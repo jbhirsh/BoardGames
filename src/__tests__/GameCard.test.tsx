@@ -1,11 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import GameCard from '../components/GameCard';
 import { FilterProvider } from '../context/FilterContext';
 import { quickGame } from './testData';
 
 function renderWithContext(ui: React.ReactElement) {
-  return render(<FilterProvider>{ui}</FilterProvider>);
+  return render(
+    <MemoryRouter>
+      <FilterProvider>{ui}</FilterProvider>
+    </MemoryRouter>
+  );
 }
 
 describe('GameCard', () => {

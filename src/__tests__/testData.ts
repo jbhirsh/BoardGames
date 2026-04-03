@@ -2,6 +2,9 @@ import type { Game } from '../data/types';
 
 export const quickGame: Game = {
   name: 'Quick Game',
+  slug: 'quick-game',
+  img: '/images/quick-game.webp',
+  rules: '/rules/quick-game.pdf',
   players: '2–4',
   min: 2,
   max: 4,
@@ -18,6 +21,9 @@ export const quickGame: Game = {
 
 export const mediumGame: Game = {
   name: 'Medium Game',
+  slug: 'medium-game',
+  img: '/images/medium-game.webp',
+  rules: '/rules/medium-game.pdf',
   players: '3–6',
   min: 3,
   max: 6,
@@ -34,6 +40,9 @@ export const mediumGame: Game = {
 
 export const longGame: Game = {
   name: 'Long Game',
+  slug: 'long-game',
+  img: '/images/long-game.webp',
+  rules: '/rules/long-game.pdf',
   players: '2–5',
   min: 2,
   max: 5,

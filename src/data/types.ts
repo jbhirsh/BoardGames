@@ -10,6 +10,9 @@ export type KeywordId =
 
 export interface Game {
   name: string;
+  slug: string;
+  img: string;
+  rules: string;
   players: string;
   min: number;
   max: number;

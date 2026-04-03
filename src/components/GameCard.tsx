@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import type { Game, KeywordId } from '../data/types';
 import { ytURL, rulesURL } from '../utils/urls';
 import { sortedKw } from '../utils/filterGames';
@@ -12,6 +13,9 @@ interface Props {
 export default function GameCard({ game }: Props) {
   return (
     <div className="game-card">
+      <div className="card-img">
+        <img src={game.img} alt={`${game.name} box art`} loading="lazy" />
+      </div>
       <div className="card-head">
         <div className="card-row1" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <h3 className="card-name">{game.name}</h3>
@@ -35,14 +39,20 @@ export default function GameCard({ game }: Props) {
         <p className="card-desc">{game.short}</p>
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', padding: '0 18px 16px' }}>
-        <a
-          className="rules-btn"
-          href={rulesURL(game.name)}
-          onClick={(e) => { e.preventDefault(); window.open(rulesURL(game.name), '_blank'); }}
-          title="Rules PDF"
-        >
-          <PdfIcon />
-        </a>
+        {game.rules ? (
+          <Link className="rules-btn" to={`/rules/${game.slug}`} title="Rules PDF">
+            <PdfIcon />
+          </Link>
+        ) : (
+          <a
+            className="rules-btn"
+            href={rulesURL(game.name)}
+            onClick={(e) => { e.preventDefault(); window.open(rulesURL(game.name), '_blank'); }}
+            title="Rules PDF"
+          >
+            <PdfIcon />
+          </a>
+        )}
         <a
           className="row-yt"
           href={ytURL(game.yt)}

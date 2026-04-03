@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import type { Game, KeywordId } from '../data/types';
 import { useFilter } from '../context/FilterContext';
 import { ytURL, rulesURL } from '../utils/urls';
@@ -74,13 +75,23 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
                 ))}
               </div>
               <div className="row-expand-foot">
-                <a
-                  className="rules-link"
-                  href={rulesURL(game.name)}
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(rulesURL(game.name), '_blank'); }}
-                >
-                  <PdfIcon /> Rules
-                </a>
+                {game.rules ? (
+                  <Link
+                    className="rules-link"
+                    to={`/rules/${game.slug}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <PdfIcon /> Rules
+                  </Link>
+                ) : (
+                  <a
+                    className="rules-link"
+                    href={rulesURL(game.name)}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(rulesURL(game.name), '_blank'); }}
+                  >
+                    <PdfIcon /> Rules
+                  </a>
+                )}
                 <a
                   className="row-yt"
                   href={ytURL(game.yt)}
