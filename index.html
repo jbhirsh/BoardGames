@@ -442,13 +442,13 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 <header class="hero">
   <div class="hero-eyebrow">The Collection</div>
   <h1>Our <em>Game</em> Room</h1>
-  <p class="hero-sub">25 games spanning ten minutes to eight hours — find exactly what fits your night.</p>
+  <p class="hero-sub"><span id="hero-count"></span> games spanning ten minutes to eight hours — find exactly what fits your night.</p>
   <div class="hero-stats">
-    <div class="hstat"><div class="hstat-n">26</div><div class="hstat-l">Games</div></div>
+    <div class="hstat"><div class="hstat-n" id="stat-games"></div><div class="hstat-l">Games</div></div>
     <div class="hstat"><div class="hstat-n">2–20+</div><div class="hstat-l">Player Range</div></div>
     <div class="hstat"><div class="hstat-n">10 min</div><div class="hstat-l">Shortest</div></div>
     <div class="hstat"><div class="hstat-n">8 hrs</div><div class="hstat-l">Longest</div></div>
-    <div class="hstat"><div class="hstat-n">5</div><div class="hstat-l">Wishlist</div></div>
+    <div class="hstat"><div class="hstat-n" id="stat-wishlist"></div><div class="hstat-l">Wishlist</div></div>
   </div>
 </header>
 
@@ -1078,6 +1078,9 @@ new ResizeObserver(updateTheadTop).observe(document.getElementById('sticky-heade
 window.addEventListener('resize', updateTheadTop);
 
 // ── INIT ─────────────────────────────────────────────────
+document.getElementById('hero-count').textContent = GAMES.length;
+document.getElementById('stat-games').textContent = GAMES.length;
+document.getElementById('stat-wishlist').textContent = WISHLIST.length;
 buildPlrOpts();
 renderKwOpts();
 render();
