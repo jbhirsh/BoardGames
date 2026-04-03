@@ -5,6 +5,7 @@ import FilterBar from './components/FilterBar/FilterBar';
 import ActiveTags from './components/ActiveTags';
 import GameCollection from './components/GameCollection';
 import Wishlist from './components/Wishlist';
+import { Analytics } from '@vercel/analytics/react';
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
           <Wishlist />
         </main>
       </div>
+      <Analytics />
     </FilterProvider>
   );
 }
