@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { FormEvent } from 'react';
+import Markdown from 'react-markdown';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -96,7 +97,9 @@ export default function RulesChat({ slug, gameName }: RulesChatProps) {
           <div className="rules-chat-messages">
             {messages.map((msg, i) => (
               <div key={i} className={`rules-chat-msg rules-chat-msg-${msg.role}`}>
-                <div className="rules-chat-bubble">{msg.content}</div>
+                <div className="rules-chat-bubble">
+                  {msg.role === 'assistant' ? <Markdown>{msg.content}</Markdown> : msg.content}
+                </div>
               </div>
             ))}
             {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
