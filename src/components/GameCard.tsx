@@ -1,8 +1,8 @@
 import { Link } from 'react-router';
 import type { Game, KeywordId } from '../data/types';
+import { useFilter } from '../context/FilterContext';
 import { ytURL, rulesURL } from '../utils/urls';
 import { sortedKw } from '../utils/filterGames';
-import DurationPill from './DurationPill';
 import KeywordPill from './KeywordPill';
 import { YouTubeIcon, PdfIcon, UserIcon, ClockIcon } from './Icons';
 
@@ -11,16 +11,13 @@ interface Props {
 }
 
 export default function GameCard({ game }: Props) {
+  const { state, dispatch } = useFilter();
+
   return (
     <div className="game-card">
-      <div className="card-img">
-        <img src={game.img} alt={`${game.name} box art`} loading="lazy" />
-      </div>
       <div className="card-head">
-        <div className="card-row1" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <h3 className="card-name">{game.name}</h3>
-          <DurationPill cat={game.cat} />
-        </div>
+        <img src={game.img} alt={`${game.name} box art`} className="card-corner-img" loading="lazy" />
+        <h3 className="card-name">{game.name}</h3>
         <div className="card-meta">
           <span className="cmeta">
             <UserIcon /> {game.players}
@@ -29,11 +26,16 @@ export default function GameCard({ game }: Props) {
             <ClockIcon /> {game.dur}
           </span>
         </div>
-      </div>
-      <div className="card-kw">
-        {sortedKw(game.kw).map((kw) => (
-          <KeywordPill key={kw} keyword={kw as KeywordId} />
-        ))}
+        <div className="card-kw">
+          {sortedKw(game.kw).map((kw) => (
+            <KeywordPill
+              key={kw}
+              keyword={kw as KeywordId}
+              active={state.keywords.has(kw as KeywordId)}
+              onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: kw as KeywordId })}
+            />
+          ))}
+        </div>
       </div>
       <div className="card-body">
         <p className="card-desc">{game.short}</p>

@@ -1,4 +1,13 @@
 {
   "outputDirectory": "dist",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "framework": "vite",
+  "devCommand": "npx vite --port $PORT",
+  "functions": {
+    "api/chat.ts": {
+      "includeFiles": "rules-text/**"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" }
+  ]
 }

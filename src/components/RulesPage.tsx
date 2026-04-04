@@ -1,5 +1,6 @@
 import { useParams, Link } from 'react-router';
 import { GAMES } from '../data/games';
+import RulesChat from './RulesChat';
 
 export default function RulesPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -36,6 +37,7 @@ export default function RulesPage() {
       <a href={game.rules} download className="rules-download">
         Download PDF
       </a>
+      <RulesChat slug={game.slug} gameName={game.name} />
     </div>
   );
 }
