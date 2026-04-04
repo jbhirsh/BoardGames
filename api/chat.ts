@@ -2,6 +2,12 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI } from '@google/genai';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import * as Sentry from '@sentry/node';
+
+Sentry.init({
+  dsn: "https://0555fa542a1eb1b3da2a4892a8472c43@o4511157588918272.ingest.us.sentry.io/4511158568353792",
+  tracesSampleRate: 1.0,
+});
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -65,6 +71,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     parts: [{ text: message }],
   });
 
+  Sentry.setTag("game_slug", slug);
+  Sentry.setContext("chat", { slug, messageLength: message.length, historyLength: history?.length ?? 0 });
+
   try {
     const response = await ai.models.generateContentStream({
       model: 'gemini-2.5-flash',
@@ -86,6 +95,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     res.end();
   } catch (err) {
+    Sentry.captureException(err);
+    await Sentry.flush(2000);
     console.error('Gemini API error:', err);
     return res.status(500).json({ error: 'Failed to generate response' });
   }

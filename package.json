@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@google/genai": "^1.48.0",
+    "@sentry/node": "^10.47.0",
     "@sentry/react": "^10.47.0",
     "@sentry/vite-plugin": "^5.1.1",
     "@vercel/analytics": "^2.0.1",
