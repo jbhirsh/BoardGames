@@ -4,7 +4,7 @@ import { useFilter } from '../context/FilterContext';
 import { ytURL, rulesURL } from '../utils/urls';
 import { sortedKw } from '../utils/filterGames';
 import KeywordPill from './KeywordPill';
-import { YouTubeIcon, PdfIcon, UserIcon, ClockIcon } from './Icons';
+import { YouTubeIcon, AiRulesIcon, UserIcon, ClockIcon } from './Icons';
 
 interface Props {
   game: Game;
@@ -42,17 +42,17 @@ export default function GameCard({ game }: Props) {
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', padding: '0 18px 16px' }}>
         {game.rules ? (
-          <Link className="rules-btn" to={`/rules/${game.slug}`} title="Rules PDF">
-            <PdfIcon />
+          <Link className="rules-btn" to={`/rules/${game.slug}`} title="Rules">
+            <AiRulesIcon /> Rules
           </Link>
         ) : (
           <a
             className="rules-btn"
             href={rulesURL(game.name)}
             onClick={(e) => { e.preventDefault(); window.open(rulesURL(game.name), '_blank'); }}
-            title="Rules PDF"
+            title="Rules"
           >
-            <PdfIcon />
+            <AiRulesIcon /> Rules
           </a>
         )}
         <a

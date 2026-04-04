@@ -5,7 +5,7 @@ import { ytURL, rulesURL } from '../utils/urls';
 import { sortedKw } from '../utils/filterGames';
 import DurationPill from './DurationPill';
 import KeywordPill from './KeywordPill';
-import { ChevronIcon, YouTubeIcon, PdfIcon } from './Icons';
+import { ChevronIcon, YouTubeIcon, AiRulesIcon } from './Icons';
 
 interface Props {
   game: Game;
@@ -81,7 +81,7 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
                     to={`/rules/${game.slug}`}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <PdfIcon /> Rules
+                    <AiRulesIcon /> Rules
                   </Link>
                 ) : (
                   <a
@@ -89,7 +89,7 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
                     href={rulesURL(game.name)}
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(rulesURL(game.name), '_blank'); }}
                   >
-                    <PdfIcon /> Rules
+                    <AiRulesIcon /> Rules
                   </a>
                 )}
                 <a

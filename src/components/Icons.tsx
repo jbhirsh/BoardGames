@@ -71,6 +71,19 @@ export function GridIcon() {
   );
 }
 
+export function AiRulesIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 18 18" fill="currentColor" style={{ overflow: 'visible' }}>
+      <path d="M2 2.5A1.5 1.5 0 0 1 3.5 1H10l4 4v9.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5V2.5z" />
+      <path d="M10 1l4 4h-3a1 1 0 0 1-1-1V1z" fill="currentColor" opacity=".3" />
+      <rect x="4.5" y="6" width="7" height="1.4" rx=".7" fill="var(--surface, #fff)" />
+      <rect x="4.5" y="8.5" width="7" height="1.4" rx=".7" fill="var(--surface, #fff)" />
+      <rect x="4.5" y="11" width="5" height="1.4" rx=".7" fill="var(--surface, #fff)" />
+      <path d="M12 8l1.5 3.5L17 13l-3.5 1.5L12 18l-1.5-3.5L7 13l3.5-1.5Z" fill="var(--surface, #fff)" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function ListIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">

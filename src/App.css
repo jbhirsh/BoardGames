@@ -231,10 +231,11 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .col-actions{white-space:nowrap;text-align:center;width:28px;}
 .col-actions span{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;}
 .rules-btn{
-  display:inline-flex;align-items:center;justify-content:center;
-  width:32px;height:32px;border-radius:8px;
+  display:inline-flex;align-items:center;justify-content:center;gap:4px;
+  padding:6px 10px;height:32px;border-radius:8px;
   background:var(--bg2);border:1px solid var(--border);
   color:var(--text3);text-decoration:none;flex-shrink:0;
+  font-size:12px;font-weight:500;white-space:nowrap;
   transition:background .15s,color .15s,border-color .15s,transform .12s;
 }
 .rules-btn:hover{background:var(--blue-bg);border-color:rgba(0,113,227,0.3);color:var(--blue);box-shadow:var(--shadow-md);}
@@ -440,9 +441,11 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .back-link{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:500;color:var(--blue);text-decoration:none;margin-bottom:24px;transition:opacity .15s;}
 .back-link:hover{opacity:.7;}
 .rules-title-row{display:flex;align-items:center;gap:20px;}
+.rules-title-info{flex:1;min-width:0;}
 .rules-box-art{width:80px;height:80px;object-fit:cover;border-radius:var(--r-sm);border:1px solid var(--border);flex-shrink:0;}
-.rules-game-name{font-family:'Playfair Display',serif;font-size:clamp(24px,4vw,36px);font-weight:700;color:var(--dark);line-height:1.2;margin-bottom:4px;}
+.rules-game-name{font-family:'Playfair Display',serif;font-size:clamp(24px,4vw,36px);font-weight:700;color:var(--dark);line-height:1.2;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rules-game-desc{font-size:14px;color:var(--text2);line-height:1.5;}
+.rules-title-row .rules-chat-toggle{flex-shrink:0;}
 .rules-not-found{font-family:'Playfair Display',serif;font-size:28px;color:var(--dark);margin-top:24px;}
 .rules-viewer{border-radius:var(--r);overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow-md);margin-bottom:16px;}
 .rules-viewer iframe{width:100%;height:80vh;border:none;display:block;}
@@ -450,11 +453,10 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .rules-download:hover{opacity:.7;}
 
 /* ══ RULES CHAT ══════════════════════════════════════════════ */
-.rules-chat{margin-top:24px;}
 .rules-chat-toggle{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-size:14px;font-weight:600;color:var(--blue);background:var(--blue-bg);border:1px solid rgba(0,113,227,0.2);border-radius:var(--r-sm);cursor:pointer;transition:background .15s,border-color .15s;}
 .rules-chat-toggle:hover{background:rgba(0,113,227,0.12);border-color:rgba(0,113,227,0.35);}
 
-.rules-chat-panel{margin-top:16px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow-md);overflow:hidden;display:flex;flex-direction:column;height:420px;}
+.rules-chat-panel{margin-bottom:20px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow-md);overflow:hidden;display:flex;flex-direction:column;height:420px;}
 
 .rules-chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;}
 
