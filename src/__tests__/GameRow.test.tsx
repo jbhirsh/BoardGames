@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import GameRow from '../components/GameRow';
 import { FilterProvider } from '../context/FilterContext';
-import { quickGame } from './testData';
+import { quickGame, bananagramsGame, sevenWondersGame } from './testData';
 import type { Game } from '../data/types';
 
 function renderRow(game: Game, isOpen = false, onToggle = vi.fn(), showGroupBadge = false) {
@@ -85,6 +85,23 @@ describe('GameRow', () => {
       '_blank',
     );
     openSpy.mockRestore();
+  });
+
+  it('renders Word Checker link for bananagrams when expanded', () => {
+    renderRow(bananagramsGame, true);
+    const link = screen.getByText('Word Checker');
+    expect(link.closest('a')).toHaveAttribute('href', '/word-checker');
+  });
+
+  it('does not render Word Checker link for non-bananagrams games', () => {
+    renderRow(quickGame, true);
+    expect(screen.queryByText('Word Checker')).not.toBeInTheDocument();
+  });
+
+  it('renders Score Calculator link for 7-wonders when expanded', () => {
+    renderRow(sevenWondersGame, true);
+    const link = screen.getByText('Score');
+    expect(link.closest('a')).toHaveAttribute('href', '/score/7-wonders');
   });
 
   it('renders YouTube link that opens in new window', () => {

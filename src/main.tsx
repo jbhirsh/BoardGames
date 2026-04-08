@@ -5,6 +5,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router'
 import App, { HomePage } from './App'
 import RulesPage from './components/RulesPage'
 import ScoreCalculatorPage from './components/ScoreCalculatorPage'
+import WordCheckerPage from './components/WordCheckerPage'
 
 const router = createBrowserRouter([
   {
@@ -13,6 +14,7 @@ const router = createBrowserRouter([
       { path: '/', element: <HomePage /> },
       { path: '/rules/:slug', element: <RulesPage /> },
       { path: '/score/:slug', element: <ScoreCalculatorPage /> },
+      { path: '/word-checker', element: <WordCheckerPage /> },
     ],
   },
 ])
