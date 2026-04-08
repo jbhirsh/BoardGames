@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router';
 import { GAMES } from '../data/games';
 import RulesChatProvider, { RulesChatToggle, RulesChatPanel } from './RulesChat';
+import WordChecker from './WordChecker';
 
 export default function RulesPage() {
   const { slug } = useParams<{ slug: string }>();
   const game = GAMES.find(g => g.slug === slug);
+  const [wordCheckerOpen, setWordCheckerOpen] = useState(false);
 
   if (!game) {
     return (
@@ -31,9 +34,18 @@ export default function RulesPage() {
               <p className="rules-game-desc">{game.short}</p>
             </div>
             <RulesChatToggle />
+            {game.kw.includes('word') && (
+              <button
+                className="rules-chat-toggle"
+                onClick={() => setWordCheckerOpen(o => !o)}
+              >
+                {wordCheckerOpen ? 'Close Word Checker' : 'Word Checker'}
+              </button>
+            )}
           </div>
         </header>
         <RulesChatPanel slug={game.slug} gameName={game.name} />
+        {wordCheckerOpen && <WordChecker />}
         <div className="rules-viewer">
           <iframe src={game.rules} title={`${game.name} rules`} />
         </div>

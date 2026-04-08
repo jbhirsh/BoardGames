@@ -1,4 +1,4 @@
-import { useFilter } from '../context/FilterContext';
+import { useFilter } from '../context/useFilter';
 import { GROUPS, GROUP_ORDER } from '../data/keywords';
 import GameCard from './GameCard';
 import type { GroupId } from '../data/types';

@@ -488,3 +488,23 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .rules-chat-input button{padding:10px 18px;font-size:14px;font-weight:600;color:#fff;background:var(--blue);border:none;border-radius:var(--r-sm);cursor:pointer;transition:opacity .15s;}
 .rules-chat-input button:hover:not(:disabled){opacity:.85;}
 .rules-chat-input button:disabled{opacity:.5;cursor:not-allowed;}
+
+/* Word checker section */
+.word-checker-section{margin-bottom:20px;}
+.word-checker-heading{font-size:16px;font-weight:700;color:var(--text);margin:0 0 8px;}
+
+/* Word checker */
+.word-checker-body{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;}
+.word-checker-empty{color:var(--text3);font-size:14px;text-align:center;padding:40px 20px;}
+.word-badge{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:var(--r-sm);font-size:14px;}
+.word-badge-word{font-weight:700;font-size:18px;text-transform:lowercase;}
+.word-badge-status{font-weight:600;font-size:13px;}
+.word-valid{background:rgba(52,199,89,0.12);color:#2d8a4e;border:1px solid rgba(52,199,89,0.25);}
+.word-invalid{background:rgba(255,59,48,0.1);color:#d42020;border:1px solid rgba(255,59,48,0.2);}
+.word-meanings{display:flex;flex-direction:column;gap:12px;}
+.word-phonetic{color:var(--text3);font-size:13px;font-style:italic;}
+.word-meaning{display:flex;flex-direction:column;gap:4px;}
+.word-pos{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--blue);}
+.word-def{font-size:14px;line-height:1.5;color:var(--text);padding-left:4px;}
+.word-def-num{color:var(--text3);font-weight:600;}
+.word-example{font-style:italic;color:var(--text3);font-size:13px;margin-top:2px;padding-left:16px;}
