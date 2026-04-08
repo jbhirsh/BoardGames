@@ -39,11 +39,13 @@ export type SortMode = 'az' | 'group' | 'quick' | 'long'
   | 'dur-asc' | 'dur-desc'
   | 'players-asc' | 'players-desc';
 export type ViewMode = 'grid' | 'list';
+export type KeywordMode = 'and' | 'or';
 
 export interface FilterState {
   duration: DurationFilter;
   players: number;
   keywords: Set<KeywordId>;
+  keywordMode: KeywordMode;
   search: string;
   sort: SortMode;
   baseSort: SortMode;

@@ -1,9 +1,10 @@
-import type { FilterState, DurationFilter, SortMode, ViewMode, KeywordId } from '../data/types';
+import type { FilterState, DurationFilter, SortMode, ViewMode, KeywordId, KeywordMode } from '../data/types';
 
 export const initialFilterState: FilterState = {
   duration: 'all',
   players: 0,
   keywords: new Set<KeywordId>(),
+  keywordMode: 'or',
   search: '',
   sort: 'az',
   baseSort: 'az',
@@ -15,6 +16,7 @@ export type FilterAction =
   | { type: 'SET_PLAYERS'; payload: number }
   | { type: 'TOGGLE_KEYWORD'; payload: KeywordId }
   | { type: 'CLEAR_KEYWORDS' }
+  | { type: 'SET_KEYWORD_MODE'; payload: KeywordMode }
   | { type: 'SET_SEARCH'; payload: string }
   | { type: 'SET_SORT'; payload: SortMode }
   | { type: 'SET_COLUMN_SORT'; payload: string }
@@ -35,6 +37,8 @@ export function filterReducer(state: FilterState, action: FilterAction): FilterS
     }
     case 'CLEAR_KEYWORDS':
       return { ...state, keywords: new Set() };
+    case 'SET_KEYWORD_MODE':
+      return { ...state, keywordMode: action.payload };
     case 'SET_SEARCH':
       return { ...state, search: action.payload };
     case 'SET_SORT':

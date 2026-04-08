@@ -76,6 +76,7 @@ describe('filterReducer', () => {
       duration: 'quick',
       players: 4,
       keywords: new Set(['strategy'] as const),
+      keywordMode: 'and',
       search: 'test',
       sort: 'name-asc',
       baseSort: 'group',

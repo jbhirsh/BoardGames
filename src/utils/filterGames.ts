@@ -10,7 +10,10 @@ export function filterGames(games: Game[], state: FilterState): Game[] {
 
   if (state.players > 0) list = list.filter(g => g.min <= state.players && g.max >= state.players);
 
-  if (state.keywords.size > 0) list = list.filter(g => [...state.keywords].every(k => g.kw.includes(k)));
+  if (state.keywords.size > 0) {
+    const match = state.keywordMode === 'and' ? 'every' : 'some';
+    list = list.filter(g => [...state.keywords][match](k => g.kw.includes(k)));
+  }
 
   if (state.search) {
     const q = state.search.toLowerCase().trim();

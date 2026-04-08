@@ -20,8 +20,9 @@ export default function KeywordsDropdown({ isOpen, onToggle }: Props) {
     return GAMES.filter((g) => g.kw.includes(kwId)).length;
   }
 
+  const modeLabel = state.keywordMode.toUpperCase();
   const label = isActive
-    ? `${state.keywords.size} keyword${state.keywords.size > 1 ? 's' : ''} (AND)`
+    ? `${state.keywords.size} keyword${state.keywords.size > 1 ? 's' : ''} (${modeLabel})`
     : 'Keywords';
 
   return (
@@ -36,6 +37,20 @@ export default function KeywordsDropdown({ isOpen, onToggle }: Props) {
         dispatch({ type: 'CLEAR_KEYWORDS' });
       }}
     >
+      <div className="kw-mode-toggle">
+        <button
+          className={`kw-mode-btn${state.keywordMode === 'or' ? ' active' : ''}`}
+          onClick={() => dispatch({ type: 'SET_KEYWORD_MODE', payload: 'or' })}
+        >
+          Any
+        </button>
+        <button
+          className={`kw-mode-btn${state.keywordMode === 'and' ? ' active' : ''}`}
+          onClick={() => dispatch({ type: 'SET_KEYWORD_MODE', payload: 'and' })}
+        >
+          All
+        </button>
+      </div>
       <div className="dd-opts-scroll">
         {allKw.map(([id, name]) => {
           const sel = state.keywords.has(id);

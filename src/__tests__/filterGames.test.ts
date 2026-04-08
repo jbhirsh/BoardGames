@@ -52,20 +52,27 @@ describe('filterGames', () => {
 
   describe('keyword filter (AND logic)', () => {
     it('filters by single keyword', () => {
-      const result = filterGames(testGames, makeState({ keywords: new Set(['strategy']) }));
+      const result = filterGames(testGames, makeState({ keywords: new Set(['strategy']), keywordMode: 'and' }));
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe('Medium Game');
     });
 
     it('filters by multiple keywords (AND)', () => {
-      const result = filterGames(testGames, makeState({ keywords: new Set(['card-game', 'family']) }));
+      const result = filterGames(testGames, makeState({ keywords: new Set(['card-game', 'family']), keywordMode: 'and' }));
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe('Quick Game');
     });
 
     it('returns empty when no game matches all keywords', () => {
-      const result = filterGames(testGames, makeState({ keywords: new Set(['strategy', 'cooperative']) }));
+      const result = filterGames(testGames, makeState({ keywords: new Set(['strategy', 'cooperative']), keywordMode: 'and' }));
       expect(result).toHaveLength(0);
+    });
+  });
+
+  describe('keyword filter (OR logic)', () => {
+    it('returns games matching any keyword', () => {
+      const result = filterGames(testGames, makeState({ keywords: new Set(['strategy', 'cooperative']), keywordMode: 'or' }));
+      expect(result).toHaveLength(2);
     });
   });
 
