@@ -71,6 +71,15 @@ describe('GameRow', () => {
     expect(link?.closest('a')).toHaveAttribute('href', '/rules/quick-game');
   });
 
+  it('clicking Rules link does not trigger row toggle', () => {
+    const onToggle = vi.fn();
+    renderRow(quickGame, true, onToggle);
+    const rulesLinks = screen.getAllByText(/Rules/);
+    const link = rulesLinks.find((el) => el.closest('a[href*="rules"]'));
+    fireEvent.click(link!);
+    expect(onToggle).not.toHaveBeenCalled();
+  });
+
   it('renders fallback rules link when game has no rules', () => {
     const noRulesGame: Game = { ...quickGame, rules: '' };
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);

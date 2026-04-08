@@ -19,5 +19,11 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/setupTests.ts',
+    coverage: {
+      thresholds: {
+        perFile: true,
+        lines: 80,
+      },
+    },
   },
 })
