@@ -1,5 +1,5 @@
 import './App.css';
-import { Routes, Route } from 'react-router';
+import { Routes, Route, ScrollRestoration } from 'react-router';
 import { FilterProvider } from './context/FilterContext';
 import Hero from './components/Hero';
 import FilterBar from './components/FilterBar/FilterBar';
@@ -28,6 +28,7 @@ function HomePage() {
 export default function App() {
   return (
     <FilterProvider>
+      <ScrollRestoration />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/rules/:slug" element={<RulesPage />} />
