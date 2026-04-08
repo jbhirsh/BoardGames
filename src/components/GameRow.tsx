@@ -6,7 +6,7 @@ import { ytURL, rulesURL } from '../utils/urls';
 import { sortedKw } from '../utils/filterGames';
 import DurationPill from './DurationPill';
 import KeywordPill from './KeywordPill';
-import { ChevronIcon, YouTubeIcon, AiRulesIcon, CalculatorIcon } from './Icons';
+import { ChevronIcon, YouTubeIcon, AiRulesIcon, CalculatorIcon, SearchIcon } from './Icons';
 
 interface Props {
   game: Game;
@@ -94,6 +94,15 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
                     onClick={(e) => e.stopPropagation()}
                   >
                     <CalculatorIcon /> Score
+                  </Link>
+                )}
+                {game.slug === 'bananagrams' && (
+                  <Link
+                    className="rules-link"
+                    to="/word-checker"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <SearchIcon /> Word Checker
                   </Link>
                 )}
                 <a

@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import GameCard from '../components/GameCard';
 import { FilterProvider } from '../context/FilterContext';
-import { quickGame, mediumGame } from './testData';
+import { quickGame, mediumGame, bananagramsGame, sevenWondersGame } from './testData';
 import type { Game } from '../data/types';
 
 function renderWithContext(ui: React.ReactElement) {
@@ -71,6 +71,30 @@ describe('GameCard', () => {
       '_blank',
     );
     openSpy.mockRestore();
+  });
+
+  it('renders Word Checker link for bananagrams', () => {
+    renderWithContext(<GameCard game={bananagramsGame} />);
+    const link = screen.getByTitle('Word Checker');
+    expect(link).toBeInTheDocument();
+    expect(link.closest('a')).toHaveAttribute('href', '/word-checker');
+  });
+
+  it('does not render Word Checker link for non-bananagrams games', () => {
+    renderWithContext(<GameCard game={quickGame} />);
+    expect(screen.queryByTitle('Word Checker')).not.toBeInTheDocument();
+  });
+
+  it('renders Score Calculator link for 7-wonders', () => {
+    renderWithContext(<GameCard game={sevenWondersGame} />);
+    const link = screen.getByTitle('Score Calculator');
+    expect(link).toBeInTheDocument();
+    expect(link.closest('a')).toHaveAttribute('href', '/score/7-wonders');
+  });
+
+  it('does not render Score Calculator link for non-7-wonders games', () => {
+    renderWithContext(<GameCard game={quickGame} />);
+    expect(screen.queryByTitle('Score Calculator')).not.toBeInTheDocument();
   });
 
   it('clicking a keyword pill dispatches TOGGLE_KEYWORD', () => {

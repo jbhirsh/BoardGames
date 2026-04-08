@@ -57,4 +57,42 @@ export const longGame: Game = {
   yt: 'how to play long game',
 };
 
+export const bananagramsGame: Game = {
+  name: 'Bananagrams',
+  slug: 'bananagrams',
+  img: '/images/bananagrams.webp',
+  rules: '/rules/bananagrams.pdf',
+  players: '2–8',
+  min: 2,
+  max: 8,
+  dur: '15 min',
+  mins: 15,
+  cat: 'quick',
+  group: 'word',
+  kw: ['word', 'family', 'quick-play'],
+  short: 'A fast word game.',
+  desc: 'Race to build your own crossword grid.',
+  detail: '<div class="detail-section"><h3>How to Play</h3><p>Build words fast.</p></div>',
+  yt: 'how to play bananagrams',
+};
+
+export const sevenWondersGame: Game = {
+  name: '7 Wonders',
+  slug: '7-wonders',
+  img: '/images/7-wonders.webp',
+  rules: '/rules/7-wonders.pdf',
+  players: '2–7',
+  min: 2,
+  max: 7,
+  dur: '30 min',
+  mins: 30,
+  cat: 'medium',
+  group: 'strat',
+  kw: ['strategy', 'card-game'],
+  short: 'A card drafting civilization game.',
+  desc: 'Draft cards to build your ancient civilization.',
+  detail: '<div class="detail-section"><h3>Strategy</h3><p>Draft wisely.</p></div>',
+  yt: 'how to play 7 wonders',
+};
+
 export const testGames: Game[] = [quickGame, mediumGame, longGame];
