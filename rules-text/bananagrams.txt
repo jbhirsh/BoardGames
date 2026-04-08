@@ -1,13 +1,100 @@
+PLAYERS 2 to 4 5 to 6 7 to 8
+STARTING TILES 21 15 11
+LETTER BREAKDOWN
+A=13
+B=3
+C=3
+D=6
+E=18
+F=3
+G=4
+H=3
+I=12
+J=2
+K=2
+L=5
+M=3
+N=8
+O=11
+P=3
+Q=2
+R=9
+S=6
+T-9
+U=6
+V=3
+W=3
+X=2
+Y=3
+Z=2
+Welcome to the Bunch!
+BANANAGRAMS is a labor of love, grown out of a passion
+for wit, wordplay and silliness... We hope you enjoy playing
+it as much as our family enjoyed creating it!
+SET-UP
+1. Place all 144 tiles facedown in the center of the table. These form the BUNCH.
+2. Each player now takes their ‘STARTING TILES’ from the BUNCH:
+WINNING!
+When the BUNCH is depleted to fewer tiles than number of players, the first person to use ALL
+their letters in a connected word grid and call out “BANANAS!” wins that hand and is declared
+TOP BANANA!
+Other players may now inspect the winning grid. If it contains a misspelled word, proper noun,
+abbreviation or other unacceptable word, the other players call out “ROTTEN BANANA!” and that
+player is out of the game. The ROTTEN BANANA’s letters are returned to the BUNCH facedown.
+Play resumes for the other players until one of them calls out “BANANAS!”
+HOW TO PLAY
+Object: Be the first to use all your letters.
+1. To start, any player calls out “SPLIT!” Everyone simultaneously turns their tiles faceup
+and races to arrange them in their own intersecting word grid... Words must read left
+to right horizontally, or top to bottom vertically. You may rearrange your grid at any
+time, and as often as you like.
+2. Whenever a player places their last faceup letter in their grid, that person calls
+out “PEEL!” Every player—including the one saying “PEEL”—then takes another
+tile from the BUNCH.
+3. At any time during the game, you may call out “DUMP!” and put one of your letters
+back, facedown in the BUNCH. However, you MUST take three more tiles in exchange!
+This has no effect on other players and there’s no limit to the number of times
+you may DUMP.
+Ages 7-107
+1 to 8 Players
 
-
-Bananagrams rules pdf
-Double bananagrams rules. Bananagrams instructions pdf. What are the rules for playing bananagrams. My first bananagrams rules pdf. Bananagrams rules. Bananagrams party edition rules pdf.
-BANANAGRAMS, a passion project born from love of wit, wordplay, and whimsy! We hope you enjoy playing it as much as our family did creating it. To get started: 1. Gather all 144 tiles in the center of the table. 2. Each player takes their share of tiles based on the number of players: 2-4 people take 21 letters each, 5-6 people take 15 letters each,
-and 7 people take 11 letters each. Gameplay: 1. Anyone can start by saying "SPLIT!" and flipping over their tiles. 2. Form crossword collections of intersecting words horizontally or vertically. 3. Players work independently; there are no turns. 4. When someone uses up all their letters, they shout "PEEL!" and take a tile from the bunch. 5. Everyone
-else must then take a tile and add it to their collection. Strategies: 1. Return troublesome letters to the bunch, taking three new ones in return (say "DUMP!"). 2. Keep an eye out for misspelled or incorrect words. Game Over: 1. The first player with no remaining tiles shouts "BANANAS!" and wins. 2. The winner's hand is inspected for unacceptable
-words; if found, they become the "ROTTEN BANANA" and are out of that round. Work quick smart thinking - get letters together fast, it's go time! Sort them if it helps, or just wing it, see what works best for you. Now, lay out words like a crossword, but don't go diagonal. Use all your tiles before others do, no shortcuts allowed! Each player makes
-their own word grid, not like Scrabble where everyone adds on together. When all your letters are used up, shout "Peel!" and get one new tile from the bunch. If someone else does it first, you're out of luck - just draw a new tile right away. But if you use that new tile straight away, peel again! Just check that words are valid and spelled correctly
-before shouting "peel". Shout "Dump!" to swap 1 old letter for 3 new ones, helps when you're stuck with tricky letters like X or Q. Other players don't have to dump their tiles, just be sure to put your used tile far away so you don't pick it up again. Rearrange your grid anytime to make new words and layouts - no rules to stick to! In this example, a
-player swapped a T for a D in "FOOD" to make "TIED", using all their tiles. Keep peeling until there are fewer tiles than players left. The last one to use up all their tiles is the winner. If it's tied and there are no more tiles left, shout "Bananas!" first to win! No more tiles in the bunch means the game is over - whoever called "Bananas" first wins! When
-ties occur, the longest word in each player's grid determines the winner, but feel free to establish alternative tie-breaker rules. To maximize tile usage, players must strategically rearrange their grids to shout "bananas" first. Upon inspection of the winning grid, any disqualifying words - such as proper nouns or abbreviations - result in a "Rotten
-banana!" declaration, disqualifying the player and reintegrating their tiles back into the game pool. The game continues until a new winner emerges. Note: I have applied the "ADD SPELLING ERRORS (SE)" rewriting method to this text, introducing occasional and rare spelling mistakes that do not disrupt readability or meaning.
+Appetite for more?
+Other ways of playing!
+“Best of...”
+BANANAGRAMS is fast and fun! Sometimes, it’s over before you’ve had your fill...
+If that’s the case, play the ‘best of’ three or five hands. Whoever wins the most
+games is TOP BANANA!
+Banana Smoothie - for when you’re in no mood to rush
+1. Place all the tiles facedown on the table.
+2. Keeping them facedown, divide them equally among players.
+3. Play the regular BANANAGRAMS game, BUT with no peeling or dumping.
+4. The first player to use ALL their letters and call out “BANANAS!” wins! If the game
+ends in a stalemate or tie, the player with the longest word in their grid becomes
+TOP BANANA. If you have the same number of letters in your longest words...
+Play another hand!
+Banana Café – great for playing while waiting in restaurants
+1. Put the BANANAGRAMS game on the table, leaving all tiles in the pouch.
+2. Each player takes 21 facedown tiles from the pouch.
+3. Play BANANAGRAMS the usual way, with dumping, BUT no peeling.
+4. The first player to use ALL their letters and call out “BANANAS!” wins the game!
+Banana Solitaire - for when you need a little alone time
+1. Place all the tiles facedown.
+2. Take 21 tiles and play as usual.
+3. Try to beat your own best time using all the letters—or try to make as few words
+as possible! This can be a relaxing way to hone your BANANAGRAMS skills.
+845 Allens Avenue Providence, RI 02905
+info@bananagrams.com
+www.bananagrams.com ©2018 Bananagrams, inc. All rights reserved.
+The Nathanson Family, Inventors of BANANAGRAMS®
+Collins Little Book of
+BANANAGRAMS® SECRETS
+Features tactics, tips, tricks and winning words
+to make you the Top Banana!
+Available nationwide wherever books are sold.
+by Asmodee Digital
+BANANAGRAMS® APP
+Ready, Set, Split! APP-solutely the best way to get wordy
+on the move! Download the BANANAGRAMS app for your
+iOS or Android device to challenge your friends and family
+anywhere, anytime. Our new app has BUNCHES of options
+to feed your BANANAGRAMS APP-etite.
