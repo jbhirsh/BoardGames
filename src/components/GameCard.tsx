@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import type { Game, KeywordId } from '../data/types';
+import { KW } from '../data/keywords';
 import { useFilter } from '../context/FilterContext';
 import { ytURL, rulesURL } from '../utils/urls';
 import { sortedKw } from '../utils/filterGames';
@@ -31,7 +32,7 @@ export default function GameCard({ game }: Props) {
             <KeywordPill
               key={kw}
               keyword={kw as KeywordId}
-              active={state.keywords.has(kw as KeywordId)}
+              active={state.keywords.has(kw as KeywordId) || (!!state.search && KW[kw as KeywordId].toLowerCase().includes(state.search.toLowerCase().trim()))}
               onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: kw as KeywordId })}
             />
           ))}

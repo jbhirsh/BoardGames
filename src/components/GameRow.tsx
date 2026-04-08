@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import type { Game, KeywordId } from '../data/types';
+import { KW } from '../data/keywords';
 import { useFilter } from '../context/FilterContext';
 import { ytURL, rulesURL } from '../utils/urls';
 import { sortedKw } from '../utils/filterGames';
@@ -15,7 +16,9 @@ interface Props {
 }
 
 export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Props) {
-  const { dispatch } = useFilter();
+  const { state, dispatch } = useFilter();
+  const searchMatch = (kw: KeywordId) =>
+    state.keywords.has(kw) || (!!state.search && KW[kw].toLowerCase().includes(state.search.toLowerCase().trim()));
 
   return (
     <>
@@ -44,6 +47,7 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
             <KeywordPill
               key={kw}
               keyword={kw as KeywordId}
+              active={searchMatch(kw as KeywordId)}
               onClick={(e) => {
                 e.stopPropagation();
                 dispatch({ type: 'TOGGLE_KEYWORD', payload: kw as KeywordId });
@@ -65,15 +69,6 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
                 className="detail-section"
                 dangerouslySetInnerHTML={{ __html: game.detail }}
               />
-              <div className="row-expand-kw">
-                {sortedKw(game.kw).map((kw) => (
-                  <KeywordPill
-                    key={kw}
-                    keyword={kw as KeywordId}
-                    onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: kw as KeywordId })}
-                  />
-                ))}
-              </div>
               <div className="row-expand-foot">
                 {game.rules ? (
                   <Link
