@@ -1,4 +1,4 @@
-import { useFilter } from '../../context/FilterContext';
+import { useFilter } from '../../context/useFilter';
 import { DUR_LABELS } from '../../data/keywords';
 import { CheckIcon } from '../Icons';
 import Dropdown from './Dropdown';

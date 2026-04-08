@@ -1,4 +1,4 @@
-import { useFilter } from '../../context/FilterContext';
+import { useFilter } from '../../context/useFilter';
 import { KW } from '../../data/keywords';
 import { GAMES } from '../../data/games';
 import { CheckIcon } from '../Icons';

@@ -1,4 +1,4 @@
-import { useFilter } from '../context/FilterContext';
+import { useFilter } from '../context/useFilter';
 import { GridIcon, ListIcon } from './Icons';
 
 export default function ViewToggle() {

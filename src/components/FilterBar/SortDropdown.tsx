@@ -1,4 +1,4 @@
-import { useFilter } from '../../context/FilterContext';
+import { useFilter } from '../../context/useFilter';
 import { CheckIcon } from '../Icons';
 import Dropdown from './Dropdown';
 import type { SortMode } from '../../data/types';

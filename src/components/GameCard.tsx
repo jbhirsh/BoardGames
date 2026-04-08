@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import type { Game, KeywordId } from '../data/types';
 import { KW } from '../data/keywords';
-import { useFilter } from '../context/FilterContext';
+import { useFilter } from '../context/useFilter';
 import { ytURL, rulesURL } from '../utils/urls';
 import { sortedKw } from '../utils/filterGames';
 import KeywordPill from './KeywordPill';

@@ -1,4 +1,4 @@
-import { useFilter } from '../context/FilterContext';
+import { useFilter } from '../context/useFilter';
 import ViewToggle from './ViewToggle';
 import GridView from './GridView';
 import ListView from './ListView';

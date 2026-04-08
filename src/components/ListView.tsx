@@ -1,5 +1,5 @@
 import { useState, Fragment } from 'react';
-import { useFilter } from '../context/FilterContext';
+import { useFilter } from '../context/useFilter';
 import { GROUPS, GROUP_ORDER } from '../data/keywords';
 import GameRow from './GameRow';
 import type { GroupId } from '../data/types';

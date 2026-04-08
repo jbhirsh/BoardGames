@@ -1,4 +1,4 @@
-import { useFilter } from '../context/FilterContext';
+import { useFilter } from '../context/useFilter';
 import { DUR_LABELS, KW } from '../data/keywords';
 import type { KeywordId } from '../data/types';
 
