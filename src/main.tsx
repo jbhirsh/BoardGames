@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import App, { HomePage } from './App'
 import RulesPage from './components/RulesPage'
+import ScoreCalculatorPage from './components/ScoreCalculatorPage'
 
 const router = createBrowserRouter([
   {
@@ -11,6 +12,7 @@ const router = createBrowserRouter([
     children: [
       { path: '/', element: <HomePage /> },
       { path: '/rules/:slug', element: <RulesPage /> },
+      { path: '/score/:slug', element: <ScoreCalculatorPage /> },
     ],
   },
 ])

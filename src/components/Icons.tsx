@@ -84,6 +84,21 @@ export function AiRulesIcon({ size = 16 }: { size?: number }) {
   );
 }
 
+export function CalculatorIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+      <rect x="2" y="1" width="12" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="4" y="3" width="8" height="3" rx=".5" fill="currentColor" opacity=".3" />
+      <circle cx="5.5" cy="9" r=".9" fill="currentColor" />
+      <circle cx="8" cy="9" r=".9" fill="currentColor" />
+      <circle cx="10.5" cy="9" r=".9" fill="currentColor" />
+      <circle cx="5.5" cy="12" r=".9" fill="currentColor" />
+      <circle cx="8" cy="12" r=".9" fill="currentColor" />
+      <circle cx="10.5" cy="12" r=".9" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function ListIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">

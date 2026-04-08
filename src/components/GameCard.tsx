@@ -5,7 +5,7 @@ import { useFilter } from '../context/useFilter';
 import { ytURL, rulesURL } from '../utils/urls';
 import { sortedKw } from '../utils/filterGames';
 import KeywordPill from './KeywordPill';
-import { YouTubeIcon, AiRulesIcon, UserIcon, ClockIcon } from './Icons';
+import { YouTubeIcon, AiRulesIcon, UserIcon, ClockIcon, CalculatorIcon } from './Icons';
 
 interface Props {
   game: Game;
@@ -55,6 +55,11 @@ export default function GameCard({ game }: Props) {
           >
             <AiRulesIcon /> Rules
           </a>
+        )}
+        {game.slug === '7-wonders' && (
+          <Link className="rules-btn" to={`/score/${game.slug}`} title="Score Calculator">
+            <CalculatorIcon /> Score
+          </Link>
         )}
         <a
           className="row-yt"
