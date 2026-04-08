@@ -1,15 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
-import App from '../App';
+import { createMemoryRouter, RouterProvider } from 'react-router';
+import App, { HomePage } from '../App';
 import { GAMES } from '../data/games';
 
 function renderApp() {
-  return render(
-    <MemoryRouter>
-      <App />
-    </MemoryRouter>
-  );
+  const router = createMemoryRouter([
+    {
+      element: <App />,
+      children: [{ path: '/', element: <HomePage /> }],
+    },
+  ]);
+  return render(<RouterProvider router={router} />);
 }
 
 describe('App', () => {

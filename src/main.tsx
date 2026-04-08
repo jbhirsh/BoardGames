@@ -1,13 +1,22 @@
 import './instrument'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter } from 'react-router'
-import App from './App'
+import { createBrowserRouter, RouterProvider } from 'react-router'
+import App, { HomePage } from './App'
+import RulesPage from './components/RulesPage'
+
+const router = createBrowserRouter([
+  {
+    element: <App />,
+    children: [
+      { path: '/', element: <HomePage /> },
+      { path: '/rules/:slug', element: <RulesPage /> },
+    ],
+  },
+])
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <RouterProvider router={router} />
   </StrictMode>,
 )
