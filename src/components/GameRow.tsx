@@ -6,7 +6,7 @@ import { ytURL, rulesURL } from '../utils/urls';
 import { sortedKw } from '../utils/filterGames';
 import DurationPill from './DurationPill';
 import KeywordPill from './KeywordPill';
-import { ChevronIcon, YouTubeIcon, AiRulesIcon } from './Icons';
+import { ChevronIcon, YouTubeIcon, AiRulesIcon, CalculatorIcon } from './Icons';
 
 interface Props {
   game: Game;
@@ -86,6 +86,15 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
                   >
                     <AiRulesIcon /> Rules
                   </a>
+                )}
+                {game.slug === '7-wonders' && (
+                  <Link
+                    className="rules-link"
+                    to={`/score/${game.slug}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <CalculatorIcon /> Score
+                  </Link>
                 )}
                 <a
                   className="row-yt"
