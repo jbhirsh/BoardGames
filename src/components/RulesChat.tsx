@@ -32,10 +32,11 @@ export function RulesChatPanel({ slug, gameName }: { slug: string; gameName: str
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = messagesContainerRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
   async function handleSend(e: FormEvent) {
@@ -102,7 +103,7 @@ export function RulesChatPanel({ slug, gameName }: { slug: string; gameName: str
 
   return (
     <div className="rules-chat-panel">
-        <div className="rules-chat-messages">
+        <div className="rules-chat-messages" ref={messagesContainerRef}>
         {messages.map((msg, i) => (
           <div key={i} className={`rules-chat-msg rules-chat-msg-${msg.role}`}>
             <div className="rules-chat-bubble">
@@ -115,7 +116,6 @@ export function RulesChatPanel({ slug, gameName }: { slug: string; gameName: str
             <div className="rules-chat-bubble rules-chat-thinking">Thinking...</div>
           </div>
         )}
-        <div ref={messagesEndRef} />
       </div>
       <form className="rules-chat-input" onSubmit={handleSend}>
         <input
