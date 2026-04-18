@@ -26,7 +26,12 @@ export default function ListView() {
   }
 
   if (filteredGames.length === 0) {
-    return <div className="no-results-list">No games match your filters.</div>;
+    return (
+      <div className="no-results">
+        <p>No games match your filters.</p>
+        <button className="no-results-btn" onClick={() => dispatch({ type: 'CLEAR_ALL' })}>Clear filters</button>
+      </div>
+    );
   }
 
   const isGrouped = state.sort === 'group' || state.baseSort === 'group';

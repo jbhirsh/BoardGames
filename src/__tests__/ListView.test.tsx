@@ -115,4 +115,33 @@ describe('ListView', () => {
     fireEvent.click(screen.getByText('Search'));
     expect(screen.getByText('No games match your filters.')).toBeInTheDocument();
   });
+
+  it('Clear filters button restores full game list', () => {
+    function EmptyTest() {
+      const { dispatch } = useFilter();
+      return (
+        <>
+          <button onClick={() => dispatch({ type: 'SET_SEARCH', payload: 'zzzznotfound' })}>
+            Search
+          </button>
+          <ListView />
+        </>
+      );
+    }
+
+    render(
+      <MemoryRouter>
+        <FilterProvider>
+          <EmptyTest />
+        </FilterProvider>
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByText('Search'));
+    expect(screen.getByText('No games match your filters.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Clear filters'));
+    expect(screen.queryByText('No games match your filters.')).not.toBeInTheDocument();
+    expect(screen.getByText(GAMES[0].name)).toBeInTheDocument();
+  });
 });
