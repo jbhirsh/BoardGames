@@ -345,7 +345,6 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .no-results p{color:var(--text2);font-size:15px;margin-bottom:16px;}
 .no-results-btn{display:inline-block;background:var(--blue);color:#fff;border:none;padding:9px 22px;border-radius:20px;font-family:inherit;font-size:13px;cursor:pointer;transition:background .2s;}
 .no-results-btn:hover{background:var(--blue2);}
-.no-results-list{text-align:center;padding:48px;color:var(--text2);font-size:15px;margin-bottom:64px;}
 
 /* ══ WISHLIST ═════════════════════════════════════════════ */
 .wishlist{background:var(--dark);border-radius:20px;padding:52px;position:relative;overflow:hidden;}
