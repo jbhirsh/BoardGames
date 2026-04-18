@@ -53,11 +53,22 @@ jobs:
 
       - uses: anthropics/claude-code-action@v1
         if: steps.pr.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             REPO_DIR: ${{ github.workspace }}
             PR: ${{ steps.pr.outputs.number }}
+
+            This workflow is triggered via `workflow_run` after CI, so no PR
+            context is pre-loaded. Start by running these commands to load
+            the PR diff and metadata yourself:
+              - `gh pr diff ${{ steps.pr.outputs.number }}` — full diff
+              - `gh pr view ${{ steps.pr.outputs.number }} --json title,body,files,commits`
+              - `git log origin/main..HEAD --pretty=full` — commit history
+            Then read any source files you need with the `Read` tool for
+            context before commenting.
 
             Review this pull request for correctness, bugs, and adherence to
             the project's engineering conventions. This is a React 19 +
@@ -138,4 +149,4 @@ jobs:
           classify_inline_comments: "true"
           claude_args: |
             --max-turns 40
-            --allowedTools "mcp__github_inline_comment__create_inline_comment"
+            --allowedTools "Read,Grep,Glob,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh api:*),Bash(git log:*),Bash(git diff:*),Bash(git show:*),mcp__github_inline_comment__create_inline_comment"
