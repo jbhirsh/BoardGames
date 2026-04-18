@@ -48,7 +48,7 @@ export default function ListView() {
             </th>
             <th className="col-hide col-desc">Description</th>
             <th className="col-hide col-tags">Tags</th>
-            <th></th>
+            <th><span className="sr-only">Actions</span></th>
           </tr>
         </thead>
         <tbody>

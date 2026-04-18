@@ -35,10 +35,7 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
           <DurationPill
             cat={game.cat}
             className="row-dur"
-            onClick={(e) => {
-              e.stopPropagation();
-              dispatch({ type: 'SET_DURATION', payload: game.cat });
-            }}
+            onClick={() => dispatch({ type: 'SET_DURATION', payload: game.cat })}
           />
         </td>
         <td className="col-hide col-short">{game.short}</td>
@@ -48,10 +45,7 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
               key={kw}
               keyword={kw as KeywordId}
               active={searchMatch(kw as KeywordId)}
-              onClick={(e) => {
-                e.stopPropagation();
-                dispatch({ type: 'TOGGLE_KEYWORD', payload: kw as KeywordId });
-              }}
+              onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: kw as KeywordId })}
             />
           ))}
         </td>
@@ -108,6 +102,7 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
                 <a
                   className="row-yt"
                   href={ytURL(game.yt)}
+                  aria-label={`Watch ${game.name} tutorial on YouTube`}
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(ytURL(game.yt), '_blank'); }}
                 >
                   <YouTubeIcon />

@@ -8,20 +8,23 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - run: npm ci
 
-      - name: Lint
+      - name: Lint (includes jsx-a11y static a11y checks)
         run: npm run lint
 
       - name: Type check
         run: npx tsc -b
+
+      - name: Accessibility tests (axe-core on rendered components)
+        run: npx vitest run src/__tests__/a11y.test.tsx
 
       - name: Unit tests with coverage
         run: npx vitest run --coverage

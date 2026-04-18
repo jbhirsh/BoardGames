@@ -55,9 +55,11 @@ export default function KeywordsDropdown({ isOpen, onToggle }: Props) {
         {allKw.map(([id, name]) => {
           const sel = state.keywords.has(id);
           return (
-            <div
+            <button
               key={id}
+              type="button"
               className={`dd-opt${sel ? ' sel' : ''}`}
+              aria-pressed={sel}
               onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: id })}
             >
               <span className="dd-chk">
@@ -65,7 +67,7 @@ export default function KeywordsDropdown({ isOpen, onToggle }: Props) {
               </span>
               {name}
               <span className="dd-count">{countForKw(id)}</span>
-            </div>
+            </button>
           );
         })}
       </div>

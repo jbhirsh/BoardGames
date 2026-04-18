@@ -71,6 +71,7 @@ export default function GameCard({ game }: Props) {
           href={ytURL(game.yt)}
           onClick={(e) => { e.preventDefault(); window.open(ytURL(game.yt), '_blank'); }}
           title="Watch Tutorial"
+          aria-label={`Watch ${game.name} tutorial on YouTube`}
         >
           <YouTubeIcon />
         </a>
