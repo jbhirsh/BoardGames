@@ -34,7 +34,7 @@ export default function RulesPage() {
               <p className="rules-game-desc">{game.short}</p>
             </div>
             <RulesChatToggle />
-            {game.kw.includes('word') && (
+            {game.slug === 'bananagrams' && (
               <button
                 className="rules-chat-toggle"
                 onClick={() => setWordCheckerOpen(o => !o)}
