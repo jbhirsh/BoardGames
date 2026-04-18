@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { GAMES } from '../data/games';
 
+let nextPlayerId = 0;
+
 const SCIENCE_ICONS: Record<string, string> = {
   tablets: '/images/science-tablet.png',
   compasses: '/images/science-compass.png',
@@ -9,6 +11,7 @@ const SCIENCE_ICONS: Record<string, string> = {
 };
 
 interface PlayerScores {
+  id: number;
   name: string;
   military: number;
   coins: number;
@@ -22,7 +25,7 @@ interface PlayerScores {
 }
 
 function emptyScores(name: string): PlayerScores {
-  return { name, military: 0, coins: 0, wonder: 0, civilian: 0, tablets: 0, compasses: 0, gears: 0, commercial: 0, guilds: 0 };
+  return { id: nextPlayerId++, name, military: 0, coins: 0, wonder: 0, civilian: 0, tablets: 0, compasses: 0, gears: 0, commercial: 0, guilds: 0 };
 }
 
 function calcScience(t: number, c: number, g: number): number {
@@ -42,11 +45,11 @@ const CATEGORIES = [
   { key: 'guilds', label: 'Guilds (Purple)', color: '#8b5cf6', icon: '🟣' },
 ] as const;
 
-type ScoreField = keyof Omit<PlayerScores, 'name'>;
+type ScoreField = keyof Omit<PlayerScores, 'id' | 'name'>;
 
 export default function ScoreCalculatorPage() {
   const game = GAMES.find(g => g.slug === '7-wonders');
-  const [players, setPlayers] = useState<PlayerScores[]>([
+  const [players, setPlayers] = useState<PlayerScores[]>(() => [
     emptyScores('Player 1'),
     emptyScores('Player 2'),
   ]);
@@ -106,27 +109,32 @@ export default function ScoreCalculatorPage() {
 
       <div className="sc-player-tabs">
         {players.map((p, i) => (
-          <button
-            key={i}
-            className={`sc-player-tab${i === activePlayer ? ' active' : ''}`}
-            onClick={() => { setActivePlayer(i); setShowSummary(false); }}
-          >
-            {p.name}
+          <div key={p.id} className={`sc-player-tab-wrap${i === activePlayer ? ' active' : ''}`}>
+            <button
+              type="button"
+              className={`sc-player-tab${i === activePlayer ? ' active' : ''}`}
+              onClick={() => { setActivePlayer(i); setShowSummary(false); }}
+            >
+              {p.name}
+            </button>
             {players.length > 2 && (
-              <span
+              <button
+                type="button"
                 className="sc-player-remove"
-                onClick={(e) => { e.stopPropagation(); removePlayer(i); }}
+                aria-label={`Remove ${p.name}`}
+                onClick={() => removePlayer(i)}
               >
                 &times;
-              </span>
+              </button>
             )}
-          </button>
+          </div>
         ))}
         {players.length < 7 && (
-          <button className="sc-player-tab sc-add-player" onClick={addPlayer}>+</button>
+          <button type="button" className="sc-add-player" aria-label="Add player" onClick={addPlayer}>+</button>
         )}
         <button
-          className={`sc-player-tab sc-summary-tab${showSummary ? ' active' : ''}`}
+          type="button"
+          className={`sc-summary-tab${showSummary ? ' active' : ''}`}
           onClick={() => setShowSummary(true)}
         >
           Results
@@ -137,7 +145,7 @@ export default function ScoreCalculatorPage() {
         <div className="sc-panel">
           <div className="sc-summary">
             {ranked.map((p, rank) => (
-              <div key={p.idx} className={`sc-summary-row${rank === 0 ? ' sc-winner' : ''}`}>
+              <div key={p.id} className={`sc-summary-row${rank === 0 ? ' sc-winner' : ''}`}>
                 <span className="sc-rank">{rank === 0 ? '👑' : `#${rank + 1}`}</span>
                 <span className="sc-summary-name">{p.name}</span>
                 <span className="sc-summary-total">{p.total} VP</span>
@@ -149,8 +157,9 @@ export default function ScoreCalculatorPage() {
         <div className="sc-panel">
           <div className="sc-form">
             <div className="sc-name-row">
-              <label className="sc-label">Player Name</label>
+              <label className="sc-label" htmlFor="sc-player-name">Player Name</label>
               <input
+                id="sc-player-name"
                 className="sc-input sc-name-input"
                 type="text"
                 value={current.name}
@@ -160,7 +169,7 @@ export default function ScoreCalculatorPage() {
 
             {CATEGORIES.map(({ key, label, color, icon }) => (
               <div key={key} className="sc-row">
-                <label className="sc-label">
+                <label className="sc-label" htmlFor={`sc-${key}`}>
                   <span className="sc-icon">{icon}</span>
                   <span>{label}</span>
                   {key === 'coins' && current.coins > 0 && (
@@ -168,6 +177,7 @@ export default function ScoreCalculatorPage() {
                   )}
                 </label>
                 <input
+                  id={`sc-${key}`}
                   className="sc-input"
                   type="number"
                   value={current[key as ScoreField]}
@@ -185,17 +195,18 @@ export default function ScoreCalculatorPage() {
               </label>
               <div className="sc-science-inputs">
                 {(['tablets', 'compasses', 'gears'] as const).map((field) => (
-                  <div key={field} className="sc-science-field">
+                  <label key={field} className="sc-science-field">
                     <span className="sc-science-label"><img src={SCIENCE_ICONS[field]} alt={field} className="sc-science-icon" /></span>
                     <input
                       className="sc-input"
                       type="number"
                       min="0"
+                      aria-label={field}
                       value={current[field]}
                       onChange={(e) => updateField(field, parseNum(e.target.value))}
                       style={{ borderColor: '#22c55e' }}
                     />
-                  </div>
+                  </label>
                 ))}
               </div>
             </div>

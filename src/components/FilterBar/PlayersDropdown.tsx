@@ -25,8 +25,9 @@ export default function PlayersDropdown({ isOpen, onToggle }: Props) {
       }}
     >
       {PLAYER_OPTIONS.map((n) => (
-        <div
+        <button
           key={n}
+          type="button"
           className={`dd-opt${state.players === n ? ' sel' : ''}`}
           onClick={() => {
             dispatch({ type: 'SET_PLAYERS', payload: state.players === n ? 0 : n });
@@ -37,7 +38,7 @@ export default function PlayersDropdown({ isOpen, onToggle }: Props) {
             {state.players === n && <CheckIcon />}
           </span>
           {n}{n === 10 ? '+' : ''} players
-        </div>
+        </button>
       ))}
     </Dropdown>
   );

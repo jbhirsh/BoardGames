@@ -21,6 +21,7 @@
   --r-sm:       10px;
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;}
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;font-weight:400;min-height:100vh;}
 .clip-wrap{overflow-x:clip;}
@@ -100,9 +101,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .dd-opts::-webkit-scrollbar{width:4px;}
 .dd-opts::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 .dd-opt{
-  display:flex;align-items:center;gap:9px;
+  display:flex;align-items:center;gap:9px;width:100%;
   padding:8px 10px;border-radius:8px;cursor:pointer;
-  font-size:13px;color:var(--text2);
+  font-size:13px;color:var(--text2);text-align:left;
+  border:none;background:transparent;font-family:inherit;
   transition:background .12s,color .12s;user-select:none;
 }
 .dd-opt:hover{background:var(--bg2);color:var(--text);}
@@ -510,14 +512,21 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .word-example{font-style:italic;color:var(--text3);font-size:13px;margin-top:2px;padding-left:16px;}
 
 /* Score Calculator */
-.sc-player-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;}
-.sc-player-tab{padding:8px 16px;font-size:13px;font-weight:600;color:var(--text3);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;font-family:inherit;transition:color .15s,background .15s,border-color .15s;position:relative;}
+.sc-player-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;align-items:stretch;}
+.sc-player-tab-wrap{display:inline-flex;align-items:stretch;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg2);overflow:hidden;transition:color .15s,background .15s,border-color .15s;}
+.sc-player-tab-wrap.active{background:var(--blue-bg);border-color:rgba(0,113,227,0.3);}
+.sc-player-tab{padding:8px 16px;font-size:13px;font-weight:600;color:var(--text3);background:transparent;border:none;cursor:pointer;font-family:inherit;transition:color .15s,background .15s;}
 .sc-player-tab:hover{color:var(--text);background:var(--bg3);}
-.sc-player-tab.active{color:var(--blue);background:var(--blue-bg);border-color:rgba(0,113,227,0.3);}
-.sc-add-player{font-size:16px;padding:8px 14px;}
-.sc-summary-tab{margin-left:auto;}
-.sc-player-remove{margin-left:8px;font-size:15px;opacity:0.5;transition:opacity .15s;}
-.sc-player-remove:hover{opacity:1;}
+.sc-player-tab.active{color:var(--blue);background:transparent;}
+.sc-player-tab-wrap:hover:not(.active){background:var(--bg3);}
+.sc-player-tab-wrap:hover:not(.active) .sc-player-tab{background:transparent;}
+.sc-add-player{padding:8px 16px;font-size:16px;font-weight:600;color:var(--text3);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;font-family:inherit;transition:color .15s,background .15s,border-color .15s;}
+.sc-add-player:hover{color:var(--text);background:var(--bg3);}
+.sc-summary-tab{padding:8px 16px;font-size:13px;font-weight:600;color:var(--text3);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;font-family:inherit;transition:color .15s,background .15s,border-color .15s;margin-left:auto;}
+.sc-summary-tab:hover{color:var(--text);background:var(--bg3);}
+.sc-summary-tab.active{color:var(--blue);background:var(--blue-bg);border-color:rgba(0,113,227,0.3);}
+.sc-player-remove{padding:0 10px;font-size:15px;color:inherit;background:transparent;border:none;cursor:pointer;font-family:inherit;opacity:0.5;transition:opacity .15s,background .15s;}
+.sc-player-remove:hover{opacity:1;background:var(--bg3);}
 .sc-panel{border:1px solid var(--border);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow-md);overflow:hidden;padding:20px;}
 .sc-form{display:flex;flex-direction:column;gap:14px;}
 .sc-name-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}

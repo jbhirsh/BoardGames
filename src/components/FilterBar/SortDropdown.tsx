@@ -29,8 +29,9 @@ export default function SortDropdown({ isOpen, onToggle }: Props) {
       onClear={(e) => e.stopPropagation()}
     >
       {SORT_OPTIONS.map((opt) => (
-        <div
+        <button
           key={opt.value}
+          type="button"
           className={`dd-opt${state.baseSort === opt.value ? ' sel' : ''}`}
           onClick={() => {
             dispatch({ type: 'SET_SORT', payload: opt.value });
@@ -41,7 +42,7 @@ export default function SortDropdown({ isOpen, onToggle }: Props) {
             {state.baseSort === opt.value && <CheckIcon />}
           </span>
           {opt.label}
-        </div>
+        </button>
       ))}
     </Dropdown>
   );

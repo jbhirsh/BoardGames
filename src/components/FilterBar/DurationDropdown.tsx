@@ -33,8 +33,9 @@ export default function DurationDropdown({ isOpen, onToggle }: Props) {
       }}
     >
       {OPTIONS.map((opt) => (
-        <div
+        <button
           key={opt.value}
+          type="button"
           className={`dd-opt${state.duration === opt.value ? ' sel' : ''}`}
           onClick={() => {
             dispatch({ type: 'SET_DURATION', payload: opt.value });
@@ -45,7 +46,7 @@ export default function DurationDropdown({ isOpen, onToggle }: Props) {
             {state.duration === opt.value && <CheckIcon />}
           </span>
           {opt.label}
-        </div>
+        </button>
       ))}
     </Dropdown>
   );

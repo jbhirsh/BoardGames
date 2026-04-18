@@ -15,6 +15,7 @@ export default function WishlistCard({ item }: Props) {
       <a
         className="wish-yt"
         href={ytURL(item.yt)}
+        aria-label={`Watch ${item.name} tutorial on YouTube`}
         onClick={(e) => { e.preventDefault(); window.open(ytURL(item.yt), '_blank'); }}
       >
         <YouTubeIcon />
