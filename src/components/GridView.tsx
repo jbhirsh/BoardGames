@@ -4,13 +4,13 @@ import GameCard from './GameCard';
 import type { GroupId } from '../data/types';
 
 export default function GridView() {
-  const { state, filteredGames } = useFilter();
+  const { state, dispatch, filteredGames } = useFilter();
 
   if (filteredGames.length === 0) {
     return (
       <div className="no-results">
         <p>No games match your filters.</p>
-        <button className="no-results-btn" onClick={() => {}}>Clear filters</button>
+        <button className="no-results-btn" onClick={() => dispatch({ type: 'CLEAR_ALL' })}>Clear filters</button>
       </div>
     );
   }
