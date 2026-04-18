@@ -11,13 +11,14 @@ interface Props {
   disabled?: boolean;
 }
 
-export default function WishlistCard({ item, voteCount, voted, onVote, disabled }: Props) {
+export default function WishlistRow({ item, voteCount, voted, onVote, disabled }: Props) {
   return (
-    <div className="wish-card" data-testid="wishlist-item" data-item-id={item.id}>
-      <span className="wish-lbl">Wishlist</span>
-      <h3 className="wish-name">{item.name}</h3>
-      <p className="wish-desc">{item.desc}</p>
-      <div className="wish-footer">
+    <div className="wish-row" data-testid="wishlist-item" data-item-id={item.id}>
+      <div className="wish-row-main">
+        <h3 className="wish-name">{item.name}</h3>
+        <p className="wish-desc">{item.desc}</p>
+      </div>
+      <div className="wish-row-actions">
         <VoteButton
           itemName={item.name}
           voteCount={voteCount}

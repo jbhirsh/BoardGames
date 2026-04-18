@@ -28,6 +28,7 @@ export interface Game {
 }
 
 export interface WishlistItem {
+  id: string;
   name: string;
   desc: string;
   yt: string;

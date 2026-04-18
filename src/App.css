@@ -362,6 +362,20 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .wish-yt{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:rgba(204,0,0,.65);border-radius:6px;text-decoration:none;transition:background .2s;}
 .wish-yt:hover{background:#C00;}
 .wish-yt svg{width:12px;height:12px;fill:#fff;}
+.wish-footer{display:flex;align-items:center;justify-content:flex-end;gap:8px;}
+.vote-btn{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:6px;color:#C7C7CC;font-size:12px;font-weight:600;cursor:pointer;transition:background .2s,border-color .2s,color .2s;}
+.vote-btn:hover:not(:disabled){background:rgba(231,76,88,0.12);border-color:rgba(231,76,88,0.45);color:#F5F5F7;}
+.vote-btn:disabled{opacity:.5;cursor:not-allowed;}
+.vote-btn--on{background:rgba(231,76,88,0.18);border-color:rgba(231,76,88,0.55);color:#F5F5F7;}
+.vote-heart{font-size:14px;line-height:1;color:#E74C58;}
+.vote-count{font-variant-numeric:tabular-nums;min-width:1ch;text-align:right;}
+.wish-list{display:flex;flex-direction:column;gap:10px;}
+.wish-row{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-sm);padding:16px 18px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;transition:background .2s,border-color .2s;}
+.wish-row:hover{background:rgba(0,113,227,0.08);border-color:rgba(0,113,227,0.25);}
+.wish-row-main{flex:1;min-width:0;}
+.wish-row-main .wish-name{margin-bottom:6px;}
+.wish-row-main .wish-desc{margin-bottom:0;}
+.wish-row-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;}
 
 ::-webkit-scrollbar{width:6px;height:6px;}
 ::-webkit-scrollbar-track{background:transparent;}
