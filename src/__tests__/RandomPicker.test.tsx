@@ -107,7 +107,8 @@ describe('RandomPicker', () => {
     });
 
     expect(screen.queryByText('Spinning…')).toBeNull();
-    expect(screen.getByText(/^Tonight, play — /)).toBeInTheDocument();
+    // "Tonight, play — X" appears twice (visible eyebrow + sr-only live region).
+    expect(screen.getAllByText(/^Tonight, play — /).length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: /View rules/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Pick again/ })).toBeInTheDocument();
   });

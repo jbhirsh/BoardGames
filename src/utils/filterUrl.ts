@@ -16,6 +16,18 @@ const SORTS: Exclude<SortMode, `${string}-${'asc' | 'desc'}`>[] = [
   'az', 'group', 'quick', 'long',
 ];
 
+// Compile-time completeness check: if a new non-column SortMode is added to
+// the type and forgotten here, this becomes an error-descriptor type and the
+// assignment on the next line fails to typecheck.
+type _SortsExhaustive = Exclude<
+  Exclude<SortMode, `${string}-${'asc' | 'desc'}`>,
+  (typeof SORTS)[number]
+> extends never
+  ? true
+  : 'SORTS is missing a non-column SortMode value';
+const _sortsExhaustive: _SortsExhaustive = true;
+void _sortsExhaustive;
+
 const VALID_KEYWORDS = new Set(Object.keys(KW) as KeywordId[]);
 const MAX_PLAYERS = 99;
 
@@ -39,48 +51,52 @@ export function filterToSearchParams(state: FilterState): URLSearchParams {
 }
 
 export function searchParamsToFilter(params: URLSearchParams): FilterState {
-  const state: FilterState = {
-    ...initialFilterState,
-    keywords: new Set<KeywordId>(),
-  };
-
   const d = params.get('d');
-  if (d && DURATIONS.includes(d as DurationFilter)) {
-    state.duration = d as DurationFilter;
-  }
+  const duration: DurationFilter =
+    d && DURATIONS.includes(d as DurationFilter) ? (d as DurationFilter) : initialFilterState.duration;
 
   const p = params.get('p');
-  if (p) {
+  const players = (() => {
+    if (!p) return initialFilterState.players;
     const n = Number(p);
-    if (Number.isInteger(n) && n > 0 && n <= MAX_PLAYERS) state.players = n;
-  }
+    return Number.isInteger(n) && n > 0 && n <= MAX_PLAYERS ? n : initialFilterState.players;
+  })();
 
+  const keywords = new Set<KeywordId>();
   const k = params.get('k');
   if (k) {
     for (const raw of k.split(',')) {
       const kw = raw.trim() as KeywordId;
-      if (VALID_KEYWORDS.has(kw)) state.keywords.add(kw);
+      if (VALID_KEYWORDS.has(kw)) keywords.add(kw);
     }
   }
 
   const m = params.get('m');
-  if (m && (KEYWORD_MODES as readonly string[]).includes(m)) {
-    state.keywordMode = m as KeywordMode;
-  }
+  const keywordMode: KeywordMode =
+    m && (KEYWORD_MODES as readonly string[]).includes(m)
+      ? (m as KeywordMode)
+      : initialFilterState.keywordMode;
 
-  const q = params.get('q');
-  if (q) state.search = q;
+  const search = params.get('q') ?? initialFilterState.search;
 
   const s = params.get('s');
-  if (s && (SORTS as readonly string[]).includes(s)) {
-    state.sort = s as SortMode;
-    state.baseSort = s as SortMode;
-  }
+  const sort: SortMode =
+    s && (SORTS as readonly string[]).includes(s) ? (s as SortMode) : initialFilterState.sort;
 
   const v = params.get('v');
-  if (v && VIEWS.includes(v as ViewMode)) state.view = v as ViewMode;
+  const view: ViewMode =
+    v && VIEWS.includes(v as ViewMode) ? (v as ViewMode) : initialFilterState.view;
 
-  return state;
+  return {
+    duration,
+    players,
+    keywords,
+    keywordMode,
+    search,
+    sort,
+    baseSort: sort,
+    view,
+  };
 }
 
 export function buildShareUrl(

@@ -27,7 +27,7 @@ export function FilterProvider({ children }: { children: ReactNode }) {
   stateRef.current = state;
   locationRef.current = location;
 
-  // state → URL: only dep is state, so it never fires on external URL changes.
+  // state → URL: must be declared BEFORE the URL → state effect — wroteUrlRef relies on React's declaration-order effect flush.
   useEffect(() => {
     const loc = locationRef.current;
     if (loc.pathname !== '/') return;

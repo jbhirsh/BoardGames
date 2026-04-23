@@ -104,6 +104,12 @@ export default function RandomPicker() {
 
   const disabled = filteredGames.length === 0;
 
+  // Live region stays mounted at the top level so AT combinations that ignore
+  // dynamically-added live regions (older NVDA+Firefox, some VoiceOver builds)
+  // still hear the resolved pick.
+  const liveMessage =
+    open && current && !spinning ? `Tonight, play — ${current.name}` : '';
+
   return (
     <>
       <button
@@ -115,6 +121,9 @@ export default function RandomPicker() {
       >
         Pick for us
       </button>
+      <span className="sr-only" aria-live="polite" aria-atomic="true">
+        {liveMessage}
+      </span>
 
       {open && current && (
         <div className="pick-modal">
@@ -127,7 +136,7 @@ export default function RandomPicker() {
             tabIndex={-1}
             className={`pick-card${spinning ? ' spinning' : ''}`}
           >
-            <div className="pick-eyebrow" aria-live="polite" aria-atomic="true">
+            <div className="pick-eyebrow">
               {spinning ? 'Spinning…' : `Tonight, play — ${current.name}`}
             </div>
             <img src={current.img} alt="" className="pick-img" />
