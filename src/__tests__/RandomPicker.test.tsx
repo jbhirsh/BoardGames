@@ -39,6 +39,11 @@ describe('pickRandom', () => {
       random.mockRestore();
     }
   });
+
+  it('falls back to the first pool element when every item equals exclude', () => {
+    const pool = ['a', 'a', 'a'];
+    expect(pickRandom(pool, 'a')).toBe('a');
+  });
 });
 
 function renderPicker() {
@@ -148,5 +153,46 @@ describe('RandomPicker', () => {
 
     act(() => fireEvent.click(screen.getByRole('button', { name: /Pick again/ })));
     expect(screen.getByText('Spinning…')).toBeInTheDocument();
+  });
+
+  it('returns focus to the trigger button when closed', () => {
+    renderPicker();
+    const trigger = screen.getByRole('button', { name: /^Pick for us$/ });
+    act(() => fireEvent.click(trigger));
+    act(() => vi.advanceTimersByTime(2000));
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it('traps Tab focus inside the dialog', () => {
+    renderPicker();
+    act(() => fireEvent.click(screen.getByRole('button', { name: /^Pick for us$/ })));
+    act(() => vi.advanceTimersByTime(2000));
+
+    const pickAgain = screen.getByRole('button', { name: /Pick again/ });
+    const viewRules = screen.getByRole('button', { name: /View rules/ });
+    const closeBtns = screen.getAllByRole('button', { name: 'Close' });
+    const closeBtn = closeBtns[closeBtns.length - 1];
+
+    // Forward Tab from the last focusable should wrap to the first.
+    closeBtn.focus();
+    expect(document.activeElement).toBe(closeBtn);
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    });
+    expect(document.activeElement).toBe(pickAgain);
+
+    // Shift+Tab from the first focusable should wrap to the last.
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true }));
+    });
+    expect(document.activeElement).toBe(closeBtn);
+
+    // Sanity: View rules sits between the two.
+    expect(viewRules).toBeInTheDocument();
   });
 });

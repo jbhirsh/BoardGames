@@ -5,5 +5,6 @@ export function pickRandom<T>(pool: readonly T[], exclude?: T): T {
     return pool[Math.floor(Math.random() * pool.length)];
   }
   const candidates = pool.filter((x) => x !== exclude);
+  if (candidates.length === 0) return pool[0];
   return candidates[Math.floor(Math.random() * candidates.length)];
 }
