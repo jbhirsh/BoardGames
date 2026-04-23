@@ -118,11 +118,11 @@ describe('FilterProvider URL sync', () => {
 
     act(() => fireEvent.click(screen.getByText('dual')));
 
-    // After the combined commit the URL and state must converge without
-    // an endless ping-pong. The wroteUrlRef guard makes the local
-    // dispatch win: state→URL writes the filter-state URL first, and
-    // URL→state skips the pending HYDRATE that would have reverted it
-    // back to the explicit navigate target.
+    // The wroteUrlRef guard makes the local dispatch win: state→URL writes
+    // the filter-state URL first, and URL→state skips the pending HYDRATE.
+    // NOTE: this is a lossy operation — the navigate target's p=3 is dropped
+    // entirely, not merged. Callers mixing dispatch+navigate in one handler
+    // lose the navigate's query params.
     expect(screen.getByTestId('url').textContent).toBe('/?d=medium');
     expect(screen.getByTestId('state-duration').textContent).toBe('medium');
     expect(screen.getByTestId('state-players').textContent).toBe('0');

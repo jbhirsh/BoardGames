@@ -50,7 +50,9 @@ export function FilterProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (location.pathname !== '/') return;
     if (wroteUrlRef.current) {
-      // state→URL fired first this cycle; our navigate already wrote the correct URL.
+      // Our own navigate just landed. Skipping HYDRATE means any params
+      // the caller tried to set via a same-handler navigate() are dropped,
+      // not merged — a dispatch + navigate pair is a lossy operation.
       wroteUrlRef.current = false;
       return;
     }

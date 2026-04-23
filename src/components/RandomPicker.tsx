@@ -80,6 +80,7 @@ export default function RandomPicker() {
       const focusables = card.querySelectorAll<HTMLElement>(
         'a[href], area[href], input:not([disabled]), select:not([disabled]), ' +
         'textarea:not([disabled]), button:not([disabled]), ' +
+        '[contenteditable]:not([contenteditable="false"]), ' +
         '[tabindex]:not([tabindex="-1"])',
       );
       if (focusables.length === 0) return;

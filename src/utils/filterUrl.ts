@@ -10,7 +10,7 @@ import { KW } from '../data/keywords';
 import { initialFilterState } from '../data/initialFilterState';
 
 const DURATIONS: DurationFilter[] = ['quick', 'medium', 'long'];
-const KEYWORD_MODES: KeywordMode[] = ['and'];
+const KEYWORD_MODES: Exclude<KeywordMode, 'or'>[] = ['and'];
 const VIEWS: ViewMode[] = ['grid', 'list'];
 const SORTS: Exclude<SortMode, `${string}-${'asc' | 'desc'}`>[] = [
   'az', 'group', 'quick', 'long',
@@ -64,7 +64,7 @@ export function searchParamsToFilter(params: URLSearchParams): FilterState {
   }
 
   const m = params.get('m');
-  if (m && KEYWORD_MODES.includes(m as KeywordMode)) {
+  if (m && (KEYWORD_MODES as readonly string[]).includes(m)) {
     state.keywordMode = m as KeywordMode;
   }
 
