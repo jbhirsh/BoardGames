@@ -56,7 +56,9 @@ export default function RandomPicker() {
         tickRef.current = null;
         return;
       }
-      setCurrent((prev) => pickRandom(currentPool, prev ?? undefined));
+      // prev is guaranteed non-null here: setCurrent(pickRandom(pool)) above
+      // commits before the first setTimeout(tick) fires.
+      setCurrent((prev) => pickRandom(currentPool, prev!));
       if (Date.now() - start >= SPIN_MS) {
         setSpinning(false);
         tickRef.current = null;
@@ -80,7 +82,9 @@ export default function RandomPicker() {
       }
       if (e.key !== 'Tab' || !card) return;
       const focusables = card.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+        'a[href], area[href], input:not([disabled]), select:not([disabled]), ' +
+        'textarea:not([disabled]), button:not([disabled]), ' +
+        '[tabindex]:not([tabindex="-1"])',
       );
       if (focusables.length === 0) return;
       const first = focusables[0];
