@@ -2,20 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useFilter } from '../context/useFilter';
 import type { Game } from '../data/types';
+import { pickRandom } from '../utils/pickRandom';
 
 const SPIN_MS = 1400;
 const TICK_MS = 75;
-
-function pickRandom<T>(pool: readonly T[], exclude?: T): T {
-  if (pool.length === 0) throw new Error('pool empty');
-  if (pool.length === 1) return pool[0];
-  const idx = Math.floor(Math.random() * pool.length);
-  const picked = pool[idx];
-  if (exclude !== undefined && picked === exclude) {
-    return pool[(idx + 1) % pool.length];
-  }
-  return picked;
-}
 
 export default function RandomPicker() {
   const { filteredGames } = useFilter();
@@ -24,6 +14,12 @@ export default function RandomPicker() {
   const [spinning, setSpinning] = useState(false);
   const [current, setCurrent] = useState<Game | null>(null);
   const tickRef = useRef<number | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const filteredGamesRef = useRef(filteredGames);
+
+  useEffect(() => {
+    filteredGamesRef.current = filteredGames;
+  }, [filteredGames]);
 
   const stopTicking = useCallback(() => {
     if (tickRef.current !== null) {
@@ -40,16 +36,16 @@ export default function RandomPicker() {
   }, [stopTicking]);
 
   const pick = useCallback(() => {
-    if (filteredGames.length === 0) return;
+    const pool = filteredGamesRef.current;
+    if (pool.length === 0) return;
     stopTicking();
-    const initial = pickRandom(filteredGames);
     setOpen(true);
     setSpinning(true);
-    setCurrent(initial);
+    setCurrent(pickRandom(pool));
 
     const start = Date.now();
     const tick = () => {
-      setCurrent((prev) => pickRandom(filteredGames, prev ?? undefined));
+      setCurrent((prev) => pickRandom(filteredGamesRef.current, prev ?? undefined));
       if (Date.now() - start >= SPIN_MS) {
         setSpinning(false);
         tickRef.current = null;
@@ -58,12 +54,13 @@ export default function RandomPicker() {
       tickRef.current = window.setTimeout(tick, TICK_MS);
     };
     tickRef.current = window.setTimeout(tick, TICK_MS);
-  }, [filteredGames, stopTicking]);
+  }, [stopTicking]);
 
   useEffect(() => stopTicking, [stopTicking]);
 
   useEffect(() => {
     if (!open) return;
+    cardRef.current?.focus();
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') close();
     }
@@ -94,8 +91,14 @@ export default function RandomPicker() {
             aria-label="Close"
             tabIndex={-1}
           />
-          <div className={`pick-card${spinning ? ' spinning' : ''}`}>
-            <div className="pick-eyebrow">{spinning ? 'Spinning…' : 'Tonight, play'}</div>
+          <div
+            ref={cardRef}
+            tabIndex={-1}
+            className={`pick-card${spinning ? ' spinning' : ''}`}
+          >
+            <div className="pick-eyebrow" aria-live="polite">
+              {spinning ? 'Spinning…' : 'Tonight, play'}
+            </div>
             <img src={current.img} alt="" className="pick-img" />
             <div className="pick-name">{current.name}</div>
             <div className="pick-meta">

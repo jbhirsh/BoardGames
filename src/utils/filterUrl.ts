@@ -9,7 +9,7 @@ import type {
 import { KW } from '../data/keywords';
 import { initialFilterState } from '../context/filterReducer';
 
-const DURATIONS: DurationFilter[] = ['all', 'quick', 'medium', 'long'];
+const DURATIONS: DurationFilter[] = ['quick', 'medium', 'long'];
 const KEYWORD_MODES: KeywordMode[] = ['and', 'or'];
 const VIEWS: ViewMode[] = ['grid', 'list'];
 const SORTS: SortMode[] = [
@@ -20,6 +20,7 @@ const SORTS: SortMode[] = [
 ];
 
 const VALID_KEYWORDS = new Set(Object.keys(KW) as KeywordId[]);
+const MAX_PLAYERS = 99;
 
 export function filterToSearchParams(state: FilterState): URLSearchParams {
   const params = new URLSearchParams();
@@ -49,7 +50,7 @@ export function searchParamsToFilter(params: URLSearchParams): FilterState {
   const p = params.get('p');
   if (p) {
     const n = Number.parseInt(p, 10);
-    if (Number.isFinite(n) && n > 0 && n < 100) state.players = n;
+    if (Number.isFinite(n) && n > 0 && n <= MAX_PLAYERS) state.players = n;
   }
 
   const k = params.get('k');
