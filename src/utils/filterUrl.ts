@@ -13,11 +13,15 @@ const DURATIONS: DurationFilter[] = ['quick', 'medium', 'long'];
 const KEYWORD_MODES: KeywordMode[] = ['and', 'or'];
 const VIEWS: ViewMode[] = ['grid', 'list'];
 // Only the user-facing SortMode values belong here. Column-sort modes
-// (name-asc, dur-desc, players-asc, etc.) are transient list-view UI and
-// intentionally never round-trip through URLs, so they must stay out of
-// this whitelist. Keep in sync manually when SortMode gains a new
-// non-column member — TS's SortMode[] annotation won't catch omissions.
-const SORTS: SortMode[] = ['az', 'group', 'quick', 'long'];
+// (name-asc, dur-desc, players-asc, etc.) are transient list-view UI
+// and intentionally never round-trip through URLs. The Exclude<> below
+// rejects any `*-asc` / `*-desc` value at compile time so a column-sort
+// can't be added here by accident. (TS can't catch *omissions* — a
+// newly-added non-column SortMode has to be added by hand; the test in
+// filterUrl.test.ts covers the column-sort reject path.)
+const SORTS: Exclude<SortMode, `${string}-${'asc' | 'desc'}`>[] = [
+  'az', 'group', 'quick', 'long',
+];
 
 const VALID_KEYWORDS = new Set(Object.keys(KW) as KeywordId[]);
 const MAX_PLAYERS = 99;
@@ -72,7 +76,7 @@ export function searchParamsToFilter(params: URLSearchParams): FilterState {
   if (q) state.search = q;
 
   const s = params.get('s');
-  if (s && SORTS.includes(s as SortMode)) {
+  if (s && (SORTS as readonly string[]).includes(s)) {
     state.sort = s as SortMode;
     state.baseSort = s as SortMode;
   }

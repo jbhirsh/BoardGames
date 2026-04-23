@@ -47,6 +47,22 @@ describe('filterToSearchParams', () => {
     expect(params.get('v')).toBe('grid');
   });
 
+  it('omits active column sort, serialising baseSort instead', () => {
+    // sort='name-asc' is a transient column-sort; baseSort is still the
+    // default 'az', so the URL should have no `s` at all.
+    const params = filterToSearchParams(
+      makeState({ sort: 'name-asc', baseSort: 'az' }),
+    );
+    expect(params.has('s')).toBe(false);
+  });
+
+  it('serialises baseSort and ignores sort when they diverge', () => {
+    const params = filterToSearchParams(
+      makeState({ sort: 'name-asc', baseSort: 'group' }),
+    );
+    expect(params.get('s')).toBe('group');
+  });
+
   it('omits defaults', () => {
     const params = filterToSearchParams(
       makeState({ keywordMode: 'or', view: 'list', baseSort: 'az' }),

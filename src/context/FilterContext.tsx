@@ -19,11 +19,7 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     (search) => searchParamsToFilter(new URLSearchParams(search)),
   );
 
-  // Each sync direction runs only when *its* source changes, reading the
-  // other side through a ref. That prevents the two effects from racing
-  // in the same commit: if both state and location were in both dep
-  // arrays, a user-dispatched change would trigger URL→state (reverting)
-  // and an external URL change would trigger state→URL (reverting).
+  // Refs let each sync effect read the other side without triggering it, avoiding ping-pong.
   const stateRef = useRef(state);
   const locationRef = useRef(location);
   useEffect(() => {
@@ -33,8 +29,7 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     locationRef.current = location;
   }, [location]);
 
-  // state → URL: fires when state changes. Reads the current location
-  // through the ref so it doesn't also fire on URL changes.
+  // state → URL: only dep is state, so it never fires on external URL changes.
   useEffect(() => {
     const loc = locationRef.current;
     if (loc.pathname !== '/') return;
@@ -48,9 +43,7 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     navigate(target, { replace: true });
   }, [state, navigate]);
 
-  // URL → state: fires when location changes (back / forward / external
-  // navigation). Reads the current state through the ref so it doesn't
-  // also fire on state changes.
+  // URL → state: only dep is location, so it never fires on state changes.
   useEffect(() => {
     if (location.pathname !== '/') return;
     const urlState = searchParamsToFilter(new URLSearchParams(location.search));
