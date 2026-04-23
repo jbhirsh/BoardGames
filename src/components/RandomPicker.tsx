@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { useFilter } from '../context/useFilter';
 import type { Game } from '../data/types';
 import { pickRandom } from '../utils/pickRandom';
+import Backdrop from './Backdrop';
 
 const SPIN_MS = 1400;
 const TICK_MS = 75;
@@ -119,7 +120,7 @@ export default function RandomPicker() {
 
       {open && current && (
         <div className="pick-modal">
-          <div className="pick-backdrop" aria-hidden="true" onClick={close} />
+          <Backdrop onClick={close} />
           <div
             ref={cardRef}
             role="dialog"

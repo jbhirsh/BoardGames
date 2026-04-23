@@ -24,10 +24,17 @@ export default defineConfig([
   },
   {
     // backdrop <div> uses onClick for mouse dismiss; Escape + close button cover keyboard
-    files: ['src/components/RandomPicker.tsx'],
+    files: ['src/components/Backdrop.tsx'],
     rules: {
       'jsx-a11y/no-static-element-interactions': 'off',
       'jsx-a11y/click-events-have-key-events': 'off',
+    },
+  },
+  {
+    // refs written during render so sync effects don't depend on declaration order
+    files: ['src/context/FilterContext.tsx'],
+    rules: {
+      'react-hooks/refs': 'off',
     },
   },
 ])

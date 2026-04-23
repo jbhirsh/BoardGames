@@ -78,7 +78,7 @@ export default function ActiveTags() {
         </button>
       )}
       {hasAny && (
-        <button className="clear-all" onClick={() => dispatch({ type: 'CLEAR_ALL' })}>
+        <button type="button" className="clear-all" onClick={() => dispatch({ type: 'CLEAR_ALL' })}>
           Clear all
         </button>
       )}

@@ -10,6 +10,9 @@ import {
 } from '../utils/filterUrl';
 
 // Must be rendered inside a React Router context (calls useLocation / useNavigate).
+// NOTE for consumers: never pair a filter dispatch with navigate() in the same
+// handler — state→URL fires first, so the dispatch wins and the navigate's
+// query params are dropped entirely, not merged.
 export function FilterProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -20,20 +23,14 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     (search) => searchParamsToFilter(new URLSearchParams(search)),
   );
 
-  // INVARIANT: the four useEffect blocks below must stay in this order — the two
-  // ref-update effects must fire before the two sync effects each commit, so the
-  // sync effects read post-update values of the other side. React runs effects in
-  // declaration order within a component; reordering or extracting to a hook would
-  // silently break the sync without a test failure.
+  // Write refs during render (safe: reads happen only in effects) so the two
+  // sync effects below always see the latest committed values. Avoids the
+  // declaration-order invariant that effect-based ref updates would require.
   const stateRef = useRef(state);
   const locationRef = useRef(location);
   const wroteUrlRef = useRef(false);
-  useEffect(() => {
-    stateRef.current = state;
-  }, [state]);
-  useEffect(() => {
-    locationRef.current = location;
-  }, [location]);
+  stateRef.current = state;
+  locationRef.current = location;
 
   // state → URL: only dep is state, so it never fires on external URL changes.
   useEffect(() => {
