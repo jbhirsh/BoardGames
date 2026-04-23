@@ -19,7 +19,7 @@ export function useFilterUrlSync(state: FilterState, dispatch: Dispatch<FilterAc
   stateRef.current = state;
   locationRef.current = location;
 
-  // state → URL: must be declared BEFORE the URL → state effect — wroteUrlRef relies on React's declaration-order effect flush.
+  // state → URL: React guarantees same-component effects flush in declaration order (spec-stable); state→URL must be declared first so wroteUrlRef is set before the URL→state effect checks it in the same flush.
   useEffect(() => {
     const loc = locationRef.current;
     if (loc.pathname !== '/') return;
