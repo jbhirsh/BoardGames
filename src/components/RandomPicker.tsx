@@ -121,7 +121,7 @@ export default function RandomPicker() {
             className={`pick-card${spinning ? ' spinning' : ''}`}
           >
             <div className="pick-eyebrow" aria-live="polite">
-              {spinning ? 'Spinning…' : 'Tonight, play'}
+              {spinning ? 'Spinning…' : `Tonight, play — ${current.name}`}
             </div>
             <img src={current.img} alt="" className="pick-img" />
             <div className="pick-name">{current.name}</div>

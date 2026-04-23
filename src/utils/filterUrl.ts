@@ -31,6 +31,8 @@ export function filterToSearchParams(state: FilterState): URLSearchParams {
   }
   if (state.keywordMode !== 'or') params.set('m', state.keywordMode);
   if (state.search) params.set('q', state.search);
+  // Serialise baseSort, not sort: column-sort (SET_COLUMN_SORT) is a
+  // transient list-view preference and not part of what we share.
   if (state.baseSort !== 'az') params.set('s', state.baseSort);
   if (state.view !== 'list') params.set('v', state.view);
   return params;

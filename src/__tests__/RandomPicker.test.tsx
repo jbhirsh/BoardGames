@@ -107,7 +107,7 @@ describe('RandomPicker', () => {
     });
 
     expect(screen.queryByText('Spinning…')).toBeNull();
-    expect(screen.getByText('Tonight, play')).toBeInTheDocument();
+    expect(screen.getByText(/^Tonight, play — /)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /View rules/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Pick again/ })).toBeInTheDocument();
   });
