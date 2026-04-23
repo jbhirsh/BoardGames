@@ -84,6 +84,50 @@ describe('FilterProvider URL sync', () => {
     expect(screen.getByTestId('state-players').textContent).toBe('6');
   });
 
+  it('keeps sync consistent when state and URL both change in one pass', () => {
+    // Simulates a caller that dispatches a filter change AND navigates in
+    // the same commit — exercises the effect-ordering invariant between
+    // the ref updates and the two sync effects.
+    function DualAction() {
+      const { dispatch } = useFilter();
+      const navigate = useNavigate();
+      return (
+        <button
+          onClick={() => {
+            dispatch({ type: 'SET_DURATION', payload: 'medium' });
+            navigate('/?p=3');
+          }}
+        >
+          dual
+        </button>
+      );
+    }
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <FilterProvider>
+          <DualAction />
+          <FilterControls />
+          <LocationProbe />
+          <Routes>
+            <Route path="*" element={null} />
+          </Routes>
+        </FilterProvider>
+      </MemoryRouter>,
+    );
+
+    act(() => fireEvent.click(screen.getByText('dual')));
+
+    // After the combined commit the URL and state must converge without
+    // an endless ping-pong. The wroteUrlRef guard makes the local
+    // dispatch win: state→URL writes the filter-state URL first, and
+    // URL→state skips the pending HYDRATE that would have reverted it
+    // back to the explicit navigate target.
+    expect(screen.getByTestId('url').textContent).toBe('/?d=medium');
+    expect(screen.getByTestId('state-duration').textContent).toBe('medium');
+    expect(screen.getByTestId('state-players').textContent).toBe('0');
+  });
+
   it('does not sync URL when on a non-home route', () => {
     render(
       <MemoryRouter initialEntries={['/rules/catan']}>

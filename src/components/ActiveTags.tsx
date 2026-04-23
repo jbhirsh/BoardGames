@@ -69,24 +69,22 @@ export default function ActiveTags() {
         </button>
       )}
       {hasAny && (
-        <>
-          <button
-            type="button"
-            className="share-link"
-            onClick={handleShare}
-          >
-            {copied ? 'Copied!' : 'Share link'}
-          </button>
-          <span className="sr-only" aria-live="polite" aria-atomic="true">
-            {copied ? 'Link copied to clipboard' : ''}
-          </span>
-        </>
+        <button
+          type="button"
+          className="share-link"
+          onClick={handleShare}
+        >
+          {copied ? 'Copied!' : 'Share link'}
+        </button>
       )}
       {hasAny && (
         <button className="clear-all" onClick={() => dispatch({ type: 'CLEAR_ALL' })}>
           Clear all
         </button>
       )}
+      <span className="sr-only" aria-live="polite" aria-atomic="true">
+        {copied ? 'Link copied to clipboard' : ''}
+      </span>
     </div>
   );
 }

@@ -10,7 +10,7 @@ import { KW } from '../data/keywords';
 import { initialFilterState } from '../data/initialFilterState';
 
 const DURATIONS: DurationFilter[] = ['quick', 'medium', 'long'];
-const KEYWORD_MODES: KeywordMode[] = ['and', 'or'];
+const KEYWORD_MODES: KeywordMode[] = ['and'];
 const VIEWS: ViewMode[] = ['grid', 'list'];
 const SORTS: Exclude<SortMode, `${string}-${'asc' | 'desc'}`>[] = [
   'az', 'group', 'quick', 'long',

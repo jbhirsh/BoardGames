@@ -28,6 +28,7 @@ export function FilterProvider({ children }: { children: ReactNode }) {
   // effects so the cross-read refs are fresh when the sync effects fire.
   const stateRef = useRef(state);
   const locationRef = useRef(location);
+  const wroteUrlRef = useRef(false);
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
@@ -46,12 +47,20 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     ).toString();
     const current = loc.pathname + (currentQuery ? `?${currentQuery}` : '');
     if (current === target) return;
+    wroteUrlRef.current = true;
     navigate(target, { replace: true });
   }, [state, navigate]);
 
   // URL → state: only dep is location, so it never fires on state changes.
+  // If the preceding state→URL just wrote the URL, skip the HYDRATE that
+  // would otherwise revert the just-written state in the simultaneous-
+  // change case (dispatch + navigate in the same handler).
   useEffect(() => {
     if (location.pathname !== '/') return;
+    if (wroteUrlRef.current) {
+      wroteUrlRef.current = false;
+      return;
+    }
     const urlState = searchParamsToFilter(new URLSearchParams(location.search));
     const stateQuery = filterToSearchParams(stateRef.current).toString();
     const urlQuery = filterToSearchParams(urlState).toString();
