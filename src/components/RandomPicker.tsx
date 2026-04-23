@@ -15,6 +15,7 @@ export default function RandomPicker() {
   const [current, setCurrent] = useState<Game | null>(null);
   const tickRef = useRef<number | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const filteredGamesRef = useRef(filteredGames);
 
   useEffect(() => {
@@ -33,6 +34,7 @@ export default function RandomPicker() {
     setOpen(false);
     setSpinning(false);
     setCurrent(null);
+    triggerRef.current?.focus();
   }, [stopTicking]);
 
   const pick = useCallback(() => {
@@ -73,11 +75,11 @@ export default function RandomPicker() {
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         className="pick-btn"
         onClick={pick}
         disabled={disabled}
-        aria-label="Pick a random game from the current filter"
       >
         Pick for us
       </button>

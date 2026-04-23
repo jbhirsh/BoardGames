@@ -23,14 +23,11 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     if (location.pathname !== '/') return;
     const query = filterToSearchParams(state).toString();
     const target = query ? `/?${query}` : '/';
-    const current = location.pathname + location.search;
-    if (current !== target) {
-      navigate(target, { replace: true });
-    }
-    // location.search is intentionally omitted: target is derived from state,
-    // and navigate() updates location.search which would re-trigger this effect.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, location.pathname, navigate]);
+    // Skip if the URL already reflects the current state; this also breaks
+    // the navigate → location.search change → effect re-run loop.
+    if (location.pathname + location.search === target) return;
+    navigate(target, { replace: true });
+  }, [state, location.pathname, location.search, navigate]);
 
   const filteredGames = useMemo(() => filterGames(GAMES, state), [state]);
 

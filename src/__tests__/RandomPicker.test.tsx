@@ -71,7 +71,7 @@ describe('RandomPicker', () => {
 
   it('renders enabled when games are available', () => {
     renderPicker();
-    const btn = screen.getByRole('button', { name: /Pick a random game/ });
+    const btn = screen.getByRole('button', { name: /^Pick for us$/ });
     expect(btn).toBeEnabled();
   });
 
@@ -80,12 +80,12 @@ describe('RandomPicker', () => {
     const searchInput = screen.getByPlaceholderText('Search games...');
     fireEvent.change(searchInput, { target: { value: '__no_such_game__' } });
 
-    expect(screen.getByRole('button', { name: /Pick a random game/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Pick for us$/ })).toBeDisabled();
   });
 
   it('opens a modal showing a game when clicked, then resolves after spinning', () => {
     renderPicker();
-    const btn = screen.getByRole('button', { name: /Pick a random game/ });
+    const btn = screen.getByRole('button', { name: /^Pick for us$/ });
 
     act(() => {
       fireEvent.click(btn);
@@ -109,7 +109,7 @@ describe('RandomPicker', () => {
 
   it('closes the modal when the close button is clicked', () => {
     renderPicker();
-    act(() => fireEvent.click(screen.getByRole('button', { name: /Pick a random game/ })));
+    act(() => fireEvent.click(screen.getByRole('button', { name: /^Pick for us$/ })));
     act(() => vi.advanceTimersByTime(2000));
 
     const closeBtns = screen.getAllByRole('button', { name: 'Close' });
@@ -120,7 +120,7 @@ describe('RandomPicker', () => {
 
   it('closes the modal when Escape is pressed', () => {
     renderPicker();
-    act(() => fireEvent.click(screen.getByRole('button', { name: /Pick a random game/ })));
+    act(() => fireEvent.click(screen.getByRole('button', { name: /^Pick for us$/ })));
     act(() => vi.advanceTimersByTime(2000));
 
     act(() => {
@@ -132,7 +132,7 @@ describe('RandomPicker', () => {
 
   it('navigates to the rules page for the picked game', () => {
     renderPicker();
-    act(() => fireEvent.click(screen.getByRole('button', { name: /Pick a random game/ })));
+    act(() => fireEvent.click(screen.getByRole('button', { name: /^Pick for us$/ })));
     act(() => vi.advanceTimersByTime(2000));
 
     act(() => fireEvent.click(screen.getByRole('button', { name: /View rules/ })));
@@ -142,7 +142,7 @@ describe('RandomPicker', () => {
 
   it('respawns a new spin when Pick again is clicked', () => {
     renderPicker();
-    act(() => fireEvent.click(screen.getByRole('button', { name: /Pick a random game/ })));
+    act(() => fireEvent.click(screen.getByRole('button', { name: /^Pick for us$/ })));
     act(() => vi.advanceTimersByTime(2000));
     expect(screen.queryByText('Spinning…')).toBeNull();
 

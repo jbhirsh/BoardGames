@@ -82,7 +82,7 @@ export function searchParamsToFilter(params: URLSearchParams): FilterState {
 }
 
 export function buildShareUrl(state: FilterState): string {
-  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const origin = window.location.origin;
   const query = filterToSearchParams(state).toString();
   return query ? `${origin}/?${query}` : `${origin}/`;
 }
