@@ -9,16 +9,34 @@ import type {
 import { KW } from '../data/keywords';
 import { initialFilterState } from '../data/initialFilterState';
 
-const DURATIONS: DurationFilter[] = ['quick', 'medium', 'long'];
+const DURATIONS: Exclude<DurationFilter, 'all'>[] = ['quick', 'medium', 'long'];
 const KEYWORD_MODES: Exclude<KeywordMode, 'or'>[] = ['and'];
-const VIEWS: ViewMode[] = ['grid', 'list'];
+const VIEWS: Exclude<ViewMode, 'list'>[] = ['grid'];
 const SORTS: Exclude<SortMode, `${string}-${'asc' | 'desc'}`>[] = [
   'az', 'group', 'quick', 'long',
 ];
 
-// Compile-time completeness check: if a new non-column SortMode is added to
-// the type and forgotten here, this becomes an error-descriptor type and the
-// assignment on the next line fails to typecheck.
+// Compile-time completeness checks: if a new non-default value is added to
+// the underlying type and forgotten in one of the whitelists above, the
+// matching assertion fails to typecheck.
+type _DurationsExhaustive = Exclude<
+  Exclude<DurationFilter, 'all'>,
+  (typeof DURATIONS)[number]
+> extends never
+  ? true
+  : 'DURATIONS is missing a DurationFilter value';
+const _durationsExhaustive: _DurationsExhaustive = true;
+void _durationsExhaustive;
+
+type _ViewsExhaustive = Exclude<
+  Exclude<ViewMode, 'list'>,
+  (typeof VIEWS)[number]
+> extends never
+  ? true
+  : 'VIEWS is missing a ViewMode value';
+const _viewsExhaustive: _ViewsExhaustive = true;
+void _viewsExhaustive;
+
 type _SortsExhaustive = Exclude<
   Exclude<SortMode, `${string}-${'asc' | 'desc'}`>,
   (typeof SORTS)[number]
@@ -53,7 +71,9 @@ export function filterToSearchParams(state: FilterState): URLSearchParams {
 export function searchParamsToFilter(params: URLSearchParams): FilterState {
   const d = params.get('d');
   const duration: DurationFilter =
-    d && DURATIONS.includes(d as DurationFilter) ? (d as DurationFilter) : initialFilterState.duration;
+    d && (DURATIONS as readonly string[]).includes(d)
+      ? (d as DurationFilter)
+      : initialFilterState.duration;
 
   const p = params.get('p');
   const players = (() => {
@@ -85,7 +105,7 @@ export function searchParamsToFilter(params: URLSearchParams): FilterState {
 
   const v = params.get('v');
   const view: ViewMode =
-    v && VIEWS.includes(v as ViewMode) ? (v as ViewMode) : initialFilterState.view;
+    v && (VIEWS as readonly string[]).includes(v) ? (v as ViewMode) : initialFilterState.view;
 
   return {
     duration,

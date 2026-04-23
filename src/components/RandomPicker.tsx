@@ -130,12 +130,12 @@ export default function RandomPicker() {
             ref={cardRef}
             role="dialog"
             aria-modal="true"
-            aria-label="Random game pick"
+            aria-labelledby="pick-eyebrow"
             aria-busy={spinning}
             tabIndex={-1}
             className={`pick-card${spinning ? ' spinning' : ''}`}
           >
-            <div className="pick-eyebrow">
+            <div id="pick-eyebrow" className="pick-eyebrow">
               {spinning ? 'Spinning…' : `Tonight, play — ${current.name}`}
             </div>
             <img src={current.img} alt="" className="pick-img" />

@@ -97,7 +97,8 @@ describe('RandomPicker', () => {
     });
 
     // Modal opens immediately with an initial pick while spinning
-    expect(screen.getByRole('dialog', { name: /Random game pick/ })).toBeInTheDocument();
+    // aria-labelledby points at the eyebrow, so the dialog's name reflects the current state.
+    expect(screen.getByRole('dialog', { name: /Spinning/ })).toBeInTheDocument();
     expect(screen.getByText('Spinning…')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /View rules/ })).toBeNull();
 

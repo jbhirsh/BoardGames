@@ -37,14 +37,14 @@ export function useFilterUrlSync(state: FilterState, dispatch: Dispatch<FilterAc
   // URL → state: dep is location only; wroteUrlRef skips HYDRATE after our own navigate.
   useEffect(() => {
     if (location.pathname !== '/') return;
+    const urlState = searchParamsToFilter(new URLSearchParams(location.search));
+    const stateQuery = filterToSearchParams(stateRef.current).toString();
+    const urlQuery = filterToSearchParams(urlState).toString();
     if (wroteUrlRef.current) {
       // State→URL already won; hydrating here would revert it (dispatch+navigate is lossy by design).
       wroteUrlRef.current = false;
       return;
     }
-    const urlState = searchParamsToFilter(new URLSearchParams(location.search));
-    const stateQuery = filterToSearchParams(stateRef.current).toString();
-    const urlQuery = filterToSearchParams(urlState).toString();
     if (stateQuery === urlQuery) return;
     dispatch({ type: 'HYDRATE', payload: urlState });
   }, [location.pathname, location.search, dispatch]);
