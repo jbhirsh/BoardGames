@@ -87,9 +87,7 @@ export default function RandomPicker() {
       const last = focusables[focusables.length - 1];
       const active = document.activeElement as HTMLElement | null;
       if (!card.contains(active) || active === card) {
-        // Card div itself is focused (tabIndex=-1 placeholder for the
-        // "focus the dialog on open" step) — redirect to the first or
-        // last focusable child so Tab/Shift+Tab can't escape the dialog.
+        // card has tabIndex=-1, not in focusables list — redirect Tab/Shift+Tab to first/last.
         e.preventDefault();
         (e.shiftKey ? last : first).focus();
       } else if (e.shiftKey && active === first) {

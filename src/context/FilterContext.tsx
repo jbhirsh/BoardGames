@@ -9,11 +9,7 @@ import {
   searchParamsToFilter,
 } from '../utils/filterUrl';
 
-/**
- * FilterProvider must be rendered inside a React Router context. It calls
- * `useLocation` / `useNavigate` to keep the filter state in sync with the URL,
- * so rendering it outside a router (or bare Storybook story) will throw.
- */
+// Must be rendered inside a React Router context (calls useLocation / useNavigate).
 export function FilterProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -24,8 +20,7 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     (search) => searchParamsToFilter(new URLSearchParams(search)),
   );
 
-  // Ordering matters: these ref-update effects must sit before the two sync
-  // effects so the cross-read refs are fresh when the sync effects fire.
+  // ref-update effects must precede sync effects so cross-reads are fresh.
   const stateRef = useRef(state);
   const locationRef = useRef(location);
   const wroteUrlRef = useRef(false);
@@ -51,13 +46,11 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     navigate(target, { replace: true });
   }, [state, navigate]);
 
-  // URL → state: only dep is location, so it never fires on state changes.
-  // If the preceding state→URL just wrote the URL, skip the HYDRATE that
-  // would otherwise revert the just-written state in the simultaneous-
-  // change case (dispatch + navigate in the same handler).
+  // URL → state: dep is location only; wroteUrlRef skips HYDRATE after our own navigate.
   useEffect(() => {
     if (location.pathname !== '/') return;
     if (wroteUrlRef.current) {
+      // state→URL fired first this cycle; our navigate already wrote the correct URL.
       wroteUrlRef.current = false;
       return;
     }
