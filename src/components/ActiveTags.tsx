@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFilter } from '../context/useFilter';
 import { DUR_LABELS, KW } from '../data/keywords';
 import type { KeywordId } from '../data/types';
@@ -7,6 +7,11 @@ import { buildShareUrl } from '../utils/filterUrl';
 export default function ActiveTags() {
   const { state, dispatch } = useFilter();
   const [copied, setCopied] = useState(false);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+  }, []);
 
   const hasDuration = state.duration !== 'all';
   const hasPlayers = state.players > 0;
@@ -16,10 +21,11 @@ export default function ActiveTags() {
 
   async function handleShare() {
     const url = buildShareUrl(state);
+    if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
+      copiedTimerRef.current = setTimeout(() => setCopied(false), 1800);
     } catch {
       window.prompt('Copy this link:', url);
     }
@@ -32,7 +38,7 @@ export default function ActiveTags() {
           className="atag"
           onClick={() => dispatch({ type: 'SET_DURATION', payload: 'all' })}
         >
-          {DUR_LABELS[state.duration]} {'✕'}
+          {DUR_LABELS[state.duration]} {'\u2715'}
         </button>
       )}
       {hasPlayers && (
@@ -40,7 +46,7 @@ export default function ActiveTags() {
           className="atag"
           onClick={() => dispatch({ type: 'SET_PLAYERS', payload: 0 })}
         >
-          {state.players} players {'✕'}
+          {state.players} players {'\u2715'}
         </button>
       )}
       {[...state.keywords].map((kw: KeywordId) => (
@@ -49,7 +55,7 @@ export default function ActiveTags() {
           className="atag"
           onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: kw })}
         >
-          {KW[kw]} {'✕'}
+          {KW[kw]} {'\u2715'}
         </button>
       ))}
       {hasSearch && (
@@ -57,14 +63,13 @@ export default function ActiveTags() {
           className="atag"
           onClick={() => dispatch({ type: 'SET_SEARCH', payload: '' })}
         >
-          &quot;{state.search}&quot; {'✕'}
+          &quot;{state.search}&quot; {'\u2715'}
         </button>
       )}
       {hasAny && (
         <button
           className="share-link"
           onClick={handleShare}
-          aria-label="Copy shareable link"
         >
           {copied ? 'Copied!' : 'Share link'}
         </button>

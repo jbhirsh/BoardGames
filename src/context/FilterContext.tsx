@@ -6,18 +6,18 @@ import { filterGames } from '../utils/filterGames';
 import { FilterContext } from './filterContextValue';
 import {
   filterToSearchParams,
-  hydrateFilterStateFromLocation,
+  searchParamsToFilter,
 } from '../utils/filterUrl';
 
 export function FilterProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(
-    filterReducer,
-    undefined,
-    hydrateFilterStateFromLocation,
-  );
-
   const location = useLocation();
   const navigate = useNavigate();
+
+  const [state, dispatch] = useReducer(
+    filterReducer,
+    location.search,
+    (search) => searchParamsToFilter(new URLSearchParams(search)),
+  );
 
   useEffect(() => {
     if (location.pathname !== '/') return;
@@ -27,7 +27,10 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     if (current !== target) {
       navigate(target, { replace: true });
     }
-  }, [state, location.pathname, location.search, navigate]);
+    // location.search is intentionally omitted: target is derived from state,
+    // and navigate() updates location.search which would re-trigger this effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, location.pathname, navigate]);
 
   const filteredGames = useMemo(() => filterGames(GAMES, state), [state]);
 

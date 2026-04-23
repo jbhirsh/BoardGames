@@ -121,7 +121,7 @@ describe('ActiveTags', () => {
 
     it('is hidden when no filters are active', () => {
       renderActiveTags();
-      expect(screen.queryByRole('button', { name: /Copy shareable link/ })).toBeNull();
+      expect(screen.queryByText('Share link')).toBeNull();
     });
 
     it('copies a URL containing the active filters', async () => {
@@ -131,7 +131,7 @@ describe('ActiveTags', () => {
       fireEvent.click(playersBtn);
       fireEvent.click(screen.getByText('5 players'));
 
-      const share = screen.getByRole('button', { name: /Copy shareable link/ });
+      const share = screen.getByRole('button', { name: /Share link/ });
       await act(async () => {
         fireEvent.click(share);
       });
@@ -152,7 +152,7 @@ describe('ActiveTags', () => {
       fireEvent.click(screen.getByText('4 players'));
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /Copy shareable link/ }));
+        fireEvent.click(screen.getByRole('button', { name: /Share link/ }));
       });
 
       await waitFor(() => expect(promptSpy).toHaveBeenCalledTimes(1));

@@ -3,7 +3,6 @@ import {
   filterToSearchParams,
   searchParamsToFilter,
   buildShareUrl,
-  hydrateFilterStateFromLocation,
 } from '../utils/filterUrl';
 import { initialFilterState } from '../context/filterReducer';
 import type { FilterState } from '../data/types';
@@ -141,13 +140,3 @@ describe('buildShareUrl', () => {
   });
 });
 
-describe('hydrateFilterStateFromLocation', () => {
-  it('reads from window.location.search', () => {
-    const prev = window.location.search;
-    window.history.replaceState(null, '', '/?d=long&p=2');
-    const state = hydrateFilterStateFromLocation();
-    expect(state.duration).toBe('long');
-    expect(state.players).toBe(2);
-    window.history.replaceState(null, '', `/${prev}`);
-  });
-});

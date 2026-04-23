@@ -80,11 +80,6 @@ export function searchParamsToFilter(params: URLSearchParams): FilterState {
   return state;
 }
 
-export function hydrateFilterStateFromLocation(): FilterState {
-  if (typeof window === 'undefined') return initialFilterState;
-  return searchParamsToFilter(new URLSearchParams(window.location.search));
-}
-
 export function buildShareUrl(state: FilterState): string {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const query = filterToSearchParams(state).toString();
