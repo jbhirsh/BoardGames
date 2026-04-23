@@ -32,7 +32,7 @@ export default defineConfig([
   },
   {
     // refs written during render so sync/tick reads never see a stale frame
-    files: ['src/context/FilterContext.tsx', 'src/components/RandomPicker.tsx'],
+    files: ['src/context/useFilterUrlSync.ts', 'src/components/RandomPicker.tsx'],
     rules: {
       'react-hooks/refs': 'off',
     },

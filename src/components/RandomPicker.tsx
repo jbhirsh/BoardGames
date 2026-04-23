@@ -104,9 +104,7 @@ export default function RandomPicker() {
 
   const disabled = filteredGames.length === 0;
 
-  // Live region stays mounted at the top level so AT combinations that ignore
-  // dynamically-added live regions (older NVDA+Firefox, some VoiceOver builds)
-  // still hear the resolved pick.
+  // Stays mounted at top-level so older NVDA+Firefox / VoiceOver combos that ignore late-added live regions still hear the pick.
   const liveMessage =
     open && current && !spinning ? `Tonight, play — ${current.name}` : '';
 
@@ -133,6 +131,7 @@ export default function RandomPicker() {
             role="dialog"
             aria-modal="true"
             aria-label="Random game pick"
+            aria-busy={spinning}
             tabIndex={-1}
             className={`pick-card${spinning ? ' spinning' : ''}`}
           >
