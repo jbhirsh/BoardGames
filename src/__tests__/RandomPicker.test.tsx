@@ -117,8 +117,7 @@ describe('RandomPicker', () => {
     act(() => fireEvent.click(screen.getByRole('button', { name: /^Pick for us$/ })));
     act(() => vi.advanceTimersByTime(2000));
 
-    const closeBtns = screen.getAllByRole('button', { name: 'Close' });
-    act(() => fireEvent.click(closeBtns[0]));
+    act(() => fireEvent.click(screen.getByRole('button', { name: 'Close' })));
 
     expect(screen.queryByRole('dialog')).toBeNull();
   });
@@ -175,8 +174,7 @@ describe('RandomPicker', () => {
 
     const pickAgain = screen.getByRole('button', { name: /Pick again/ });
     const viewRules = screen.getByRole('button', { name: /View rules/ });
-    const closeBtns = screen.getAllByRole('button', { name: 'Close' });
-    const closeBtn = closeBtns[closeBtns.length - 1];
+    const closeBtn = screen.getByRole('button', { name: 'Close' });
 
     // Forward Tab from the last focusable should wrap to the first.
     closeBtn.focus();

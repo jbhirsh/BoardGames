@@ -112,7 +112,7 @@ export default function RandomPicker() {
             type="button"
             className="pick-backdrop"
             onClick={close}
-            aria-label="Close"
+            aria-hidden="true"
             tabIndex={-1}
           />
           <div

@@ -12,12 +12,7 @@ import { initialFilterState } from '../context/filterReducer';
 const DURATIONS: DurationFilter[] = ['quick', 'medium', 'long'];
 const KEYWORD_MODES: KeywordMode[] = ['and', 'or'];
 const VIEWS: ViewMode[] = ['grid', 'list'];
-const SORTS: SortMode[] = [
-  'az', 'group', 'quick', 'long',
-  'name-asc', 'name-desc',
-  'dur-asc', 'dur-desc',
-  'players-asc', 'players-desc',
-];
+const SORTS: SortMode[] = ['az', 'group', 'quick', 'long'];
 
 const VALID_KEYWORDS = new Set(Object.keys(KW) as KeywordId[]);
 const MAX_PLAYERS = 99;

@@ -23,10 +23,13 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     if (location.pathname !== '/') return;
     const query = filterToSearchParams(state).toString();
     const target = query ? `/?${query}` : '/';
-    // Normalise both sides before comparing so incoming %20 vs our '+'
-    // encoding don't trigger a cosmetic re-navigate on mount. The guard
-    // also breaks the navigate → location.search change → re-run loop.
-    const currentQuery = new URLSearchParams(location.search).toString();
+    // Canonicalise the current URL through the same parse+serialise pipeline
+    // so differences in parameter order (?p=4&d=quick vs ?d=quick&p=4) and
+    // encoding (%20 vs '+') don't trigger a cosmetic replace-navigate on
+    // mount. This also breaks the navigate → location.search → re-run loop.
+    const currentQuery = filterToSearchParams(
+      searchParamsToFilter(new URLSearchParams(location.search)),
+    ).toString();
     const current = location.pathname + (currentQuery ? `?${currentQuery}` : '');
     if (current === target) return;
     navigate(target, { replace: true });

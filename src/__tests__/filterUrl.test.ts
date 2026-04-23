@@ -83,6 +83,17 @@ describe('searchParamsToFilter', () => {
     expect(state.view).toBe('grid');
   });
 
+  it('ignores column-sort values that are never emitted', () => {
+    // name-asc / dur-desc etc. are valid SortMode values but internal to
+    // list-view column sorting and intentionally never serialised. They
+    // must not be accepted on the way back in.
+    for (const s of ['name-asc', 'name-desc', 'dur-asc', 'dur-desc', 'players-asc', 'players-desc']) {
+      const state = searchParamsToFilter(new URLSearchParams(`s=${s}`));
+      expect(state.baseSort).toBe('az');
+      expect(state.sort).toBe('az');
+    }
+  });
+
   it('ignores invalid duration, keywords, sort, view, and mode', () => {
     const state = searchParamsToFilter(
       new URLSearchParams('d=forever&k=notakw,strategy,bogus&m=xor&s=chaotic&v=cards'),
