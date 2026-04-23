@@ -1,15 +1,7 @@
 import type { FilterState, DurationFilter, SortMode, ViewMode, KeywordId, KeywordMode } from '../data/types';
+import { initialFilterState } from '../data/types';
 
-export const initialFilterState: FilterState = {
-  duration: 'all',
-  players: 0,
-  keywords: new Set<KeywordId>(),
-  keywordMode: 'or',
-  search: '',
-  sort: 'az',
-  baseSort: 'az',
-  view: 'list',
-};
+export { initialFilterState };
 
 export type FilterAction =
   | { type: 'SET_DURATION'; payload: DurationFilter }

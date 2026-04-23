@@ -135,7 +135,7 @@ export default function RandomPicker() {
             tabIndex={-1}
             className={`pick-card${spinning ? ' spinning' : ''}`}
           >
-            <div className="pick-eyebrow" aria-live="polite">
+            <div className="pick-eyebrow" aria-live="polite" aria-atomic="true">
               {spinning ? 'Spinning…' : `Tonight, play — ${current.name}`}
             </div>
             <img src={current.img} alt="" className="pick-img" />
