@@ -7,7 +7,7 @@ import type {
   ViewMode,
 } from '../data/types';
 import { KW } from '../data/keywords';
-import { initialFilterState } from '../data/types';
+import { initialFilterState } from '../data/initialFilterState';
 
 const DURATIONS: DurationFilter[] = ['quick', 'medium', 'long'];
 const KEYWORD_MODES: KeywordMode[] = ['and', 'or'];

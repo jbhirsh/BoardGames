@@ -1,5 +1,5 @@
 import type { FilterState, DurationFilter, SortMode, ViewMode, KeywordId, KeywordMode } from '../data/types';
-import { initialFilterState } from '../data/types';
+import { initialFilterState } from '../data/initialFilterState';
 
 export { initialFilterState };
 
