@@ -12,13 +12,6 @@ import { initialFilterState } from '../data/initialFilterState';
 const DURATIONS: DurationFilter[] = ['quick', 'medium', 'long'];
 const KEYWORD_MODES: KeywordMode[] = ['and', 'or'];
 const VIEWS: ViewMode[] = ['grid', 'list'];
-// Only the user-facing SortMode values belong here. Column-sort modes
-// (name-asc, dur-desc, players-asc, etc.) are transient list-view UI
-// and intentionally never round-trip through URLs. The Exclude<> below
-// rejects any `*-asc` / `*-desc` value at compile time so a column-sort
-// can't be added here by accident. (TS can't catch *omissions* — a
-// newly-added non-column SortMode has to be added by hand; the test in
-// filterUrl.test.ts covers the column-sort reject path.)
 const SORTS: Exclude<SortMode, `${string}-${'asc' | 'desc'}`>[] = [
   'az', 'group', 'quick', 'long',
 ];
@@ -35,10 +28,6 @@ export function filterToSearchParams(state: FilterState): URLSearchParams {
   }
   if (state.keywordMode !== 'or') params.set('m', state.keywordMode);
   if (state.search) params.set('q', state.search);
-  // Serialise baseSort, not sort: column-sort (SET_COLUMN_SORT) is a
-  // transient list-view preference and not part of what we share.
-  // Also validate against SORTS so a stray column-sort value in baseSort
-  // can't emit a param the reader would refuse on the way back in.
   if (
     state.baseSort !== 'az' &&
     (SORTS as readonly string[]).includes(state.baseSort)

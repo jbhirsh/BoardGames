@@ -54,8 +54,7 @@ export default function RandomPicker() {
         tickRef.current = null;
         return;
       }
-      // prev is non-null: setCurrent(pickRandom(pool)) commits before this timer fires.
-      setCurrent((prev) => pickRandom(currentPool, prev as Game));
+      setCurrent((prev) => pickRandom(currentPool, prev ?? undefined));
       if (Date.now() - start >= SPIN_MS) {
         setSpinning(false);
         tickRef.current = null;
@@ -66,7 +65,7 @@ export default function RandomPicker() {
     tickRef.current = window.setTimeout(tick, TICK_MS);
   }, [stopTicking]);
 
-  useEffect(() => stopTicking, [stopTicking]);
+  useEffect(() => { return stopTicking; }, [stopTicking]);
 
   useEffect(() => {
     if (!open) return;

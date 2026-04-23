@@ -46,7 +46,13 @@ export function filterReducer(state: FilterState, action: FilterAction): FilterS
     case 'HYDRATE':
       return action.payload;
     case 'CLEAR_ALL':
-      return { ...initialFilterState, view: state.view, sort: state.baseSort, baseSort: state.baseSort };
+      return {
+        ...initialFilterState,
+        keywords: new Set(),
+        view: state.view,
+        sort: state.baseSort,
+        baseSort: state.baseSort,
+      };
     default:
       return state;
   }
