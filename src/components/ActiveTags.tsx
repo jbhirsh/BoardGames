@@ -9,8 +9,10 @@ export default function ActiveTags() {
   const [copied, setCopied] = useState(false);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => () => {
-    if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+  useEffect(() => {
+    return () => {
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    };
   }, []);
 
   const hasDuration = state.duration !== 'all';

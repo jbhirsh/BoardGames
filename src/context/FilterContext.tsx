@@ -20,6 +20,8 @@ export function FilterProvider({ children }: { children: ReactNode }) {
   );
 
   // Refs let each sync effect read the other side without triggering it, avoiding ping-pong.
+  // Ordering matters: the ref-update effects below must sit before the two sync effects so
+  // the refs are fresh when the sync effects read them in the same commit cycle.
   const stateRef = useRef(state);
   const locationRef = useRef(location);
   useEffect(() => {
