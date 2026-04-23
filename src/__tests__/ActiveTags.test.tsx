@@ -140,6 +140,9 @@ describe('ActiveTags', () => {
       const url = writeText.mock.calls[0][0] as string;
       expect(url).toContain('p=5');
       await waitFor(() => expect(screen.getByText('Copied!')).toBeInTheDocument());
+      // The sibling live region should announce the copy to screen readers
+      // even if focus doesn't move off the button.
+      expect(screen.getByText('Link copied to clipboard')).toBeInTheDocument();
     });
 
     it('falls back to a prompt if clipboard rejects', async () => {
