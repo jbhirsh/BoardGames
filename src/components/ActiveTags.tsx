@@ -68,6 +68,7 @@ export default function ActiveTags() {
       )}
       {hasAny && (
         <button
+          type="button"
           className="share-link"
           onClick={handleShare}
         >

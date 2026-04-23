@@ -193,4 +193,30 @@ describe('RandomPicker', () => {
     // Sanity: View rules sits between the two.
     expect(viewRules).toBeInTheDocument();
   });
+
+  it('keeps focus inside the dialog on initial Shift+Tab from the card', () => {
+    renderPicker();
+    act(() => fireEvent.click(screen.getByRole('button', { name: /^Pick for us$/ })));
+    act(() => vi.advanceTimersByTime(2000));
+
+    // When the dialog opens, focus is placed on the card div (tabIndex=-1).
+    // Pressing Shift+Tab from there must not escape the dialog.
+    const card = document.querySelector('.pick-card') as HTMLElement;
+    const closeBtn = screen.getByRole('button', { name: 'Close' });
+    const pickAgain = screen.getByRole('button', { name: /Pick again/ });
+
+    expect(document.activeElement).toBe(card);
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true }));
+    });
+    expect(document.activeElement).toBe(closeBtn);
+
+    // Re-focus the card and verify forward Tab lands on the first focusable.
+    card.focus();
+    expect(document.activeElement).toBe(card);
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    });
+    expect(document.activeElement).toBe(pickAgain);
+  });
 });

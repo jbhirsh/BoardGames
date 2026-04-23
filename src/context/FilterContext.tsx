@@ -1,4 +1,4 @@
-import { useReducer, useMemo, useEffect, type ReactNode } from 'react';
+import { useReducer, useMemo, useEffect, useRef, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { filterReducer } from './filterReducer';
 import { GAMES } from '../data/games';
@@ -19,21 +19,46 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     (search) => searchParamsToFilter(new URLSearchParams(search)),
   );
 
+  // Each sync direction runs only when *its* source changes, reading the
+  // other side through a ref. That prevents the two effects from racing
+  // in the same commit: if both state and location were in both dep
+  // arrays, a user-dispatched change would trigger URL→state (reverting)
+  // and an external URL change would trigger state→URL (reverting).
+  const stateRef = useRef(state);
+  const locationRef = useRef(location);
   useEffect(() => {
-    if (location.pathname !== '/') return;
+    stateRef.current = state;
+  }, [state]);
+  useEffect(() => {
+    locationRef.current = location;
+  }, [location]);
+
+  // state → URL: fires when state changes. Reads the current location
+  // through the ref so it doesn't also fire on URL changes.
+  useEffect(() => {
+    const loc = locationRef.current;
+    if (loc.pathname !== '/') return;
     const query = filterToSearchParams(state).toString();
     const target = query ? `/?${query}` : '/';
-    // Canonicalise the current URL through the same parse+serialise pipeline
-    // so differences in parameter order (?p=4&d=quick vs ?d=quick&p=4) and
-    // encoding (%20 vs '+') don't trigger a cosmetic replace-navigate on
-    // mount. This also breaks the navigate → location.search → re-run loop.
     const currentQuery = filterToSearchParams(
-      searchParamsToFilter(new URLSearchParams(location.search)),
+      searchParamsToFilter(new URLSearchParams(loc.search)),
     ).toString();
-    const current = location.pathname + (currentQuery ? `?${currentQuery}` : '');
+    const current = loc.pathname + (currentQuery ? `?${currentQuery}` : '');
     if (current === target) return;
     navigate(target, { replace: true });
-  }, [state, location.pathname, location.search, navigate]);
+  }, [state, navigate]);
+
+  // URL → state: fires when location changes (back / forward / external
+  // navigation). Reads the current state through the ref so it doesn't
+  // also fire on state changes.
+  useEffect(() => {
+    if (location.pathname !== '/') return;
+    const urlState = searchParamsToFilter(new URLSearchParams(location.search));
+    const stateQuery = filterToSearchParams(stateRef.current).toString();
+    const urlQuery = filterToSearchParams(urlState).toString();
+    if (stateQuery === urlQuery) return;
+    dispatch({ type: 'HYDRATE', payload: urlState });
+  }, [location.pathname, location.search]);
 
   const filteredGames = useMemo(() => filterGames(GAMES, state), [state]);
 

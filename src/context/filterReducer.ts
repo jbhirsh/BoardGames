@@ -21,6 +21,7 @@ export type FilterAction =
   | { type: 'SET_SORT'; payload: SortMode }
   | { type: 'SET_COLUMN_SORT'; payload: string }
   | { type: 'SET_VIEW'; payload: ViewMode }
+  | { type: 'HYDRATE'; payload: FilterState }
   | { type: 'CLEAR_ALL' };
 
 export function filterReducer(state: FilterState, action: FilterAction): FilterState {
@@ -50,6 +51,8 @@ export function filterReducer(state: FilterState, action: FilterAction): FilterS
     }
     case 'SET_VIEW':
       return { ...state, view: action.payload };
+    case 'HYDRATE':
+      return action.payload;
     case 'CLEAR_ALL':
       return { ...initialFilterState, view: state.view, sort: state.baseSort, baseSort: state.baseSort };
     default:

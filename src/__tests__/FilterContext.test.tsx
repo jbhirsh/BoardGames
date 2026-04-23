@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import { MemoryRouter, Routes, Route, useLocation } from 'react-router';
+import { MemoryRouter, Routes, Route, useLocation, useNavigate } from 'react-router';
 import { FilterProvider } from '../context/FilterContext';
 import { useFilter } from '../context/useFilter';
 
@@ -10,7 +10,8 @@ function LocationProbe() {
 }
 
 function FilterControls() {
-  const { dispatch } = useFilter();
+  const { state, dispatch } = useFilter();
+  const navigate = useNavigate();
   return (
     <>
       <button onClick={() => dispatch({ type: 'SET_DURATION', payload: 'quick' })}>
@@ -23,6 +24,9 @@ function FilterControls() {
         strategy
       </button>
       <button onClick={() => dispatch({ type: 'CLEAR_ALL' })}>clear</button>
+      <button onClick={() => navigate('/?d=long&p=6')}>push-different-url</button>
+      <div data-testid="state-duration">{state.duration}</div>
+      <div data-testid="state-players">{String(state.players)}</div>
     </>
   );
 }
@@ -65,6 +69,19 @@ describe('FilterProvider URL sync', () => {
 
     act(() => fireEvent.click(screen.getByText('clear')));
     expect(screen.getByTestId('url').textContent).toBe('/');
+  });
+
+  it('hydrates state when the URL changes externally (browser back / pushed URL)', () => {
+    renderProvider('/?d=quick&p=4');
+    expect(screen.getByTestId('state-duration').textContent).toBe('quick');
+    expect(screen.getByTestId('state-players').textContent).toBe('4');
+
+    act(() => fireEvent.click(screen.getByText('push-different-url')));
+
+    // State should now reflect the new URL, not get reverted back to the old filters.
+    expect(screen.getByTestId('url').textContent).toBe('/?d=long&p=6');
+    expect(screen.getByTestId('state-duration').textContent).toBe('long');
+    expect(screen.getByTestId('state-players').textContent).toBe('6');
   });
 
   it('does not sync URL when on a non-home route', () => {

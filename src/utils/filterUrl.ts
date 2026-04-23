@@ -12,6 +12,11 @@ import { initialFilterState } from '../context/filterReducer';
 const DURATIONS: DurationFilter[] = ['quick', 'medium', 'long'];
 const KEYWORD_MODES: KeywordMode[] = ['and', 'or'];
 const VIEWS: ViewMode[] = ['grid', 'list'];
+// Only the user-facing SortMode values belong here. Column-sort modes
+// (name-asc, dur-desc, players-asc, etc.) are transient list-view UI and
+// intentionally never round-trip through URLs, so they must stay out of
+// this whitelist. Keep in sync manually when SortMode gains a new
+// non-column member — TS's SortMode[] annotation won't catch omissions.
 const SORTS: SortMode[] = ['az', 'group', 'quick', 'long'];
 
 const VALID_KEYWORDS = new Set(Object.keys(KW) as KeywordId[]);
