@@ -49,9 +49,7 @@ export default function RandomPicker() {
     const tick = () => {
       const currentPool = filteredGamesRef.current;
       if (currentPool.length === 0) {
-        // The filter emptied while spinning (e.g. back/forward navigation
-        // or external state change). Freeze on the last pick instead of
-        // letting pickRandom throw on every subsequent tick.
+        // pool emptied mid-spin — freeze on last pick rather than throwing
         setSpinning(false);
         tickRef.current = null;
         return;
@@ -122,16 +120,13 @@ export default function RandomPicker() {
       </button>
 
       {open && current && (
-        <div className="pick-modal" role="dialog" aria-modal="true" aria-label="Random game pick">
-          <button
-            type="button"
-            className="pick-backdrop"
-            onClick={close}
-            aria-hidden="true"
-            tabIndex={-1}
-          />
+        <div className="pick-modal">
+          <div className="pick-backdrop" />
           <div
             ref={cardRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Random game pick"
             tabIndex={-1}
             className={`pick-card${spinning ? ' spinning' : ''}`}
           >
