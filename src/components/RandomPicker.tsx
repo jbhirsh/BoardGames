@@ -56,8 +56,7 @@ export default function RandomPicker() {
         tickRef.current = null;
         return;
       }
-      // prev is guaranteed non-null here: setCurrent(pickRandom(pool)) above
-      // commits before the first setTimeout(tick) fires.
+      // prev is non-null: setCurrent(pickRandom(pool)) commits before this timer fires.
       setCurrent((prev) => pickRandom(currentPool, prev!));
       if (Date.now() - start >= SPIN_MS) {
         setSpinning(false);

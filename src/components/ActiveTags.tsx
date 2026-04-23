@@ -27,9 +27,7 @@ export default function ActiveTags() {
       setCopied(true);
       copiedTimerRef.current = setTimeout(() => setCopied(false), 1800);
     } catch {
-      // Fail silently: window.prompt is blocked in sandboxed iframes and
-      // clipboard failures are typically one-off permission denials that
-      // a fresh user gesture can retry.
+      // clipboard errors are transient permission denials; a fresh user gesture can retry
     }
   }
 
