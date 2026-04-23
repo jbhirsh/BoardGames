@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import Wishlist from '../components/Wishlist';
 import { FilterProvider } from '../context/FilterContext';
 import { useFilter } from '../context/useFilter';
@@ -15,9 +16,11 @@ function mockVotes(counts: Record<string, number>, myVotes: string[] = []) {
 
 function renderWishlist() {
   return render(
-    <FilterProvider>
-      <Wishlist />
-    </FilterProvider>,
+    <MemoryRouter>
+      <FilterProvider>
+        <Wishlist />
+      </FilterProvider>
+    </MemoryRouter>,
   );
 }
 
@@ -81,9 +84,11 @@ describe('Wishlist', () => {
       );
     }
     const { container } = render(
-      <FilterProvider>
-        <ViewToggleTest />
-      </FilterProvider>,
+      <MemoryRouter>
+        <FilterProvider>
+          <ViewToggleTest />
+        </FilterProvider>
+      </MemoryRouter>,
     );
 
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled());

@@ -131,6 +131,9 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .atags.show{display:flex;}
 .atag{display:inline-flex;align-items:center;gap:5px;background:var(--blue-bg);border:1px solid rgba(0,113,227,0.2);color:var(--blue);font-size:12px;font-weight:500;padding:4px 12px;border-radius:20px;cursor:pointer;user-select:none;transition:background .15s,border-color .15s;}
 .atag:hover{background:rgba(0,113,227,0.14);border-color:rgba(0,113,227,0.4);}
+.share-link{margin-left:auto;background:none;border:none;font-family:inherit;font-size:12px;font-weight:500;color:var(--blue);cursor:pointer;padding:4px 8px;transition:color .15s;}
+.share-link:hover{color:var(--dark);}
+.share-link+.clear-all{margin-left:0;}
 .clear-all{margin-left:auto;background:none;border:none;font-family:inherit;font-size:12px;color:var(--text3);cursor:pointer;transition:color .15s;}
 .clear-all:hover{color:var(--text);}
 

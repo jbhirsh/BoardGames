@@ -1,13 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import ViewToggle from '../components/ViewToggle';
 import { FilterProvider } from '../context/FilterContext';
 
 function renderViewToggle() {
   return render(
-    <FilterProvider>
-      <ViewToggle />
-    </FilterProvider>
+    <MemoryRouter>
+      <FilterProvider>
+        <ViewToggle />
+      </FilterProvider>
+    </MemoryRouter>
   );
 }
 
