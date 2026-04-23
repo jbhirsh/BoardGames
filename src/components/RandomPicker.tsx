@@ -42,7 +42,7 @@ export default function RandomPicker() {
     stopTicking();
     setOpen(true);
     setSpinning(true);
-    setCurrent(pickRandom(pool));
+    setCurrent((prev) => pickRandom(pool, prev ?? undefined));
 
     const start = Date.now();
     const tick = () => {

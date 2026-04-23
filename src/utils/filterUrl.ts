@@ -28,6 +28,15 @@ type _DurationsExhaustive = Exclude<
 const _durationsExhaustive: _DurationsExhaustive = true;
 void _durationsExhaustive;
 
+type _KeywordModesExhaustive = Exclude<
+  Exclude<KeywordMode, 'or'>,
+  (typeof KEYWORD_MODES)[number]
+> extends never
+  ? true
+  : 'KEYWORD_MODES is missing a KeywordMode value';
+const _keywordModesExhaustive: _KeywordModesExhaustive = true;
+void _keywordModesExhaustive;
+
 type _ViewsExhaustive = Exclude<
   Exclude<ViewMode, 'list'>,
   (typeof VIEWS)[number]
