@@ -1,5 +1,4 @@
-// When every item in the pool equals `exclude` (including the pool-of-one
-// case), falls back to pool[0] rather than returning undefined.
+// Falls back to pool[0] when all candidates equal `exclude` (including the pool-of-one case).
 export function pickRandom<T>(pool: readonly T[], exclude?: T): T {
   if (pool.length === 0) throw new Error('pool empty');
   if (pool.length === 1) return pool[0];

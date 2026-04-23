@@ -9,9 +9,7 @@ import {
   searchParamsToFilter,
 } from '../utils/filterUrl';
 
-/** Must be rendered inside a React Router context. Do not pair a filter
- * dispatch with `navigate()` in the same handler — the dispatch wins and
- * the navigate's query params are dropped entirely, not merged. */
+/** Requires a React Router context. Do not mix dispatch + navigate() — dispatch wins and the navigate's params are dropped. */
 export function FilterProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -22,9 +20,7 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     (search) => searchParamsToFilter(new URLSearchParams(search)),
   );
 
-  // Write refs during render (safe: reads happen only in effects) so the two
-  // sync effects below always see the latest committed values. Avoids the
-  // declaration-order invariant that effect-based ref updates would require.
+  // Written during render so effects always see the latest values without a declaration-order dependency.
   const stateRef = useRef(state);
   const locationRef = useRef(location);
   const wroteUrlRef = useRef(false);
@@ -50,9 +46,7 @@ export function FilterProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (location.pathname !== '/') return;
     if (wroteUrlRef.current) {
-      // Our own navigate just landed. Skipping HYDRATE means any params
-      // the caller tried to set via a same-handler navigate() are dropped,
-      // not merged — a dispatch + navigate pair is a lossy operation.
+      // State→URL already won; hydrating here would revert it (dispatch+navigate is lossy by design).
       wroteUrlRef.current = false;
       return;
     }

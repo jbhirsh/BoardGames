@@ -17,8 +17,7 @@ export default function RandomPicker() {
   const tickRef = useRef<number | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  // Written during render so the spinning tick always reads the latest
-  // filtered list (no ≤1-frame stale-ref window after a filter change).
+  // Written during render so the tick always reads the current filtered list without a stale-ref window.
   const filteredGamesRef = useRef(filteredGames);
   filteredGamesRef.current = filteredGames;
 
