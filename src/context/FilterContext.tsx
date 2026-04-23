@@ -20,7 +20,11 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     (search) => searchParamsToFilter(new URLSearchParams(search)),
   );
 
-  // ref-update effects must precede sync effects so cross-reads are fresh.
+  // INVARIANT: the four useEffect blocks below must stay in this order — the two
+  // ref-update effects must fire before the two sync effects each commit, so the
+  // sync effects read post-update values of the other side. React runs effects in
+  // declaration order within a component; reordering or extracting to a hook would
+  // silently break the sync without a test failure.
   const stateRef = useRef(state);
   const locationRef = useRef(location);
   const wroteUrlRef = useRef(false);
@@ -61,7 +65,7 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     const urlQuery = filterToSearchParams(urlState).toString();
     if (stateQuery === urlQuery) return;
     dispatch({ type: 'HYDRATE', payload: urlState });
-  }, [location.pathname, location.search]);
+  }, [location.pathname, location.search, dispatch]);
 
   const filteredGames = useMemo(() => filterGames(GAMES, state), [state]);
 

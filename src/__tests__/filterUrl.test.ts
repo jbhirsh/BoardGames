@@ -63,6 +63,16 @@ describe('filterToSearchParams', () => {
     expect(params.get('s')).toBe('group');
   });
 
+  it('drops a column-sort value sitting in baseSort instead of emitting an invalid param', () => {
+    // Defensive guard: if baseSort ever drifts to a column-sort value
+    // (which the reducer shouldn't allow, but types don't prevent), the
+    // write path must not emit ?s=name-asc because the reader refuses it.
+    const params = filterToSearchParams(
+      makeState({ sort: 'name-asc', baseSort: 'name-asc' }),
+    );
+    expect(params.has('s')).toBe(false);
+  });
+
   it('omits defaults', () => {
     const params = filterToSearchParams(
       makeState({ keywordMode: 'or', view: 'list', baseSort: 'az' }),
