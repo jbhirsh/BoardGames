@@ -1,15 +1,5 @@
 import type { FilterState, DurationFilter, SortMode, ViewMode, KeywordId, KeywordMode } from '../data/types';
-
-export const initialFilterState: FilterState = {
-  duration: 'all',
-  players: 0,
-  keywords: new Set<KeywordId>(),
-  keywordMode: 'or',
-  search: '',
-  sort: 'az',
-  baseSort: 'az',
-  view: 'list',
-};
+import { initialFilterState } from '../data/initialFilterState';
 
 export type FilterAction =
   | { type: 'SET_DURATION'; payload: DurationFilter }
@@ -21,6 +11,7 @@ export type FilterAction =
   | { type: 'SET_SORT'; payload: SortMode }
   | { type: 'SET_COLUMN_SORT'; payload: string }
   | { type: 'SET_VIEW'; payload: ViewMode }
+  | { type: 'HYDRATE'; payload: FilterState }
   | { type: 'CLEAR_ALL' };
 
 export function filterReducer(state: FilterState, action: FilterAction): FilterState {
@@ -50,8 +41,16 @@ export function filterReducer(state: FilterState, action: FilterAction): FilterS
     }
     case 'SET_VIEW':
       return { ...state, view: action.payload };
+    case 'HYDRATE':
+      return action.payload;
     case 'CLEAR_ALL':
-      return { ...initialFilterState, view: state.view, sort: state.baseSort, baseSort: state.baseSort };
+      return {
+        ...initialFilterState,
+        keywords: new Set(),
+        view: state.view,
+        sort: state.baseSort,
+        baseSort: state.baseSort,
+      };
     default:
       return state;
   }

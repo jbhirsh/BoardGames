@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { filterGames, sortGames } from '../utils/filterGames';
-import { initialFilterState } from '../context/filterReducer';
+import { initialFilterState } from '../data/initialFilterState';
 import { testGames, quickGame, mediumGame, longGame } from './testData';
 import type { FilterState } from '../data/types';
 

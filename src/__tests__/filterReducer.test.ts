@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { filterReducer, initialFilterState } from '../context/filterReducer';
+import { filterReducer } from '../context/filterReducer';
+import { initialFilterState } from '../data/initialFilterState';
 import type { FilterState } from '../data/types';
 
 describe('filterReducer', () => {
@@ -69,6 +70,26 @@ describe('filterReducer', () => {
   it('SET_VIEW updates view', () => {
     const state = filterReducer(initialFilterState, { type: 'SET_VIEW', payload: 'grid' });
     expect(state.view).toBe('grid');
+  });
+
+  it('HYDRATE replaces the state with the payload verbatim', () => {
+    const payload: FilterState = {
+      duration: 'long',
+      players: 6,
+      keywords: new Set(['strategy', 'thematic'] as const),
+      keywordMode: 'and',
+      search: 'epic',
+      sort: 'group',
+      baseSort: 'group',
+      view: 'grid',
+    };
+    const next = filterReducer(initialFilterState, { type: 'HYDRATE', payload });
+    expect(next).toBe(payload);
+    expect(next.duration).toBe('long');
+    expect(next.players).toBe(6);
+    expect(next.keywords.has('strategy')).toBe(true);
+    expect(next.search).toBe('epic');
+    expect(next.view).toBe('grid');
   });
 
   it('CLEAR_ALL resets to initial but preserves view and baseSort', () => {

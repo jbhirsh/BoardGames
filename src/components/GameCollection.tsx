@@ -3,6 +3,7 @@ import { useFilter } from '../context/useFilter';
 import ViewToggle from './ViewToggle';
 import GridView from './GridView';
 import ListView from './ListView';
+import RandomPicker from './RandomPicker';
 
 export default function GameCollection() {
   const { state, filteredGames } = useFilter();
@@ -31,6 +32,7 @@ export default function GameCollection() {
         <h2 className="sec-title">Our Collection</h2>
         <span className="sec-count">{filteredGames.length} games</span>
         <div className="sec-right">
+          <RandomPicker />
           <ViewToggle />
         </div>
       </div>
