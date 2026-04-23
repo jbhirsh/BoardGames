@@ -145,9 +145,8 @@ describe('ActiveTags', () => {
       expect(screen.getByText('Link copied to clipboard')).toBeInTheDocument();
     });
 
-    it('falls back to a prompt if clipboard rejects', async () => {
+    it('fails silently if clipboard rejects (no announcement, no exception)', async () => {
       writeText.mockRejectedValueOnce(new Error('denied'));
-      const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue(null);
 
       renderActiveTags();
       const playersBtn = screen.getByRole('button', { name: /Players/ });
@@ -158,9 +157,9 @@ describe('ActiveTags', () => {
         fireEvent.click(screen.getByRole('button', { name: /Share link/ }));
       });
 
-      await waitFor(() => expect(promptSpy).toHaveBeenCalledTimes(1));
-      expect(promptSpy.mock.calls[0][1]).toContain('p=4');
-      promptSpy.mockRestore();
+      // Label stays as "Share link" and the live region remains empty.
+      expect(screen.getByRole('button', { name: /Share link/ })).toHaveTextContent('Share link');
+      expect(screen.queryByText('Link copied to clipboard')).toBeNull();
     });
   });
 });

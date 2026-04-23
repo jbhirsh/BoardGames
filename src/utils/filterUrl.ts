@@ -37,7 +37,14 @@ export function filterToSearchParams(state: FilterState): URLSearchParams {
   if (state.search) params.set('q', state.search);
   // Serialise baseSort, not sort: column-sort (SET_COLUMN_SORT) is a
   // transient list-view preference and not part of what we share.
-  if (state.baseSort !== 'az') params.set('s', state.baseSort);
+  // Also validate against SORTS so a stray column-sort value in baseSort
+  // can't emit a param the reader would refuse on the way back in.
+  if (
+    state.baseSort !== 'az' &&
+    (SORTS as readonly string[]).includes(state.baseSort)
+  ) {
+    params.set('s', state.baseSort);
+  }
   if (state.view !== 'list') params.set('v', state.view);
   return params;
 }
