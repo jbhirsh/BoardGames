@@ -1,6 +1,6 @@
 import type { FilterState, KeywordId } from './types';
 
-export const initialFilterState: FilterState = Object.freeze({
+export const initialFilterState: FilterState = {
   duration: 'all',
   players: 0,
   keywords: new Set<KeywordId>(),
@@ -9,4 +9,4 @@ export const initialFilterState: FilterState = Object.freeze({
   sort: 'az',
   baseSort: 'az',
   view: 'list',
-}) as FilterState;
+};

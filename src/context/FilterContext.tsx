@@ -9,6 +9,11 @@ import {
   searchParamsToFilter,
 } from '../utils/filterUrl';
 
+/**
+ * FilterProvider must be rendered inside a React Router context. It calls
+ * `useLocation` / `useNavigate` to keep the filter state in sync with the URL,
+ * so rendering it outside a router (or bare Storybook story) will throw.
+ */
 export function FilterProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -19,9 +24,8 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     (search) => searchParamsToFilter(new URLSearchParams(search)),
   );
 
-  // Refs let each sync effect read the other side without triggering it, avoiding ping-pong.
-  // Ordering matters: the ref-update effects below must sit before the two sync effects so
-  // the refs are fresh when the sync effects read them in the same commit cycle.
+  // Ordering matters: these ref-update effects must sit before the two sync
+  // effects so the cross-read refs are fresh when the sync effects fire.
   const stateRef = useRef(state);
   const locationRef = useRef(location);
   useEffect(() => {

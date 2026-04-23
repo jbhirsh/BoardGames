@@ -83,8 +83,10 @@ export function searchParamsToFilter(params: URLSearchParams): FilterState {
   return state;
 }
 
-export function buildShareUrl(state: FilterState): string {
-  const origin = window.location.origin;
+export function buildShareUrl(
+  state: FilterState,
+  origin: string = window.location.origin,
+): string {
   const query = filterToSearchParams(state).toString();
   return query ? `${origin}/?${query}` : `${origin}/`;
 }
