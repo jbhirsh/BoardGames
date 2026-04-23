@@ -9,10 +9,9 @@ import {
   searchParamsToFilter,
 } from '../utils/filterUrl';
 
-// Must be rendered inside a React Router context (calls useLocation / useNavigate).
-// NOTE for consumers: never pair a filter dispatch with navigate() in the same
-// handler — state→URL fires first, so the dispatch wins and the navigate's
-// query params are dropped entirely, not merged.
+/** Must be rendered inside a React Router context. Do not pair a filter
+ * dispatch with `navigate()` in the same handler — the dispatch wins and
+ * the navigate's query params are dropped entirely, not merged. */
 export function FilterProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();

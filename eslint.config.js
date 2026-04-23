@@ -31,8 +31,8 @@ export default defineConfig([
     },
   },
   {
-    // refs written during render so sync effects don't depend on declaration order
-    files: ['src/context/FilterContext.tsx'],
+    // refs written during render so sync/tick reads never see a stale frame
+    files: ['src/context/FilterContext.tsx', 'src/components/RandomPicker.tsx'],
     rules: {
       'react-hooks/refs': 'off',
     },

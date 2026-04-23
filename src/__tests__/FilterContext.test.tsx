@@ -84,7 +84,7 @@ describe('FilterProvider URL sync', () => {
     expect(screen.getByTestId('state-players').textContent).toBe('6');
   });
 
-  it('keeps sync consistent when state and URL both change in one pass', () => {
+  it('dispatch wins and navigate params are dropped when both fire in the same handler', () => {
     // Simulates a caller that dispatches a filter change AND navigates in
     // the same commit — exercises the effect-ordering invariant between
     // the ref updates and the two sync effects.

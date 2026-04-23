@@ -17,11 +17,10 @@ export default function RandomPicker() {
   const tickRef = useRef<number | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  // Written during render so the spinning tick always reads the latest
+  // filtered list (no ≤1-frame stale-ref window after a filter change).
   const filteredGamesRef = useRef(filteredGames);
-
-  useEffect(() => {
-    filteredGamesRef.current = filteredGames;
-  }, [filteredGames]);
+  filteredGamesRef.current = filteredGames;
 
   const stopTicking = useCallback(() => {
     if (tickRef.current !== null) {
