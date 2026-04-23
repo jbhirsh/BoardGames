@@ -1,8 +1,6 @@
 import type { FilterState, DurationFilter, SortMode, ViewMode, KeywordId, KeywordMode } from '../data/types';
 import { initialFilterState } from '../data/initialFilterState';
 
-export { initialFilterState };
-
 export type FilterAction =
   | { type: 'SET_DURATION'; payload: DurationFilter }
   | { type: 'SET_PLAYERS'; payload: number }

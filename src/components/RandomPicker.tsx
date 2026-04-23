@@ -120,7 +120,7 @@ export default function RandomPicker() {
 
       {open && current && (
         <div className="pick-modal">
-          <div className="pick-backdrop" />
+          <div className="pick-backdrop" aria-hidden="true" onClick={close} />
           <div
             ref={cardRef}
             role="dialog"

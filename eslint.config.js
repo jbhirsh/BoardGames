@@ -22,4 +22,15 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // The random-picker modal uses a decorative <div> backdrop with
+    // onClick to let mouse users click-to-dismiss. Escape and the close
+    // button already cover keyboard users, and the dialog element itself
+    // carries role=dialog.
+    files: ['src/components/RandomPicker.tsx'],
+    rules: {
+      'jsx-a11y/no-static-element-interactions': 'off',
+      'jsx-a11y/click-events-have-key-events': 'off',
+    },
+  },
 ])

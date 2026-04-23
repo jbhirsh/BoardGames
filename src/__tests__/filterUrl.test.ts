@@ -4,7 +4,7 @@ import {
   searchParamsToFilter,
   buildShareUrl,
 } from '../utils/filterUrl';
-import { initialFilterState } from '../context/filterReducer';
+import { initialFilterState } from '../data/initialFilterState';
 import type { FilterState } from '../data/types';
 
 function makeState(overrides: Partial<FilterState> = {}): FilterState {

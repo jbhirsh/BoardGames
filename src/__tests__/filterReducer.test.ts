@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { filterReducer, initialFilterState } from '../context/filterReducer';
+import { filterReducer } from '../context/filterReducer';
+import { initialFilterState } from '../data/initialFilterState';
 import type { FilterState } from '../data/types';
 
 describe('filterReducer', () => {

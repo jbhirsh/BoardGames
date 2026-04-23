@@ -122,6 +122,17 @@ describe('RandomPicker', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
+  it('closes the modal when the backdrop is clicked', () => {
+    renderPicker();
+    act(() => fireEvent.click(screen.getByRole('button', { name: /^Pick for us$/ })));
+    act(() => vi.advanceTimersByTime(2000));
+
+    const backdrop = document.querySelector('.pick-backdrop') as HTMLElement;
+    act(() => fireEvent.click(backdrop));
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
   it('closes the modal when Escape is pressed', () => {
     renderPicker();
     act(() => fireEvent.click(screen.getByRole('button', { name: /^Pick for us$/ })));
