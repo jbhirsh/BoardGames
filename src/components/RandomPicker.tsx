@@ -47,7 +47,16 @@ export default function RandomPicker() {
 
     const start = Date.now();
     const tick = () => {
-      setCurrent((prev) => pickRandom(filteredGamesRef.current, prev ?? undefined));
+      const currentPool = filteredGamesRef.current;
+      if (currentPool.length === 0) {
+        // The filter emptied while spinning (e.g. back/forward navigation
+        // or external state change). Freeze on the last pick instead of
+        // letting pickRandom throw on every subsequent tick.
+        setSpinning(false);
+        tickRef.current = null;
+        return;
+      }
+      setCurrent((prev) => pickRandom(currentPool, prev ?? undefined));
       if (Date.now() - start >= SPIN_MS) {
         setSpinning(false);
         tickRef.current = null;

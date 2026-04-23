@@ -71,6 +71,26 @@ describe('filterReducer', () => {
     expect(state.view).toBe('grid');
   });
 
+  it('HYDRATE replaces the state with the payload verbatim', () => {
+    const payload: FilterState = {
+      duration: 'long',
+      players: 6,
+      keywords: new Set(['strategy', 'thematic'] as const),
+      keywordMode: 'and',
+      search: 'epic',
+      sort: 'group',
+      baseSort: 'group',
+      view: 'grid',
+    };
+    const next = filterReducer(initialFilterState, { type: 'HYDRATE', payload });
+    expect(next).toBe(payload);
+    expect(next.duration).toBe('long');
+    expect(next.players).toBe(6);
+    expect(next.keywords.has('strategy')).toBe(true);
+    expect(next.search).toBe('epic');
+    expect(next.view).toBe('grid');
+  });
+
   it('CLEAR_ALL resets to initial but preserves view and baseSort', () => {
     const modified: FilterState = {
       duration: 'quick',

@@ -194,6 +194,24 @@ describe('RandomPicker', () => {
     expect(viewRules).toBeInTheDocument();
   });
 
+  it('freezes on the last pick when the filter empties mid-spin', () => {
+    renderPicker();
+    act(() => fireEvent.click(screen.getByRole('button', { name: /^Pick for us$/ })));
+    // Take a couple of ticks of the spin, then empty the filtered list.
+    act(() => vi.advanceTimersByTime(200));
+    expect(screen.getByText('Spinning…')).toBeInTheDocument();
+
+    const searchInput = screen.getByPlaceholderText('Search games...');
+    act(() => fireEvent.change(searchInput, { target: { value: '__no_match__' } }));
+
+    // Advance well past SPIN_MS. No throw, spin completes cleanly, dialog
+    // stays open on the last-selected game.
+    act(() => vi.advanceTimersByTime(2000));
+
+    expect(screen.queryByText('Spinning…')).toBeNull();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
   it('keeps focus inside the dialog on initial Shift+Tab from the card', () => {
     renderPicker();
     act(() => fireEvent.click(screen.getByRole('button', { name: /^Pick for us$/ })));
