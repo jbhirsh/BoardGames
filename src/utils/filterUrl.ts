@@ -62,8 +62,8 @@ export function searchParamsToFilter(params: URLSearchParams): FilterState {
 
   const p = params.get('p');
   if (p) {
-    const n = Number.parseInt(p, 10);
-    if (Number.isFinite(n) && n > 0 && n <= MAX_PLAYERS) state.players = n;
+    const n = Number(p);
+    if (Number.isInteger(n) && n > 0 && n <= MAX_PLAYERS) state.players = n;
   }
 
   const k = params.get('k');

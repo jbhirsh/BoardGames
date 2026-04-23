@@ -127,6 +127,11 @@ describe('searchParamsToFilter', () => {
     expect(searchParamsToFilter(new URLSearchParams('p=0')).players).toBe(0);
     expect(searchParamsToFilter(new URLSearchParams('p=999')).players).toBe(0);
     expect(searchParamsToFilter(new URLSearchParams('p=-3')).players).toBe(0);
+    // Partial numeric strings: parseInt('5abc', 10) === 5 would silently
+    // accept this; Number('5abc') is NaN.
+    expect(searchParamsToFilter(new URLSearchParams('p=5abc')).players).toBe(0);
+    // Floats must be rejected too.
+    expect(searchParamsToFilter(new URLSearchParams('p=5.5')).players).toBe(0);
   });
 });
 

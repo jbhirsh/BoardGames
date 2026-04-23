@@ -57,7 +57,7 @@ export default function RandomPicker() {
         return;
       }
       // prev is non-null: setCurrent(pickRandom(pool)) commits before this timer fires.
-      setCurrent((prev) => pickRandom(currentPool, prev!));
+      setCurrent((prev) => pickRandom(currentPool, prev as Game));
       if (Date.now() - start >= SPIN_MS) {
         setSpinning(false);
         tickRef.current = null;
