@@ -468,6 +468,13 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
   .sec-hd{ padding:14px 0 10px; }
   .hero{ padding:60px 20px 48px; }
   .hstat{ padding:14px 10px; font-size:9px; }
+
+  /* rules header: stop description being squeezed into a single-word column */
+  .rules-title-row{ flex-wrap:wrap; align-items:flex-start; gap:14px; }
+  .rules-box-art{ width:64px; height:64px; }
+  .rules-title-info{ flex:1 1 calc(100% - 80px); min-width:0; }
+  .rules-game-name{ white-space:normal; overflow:visible; text-overflow:clip; font-size:22px; margin-bottom:6px; }
+  .rules-title-row .rules-chat-toggle{ flex:1 1 100%; justify-content:center; }
 }
 
 @media(max-width:400px){
