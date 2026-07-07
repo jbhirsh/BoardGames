@@ -24,7 +24,6 @@ dist-ssr
 *.sw?
 
 .claude
-CLAUDE.md
 .vercel
 
 # Local env files — real secrets live here, never committed.
