@@ -5,7 +5,7 @@ import { join } from 'path';
 import * as Sentry from '@sentry/node';
 
 Sentry.init({
-  dsn: "https://0555fa542a1eb1b3da2a4892a8472c43@o4511157588918272.ingest.us.sentry.io/4511158568353792",
+  dsn: process.env.SENTRY_DSN,
   tracesSampleRate: 1.0,
 });
 
