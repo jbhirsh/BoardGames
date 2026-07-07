@@ -24,8 +24,11 @@ dist-ssr
 *.sw?
 
 .claude
-CLAUDE.md
 .vercel
-.env*.local
+
+# Local env files — real secrets live here, never committed.
+.env
+.env.*
+!.env.example
 *.traineddata
 .tmp-ocr-images
