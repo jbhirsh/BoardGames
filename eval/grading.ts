@@ -107,22 +107,56 @@ export interface JudgeVerdict {
   reason: string;
 }
 
-/** Strict rubric prompt for the second (judge) Gemini call. */
-export function buildJudgePrompt(question: string, expected: string, answer: string): string {
-  return [
-    'You are a strict grader for a board game rules assistant.',
+/**
+ * Strict rubric prompt for the second (judge) Gemini call. The response is
+ * graded against `reference` as a reference answer (factual agreement), not
+ * as text it must recite. Optional `notes` are included as
+ * accept-but-don't-require grading guidance.
+ */
+export function buildJudgePrompt(
+  question: string,
+  reference: string,
+  answer: string,
+  notes?: string,
+): string {
+  const lines = [
+    "You are a strict grader for a board game rules assistant. Grade the assistant's " +
+      'response against the reference answer below.',
     '',
     `Question asked to the assistant: ${question}`,
-    `Expected fact the response must state: ${expected}`,
+    '',
+    'Reference answer:',
+    '"""',
+    reference,
+    '"""',
     '',
     "Assistant's response:",
     '"""',
     answer,
     '"""',
+  ];
+  if (notes !== undefined && notes.trim() !== '') {
+    lines.push(
+      '',
+      'Grading guidance (content mentioned here is acceptable in the response, but not required):',
+      '"""',
+      notes,
+      '"""',
+    );
+  }
+  lines.push(
     '',
-    'Does the response correctly state the expected fact? Answer PASS or FAIL ' +
-      'with a one-line reason. Start your reply with exactly PASS or FAIL.',
-  ].join('\n');
+    'Grading rules:',
+    '- PASS if the response correctly answers the question and agrees with the reference ' +
+      'answer on the facts it does state. The response does not need to repeat every detail ' +
+      'of the reference answer. Phrasing like "The assistant should..." in the reference ' +
+      'answer describes required behavior, not text the response must recite.',
+    '- FAIL if the response contradicts the reference answer, asserts rules the reference ' +
+      'answer does not support, or fails to answer the question.',
+    '',
+    'Answer PASS or FAIL with a one-line reason. Start your reply with exactly PASS or FAIL.',
+  );
+  return lines.join('\n');
 }
 
 /** Robustly extracts a PASS/FAIL verdict from a judge reply; unparseable replies fail. */

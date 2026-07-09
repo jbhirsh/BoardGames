@@ -59,7 +59,7 @@ function loadGoldenSet(path: string): GoldenSet | null {
 async function judgeAnswer(ai: GoogleGenAI, entry: GoldenEntry, answer: string): Promise<string> {
   const response = await ai.models.generateContent({
     model: RULES_ASSISTANT_MODEL,
-    contents: buildJudgePrompt(entry.question, entry.expected, answer),
+    contents: buildJudgePrompt(entry.question, entry.expected, answer, entry.notes),
     config: { temperature: 0 },
   });
   return response.text ?? '';

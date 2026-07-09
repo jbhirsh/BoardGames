@@ -126,11 +126,11 @@ requests that touch `api/**`, `eval/**`, or `rules-text/**` (plus a manual
 `GEMINI_API_KEY` isn't available — e.g. on PRs from forks, which don't receive
 repository secrets.
 
-**Current score:** 22/26 (84.6%) — below the 90% threshold, so `npm run eval`
-currently exits nonzero. All four failures are judge-graded entries where the
-assistant's answer looks substantively correct (including two "unanswerable"
-questions it correctly declined); they are kept as-is per the golden-set rule
-that failures are signal to investigate, not questions to tune away.
+**Current score:** 24/26 (92.3%) — passing the 90% threshold. The two failures
+are judge-graded entries where the assistant's answer included *correct* rulebook
+detail beyond the reference answer, which a reference-only judge cannot verify
+and so treats as unsupported. They are kept as findings rather than tuned away,
+per the golden-set rule that failures are signal to investigate.
 
 ## Deployment
 

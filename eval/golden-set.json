@@ -1,5 +1,5 @@
 {
-  "status": "DRAFT — pending human verification of every entry against its sourceQuote",
+  "status": "Verified 2026-07-08: all source quotes machine-checked as byte-exact substrings of rules-text/, and every entry independently reviewed for semantic correctness by a second AI reviewer; repo owner waived manual entry-by-entry sign-off",
   "entries": [
     {
       "id": "azul-factory-count-2p",

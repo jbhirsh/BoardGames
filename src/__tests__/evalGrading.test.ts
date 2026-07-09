@@ -149,12 +149,38 @@ describe('parseJudgeVerdict', () => {
 });
 
 describe('buildJudgePrompt', () => {
-  it('embeds question, expected fact, and answer, and demands PASS or FAIL', () => {
-    const prompt = buildJudgePrompt('How many cards?', '7 cards', 'You are dealt 7 cards.');
-    expect(prompt).toContain('How many cards?');
-    expect(prompt).toContain('7 cards');
+  it('frames expected as a reference answer and embeds question, reference, and response', () => {
+    const prompt = buildJudgePrompt(
+      'How many cards?',
+      'Each player is dealt 7 cards.',
+      'You are dealt 7 cards.',
+    );
+    expect(prompt).toContain('Question asked to the assistant: How many cards?');
+    expect(prompt).toContain('Reference answer:');
+    expect(prompt).toContain('Each player is dealt 7 cards.');
     expect(prompt).toContain('You are dealt 7 cards.');
-    expect(prompt).toContain('Answer PASS or FAIL');
+    expect(prompt).toContain('does not need to repeat every detail');
+    expect(prompt).toContain('contradicts the reference answer');
+    expect(prompt).not.toContain('Expected fact');
+  });
+
+  it('keeps the strict verdict contract', () => {
+    const prompt = buildJudgePrompt('q', 'ref', 'ans');
+    expect(prompt).toContain('Answer PASS or FAIL with a one-line reason.');
+    expect(prompt).toContain('Start your reply with exactly PASS or FAIL.');
+  });
+
+  it('includes notes as accept-but-not-require guidance when present', () => {
+    const prompt = buildJudgePrompt('q', 'ref', 'ans', 'Mentioning house-rule variants is fine.');
+    expect(prompt).toContain('Grading guidance');
+    expect(prompt).toContain('Mentioning house-rule variants is fine.');
+    expect(prompt).toContain('but not required');
+  });
+
+  it('omits the guidance section when notes is absent, empty, or blank', () => {
+    expect(buildJudgePrompt('q', 'ref', 'ans')).not.toContain('Grading guidance');
+    expect(buildJudgePrompt('q', 'ref', 'ans', '')).not.toContain('Grading guidance');
+    expect(buildJudgePrompt('q', 'ref', 'ans', '   ')).not.toContain('Grading guidance');
   });
 });
 
