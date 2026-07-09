@@ -1,0 +1,220 @@
+{
+  "status": "DRAFT — pending human verification of every entry against its sourceQuote",
+  "entries": [
+    {
+      "id": "azul-factory-count-2p",
+      "game": "azul",
+      "question": "How many Factory displays do we set out in a 2-player game of Azul?",
+      "expected": "\\b(5|five)\\b",
+      "matchType": "regex",
+      "sourceQuote": "In a 2-player game, place 5 Factory displays."
+    },
+    {
+      "id": "azul-vertical-line-bonus",
+      "game": "azul",
+      "question": "In Azul, how many bonus points do I score at the end of the game for a complete vertical line of 5 tiles?",
+      "expected": "\\b(7|seven)\\b",
+      "matchType": "regex",
+      "sourceQuote": "Gain 7 points for each\ncomplete vertical line of\n5 consecutive tiles on\nyour wall."
+    },
+    {
+      "id": "azul-tiebreaker",
+      "game": "azul",
+      "question": "If two players are tied on points at the end of Azul, who wins?",
+      "expected": "The tied player with more complete horizontal lines wins. If that still does not break the tie, the victory is shared.",
+      "matchType": "judge",
+      "sourceQuote": "In the case of a tie, the\ntied player with more complete\nhorizontal lines wins the game.\nIf that does not break the tie,\nthe victory is shared."
+    },
+    {
+      "id": "ttr-longest-path-bonus",
+      "game": "ticket-to-ride",
+      "question": "How many bonus points does the Longest Continuous Path card give in Ticket to Ride?",
+      "expected": "\\b(10|ten)\\b",
+      "matchType": "regex",
+      "sourceQuote": "The player who has the Longest Continuous Path of routes receives this special bonus card and adds 10 points to his score."
+    },
+    {
+      "id": "ttr-endgame-trigger",
+      "game": "ticket-to-ride",
+      "question": "What triggers the end of the game in Ticket to Ride?",
+      "expected": "When any player is down to 0, 1, or 2 plastic trains left in their stock at the end of their turn, every player (including that player) gets one final turn, and then the game ends and final scores are calculated.",
+      "matchType": "judge",
+      "sourceQuote": "When one player’s stock of colored plastic trains gets down to only 0,1 or 2 trains left at the end of his turn, each player, including that player, gets\none final turn. The game then ends and players calculate their final scores."
+    },
+    {
+      "id": "ttr-europe-unused-station-points",
+      "game": "ticket-to-ride-europe",
+      "question": "In Ticket to Ride Europe, how many points do I score at the end of the game for each train station I never used?",
+      "expected": "\\b(4|four)\\b",
+      "matchType": "regex",
+      "sourceQuote": "For each Station a player has not used, four points are added to his score at the end of the game."
+    },
+    {
+      "id": "ttr-europe-max-stations",
+      "game": "ticket-to-ride-europe",
+      "question": "How many train stations can a single player build over the course of a game of Ticket to Ride Europe?",
+      "expected": "\\b(3|three)\\b",
+      "matchType": "regex",
+      "sourceQuote": "Each player may build a maximum of one Station per turn, and three\nStations throughout the course of the game."
+    },
+    {
+      "id": "uno-deal-count",
+      "game": "uno",
+      "question": "How many cards is each player dealt at the start of a round of UNO?",
+      "expected": "\\b(7|seven)\\b",
+      "matchType": "regex",
+      "sourceQuote": "The dealer shuffles and deals each player 7 cards."
+    },
+    {
+      "id": "uno-wd4-false-challenge",
+      "game": "uno",
+      "question": "In UNO, if I challenge a Wild Draw 4 and the player who played it turns out to be innocent, how many cards do I have to draw?",
+      "expected": "\\b(6|six)\\b",
+      "matchType": "regex",
+      "sourceQuote": "However, if the\nchallenged player is innocent, you must draw the 4 cards PLUS an additional 2\ncards (6 total)!"
+    },
+    {
+      "id": "exploding-kittens-setup-4p",
+      "game": "exploding-kittens",
+      "question": "For a 4-player game of Exploding Kittens, how many Exploding Kitten cards do we insert back into the deck during setup?",
+      "expected": "\\b(3|three)\\b",
+      "matchType": "regex",
+      "sourceQuote": "For a 4 player game, insert 3 Kittens."
+    },
+    {
+      "id": "exploding-kittens-see-future",
+      "game": "exploding-kittens",
+      "question": "How many cards of the Draw Pile does the See the Future card let me look at in Exploding Kittens?",
+      "expected": "\\b(3|three)\\b",
+      "matchType": "regex",
+      "sourceQuote": "Privately view the top 3 cards from the Draw\nPile and put them back in the same order."
+    },
+    {
+      "id": "pandemic-actions-per-turn",
+      "game": "pandemic",
+      "question": "How many actions can I take on my turn in Pandemic?",
+      "expected": "\\b(4|four)\\b",
+      "matchType": "regex",
+      "sourceQuote": "You may do up to 4 actions each turn."
+    },
+    {
+      "id": "pandemic-lose-conditions",
+      "game": "pandemic",
+      "question": "What are all the ways we can lose a game of Pandemic?",
+      "expected": "There are three ways to lose: the outbreaks marker reaches the last space of the Outbreaks Track; you are unable to place the number of disease cubes actually needed on the board; or a player cannot draw 2 Player cards after doing their actions.",
+      "matchType": "judge",
+      "sourceQuote": "There are 3 ways for the game to end and the players to lose:\n• if the outbreaks marker reaches the last space of the Outbreaks Track,\n• if you are unable to place the number of disease cubes actually\nneeded on the board, or\n• if a player cannot draw 2 Player cards after doing his actions."
+    },
+    {
+      "id": "catan-victory-points",
+      "game": "catan",
+      "question": "How many victory points do I need to win Catan?",
+      "expected": "\\b(10|ten)\\b",
+      "matchType": "regex",
+      "sourceQuote": "If you have 10 or more victory points during your turn,\nthe game ends and you are the winner!"
+    },
+    {
+      "id": "catan-roll-seven",
+      "game": "catan",
+      "question": "What happens when someone rolls a 7 in Catan?",
+      "expected": "No one receives any resources. Every player who has more than 7 resource cards must select half of their resource cards (rounded down) and return them to the bank. Then the player who rolled must move the robber.",
+      "matchType": "judge",
+      "sourceQuote": "If you roll a “7,” no one receives any resources.\nInstead, every player who has more than 7 resource cards\nmust select half (rounded down) of their resource cards and\nreturn them to the bank.\nThen you must move the robber Y."
+    },
+    {
+      "id": "catan-longest-road-length",
+      "game": "catan",
+      "question": "How many road segments does my continuous road need before I can claim the Longest Road card in Catan?",
+      "expected": "\\b(5|five)\\b",
+      "matchType": "regex",
+      "sourceQuote": "The first player to build a continuous\nroad (not counting forks) of at least 5\nroad segments receives the special card"
+    },
+    {
+      "id": "codenames-starting-team-words",
+      "game": "codenames",
+      "question": "In Codenames, how many words does the starting team have to guess?",
+      "expected": "\\b(9|nine)\\b",
+      "matchType": "regex",
+      "sourceQuote": "The starting\nteam has 9 words to guess. The other team has 8."
+    },
+    {
+      "id": "codenames-assassin",
+      "game": "codenames",
+      "question": "What happens if a field operative touches the assassin word in Codenames?",
+      "expected": "The game ends immediately and the team that contacted the assassin loses.",
+      "matchType": "judge",
+      "sourceQuote": "If the field operative touches the assassin, the word is covered by the assassin card. This ends the\ngame! The team that contacted the assassin loses."
+    },
+    {
+      "id": "bananagrams-dump-exchange",
+      "game": "bananagrams",
+      "question": "In Bananagrams, if I dump a letter back into the bunch, how many tiles do I have to take in exchange?",
+      "expected": "\\b(three|3)\\b",
+      "matchType": "regex",
+      "sourceQuote": "At any time during the game, you may call out “DUMP!” and put one of your letters\nback, facedown in the BUNCH. However, you MUST take three more tiles in exchange!"
+    },
+    {
+      "id": "pandemic-hand-limit-crossgame",
+      "game": "pandemic",
+      "question": "What is the hand limit in Pandemic?",
+      "expected": "\\b(7|seven)\\b",
+      "matchType": "regex",
+      "sourceQuote": "If you ever have more than 7 cards in hand (after first resolving any\nEpidemic cards you may have drawn), discard cards or play Event cards\nuntil you have 7 cards in hand",
+      "notes": "Cross-game disambiguation: hand-size rules differ across the corpus. Ticket to Ride says a player may have any number of cards in hand, Exploding Kittens says there is no maximum or minimum hand size, and Catan has a different 7-card rule (discard half when a 7 is rolled). The answer must be grounded in the Pandemic rulebook specifically: the limit is 7 cards."
+    },
+    {
+      "id": "ttr-hand-limit-crossgame",
+      "game": "ticket-to-ride",
+      "question": "Is there a maximum number of Train Car cards I'm allowed to hold in my hand in Ticket to Ride?",
+      "expected": "No. The rulebook states a player may have any number of cards in his hand at any time. The assistant should not import a hand limit from another game.",
+      "matchType": "judge",
+      "sourceQuote": "A player may have any number of cards in his hand at any time.",
+      "notes": "Cross-game disambiguation: Pandemic has a hard 7-card hand limit and Catan forces a discard of half your hand (when over 7 cards) on a roll of 7. A correct answer must pull from the Ticket to Ride rulebook, which explicitly allows any number of cards."
+    },
+    {
+      "id": "exploding-kittens-skip-crossgame",
+      "game": "exploding-kittens",
+      "question": "What does playing a Skip card do in Exploding Kittens?",
+      "expected": "It immediately ends your own turn without you having to draw a card.",
+      "matchType": "judge",
+      "sourceQuote": "Immediately end your turn without drawing\na card.",
+      "notes": "Cross-game disambiguation: UNO also has a Skip card, but there it makes the NEXT player lose their turn. In Exploding Kittens a Skip ends YOUR OWN turn without drawing. The answer must be grounded in the Exploding Kittens rulebook, not UNO's. Judge should accept (but not require) the extra detail that a Skip played against an Attack only ends 1 of the 2 turns — stated elsewhere in the same rulebook."
+    },
+    {
+      "id": "bananagrams-dictionary-unanswerable",
+      "game": "bananagrams",
+      "question": "Which dictionary should we use to settle whether a word is acceptable in Bananagrams?",
+      "expected": "The assistant should say the rulebook does not name any dictionary or official word list. The rules only say a winning grid may not contain a misspelled word, proper noun, abbreviation or other unacceptable word, and leave adjudication to the players. The assistant should not invent an official dictionary.",
+      "matchType": "judge",
+      "sourceQuote": "",
+      "notes": "UNANSWERABLE. Searched bananagrams.txt for 'dictionary', 'official word', and 'scrabble' — zero matches. The rules ban a 'misspelled word, proper noun, abbreviation or other unacceptable word' but never specify a reference for what counts as a word."
+    },
+    {
+      "id": "ttr-rearrange-trains-unanswerable",
+      "game": "ticket-to-ride",
+      "question": "In Ticket to Ride, can I move or take back one of my plastic trains after I've placed it on a route?",
+      "expected": "The assistant should say the rulebook does not address moving, removing, or taking back trains once placed — the claiming-routes rules only describe placing trains on a route — and should not invent a rule allowing or governing it.",
+      "matchType": "judge",
+      "sourceQuote": "",
+      "notes": "UNANSWERABLE. Searched ticket-to-ride.txt for 'remove', 'rearrange', 'take back', and 'relocat' — zero matches. The Claiming Routes section only covers placing trains; nothing covers undoing a placement."
+    },
+    {
+      "id": "codenames-timer-length-unanswerable",
+      "game": "codenames",
+      "question": "How long is the sand timer in Codenames?",
+      "expected": "The assistant should say the rulebook never states the sand timer's duration. It only says that if a player is thinking too long, any player can flip the sand timer and ask them to decide before time runs out. The assistant should not state a specific number of seconds or minutes.",
+      "matchType": "judge",
+      "sourceQuote": "",
+      "notes": "UNANSWERABLE. Searched codenames.txt for 'minute', 'second', and 'duration' — the only hit is the unrelated phrase 'for the duration of the game' (about the double agent). The 'WHAT'S THE TIMER FOR?' section describes when to flip the timer but never its length."
+    },
+    {
+      "id": "uno-jump-in-unanswerable",
+      "game": "uno",
+      "question": "In UNO, can I jump in and play a card out of turn if I have the identical card to the one on top of the discard pile?",
+      "expected": "The assistant should say this rulebook does not mention any jump-in rule; play as written proceeds in turn order only. It should note the rulebook doesn't cover playing out of turn rather than confirming or describing a jump-in house rule.",
+      "matchType": "judge",
+      "sourceQuote": "",
+      "notes": "UNANSWERABLE. Searched uno.txt for 'jump', 'out of turn', and 'identical' — zero matches. Jump-in is a common house rule (and appears in other UNO editions) but this rulebook text does not cover it."
+    }
+  ]
+}

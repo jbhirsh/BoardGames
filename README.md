@@ -96,6 +96,42 @@ secrets live in `.env.local`, which is gitignored.
 
 See [`CLAUDE.md`](CLAUDE.md) for a deeper tour of the codebase and conventions.
 
+## Answer-quality evaluation
+
+The AI rules assistant is only useful if its answers are right, so the repo
+includes an evaluation harness that measures answer quality against a **golden
+set** ([`eval/golden-set.json`](eval/golden-set.json)) — a fixed list of rules
+questions with verified answers and verbatim source quotes from the extracted
+rulebook text in `rules-text/`. The set deliberately includes hard cases:
+questions the rulebooks don't answer (the assistant should say so rather than
+guess) and questions that mean different things in different games
+(cross-game disambiguation).
+
+**Run it locally:**
+
+```bash
+GEMINI_API_KEY=... npm run eval
+```
+
+The harness runs every golden-set question through the real `api/chat.ts`
+pipeline, so it needs a `GEMINI_API_KEY` and makes real Gemini calls. It exits
+nonzero if the pass rate falls below the threshold, which defaults to **90%**
+and is configurable — see [`eval/run-eval.ts`](eval/run-eval.ts).
+
+**In CI:** the eval runs as a separate workflow
+([`.github/workflows/eval.yml`](.github/workflows/eval.yml)), not as part of
+the unit-test job, because it costs real API calls. It triggers only on pull
+requests that touch `api/**`, `eval/**`, or `rules-text/**` (plus a manual
+`workflow_dispatch`), and skips gracefully with a clear message when
+`GEMINI_API_KEY` isn't available — e.g. on PRs from forks, which don't receive
+repository secrets.
+
+**Current score:** 22/26 (84.6%) — below the 90% threshold, so `npm run eval`
+currently exits nonzero. All four failures are judge-graded entries where the
+assistant's answer looks substantively correct (including two "unanswerable"
+questions it correctly declined); they are kept as-is per the golden-set rule
+that failures are signal to investigate, not questions to tune away.
+
 ## Deployment
 
 Deployed on **Vercel** (`vercel.json`): the Vite build is served from `dist/`,

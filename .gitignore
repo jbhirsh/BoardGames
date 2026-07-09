@@ -33,3 +33,6 @@ coverage
 !.env.example
 *.traineddata
 .tmp-ocr-images
+
+# Eval harness output
+eval/results.json
