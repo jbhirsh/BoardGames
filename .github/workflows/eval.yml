@@ -1,0 +1,53 @@
+name: Rules Assistant Eval
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "api/**"
+      - "eval/**"
+      - "rules-text/**"
+      - ".github/workflows/eval.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: eval-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  eval:
+    name: Answer-Quality Eval
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check GEMINI_API_KEY availability
+        id: gate
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "skipping eval: GEMINI_API_KEY not available (secrets are not exposed to fork PRs)"
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v5
+        if: steps.gate.outputs.available == 'true'
+
+      - uses: actions/setup-node@v5
+        if: steps.gate.outputs.available == 'true'
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+        if: steps.gate.outputs.available == 'true'
+
+      - name: Run eval against golden set
+        if: steps.gate.outputs.available == 'true'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: npm run eval

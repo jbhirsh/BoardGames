@@ -1,8 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenAI } from '@google/genai';
-import { readFileSync } from 'fs';
-import { join } from 'path';
 import * as Sentry from '@sentry/node';
+import { loadRulesText, streamRulesAnswer } from './_lib/rulesAssistant';
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -38,50 +36,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Read rules text
   let rulesText: string;
   try {
-    rulesText = readFileSync(join(process.cwd(), 'rules-text', slug + '.txt'), 'utf-8');
+    rulesText = loadRulesText(slug);
   } catch {
     return res.status(404).json({ error: 'Rules not found for this game' });
   }
-
-  // Set up Gemini
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-
-  // Build conversation contents
-  const contents: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> = [];
-
-  // First message: rules text as context
-  contents.push({
-    role: 'user',
-    parts: [{ text: 'Here are the complete rules for the game:\n\n' + rulesText }],
-  });
-
-  // Map history
-  if (history && Array.isArray(history)) {
-    for (const entry of history) {
-      contents.push({
-        role: entry.role as 'user' | 'model',
-        parts: [{ text: entry.content }],
-      });
-    }
-  }
-
-  // Add the new user message
-  contents.push({
-    role: 'user',
-    parts: [{ text: message }],
-  });
 
   Sentry.setTag("game_slug", slug);
   Sentry.setContext("chat", { slug, messageLength: message.length, historyLength: history?.length ?? 0 });
 
   try {
-    const response = await ai.models.generateContentStream({
-      model: 'gemini-2.5-flash',
-      contents,
-      config: {
-        systemInstruction:
-          'You are a helpful board game rules assistant. Answer questions based only on the provided rules text. If the rules don\'t cover the question, say so. Keep answers concise and friendly.',
-      },
+    const response = await streamRulesAnswer({
+      rulesText,
+      message,
+      history,
+      apiKey: process.env.GEMINI_API_KEY!,
     });
 
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
