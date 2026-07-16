@@ -4,9 +4,11 @@ import { GROUP_ORDER, KW } from '../data/keywords';
 export function filterGames(games: Game[], state: FilterState): Game[] {
   let list = games;
 
-  if (state.duration === 'quick')  list = list.filter(g => g.mins <= 15);
-  if (state.duration === 'medium') list = list.filter(g => g.mins > 15 && g.mins <= 60);
-  if (state.duration === 'long')   list = list.filter(g => g.mins > 60);
+  // Filter on the curated `cat` field, not a re-derivation from `mins`. The
+  // clickable DurationPill and SET_DURATION both use `game.cat`, so filtering
+  // by anything else lets the two disagree — e.g. a 90-minute game tagged
+  // "medium" would vanish when you click its own "medium" pill.
+  if (state.duration !== 'all') list = list.filter(g => g.cat === state.duration);
 
   if (state.players > 0) list = list.filter(g => g.min <= state.players && g.max >= state.players);
 
