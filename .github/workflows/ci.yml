@@ -7,6 +7,11 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+# Least-privilege default for the build job; the review job below widens its
+# own scope where it genuinely needs pull-requests/issues write.
+permissions:
+  contents: read
+
 jobs:
   ci:
     runs-on: ubuntu-latest

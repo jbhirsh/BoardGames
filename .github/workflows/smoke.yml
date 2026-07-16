@@ -28,6 +28,9 @@ on:
     - cron: '17 5,17 * * *'
   workflow_dispatch:
 
+# This job only curls public URLs and reads one secret; it needs no repo token.
+permissions: {}
+
 jobs:
   api-smoke:
     name: API smoke test
@@ -53,6 +56,14 @@ jobs:
           TARGET_URL="${TARGET_URL:-https://board-games-silk.vercel.app}"
           ENVIRONMENT="${ENVIRONMENT:-Production ($GITHUB_EVENT_NAME)}"
           echo "Smoke-testing $ENVIRONMENT at $TARGET_URL"
+
+          # Only ever send the bypass secret to a Vercel host — guards against a
+          # forged/unexpected deployment_status pointing environment_url elsewhere.
+          host=${TARGET_URL#*://}; host=${host%%/*}
+          case "$host" in
+            *.vercel.app) ;;
+            *) echo "::error::refusing to smoke-test unexpected host: $host"; exit 1 ;;
+          esac
 
           auth_args=()
           if [ -n "$VERCEL_BYPASS" ]; then
