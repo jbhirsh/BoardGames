@@ -1,65 +1,92 @@
 name: Deployment Smoke Test
 
-# Vercel reports every deployment (preview and production) back to GitHub as a
-# deployment_status event. When one succeeds, POST a real rules question to the
-# deployed /api/chat and require a real answer. This exercises the compiled
-# function in the actual Vercel runtime — the layer unit tests, tsc, and the
-# golden-set eval never touch — so a function that crashes at module load
-# (e.g. the extensionless ESM import that broke production in #26) turns into
-# a red check on the PR instead of a silent 500 for users.
+# Two triggers, one job:
+#
+# 1. deployment_status — Vercel reports every deployment (preview and
+#    production) back to GitHub. When one succeeds, probe the deployed API.
+#    This exercises the compiled functions in the actual Vercel runtime — the
+#    layer unit tests, tsc, and the golden-set eval never touch — so a function
+#    that crashes at module load (e.g. the extensionless ESM import that broke
+#    production in #26) turns into a red check on the PR instead of a silent
+#    500 for users.
+#
+# 2. schedule — the same probes run against production twice a day, catching
+#    drift between deploys: revoked/quota-exhausted API keys, model
+#    retirements, or provider outages. Cost is negligible: the chat probe asks
+#    about the collection's smallest rulebook (cranium, ~1.4 KB of grounding
+#    text), so a month of scheduled runs is well under one cent of Gemini
+#    usage, and Actions minutes are free on public repos.
 #
 # Preview deployments sit behind Vercel Authentication, so the request sends
-# the project's Protection Bypass for Automation secret. Generate it in
-# Vercel: Project Settings -> Deployment Protection -> Protection Bypass for
-# Automation, and store it as the VERCEL_AUTOMATION_BYPASS_SECRET Actions
-# secret. Without it, preview smoke tests fail loudly (401) by design rather
-# than pretending coverage exists.
+# the project's Protection Bypass for Automation secret
+# (VERCEL_AUTOMATION_BYPASS_SECRET). Without it, preview smoke tests fail
+# loudly (401) by design rather than pretending coverage exists.
 
 on:
   deployment_status:
+  schedule:
+    - cron: '17 5,17 * * *'
+  workflow_dispatch:
 
 jobs:
-  chat-smoke:
-    name: Chat API smoke test
-    if: github.event.deployment_status.state == 'success'
+  api-smoke:
+    name: API smoke test
+    if: github.event_name != 'deployment_status' || github.event.deployment_status.state == 'success'
     runs-on: ubuntu-latest
     steps:
-      - name: POST a rules question to the deployed /api/chat
+      - name: Probe /api/chat and /api/votes on the target deployment
         env:
           TARGET_URL: ${{ github.event.deployment_status.environment_url }}
           ENVIRONMENT: ${{ github.event.deployment_status.environment }}
           VERCEL_BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
           set -u
-          if [ -z "$TARGET_URL" ]; then
+          # A deployment event must carry its own URL — falling back to
+          # production here would probe the wrong deployment and report a
+          # green check for one that was never tested. Only the scheduled and
+          # manual triggers (which have no event URL by nature) target
+          # production.
+          if [ "$GITHUB_EVENT_NAME" = "deployment_status" ] && [ -z "$TARGET_URL" ]; then
             echo "::error::deployment_status event carried no environment_url; cannot smoke-test"
             exit 1
           fi
+          TARGET_URL="${TARGET_URL:-https://board-games-silk.vercel.app}"
+          ENVIRONMENT="${ENVIRONMENT:-Production ($GITHUB_EVENT_NAME)}"
           echo "Smoke-testing $ENVIRONMENT at $TARGET_URL"
 
-          curl_args=(
-            -sS -X POST "$TARGET_URL/api/chat"
-            -H 'Content-Type: application/json'
-            -d '{"slug":"hogwarts-battle","message":"How many players can play this game?"}'
-            -o body.txt -w '%{http_code}' --max-time 90
-          )
+          auth_args=()
           if [ -n "$VERCEL_BYPASS" ]; then
-            curl_args+=(-H "x-vercel-protection-bypass: $VERCEL_BYPASS")
+            auth_args=(-H "x-vercel-protection-bypass: $VERCEL_BYPASS")
           else
             echo "::warning::VERCEL_AUTOMATION_BYPASS_SECRET is not set; protected preview deployments will 401. See the comment at the top of this workflow."
           fi
 
-          code=000
-          for attempt in 1 2 3; do
-            code=$(curl "${curl_args[@]}") || code=000
-            echo "attempt $attempt: HTTP $code"
-            if [ "$code" = "200" ] && [ -s body.txt ] && ! grep -q '"error"' body.txt; then
-              echo "Answer: $(cat body.txt)"
-              echo "Smoke test passed."
-              exit 0
-            fi
-            cat body.txt 2>/dev/null || true
-            sleep 10
-          done
-          echo "::error::/api/chat smoke test failed after 3 attempts (last status $code) — the deployed chat function is not answering"
-          exit 1
+          # probe <label> <expected-substring-or-empty> <curl args...>
+          # Passes when the response is HTTP 200, non-empty, free of '"error"',
+          # and (if given) contains the expected substring. Retries 3x for
+          # cold starts.
+          probe() {
+            local label="$1"; shift
+            local expect="$1"; shift
+            local code=000
+            for attempt in 1 2 3; do
+              code=$(curl -sS -o body.txt -w '%{http_code}' --max-time 90 "${auth_args[@]}" "$@") || code=000
+              echo "$label attempt $attempt: HTTP $code"
+              if [ "$code" = "200" ] && [ -s body.txt ] && ! grep -q '"error"' body.txt \
+                 && { [ -z "$expect" ] || grep -q "$expect" body.txt; }; then
+                echo "$label OK: $(head -c 200 body.txt)"
+                return 0
+              fi
+              cat body.txt 2>/dev/null || true
+              sleep 10
+            done
+            echo "::error::$label smoke test failed after 3 attempts (last status $code) — the deployed $label endpoint is not answering"
+            return 1
+          }
+
+          fail=0
+          probe "chat" "" -X POST "$TARGET_URL/api/chat" \
+            -H 'Content-Type: application/json' \
+            -d '{"slug":"cranium","message":"How many players can play this game?"}' || fail=1
+          probe "votes" '"counts"' "$TARGET_URL/api/votes?ids=lost-cities" || fail=1
+          exit $fail

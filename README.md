@@ -132,6 +132,37 @@ detail beyond the reference answer, which a reference-only judge cannot verify
 and so treats as unsupported. They are kept as findings rather than tuned away,
 per the golden-set rule that failures are signal to investigate.
 
+## Monitoring & reliability
+
+A production incident (July 2026) where the chat function crashed at module
+load — while passing every pre-merge check — shaped a set of layered guards,
+each covering a failure class the others can't see:
+
+- **Type-level:** `api/` compiles under `NodeNext` module resolution
+  (`tsconfig.api.json`), so relative imports that Node's ESM loader would
+  reject at runtime (the incident's root cause) fail `tsc -b` in CI instead.
+- **Deploy-time:** [`smoke.yml`](.github/workflows/smoke.yml) triggers on every
+  Vercel deployment — preview and production — and probes the deployed API for
+  real: a `POST /api/chat` rules question and a `GET /api/votes` read. A
+  function that dies at module load, a missing bundled file, or a broken env
+  var becomes a red check on the PR, not a silent 500.
+- **Steady-state:** the same workflow runs on a twice-daily schedule against
+  production, catching drift *between* deploys — revoked or quota-exhausted
+  API keys, model retirements, provider outages. The scheduled chat probe uses
+  the collection's smallest rulebook to keep Gemini usage under a cent per
+  month; Actions minutes are free on public repos.
+- **Error tracking:** Sentry on both the browser (`VITE_SENTRY_DSN`) and
+  serverless (`SENTRY_DSN`) sides. One caveat learned the hard way: a module-
+  load crash happens before `Sentry.init()` runs, so that class of failure
+  only appears in Vercel's function logs — which is exactly what the smoke
+  tests exist to catch.
+
+CI needs two GitHub Actions secrets beyond the defaults: `GEMINI_API_KEY` (so
+the answer-quality eval can call Gemini; the smoke probes don't need it — the
+deployed function uses the Vercel env var) and
+`VERCEL_AUTOMATION_BYPASS_SECRET` (lets the smoke test through Vercel
+Authentication on preview deployments).
+
 ## Deployment
 
 Deployed on **Vercel** (`vercel.json`): the Vite build is served from `dist/`,
