@@ -2,7 +2,12 @@ name: Claude Auto-Fix PR Comments
 
 on:
   workflow_run:
-    workflows: ["Claude Code Review"]
+    # Must match the CI workflow's `name:`. The review step lives inside CI as
+    # the "Claude Review" job, so we fire after CI completes and then act on any
+    # unresolved review threads it left. (Was "Claude Code Review", a workflow
+    # that no longer exists after the review was folded into CI — which
+    # silently stopped autofix from ever running.)
+    workflows: ["CI"]
     types: [completed]
 
 concurrency:
@@ -33,6 +38,15 @@ jobs:
           PR_JSON=$(gh api "repos/${{ github.repository }}/commits/$SHA/pulls" --jq '.[0]')
           if [ -z "$PR_JSON" ] || [ "$PR_JSON" = "null" ]; then
             echo "No PR associated with $SHA — skipping"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Same-repo-only. This job runs with a write token and unrestricted
+          # git/npm/gh, and acts on review-comment text — never let it check out
+          # or run code from a fork PR.
+          HEAD_REPO=$(echo "$PR_JSON" | jq -r '.head.repo.full_name')
+          if [ "$HEAD_REPO" != "${{ github.repository }}" ]; then
+            echo "PR head is a fork ($HEAD_REPO) — skipping (autofix runs on same-repo branches only)"
             echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -152,10 +166,9 @@ jobs:
             For each sub-agent that returned a fix (not a skip):
               - Stage only the files it touched: `git add -- <file1> <file2>`
                 (NEVER `git add -A` / `git add .`)
-              - Find the commit that introduced the fixed line:
-                ```
-                git blame -L <line>,<line> -- <path> | awk '{print $1}'
-                ```
+              - Find the commit that introduced the fixed line by running
+                `git blame -L <line>,<line> -- <path>` and taking the commit
+                SHA from the first column of the output.
                 If the fix touches multiple lines/files, pick the oldest
                 blame SHA that is on this PR's branch (in `origin/main..HEAD`).
                 If no blame SHA belongs to this PR (e.g. the fix touches only
@@ -167,7 +180,7 @@ jobs:
             Once all fixup commits exist, fold them into their targets:
 
             ```
-            GIT_SEQUENCE_EDITOR=true git rebase -i --autosquash origin/main
+            git -c sequence.editor=true rebase -i --autosquash origin/main
             ```
 
             ## Step 5 — validate
@@ -224,4 +237,4 @@ jobs:
 
           claude_args: |
             --max-turns 80
-            --allowedTools "Bash,Read,Edit,Write,Glob,Grep,Task"
+            --allowedTools "Read,Edit,Write,Glob,Grep,Task,Bash(git:*),Bash(npm:*),Bash(npx:*),Bash(gh:*)"
