@@ -43,7 +43,13 @@ jobs:
   review:
     name: Claude Review
     needs: ci
-    if: success()
+    # Skip AI review on Dependabot-authored PRs: claude-code-action refuses to
+    # run for a bot actor ("Workflow initiated by non-human actor: dependabot"),
+    # so the job would always fail. A mechanical dependency bump doesn't need an
+    # AI review, and the `ci` job above still validates the bump. On these
+    # pull_request runs github.actor is the PR author, so this also lets a human
+    # who takes over the branch get a normal review.
+    if: success() && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: read
