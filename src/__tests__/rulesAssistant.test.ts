@@ -8,6 +8,7 @@ import {
   streamRulesAnswer,
   RULES_ASSISTANT_MODEL,
   RULES_ASSISTANT_SYSTEM_INSTRUCTION,
+  RULES_ASSISTANT_MAX_OUTPUT_TOKENS,
 } from '../../api/_lib/rulesAssistant';
 
 const mocks = vi.hoisted(() => ({
@@ -100,24 +101,26 @@ describe('streamRulesAnswer', () => {
     );
   });
 
-  it('omits the temperature key entirely when not provided (production payload unchanged)', async () => {
+  it('caps output tokens by default and omits temperature when not provided', async () => {
     mocks.generateContentStream.mockResolvedValue(fakeStream());
     await streamRulesAnswer({ rulesText: 'RULES TEXT', message: 'q', apiKey: 'test-key' });
     const request = lastRequest();
-    expect(Object.keys(request.config)).toEqual(['systemInstruction']);
+    expect(request.config.maxOutputTokens).toBe(RULES_ASSISTANT_MAX_OUTPUT_TOKENS);
     expect('temperature' in request.config).toBe(false);
   });
 
-  it('forwards temperature 0 when provided', async () => {
+  it('forwards temperature 0 and an explicit maxOutputTokens when provided', async () => {
     mocks.generateContentStream.mockResolvedValue(fakeStream());
     await streamRulesAnswer({
       rulesText: 'RULES TEXT',
       message: 'q',
       apiKey: 'test-key',
       temperature: 0,
+      maxOutputTokens: 256,
     });
     expect(lastRequest().config).toEqual({
       systemInstruction: RULES_ASSISTANT_SYSTEM_INSTRUCTION,
+      maxOutputTokens: 256,
       temperature: 0,
     });
   });

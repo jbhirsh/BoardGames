@@ -1,13 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as Sentry from '@sentry/node';
 import { Redis } from '@upstash/redis';
+import { enforceRateLimit, getLimiter } from './_lib/rateLimit.js';
+import { SLUG_RE } from './_lib/slug.js';
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   tracesSampleRate: 1.0,
 });
 
-const ID_RE = /^[a-z0-9][a-z0-9-]{0,63}$/;
 const ANON_RE = /^[a-zA-Z0-9-]{8,64}$/;
 
 const voteKey = (id: string) => `wishlist:votes:${id}`;
@@ -47,7 +48,7 @@ export async function handleVotes(
       if (idsRaw.length === 0) {
         return res.status(400).json({ error: 'ids query parameter is required' });
       }
-      const ids = idsRaw.split(',').map((s) => s.trim()).filter((s) => ID_RE.test(s));
+      const ids = idsRaw.split(',').map((s) => s.trim()).filter((s) => SLUG_RE.test(s));
       if (ids.length === 0) {
         return res.status(400).json({ error: 'ids must contain at least one valid slug (lowercase alphanumeric + hyphens)' });
       }
@@ -84,7 +85,7 @@ export async function handleVotes(
       };
       const { itemId, anonId, vote } = body;
 
-      if (typeof itemId !== 'string' || !ID_RE.test(itemId)) {
+      if (typeof itemId !== 'string' || !SLUG_RE.test(itemId)) {
         return res.status(400).json({ error: 'invalid itemId' });
       }
       if (typeof anonId !== 'string' || !ANON_RE.test(anonId)) {
@@ -124,6 +125,11 @@ function defaultRedis(): Redis {
   return cached;
 }
 
+// Unauthenticated writes to Redis (sadd grows a set per unique anonId): bound
+// per IP so a loop can't inflate counts or grow storage without limit.
+const votesLimiter = getLimiter('votes', 30, 60);
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (!(await enforceRateLimit(votesLimiter, req, res))) return;
   await handleVotes(defaultRedis(), req, res);
 }

@@ -11,6 +11,12 @@ import { join } from 'path';
 /** Model used for every rules-assistant Gemini call. */
 export const RULES_ASSISTANT_MODEL = 'gemini-2.5-flash';
 
+// Answers are meant to be concise, and output tokens are the expensive side of
+// the Gemini meter. Cap them so no single request (or abusive prompt) can run
+// up an unbounded reply. ~1024 tokens is roughly 700 words — ample for a rules
+// answer. Applied by default to production and eval alike.
+export const RULES_ASSISTANT_MAX_OUTPUT_TOKENS = 1024;
+
 /** System instruction sent with every rules-assistant request. */
 export const RULES_ASSISTANT_SYSTEM_INSTRUCTION =
   'You are a helpful board game rules assistant. Answer questions based only on the provided rules text. If the rules don\'t cover the question, say so. Keep answers concise and friendly.';
@@ -69,6 +75,8 @@ export interface StreamRulesAnswerOptions {
   apiKey: string;
   /** Omitted for production chat traffic (API default); the eval harness passes 0. */
   temperature?: number;
+  /** Output-token cap; defaults to RULES_ASSISTANT_MAX_OUTPUT_TOKENS. */
+  maxOutputTokens?: number;
 }
 
 /** Prompt construction + Gemini call; returns the streaming response. */
@@ -81,6 +89,7 @@ export async function streamRulesAnswer(
     contents: buildContents(options.rulesText, options.history, options.message),
     config: {
       systemInstruction: RULES_ASSISTANT_SYSTEM_INSTRUCTION,
+      maxOutputTokens: options.maxOutputTokens ?? RULES_ASSISTANT_MAX_OUTPUT_TOKENS,
       ...(options.temperature !== undefined ? { temperature: options.temperature } : {}),
     },
   });
