@@ -15,19 +15,30 @@ describe('filterGames', () => {
   });
 
   describe('duration filter', () => {
-    it('filters quick games (≤ 15 min)', () => {
+    it('filters quick games by cat', () => {
       const result = filterGames(testGames, makeState({ duration: 'quick' }));
       expect(result).toEqual([quickGame]);
     });
 
-    it('filters medium games (15 < mins ≤ 60)', () => {
+    it('filters medium games by cat', () => {
       const result = filterGames(testGames, makeState({ duration: 'medium' }));
       expect(result).toEqual([mediumGame]);
     });
 
-    it('filters long games (> 60 min)', () => {
+    it('filters long games by cat', () => {
       const result = filterGames(testGames, makeState({ duration: 'long' }));
       expect(result).toEqual([longGame]);
+    });
+
+    // Regression: filtering must follow the curated `cat`, not a re-derivation
+    // from `mins`. Cards Against Humanity ships as mins:90, cat:"medium" — the
+    // one game where the two disagree. Under mins-bucketing it vanished from
+    // its own "medium" filter and wrongly appeared under "long".
+    it('follows cat even when mins would fall in a different bucket', () => {
+      const mismatched = { ...mediumGame, name: 'Party 90', slug: 'party-90', mins: 90, cat: 'medium' as const };
+      const games = [mismatched, longGame];
+      expect(filterGames(games, makeState({ duration: 'medium' }))).toEqual([mismatched]);
+      expect(filterGames(games, makeState({ duration: 'long' }))).toEqual([longGame]);
     });
   });
 
