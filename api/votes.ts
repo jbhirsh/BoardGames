@@ -1,5 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import * as Sentry from '@sentry/node';
 import { Redis } from '@upstash/redis';
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  tracesSampleRate: 1.0,
+});
 
 const ID_RE = /^[a-z0-9][a-z0-9-]{0,63}$/;
 const ANON_RE = /^[a-zA-Z0-9-]{8,64}$/;
@@ -99,6 +105,8 @@ export async function handleVotes(
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (err) {
+    Sentry.captureException(err);
+    await Sentry.flush(2000);
     console.error('votes api error:', err);
     return res.status(500).json({ error: 'Server error' });
   }
