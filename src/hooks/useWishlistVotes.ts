@@ -21,6 +21,24 @@ interface UseWishlistVotesReturn extends VotesSnapshot {
   toggle: (itemId: string) => Promise<void>;
 }
 
+// With no ids there is nothing to fetch, so this fixed empty-but-loaded view is
+// returned directly rather than written into state from the effect (which would
+// trip react-hooks/set-state-in-effect).
+const EMPTY_SNAPSHOT: VotesSnapshot = {
+  counts: {},
+  myVotes: new Set(),
+  loaded: true,
+};
+
+/**
+ * Loads vote counts for `itemIds` and exposes an optimistic `toggle`.
+ *
+ * `itemIds` is assumed to be stable for the hook's lifetime — the wishlist
+ * renders a fixed `WISHLIST_IDS` set — so transitions between id sets are not a
+ * supported use case. With no ids the hook returns an already-loaded empty
+ * snapshot; the internal snapshot state is otherwise only replaced by a
+ * completed fetch, never reset when `itemIds` changes.
+ */
 export function useWishlistVotes(itemIds: readonly string[]): UseWishlistVotesReturn {
   const [snapshot, setSnapshot] = useState<VotesSnapshot>({
     counts: {},
@@ -31,13 +49,16 @@ export function useWishlistVotes(itemIds: readonly string[]): UseWishlistVotesRe
   const idsKey = itemIds.join(',');
   const inFlight = useRef<Set<string>>(new Set());
   const snapshotRef = useRef(snapshot);
-  snapshotRef.current = snapshot;
+
+  // Keep the ref pointing at the latest committed snapshot so `toggle` (a stable
+  // callback) always reads current vote state. Ref writes belong in an effect,
+  // not the render body (react-hooks/refs).
+  useEffect(() => {
+    snapshotRef.current = snapshot;
+  });
 
   useEffect(() => {
-    if (!idsKey) {
-      setSnapshot({ counts: {}, myVotes: new Set(), loaded: true });
-      return;
-    }
+    if (!idsKey) return;
     const anonId = getAnonId();
     const controller = new AbortController();
     const url = `/api/votes?ids=${encodeURIComponent(idsKey)}&anonId=${encodeURIComponent(anonId)}`;
@@ -59,6 +80,11 @@ export function useWishlistVotes(itemIds: readonly string[]): UseWishlistVotesRe
     return () => controller.abort();
   }, [idsKey]);
 
+  // `toggle` optimistically mutates the internal `snapshot`, which is only
+  // returned while `itemIds` is non-empty (see the return below — the empty-ids
+  // case yields the fixed EMPTY_SNAPSHOT). That is sound because an empty id set
+  // renders no wishlist items, so there is no control from which to invoke
+  // `toggle`; it is never called with no ids.
   const toggle = useCallback(async (itemId: string) => {
     if (inFlight.current.has(itemId)) return;
     inFlight.current.add(itemId);
@@ -104,5 +130,5 @@ export function useWishlistVotes(itemIds: readonly string[]): UseWishlistVotesRe
     }
   }, []);
 
-  return { ...snapshot, toggle };
+  return { ...(idsKey ? snapshot : EMPTY_SNAPSHOT), toggle };
 }
