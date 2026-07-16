@@ -1,0 +1,65 @@
+name: Deployment Smoke Test
+
+# Vercel reports every deployment (preview and production) back to GitHub as a
+# deployment_status event. When one succeeds, POST a real rules question to the
+# deployed /api/chat and require a real answer. This exercises the compiled
+# function in the actual Vercel runtime — the layer unit tests, tsc, and the
+# golden-set eval never touch — so a function that crashes at module load
+# (e.g. the extensionless ESM import that broke production in #26) turns into
+# a red check on the PR instead of a silent 500 for users.
+#
+# Preview deployments sit behind Vercel Authentication, so the request sends
+# the project's Protection Bypass for Automation secret. Generate it in
+# Vercel: Project Settings -> Deployment Protection -> Protection Bypass for
+# Automation, and store it as the VERCEL_AUTOMATION_BYPASS_SECRET Actions
+# secret. Without it, preview smoke tests fail loudly (401) by design rather
+# than pretending coverage exists.
+
+on:
+  deployment_status:
+
+jobs:
+  chat-smoke:
+    name: Chat API smoke test
+    if: github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST a rules question to the deployed /api/chat
+        env:
+          TARGET_URL: ${{ github.event.deployment_status.environment_url }}
+          ENVIRONMENT: ${{ github.event.deployment_status.environment }}
+          VERCEL_BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: |
+          set -u
+          if [ -z "$TARGET_URL" ]; then
+            echo "::error::deployment_status event carried no environment_url; cannot smoke-test"
+            exit 1
+          fi
+          echo "Smoke-testing $ENVIRONMENT at $TARGET_URL"
+
+          curl_args=(
+            -sS -X POST "$TARGET_URL/api/chat"
+            -H 'Content-Type: application/json'
+            -d '{"slug":"hogwarts-battle","message":"How many players can play this game?"}'
+            -o body.txt -w '%{http_code}' --max-time 90
+          )
+          if [ -n "$VERCEL_BYPASS" ]; then
+            curl_args+=(-H "x-vercel-protection-bypass: $VERCEL_BYPASS")
+          else
+            echo "::warning::VERCEL_AUTOMATION_BYPASS_SECRET is not set; protected preview deployments will 401. See the comment at the top of this workflow."
+          fi
+
+          code=000
+          for attempt in 1 2 3; do
+            code=$(curl "${curl_args[@]}") || code=000
+            echo "attempt $attempt: HTTP $code"
+            if [ "$code" = "200" ] && [ -s body.txt ] && ! grep -q '"error"' body.txt; then
+              echo "Answer: $(cat body.txt)"
+              echo "Smoke test passed."
+              exit 0
+            fi
+            cat body.txt 2>/dev/null || true
+            sleep 10
+          done
+          echo "::error::/api/chat smoke test failed after 3 attempts (last status $code) — the deployed chat function is not answering"
+          exit 1
