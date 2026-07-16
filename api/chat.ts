@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as Sentry from '@sentry/node';
-import { loadRulesText, streamRulesAnswer } from './_lib/rulesAssistant';
+import { loadRulesText, streamRulesAnswer } from './_lib/rulesAssistant.js';
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
