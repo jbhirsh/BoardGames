@@ -1,0 +1,20 @@
+version: 2
+updates:
+  # npm dependencies. An 11-advisory backlog (including a critical react-router
+  # RCE) accumulated silently because nothing watched for vulnerable deps; this
+  # keeps them patched. Grouped so routine minor/patch bumps arrive as one PR
+  # rather than a swarm. Security updates come through regardless of the group.
+  #
+  # Only npm is enabled — not github-actions — because this repo intentionally
+  # tracks floating major action tags (@v5, @v1); Dependabot's actions updater
+  # would pin them to exact versions and fight that convention.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
