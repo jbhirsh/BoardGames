@@ -67,6 +67,7 @@ before committing — CI runs all three plus a production build.
   (`VotesRedis`, `VotesRequest`, `VotesResponse`) so it can be unit-tested with
   a fake Redis; the default export wires in the real client. Votes are stored as
   Redis sets keyed `wishlist:votes:<id>`, deduped by an anonymous browser id.
+  Errors reported to Sentry (`@sentry/node`).
 
 ### Rules text pipeline (`scripts/`)
 Rule PDFs live in `public/rules/*.pdf`. `scripts/extract-rules-text.mjs`

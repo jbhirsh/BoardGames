@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, createContext, useContext } from 'react';
 import type { FormEvent, ReactNode } from 'react';
+import * as Sentry from '@sentry/react';
 import Markdown from 'react-markdown';
 import { AiRulesIcon } from './Icons';
 
@@ -65,6 +66,10 @@ export function RulesChatPanel({ slug, gameName }: { slug: string; gameName: str
       });
 
       if (!response.ok) {
+        Sentry.captureMessage(`rules chat request failed: HTTP ${response.status}`, {
+          level: 'error',
+          tags: { slug },
+        });
         setMessages((prev) => [
           ...prev,
           { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' },
@@ -89,7 +94,8 @@ export function RulesChatPanel({ slug, gameName }: { slug: string; gameName: str
           return updated;
         });
       }
-    } catch {
+    } catch (err) {
+      Sentry.captureException(err, { tags: { slug } });
       setMessages((prev) => [
         ...prev,
         { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' },
