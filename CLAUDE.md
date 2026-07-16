@@ -59,15 +59,18 @@ before committing — CI runs all three plus a production build.
 ### Serverless API (`api/`) — Vercel Functions (`@vercel/node`)
 - **`chat.ts`** — the AI rules assistant. Reads `rules-text/<slug>.txt`, sends
   it plus the recent chat history to Google Gemini (`@google/genai`,
-  `gemini-2.5-flash`) and streams the reply back as plain text. Validates slug,
-  message length (<=500), and history length (<=10). Errors reported to Sentry
-  (`@sentry/node`).
+  `gemini-2.5-flash`) and streams the reply back as plain text. Validates slug
+  format (must match the same slug regex as `votes.ts`, since it becomes a
+  filesystem path), message length (<=500), history length (<=10) and total
+  history content size, and caps Gemini output tokens. Per-IP rate limited via
+  `_lib/rateLimit.ts`. Errors reported to Sentry (`@sentry/node`).
 - **`votes.ts`** — anonymous wishlist voting backed by Upstash Redis
   (`@upstash/redis`). `handleVotes()` is written against small interfaces
   (`VotesRedis`, `VotesRequest`, `VotesResponse`) so it can be unit-tested with
   a fake Redis; the default export wires in the real client. Votes are stored as
   Redis sets keyed `wishlist:votes:<id>`, deduped by an anonymous browser id.
-  Errors reported to Sentry (`@sentry/node`).
+  Per-IP rate limited via `_lib/rateLimit.ts`. Errors reported to Sentry
+  (`@sentry/node`).
 
 ### Rules text pipeline (`scripts/`)
 Rule PDFs live in `public/rules/*.pdf`. `scripts/extract-rules-text.mjs`

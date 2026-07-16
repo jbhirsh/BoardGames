@@ -12,11 +12,18 @@ vi.mock('@sentry/node', () => ({
 vi.mock('../../api/_lib/rulesAssistant.js', () => ({
   loadRulesText: vi.fn(),
   streamRulesAnswer: vi.fn(),
+  RULES_ASSISTANT_MAX_OUTPUT_TOKENS: 1024,
+}));
+
+vi.mock('../../api/_lib/rateLimit.js', () => ({
+  getLimiter: vi.fn(() => null),
+  enforceRateLimit: vi.fn(async () => true),
 }));
 
 import * as Sentry from '@sentry/node';
 import handler from '../../api/chat';
 import { loadRulesText, streamRulesAnswer } from '../../api/_lib/rulesAssistant.js';
+import { enforceRateLimit } from '../../api/_lib/rateLimit.js';
 
 type Stream = Awaited<ReturnType<typeof streamRulesAnswer>>;
 
@@ -53,11 +60,50 @@ describe('chat handler', () => {
     vi.mocked(streamRulesAnswer).mockResolvedValue(
       fakeStream('Hello') as unknown as Stream,
     );
+    vi.mocked(enforceRateLimit).mockResolvedValue(true);
   });
 
   it('returns 405 for non-POST methods', async () => {
     const res = await run({}, 'GET');
     expect(res.statusCode).toBe(405);
+  });
+
+  it('stops with no further work when rate limited', async () => {
+    vi.mocked(enforceRateLimit).mockImplementation(async (_l, _req, res) => {
+      (res as unknown as { status(c: number): { json(b: unknown): void } }).status(429).json({ error: 'Too many requests. Please slow down.' });
+      return false;
+    });
+    const res = await run({ slug: 'catan', message: 'hi' });
+    expect(res.statusCode).toBe(429);
+    expect(vi.mocked(streamRulesAnswer)).not.toHaveBeenCalled();
+  });
+
+  it('rejects a slug that is not a clean identifier (path traversal guard)', async () => {
+    const res = await run({ slug: '../../etc/passwd', message: 'hi' });
+    expect(res.statusCode).toBe(400);
+    expect(vi.mocked(loadRulesText)).not.toHaveBeenCalled();
+  });
+
+  it('rejects a history entry with a bad role or non-string content', async () => {
+    expect((await run({ slug: 'catan', message: 'hi', history: [{ role: 'system', content: 'x' }] })).statusCode).toBe(400);
+    expect((await run({ slug: 'catan', message: 'hi', history: [{ role: 'user', content: 123 }] })).statusCode).toBe(400);
+  });
+
+  it('rejects history whose total content exceeds the cap', async () => {
+    const history = [{ role: 'user', content: 'x'.repeat(40961) }];
+    const res = await run({ slug: 'catan', message: 'hi', history });
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toEqual({ error: 'history content is too long' });
+  });
+
+  it('accepts a full-length assistant reply echoed back as history', async () => {
+    // A single reply near the output-token cap must not break the next turn:
+    // it should reach the pipeline, not be rejected as "history too long".
+    const history = [{ role: 'model', content: 'x'.repeat(4096) }];
+    const res = await run({ slug: 'catan', message: 'follow-up', history });
+    expect(res.statusCode).not.toBe(400);
+    expect(res.ended).toBe(true);
+    expect(vi.mocked(streamRulesAnswer)).toHaveBeenCalled();
   });
 
   it('returns 400 when slug is missing', async () => {
