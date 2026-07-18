@@ -10,6 +10,8 @@ updates:
   # would pin them to exact versions and fight that convention.
   - package-ecosystem: npm
     directory: /
+    assignees:
+      - jbhirsh
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
