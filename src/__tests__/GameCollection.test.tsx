@@ -94,3 +94,19 @@ describe('GameCollection scroll behavior', () => {
     expect(call.top).toBe(0);
   });
 });
+
+describe('GameCollection view switch', () => {
+  it('renders the list view by default and the grid view after toggling', () => {
+    // `state.view === 'grid' ? <GridView /> : <ListView />` was never asserted:
+    // ListView renders a <table>, GridView renders a `.games-grid` and no table.
+    // Pins the conditional so it can't invert or collapse to a single branch.
+    renderWithFilter();
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(document.querySelector('.games-grid')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /Grid view/i }));
+
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(document.querySelector('.games-grid')).not.toBeNull();
+  });
+});

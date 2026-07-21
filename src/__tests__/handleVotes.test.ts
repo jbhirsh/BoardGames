@@ -50,6 +50,15 @@ describe('handleVotes', () => {
     expect(res.statusCode).toBe(400);
   });
 
+  it('GET accepts exactly 100 ids (the cap is inclusive)', async () => {
+    // Boundary: only >100 is rejected. Pins `ids.length > 100` so it can't be
+    // weakened to `>= 100`, which would reject a legitimate 100-id request.
+    const res = makeRes();
+    const ids = Array.from({ length: 100 }, (_, i) => `g${i}`).join(',');
+    await handleVotes(makeRedis(), { method: 'GET', query: { ids } }, res);
+    expect(res.statusCode).toBe(200);
+  });
+
   it('GET filters invalid ids and returns counts map', async () => {
     const redis = makeRedis({
       pipeline: () => {
