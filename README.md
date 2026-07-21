@@ -50,7 +50,8 @@ A sortable list view is also available:
 - **Data / KV:** Upstash Redis (`@upstash/redis`) for wishlist votes
 - **Monitoring:** Sentry (browser + serverless) and Vercel Analytics
 - **Testing:** Vitest 4, React Testing Library, jsdom, `axe-core` / `vitest-axe`
-  (per-file 80% line coverage enforced)
+  (per-file 80% line coverage enforced); StrykerJS mutation testing over the
+  pure-logic and component code
 - **Tooling:** ESLint 9 (flat config, `typescript-eslint`, `jsx-a11y`,
   `react-hooks`), Node 24
 - **Rules pipeline:** `unpdf` for text extraction with a `tesseract.js` OCR
@@ -82,6 +83,7 @@ secrets live in `.env.local`, which is gitignored.
 | `npm run preview` | Serve the production build locally |
 | `npm run lint` | Run ESLint (includes static a11y checks) |
 | `npx vitest run` | Run the test suite once (`--coverage` to enforce thresholds) |
+| `npm run test:mutation` | Run StrykerJS mutation testing (see below) |
 
 ## Architecture
 
@@ -92,7 +94,8 @@ secrets live in `.env.local`, which is gitignored.
 - `scripts/` — the PDF-to-text pipeline that generates `rules-text/` from
   `public/rules/*.pdf` for the AI assistant.
 - CI runs lint, type-check, accessibility tests, unit tests with coverage, and a
-  production build on every PR (`.github/workflows/`).
+  production build on every PR (`.github/workflows/`), plus a mutation-testing
+  workflow — PR-scoped runs and a weekly full sweep (see below).
 
 See [`CLAUDE.md`](CLAUDE.md) for a deeper tour of the codebase and conventions.
 
@@ -131,6 +134,52 @@ are judge-graded entries where the assistant's answer included *correct* ruleboo
 detail beyond the reference answer, which a reference-only judge cannot verify
 and so treats as unsupported. They are kept as findings rather than tuned away,
 per the golden-set rule that failures are signal to investigate.
+
+## Mutation testing
+
+Line coverage proves a line *ran*; it says nothing about whether a test would
+*fail* if that line's behavior changed. [StrykerJS](https://stryker-mutator.io/)
+closes that gap: it rewrites the source — flip a boundary (`<=` → `<`), drop a
+branch, empty an event handler, invert a conditional render — and reports every
+mutant no test kills. Each surviving mutant is a missing assertion, so the score
+is a second, sharper quality signal alongside the per-file line-coverage gate.
+
+It's scoped to the code where the signal earns its runtime: the pure-logic layer
+(`src/utils`, the filter reducer, the `api/` handlers) and the React components
+(`src/components`, `src/App.tsx`). The static data layer, entry points
+(`src/main.tsx`, `src/instrument.ts`), and tests are not mutated. The
+`StringLiteral` mutator is disabled project-wide — in TSX it mostly mutates
+`className` / `aria-label` / placeholder strings (stylistic noise), and in the
+logic layer it only touches error-message text. Conditional, equality/boundary,
+logical, and block-statement mutators stay on, since those catch real
+rendering, interaction, and edge-case bugs.
+
+**Run it locally:**
+
+```bash
+npm run test:mutation                                  # full run
+npx stryker run --mutate "src/utils/filterGames.ts"    # scope to one file while iterating
+```
+
+The HTML report lands at `reports/mutation/mutation.html`. A `break` threshold
+in [`stryker.config.json`](stryker.config.json) fails the run when the score
+drops below it, so it ratchets against regressions. The pure-logic layer scores
+highest (utilities and the reducer in the high-80s–90s, the API handlers ~80%);
+the aggregate is pulled down by presentational component code — SVG icons, the
+PDF-viewer shell, animation-driven UI — where mutation testing has little
+behavior to prove.
+
+**In CI:** mutation testing runs as its own workflow
+([`.github/workflows/mutation.yml`](.github/workflows/mutation.yml)) with two
+placements. On pull requests it mutates **only the in-scope files the PR
+touched** — fast, targeted feedback on exactly the code under review (a PR that
+triggers the workflow without changing mutable source runs a small utils smoke
+scope instead, keeping the Stryker wiring validated). A **weekly scheduled full
+sweep** (plus manual `workflow_dispatch`) acts as a drift sensor, catching test
+erosion that PR-scoped runs can't see — e.g. a test refactor weakening
+assertions for untouched code. The `break` threshold only gates full sweeps: a
+changed-files subset score isn't comparable to the full-scope baseline, so PR
+runs are report-only.
 
 ## Monitoring & reliability
 

@@ -122,6 +122,14 @@ describe('chat handler', () => {
     expect(res.statusCode).toBe(400);
   });
 
+  it('accepts a message of exactly 500 characters', async () => {
+    // Boundary: only >500 is rejected. Pins `message.length > 500` so it can't
+    // be weakened to `>= 500`, which would reject a legitimate max-length message.
+    const res = await run({ slug: 'catan', message: 'x'.repeat(500) });
+    expect(res.statusCode).not.toBe(400);
+    expect(res.ended).toBe(true);
+  });
+
   it('returns 400 when history is not an array or too long', async () => {
     expect((await run({ slug: 'catan', message: 'hi', history: 'nope' })).statusCode).toBe(400);
     const history = Array.from({ length: 11 }, () => ({ role: 'user', content: 'q' }));

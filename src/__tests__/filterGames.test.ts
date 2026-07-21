@@ -59,6 +59,21 @@ describe('filterGames', () => {
       const result = filterGames(testGames, makeState({ players: 0 }));
       expect(result).toHaveLength(3);
     });
+
+    // Both range checks are inclusive: a game is playable at exactly its min
+    // and exactly its max seat count. These pin the boundaries so `g.min <=`
+    // and `g.max >=` can't be weakened to strict `<` / `>`.
+    it('includes a game when players equals its max seat count', () => {
+      // longGame seats 2–5; at exactly 5 it must still appear.
+      const result = filterGames(testGames, makeState({ players: 5 }));
+      expect(result.map(g => g.name)).toContain('Long Game');
+    });
+
+    it('includes a game when players equals its min seat count', () => {
+      // mediumGame seats 3–6; at exactly 3 it must still appear.
+      const result = filterGames(testGames, makeState({ players: 3 }));
+      expect(result.map(g => g.name)).toContain('Medium Game');
+    });
   });
 
   describe('keyword filter (AND logic)', () => {
@@ -147,5 +162,35 @@ describe('sortGames', () => {
     const result = sortGames(testGames, 'group');
     // GROUP_ORDER: social, word, party, strat, coop
     expect(result.map(g => g.group)).toEqual(['party', 'strat', 'coop']);
+  });
+
+  it('sorts by player count ascending, breaking ties by max seats', () => {
+    // Primary key is min seats ascending; when two games share a min, the
+    // smaller max comes first. quickGame (2–4) before longGame (2–5), then
+    // mediumGame (3–6). Guards the `a.min - b.min || a.max - b.max` comparator.
+    const result = sortGames([mediumGame, longGame, quickGame], 'players-asc');
+    expect(result.map(g => g.name)).toEqual(['Quick Game', 'Long Game', 'Medium Game']);
+  });
+
+  it('sorts by player count descending, breaking ties by max seats', () => {
+    // Mirror of players-asc: min seats descending, ties broken by larger max
+    // first. mediumGame (3–6), then longGame (2–5) before quickGame (2–4). Input
+    // is deliberately unsorted so a no-op comparator can't pass by coincidence.
+    const result = sortGames([longGame, quickGame, mediumGame], 'players-desc');
+    expect(result.map(g => g.name)).toEqual(['Medium Game', 'Long Game', 'Quick Game']);
+  });
+
+  it('breaks duration-sort ties by curated category order', () => {
+    // Two games with identical playtime but different curated `cat` must fall
+    // back to CAT_ORDER (quick < medium < long) instead of keeping input order.
+    // Guards the `|| CAT_ORDER[...]` secondary comparator on both dur sorts.
+    const quickTie = { ...quickGame, name: 'Tie Quick', slug: 'tie-quick', mins: 30, cat: 'quick' as const };
+    const mediumTie = { ...mediumGame, name: 'Tie Medium', slug: 'tie-medium', mins: 30, cat: 'medium' as const };
+
+    const asc = sortGames([mediumTie, quickTie], 'quick');
+    expect(asc.map(g => g.name)).toEqual(['Tie Quick', 'Tie Medium']);
+
+    const desc = sortGames([quickTie, mediumTie], 'long');
+    expect(desc.map(g => g.name)).toEqual(['Tie Medium', 'Tie Quick']);
   });
 });
