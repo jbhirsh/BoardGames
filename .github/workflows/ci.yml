@@ -28,6 +28,9 @@ jobs:
       - name: Lint (includes jsx-a11y static a11y checks)
         run: npm run lint
 
+      - name: Architecture rules (dependency-cruiser)
+        run: npm run depcruise
+
       - name: Type check
         run: npx tsc -b
 
