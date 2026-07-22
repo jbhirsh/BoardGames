@@ -12,8 +12,14 @@ updates:
     directory: /
     assignees:
       - jbhirsh
+    # Pinned to the shared Monday 06:00 UTC sweep slot (mutation.yml,
+    # gitleaks.yml, semgrep-autofix.yml) so all weekly robot output lands
+    # together on Monday morning.
     schedule:
       interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Etc/UTC
     open-pull-requests-limit: 5
     groups:
       minor-and-patch:

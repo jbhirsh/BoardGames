@@ -3,6 +3,12 @@ name: CI
 on:
   pull_request:
     branches: [main]
+  # Robot-made branches (semgrep-autofix PRs, claude-autofix force-pushes) are
+  # created with the default Actions token, whose events never trigger
+  # pull_request workflows (recursion guard). workflow_dispatch is exempt from
+  # that guard, so those workflows dispatch CI onto their branch and the check
+  # runs land on the PR's head commit.
+  workflow_dispatch:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -46,7 +52,10 @@ jobs:
   review:
     name: Claude Review
     needs: ci
-    if: success()
+    # pull_request events only: the review needs PR context for inline
+    # comments, which dispatched runs don't have. Skipping it on dispatch also
+    # keeps robot-triggered CI from spawning further robot activity.
+    if: success() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read

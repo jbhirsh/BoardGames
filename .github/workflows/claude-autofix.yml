@@ -26,7 +26,10 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
-      actions: read
+      # write (not just read): the agent dispatches CI onto the branch after
+      # force-pushing, because pushes made with the Actions token don't
+      # retrigger pull_request workflows and the PR's checks would go stale.
+      actions: write
 
     steps:
       - name: Resolve PR info
@@ -202,11 +205,20 @@ jobs:
             thresholds are per-file 80% lines — add tests for any code you
             introduced to pass them.
 
-            ## Step 6 — push
+            ## Step 6 — push, then re-trigger CI
 
             `git push --force-with-lease`
 
             NEVER use `--no-verify`.
+
+            Pushes made with the Actions token don't retrigger pull_request
+            workflows, so the PR's checks would stay pinned to the old HEAD.
+            workflow_dispatch is exempt from that guard — dispatch CI onto
+            the branch so the checks rerun against your push:
+
+            ```
+            gh workflow run ci.yml --ref "$(git branch --show-current)"
+            ```
 
             ## Step 7 — resolve threads (REQUIRED)
 
