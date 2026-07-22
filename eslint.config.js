@@ -4,6 +4,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import jsxA11y from 'eslint-plugin-jsx-a11y'
 import tseslint from 'typescript-eslint'
+import eslintComments from '@eslint-community/eslint-plugin-eslint-comments'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
@@ -20,6 +21,18 @@ export default defineConfig([
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+    },
+    plugins: {
+      '@eslint-community/eslint-comments': eslintComments,
+    },
+    rules: {
+      // Enforce CLAUDE.md's "never suppress lint or type errors": ban every
+      // inline eslint control comment (eslint-disable, disable-next-line,
+      // eslint-enable, …). The sanctioned escape hatch stays the file-scoped
+      // overrides in this config below — those are configuration, not comments,
+      // so they are unaffected. @ts-ignore/@ts-nocheck are already blocked by
+      // @typescript-eslint/ban-ts-comment.
+      '@eslint-community/eslint-comments/no-use': 'error',
     },
   },
   {
