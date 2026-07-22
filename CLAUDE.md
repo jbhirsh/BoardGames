@@ -17,6 +17,7 @@ npm install          # install dependencies
 npm run dev          # Vite dev server (http://localhost:5173)
 npm run build        # tsc -b (type-check, project refs) then vite build -> dist/
 npm run lint         # eslint . (flat config; includes jsx-a11y static checks)
+npm run depcruise    # dependency-cruiser: layering rules (.dependency-cruiser.cjs)
 npm run preview      # serve the production build locally
 
 # Tests — there is no `npm test` script; call vitest directly:
@@ -119,7 +120,9 @@ secrets belong in tracked source.
   Don't edit a test to match wrong behavior; fix the implementation.
 - **Pure utilities stay pure.** Filtering/sorting/URL logic in `src/utils/` and
   `src/context/filterReducer.ts` should have no side effects and be directly
-  unit-testable.
+  unit-testable. The import side of this (utils/data may not reach React or
+  app layers, api and src stay separate) is enforced by dependency-cruiser
+  (`.dependency-cruiser.cjs`, run in CI).
 - **Validate only at boundaries.** The serverless handlers validate untrusted
   input (slug format, lengths, vote values); don't add defensive checks for
   states that can't occur inside the app.
