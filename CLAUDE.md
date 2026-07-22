@@ -112,11 +112,6 @@ secrets belong in tracked source.
   `tsconfig.app.json` (`src`, DOM libs), `tsconfig.api.json` (`api`, Node libs),
   `tsconfig.node.json` (`vite.config.ts`). `npm run build` runs `tsc -b` across
   all of them.
-- **Never suppress lint or type errors.** No inline `// eslint-disable-*` or
-  `@ts-ignore`/`@ts-expect-error`. If a rule genuinely needs relaxing, add a
-  narrow, file-scoped override in `eslint.config.js` (see the existing
-  `Backdrop.tsx` and `useFilterUrlSync.ts` overrides for the pattern) — and only
-  with a comment explaining why.
 - **Tests live in `src/__tests__/`** (Vitest + React Testing Library, jsdom).
   Coverage thresholds are enforced **per file at 80% lines** (`vite.config.ts`),
   so new reducer actions, filter utilities, and API handlers need their own

@@ -85,8 +85,7 @@ describe('useStickyOffset', () => {
       observe = observeSpy;
       unobserve = vi.fn();
       disconnect = vi.fn();
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      constructor(_cb: ResizeObserverCallback) {}
+      constructor() {}
     } as unknown as typeof ResizeObserver;
 
     const ref = { current: null };
