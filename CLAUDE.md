@@ -19,6 +19,7 @@ npm run build        # tsc -b (type-check, project refs) then vite build -> dist
 npm run lint         # eslint . (flat config; includes jsx-a11y static checks)
 npm run depcruise    # dependency-cruiser: layering rules (.dependency-cruiser.cjs)
 npm run preview      # serve the production build locally
+# `npm install` also runs `prepare`, pointing core.hooksPath at .githooks/
 
 # Tests — there is no `npm test` script; call vitest directly:
 npx vitest                              # watch mode
@@ -28,8 +29,11 @@ npx vitest run src/__tests__/a11y.test.tsx   # accessibility suite only
 npx tsc -b                              # type-check without emitting
 ```
 
-Node 24 is used in CI. Run `npm run lint`, `npx tsc -b`, and `npx vitest run`
-before committing — CI runs all three plus a production build.
+Node 24 is used in CI. Git hooks in `.githooks/` (activated by `npm install`
+via `core.hooksPath`) run the same checks locally so failures surface before
+a push: **pre-commit** runs eslint + dependency-cruiser + `tsc -b`;
+**pre-push** runs the test suite with coverage + the production build. Both
+no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
 
 ## Architecture
 
