@@ -1,0 +1,162 @@
+# Weekly Semgrep scan → Claude autofix. Semgrep's cloud app comments on PR
+# diffs, but findings in already-merged code only pile up in the dashboard —
+# nothing turns them into fixes. This closes that loop the same way
+# claude-autofix.yml does for review threads: scan, then hand real findings to
+# Claude to fix, validate against the full CI suite, and open ONE consolidated
+# PR (never one per finding).
+#
+# Runs on the shared Monday 06:00 UTC sweep cadence (mutation.yml,
+# gitleaks.yml, Dependabot), so all robot output lands together on Monday
+# morning. Scans with the free Semgrep CLI (--config auto) rather than the
+# platform API, so no SEMGREP_APP_TOKEN is needed; zero findings means the
+# Claude step never runs and the job costs a couple of CLI minutes.
+#
+# PRs opened with the default Actions token don't trigger pull_request
+# workflows (recursion guard), so after opening the PR the agent dispatches
+# CI onto the branch via `gh workflow run ci.yml` — workflow_dispatch is
+# exempt from the guard, and the check runs land on the PR's head commit.
+# Claude Review, mutation, and gitleaks still don't run on dispatched CI;
+# the full CI command set also runs in-job before anything is pushed.
+name: Semgrep Autofix
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: semgrep-autofix
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+jobs:
+  scan-and-fix:
+    name: Scan and fix
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      # Lets the agent `gh workflow run ci.yml` on its branch so the PR gets
+      # real CI checks despite the Actions-token recursion guard.
+      actions: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Run Semgrep
+        id: semgrep
+        run: |
+          pipx install semgrep
+          semgrep scan --config auto --json --output semgrep-findings.json
+          COUNT=$(jq '.results | length' semgrep-findings.json)
+          echo "Findings: $COUNT"
+          jq -r '.results[] | "\(.check_id) \(.path):\(.start.line)"' semgrep-findings.json || true
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+
+      # Only needed by the fix step's validation commands (lint, tsc, vitest,
+      # build), so zero-finding weeks skip the install entirely.
+      - name: Install dependencies for validation
+        if: steps.semgrep.outputs.count != '0'
+        run: npm ci
+
+      - uses: anthropics/claude-code-action@v1
+        if: steps.semgrep.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          track_progress: true
+          prompt: |
+            REPO_DIR: ${{ github.workspace }}
+            REPO: ${{ github.repository }}
+
+            `semgrep-findings.json` at the repo root holds this week's Semgrep
+            scan of main. Each entry in `.results[]` has `check_id`, `path`,
+            `start.line`, `end.line`, and `extra.message` / `extra.severity`.
+            Turn the real findings into ONE consolidated fix PR.
+
+            ## Step 1 — triage every finding
+
+            Read the code around each finding and classify it REAL or FALSE
+            POSITIVE. Judge against how this codebase actually works (e.g. a
+            "tainted path" finding on a value already validated against
+            SLUG_RE at the boundary is a false positive — this repo validates
+            at boundaries by design, see CLAUDE.md).
+
+            NEVER "fix" a finding by adding `// nosemgrep`, creating or
+            editing `.semgrepignore`, or weakening any config — suppressions
+            are banned in this repo. A finding is either fixed in code or
+            reported as a false positive; there is no third option.
+
+            ## Step 2 — fix the REAL findings
+
+            Create a branch `semgrep-autofix-$(date -u +%Y-%m-%d)`. Apply the
+            minimum correct change for every real finding — no drive-by
+            refactors. If a fix changes behavior in reducer actions, filter
+            utilities, or API handlers, add or extend a unit test in
+            `src/__tests__/` (per-file coverage threshold is 80% lines).
+
+            ## Step 3 — validate exactly like CI
+
+            Dependencies are already installed (`npm ci` ran before this
+            step). Run, in order, and fix any regression before pushing:
+              - `npm run lint`
+              - `npm run depcruise` (skip if this script doesn't exist yet)
+              - `npx tsc -b`
+              - `npx vitest run --coverage`
+              - `npm run build`
+
+            NEVER use `--no-verify`.
+
+            ## Step 4 — one clean commit, one PR
+
+            Squash all work into ONE commit: imperative subject ≤72 chars,
+            body explaining why, ending with the trailer
+            `Co-Authored-By: Claude <noreply@anthropic.com>`.
+
+            Push the branch and open a single PR with `gh pr create`. The
+            body must contain:
+              - a table: finding (check_id, file:line) → what the fix was
+              - a "False positives" section: each skipped finding with one
+                sentence of reasoning, so a human can decide whether to
+                allowlist it upstream in the Semgrep dashboard
+              - a note that CI was dispatched onto the branch (see below)
+                and that Claude Review / mutation / gitleaks don't run on
+                dispatched CI
+
+            Immediately after the PR is created, dispatch the real CI suite
+            onto the branch so the PR gets checks (PRs opened with the
+            Actions token don't trigger pull_request workflows, but
+            workflow_dispatch is exempt from that guard):
+
+            ```
+            gh workflow run ci.yml --ref "$(git branch --show-current)"
+            ```
+
+            `semgrep-findings.json` is untracked scratch output — never
+            `git add` it (and never `git add -A` / `git add .`).
+
+            ## Step 5 — if NOTHING is real
+
+            If every finding is a false positive, open NO pull request.
+            Instead open (or update, if one is already open with the same
+            title) an issue titled "Semgrep triage: false positives to
+            allowlist" listing each finding and why it doesn't apply, so a
+            human can allowlist them in the Semgrep dashboard and future
+            runs go quiet.
+          claude_args: |
+            --max-turns 80
+            --allowedTools "Read,Edit,Write,Glob,Grep,Task,Bash(git:*),Bash(npm:*),Bash(npx:*),Bash(gh:*),Bash(jq:*),Bash(date:*)"
