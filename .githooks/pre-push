@@ -1,0 +1,15 @@
+#!/bin/sh
+# Full pre-flight before code leaves the machine — the half of CI too slow to
+# run on every commit: the test suite (a11y included) under the coverage
+# thresholds CI enforces, plus the production build. `vite build` can fail
+# where `tsc -b` passes (see the #26 extensionless-ESM-import incident that
+# broke production), so building here closes that gap before it reaches CI.
+#
+# No-op in CI (see pre-commit).
+[ -n "$CI" ] && exit 0
+
+set -e
+echo "▶ pre-push: vitest --coverage"
+npx vitest run --coverage
+echo "▶ pre-push: production build"
+npm run build

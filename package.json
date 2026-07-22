@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prepare": "git config core.hooksPath .githooks || true",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "depcruise": "depcruise src api",
