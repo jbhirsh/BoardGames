@@ -37,6 +37,9 @@ jobs:
       - name: Architecture rules (dependency-cruiser)
         run: npm run depcruise
 
+      - name: Docs hygiene (no enforced-rule prose in CLAUDE.md)
+        run: node scripts/check-doc-hygiene.mjs
+
       - name: Type check
         run: npx tsc -b
 
