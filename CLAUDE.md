@@ -116,7 +116,6 @@ secrets belong in tracked source.
   Coverage thresholds are enforced **per file at 80% lines** (`vite.config.ts`),
   so new reducer actions, filter utilities, and API handlers need their own
   tests. Tests must be pure logic or RTL — no real network, no real browser.
-  Don't edit a test to match wrong behavior; fix the implementation.
 - **Pure utilities stay pure.** Filtering/sorting/URL logic in `src/utils/` and
   `src/context/filterReducer.ts` should have no side effects and be directly
   unit-testable. The import side of this (utils/data may not reach React or
@@ -125,9 +124,20 @@ secrets belong in tracked source.
 - **Validate only at boundaries.** The serverless handlers validate untrusted
   input (slug format, lengths, vote values); don't add defensive checks for
   states that can't occur inside the app.
-- **Commit hygiene.** Imperative subject <=72 chars; body explains *why*. One
-  logical change per commit; squash "fix typo"/"oops" churn before opening or
-  updating a PR. Linear history (rebase, not merge).
+- **Commit hygiene.** Imperative subject <=72 chars; body explains *why*; end
+  with the `Co-Authored-By:` trailer. One logical change per commit; squash
+  "fix typo"/"oops" churn before opening or updating a PR. Linear history
+  (rebase, not merge). Amend or squash your own feature branch freely before it
+  merges, but never amend, rebase, or force-push `main`.
+- **Never** `git add -A`/`git add .` (stage files explicitly), modify a test to
+  make it pass (fix the implementation instead), install packages outside the
+  project root, or use `--no-verify`.
+- **Issues are the source of truth.** Check `gh issue list` (and
+  `gh issue view <n>`) before designing or implementing a feature — issues
+  carry rationale the code doesn't.
+- **Review before raising a PR.** Review the full diff (e.g. a review subagent
+  reading it) before opening the PR — review gates PR creation, rather than
+  opening first and reviewing after.
 
 ## Deployment
 
