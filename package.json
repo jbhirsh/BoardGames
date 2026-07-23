@@ -14,17 +14,17 @@
     "test:mutation": "stryker run"
   },
   "dependencies": {
-    "@google/genai": "^2.12.0",
-    "@sentry/node": "^10.66.0",
-    "@sentry/react": "^10.66.0",
+    "@google/genai": "^2.13.0",
+    "@sentry/node": "^10.67.0",
+    "@sentry/react": "^10.67.0",
     "@sentry/vite-plugin": "^5.4.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
     "@vercel/analytics": "^2.0.1",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "react-markdown": "^10.1.0",
-    "react-router": "^8.2.0"
+    "react-router": "^8.3.0"
   },
   "devDependencies": {
     "@eslint-community/eslint-plugin-eslint-comments": "^4.7.2",
@@ -38,7 +38,7 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vercel/node": "^5.8.26",
-    "@vitejs/plugin-react": "^6.0.3",
+    "@vitejs/plugin-react": "^6.0.4",
     "@vitest/coverage-v8": "^4.1.10",
     "axe-core": "^4.12.1",
     "dependency-cruiser": "^18.1.0",
@@ -51,7 +51,7 @@
     "pdf-to-img": "^6.2.0",
     "tesseract.js": "^7.0.0",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.64.0",
+    "typescript-eslint": "^8.65.0",
     "unpdf": "^1.6.2",
     "vite": "^8.1.5",
     "vitest": "^4.1.2",
