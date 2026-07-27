@@ -458,7 +458,9 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .rules-chat-thinking{color:var(--text3);font-style:italic;}
 
 .rules-chat-input{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);background:var(--bg);}
-.rules-chat-input input{flex:1;padding:10px 14px;font-size:14px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface);color:var(--text);outline:none;transition:border-color .15s;}
+/* 16px is a functional minimum, not a style choice: iOS Safari zooms the
+   whole page when a focused input computes below it, and does not zoom back. */
+.rules-chat-input input{flex:1;padding:10px 14px;font-size:16px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface);color:var(--text);outline:none;transition:border-color .15s;}
 .rules-chat-input input:focus{border-color:var(--blue);}
 .rules-chat-input input:disabled{opacity:.6;}
 .rules-chat-input button{padding:10px 18px;font-size:14px;font-weight:600;color:#fff;background:var(--blue);border:none;border-radius:var(--r-sm);cursor:pointer;transition:opacity .15s;}

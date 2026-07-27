@@ -22,6 +22,17 @@ describe('WordChecker', () => {
     expect(screen.getByText('Check')).toBeDisabled();
   });
 
+  it('opts the input out of iOS autocapitalise and autocorrect', () => {
+    renderChecker();
+    const input = screen.getByPlaceholderText('Enter a word...');
+    // A dictionary lookup must receive exactly what was typed; iOS would
+    // otherwise capitalise the first letter and autocorrect the word.
+    expect(input).toHaveAttribute('autocapitalize', 'off');
+    expect(input).toHaveAttribute('autocorrect', 'off');
+    expect(input).toHaveAttribute('spellcheck', 'false');
+    expect(input).toHaveAttribute('enterkeyhint', 'search');
+  });
+
   it('enables check button when input has text', () => {
     renderChecker();
     fireEvent.change(screen.getByPlaceholderText('Enter a word...'), { target: { value: 'hello' } });
