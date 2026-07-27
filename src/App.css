@@ -20,7 +20,13 @@
   --shadow-lg:  0 12px 40px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.05);
   --r:          18px;
   --r-sm:       10px;
+  /* One horizontal gutter for every full-width section. Overriding this in a
+     breakpoint keeps the hero, filter bar, tags and main content on a single
+     left edge; setting them individually is what let them drift apart. */
+  --gutter:     48px;
 }
+@media(max-width:900px){ :root{ --gutter:24px; } }
+@media(max-width:520px){ :root{ --gutter:16px; } }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;}
@@ -29,7 +35,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 /* ══ HERO ═════════════════════════════════════════════════ */
 .hero{
-  text-align:center;padding:96px 48px 80px;
+  text-align:center;padding:96px var(--gutter) 80px;
   background:linear-gradient(180deg,#fff 0%,var(--bg) 100%);
   border-bottom:1px solid var(--border);position:relative;overflow:hidden;
 }
@@ -55,7 +61,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   backdrop-filter:saturate(180%) blur(20px);
   -webkit-backdrop-filter:saturate(180%) blur(20px);
   border-bottom:1px solid var(--border);
-  padding:10px 48px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:10px var(--gutter);display:flex;align-items:center;gap:8px;flex-wrap:wrap;
 }
 .dd-wrap{position:relative;flex-shrink:0;}
 .dd-btn{
@@ -120,7 +126,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .fb-search-input:focus{background:rgba(255,255,255,0.6);border-color:rgba(0,113,227,0.4);box-shadow:0 0 0 3.5px rgba(0,113,227,0.12), 0 1px 3px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.7);}
 
 /* Active tag row */
-.atags{background:var(--bg2);border-bottom:1px solid var(--border);padding:8px 48px;display:none;align-items:center;gap:7px;flex-wrap:wrap;}
+.atags{background:var(--bg2);border-bottom:1px solid var(--border);padding:8px var(--gutter);display:none;align-items:center;gap:7px;flex-wrap:wrap;}
 .atags.show{display:flex;}
 .atag{display:inline-flex;align-items:center;gap:5px;background:var(--blue-bg);border:1px solid rgba(0,113,227,0.2);color:var(--blue);font-size:12px;font-weight:500;padding:4px 12px;border-radius:20px;cursor:pointer;user-select:none;transition:background .15s,border-color .15s;}
 .atag:hover{background:rgba(0,113,227,0.14);border-color:rgba(0,113,227,0.4);}
@@ -131,14 +137,14 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .clear-all:hover{color:var(--text);}
 
 /* ══ MAIN ═════════════════════════════════════════════════ */
-.main{max-width:1360px;margin:0 auto;padding:52px 48px 88px;}
-.sec-hd{display:flex;align-items:center;gap:14px;margin-bottom:28px;}
+.main{max-width:1360px;margin:0 auto;padding:52px var(--gutter) 88px;}
+.sec-hd{display:flex;align-items:center;gap:14px;margin-bottom:28px;flex-wrap:wrap;}
 .sec-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;letter-spacing:-.5px;color:var(--dark);}
 .sec-count{font-size:11px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;}
 .sec-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
 
 /* Random picker */
-.pick-btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 14px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s,transform .15s,opacity .15s;}
+.pick-btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 14px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;white-space:nowrap;transition:background .15s,transform .15s,opacity .15s;}
 .pick-btn:hover:not(:disabled){background:#0062c2;transform:translateY(-1px);}
 .pick-btn:disabled{opacity:.45;cursor:not-allowed;}
 .pick-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px;overflow-y:auto;overscroll-behavior:contain;}
@@ -281,7 +287,7 @@ table.games-list{
   table-layout:auto;
 }
 table.games-list thead tr th{
-  position:sticky;top:var(--thead-top,57px);z-index:10;
+  position:sticky;top:var(--thead-top,91px);z-index:10;
   padding:10px 14px;
   font-size:10px;font-weight:600;letter-spacing:1.8px;text-transform:uppercase;
   color:var(--text3);border-bottom:1px solid var(--border);
@@ -385,59 +391,65 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 
+/* Breakpoints: 900 (tablet) / 720 (small tablet) / 520 (phone).
+   The gutter is handled by --gutter above, not per-section here. */
+
 @media(max-width:900px){
-  .hero,.main,.atags{padding-left:20px;padding-right:20px;}
-  .filterbar{padding:8px 20px;}
+  .hero{ padding:60px var(--gutter) 48px; }
   .hero-stats{flex-direction:column;}
   .hstat{border-right:none;border-bottom:1px solid var(--border);}
   .hstat:last-child{border-bottom:none;}
   .wishlist{padding:28px 20px;}
-}
 
-/* At medium widths: hide only Tags, keep Description */
-@media(max-width:860px){
+  /* hide Tags, keep Description */
   .games-list th.col-tags,
   .games-list td.col-tags{ display:none; }
 
   .games-list{ table-layout:fixed; }
   .col-name{ white-space:normal; font-size:13.5px; }
   .game-row td{ padding:10px 10px; }
-  .game-row td:first-child{ padding-left:16px; width:25%; }
-  .game-row td:nth-child(2){ width:12%; }
-  .game-row td:nth-child(3){ width:14%; }
-  .game-row td:nth-child(4){ width:49%; }
-  .main{ padding-left:24px; padding-right:24px; }
-  .filterbar{ padding:8px 24px; }
-  .atags{ padding-left:24px; padding-right:24px; }
+  .game-row td:first-child{ padding-left:16px; }
+  /* No column widths here: under table-layout:fixed the widths come from
+     <col> or the FIRST row, and the first row is the <thead>. Percentages
+     on tbody cells are ignored, so the columns divide equally. Setting them
+     on th:nth-child(...) would make them bind — see the follow-up note. */
 }
 
-/* Hide Players too at narrower widths */
-@media(max-width:680px){
+/* Hide Players too. 720 rather than 680 so landscape phones (756px and
+   838px) keep the description column. */
+@media(max-width:720px){
   .games-list th.col-players-h,
   .games-list td.col-players-h{ display:none; }
 }
 
-@media(max-width:600px){
+/* Phone. 520 rather than 600 so the 402px and 440px targets read from
+   exactly one block, with headroom above the widest current iPhone. */
+@media(max-width:520px){
   /* hide heavy columns on phone */
   .games-list th.col-hide,
   .games-list td.col-hide{ display:none; }
 
-  /* reset table to auto layout */
+  /* reset table to auto layout (no widths left to reset — see above) */
   .games-list{ table-layout:auto; }
-  .game-row td:first-child{ width:auto; padding-left:14px; }
-  .game-row td:nth-child(2){ width:auto; }
-  .game-row td:nth-child(3){ width:auto; }
-  .game-row td:nth-child(4){ width:auto; }
+  .game-row td:first-child{ padding-left:14px; }
   .game-row td{ padding:11px 10px; }
   .game-row td:last-child{ padding-right:14px; }
   .list-group-row td{ padding:7px 14px; }
+
+  /* expanded detail shares the row's left edge instead of sitting 14px in */
+  .row-expand-content,
+  .game-row.open + .row-expand .row-expand-content{ padding-left:14px; padding-right:14px; }
+
+  /* keep the column headers in register with the cells below them */
+  table.games-list thead tr th:first-child{ padding-left:14px; }
+  table.games-list thead tr th:last-child{ padding-right:14px; }
 
   /* name wraps and shows subtitle */
   .col-name{ font-size:13.5px; white-space:normal; }
   .mobile-short{ display:block; }
 
   /* filterbar: pills wrap, search stays inline */
-  .filterbar{ flex-wrap:wrap; gap:6px; padding:8px 16px; }
+  .filterbar{ flex-wrap:wrap; gap:6px; padding:8px var(--gutter); }
   .dd-btn{ font-size:12px; height:32px; padding:0 11px; }
   .fb-search{ flex:1; min-width:100px; }
 
@@ -446,9 +458,17 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
   .wish-row-actions{ justify-content:flex-end; }
 
   .table-wrap{ clip-path:none; }
-  .sec-hd{ padding:14px 0 10px; }
-  .hero{ padding:60px 20px 48px; }
-  .hstat{ padding:14px 10px; font-size:9px; }
+  .sec-hd{ padding:14px 0 10px; row-gap:10px; }
+  .sec-right{ margin-left:auto; flex-shrink:0; }
+  .hstat{ padding:14px 10px; }
+  .wishlist{ padding:28px 14px; }
+
+  /* score calculator: three icon+input pairs are 360px wide and overflow
+     the page, which has no clip wrapper, so the whole page pans sideways */
+  .sc-science-section{ flex-direction:column; align-items:stretch; }
+  .sc-science-inputs{ margin-left:0; width:100%; gap:8px; }
+  .sc-science-field{ flex:1; min-width:0; }
+  .sc-science-field .sc-input{ width:100%; }
 
   /* rules header: stop description being squeezed into a single-word column */
   .rules-title-row{ flex-wrap:wrap; align-items:flex-start; gap:14px; }
@@ -459,17 +479,15 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
   .rules-title-row .rules-chat-toggle{ flex:1 1 calc(50% - 7px); justify-content:center; }
 }
 
-@media(max-width:400px){
-  .fb-search{ flex-basis:100%; order:5; min-width:0; }
-}
-
 /* ══ CARD CORNER IMAGE ═══════════════════════════════════════ */
 .card-corner-img{position:absolute;top:12px;right:14px;width:76px;height:76px;border-radius:50%;object-fit:cover;border:2px solid var(--border);box-shadow:var(--shadow-sm);flex-shrink:0;}
 .game-card:hover .card-corner-img{border-color:rgba(0,113,227,0.25);}
 
 
 /* ══ RULES PAGE ══════════════════════════════════════════════ */
-.rules-page{max-width:960px;margin:0 auto;padding:32px 24px 64px;}
+/* Tracks the gutter on phones but stays at 24px on desktop: this column is
+   max-width:960px, so a 48px gutter would eat content width for no gain. */
+.rules-page{max-width:960px;margin:0 auto;padding:32px min(var(--gutter),24px) 64px;}
 .rules-header{margin-bottom:32px;}
 .back-link{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:500;color:var(--blue);text-decoration:none;margin-bottom:24px;transition:opacity .15s;}
 .back-link:hover{opacity:.7;}
