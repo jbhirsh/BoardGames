@@ -27,6 +27,15 @@ describe('FilterBar', () => {
     expect(screen.getByPlaceholderText('Search games...')).toBeInTheDocument();
   });
 
+  it('opts the search field out of iOS autocorrect', () => {
+    renderFilterBar();
+    const input = screen.getByPlaceholderText('Search games...');
+    expect(input).toHaveAttribute('autocapitalize', 'off');
+    expect(input).toHaveAttribute('autocorrect', 'off');
+    expect(input).toHaveAttribute('spellcheck', 'false');
+    expect(input).toHaveAttribute('enterkeyhint', 'search');
+  });
+
   it('opens and closes duration dropdown', () => {
     renderFilterBar();
     fireEvent.click(getDDButton('Duration'));
