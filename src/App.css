@@ -607,4 +607,13 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
   .rules-game-name{ white-space:normal; overflow:visible; text-overflow:clip; font-size:22px; margin-bottom:6px; }
   /* basis is half-row minus half-gap so two buttons (Bananagrams) sit side-by-side; a lone button grows to fill the row. */
   .rules-title-row .rules-chat-toggle{ flex:1 1 calc(50% - 7px); justify-content:center; }
+
+  /* Chat + word checker panel. A hard 420px is taller than the space left
+     under the page header on a small phone, which pushed the text field
+     off-screen. svh (not vh/dvh) sizes against the viewport with the
+     browser toolbars showing, so the panel fits without resizing as they
+     collapse. The cap keeps it from growing on larger phones. */
+  .rules-chat-panel{ height:min(420px, 60svh); }
+  .rules-chat-messages{ padding:14px; }
+  .rules-chat-input{ padding:10px 12px; padding-bottom:max(10px, env(safe-area-inset-bottom)); }
 }
