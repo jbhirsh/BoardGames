@@ -17,6 +17,9 @@ export default function RandomPicker() {
   const tickRef = useRef<number | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  // Set when the modal closes because we are navigating away, so the
+  // scroll-lock cleanup knows not to restore the old page's offset.
+  const navigatingRef = useRef(false);
   // Written during render so the tick always reads the current filtered list without a stale-ref window.
   const filteredGamesRef = useRef(filteredGames);
   filteredGamesRef.current = filteredGames;
@@ -82,6 +85,13 @@ export default function RandomPicker() {
     });
     return () => {
       Object.assign(document.body.style, { overflow, position, top, width });
+      // Not when we are leaving the page: ScrollRestoration positions the new
+      // route in a layout effect, which runs before this passive cleanup, so
+      // restoring here would yank the rules page to the collection's offset.
+      if (navigatingRef.current) {
+        navigatingRef.current = false;
+        return;
+      }
       // 'instant' is required: the legacy two-arg form resolves to 'auto',
       // which inherits html{scroll-behavior:smooth} and glides on dismiss.
       window.scrollTo({ top: scrollY, behavior: 'instant' });
@@ -181,6 +191,7 @@ export default function RandomPicker() {
                   className="pick-primary"
                   onClick={() => {
                     const slug = current.slug;
+                    navigatingRef.current = true;
                     close();
                     navigate(`/rules/${slug}`);
                   }}

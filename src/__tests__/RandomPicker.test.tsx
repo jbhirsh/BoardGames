@@ -277,4 +277,25 @@ describe('RandomPicker', () => {
       scrollTo.mockRestore();
     }
   });
+
+  it('does not restore the old scroll position when navigating to the rules', () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    Object.defineProperty(window, 'scrollY', { value: 900, configurable: true });
+
+    try {
+      renderPicker();
+      fireEvent.click(screen.getByRole('button', { name: /^Pick for us$/ }));
+      act(() => vi.advanceTimersByTime(2000));
+
+      fireEvent.click(screen.getByRole('button', { name: /View rules/i }));
+
+      // ScrollRestoration positions the new route in a layout effect, which
+      // runs before this passive cleanup — restoring here would yank the
+      // rules page back to the collection's offset.
+      expect(scrollTo).not.toHaveBeenCalledWith({ top: 900, behavior: 'instant' });
+      expect(document.body.style.position).toBe('');
+    } finally {
+      scrollTo.mockRestore();
+    }
+  });
 });

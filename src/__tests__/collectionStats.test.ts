@@ -27,6 +27,13 @@ describe('formatMinutes', () => {
     expect(formatMinutes(90)).toBe('1.5 hrs');
     expect(formatMinutes(150)).toBe('2.5 hrs');
   });
+
+  it('rounds to the displayed precision before deciding it is whole', () => {
+    // 61/60 = 1.0166… — must read as "1 hr", not "1.0 hrs".
+    expect(formatMinutes(61)).toBe('1 hr');
+    expect(formatMinutes(119)).toBe('2 hrs');
+    expect(formatMinutes(95)).toBe('1.6 hrs');
+  });
 });
 
 describe('collectionSpan', () => {
