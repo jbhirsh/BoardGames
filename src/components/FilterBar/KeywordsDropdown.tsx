@@ -51,7 +51,7 @@ export default function KeywordsDropdown({ isOpen, onToggle }: Props) {
           All
         </button>
       </div>
-      <div className="dd-opts-scroll">
+      <div className="dd-opts">
         {allKw.map(([id, name]) => {
           const sel = state.keywords.has(id);
           return (
@@ -66,7 +66,7 @@ export default function KeywordsDropdown({ isOpen, onToggle }: Props) {
                 {sel && <CheckIcon />}
               </span>
               {name}
-              <span className="dd-count">{countForKw(id)}</span>
+              <span className="dd-opt-ct">{countForKw(id)}</span>
             </button>
           );
         })}
