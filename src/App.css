@@ -402,90 +402,12 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 /* Breakpoints: 900 (tablet) / 720 (small tablet) / 520 (phone).
    The gutter is handled by --gutter above, not per-section here. */
 
-@media(max-width:900px){
-  .hero{ padding:48px var(--gutter) 40px; }
-  .wishlist{padding:28px 20px;}
-
-  /* hide Tags, keep Description */
-  .games-list th.col-tags,
-  .games-list td.col-tags{ display:none; }
-
-  .games-list{ table-layout:fixed; }
-  .col-name{ white-space:normal; font-size:13.5px; }
-  .game-row td{ padding:10px 10px; }
-  .game-row td:first-child{ padding-left:16px; }
-  /* No column widths here: under table-layout:fixed the widths come from
-     <col> or the FIRST row, and the first row is the <thead>. Percentages
-     on tbody cells are ignored, so the columns divide equally. Setting them
-     on th:nth-child(...) would make them bind — see the follow-up note. */
-}
-
-/* Hide Players too. 720 rather than 680 so landscape phones (756px and
-   838px) keep the description column. */
-@media(max-width:720px){
-  .games-list th.col-players-h,
-  .games-list td.col-players-h{ display:none; }
-}
-
-/* Phone. 520 rather than 600 so the 402px and 440px targets read from
-   exactly one block, with headroom above the widest current iPhone. */
-@media(max-width:520px){
-  /* hide heavy columns on phone */
-  .games-list th.col-hide,
-  .games-list td.col-hide{ display:none; }
-
-  /* reset table to auto layout (no widths left to reset — see above) */
-  .games-list{ table-layout:auto; }
-  .game-row td:first-child{ padding-left:14px; }
-  .game-row td{ padding:11px 10px; }
-  .game-row td:last-child{ padding-right:14px; }
-  .list-group-row td{ padding:7px 14px; }
-
-  /* expanded detail shares the row's left edge instead of sitting 14px in */
-  .row-expand-content,
-  .game-row.open + .row-expand .row-expand-content{ padding-left:14px; padding-right:14px; }
-
-  /* keep the column headers in register with the cells below them */
-  table.games-list thead tr th:first-child{ padding-left:14px; }
-  table.games-list thead tr th:last-child{ padding-right:14px; }
-
-  /* name wraps and shows subtitle */
-  .col-name{ font-size:13.5px; white-space:normal; }
-  .mobile-short{ display:block; }
-
-  /* filterbar: pills wrap, search stays inline */
-  .filterbar{ flex-wrap:wrap; gap:6px; padding:8px var(--gutter); }
-  .dd-btn{ font-size:12px; height:32px; padding:0 11px; }
-  .fb-search{ flex:1; min-width:100px; }
-
-  /* wishlist rows stack: side-by-side leaves the text ~165px wide on a phone */
-  .wish-row{ flex-direction:column; align-items:stretch; gap:12px; }
-  .wish-row-actions{ justify-content:flex-end; }
-
-  .table-wrap{ clip-path:none; }
-  .sec-hd{ padding:14px 0 10px; row-gap:10px; }
-  .sec-right{ margin-left:auto; flex-shrink:0; }
-  .wishlist{ padding:28px 14px; }
-  .hero{ padding:32px var(--gutter) 24px; }
-  .hero-sub{ font-size:15px; margin-bottom:20px; }
-  .main{ padding-top:24px; }
-
-  /* score calculator: three icon+input pairs are 360px wide and overflow
-     the page, which has no clip wrapper, so the whole page pans sideways */
-  .sc-science-section{ flex-direction:column; align-items:stretch; }
-  .sc-science-inputs{ margin-left:0; width:100%; gap:8px; }
-  .sc-science-field{ flex:1; min-width:0; }
-  .sc-science-field .sc-input{ width:100%; }
-
-  /* rules header: stop description being squeezed into a single-word column */
-  .rules-title-row{ flex-wrap:wrap; align-items:flex-start; gap:14px; }
-  .rules-box-art{ width:64px; height:64px; }
-  .rules-title-info{ flex:1 1 calc(100% - 78px); min-width:0; }
-  .rules-game-name{ white-space:normal; overflow:visible; text-overflow:clip; font-size:22px; margin-bottom:6px; }
-  /* basis is half-row minus half-gap so two buttons (Bananagrams) sit side-by-side; a lone button grows to fill the row. */
-  .rules-title-row .rules-chat-toggle{ flex:1 1 calc(50% - 7px); justify-content:center; }
-}
-
+/* ══ COMPONENT RULES ═══════════════════════════════════════════
+   Everything below is base styling and MUST stay above the media
+   blocks: the queries are max-width, so at equal specificity the
+   later rule wins. These sat after the queries, which silently
+   killed every mobile override for the rules page, the chat panel
+   and the score calculator. ══════════════════════════════════ */
 /* ══ CARD CORNER IMAGE ═══════════════════════════════════════ */
 .card-corner-img{position:absolute;top:12px;right:14px;width:76px;height:76px;border-radius:50%;object-fit:cover;border:2px solid var(--border);box-shadow:var(--shadow-sm);flex-shrink:0;}
 .game-card:hover .card-corner-img{border-color:rgba(0,113,227,0.25);}
@@ -598,3 +520,87 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .sc-rank{font-size:18px;width:32px;text-align:center;}
 .sc-summary-name{flex:1;font-weight:600;color:var(--text);}
 .sc-summary-total{font-weight:700;font-size:16px;color:var(--blue);}
+
+@media(max-width:900px){
+  .hero{ padding:48px var(--gutter) 40px; }
+  .wishlist{padding:28px 20px;}
+
+  /* hide Tags, keep Description */
+  .games-list th.col-tags,
+  .games-list td.col-tags{ display:none; }
+
+  .games-list{ table-layout:fixed; }
+  .col-name{ white-space:normal; font-size:13.5px; }
+  .game-row td{ padding:10px 10px; }
+  .game-row td:first-child{ padding-left:16px; }
+  /* No column widths here: under table-layout:fixed the widths come from
+     <col> or the FIRST row, and the first row is the <thead>. Percentages
+     on tbody cells are ignored, so the columns divide equally. Setting them
+     on th:nth-child(...) would make them bind — see the follow-up note. */
+}
+
+/* Hide Players too. 720 rather than 680 so landscape phones (756px and
+   838px) keep the description column. */
+@media(max-width:720px){
+  .games-list th.col-players-h,
+  .games-list td.col-players-h{ display:none; }
+}
+
+/* Phone. 520 rather than 600 so the 402px and 440px targets read from
+   exactly one block, with headroom above the widest current iPhone. */
+@media(max-width:520px){
+  /* hide heavy columns on phone */
+  .games-list th.col-hide,
+  .games-list td.col-hide{ display:none; }
+
+  /* reset table to auto layout (no widths left to reset — see above) */
+  .games-list{ table-layout:auto; }
+  .game-row td:first-child{ padding-left:14px; }
+  .game-row td{ padding:11px 10px; }
+  .game-row td:last-child{ padding-right:14px; }
+  .list-group-row td{ padding:7px 14px; }
+
+  /* expanded detail shares the row's left edge instead of sitting 14px in */
+  .row-expand-content,
+  .game-row.open + .row-expand .row-expand-content{ padding-left:14px; padding-right:14px; }
+
+  /* keep the column headers in register with the cells below them */
+  table.games-list thead tr th:first-child{ padding-left:14px; }
+  table.games-list thead tr th:last-child{ padding-right:14px; }
+
+  /* name wraps and shows subtitle */
+  .col-name{ font-size:13.5px; white-space:normal; }
+  .mobile-short{ display:block; }
+
+  /* filterbar: pills wrap, search stays inline */
+  .filterbar{ flex-wrap:wrap; gap:6px; padding:8px var(--gutter); }
+  .dd-btn{ font-size:12px; height:32px; padding:0 11px; }
+  .fb-search{ flex:1; min-width:100px; }
+
+  /* wishlist rows stack: side-by-side leaves the text ~165px wide on a phone */
+  .wish-row{ flex-direction:column; align-items:stretch; gap:12px; }
+  .wish-row-actions{ justify-content:flex-end; }
+
+  .table-wrap{ clip-path:none; }
+  .sec-hd{ padding:14px 0 10px; row-gap:10px; }
+  .sec-right{ margin-left:auto; flex-shrink:0; }
+  .wishlist{ padding:28px 14px; }
+  .hero{ padding:32px var(--gutter) 24px; }
+  .hero-sub{ font-size:15px; margin-bottom:20px; }
+  .main{ padding-top:24px; }
+
+  /* score calculator: three icon+input pairs are 360px wide and overflow
+     the page, which has no clip wrapper, so the whole page pans sideways */
+  .sc-science-section{ flex-direction:column; align-items:stretch; }
+  .sc-science-inputs{ margin-left:0; width:100%; gap:8px; }
+  .sc-science-field{ flex:1; min-width:0; }
+  .sc-science-field .sc-input{ width:100%; }
+
+  /* rules header: stop description being squeezed into a single-word column */
+  .rules-title-row{ flex-wrap:wrap; align-items:flex-start; gap:14px; }
+  .rules-box-art{ width:64px; height:64px; }
+  .rules-title-info{ flex:1 1 calc(100% - 78px); min-width:0; }
+  .rules-game-name{ white-space:normal; overflow:visible; text-overflow:clip; font-size:22px; margin-bottom:6px; }
+  /* basis is half-row minus half-gap so two buttons (Bananagrams) sit side-by-side; a lone button grows to fill the row. */
+  .rules-title-row .rules-chat-toggle{ flex:1 1 calc(50% - 7px); justify-content:center; }
+}
