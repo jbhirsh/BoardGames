@@ -152,8 +152,12 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .main{max-width:1360px;margin:0 auto;padding:52px var(--gutter) 88px;}
 .sec-hd{display:flex;align-items:center;gap:14px;margin-bottom:28px;flex-wrap:wrap;}
 /* The hero's "Browse all" jumps here; clear the sticky header on arrival.
-   Fallback is the phone bar height (91px); the one on thead below is the
-   desktop bar (57px). They differ on purpose — don't reconcile them. */
+   The 91px fallback only applies before the ResizeObserver in
+   useStickyOffset publishes the measured height, and matches the one on
+   thead below. It is the phone bar height rather than the desktop one
+   (~57px) deliberately: if the fallback is ever used, landing slightly too
+   low is recoverable, whereas landing too high hides the target under the
+   sticky bar. */
 #collection{scroll-margin-top:var(--thead-top,91px);}
 .sec-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;letter-spacing:-.5px;color:var(--dark);}
 .sec-count{font-size:11px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;}

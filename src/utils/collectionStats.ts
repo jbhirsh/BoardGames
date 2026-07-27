@@ -7,7 +7,10 @@ import type { Game } from '../data/types';
  */
 export function formatMinutes(mins: number): string {
   if (mins < 60) return `${mins} min`;
-  const hrs = mins / 60;
+  // Round to the displayed precision first. Without it, a duration that is
+  // not a whole number of minutes-per-hour reads as "1.0 hrs" rather than
+  // "1 hr", because the integer check runs against the unrounded quotient.
+  const hrs = Math.round((mins / 60) * 10) / 10;
   const label = Number.isInteger(hrs) ? String(hrs) : hrs.toFixed(1);
   return `${label} ${hrs === 1 ? 'hr' : 'hrs'}`;
 }
