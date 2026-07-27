@@ -16,11 +16,13 @@ export default function FilterBar() {
 
   return (
     <div className="filterbar">
+      {/* Search leads: it is the fastest way to a known game, and the pills
+          read as refinements beneath it. */}
+      <SearchInput />
       <DurationDropdown isOpen={openDD === 'duration'} onToggle={() => toggle('duration')} />
       <PlayersDropdown isOpen={openDD === 'players'} onToggle={() => toggle('players')} />
       <KeywordsDropdown isOpen={openDD === 'keywords'} onToggle={() => toggle('keywords')} />
       <SortDropdown isOpen={openDD === 'sort'} onToggle={() => toggle('sort')} />
-      <SearchInput />
     </div>
   );
 }
