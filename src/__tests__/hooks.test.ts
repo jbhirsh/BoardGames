@@ -65,14 +65,46 @@ describe('useStickyOffset', () => {
     const ref = { current: div };
 
     const { unmount } = renderHook(() => useStickyOffset(ref));
-    expect(observeSpy).toHaveBeenCalledWith(div);
+    // Border box, not content box: the offset must include the bar's padding
+    // and bottom border or the sticky <thead> hides behind it.
+    expect(observeSpy).toHaveBeenCalledWith(div, { box: 'border-box' });
 
-    // Invoke the callback to cover lines 9-10
-    capturedCb!([{ contentRect: { height: 42 } } as ResizeObserverEntry] as ResizeObserverEntry[], {} as ResizeObserver);
+    capturedCb!(
+      [{ borderBoxSize: [{ blockSize: 42, inlineSize: 300 }], target: div } as unknown as ResizeObserverEntry],
+      {} as ResizeObserver,
+    );
     expect(document.documentElement.style.getPropertyValue('--thead-top')).toBe('42px');
 
     unmount();
     expect(disconnectSpy).toHaveBeenCalled();
+
+    globalThis.ResizeObserver = OriginalRO;
+  });
+
+  it('falls back to the bounding rect when borderBoxSize is unavailable', () => {
+    let capturedCb: ResizeObserverCallback | undefined;
+
+    const OriginalRO = globalThis.ResizeObserver;
+    globalThis.ResizeObserver = class MockResizeObserver {
+      observe = vi.fn();
+      unobserve = vi.fn();
+      disconnect = vi.fn();
+      constructor(cb: ResizeObserverCallback) {
+        capturedCb = cb;
+      }
+    } as unknown as typeof ResizeObserver;
+
+    const div = document.createElement('div');
+    div.getBoundingClientRect = () => ({ height: 91 }) as DOMRect;
+    const ref = { current: div };
+
+    renderHook(() => useStickyOffset(ref));
+
+    capturedCb!(
+      [{ target: div } as unknown as ResizeObserverEntry],
+      {} as ResizeObserver,
+    );
+    expect(document.documentElement.style.getPropertyValue('--thead-top')).toBe('91px');
 
     globalThis.ResizeObserver = OriginalRO;
   });

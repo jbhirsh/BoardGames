@@ -152,7 +152,7 @@ describe('KeywordsDropdown', () => {
     renderFilterBar();
     fireEvent.click(getDDButton('Keywords'));
 
-    const counts = document.querySelectorAll('.dd-count');
+    const counts = document.querySelectorAll('.dd-opt-ct');
     expect(counts.length).toBeGreaterThan(0);
   });
 

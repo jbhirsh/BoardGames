@@ -250,4 +250,31 @@ describe('RandomPicker', () => {
     });
     expect(document.activeElement).toBe(pickAgain);
   });
+
+  it('pins the body while open and restores the scroll position on close', () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    Object.defineProperty(window, 'scrollY', { value: 420, configurable: true });
+
+    try {
+      renderPicker();
+      fireEvent.click(screen.getByRole('button', { name: /^Pick for us$/ }));
+
+      // position:fixed, not overflow alone — iOS ignores overflow for touch.
+      expect(document.body.style.position).toBe('fixed');
+      expect(document.body.style.top).toBe('-420px');
+      expect(document.body.style.width).toBe('100%');
+
+      act(() => {
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      });
+
+      expect(document.body.style.position).toBe('');
+      expect(document.body.style.top).toBe('');
+      // Object form with 'instant': the legacy two-arg call would inherit
+      // html{scroll-behavior:smooth} and animate the restore.
+      expect(scrollTo).toHaveBeenCalledWith({ top: 420, behavior: 'instant' });
+    } finally {
+      scrollTo.mockRestore();
+    }
+  });
 });
