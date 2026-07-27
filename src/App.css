@@ -587,7 +587,22 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
   .wish-row{ flex-direction:column; align-items:stretch; gap:12px; }
   .wish-row-actions{ justify-content:flex-end; }
 
-  .table-wrap{ clip-path:none; }
+  /* clip-path stays on here. `border-radius` alone does not clip the child
+     table's backgrounds, so disabling it left the thead's grey fill and the
+     table's white fill painting square into the rounded border — the stroke
+     visibly cut across all four corners. clip-path is not a scroll container
+     and does not create a containing block for the sticky thead, which is
+     the whole reason it was chosen over overflow:hidden (see above). */
+  /* Dropdown panels anchor to the bar rather than the pill. A 220px popover
+     opened from a right-hand pill runs to x=422 on a 402px viewport, and
+     .clip-wrap's overflow-x:clip cuts it off silently — no scrollbar, no way
+     to reach the option counts. Full width under the bar also gives a much
+     larger touch target. */
+  .filterbar{ position:relative; }
+  .dd-wrap{ position:static; }
+  .dd-panel{ left:var(--gutter); right:var(--gutter); width:auto; min-width:0; transform-origin:top center; }
+  .dd-opts{ max-height:min(250px, 40svh); }
+
   .sec-hd{ padding:14px 0 10px; row-gap:10px; }
   .sec-right{ margin-left:auto; flex-shrink:0; }
   .wishlist{ padding:28px 14px; }
