@@ -97,12 +97,19 @@ export default function WordChecker() {
         )}
       </div>
       <form className="rules-chat-input" onSubmit={handleCheck}>
+        {/* iOS would otherwise capitalise and autocorrect the word being
+            looked up, which is the one thing this tool must not do. */}
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Enter a word..."
           disabled={isLoading}
+          autoCapitalize="off"
+          autoCorrect="off"
+          autoComplete="off"
+          spellCheck={false}
+          enterKeyHint="search"
         />
         <button type="submit" disabled={!input.trim() || isLoading}>
           Check
