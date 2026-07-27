@@ -125,7 +125,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 /* Text search */
 .fb-search{flex:1;min-width:80px;position:relative;}
 .fb-search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;}
-.fb-search-input{width:100%;height:36px;padding:0 14px 0 36px;background:rgba(255,255,255,0.45);backdrop-filter:blur(12px) saturate(1.8);-webkit-backdrop-filter:blur(12px) saturate(1.8);border:1px solid rgba(255,255,255,0.6);border-radius:12px;font-family:inherit;font-size:13px;color:var(--text);outline:none;box-shadow:0 1px 3px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.7);transition:border-color .2s,box-shadow .2s,background .2s;}
+/* 16px: below it, iOS Safari zooms the page on focus and never zooms back. */
+.fb-search-input{width:100%;height:36px;padding:0 14px 0 36px;background:rgba(255,255,255,0.45);backdrop-filter:blur(12px) saturate(1.8);-webkit-backdrop-filter:blur(12px) saturate(1.8);border:1px solid rgba(255,255,255,0.6);border-radius:12px;font-family:inherit;font-size:16px;color:var(--text);outline:none;box-shadow:0 1px 3px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.7);transition:border-color .2s,box-shadow .2s,background .2s;}
 .fb-search-input::placeholder{color:var(--text3);}
 .fb-search-input:focus{background:rgba(255,255,255,0.6);border-color:rgba(0,113,227,0.4);box-shadow:0 0 0 3.5px rgba(0,113,227,0.12), 0 1px 3px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.7);}
 
@@ -507,7 +508,8 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .sc-label{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:var(--text);}
 .sc-icon{font-size:16px;}
 .sc-vp-note{font-size:12px;color:var(--text3);font-weight:400;margin-left:4px;}
-.sc-input{width:80px;padding:8px 10px;font-size:14px;border:2px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--text);text-align:center;font-family:inherit;outline:none;transition:border-color .15s;}
+/* 16px for the same iOS reason — this screen has ten of these in a column. */
+.sc-input{width:80px;padding:8px 10px;font-size:16px;border:2px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--text);text-align:center;font-family:inherit;outline:none;transition:border-color .15s;}
 .sc-input:focus{border-color:var(--blue);}
 .sc-science-section{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
 .sc-science-inputs{display:flex;gap:12px;margin-left:auto;}
