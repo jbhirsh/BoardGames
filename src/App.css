@@ -30,7 +30,7 @@
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;}
-body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;font-weight:400;min-height:100vh;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;font-weight:400;min-height:100svh;}
 .clip-wrap{overflow-x:clip;}
 
 /* ══ HERO ═════════════════════════════════════════════════ */
@@ -429,7 +429,9 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .rules-title-row .rules-chat-toggle{flex-shrink:0;}
 .rules-not-found{font-family:'Playfair Display',serif;font-size:28px;color:var(--dark);margin-top:24px;}
 .rules-viewer{border-radius:var(--r);overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow-md);margin-bottom:16px;}
-.rules-viewer iframe{width:100%;height:80vh;border:none;display:block;}
+/* svh, not vh: on iOS `vh` resolves to the large viewport, so 80vh renders
+   a frame taller than the space actually visible with the toolbars up. */
+.rules-viewer iframe{width:100%;height:80svh;border:none;display:block;}
 .rules-download{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--blue);text-decoration:none;transition:opacity .15s;margin-bottom:24px;}
 .rules-download:hover{opacity:.7;}
 
@@ -616,4 +618,11 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
   .rules-chat-panel{ height:min(420px, 60svh); }
   .rules-chat-messages{ padding:14px; }
   .rules-chat-input{ padding:10px 12px; padding-bottom:max(10px, env(safe-area-inset-bottom)); }
+
+  /* PDF frame: 80svh still overshoots the ~541px left under the page
+     header, which pushed the Download PDF fallback well below the fold.
+     iOS renders a PDF in an iframe as a non-scrolling preview, so a taller
+     frame buys nothing here — the download link is the real affordance and
+     it needs to be reachable. */
+  .rules-viewer iframe{ height:min(60svh, 420px); }
 }
