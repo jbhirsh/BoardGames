@@ -50,8 +50,11 @@ describe('Wishlist', () => {
     renderWishlist();
     await waitFor(() => {
       for (const item of WISHLIST) {
-        const btn = screen.getByRole('button', { name: new RegExp(`Vote for ${item.name}`) });
-        expect(btn).toHaveTextContent(String(counts[item.id]));
+        // Match the full label: an unanchored prefix would also hit an item
+        // whose name extends this one (e.g. a base game and its expansion).
+        const n = counts[item.id];
+        const btn = screen.getByRole('button', { name: `Vote for ${item.name} (${n} ${n === 1 ? 'vote' : 'votes'})` });
+        expect(btn).toHaveTextContent(String(n));
       }
     });
   });
