@@ -5,6 +5,7 @@ import { useFilter } from '../context/useFilter';
 import { ytURL, rulesURL } from '../utils/urls';
 import { sortedKw } from '../utils/filterGames';
 import KeywordPill from './KeywordPill';
+import AwardsBadge from './AwardsBadge';
 import { YouTubeIcon, AiRulesIcon, UserIcon, ClockIcon, CalculatorIcon, SearchIcon } from './Icons';
 
 interface Props {
@@ -26,6 +27,7 @@ export default function GameCard({ game }: Props) {
           <span className="cmeta">
             <ClockIcon /> {game.dur}
           </span>
+          <AwardsBadge itemName={game.name} awards={game.awards} />
         </div>
         <div className="card-kw">
           {sortedKw(game.kw).map((kw) => (

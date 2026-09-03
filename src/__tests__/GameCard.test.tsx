@@ -26,6 +26,18 @@ describe('GameCard', () => {
     expect(screen.getByText('10 min')).toBeInTheDocument();
   });
 
+  it('renders an award badge that lists the wins when opened', () => {
+    const game: Game = { ...quickGame, awards: [{ name: 'Spiel des Jahres', year: 2016 }] };
+    renderWithContext(<GameCard game={game} />);
+    fireEvent.click(screen.getByText(/1 award/));
+    expect(screen.getByRole('listitem')).toHaveTextContent('Spiel des Jahres');
+  });
+
+  it('shows a plain zero-award label when the game has no wins', () => {
+    renderWithContext(<GameCard game={quickGame} />);
+    expect(screen.getByText('0 awards').tagName).toBe('SPAN');
+  });
+
   it('renders keyword pills', () => {
     renderWithContext(<GameCard game={quickGame} />);
     expect(screen.getByText('Card Game')).toBeInTheDocument();

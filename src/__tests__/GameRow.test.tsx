@@ -40,6 +40,15 @@ describe('GameRow', () => {
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 
+  it('opens the award list without toggling the row', () => {
+    const onToggle = vi.fn();
+    const game: Game = { ...quickGame, awards: [{ name: 'Mensa Select', year: 2009 }, { name: 'As d\'Or', year: 2010 }] };
+    renderRow(game, false, onToggle);
+    fireEvent.click(screen.getByText(/2 awards/));
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    expect(onToggle).not.toHaveBeenCalled();
+  });
+
   it('shows group badge when showGroupBadge is true', () => {
     renderRow(quickGame, false, vi.fn(), true);
     expect(screen.getByText('party')).toBeInTheDocument();

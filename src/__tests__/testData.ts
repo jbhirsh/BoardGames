@@ -17,6 +17,7 @@ export const quickGame: Game = {
   desc: 'A fast-paced card game for the whole family.',
   detail: '<div class="detail-section"><h3>How to Play</h3><p>Play cards fast.</p></div>',
   yt: 'how to play quick game',
+  awards: [],
 };
 
 export const mediumGame: Game = {
@@ -36,6 +37,7 @@ export const mediumGame: Game = {
   desc: 'A classic strategy game with moderate playtime.',
   detail: '<div class="detail-section"><h3>Strategy</h3><p>Think hard.</p></div>',
   yt: 'how to play medium game',
+  awards: [],
 };
 
 export const longGame: Game = {
@@ -55,6 +57,7 @@ export const longGame: Game = {
   desc: 'An epic cooperative adventure lasting hours.',
   detail: '<div class="detail-section"><h3>Adventure</h3><p>Work together.</p></div>',
   yt: 'how to play long game',
+  awards: [],
 };
 
 export const bananagramsGame: Game = {
@@ -74,6 +77,7 @@ export const bananagramsGame: Game = {
   desc: 'Race to build your own crossword grid.',
   detail: '<div class="detail-section"><h3>How to Play</h3><p>Build words fast.</p></div>',
   yt: 'how to play bananagrams',
+  awards: [],
 };
 
 export const sevenWondersGame: Game = {
@@ -93,6 +97,7 @@ export const sevenWondersGame: Game = {
   desc: 'Draft cards to build your ancient civilization.',
   detail: '<div class="detail-section"><h3>Strategy</h3><p>Draft wisely.</p></div>',
   yt: 'how to play 7 wonders',
+  awards: [],
 };
 
 export const testGames: Game[] = [quickGame, mediumGame, longGame];
