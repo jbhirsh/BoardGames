@@ -1,4 +1,4 @@
-import type { GroupId, KeywordId } from './types';
+import type { GroupId, KeywordId, WishlistType } from './types';
 
 export const KW: Record<KeywordId, string> = {
   'social': 'Social',
@@ -32,6 +32,16 @@ export const GROUPS: Record<GroupId, string> = {
 };
 
 export const GROUP_ORDER: GroupId[] = ['social', 'word', 'party', 'strat', 'coop'];
+
+export const WISHLIST_TYPES: Record<WishlistType, string> = {
+  'two-player': 'Two-Player',
+  coop: 'Cooperative',
+  strategy: 'Strategy',
+  heavy: 'Heavy Strategy',
+  party: 'Party & Card',
+};
+
+export const WISHLIST_TYPE_ORDER: WishlistType[] = ['party', 'strategy', 'coop', 'two-player', 'heavy'];
 
 export const DUR_LABELS: Record<string, string> = {
   all: 'Duration',

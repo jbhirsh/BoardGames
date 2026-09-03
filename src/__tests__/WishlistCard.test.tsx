@@ -8,6 +8,9 @@ const testItem: WishlistItem = {
   name: 'Test Wishlist Game',
   desc: 'A great game to add.',
   yt: 'test wishlist game review',
+  players: '2–4',
+  type: 'strategy',
+  awards: [{ name: 'Spiel des Jahres', year: 2020 }],
 };
 
 function defaultProps(overrides: Partial<React.ComponentProps<typeof WishlistCard>> = {}) {
@@ -25,6 +28,13 @@ describe('WishlistCard', () => {
     render(<WishlistCard {...defaultProps()} />);
     expect(screen.getByText('Test Wishlist Game')).toBeInTheDocument();
     expect(screen.getByText('A great game to add.')).toBeInTheDocument();
+  });
+
+  it('renders player count, type label and award count', () => {
+    render(<WishlistCard {...defaultProps()} />);
+    expect(screen.getByText('2–4')).toBeInTheDocument();
+    expect(screen.getByText('Strategy')).toBeInTheDocument();
+    expect(screen.getByText(/1 award/)).toBeInTheDocument();
   });
 
   it('renders the Wishlist label', () => {

@@ -8,6 +8,9 @@ const testItem: WishlistItem = {
   name: 'Row Game',
   desc: 'A row of a game.',
   yt: 'row game review',
+  players: '3–8',
+  type: 'party',
+  awards: [],
 };
 
 describe('WishlistRow', () => {
@@ -17,6 +20,15 @@ describe('WishlistRow', () => {
     expect(screen.getByText('A row of a game.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Vote for Row Game/ })).toHaveTextContent('4');
     expect(screen.getByRole('link')).toHaveAttribute('href', expect.stringContaining('youtube.com'));
+  });
+
+  it('renders player count, type label and a non-interactive zero-award label', () => {
+    render(<WishlistRow item={testItem} voteCount={0} voted={false} onVote={() => {}} />);
+    expect(screen.getByText('3–8')).toBeInTheDocument();
+    expect(screen.getByText('Party & Card')).toBeInTheDocument();
+    const label = screen.getByText('0 awards');
+    expect(label.tagName).toBe('SPAN');
+    expect(screen.queryByRole('group')).not.toBeInTheDocument();
   });
 
   it('fires onVote when the vote button is clicked', () => {
