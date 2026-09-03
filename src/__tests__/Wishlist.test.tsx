@@ -5,6 +5,7 @@ import Wishlist from '../components/Wishlist';
 import { FilterProvider } from '../context/FilterContext';
 import { useFilter } from '../context/useFilter';
 import { WISHLIST } from '../data/wishlist';
+import { WISHLIST_TYPES, WISHLIST_TYPE_ORDER } from '../data/keywords';
 
 function jsonResponse(body: unknown, ok = true): Response {
   return { ok, json: async () => body } as unknown as Response;
@@ -59,19 +60,47 @@ describe('Wishlist', () => {
     });
   });
 
-  it('sorts items by vote count, highest first', async () => {
+  it('groups items by type, in the configured type order', async () => {
+    mockVotes({});
+    renderWishlist();
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled());
+
+    const headings = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
+    const expected = WISHLIST_TYPE_ORDER
+      .filter((t) => WISHLIST.some((w) => w.type === t))
+      .map((t) => WISHLIST_TYPES[t]);
+    expect(headings).toEqual(expected);
+
+    // Every item rendered under a group heading has that group's type.
+    for (const group of document.querySelectorAll('.wish-group')) {
+      const label = group.querySelector('h3')!.textContent;
+      const ids = Array.from(group.querySelectorAll('[data-item-id]')).map((el) => el.getAttribute('data-item-id'));
+      expect(ids.length).toBeGreaterThan(0);
+      for (const id of ids) {
+        expect(WISHLIST_TYPES[WISHLIST.find((w) => w.id === id)!.type]).toBe(label);
+      }
+    }
+  });
+
+  it('sorts items within a group by vote count, highest first', async () => {
     const byId = Object.fromEntries(WISHLIST.map((w, i) => [w.id, WISHLIST.length - i]));
-    // Reverse the order: first item in WISHLIST gets the highest count.
-    // Shuffle so sort actually has work to do: give a middle item the top score.
+    // Give the last item of the first group the top score so sort has work to do.
+    const firstType = WISHLIST_TYPE_ORDER.find((t) => WISHLIST.some((w) => w.type === t))!;
+    const inGroup = WISHLIST.filter((w) => w.type === firstType);
+    const star = inGroup[inGroup.length - 1];
     const counts: Record<string, number> = {};
-    WISHLIST.forEach((w, i) => { counts[w.id] = i === 2 ? 999 : byId[w.id]; });
+    WISHLIST.forEach((w) => { counts[w.id] = w.id === star.id ? 999 : byId[w.id]; });
     mockVotes(counts);
     renderWishlist();
 
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled());
 
-    const names = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
-    expect(names[0]).toBe(WISHLIST[2].name);
+    const names = screen.getAllByRole('heading', { level: 4 }).map((h) => h.textContent);
+    expect(names[0]).toBe(star.name);
+    // The rest of that group follows in descending vote order.
+    const groupNames = names.slice(0, inGroup.length);
+    const groupCounts = groupNames.map((n) => counts[WISHLIST.find((w) => w.name === n)!.id]);
+    expect(groupCounts).toEqual([...groupCounts].sort((a, b) => b - a));
   });
 
   it('switches to list layout when the filter view is set to list', async () => {

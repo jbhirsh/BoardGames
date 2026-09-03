@@ -399,12 +399,29 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .vote-btn--on{background:rgba(231,76,88,0.18);border-color:rgba(231,76,88,0.55);color:#F5F5F7;}
 .vote-heart{font-size:14px;line-height:1;color:#E74C58;}
 .vote-count{font-variant-numeric:tabular-nums;min-width:1ch;text-align:right;}
+.wish-group+.wish-group{margin-top:28px;}
+.wish-group-hd{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8E8E93;font-weight:600;margin-bottom:12px;}
+.wish-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px;font-size:11.5px;color:#A1A1A6;}
+.wish-players{display:inline-flex;align-items:center;gap:4px;}
+.wish-players svg{width:12px;height:12px;stroke:currentColor;fill:none;}
+.wish-type{font-size:10px;letter-spacing:.4px;padding:2px 8px;border-radius:20px;background:rgba(0,113,227,0.14);color:#8FB8F0;border:1px solid rgba(0,113,227,0.3);}
+.wish-awards{font-size:11.5px;color:#D9C36A;}
+.wish-awards[open]{flex-basis:100%;}
+.wish-awards--none{color:#636366;}
+.wish-awards-toggle{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;background:rgba(217,195,106,0.1);border:1px solid rgba(217,195,106,0.3);transition:background .2s,border-color .2s;}
+.wish-awards-toggle::-webkit-details-marker{display:none;}
+.wish-awards-toggle:hover{background:rgba(217,195,106,0.2);border-color:rgba(217,195,106,0.55);}
+.wish-awards[open] .wish-awards-toggle{background:rgba(217,195,106,0.22);border-color:rgba(217,195,106,0.6);}
+.wish-trophy{font-size:11px;line-height:1;}
+.wish-awards-list{list-style:none;margin:8px 0 0;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#C7C7CC;font-size:11.5px;line-height:1.5;display:flex;flex-direction:column;gap:2px;flex-basis:100%;}
+.wish-award-year{color:#8E8E93;margin-left:4px;}
 .wish-list{display:flex;flex-direction:column;gap:10px;}
 .wish-row{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-sm);padding:16px 18px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;transition:background .2s,border-color .2s;}
 .wish-row:hover{background:rgba(0,113,227,0.08);border-color:rgba(0,113,227,0.25);}
 .wish-row-main{flex:1;min-width:0;}
 .wish-row-main .wish-name{margin-bottom:6px;}
 .wish-row-main .wish-desc{margin-bottom:0;}
+.wish-row-main .wish-meta{margin-bottom:8px;}
 .wish-row-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;}
 
 ::-webkit-scrollbar{width:6px;height:6px;}
