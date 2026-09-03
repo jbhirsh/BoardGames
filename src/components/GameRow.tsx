@@ -6,6 +6,7 @@ import { ytURL, rulesURL } from '../utils/urls';
 import { sortedKw } from '../utils/filterGames';
 import DurationPill from './DurationPill';
 import KeywordPill from './KeywordPill';
+import AwardsBadge from './AwardsBadge';
 import { ChevronIcon, YouTubeIcon, AiRulesIcon, CalculatorIcon, SearchIcon } from './Icons';
 
 interface Props {
@@ -22,12 +23,20 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
 
   return (
     <>
-      <tr className={`game-row${isOpen ? ' open' : ''}`} onClick={onToggle}>
+      <tr
+        className={`game-row${isOpen ? ' open' : ''}`}
+        onClick={(e) => {
+          // Opening the award list shouldn't also expand/collapse the row.
+          if ((e.target as HTMLElement).closest('.awards')) return;
+          onToggle();
+        }}
+      >
         <td className="col-name">
           <div className="col-name-wrap">
             <span className="col-name">{game.name}</span>
             {showGroupBadge && <span className="group-badge">{game.group}</span>}
             <span className="mobile-short">{game.short}</span>
+            <AwardsBadge itemName={game.name} awards={game.awards} />
           </div>
         </td>
         <td className="col-hide col-players-h col-players">{game.players}</td>

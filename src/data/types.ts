@@ -25,11 +25,13 @@ export interface Game {
   desc: string;
   detail: string;
   yt: string;
+  awards: Award[];
 }
 
 export type WishlistType = 'two-player' | 'coop' | 'strategy' | 'heavy' | 'party';
 
-export interface WishlistAward {
+/** One confirmed award win from a recognised body (nominations excluded). */
+export interface Award {
   name: string;
   year: number;
 }
@@ -41,8 +43,7 @@ export interface WishlistItem {
   yt: string;
   players: string;
   type: WishlistType;
-  /** Confirmed wins from recognised award bodies (nominations excluded). */
-  awards: WishlistAward[];
+  awards: Award[];
 }
 
 export type DurationFilter = 'all' | DurationCategory;
