@@ -49,6 +49,13 @@ describe('GameRow', () => {
     expect(onToggle).not.toHaveBeenCalled();
   });
 
+  it('still toggles the row when the zero-award label is clicked', () => {
+    const onToggle = vi.fn();
+    renderRow({ ...quickGame, awards: [] }, false, onToggle);
+    fireEvent.click(screen.getByText('0 awards'));
+    expect(onToggle).toHaveBeenCalledTimes(1);
+  });
+
   it('shows group badge when showGroupBadge is true', () => {
     renderRow(quickGame, false, vi.fn(), true);
     expect(screen.getByText('party')).toBeInTheDocument();

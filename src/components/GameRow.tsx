@@ -27,7 +27,7 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
         className={`game-row${isOpen ? ' open' : ''}`}
         onClick={(e) => {
           // Opening the award list shouldn't also expand/collapse the row.
-          if ((e.target as HTMLElement).closest('.awards')) return;
+          if ((e.target as HTMLElement).closest('details.awards')) return;
           onToggle();
         }}
       >
