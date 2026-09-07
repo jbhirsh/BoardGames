@@ -78,7 +78,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          track_progress: true
+          # No track_progress here: the action only accepts it on
+          # pull_request/issue events, where it has a comment thread to update.
+          # This workflow runs on schedule/workflow_dispatch, so setting it
+          # fails the run before the agent starts.
           prompt: |
             REPO_DIR: ${{ github.workspace }}
             REPO: ${{ github.repository }}
