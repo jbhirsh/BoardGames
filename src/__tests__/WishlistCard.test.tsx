@@ -46,15 +46,53 @@ describe('WishlistCard', () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     render(<WishlistCard {...defaultProps()} />);
 
-    const link = screen.getByRole('link');
+    const link = screen.getByRole('link', { name: /YouTube/ });
     expect(link).toHaveAttribute('href', expect.stringContaining('youtube.com'));
 
     fireEvent.click(link);
     expect(openSpy).toHaveBeenCalledWith(
       expect.stringContaining('youtube.com'),
       '_blank',
+      'noopener',
     );
     openSpy.mockRestore();
+  });
+
+  it('renders an Amazon search link when no ASIN is pinned, and no price tracker', () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    render(<WishlistCard {...defaultProps()} />);
+    const link = screen.getByRole('link', { name: 'Buy Test Wishlist Game on Amazon' });
+    expect(link).toHaveAttribute('href', 'https://www.amazon.com/s?k=Test%20Wishlist%20Game%20board%20game');
+    expect(screen.queryByRole('link', { name: /price history/ })).not.toBeInTheDocument();
+    fireEvent.click(link);
+    expect(openSpy).toHaveBeenCalledWith(expect.stringContaining('amazon.com/s?k='), '_blank', 'noopener');
+    openSpy.mockRestore();
+  });
+
+  it('links to the exact product and a price tracker when an ASIN is pinned', () => {
+    render(<WishlistCard {...defaultProps({ item: { ...testItem, asin: 'B0TESTASIN' } })} />);
+    expect(screen.getByRole('link', { name: 'Buy Test Wishlist Game on Amazon' }))
+      .toHaveAttribute('href', 'https://www.amazon.com/dp/B0TESTASIN');
+    expect(screen.getByRole('link', { name: /price history/ }))
+      .toHaveAttribute('href', 'https://camelcamelcamel.com/product/B0TESTASIN');
+  });
+
+  it('opens the price tracker in a new window when clicked', () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    render(<WishlistCard {...defaultProps({ item: { ...testItem, asin: 'B0TESTASIN' } })} />);
+    fireEvent.click(screen.getByRole('link', { name: /price history/ }));
+    expect(openSpy).toHaveBeenCalledWith('https://camelcamelcamel.com/product/B0TESTASIN', '_blank', 'noopener');
+    openSpy.mockRestore();
+  });
+
+  it('marks every outbound link noopener for middle-click and open-in-new-tab', () => {
+    render(<WishlistCard {...defaultProps({ item: { ...testItem, asin: 'B0TESTASIN' } })} />);
+    const links = screen.getAllByRole('link');
+    expect(links).toHaveLength(3);
+    for (const link of links) {
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    }
   });
 
   it('renders a vote button with the provided count', () => {

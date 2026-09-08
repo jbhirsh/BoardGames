@@ -19,7 +19,8 @@ describe('WishlistRow', () => {
     expect(screen.getByText('Row Game')).toBeInTheDocument();
     expect(screen.getByText('A row of a game.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Vote for Row Game/ })).toHaveTextContent('4');
-    expect(screen.getByRole('link')).toHaveAttribute('href', expect.stringContaining('youtube.com'));
+    expect(screen.getByRole('link', { name: /YouTube/ })).toHaveAttribute('href', expect.stringContaining('youtube.com'));
+    expect(screen.getByRole('link', { name: 'Buy Row Game on Amazon' })).toHaveAttribute('href', expect.stringContaining('amazon.com'));
   });
 
   it('renders player count, type label and a non-interactive zero-award label', () => {
@@ -50,11 +51,28 @@ describe('WishlistRow', () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     render(<WishlistRow item={testItem} voteCount={0} voted={false} onVote={() => {}} />);
 
-    fireEvent.click(screen.getByRole('link'));
+    fireEvent.click(screen.getByRole('link', { name: /YouTube/ }));
     expect(openSpy).toHaveBeenCalledWith(
       expect.stringContaining('youtube.com'),
       '_blank',
+      'noopener',
     );
+    openSpy.mockRestore();
+  });
+
+  it('opens Amazon in a new window when the buy link is clicked', () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    render(<WishlistRow item={testItem} voteCount={0} voted={false} onVote={() => {}} />);
+    fireEvent.click(screen.getByRole('link', { name: 'Buy Row Game on Amazon' }));
+    expect(openSpy).toHaveBeenCalledWith('https://www.amazon.com/s?k=Row%20Game%20board%20game', '_blank', 'noopener');
+    openSpy.mockRestore();
+  });
+
+  it('opens the price tracker in a new window when an ASIN is pinned', () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    render(<WishlistRow item={{ ...testItem, asin: 'B0TESTASIN' }} voteCount={0} voted={false} onVote={() => {}} />);
+    fireEvent.click(screen.getByRole('link', { name: /price history/ }));
+    expect(openSpy).toHaveBeenCalledWith('https://camelcamelcamel.com/product/B0TESTASIN', '_blank', 'noopener');
     openSpy.mockRestore();
   });
 

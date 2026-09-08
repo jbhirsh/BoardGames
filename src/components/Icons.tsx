@@ -106,3 +106,22 @@ export function ListIcon() {
     </svg>
   );
 }
+
+export function CartIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M1.5 2h2l1.6 8.2a1 1 0 0 0 1 .8h6.4a1 1 0 0 0 1-.8L14.5 5H4.3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="6.5" cy="13.5" r="1" fill="currentColor" />
+      <circle cx="12" cy="13.5" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function TrendIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M2 12l3.5-4 3 2.5L14 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10.5 4H14v3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

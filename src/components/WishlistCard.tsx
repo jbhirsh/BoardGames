@@ -1,7 +1,7 @@
 import type { WishlistItem } from '../data/types';
-import { ytURL } from '../utils/urls';
 import { WISHLIST_TYPES } from '../data/keywords';
-import { YouTubeIcon, UserIcon } from './Icons';
+import { UserIcon } from './Icons';
+import WishlistLinks from './WishlistLinks';
 import AwardsBadge from './AwardsBadge';
 import VoteButton from './VoteButton';
 
@@ -32,14 +32,7 @@ export default function WishlistCard({ item, voteCount, voted, onVote, disabled 
           onClick={onVote}
           disabled={disabled}
         />
-        <a
-          className="wish-yt"
-          href={ytURL(item.yt)}
-          aria-label={`Watch ${item.name} tutorial on YouTube`}
-          onClick={(e) => { e.preventDefault(); window.open(ytURL(item.yt), '_blank'); }}
-        >
-          <YouTubeIcon />
-        </a>
+        <WishlistLinks item={item} />
       </div>
     </div>
   );

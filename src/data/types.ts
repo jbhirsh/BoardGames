@@ -44,6 +44,8 @@ export interface WishlistItem {
   players: string;
   type: WishlistType;
   awards: Award[];
+  /** Amazon product id of the standard edition, when verified; buy links fall back to a search without it. */
+  asin?: string;
 }
 
 export type DurationFilter = 'all' | DurationCategory;
