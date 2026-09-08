@@ -6,6 +6,7 @@ import { ytURL, rulesURL } from '../utils/urls';
 import { sortedKw } from '../utils/filterGames';
 import KeywordPill from './KeywordPill';
 import AwardsBadge from './AwardsBadge';
+import OwnButton from './OwnButton';
 import { YouTubeIcon, AiRulesIcon, UserIcon, ClockIcon, CalculatorIcon, SearchIcon } from './Icons';
 
 interface Props {
@@ -42,6 +43,7 @@ export default function GameCard({ game }: Props) {
       </div>
       <div className="card-body">
         <p className="card-desc">{game.short}</p>
+        <OwnButton itemId={game.slug} itemName={game.name} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', padding: '0 18px 16px' }}>
         {game.rules ? (
