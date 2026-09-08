@@ -1,15 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as Sentry from '@sentry/node';
-import { Redis } from '@upstash/redis';
 import { enforceRateLimit, getLimiter } from './_lib/rateLimit.js';
 import { SLUG_RE } from './_lib/slug.js';
+import { ANON_RE, parseIds, optionalAnonId } from './_lib/ids.js';
+import { getRedis } from './_lib/redis.js';
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   tracesSampleRate: 1.0,
 });
-
-const ANON_RE = /^[a-zA-Z0-9-]{8,64}$/;
 
 const voteKey = (id: string) => `wishlist:votes:${id}`;
 
@@ -44,20 +43,10 @@ export async function handleVotes(
 ): Promise<VotesResponse> {
   try {
     if (req.method === 'GET') {
-      const idsRaw = typeof req.query.ids === 'string' ? req.query.ids : '';
-      if (idsRaw.length === 0) {
-        return res.status(400).json({ error: 'ids query parameter is required' });
-      }
-      const ids = idsRaw.split(',').map((s) => s.trim()).filter((s) => SLUG_RE.test(s));
-      if (ids.length === 0) {
-        return res.status(400).json({ error: 'ids must contain at least one valid slug (lowercase alphanumeric + hyphens)' });
-      }
-      if (ids.length > 100) {
-        return res.status(400).json({ error: 'too many ids (max 100)' });
-      }
-
-      const anonRaw = typeof req.query.anonId === 'string' ? req.query.anonId : '';
-      const anonId = ANON_RE.test(anonRaw) ? anonRaw : null;
+      const parsed = parseIds(req.query.ids);
+      if (!parsed.ok) return res.status(400).json({ error: parsed.error });
+      const { ids } = parsed;
+      const anonId = optionalAnonId(req.query.anonId);
 
       const pipe = redis.pipeline();
       for (const id of ids) pipe.scard(voteKey(id));
@@ -113,23 +102,11 @@ export async function handleVotes(
   }
 }
 
-let cached: Redis | null = null;
-function defaultRedis(): Redis {
-  if (cached) return cached;
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  if (!url || !token) {
-    throw new Error('KV_REST_API_URL and KV_REST_API_TOKEN must be set');
-  }
-  cached = new Redis({ url, token });
-  return cached;
-}
-
 // Unauthenticated writes to Redis (sadd grows a set per unique anonId): bound
 // per IP so a loop can't inflate counts or grow storage without limit.
 const votesLimiter = getLimiter('votes', 30, 60);
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!(await enforceRateLimit(votesLimiter, req, res))) return;
-  await handleVotes(defaultRedis(), req, res);
+  await handleVotes(getRedis(), req, res);
 }

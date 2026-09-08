@@ -4,6 +4,7 @@ import { UserIcon } from './Icons';
 import WishlistLinks from './WishlistLinks';
 import AwardsBadge from './AwardsBadge';
 import VoteButton from './VoteButton';
+import OwnButton from './OwnButton';
 
 interface Props {
   item: WishlistItem;
@@ -24,6 +25,7 @@ export default function WishlistRow({ item, voteCount, voted, onVote, disabled }
           <AwardsBadge itemName={item.name} awards={item.awards} />
         </div>
         <p className="wish-desc">{item.desc}</p>
+        <OwnButton itemId={item.id} itemName={item.name} />
       </div>
       <div className="wish-row-actions">
         <VoteButton

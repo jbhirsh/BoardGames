@@ -7,6 +7,7 @@ import { sortedKw } from '../utils/filterGames';
 import DurationPill from './DurationPill';
 import KeywordPill from './KeywordPill';
 import { AwardsCount, AwardsList } from './AwardsBadge';
+import OwnButton from './OwnButton';
 import { ChevronIcon, YouTubeIcon, AiRulesIcon, CalculatorIcon, SearchIcon } from './Icons';
 
 interface Props {
@@ -71,6 +72,7 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
                   <AwardsList awards={game.awards} />
                 </div>
               )}
+              <OwnButton itemId={game.slug} itemName={game.name} />
               <div className="row-expand-foot">
                 {game.rules ? (
                   <Link
