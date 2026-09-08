@@ -11,8 +11,15 @@ function jsonResponse(body: unknown, ok = true): Response {
   return { ok, json: async () => body } as unknown as Response;
 }
 
-function mockVotes(counts: Record<string, number>, myVotes: string[] = []) {
-  return vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({ counts, myVotes }));
+type Suggested = { id: string; game: string; name: string; note: string };
+
+function mockVotes(counts: Record<string, number>, myVotes: string[] = [], suggestions: Suggested[] = []) {
+  return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+    const url = String(input);
+    if (url.startsWith('/api/suggestions')) return jsonResponse({ items: suggestions });
+    if (url.startsWith('/api/owners')) return jsonResponse({ owners: {}, mine: [] });
+    return jsonResponse({ counts, myVotes });
+  });
 }
 
 function renderWishlist() {
@@ -38,7 +45,7 @@ describe('Wishlist', () => {
   it('renders all wishlist items in the default list layout', async () => {
     mockVotes({});
     renderWishlist();
-    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled());
+    await screen.findByText(WISHLIST[0].name);
     for (const item of WISHLIST) {
       expect(screen.getByText(item.name)).toBeInTheDocument();
       expect(screen.getByText(item.desc)).toBeInTheDocument();
@@ -63,9 +70,10 @@ describe('Wishlist', () => {
   it('groups items by type, in the configured type order', async () => {
     mockVotes({});
     renderWishlist();
-    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled());
+    await screen.findByText(WISHLIST[0].name);
 
-    const headings = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
+    // Group headings only: the suggestion form has its own h3.
+    const headings = Array.from(document.querySelectorAll('.wish-group-hd')).map((h) => h.textContent);
     const expected = WISHLIST_TYPE_ORDER
       .filter((t) => WISHLIST.some((w) => w.type === t))
       .map((t) => WISHLIST_TYPES[t]);
@@ -93,10 +101,11 @@ describe('Wishlist', () => {
     mockVotes(counts);
     renderWishlist();
 
-    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled());
-
+    await waitFor(() => {
+      const first = screen.getAllByRole('heading', { level: 4 })[0]?.textContent;
+      expect(first).toBe(star.name);
+    });
     const names = screen.getAllByRole('heading', { level: 4 }).map((h) => h.textContent);
-    expect(names[0]).toBe(star.name);
     // The rest of that group follows in descending vote order.
     const groupNames = names.slice(0, inGroup.length);
     const groupCounts = groupNames.map((n) => counts[WISHLIST.find((w) => w.name === n)!.id]);
@@ -123,7 +132,7 @@ describe('Wishlist', () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled());
+    await screen.findByText(WISHLIST[0].name);
     // Default view is 'list' per initialFilterState
     expect(container.querySelector('.wish-list')).toBeInTheDocument();
 
@@ -136,25 +145,51 @@ describe('Wishlist', () => {
   });
 
   it('POSTs a vote when the vote button is clicked', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce(jsonResponse({ counts: { [WISHLIST[0].id]: 0 }, myVotes: [] }))
-      .mockResolvedValueOnce(jsonResponse({ itemId: WISHLIST[0].id, count: 1, myVote: 1 }));
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url.startsWith('/api/suggestions')) return jsonResponse({ items: [] });
+      if (url.startsWith('/api/owners')) return jsonResponse({ owners: {}, mine: [] });
+      if (init?.method === 'POST') return jsonResponse({ itemId: WISHLIST[0].id, count: 1, myVote: 1 });
+      return jsonResponse({ counts: { [WISHLIST[0].id]: 0 }, myVotes: [] });
+    });
+    const postCalls = () => fetchSpy.mock.calls.filter((c) => (c[1] as RequestInit | undefined)?.method === 'POST');
 
     renderWishlist();
-    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+    await screen.findByText(WISHLIST[0].name);
 
     const item = screen.getAllByTestId('wishlist-item')
       .find((el) => el.getAttribute('data-item-id') === WISHLIST[0].id)!;
     const voteBtn = within(item).getByRole('button', { name: /Vote for/ });
+    await waitFor(() => expect(voteBtn).toBeEnabled());
 
     fireEvent.click(voteBtn);
 
-    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2));
-    const postCall = fetchSpy.mock.calls[1];
+    await waitFor(() => expect(postCalls()).toHaveLength(1));
+    const postCall = postCalls()[0];
     expect(postCall[0]).toBe('/api/votes');
     expect(JSON.parse(postCall[1]!.body as string)).toMatchObject({
       itemId: WISHLIST[0].id,
       vote: 1,
     });
+  });
+
+  it('renders approved friend suggestions in their own group with the suggester credited', async () => {
+    mockVotes({}, [], [{ id: 'sug-abc123', game: 'Root', name: 'Alex', note: 'Mean fun' }]);
+    renderWishlist();
+    await waitFor(() => expect(screen.getByText('Root')).toBeInTheDocument());
+    expect(screen.getByRole('heading', { level: 3, name: 'Suggested by friends' })).toBeInTheDocument();
+    expect(screen.getByText('Suggested by Alex')).toBeInTheDocument();
+    expect(screen.getByText('“Mean fun”')).toBeInTheDocument();
+    expect(screen.getByText(`${WISHLIST.length + 1} titles`)).toBeInTheDocument();
+    // Votes were requested for the suggestion too.
+    const voteCall = (globalThis.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls
+      .map((c) => String(c[0])).find((u) => u.startsWith('/api/votes?'));
+    expect(voteCall).toContain('sug-abc123');
+  });
+
+  it('shows the suggestion form', async () => {
+    mockVotes({});
+    renderWishlist();
+    expect(await screen.findByRole('form', { name: 'Suggest a game' })).toBeInTheDocument();
   });
 });

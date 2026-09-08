@@ -21,6 +21,24 @@ interface UseWishlistVotesReturn extends VotesSnapshot {
   toggle: (itemId: string) => Promise<void>;
 }
 
+/** The votes API caps one request at 100 ids; larger sets go in batches. */
+export const VOTES_BATCH = 100;
+
+async function fetchVotes(ids: readonly string[], anonId: string, signal: AbortSignal): Promise<VotesSnapshot> {
+  const counts: Record<string, number> = {};
+  const myVotes = new Set<string>();
+  for (let i = 0; i < ids.length; i += VOTES_BATCH) {
+    const batch = ids.slice(i, i + VOTES_BATCH);
+    const url = `/api/votes?ids=${encodeURIComponent(batch.join(','))}&anonId=${encodeURIComponent(anonId)}`;
+    const r = await fetch(url, { signal });
+    if (!r.ok) throw new Error('fetch failed');
+    const data = (await r.json()) as { counts?: Record<string, number>; myVotes?: string[] };
+    Object.assign(counts, data.counts ?? {});
+    for (const id of data.myVotes ?? []) myVotes.add(id);
+  }
+  return { counts, myVotes, loaded: true };
+}
+
 // With no ids there is nothing to fetch, so this fixed empty-but-loaded view is
 // returned directly rather than written into state from the effect (which would
 // trip react-hooks/set-state-in-effect).
@@ -61,19 +79,12 @@ export function useWishlistVotes(itemIds: readonly string[]): UseWishlistVotesRe
     if (!idsKey) return;
     const anonId = getAnonId();
     const controller = new AbortController();
-    const url = `/api/votes?ids=${encodeURIComponent(idsKey)}&anonId=${encodeURIComponent(anonId)}`;
 
-    fetch(url, { signal: controller.signal })
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('fetch failed'))))
-      .then((data: { counts?: Record<string, number>; myVotes?: string[] }) => {
-        setSnapshot({
-          counts: data.counts ?? {},
-          myVotes: new Set(data.myVotes ?? []),
-          loaded: true,
-        });
-      })
+    fetchVotes(idsKey.split(','), anonId, controller.signal)
+      .then(setSnapshot)
       .catch((err: Error) => {
         if (err.name === 'AbortError') return;
+        console.error('votes: could not load vote counts', err);
         setSnapshot((s) => ({ ...s, loaded: true }));
       });
 

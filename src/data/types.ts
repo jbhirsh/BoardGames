@@ -28,7 +28,7 @@ export interface Game {
   awards: Award[];
 }
 
-export type WishlistType = 'two-player' | 'coop' | 'strategy' | 'heavy' | 'party';
+export type WishlistType = 'two-player' | 'coop' | 'strategy' | 'heavy' | 'party' | 'suggested';
 
 /** One confirmed award win from a recognised body (nominations excluded). */
 export interface Award {
@@ -46,6 +46,8 @@ export interface WishlistItem {
   awards: Award[];
   /** Amazon product id of the standard edition, when verified; buy links fall back to a search without it. */
   asin?: string;
+  /** Set on approved friend suggestions: the display name that suggested it. */
+  suggestedBy?: string;
 }
 
 export type DurationFilter = 'all' | DurationCategory;

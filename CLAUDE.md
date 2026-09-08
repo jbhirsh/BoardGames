@@ -76,6 +76,28 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   Redis sets keyed `wishlist:votes:<id>`, deduped by an anonymous browser id.
   Per-IP rate limited via `_lib/rateLimit.ts`. Errors reported to Sentry
   (`@sentry/node`).
+- **`owners.ts`** — "I own this" for collection and wishlist games. One Redis
+  hash per game keyed by the same anonymous browser id as votes, value = the
+  display name the friend typed once. `handleOwners()` is injectable like
+  `handleVotes()`.
+- **`suggestions.ts`** — friend suggestions with owner approval by email and
+  no admin page. `POST` validates, emails the owner (Resend) approve/deny
+  links carrying a per-suggestion token, then stores the suggestion as
+  `pending`; `GET ?action=approve|deny&id&token` verifies the token and
+  renders a confirmation page whose form `POST`s `{ decision, id, token }`
+  to flip the status (a bare GET never mutates, because mail link-scanners
+  follow every URL); plain `GET` lists approved suggestions, which the
+  wishlist renders under "Suggested by friends". Redis keeps one hash per
+  suggestion plus two id lists, `suggestions:active` (pending + approved,
+  for duplicate checks) and `suggestions:approved` (the public list).
+  A new suggestion is stored before the email is sent so the emailed links
+  always resolve; if the send call fails the record is dropped from the
+  active list and marked `unsent` so the suggester can retry, but its links
+  keep working (a timeout can follow a real delivery), and approving an
+  unsent record returns it to the active list. `handleSuggestions()`
+  takes `{ redis, mailer, baseUrl }` so the mailer is a spy in tests. With no
+  Resend configuration the endpoint returns 503 rather than storing a
+  suggestion the owner would never see.
 
 ### Rules text pipeline (`scripts/`)
 Rule PDFs live in `public/rules/*.pdf`. `scripts/extract-rules-text.mjs`
@@ -105,6 +127,10 @@ secrets belong in tracked source.
 | `KV_REST_API_URL` | serverless (`api/votes.ts`) | Upstash Redis REST URL |
 | `KV_REST_API_TOKEN` | serverless (`api/votes.ts`) | Upstash Redis REST token |
 | `SENTRY_AUTH_TOKEN` | build (optional) | enables Sentry source-map upload during `vite build` |
+| `RESEND_API_KEY` | serverless (`api/suggestions.ts`) | Resend key for the suggestion approval email; suggestions are refused until set |
+| `SUGGESTIONS_TO` | serverless (`api/suggestions.ts`) | address that receives approve/deny emails |
+| `SUGGESTIONS_FROM` | serverless (optional) | sender; defaults to `The Game Room <onboarding@resend.dev>` |
+| `APP_URL` | serverless (optional) | origin for the emailed links; defaults to the Vercel production URL |
 
 ## Conventions
 

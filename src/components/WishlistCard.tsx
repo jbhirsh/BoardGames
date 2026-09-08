@@ -20,9 +20,10 @@ export default function WishlistCard({ item, voteCount, voted, onVote, disabled 
       <span className="wish-lbl">Wishlist</span>
       <h4 className="wish-name">{item.name}</h4>
       <div className="wish-meta">
-        <span className="wish-players"><UserIcon /> {item.players}</span>
-        <span className="wish-type">{WISHLIST_TYPES[item.type]}</span>
-        <AwardsBadge itemName={item.name} awards={item.awards} />
+        {item.players && <span className="wish-players"><UserIcon /> {item.players}</span>}
+        {item.suggestedBy && <span className="wish-suggested">Suggested by {item.suggestedBy}</span>}
+        {!item.suggestedBy && <span className="wish-type">{WISHLIST_TYPES[item.type]}</span>}
+        {!item.suggestedBy && <AwardsBadge itemName={item.name} awards={item.awards} />}
       </div>
       <p className="wish-desc">{item.desc}</p>
       <OwnButton itemId={item.id} itemName={item.name} />

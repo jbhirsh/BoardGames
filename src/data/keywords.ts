@@ -39,9 +39,10 @@ export const WISHLIST_TYPES: Record<WishlistType, string> = {
   strategy: 'Strategy',
   heavy: 'Heavy Strategy',
   party: 'Party & Card',
+  suggested: 'Suggested by friends',
 };
 
-export const WISHLIST_TYPE_ORDER: WishlistType[] = ['party', 'strategy', 'coop', 'two-player', 'heavy'];
+export const WISHLIST_TYPE_ORDER: WishlistType[] = ['party', 'strategy', 'coop', 'two-player', 'heavy', 'suggested'];
 
 export const DUR_LABELS: Record<string, string> = {
   all: 'Duration',
