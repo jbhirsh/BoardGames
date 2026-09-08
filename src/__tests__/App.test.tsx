@@ -36,9 +36,9 @@ describe('App', () => {
     }
   });
 
-  it('renders the wishlist section', () => {
+  it('renders the wishlist section once friend suggestions have loaded', async () => {
     renderApp();
-    expect(screen.getByText('Lost Cities')).toBeInTheDocument();
+    expect(await screen.findByText('Lost Cities')).toBeInTheDocument();
     expect(screen.getByText('Dominion')).toBeInTheDocument();
   });
 });

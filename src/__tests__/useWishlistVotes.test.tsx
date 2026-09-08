@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { getAnonId, useWishlistVotes } from '../hooks/useWishlistVotes';
+import { getAnonId, useWishlistVotes, VOTES_BATCH } from '../hooks/useWishlistVotes';
 
 function jsonResponse(body: unknown, ok = true): Response {
   return { ok, json: async () => body } as unknown as Response;
@@ -32,6 +32,23 @@ describe('useWishlistVotes', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('splits large id sets into batches the API accepts and merges the results', async () => {
+    const ids = Array.from({ length: VOTES_BATCH + 5 }, (_, i) => `g${i}`);
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = String(input);
+      const got = decodeURIComponent(url.split('ids=')[1].split('&')[0]).split(',');
+      const counts = Object.fromEntries(got.map((id) => [id, id === 'g0' || id === `g${VOTES_BATCH}` ? 2 : 0]));
+      return jsonResponse({ counts, myVotes: got.includes(`g${VOTES_BATCH}`) ? [`g${VOTES_BATCH}`] : [] });
+    });
+    const { result } = renderHook(() => useWishlistVotes(ids));
+    await waitFor(() => expect(result.current.loaded).toBe(true));
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(result.current.counts.g0).toBe(2);
+    expect(result.current.counts[`g${VOTES_BATCH}`]).toBe(2);
+    expect(result.current.myVotes.has(`g${VOTES_BATCH}`)).toBe(true);
+    expect(Object.keys(result.current.counts)).toHaveLength(VOTES_BATCH + 5);
   });
 
   it('fetches counts and myVotes on mount', async () => {

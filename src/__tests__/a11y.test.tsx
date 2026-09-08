@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router';
 import { axe } from 'vitest-axe';
 import * as matchers from 'vitest-axe/matchers';
@@ -23,6 +23,9 @@ describe('accessibility', () => {
       { element: <App />, children: [{ path: '/', element: <HomePage /> }] },
     ]);
     const { container } = render(<RouterProvider router={router} />);
+    // The wishlist body (cards, OwnButton, SuggestForm) mounts after the
+    // suggestions fetch settles; scan once it is in the DOM.
+    await screen.findByRole('form', { name: 'Suggest a game' });
     const results = await axe(container, axeOptions);
     expect(results).toHaveNoViolations();
   }, TIMEOUT_MS);

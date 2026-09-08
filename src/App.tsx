@@ -4,7 +4,6 @@ import { Outlet, ScrollRestoration } from 'react-router';
 import { FilterProvider } from './context/FilterContext';
 import { OwnersProvider } from './context/OwnersContext';
 import { GAMES } from './data/games';
-import { WISHLIST } from './data/wishlist';
 import { useStickyOffset } from './hooks/useStickyOffset';
 import Hero from './components/Hero';
 import FilterBar from './components/FilterBar/FilterBar';
@@ -13,8 +12,9 @@ import GameCollection from './components/GameCollection';
 import Wishlist from './components/Wishlist';
 import { Analytics } from '@vercel/analytics/react';
 
-// Every card on the home page shows who owns it; one fetch covers them all.
-const OWNABLE_IDS = [...GAMES.map((g) => g.slug), ...WISHLIST.map((w) => w.id)];
+// Collection cards show who owns each game; the wishlist runs its own provider
+// because its id set also includes approved friend suggestions.
+const COLLECTION_IDS = GAMES.map((g) => g.slug);
 
 export function HomePage() {
   // Measured here, not inside FilterBar, so ActiveTags counts toward the offset.
@@ -29,10 +29,10 @@ export function HomePage() {
         <ActiveTags />
       </div>
       <main className="main">
-        <OwnersProvider ids={OWNABLE_IDS}>
+        <OwnersProvider ids={COLLECTION_IDS}>
           <GameCollection />
-          <Wishlist />
         </OwnersProvider>
+        <Wishlist />
       </main>
     </div>
   );

@@ -25,6 +25,11 @@ functions for the AI and voting features.
   quadratic science formula.
 - **Bananagrams word checker** backed by a public dictionary API.
 - **Anonymous wishlist voting** stored in Upstash Redis.
+- **"I own this"** on every game, so friends can see who to borrow from or
+  play with — no accounts, just a remembered display name.
+- **Friend suggestions with email approval**: anyone can suggest a game; the
+  owner gets an email with Approve and Deny links, and approved games join
+  the wishlist credited to the suggester. No admin page.
 - **Accessibility-tested UI** — `eslint-plugin-jsx-a11y` static checks plus
   `axe-core` assertions on rendered components in CI.
 
@@ -47,7 +52,8 @@ A sortable list view is also available:
 - **Content:** `react-markdown` for AI answers; rule PDFs rendered inline
 - **Backend:** Vercel serverless functions (`@vercel/node`)
 - **AI:** Google Gemini via `@google/genai` (`gemini-2.5-flash`, streamed)
-- **Data / KV:** Upstash Redis (`@upstash/redis`) for wishlist votes
+- **Data / KV:** Upstash Redis (`@upstash/redis`) for wishlist votes, ownership and suggestions
+- **Email:** Resend (REST, no SDK) for suggestion approvals
 - **Monitoring:** Sentry (browser + serverless) and Vercel Analytics
 - **Testing:** Vitest 4, React Testing Library, jsdom, `axe-core` / `vitest-axe`
   (per-file 80% line coverage enforced); StrykerJS mutation testing over the
@@ -69,10 +75,11 @@ npm run dev                  # http://localhost:5173
 ```
 
 The core collection, filtering, random picker, and score calculator run with no
-configuration. The AI assistant, wishlist voting, and Sentry monitoring need the
-corresponding environment variables — see [`.env.example`](.env.example) for the
-full list (Sentry DSNs, `GEMINI_API_KEY`, and Upstash Redis credentials). Real
-secrets live in `.env.local`, which is gitignored.
+configuration. The AI assistant, wishlist voting, ownership, suggestions, and
+Sentry monitoring need the corresponding environment variables — see
+[`.env.example`](.env.example) for the full list (Sentry DSNs, `GEMINI_API_KEY`,
+Upstash Redis credentials, and the Resend key plus recipient address for
+suggestion emails). Real secrets live in `.env.local`, which is gitignored.
 
 ### Scripts
 
@@ -89,8 +96,10 @@ secrets live in `.env.local`, which is gitignored.
 
 - `src/` — the React SPA: static data layer (`src/data/`), filter state and URL
   sync (`src/context/`), pure helpers (`src/utils/`), and UI (`src/components/`).
-- `api/` — Vercel serverless functions: `chat.ts` (Gemini rules assistant) and
-  `votes.ts` (Upstash Redis wishlist voting).
+- `api/` — Vercel serverless functions: `chat.ts` (Gemini rules assistant),
+  `votes.ts` (wishlist voting), `owners.ts` ("I own this"), and
+  `suggestions.ts` (friend suggestions with email approval), all on Upstash
+  Redis.
 - `scripts/` — the PDF-to-text pipeline that generates `rules-text/` from
   `public/rules/*.pdf` for the AI assistant.
 - CI runs lint, type-check, accessibility tests, unit tests with coverage, and a
