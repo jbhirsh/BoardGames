@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router';
 import { axe } from 'vitest-axe';
 import * as matchers from 'vitest-axe/matchers';
@@ -37,6 +37,34 @@ describe('accessibility', () => {
     await screen.findByRole('form', { name: 'Suggest a game' });
     const results = await axe(container, axeOptions);
     expect(results).toHaveNoViolations();
+  }, TIMEOUT_MS);
+
+  it('home page (wishlist, signed in as the owner) has no axe violations', async () => {
+    const json = (body: unknown) => ({ ok: true, json: async () => body }) as unknown as Response;
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.startsWith('/api/auth')) return json({ admin: true });
+      if (url.startsWith('/api/suggestions?action=pending')) return json({ items: [{ id: 'sug-p', game: 'Ark Nova', name: 'Sam', note: 'Zoo building' }] });
+      if (url.startsWith('/api/suggestions')) return json({ items: [{ id: 'sug-r', game: 'Root', name: 'Alex', note: '', details: { min: 2, max: 4, mins: 90, desc: 'Woodland war.', kw: ['strategy'] } }] });
+      if (url.startsWith('/api/owners')) return json({ owners: {}, mine: [] });
+      return json({ counts: {}, myVotes: [] });
+    });
+    try {
+      const router = createMemoryRouter([
+        { element: <App />, children: [{ path: '/', element: <HomePage /> }] },
+      ], { initialEntries: ['/?c=want'] });
+      const { container } = render(<RouterProvider router={router} />);
+      // Role queries over the full page are slow in jsdom; give them room.
+      const slow = { timeout: TIMEOUT_MS / 3 };
+      await screen.findByRole('button', { name: 'Approve Ark Nova' }, slow);
+      // The per-entry edit form is the densest admin control; scan it open.
+      fireEvent.click(await screen.findByRole('button', { name: 'Edit Root' }, slow));
+      await screen.findByRole('form', { name: 'Edit Root' }, slow);
+      const results = await axe(container, axeOptions);
+      expect(results).toHaveNoViolations();
+    } finally {
+      fetchSpy.mockRestore();
+    }
   }, TIMEOUT_MS);
 
   it('word checker page has no axe violations', async () => {

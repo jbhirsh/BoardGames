@@ -62,9 +62,11 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   (`filterReducer.ts`); `useFilter.ts` is the consumer hook; `useFilterUrlSync.ts`
   keeps filter state mirrored to the URL query string so views are shareable.
   `WishlistContext` is the one definition of the wishlist for the page (static
-  entries plus approved friend suggestions, loaded once) for the wishlist
-  section, the keyword counts and the hero's count; `OwnersContext` does the
-  same for "I own this" per section.
+  entries plus approved friend suggestions, loaded once and reloadable after
+  an owner edit) for the wishlist section, the keyword counts and the hero's
+  count; `OwnersContext` does the same for "I own this" per section;
+  `AuthContext` holds the owner-session check that switches admin mode on
+  (`OwnerSignIn`, `AdminPanel`, `AdminItemControls`).
 - **`components/`** — presentational + interactive UI (grid/list views, filter
   bar, random picker, rules page, rules chat, word checker, score calculator,
   wishlist + voting). `Icons.tsx` holds inline SVGs.
@@ -104,18 +106,41 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   for duplicate checks) and `suggestions:approved` (the public list).
   A new suggestion is stored before the email is sent so the emailed links
   always resolve; if the send call fails the record is dropped from the
-  active list and marked `unsent` so the suggester can retry, but its links
-  keep working (a timeout can follow a real delivery), and approving an
-  unsent record returns it to the active list. On approval the handler
+  active list and marked `unsent` (tracked on `suggestions:unsent`) so the
+  suggester can retry, but its links keep working (a timeout can follow a
+  real delivery), it still shows in the owner's on-site queue, and
+  approving an unsent record returns it to the active list. On approval the handler
   looks the game up on BoardGameGeek (`_lib/bgg.ts`, XML API 2, no key) and
   stores players, playing time, a two-sentence description, year and mapped
   keywords as a `details` JSON field, so the card renders and filters like
   any other wishlist entry; a miss or outage still approves with details
   empty. `handleSuggestions()`
-  takes `{ redis, mailer, baseUrl, lookup }` so the mailer and the BGG
-  lookup are spies in tests. With no
+  takes `{ redis, mailer, baseUrl, lookup, admin }` so the mailer, the BGG
+  lookup and the session check are spies in tests. With no
   Resend configuration the endpoint returns 503 rather than storing a
-  suggestion the owner would never see.
+  suggestion the owner would never see. A signed-in owner (see `auth.ts`)
+  can also work the list from the site: `GET ?action=pending` lists the
+  queue, `POST { decision, id }` without a token decides one, `POST
+  { action: 'add', game, name, note?, type? }` puts a game straight on the
+  wishlist (stored approved with `source: 'owner'`, enriched the same way),
+  `PATCH { id, game?, note?, details? }` edits how it reads (players, time,
+  description, keywords, section) and `DELETE { id }` takes it off (status
+  `removed`, hash kept, lists forget it). Every owner mutation must be a
+  JSON request: a cross-site form can post urlencoded bodies with the
+  cookie attached but cannot send JSON without a preflight, so the
+  content type is the CSRF check.
+- **`auth.ts`** — owner sign-in by magic link, so there is an admin mode but
+  no password. `POST { email }` answers the same for every address and, only
+  when it matches `SUGGESTIONS_TO`, emails a single-use link (a random token
+  in Redis with a 15-minute TTL). The link opens a confirmation page whose
+  form `POST`s `{ action: 'verify', token }` (mail scanners follow links, so
+  a bare GET never signs anyone in); that consumes the token with `getdel`,
+  stores a session id for 30 days and sets it as an HttpOnly, Secure,
+  SameSite=Lax cookie. `GET` reports `{ admin }` for the cookie it carries;
+  `POST { action: 'logout' }` deletes the session. Helpers in
+  `_lib/session.ts` (cookie parsing, `isAdmin`, the JSON check) and
+  `_lib/mail.ts` (Resend, the public origin, the standalone pages) are
+  shared with `suggestions.ts`. Link requests are rate limited per IP.
 
 ### Rules text pipeline (`scripts/`)
 Rule PDFs live in `public/rules/*.pdf`. `scripts/extract-rules-text.mjs`
@@ -148,7 +173,7 @@ secrets belong in tracked source.
 | `KV_REST_API_TOKEN` | serverless (`api/votes.ts`) | Upstash Redis REST token |
 | `SENTRY_AUTH_TOKEN` | build (optional) | enables Sentry source-map upload during `vite build` |
 | `RESEND_API_KEY` | serverless (`api/suggestions.ts`) | Resend key for the suggestion approval email; suggestions are refused until set |
-| `SUGGESTIONS_TO` | serverless (`api/suggestions.ts`) | address that receives approve/deny emails |
+| `SUGGESTIONS_TO` | serverless (`api/suggestions.ts`, `api/auth.ts`) | address that receives approve/deny emails; the only address that can sign in as the owner |
 | `SUGGESTIONS_FROM` | serverless (optional) | sender; defaults to `The Game Room <onboarding@resend.dev>` |
 | `APP_URL` | serverless (optional) | origin for the emailed links; defaults to the Vercel production URL |
 

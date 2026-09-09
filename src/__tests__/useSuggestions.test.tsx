@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { useSuggestions, suggestionToItem, durationCategory } from '../hooks/useSuggestions';
 
 function jsonResponse(body: unknown, ok = true): Response {
@@ -33,6 +33,21 @@ describe('suggestionToItem', () => {
     expect([durationCategory(10), durationCategory(15), durationCategory(45), durationCategory(61)]).toEqual(['quick', 'quick', 'medium', 'long']);
   });
 
+  it('reads an owner-added game as a plain entry in its section, keeping the blurb for editing', () => {
+    const item = suggestionToItem({
+      id: 'sug-2', game: 'Ark Nova', name: 'Jess', note: '', source: 'owner',
+      details: { min: 1, max: 4, mins: 150, desc: 'Zoo building.', kw: ['strategy'], type: 'heavy' },
+    });
+    expect(item).toMatchObject({ type: 'heavy', source: 'owner', desc: 'Zoo building.', blurb: 'Zoo building.' });
+    expect(item.suggestedBy).toBeUndefined();
+    // A note still shows, quoted; an unknown section falls back to the friends' one.
+    expect(suggestionToItem({ id: 's', game: 'G', name: 'Jess', note: 'Big', source: 'owner', details: { min: 1, max: 4, mins: 0, desc: '', kw: [], type: 'suggested' } }))
+      .toMatchObject({ desc: '“Big”', type: 'suggested', blurb: '' });
+    expect(suggestionToItem({ id: 's', game: 'G', name: 'Alex', note: '', source: 'friend' })).toMatchObject({ suggestedBy: 'Alex', source: 'friend' });
+    // No BGG match and no note: the card still says something rather than showing a blank line.
+    expect(suggestionToItem({ id: 's', game: 'G', name: 'Jess', note: '', source: 'owner' }).desc).toBe('Jess added this one.');
+  });
+
   it('falls back to a credit line when there is no note', () => {
     expect(suggestionToItem({ id: 'sug-1', game: 'Root', name: 'Alex', note: '' }).desc).toBe('Alex thinks we should try this one.');
   });
@@ -47,6 +62,18 @@ describe('useSuggestions', () => {
     expect(result.current.loaded).toBe(false);
     await waitFor(() => expect(result.current.loaded).toBe(true));
     expect(result.current.items.map((i) => i.name)).toEqual(['Root']);
+  });
+
+  it('fetches again on reload', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(jsonResponse({ items: [] }))
+      .mockResolvedValueOnce(jsonResponse({ items: [{ id: 'sug-1', game: 'Root', name: 'Alex', note: '' }] }));
+    const { result } = renderHook(() => useSuggestions());
+    await waitFor(() => expect(result.current.loaded).toBe(true));
+    expect(result.current.items).toEqual([]);
+    act(() => result.current.reload());
+    await waitFor(() => expect(result.current.items.map((i) => i.name)).toEqual(['Root']));
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
   it('yields an empty loaded list when the fetch fails or has no items', async () => {

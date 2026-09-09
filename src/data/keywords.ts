@@ -42,6 +42,9 @@ export const WISHLIST_TYPES: Record<WishlistType, string> = {
   suggested: 'Suggested by friends',
 };
 
+/** The sections the owner can file a game under: every wishlist type but the friends' one. */
+export const WISHLIST_SECTIONS: Exclude<WishlistType, 'suggested'>[] = ['party', 'strategy', 'coop', 'two-player', 'heavy'];
+
 export const WISHLIST_TYPE_ORDER: WishlistType[] = ['party', 'strategy', 'coop', 'two-player', 'heavy', 'suggested'];
 
 export const DUR_LABELS: Record<string, string> = {
