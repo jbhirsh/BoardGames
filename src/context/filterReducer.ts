@@ -1,4 +1,4 @@
-import type { FilterState, DurationFilter, SortMode, ViewMode, KeywordId, KeywordMode } from '../data/types';
+import type { FilterState, DurationFilter, SortMode, ViewMode, KeywordId, KeywordMode, CollectionMode } from '../data/types';
 import { initialFilterState } from '../data/initialFilterState';
 
 export type FilterAction =
@@ -11,6 +11,7 @@ export type FilterAction =
   | { type: 'SET_SORT'; payload: SortMode }
   | { type: 'SET_COLUMN_SORT'; payload: string }
   | { type: 'SET_VIEW'; payload: ViewMode }
+  | { type: 'SET_COLLECTION'; payload: CollectionMode }
   | { type: 'HYDRATE'; payload: FilterState }
   | { type: 'CLEAR_ALL' };
 
@@ -41,6 +42,10 @@ export function filterReducer(state: FilterState, action: FilterAction): FilterS
     }
     case 'SET_VIEW':
       return { ...state, view: action.payload };
+    case 'SET_COLLECTION':
+      // A column sort belongs to the list view's headers, which the other
+      // list does not have, so it does not follow the toggle across.
+      return { ...state, collection: action.payload, sort: state.baseSort };
     case 'HYDRATE':
       return action.payload;
     case 'CLEAR_ALL':
@@ -48,6 +53,7 @@ export function filterReducer(state: FilterState, action: FilterAction): FilterS
         ...initialFilterState,
         keywords: new Set(),
         view: state.view,
+        collection: state.collection,
         sort: state.baseSort,
         baseSort: state.baseSort,
       };

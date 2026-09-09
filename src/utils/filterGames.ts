@@ -44,11 +44,14 @@ export function filterWishlist(items: WishlistItem[], state: FilterState): Wishl
 }
 
 const CAT_ORDER = { quick: 0, medium: 1, long: 2 } as const;
+// mins 0 means the play time is unknown (the filter matches it everywhere);
+// sorting by time puts it last in both directions rather than first as 0 min.
+const mins = (g: Filterable) => g.mins || Number.MAX_SAFE_INTEGER;
 
 export function sortItems<T extends Filterable>(list: T[], sort: string, groupIndex: (item: T) => number): T[] {
   if (sort === 'az' || sort === 'name-asc')  return [...list].sort((a, b) => a.name.localeCompare(b.name));
   if (sort === 'name-desc') return [...list].sort((a, b) => b.name.localeCompare(a.name));
-  if (sort === 'quick' || sort === 'dur-asc') return [...list].sort((a, b) => a.mins - b.mins || CAT_ORDER[a.cat] - CAT_ORDER[b.cat]);
+  if (sort === 'quick' || sort === 'dur-asc') return [...list].sort((a, b) => mins(a) - mins(b) || CAT_ORDER[a.cat] - CAT_ORDER[b.cat]);
   if (sort === 'long'  || sort === 'dur-desc') return [...list].sort((a, b) => b.mins - a.mins || CAT_ORDER[b.cat] - CAT_ORDER[a.cat]);
   if (sort === 'players-asc')  return [...list].sort((a, b) => a.min - b.min || a.max - b.max);
   if (sort === 'players-desc') return [...list].sort((a, b) => b.min - a.min || b.max - a.max);
@@ -61,6 +64,11 @@ export function sortItems<T extends Filterable>(list: T[], sort: string, groupIn
 
 export function sortGames(list: Game[], sort: string): Game[] {
   return sortItems(list, sort, (g) => GROUP_ORDER.indexOf(g.group));
+}
+
+/** The group sort is active whether chosen directly or as the base under a column sort. */
+export function isGrouped(state: FilterState): boolean {
+  return state.sort === 'group' || state.baseSort === 'group';
 }
 
 export function sortedKw(kw: string[]): string[] {

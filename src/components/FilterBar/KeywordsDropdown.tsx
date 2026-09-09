@@ -1,9 +1,10 @@
 import { useFilter } from '../../context/useFilter';
+import { useWishlistItems } from '../../context/useWishlistItems';
 import { KW } from '../../data/keywords';
 import { GAMES } from '../../data/games';
 import { CheckIcon } from '../Icons';
 import Dropdown from './Dropdown';
-import type { KeywordId } from '../../data/types';
+import type { Filterable, KeywordId } from '../../data/types';
 
 interface Props {
   isOpen: boolean;
@@ -12,12 +13,17 @@ interface Props {
 
 export default function KeywordsDropdown({ isOpen, onToggle }: Props) {
   const { state, dispatch } = useFilter();
+  const { items: wishlist } = useWishlistItems();
   const isActive = state.keywords.size > 0;
 
   const allKw = Object.entries(KW) as [KeywordId, string][];
 
+  // Counts follow the Own/Want toggle: the list a keyword would filter is
+  // the one whose tally sits next to it.
+  const pool: readonly Filterable[] = state.collection === 'want' ? wishlist : GAMES;
+
   function countForKw(kwId: KeywordId): number {
-    return GAMES.filter((g) => g.kw.includes(kwId)).length;
+    return pool.filter((g) => g.kw.includes(kwId)).length;
   }
 
   const modeLabel = state.keywordMode.toUpperCase();

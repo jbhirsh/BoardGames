@@ -31,7 +31,9 @@ export function useFilterUrlSync(state: FilterState, dispatch: Dispatch<FilterAc
     const current = loc.pathname + (currentQuery ? `?${currentQuery}` : '');
     if (current === target) return;
     wroteUrlRef.current = true;
-    navigate(target, { replace: true });
+    // The URL mirrors state; it is never a page the user moved to, so
+    // ScrollRestoration must not reset the window on each filter change.
+    navigate(target, { replace: true, preventScrollReset: true });
   }, [state, navigate]);
 
   // URL → state: dep is location only; wroteUrlRef skips HYDRATE after our own navigate.

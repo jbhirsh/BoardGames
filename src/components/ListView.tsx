@@ -1,5 +1,7 @@
 import { useState, Fragment } from 'react';
 import { useFilter } from '../context/useFilter';
+import { isGrouped } from '../utils/filterGames';
+import NoResults from './NoResults';
 import { GROUPS, GROUP_ORDER } from '../data/keywords';
 import GameRow from './GameRow';
 import type { GroupId } from '../data/types';
@@ -25,16 +27,9 @@ export default function ListView() {
     return '\u25B2';
   }
 
-  if (filteredGames.length === 0) {
-    return (
-      <div className="no-results">
-        <p>No games match your filters.</p>
-        <button className="no-results-btn" onClick={() => dispatch({ type: 'CLEAR_ALL' })}>Clear filters</button>
-      </div>
-    );
-  }
+  if (filteredGames.length === 0) return <NoResults message="No games match your filters." />;
 
-  const isGrouped = state.sort === 'group' || state.baseSort === 'group';
+  const grouped = isGrouped(state);
   const colSpan = 6;
 
   return (
@@ -57,7 +52,7 @@ export default function ListView() {
           </tr>
         </thead>
         <tbody>
-          {isGrouped
+          {grouped
             ? GROUP_ORDER.map((groupId: GroupId) => {
                 const games = filteredGames.filter((g) => g.group === groupId);
                 if (games.length === 0) return null;

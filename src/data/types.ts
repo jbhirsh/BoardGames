@@ -62,6 +62,8 @@ export type SortMode = 'az' | 'group' | 'quick' | 'long'
   | 'dur-asc' | 'dur-desc'
   | 'players-asc' | 'players-desc';
 export type ViewMode = 'grid' | 'list';
+/** Which list the filter bar drives: the games we own or the ones we want. */
+export type CollectionMode = 'own' | 'want';
 export type KeywordMode = 'and' | 'or';
 
 export interface FilterState {
@@ -73,4 +75,5 @@ export interface FilterState {
   sort: SortMode;
   baseSort: SortMode;
   view: ViewMode;
+  collection: CollectionMode;
 }

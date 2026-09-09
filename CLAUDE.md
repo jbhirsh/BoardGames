@@ -40,7 +40,9 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
 ### Client (`src/`)
 - **`main.tsx`** — entry point. Imports `./instrument` first (Sentry), then
   mounts a `createBrowserRouter` with four routes:
-  - `/` — `HomePage` (hero, filter bar, collection, wishlist)
+  - `/` — `HomePage` (hero, filter bar, then the collection or the wishlist,
+    switched by the Own/Want toggle; both stay mounted so a toggle never
+    refetches, and only the visible one carries the `#collection` anchor)
   - `/rules/:slug` — bundled rule PDF viewer + AI rules assistant
   - `/score/:slug` — score calculator (currently 7 Wonders)
   - `/word-checker` — dictionary lookup for word games
@@ -53,11 +55,16 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   (name, desc, min/max players, mins, duration bucket, keywords). The filter
   pipeline (`utils/filterGames.ts`) is generic over it: `filterItems` with
   `filterGames` and `filterWishlist` wrappers that decide their own grouping.
-  Today only the collection is wired to the filter bar; the wishlist carries
-  the fields so the Own/Want toggle can reuse the pipeline.
+  Both views share the filter bar: `FilterState.collection` (`'own' | 'want'`,
+  mirrored to the URL as `c=want`) picks which list the section renders and
+  which one the keyword counts tally; `CLEAR_ALL` keeps the mode.
 - **`context/`** — filtering state. `FilterContext` holds a `useReducer` store
   (`filterReducer.ts`); `useFilter.ts` is the consumer hook; `useFilterUrlSync.ts`
   keeps filter state mirrored to the URL query string so views are shareable.
+  `WishlistContext` is the one definition of the wishlist for the page (static
+  entries plus approved friend suggestions, loaded once) for the wishlist
+  section, the keyword counts and the hero's count; `OwnersContext` does the
+  same for "I own this" per section.
 - **`components/`** — presentational + interactive UI (grid/list views, filter
   bar, random picker, rules page, rules chat, word checker, score calculator,
   wishlist + voting). `Icons.tsx` holds inline SVGs.

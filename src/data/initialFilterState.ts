@@ -9,4 +9,5 @@ export const initialFilterState: FilterState = {
   sort: 'az',
   baseSort: 'az',
   view: 'list',
+  collection: 'own',
 };

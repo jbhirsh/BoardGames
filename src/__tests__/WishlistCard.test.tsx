@@ -43,6 +43,14 @@ describe('WishlistCard', () => {
     expect(screen.getByText(/1 award/)).toBeInTheDocument();
   });
 
+  it('uses an h4 by default and an h3 when asked, so flat lists keep heading order', () => {
+    const { unmount } = render(<WishlistCard {...defaultProps()} />);
+    expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Test Wishlist Game');
+    unmount();
+    render(<WishlistCard {...defaultProps({ headingLevel: 3 })} />);
+    expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent('Test Wishlist Game');
+  });
+
   it('renders the Wishlist label', () => {
     render(<WishlistCard {...defaultProps()} />);
     expect(screen.getByText('Wishlist')).toBeInTheDocument();

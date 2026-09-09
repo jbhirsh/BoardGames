@@ -2,7 +2,7 @@ import { filterWishlist } from '../utils/filterGames';
 import { WISHLIST } from '../data/wishlist';
 import { WISHLIST_TYPE_ORDER } from '../data/keywords';
 import { describe, it, expect } from 'vitest';
-import { filterGames, sortGames, sortItems, sortedKw } from '../utils/filterGames';
+import { filterGames, sortGames, sortItems, sortedKw, isGrouped } from '../utils/filterGames';
 import { initialFilterState } from '../data/initialFilterState';
 import { testGames, quickGame, mediumGame, longGame } from './testData';
 import type { FilterState, Game } from '../data/types';
@@ -258,6 +258,14 @@ describe('sortItems ordering', () => {
     expect(names(sortGames(input, sort))).toEqual(['Alpha', 'Delta', 'Charlie', 'Bravo']);
   });
 
+  it.each(['quick', 'dur-asc', 'long', 'dur-desc'])('%s puts an unknown play time (mins 0) last', (sort) => {
+    // A suggestion whose lookup failed has mins 0: not the quickest game,
+    // just one we know nothing about.
+    const unknown = mk('Unknown', { mins: 0, cat: 'medium' });
+    const sorted = names(sortGames([unknown, bravo, alpha], sort));
+    expect(sorted[sorted.length - 1]).toBe('Unknown');
+  });
+
   it.each(['long', 'dur-desc'])('%s sorts longest first, ties broken long > medium > quick', (sort) => {
     // Input has Delta ahead of Charlie so the tie-break has to move Charlie.
     expect(names(sortGames([alpha, delta, charlie, bravo], sort))).toEqual(['Bravo', 'Charlie', 'Delta', 'Alpha']);
@@ -288,6 +296,15 @@ describe('sortItems ordering', () => {
   it('group sort uses the supplied groupIndex', () => {
     const byLength = (g: Game) => g.name.length;
     expect(names(sortItems([charlie, bravo, alpha, delta], 'group', byLength))).toEqual(['Alpha', 'Bravo', 'Delta', 'Charlie']);
+  });
+});
+
+describe('isGrouped', () => {
+  it('is on when group is the sort or the base under a column sort, off otherwise', () => {
+    expect(isGrouped(makeState({ sort: 'group', baseSort: 'group' }))).toBe(true);
+    expect(isGrouped(makeState({ sort: 'name-asc', baseSort: 'group' }))).toBe(true);
+    expect(isGrouped(makeState({ sort: 'group', baseSort: 'az' }))).toBe(true);
+    expect(isGrouped(makeState({ sort: 'az', baseSort: 'az' }))).toBe(false);
   });
 });
 

@@ -1,12 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import FilterBar from '../components/FilterBar/FilterBar';
 import { FilterProvider } from '../context/FilterContext';
+import { GAMES } from '../data/games';
+import { WISHLIST } from '../data/wishlist';
 
-function renderFilterBar() {
+function renderFilterBar(url = '/') {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[url]}>
       <FilterProvider>
         <FilterBar />
       </FilterProvider>
@@ -163,6 +165,25 @@ describe('KeywordsDropdown', () => {
 
     const counts = document.querySelectorAll('.dd-opt-ct');
     expect(counts.length).toBeGreaterThan(0);
+  });
+
+  it('counts against the list the toggle is showing', () => {
+    const shown = () => {
+      const opt = screen.getByText('Strategy').closest('.dd-opt')!;
+      return Number(opt.querySelector('.dd-opt-ct')!.textContent);
+    };
+    const owned = GAMES.filter((g) => g.kw.includes('strategy')).length;
+    const wanted = WISHLIST.filter((w) => w.kw.includes('strategy')).length;
+    expect(owned).not.toBe(wanted);
+
+    renderFilterBar();
+    fireEvent.click(getDDButton('Keywords'));
+    expect(shown()).toBe(owned);
+    cleanup();
+
+    renderFilterBar('/?c=want');
+    fireEvent.click(getDDButton('Keywords'));
+    expect(shown()).toBe(wanted);
   });
 
   it('shows plural label when multiple keywords selected', () => {
