@@ -7,7 +7,10 @@ import SuggestForm from './SuggestForm';
 import CollectionToggle from './CollectionToggle';
 import ViewToggle from './ViewToggle';
 import NoResults from './NoResults';
+import AdminPanel from './AdminPanel';
+import OwnerSignIn from './OwnerSignIn';
 import { useFilter } from '../context/useFilter';
+import { useAuth } from '../context/useAuth';
 import { useWishlistItems } from '../context/useWishlistItems';
 import { OwnersProvider } from '../context/OwnersContext';
 import { useWishlistVotes } from '../hooks/useWishlistVotes';
@@ -47,6 +50,7 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
 
 function WishlistBody({ items, filtered }: { items: WishlistItem[]; filtered: WishlistItem[] }) {
   const { state } = useFilter();
+  const { admin } = useAuth();
   const ids = useMemo(() => items.map((w) => w.id), [items]);
   const { counts, myVotes, toggle, loaded } = useWishlistVotes(ids);
 
@@ -94,6 +98,7 @@ function WishlistBody({ items, filtered }: { items: WishlistItem[]; filtered: Wi
 
   return (
     <>
+      {admin && <AdminPanel />}
       <OwnersProvider ids={ids}>
         {filtered.length === 0 ? (
           <NoResults message="No wishlist games match your filters." />
@@ -107,6 +112,7 @@ function WishlistBody({ items, filtered }: { items: WishlistItem[]; filtered: Wi
         )}
       </OwnersProvider>
       <SuggestForm />
+      <OwnerSignIn />
     </>
   );
 }

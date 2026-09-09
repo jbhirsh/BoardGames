@@ -9,7 +9,7 @@ import { WishlistContext } from './wishlistContextValue';
  * it, the keyword counts tally it and the hero counts it.
  */
 export function WishlistProvider({ children }: { children: ReactNode }) {
-  const { items: suggested, loaded } = useSuggestions();
-  const value = useMemo(() => ({ items: [...WISHLIST, ...suggested], loaded }), [suggested, loaded]);
+  const { items: suggested, loaded, reload } = useSuggestions();
+  const value = useMemo(() => ({ items: [...WISHLIST, ...suggested], loaded, reload }), [suggested, loaded, reload]);
   return <WishlistContext.Provider value={value}>{children}</WishlistContext.Provider>;
 }

@@ -1,11 +1,14 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
   handleSuggestions,
+  KEYWORD_IDS,
+  WISHLIST_SECTION_IDS,
   type SuggestionsDeps,
   type SuggestionsRedis,
   type SuggestionsResponse,
   type Mail,
 } from '../../api/suggestions';
+import { KW, WISHLIST_SECTIONS } from '../data/keywords';
 
 function makeRes() {
   const res = {
@@ -57,7 +60,7 @@ function deps(over: Partial<SuggestionsDeps> = {}): SuggestionsDeps & { sent: Ma
   return {
     redis: makeRedis(),
     mailer: { send: vi.fn(async (m: Mail) => { sent.push(m); }) },
-    baseUrl: () => 'https://games.example/',
+    baseUrl: () => 'https://games.example',
     now: () => 5000,
     randomId: () => 'sug-bbbbbb',
     randomToken: () => NEW_TOKEN,
@@ -304,7 +307,7 @@ describe('handleSuggestions', () => {
       const res = makeRes();
       await handleSuggestions(d, { method: 'POST', query: {}, body: { ...valid, game: '  Cascadia   ' } }, res);
       expect(res.statusCode).toBe(201);
-      expect(res.body).toEqual({ item: { id: 'sug-bbbbbb', game: 'Cascadia', name: 'Sam', note: 'Calm and quick', status: 'pending', createdAt: 5000 } });
+      expect(res.body).toEqual({ item: { id: 'sug-bbbbbb', game: 'Cascadia', name: 'Sam', note: 'Calm and quick', status: 'pending', createdAt: 5000, source: 'friend' } });
 
       expect(d.sent).toHaveLength(1);
       expect(d.sent[0].subject).toBe('Game suggestion: Cascadia (from Sam)');
@@ -332,6 +335,8 @@ describe('handleSuggestions', () => {
       expect(res.statusCode).toBe(500);
       expect(redis.lists['suggestions:active']).toEqual([]);
       expect(redis.store['suggestions:sug-bbbbbb'].status).toBe('unsent');
+      // Tracked so the owner's on-site queue can still surface it.
+      expect(redis.lists['suggestions:unsent']).toEqual(['sug-bbbbbb']);
 
       const ok = deps({ redis, randomId: () => 'sug-cccccc' });
       res = makeRes();
@@ -436,7 +441,7 @@ describe('handleSuggestions', () => {
       let res = await post(valid, deps({ mailer: null }));
       expect(res.body).toEqual({ error: 'Suggestions are not open yet' });
       res = makeRes();
-      await handleSuggestions(deps(), { method: 'DELETE', query: {} }, res);
+      await handleSuggestions(deps(), { method: 'PUT', query: {} }, res);
       expect(res.body).toEqual({ error: 'Method not allowed' });
     });
   });
@@ -608,6 +613,281 @@ describe('handleSuggestions', () => {
         expect(await withDetails(raw)).toEqual({ bggId: undefined, year: undefined, min: 1, max: 99, mins: 0, desc: '', kw: ['party', 'family'] });
         expect(await withDetails({})).toEqual({ bggId: undefined, year: undefined, min: 1, max: 99, mins: 0, desc: '', kw: [] });
       });
+    });
+  });
+
+  describe('owner actions (session instead of emailed token)', () => {
+    const JSON_H = { 'content-type': 'application/json' };
+    const asOwner = (over: Partial<SuggestionsDeps> = {}) => deps({ admin: async () => true, ...over });
+    const approvedItem = { ...pending, id: 'sug-ok', game: 'Root', status: 'approved', decidedAt: 2000, details: JSON.stringify({ min: 2, max: 4, mins: 90, desc: 'Woodland war.', kw: ['strategy'] }) };
+
+    describe('GET ?action=pending', () => {
+      it('is refused without a session', async () => {
+        const res = makeRes();
+        await handleSuggestions(deps(), { method: 'GET', query: { action: 'pending' } }, res);
+        expect(res.statusCode).toBe(403);
+        expect(res.body).toEqual({ error: 'owner sign-in required' });
+        const noAdmin = makeRes();
+        await handleSuggestions(deps({ admin: async () => false }), { method: 'GET', query: { action: 'pending' } }, noAdmin);
+        expect(noAdmin.statusCode).toBe(403);
+      });
+
+      it('lists what still needs a decision, newest first, without tokens, including unsent ones', async () => {
+        const redis = makeRedis({
+          'suggestions:sug-old': { ...pending, id: 'sug-old', createdAt: 100 },
+          'suggestions:sug-new': { ...pending, id: 'sug-new', createdAt: 300 },
+          'suggestions:sug-unsent': { ...pending, id: 'sug-unsent', createdAt: 200, status: 'unsent' },
+          'suggestions:sug-ok': approvedItem,
+        }, { 'suggestions:active': ['sug-old', 'sug-ok', 'sug-new'], 'suggestions:unsent': ['sug-unsent', 'sug-old'] });
+        const res = makeRes();
+        await handleSuggestions(asOwner({ redis }), { method: 'GET', query: { action: 'pending' } }, res);
+        expect(res.statusCode).toBe(200);
+        const items = (res.body as { items: Array<Record<string, unknown>> }).items;
+        expect(items.map((i) => i.id)).toEqual(['sug-new', 'sug-unsent', 'sug-old']);
+        expect(items.every((i) => !('token' in i))).toBe(true);
+        expect(items[0]).toMatchObject({ status: 'pending', source: 'friend' });
+        expect(items[1]).toMatchObject({ status: 'unsent' });
+      });
+
+      it('drops an unsent record from the unsent list once the owner decides it', async () => {
+        const redis = makeRedis({ 'suggestions:sug-unsent': { ...pending, id: 'sug-unsent', status: 'unsent' } }, { 'suggestions:unsent': ['sug-unsent', 'sug-other'] });
+        const res = makeRes();
+        await handleSuggestions(asOwner({ redis }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-unsent' }, headers: JSON_H }, res);
+        expect(res.statusCode).toBe(200);
+        expect(redis.lists['suggestions:unsent']).toEqual(['sug-other']);
+        expect(redis.lists['suggestions:active']).toEqual(['sug-unsent']);
+        expect(redis.lists['suggestions:approved']).toEqual(['sug-unsent']);
+      });
+    });
+
+    describe('POST decision from the site', () => {
+      const decideReq = (body: unknown, headers: Record<string, string> = JSON_H) => ({ method: 'POST', query: {}, body, headers });
+
+      it('needs a JSON body as well as a session', async () => {
+        const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
+        const form = makeRes();
+        await handleSuggestions(asOwner({ redis }), decideReq({ decision: 'approve', id: 'sug-aaaaaa' }, { 'content-type': 'application/x-www-form-urlencoded' }), form);
+        expect(form.statusCode).toBe(403);
+        expect(form.body).toEqual({ error: 'owner actions must be sent as JSON' });
+        const anon = makeRes();
+        await handleSuggestions(deps({ redis }), decideReq({ decision: 'approve', id: 'sug-aaaaaa' }), anon);
+        expect(anon.statusCode).toBe(403);
+        expect(redis.store['suggestions:sug-aaaaaa'].status).toBe('pending');
+      });
+
+      it('approves with enrichment and answers JSON, not a page', async () => {
+        const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
+        const lookup = vi.fn(async () => ({ bggId: 1, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'] }));
+        const res = makeRes();
+        await handleSuggestions(asOwner({ redis, lookup }), decideReq({ decision: 'approve', id: 'sug-aaaaaa' }), res);
+        expect(res.statusCode).toBe(200);
+        expect(res.headers['Content-Type']).toBeUndefined();
+        expect(res.body).toMatchObject({ item: { id: 'sug-aaaaaa', status: 'approved', decidedAt: 5000, details: { min: 1, max: 5, mins: 70, desc: 'Birds.' } } });
+        expect((res.body as { item: Record<string, unknown> }).item.token).toBeUndefined();
+        expect(redis.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
+        expect(lookup).toHaveBeenCalledWith('Wingspan');
+      });
+
+      it('denies, and refuses to decide twice', async () => {
+        const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
+        const res = makeRes();
+        await handleSuggestions(asOwner({ redis }), decideReq({ decision: 'deny', id: 'sug-aaaaaa' }), res);
+        expect(res.body).toMatchObject({ item: { status: 'denied' } });
+        expect(redis.lists['suggestions:active']).toEqual([]);
+        const again = makeRes();
+        await handleSuggestions(asOwner({ redis }), decideReq({ decision: 'approve', id: 'sug-aaaaaa' }), again);
+        expect(again.statusCode).toBe(409);
+        expect(again.body).toEqual({ error: 'Wingspan was already denied' });
+      });
+
+      it('reports a bad or unknown id', async () => {
+        const bad = makeRes();
+        await handleSuggestions(asOwner(), decideReq({ decision: 'approve', id: 'Not A Slug' }), bad);
+        expect(bad.statusCode).toBe(400);
+        expect(bad.body).toEqual({ error: 'invalid id' });
+        const missing = makeRes();
+        await handleSuggestions(asOwner(), decideReq({ decision: 'approve', id: 'sug-nope' }), missing);
+        expect(missing.statusCode).toBe(404);
+      });
+    });
+
+    describe('POST action=add (straight onto the wishlist)', () => {
+      const add = async (body: Record<string, unknown>, d = asOwner()) => {
+        const res = makeRes();
+        await handleSuggestions(d, { method: 'POST', query: {}, body: { action: 'add', game: 'Cascadia', name: 'Jess', ...body }, headers: JSON_H }, res);
+        return res;
+      };
+
+      it('is refused without a session and sends no email', async () => {
+        const d = deps();
+        const res = await add({}, d);
+        expect(res.statusCode).toBe(403);
+        expect(d.sent).toHaveLength(0);
+      });
+
+      it('stores it approved, credited to the owner, listed and enriched, with the chosen section', async () => {
+        const lookup = vi.fn(async () => ({ bggId: 7, name: 'Cascadia', year: 2021, min: 1, max: 4, mins: 45, desc: 'Tile laying.', kw: ['family'] }));
+        const d = asOwner({ lookup });
+        const res = await add({ type: 'strategy', note: 'Calm' }, d);
+        expect(res.statusCode).toBe(201);
+        expect(res.body).toMatchObject({ item: {
+          id: 'sug-bbbbbb', game: 'Cascadia', name: 'Jess', note: 'Calm', status: 'approved', source: 'owner', createdAt: 5000, decidedAt: 5000,
+          details: { min: 1, max: 4, mins: 45, desc: 'Tile laying.', kw: ['family'], type: 'strategy' },
+        } });
+        const redis = d.redis as ReturnType<typeof makeRedis>;
+        expect(redis.lists['suggestions:approved']).toEqual(['sug-bbbbbb']);
+        expect(redis.lists['suggestions:active']).toEqual(['sug-bbbbbb']);
+        expect(d.sent).toHaveLength(0);
+      });
+
+      it('keeps the chosen section even when BoardGameGeek has nothing, and no details otherwise', async () => {
+        const typed = await add({ type: 'party' }, asOwner({ lookup: async () => null }));
+        expect(typed.body).toMatchObject({ item: { details: { min: 1, max: 99, mins: 0, desc: '', kw: [], type: 'party' } } });
+        const untyped = await add({}, asOwner({ lookup: async () => null }));
+        expect((untyped.body as { item: { details?: unknown } }).item.details).toBeUndefined();
+      });
+
+      it('validates the game, the name and the section', async () => {
+        expect((await add({ game: 'X' })).body).toEqual({ error: 'game must be 2–80 characters' });
+        expect((await add({ name: '!!' })).statusCode).toBe(400);
+        expect((await add({ type: 'suggested' })).body).toEqual({ error: 'unknown wishlist type' });
+        expect((await add({ note: 'x'.repeat(201) })).statusCode).toBe(400);
+      });
+
+      it('refuses a game already on the list', async () => {
+        const redis = makeRedis({ 'suggestions:sug-ok': approvedItem }, { 'suggestions:active': ['sug-ok'] });
+        const res = await add({ game: 'root' }, asOwner({ redis }));
+        expect(res.statusCode).toBe(409);
+        expect(res.body).toEqual({ error: 'Root is already on the list' });
+      });
+
+      it('rejects an unknown action rather than treating it as a suggestion', async () => {
+        const d = deps();
+        const res = makeRes();
+        await handleSuggestions(d, { method: 'POST', query: {}, body: { action: 'x', game: 'Cascadia', name: 'Sam' } }, res);
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toEqual({ error: 'unknown action' });
+        expect(d.sent).toHaveLength(0);
+      });
+    });
+
+    describe('PATCH (editing how a game reads)', () => {
+      const patch = async (body: Record<string, unknown>, d = asOwner({ redis: makeRedis({ 'suggestions:sug-ok': approvedItem }, { 'suggestions:approved': ['sug-ok'] }) })) => {
+        const res = makeRes();
+        await handleSuggestions(d, { method: 'PATCH', query: {}, body: { id: 'sug-ok', ...body }, headers: JSON_H }, res);
+        return { res, redis: d.redis as ReturnType<typeof makeRedis> };
+      };
+
+      it('is refused without a JSON body or a session', async () => {
+        const res = makeRes();
+        await handleSuggestions(asOwner(), { method: 'PATCH', query: {}, body: { id: 'sug-ok' } }, res);
+        expect(res.statusCode).toBe(403);
+        const anon = makeRes();
+        await handleSuggestions(deps(), { method: 'PATCH', query: {}, body: { id: 'sug-ok' }, headers: JSON_H }, anon);
+        expect(anon.statusCode).toBe(403);
+      });
+
+      it('merges the given details over the stored ones and renames', async () => {
+        const { res, redis } = await patch({ game: '  Root:  A Game  ', note: 'Mean', details: { mins: 60, kw: ['strategy', 'thematic', 'strategy'], type: 'heavy' } });
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toMatchObject({ item: { game: 'Root: A Game', note: 'Mean', details: { min: 2, max: 4, mins: 60, desc: 'Woodland war.', kw: ['strategy', 'thematic'], type: 'heavy' } } });
+        expect(JSON.parse(String(redis.store['suggestions:sug-ok'].details))).toMatchObject({ mins: 60, type: 'heavy' });
+      });
+
+      it('clears the section with null and folds the textarea\'s line breaks into the description', async () => {
+        const { res } = await patch({ details: { type: null, desc: '  Two \n\n lines. ' } });
+        const details = (res.body as { item: { details: Record<string, unknown> } }).item.details;
+        expect(details.type).toBeUndefined();
+        expect(details.desc).toBe('Two lines.');
+      });
+
+      it('rejects out-of-range or malformed edits with the reason', async () => {
+        expect((await patch({ details: { min: 5, max: 2 } })).res.body).toEqual({ error: 'players must be whole numbers from 1 to 99, min at most max' });
+        expect((await patch({ details: { mins: 601 } })).res.body).toEqual({ error: 'minutes must be a whole number from 0 to 600' });
+        expect((await patch({ details: { min: 1.5 } })).res.statusCode).toBe(400);
+        expect((await patch({ details: { desc: 'x'.repeat(601) } })).res.statusCode).toBe(400);
+        expect((await patch({ details: { kw: ['Not Valid'] } })).res.body).toEqual({ error: 'keywords must be a short list of keyword ids' });
+        expect((await patch({ details: { kw: ['not-a-real-keyword'] } })).res.statusCode).toBe(400);
+        expect((await patch({ details: { kw: [42] } })).res.statusCode).toBe(400);
+        expect((await patch({ details: { type: 'suggested' } })).res.body).toEqual({ error: 'unknown wishlist type' });
+        expect((await patch({ details: 'nope' })).res.body).toEqual({ error: 'details must be an object' });
+        expect((await patch({ game: 'X' })).res.statusCode).toBe(400);
+        expect((await patch({ note: 42 })).res.statusCode).toBe(400);
+        expect((await patch({})).res.body).toEqual({ error: 'nothing to change' });
+      });
+
+      it('starts from defaults when a game has no details yet', async () => {
+        const redis = makeRedis({ 'suggestions:sug-bare': { ...pending, id: 'sug-bare', status: 'approved' } });
+        const res = makeRes();
+        await handleSuggestions(asOwner({ redis }), { method: 'PATCH', query: {}, body: { id: 'sug-bare', details: { mins: 30 } }, headers: JSON_H }, res);
+        expect(res.body).toMatchObject({ item: { details: { min: 1, max: 99, mins: 30, desc: '', kw: [] } } });
+      });
+
+      it('will not edit a removed or denied game, or one that does not exist', async () => {
+        const redis = makeRedis({ 'suggestions:sug-gone': { ...pending, id: 'sug-gone', status: 'removed' } });
+        const res = makeRes();
+        await handleSuggestions(asOwner({ redis }), { method: 'PATCH', query: {}, body: { id: 'sug-gone', game: 'Root' }, headers: JSON_H }, res);
+        expect(res.statusCode).toBe(409);
+        const missing = makeRes();
+        await handleSuggestions(asOwner({ redis }), { method: 'PATCH', query: {}, body: { id: 'sug-nope', game: 'Root' }, headers: JSON_H }, missing);
+        expect(missing.statusCode).toBe(404);
+      });
+    });
+
+    describe('DELETE (taking a game off)', () => {
+      it('drops it from both lists and marks it removed, keeping the hash', async () => {
+        const redis = makeRedis({ 'suggestions:sug-ok': approvedItem }, { 'suggestions:approved': ['sug-ok', 'sug-other'], 'suggestions:active': ['sug-ok'] });
+        const res = makeRes();
+        await handleSuggestions(asOwner({ redis }), { method: 'DELETE', query: {}, body: { id: 'sug-ok' }, headers: JSON_H }, res);
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toEqual({ ok: true });
+        expect(redis.lists['suggestions:approved']).toEqual(['sug-other']);
+        expect(redis.lists['suggestions:active']).toEqual([]);
+        expect(redis.store['suggestions:sug-ok']).toMatchObject({ status: 'removed', decidedAt: 5000, game: 'Root' });
+        // A later public read no longer shows it.
+        const list = makeRes();
+        await handleSuggestions(asOwner({ redis }), { method: 'GET', query: {} }, list);
+        expect((list.body as { items: unknown[] }).items).toEqual([]);
+      });
+
+      it('only removes what is on the wishlist: a pending or already-removed record answers 409 untouched', async () => {
+        for (const status of ['pending', 'unsent', 'denied', 'removed']) {
+          const redis = makeRedis({ 'suggestions:sug-x': { ...pending, id: 'sug-x', status } }, { 'suggestions:active': ['sug-x'], 'suggestions:unsent': ['sug-x'] });
+          const res = makeRes();
+          await handleSuggestions(asOwner({ redis }), { method: 'DELETE', query: {}, body: { id: 'sug-x' }, headers: JSON_H }, res);
+          expect(res.statusCode).toBe(409);
+          expect(res.body).toEqual({ error: 'Wingspan is not on the wishlist' });
+          expect(redis.store['suggestions:sug-x'].status).toBe(status);
+          expect(redis.lists['suggestions:active']).toEqual(['sug-x']);
+          expect(redis.lists['suggestions:unsent']).toEqual(['sug-x']);
+        }
+      });
+
+      it('is refused without a session and reports an unknown id', async () => {
+        const anon = makeRes();
+        await handleSuggestions(deps(), { method: 'DELETE', query: {}, body: { id: 'sug-ok' }, headers: JSON_H }, anon);
+        expect(anon.statusCode).toBe(403);
+        const missing = makeRes();
+        await handleSuggestions(asOwner(), { method: 'DELETE', query: {}, body: { id: 'sug-nope' }, headers: JSON_H }, missing);
+        expect(missing.statusCode).toBe(404);
+      });
+    });
+
+    it('knows the same keyword ids and wishlist sections as the client', () => {
+      expect([...KEYWORD_IDS].sort()).toEqual(Object.keys(KW).sort());
+      expect([...WISHLIST_SECTION_IDS].sort()).toEqual([...WISHLIST_SECTIONS].sort());
+    });
+
+    it('recognises a removed status and a stored section when parsing', async () => {
+      const redis = makeRedis({
+        'suggestions:sug-gone': { ...approvedItem, id: 'sug-gone', status: 'removed' },
+        'suggestions:sug-typed': { ...approvedItem, id: 'sug-typed', source: 'owner', details: JSON.stringify({ min: 2, max: 4, mins: 30, desc: '', kw: [], type: 'party' }) },
+      }, { 'suggestions:approved': ['sug-gone', 'sug-typed'] });
+      const res = makeRes();
+      await handleSuggestions(deps({ redis }), { method: 'GET', query: {} }, res);
+      const items = (res.body as { items: Array<Record<string, unknown>> }).items;
+      expect(items.map((i) => i.id)).toEqual(['sug-typed']);
+      expect(items[0]).toMatchObject({ source: 'owner', details: { type: 'party' } });
     });
   });
 });

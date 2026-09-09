@@ -732,3 +732,36 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
      it needs to be reachable. */
   .rules-viewer iframe{ height:min(60svh, 420px); }
 }
+
+/* ---- Owner sign-in and admin mode (inside the dark wishlist section) ---- */
+.owner-signin{margin-top:20px;font-size:12.5px;color:#8E8E93;}
+.owner-summary{cursor:pointer;color:#8E8E93;list-style:none;}
+.owner-summary::-webkit-details-marker{display:none;}
+.owner-summary:hover{color:#C7C7CC;}
+.owner-form{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px;}
+.owner-form .suggest-input{width:240px;}
+.owner-bar{margin-top:20px;font-size:12.5px;color:#C7C7CC;}
+.owner-link{background:none;border:0;padding:0;color:#7ED99A;font:inherit;text-decoration:underline;cursor:pointer;}
+.admin-panel{margin-bottom:28px;padding:20px 24px;border-radius:var(--r-sm);background:rgba(126,217,154,.06);border:1px solid rgba(126,217,154,.25);}
+.admin-title{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;color:#F5F5F7;margin-bottom:12px;}
+.admin-subtitle{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8E8E93;font-weight:600;margin:16px 0 10px;}
+.admin-muted{font-size:12.5px;color:#8E8E93;}
+.admin-error{font-size:12.5px;color:#FF8A80;margin-top:8px;}
+.admin-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;}
+.admin-item{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,.04);}
+.admin-item-game{font-weight:600;color:#F5F5F7;font-size:13.5px;}
+.admin-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+.admin-btn{height:30px;padding:0 12px;border-radius:8px;border:1px solid var(--blue);background:var(--blue);color:#fff;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;}
+.admin-btn--ghost{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.18);color:#C7C7CC;}
+.admin-btn--danger{background:#C62828;border-color:#C62828;}
+.admin-btn:disabled{opacity:.6;cursor:wait;}
+.admin-controls{margin-top:10px;}
+.admin-edit{margin-top:8px;padding:14px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);}
+.admin-range{display:flex;align-items:center;gap:8px;}
+.admin-num{width:80px;}
+.admin-desc{height:auto;padding:8px 12px;resize:vertical;}
+.admin-kw{border:0;padding:0;margin:12px 0 0;display:flex;flex-wrap:wrap;gap:6px 14px;}
+.admin-kw legend{padding:0;margin-bottom:6px;}
+.admin-kw-opt{font-size:12px;color:#C7C7CC;display:inline-flex;align-items:center;gap:4px;}
+.admin-add{margin-top:8px;}
+select.suggest-input{appearance:auto;}

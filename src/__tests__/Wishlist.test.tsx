@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router';
 import Wishlist from '../components/Wishlist';
 import { FilterProvider } from '../context/FilterContext';
 import { WishlistProvider } from '../context/WishlistContext';
+import { AuthContext } from '../context/authContextValue';
 import { useFilter } from '../context/useFilter';
 import { WISHLIST } from '../data/wishlist';
 import { WISHLIST_TYPES, WISHLIST_TYPE_ORDER } from '../data/keywords';
@@ -23,13 +24,16 @@ function mockVotes(counts: Record<string, number>, myVotes: string[] = [], sugge
   });
 }
 
-function renderWishlist(url = '/?c=want', hidden = false) {
+function renderWishlist(url = '/?c=want', hidden = false, admin = false) {
+  const auth = { admin, loaded: true, requestLink: vi.fn(async () => ({ ok: true as const })), logout: vi.fn(async () => {}) };
   return render(
     <MemoryRouter initialEntries={[url]}>
       <FilterProvider>
-        <WishlistProvider>
-          <Wishlist hidden={hidden} />
-        </WishlistProvider>
+        <AuthContext.Provider value={auth}>
+          <WishlistProvider>
+            <Wishlist hidden={hidden} />
+          </WishlistProvider>
+        </AuthContext.Provider>
       </FilterProvider>
     </MemoryRouter>,
   );
@@ -219,10 +223,13 @@ describe('Wishlist', () => {
     expect(screen.getByText('Suggested by Alex')).toBeInTheDocument();
     expect(screen.getByText('“Mean fun”')).toBeInTheDocument();
     expect(screen.getByText(`${WISHLIST.length + 1} titles`)).toBeInTheDocument();
-    // Votes were requested for the suggestion too.
-    const voteCall = (globalThis.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls
+    // Votes were requested for the suggestion too. The request goes out
+    // from a passive effect after the body mounts, so wait for it rather
+    // than reading the calls the instant the name appears.
+    const voteCall = () => (globalThis.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls
       .map((c) => String(c[0])).find((u) => u.startsWith('/api/votes?'));
-    expect(voteCall).toContain('sug-abc123');
+    await waitFor(() => expect(voteCall()).toBeDefined());
+    expect(voteCall()).toContain('sug-abc123');
   });
 
   it('filters the header count while suggestions are still loading', async () => {
@@ -244,9 +251,31 @@ describe('Wishlist', () => {
     expect(await screen.findByText(WISHLIST[0].name)).not.toBeVisible();
   });
 
-  it('shows the suggestion form', async () => {
+  it('shows the suggestion form and the owner sign-in, but no owner tools, when signed out', async () => {
     mockVotes({});
     renderWishlist();
     expect(await screen.findByRole('form', { name: 'Suggest a game' })).toBeInTheDocument();
+    expect(screen.getByText('Jess? Sign in to manage the wishlist')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Owner tools' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Edit / })).not.toBeInTheDocument();
+  });
+
+  it('shows the owner tools and per-entry controls for stored entries when signed in', async () => {
+    const fetchSpy = mockVotes({}, [], [{ id: 'sug-abc123', game: 'Root', name: 'Alex', note: '' }]);
+    fetchSpy.mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.startsWith('/api/suggestions?action=pending')) return jsonResponse({ items: [{ id: 'sug-p', game: 'Ark Nova', name: 'Sam', note: '' }] });
+      if (url.startsWith('/api/suggestions')) return jsonResponse({ items: [{ id: 'sug-abc123', game: 'Root', name: 'Alex', note: '' }] });
+      if (url.startsWith('/api/owners')) return jsonResponse({ owners: {}, mine: [] });
+      return jsonResponse({ counts: {}, myVotes: [] });
+    });
+    renderWishlist('/?c=want', false, true);
+    expect(await screen.findByRole('region', { name: 'Owner tools' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Approve Ark Nova' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Edit Root' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove Root' })).toBeInTheDocument();
+    // Compiled-in entries are edited in the source, not here.
+    expect(screen.queryByRole('button', { name: `Edit ${WISHLIST[0].name}` })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
   });
 });

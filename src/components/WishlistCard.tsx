@@ -5,6 +5,7 @@ import WishlistLinks from './WishlistLinks';
 import AwardsBadge from './AwardsBadge';
 import VoteButton from './VoteButton';
 import OwnButton from './OwnButton';
+import AdminItemControls from './AdminItemControls';
 
 interface Props {
   item: WishlistItem;
@@ -31,6 +32,7 @@ export default function WishlistCard({ item, voteCount, voted, onVote, disabled,
       </div>
       <p className="wish-desc">{item.desc}</p>
       <OwnButton itemId={item.id} itemName={item.name} />
+      <AdminItemControls item={item} />
       <div className="wish-footer">
         <VoteButton
           itemName={item.name}

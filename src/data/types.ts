@@ -54,6 +54,10 @@ export interface WishlistItem extends Filterable {
   asin?: string;
   /** Set on approved friend suggestions: the display name that suggested it. */
   suggestedBy?: string;
+  /** Present on entries that live in the suggestions store (editable by the owner); absent on compiled-in entries. */
+  source?: 'friend' | 'owner';
+  /** The stored description on its own, without the credit line, for the owner's edit form. */
+  blurb?: string;
 }
 
 export type DurationFilter = 'all' | DurationCategory;

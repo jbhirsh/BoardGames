@@ -4,6 +4,7 @@ import { Outlet, ScrollRestoration } from 'react-router';
 import { FilterProvider } from './context/FilterContext';
 import { OwnersProvider } from './context/OwnersContext';
 import { WishlistProvider } from './context/WishlistContext';
+import { AuthProvider } from './context/AuthContext';
 import { GAMES } from './data/games';
 import { useStickyOffset } from './hooks/useStickyOffset';
 import { useFilter } from './context/useFilter';
@@ -26,21 +27,23 @@ export function HomePage() {
   const { state } = useFilter();
 
   return (
-    <WishlistProvider>
-      <div className="clip-wrap">
-        <Hero />
-        <div className="sticky-header" ref={stickyRef}>
-          <FilterBar />
-          <ActiveTags />
+    <AuthProvider>
+      <WishlistProvider>
+        <div className="clip-wrap">
+          <Hero />
+          <div className="sticky-header" ref={stickyRef}>
+            <FilterBar />
+            <ActiveTags />
+          </div>
+          <main className="main">
+            <OwnersProvider ids={COLLECTION_IDS}>
+              <GameCollection hidden={state.collection !== 'own'} />
+            </OwnersProvider>
+            <Wishlist hidden={state.collection !== 'want'} />
+          </main>
         </div>
-        <main className="main">
-          <OwnersProvider ids={COLLECTION_IDS}>
-            <GameCollection hidden={state.collection !== 'own'} />
-          </OwnersProvider>
-          <Wishlist hidden={state.collection !== 'want'} />
-        </main>
-      </div>
-    </WishlistProvider>
+      </WishlistProvider>
+    </AuthProvider>
   );
 }
 

@@ -7,10 +7,12 @@ export interface WishlistData {
   items: WishlistItem[];
   /** False until the suggestions request has settled (a failure settles it too). */
   loaded: boolean;
+  /** Re-fetch the suggestions after the owner changes them. */
+  reload: () => void;
 }
 
 /**
  * Defaults to the static list, already loaded, so components render sensibly
  * outside the provider (unit tests, pages without the wishlist).
  */
-export const WishlistContext = createContext<WishlistData>({ items: WISHLIST, loaded: true });
+export const WishlistContext = createContext<WishlistData>({ items: WISHLIST, loaded: true, reload: () => {} });
