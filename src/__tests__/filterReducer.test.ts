@@ -72,20 +72,18 @@ describe('filterReducer', () => {
     expect(state.view).toBe('grid');
   });
 
+  it('keeps a column sort across the Own/Want toggle, since both tables show it', () => {
+    const sorted = filterReducer(initialFilterState, { type: 'SET_COLUMN_SORT', payload: 'dur' });
+    const want = filterReducer(sorted, { type: 'SET_COLLECTION', payload: 'want' });
+    expect(want.sort).toBe(sorted.sort);
+    expect(want.baseSort).toBe(sorted.baseSort);
+  });
+
   it('SET_COLLECTION switches between the owned games and the wishlist', () => {
     expect(initialFilterState.collection).toBe('own');
     const want = filterReducer(initialFilterState, { type: 'SET_COLLECTION', payload: 'want' });
     expect(want.collection).toBe('want');
     expect(filterReducer(want, { type: 'SET_COLLECTION', payload: 'own' }).collection).toBe('own');
-  });
-
-  it('SET_COLLECTION drops a column sort, which only the list view headers can show', () => {
-    const grouped = filterReducer(initialFilterState, { type: 'SET_SORT', payload: 'group' });
-    const byDuration = filterReducer(grouped, { type: 'SET_COLUMN_SORT', payload: 'dur' });
-    expect(byDuration.sort).toBe('dur-asc');
-    const want = filterReducer(byDuration, { type: 'SET_COLLECTION', payload: 'want' });
-    expect(want.sort).toBe('group');
-    expect(want.baseSort).toBe('group');
   });
 
   it('HYDRATE replaces the state with the payload verbatim', () => {

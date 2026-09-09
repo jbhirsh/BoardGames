@@ -1,12 +1,13 @@
 import { Link } from 'react-router';
 import type { Game, KeywordId } from '../data/types';
-import { KW } from '../data/keywords';
 import { useFilter } from '../context/useFilter';
 import { ytURL, rulesURL } from '../utils/urls';
 import { sortedKw } from '../utils/filterGames';
+import { isKeywordLit } from '../utils/keywordLit';
 import DurationPill from './DurationPill';
 import KeywordPill from './KeywordPill';
 import { AwardsCount, AwardsList } from './AwardsBadge';
+import { TABLE_COLUMNS } from './GamesTableHead';
 import { ChevronIcon, YouTubeIcon, AiRulesIcon, CalculatorIcon, SearchIcon } from './Icons';
 
 interface Props {
@@ -18,8 +19,6 @@ interface Props {
 
 export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Props) {
   const { state, dispatch } = useFilter();
-  const searchMatch = (kw: KeywordId) =>
-    state.keywords.has(kw) || (!!state.search && KW[kw].toLowerCase().includes(state.search.toLowerCase().trim()));
 
   return (
     <>
@@ -46,20 +45,28 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
             <KeywordPill
               key={kw}
               keyword={kw as KeywordId}
-              active={searchMatch(kw as KeywordId)}
+              active={isKeywordLit(state, kw as KeywordId)}
               onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: kw as KeywordId })}
             />
           ))}
         </td>
         <td className="col-actions">
-          <span>
+          <button
+            type="button"
+            className="row-toggle"
+            aria-expanded={isOpen}
+            aria-label={`${isOpen ? 'Hide' : 'Show'} details for ${game.name}`}
+            onClick={(e) => { e.stopPropagation(); onToggle(); }}
+          >
             <ChevronIcon />
-          </span>
+          </button>
         </td>
       </tr>
       <tr className="row-expand">
-        <td colSpan={6} style={{ padding: 0 }}>
-          <div className="row-expand-inner">
+        <td colSpan={TABLE_COLUMNS} style={{ padding: 0 }}>
+          {/* Collapsed only visually, so it is inert until opened: nothing in it
+              should take focus or be read out. */}
+            <div className="row-expand-inner" inert={!isOpen}>
             <div className="row-expand-content">
               <div
                 className="detail-section"

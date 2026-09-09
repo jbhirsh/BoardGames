@@ -40,6 +40,25 @@ describe('GameRow', () => {
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 
+  it('has a labelled chevron button that toggles the row once, and keeps the closed panel inert', () => {
+    const onToggle = vi.fn();
+    const { rerender } = renderRow(quickGame, false, onToggle);
+    const chevron = screen.getByRole('button', { name: 'Show details for Quick Game' });
+    expect(chevron).toHaveAttribute('aria-expanded', 'false');
+    expect(document.querySelector('.row-expand-inner')).toHaveAttribute('inert');
+    fireEvent.click(chevron);
+    expect(onToggle).toHaveBeenCalledTimes(1);
+    rerender(
+      <MemoryRouter>
+        <FilterProvider>
+          <table><tbody><GameRow game={quickGame} isOpen onToggle={onToggle} showGroupBadge={false} /></tbody></table>
+        </FilterProvider>
+      </MemoryRouter>
+    );
+    expect(screen.getByRole('button', { name: 'Hide details for Quick Game' })).toHaveAttribute('aria-expanded', 'true');
+    expect(document.querySelector('.row-expand-inner')).not.toHaveAttribute('inert');
+  });
+
   it('shows the award count in the row and the full list when expanded', () => {
     const game: Game = { ...quickGame, awards: [{ name: 'Mensa Select', year: 2009 }, { name: 'As d\'Or', year: 2010 }] };
     const { container } = renderRow(game, true);

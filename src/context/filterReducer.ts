@@ -43,9 +43,7 @@ export function filterReducer(state: FilterState, action: FilterAction): FilterS
     case 'SET_VIEW':
       return { ...state, view: action.payload };
     case 'SET_COLLECTION':
-      // A column sort belongs to the list view's headers, which the other
-      // list does not have, so it does not follow the toggle across.
-      return { ...state, collection: action.payload, sort: state.baseSort };
+      return { ...state, collection: action.payload };
     case 'HYDRATE':
       return action.payload;
     case 'CLEAR_ALL':

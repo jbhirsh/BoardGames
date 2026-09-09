@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react';
 import type { WishlistItem } from '../data/types';
 import { WISHLIST_TYPES, WISHLIST_TYPE_ORDER } from '../data/keywords';
 import WishlistCard from './WishlistCard';
-import WishlistRow from './WishlistRow';
+import WishlistListView from './WishlistListView';
 import SuggestForm from './SuggestForm';
 import CollectionToggle from './CollectionToggle';
 import ViewToggle from './ViewToggle';
@@ -35,7 +35,7 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
     <section className="wishlist" id={hidden ? undefined : 'collection'} ref={sectionRef} hidden={hidden}>
       <div className="sec-hd">
         <h2 className="sec-title">Wishlist</h2>
-        <span className="sec-count">{filtered.length} titles</span>
+        <span className="sec-count">{filtered.length} games</span>
         <div className="sec-right">
           <CollectionToggle />
           <ViewToggle />
@@ -53,34 +53,25 @@ function WishlistBody({ items, filtered }: { items: WishlistItem[]; filtered: Wi
   const { counts, myVotes, toggle, loaded } = useWishlistVotes(ids);
 
   // Under the "group" sort, items are grouped by wishlist type with the
-  // most-voted first; every other sort is a flat list in that sort's order.
+  // most-voted first; a column sort clicked on top of it keeps the groups
+  // but orders each by that column, as the collection's table does. Every
+  // other sort is a flat list in that sort's order.
   const grouped = isGrouped(state);
   const groups = useMemo(() => {
     if (!grouped) return [{ type: null, items: filtered }];
-    const byVotes = [...filtered].sort((a, b) => (counts[b.id] ?? 0) - (counts[a.id] ?? 0) || a.name.localeCompare(b.name));
+    const ordered = state.sort === 'group'
+      ? [...filtered].sort((a, b) => (counts[b.id] ?? 0) - (counts[a.id] ?? 0) || a.name.localeCompare(b.name))
+      : filtered;
     return WISHLIST_TYPE_ORDER
-      .map((type) => ({ type, items: byVotes.filter((w) => w.type === type) }))
+      .map((type) => ({ type, items: ordered.filter((w) => w.type === type) }))
       .filter((g) => g.items.length > 0);
-  }, [filtered, grouped, counts]);
+  }, [filtered, grouped, state.sort, counts]);
 
-  const renderItems = (list: WishlistItem[]) =>
-    state.view === 'list' ? (
-      <div className="wish-list">
-        {list.map((item) => (
-          <WishlistRow
-            key={item.id}
-            item={item}
-            headingLevel={grouped ? 4 : 3}
-            voteCount={counts[item.id] ?? 0}
-            voted={myVotes.has(item.id)}
-            onVote={() => toggle(item.id)}
-            disabled={!loaded}
-          />
-        ))}
-      </div>
-    ) : (
-      <div className="wish-grid">
-        {list.map((item) => (
+  const renderGrid = () => groups.map(({ type, items: groupItems }) => (
+    <div className="wish-group" key={type ?? 'all'}>
+      {type && <h3 className="group-hd">{WISHLIST_TYPES[type]}</h3>}
+      <div className="games-grid wish-grid">
+        {groupItems.map((item) => (
           <WishlistCard
             key={item.id}
             item={item}
@@ -92,20 +83,18 @@ function WishlistBody({ items, filtered }: { items: WishlistItem[]; filtered: Wi
           />
         ))}
       </div>
-    );
+    </div>
+  ));
 
   return (
     <>
       {admin && <AdminPanel />}
       {filtered.length === 0 ? (
         <NoResults message="No wishlist games match your filters." />
+      ) : state.view === 'list' ? (
+        <WishlistListView groups={groups} counts={counts} myVotes={myVotes} onVote={toggle} disabled={!loaded} />
       ) : (
-        groups.map(({ type, items: groupItems }) => (
-          <div className="wish-group" key={type ?? 'all'}>
-            {type && <h3 className="wish-group-hd">{WISHLIST_TYPES[type]}</h3>}
-            {renderItems(groupItems)}
-          </div>
-        ))
+        renderGrid()
       )}
       <SuggestForm />
     </>
