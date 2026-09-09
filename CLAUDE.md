@@ -185,5 +185,7 @@ non-API, non-file routes to `index.html`, and `api/*` maps to the serverless
 functions. CI (`.github/workflows/ci.yml`) runs lint, type-check, a11y tests,
 unit tests with coverage, and a build on `ubuntu-latest` for every PR to `main`,
 followed by an automated Claude review; `claude-autofix.yml` addresses
-unresolved review comments. All CI runs on GitHub-hosted `ubuntu-latest`
+unresolved review comments. `mutation.yml` runs StrykerJS over the source
+files a PR touched and fails below the `break` score in
+`stryker.config.json` (a weekly full sweep applies the same bar). All CI runs on GitHub-hosted `ubuntu-latest`
 runners.
