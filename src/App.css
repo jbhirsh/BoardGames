@@ -187,6 +187,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 @keyframes pick-shake{0%,100%{transform:translateX(0) rotate(0);}25%{transform:translateX(-3px) rotate(-2deg);}75%{transform:translateX(3px) rotate(2deg);}}
 
 /* View toggle */
+.coll-toggle{display:flex;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.coll-btn{height:32px;padding:0 14px;background:none;border:none;cursor:pointer;color:var(--text3);font-family:inherit;font-size:12.5px;font-weight:600;transition:background .15s,color .15s;}
+.coll-btn:hover{color:var(--text);}
+.coll-btn.active{background:var(--surface);color:var(--dark);box-shadow:var(--shadow-sm);}
 .view-btns{display:flex;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
 .view-btn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;color:var(--text3);transition:background .15s,color .15s;}
 .view-btn:hover{color:var(--text);}
@@ -383,6 +387,11 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .wishlist .sec-title{color:#F5F5F7;}
 .wishlist .sec-count{color:#48484A;}
 .wishlist .sec-hd{border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:18px;margin-bottom:24px;}
+.wishlist .coll-toggle,.wishlist .view-btns{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);}
+.wishlist .coll-btn,.wishlist .view-btn{color:#8E8E93;}
+.wishlist .coll-btn:hover,.wishlist .view-btn:hover{color:#F5F5F7;}
+.wishlist .coll-btn.active,.wishlist .view-btn.active{background:rgba(255,255,255,.14);color:#F5F5F7;box-shadow:none;}
+.wishlist .no-results{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:#C7C7CC;margin-bottom:8px;}
 .wish-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
 .wish-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-sm);padding:22px;display:flex;flex-direction:column;transition:background .2s,border-color .2s;}
 .wish-card:hover{background:rgba(0,113,227,0.08);border-color:rgba(0,113,227,0.25);}

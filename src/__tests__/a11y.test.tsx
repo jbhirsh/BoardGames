@@ -18,10 +18,19 @@ const axeOptions = { rules: { 'color-contrast': { enabled: false } } };
 const TIMEOUT_MS = 30_000;
 
 describe('accessibility', () => {
-  it('home page has no axe violations', async () => {
+  it('home page (owned games) has no axe violations', async () => {
     const router = createMemoryRouter([
       { element: <App />, children: [{ path: '/', element: <HomePage /> }] },
     ]);
+    const { container } = render(<RouterProvider router={router} />);
+    const results = await axe(container, axeOptions);
+    expect(results).toHaveNoViolations();
+  }, TIMEOUT_MS);
+
+  it('home page (wishlist) has no axe violations', async () => {
+    const router = createMemoryRouter([
+      { element: <App />, children: [{ path: '/', element: <HomePage /> }] },
+    ], { initialEntries: ['/?c=want'] });
     const { container } = render(<RouterProvider router={router} />);
     // The wishlist body (cards, OwnButton, SuggestForm) mounts after the
     // suggestions fetch settles; scan once it is in the DOM.

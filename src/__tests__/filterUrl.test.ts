@@ -47,6 +47,16 @@ describe('filterToSearchParams', () => {
     expect(params.get('v')).toBe('grid');
   });
 
+  it('encodes the wishlist mode and omits the default', () => {
+    expect(filterToSearchParams(makeState({ collection: 'want' })).get('c')).toBe('want');
+    expect(filterToSearchParams(makeState({ collection: 'own' })).has('c')).toBe(false);
+  });
+
+  it('parses the wishlist mode and ignores unknown values', () => {
+    expect(searchParamsToFilter(new URLSearchParams('c=want')).collection).toBe('want');
+    expect(searchParamsToFilter(new URLSearchParams('c=everything')).collection).toBe('own');
+  });
+
   it('omits active column sort, serialising baseSort instead', () => {
     // sort='name-asc' is a transient column-sort; baseSort is still the
     // default 'az', so the URL should have no `s` at all.
@@ -156,9 +166,11 @@ describe('roundtrip', () => {
       sort: 'group',
       baseSort: 'group',
       view: 'grid',
+      collection: 'want',
     });
     const params = filterToSearchParams(original);
     const restored = searchParamsToFilter(params);
+    expect(restored.collection).toBe('want');
     expect(restored.duration).toBe(original.duration);
     expect(restored.players).toBe(original.players);
     expect([...restored.keywords].sort()).toEqual([...original.keywords].sort());

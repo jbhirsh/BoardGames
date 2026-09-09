@@ -5,13 +5,13 @@ import GameCollection from '../components/GameCollection';
 import FilterBar from '../components/FilterBar/FilterBar';
 import { FilterProvider } from '../context/FilterContext';
 
-function renderWithFilter() {
+function renderWithFilter(hidden = false) {
   return render(
     <MemoryRouter>
       <FilterProvider>
         <div className="sticky-header" />
         <FilterBar />
-        <GameCollection />
+        <GameCollection hidden={hidden} />
       </FilterProvider>
     </MemoryRouter>
   );
@@ -60,6 +60,18 @@ describe('GameCollection scroll behavior', () => {
     const call = scrollToSpy.mock.calls[0][0] as { top: number; behavior: string };
     expect(call.top).toBe(500 + -200 - 80);
     expect(call.behavior).toBe('instant');
+  });
+
+  it('does not scroll a hidden section, whose geometry is meaningless', () => {
+    renderWithFilter(true);
+    stubHeaderHeight(80);
+    stubSectionTop(-200);
+
+    selectFirstKeyword();
+
+    expect(scrollToSpy).not.toHaveBeenCalled();
+    expect(document.querySelector('section')).toHaveAttribute('hidden');
+    expect(document.querySelector('#collection')).toBeNull();
   });
 
   it('does not scroll when the collection header is already in view', () => {

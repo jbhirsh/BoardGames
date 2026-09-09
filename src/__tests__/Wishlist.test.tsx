@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import Wishlist from '../components/Wishlist';
 import { FilterProvider } from '../context/FilterContext';
+import { WishlistProvider } from '../context/WishlistContext';
 import { useFilter } from '../context/useFilter';
 import { WISHLIST } from '../data/wishlist';
 import { WISHLIST_TYPES, WISHLIST_TYPE_ORDER } from '../data/keywords';
@@ -22,11 +23,13 @@ function mockVotes(counts: Record<string, number>, myVotes: string[] = [], sugge
   });
 }
 
-function renderWishlist() {
+function renderWishlist(url = '/?c=want', hidden = false) {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[url]}>
       <FilterProvider>
-        <Wishlist />
+        <WishlistProvider>
+          <Wishlist hidden={hidden} />
+        </WishlistProvider>
       </FilterProvider>
     </MemoryRouter>,
   );
@@ -71,9 +74,9 @@ describe('Wishlist', () => {
     });
   });
 
-  it('groups items by type, in the configured type order', async () => {
+  it('groups items by type under the group sort, in the configured type order', async () => {
     mockVotes({});
-    renderWishlist();
+    renderWishlist('/?c=want&s=group');
     await screen.findByText(WISHLIST[0].name);
 
     // Group headings only: the suggestion form has its own h3.
@@ -94,7 +97,7 @@ describe('Wishlist', () => {
     }
   });
 
-  it('sorts items within a group by vote count, highest first', async () => {
+  it('sorts items within a group by vote count under the group sort, highest first', async () => {
     const byId = Object.fromEntries(WISHLIST.map((w, i) => [w.id, WISHLIST.length - i]));
     // Give the last item of the first group the top score so sort has work to do.
     const firstType = WISHLIST_TYPE_ORDER.find((t) => WISHLIST.some((w) => w.type === t))!;
@@ -103,7 +106,7 @@ describe('Wishlist', () => {
     const counts: Record<string, number> = {};
     WISHLIST.forEach((w) => { counts[w.id] = w.id === star.id ? 999 : byId[w.id]; });
     mockVotes(counts);
-    renderWishlist();
+    renderWishlist('/?c=want&s=group');
 
     await waitFor(() => {
       const first = screen.getAllByRole('heading', { level: 4 })[0]?.textContent;
@@ -114,6 +117,37 @@ describe('Wishlist', () => {
     const groupNames = names.slice(0, inGroup.length);
     const groupCounts = groupNames.map((n) => counts[WISHLIST.find((w) => w.name === n)!.id]);
     expect(groupCounts).toEqual([...groupCounts].sort((a, b) => b - a));
+  });
+
+  it('lists items flat in A to Z order under the default sort', async () => {
+    mockVotes({});
+    renderWishlist();
+    await screen.findByText(WISHLIST[0].name);
+    expect(document.querySelectorAll('.wish-group-hd')).toHaveLength(0);
+    // Flat layout: item headings sit directly under the section h2, so they are h3.
+    const names = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent ?? '').filter((n) => n !== 'Suggest a game');
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+  });
+
+  it('applies the filter bar: search, players, and an empty state with a clear button', async () => {
+    mockVotes({});
+    renderWishlist('/?c=want&q=wingspan');
+    await screen.findByText('Wingspan');
+    expect(screen.queryByText('Dominion')).not.toBeInTheDocument();
+    expect(screen.getByText(/\b2 titles\b/)).toBeInTheDocument();
+    cleanup();
+
+    mockVotes({});
+    renderWishlist('/?c=want&p=12');
+    await screen.findByText('Wavelength');
+    expect(screen.queryByText('Lost Cities')).not.toBeInTheDocument();
+    cleanup();
+
+    mockVotes({});
+    renderWishlist('/?c=want&q=zzzz-no-such-game');
+    await screen.findByText('No wishlist games match your filters.');
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+    await screen.findByText(WISHLIST[0].name);
   });
 
   it('switches to list layout when the filter view is set to list', async () => {
@@ -129,7 +163,7 @@ describe('Wishlist', () => {
       );
     }
     const { container } = render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={['/?c=want']}>
         <FilterProvider>
           <ViewToggleTest />
         </FilterProvider>
@@ -179,7 +213,7 @@ describe('Wishlist', () => {
 
   it('renders approved friend suggestions in their own group with the suggester credited', async () => {
     mockVotes({}, [], [{ id: 'sug-abc123', game: 'Root', name: 'Alex', note: 'Mean fun' }]);
-    renderWishlist();
+    renderWishlist('/?c=want&s=group');
     await waitFor(() => expect(screen.getByText('Root')).toBeInTheDocument());
     expect(screen.getByRole('heading', { level: 3, name: 'Suggested by friends' })).toBeInTheDocument();
     expect(screen.getByText('Suggested by Alex')).toBeInTheDocument();
@@ -189,6 +223,25 @@ describe('Wishlist', () => {
     const voteCall = (globalThis.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls
       .map((c) => String(c[0])).find((u) => u.startsWith('/api/votes?'));
     expect(voteCall).toContain('sug-abc123');
+  });
+
+  it('filters the header count while suggestions are still loading', async () => {
+    // Suggestions never settle here, so the body never mounts; the count
+    // must still reflect the search from the URL rather than the full total.
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise(() => {}));
+    renderWishlist(`/?c=want&q=${encodeURIComponent(WISHLIST[0].name)}`);
+    expect(screen.getByText('1 titles')).toBeInTheDocument();
+    expect(screen.queryByText(`${WISHLIST.length} titles`)).not.toBeInTheDocument();
+    expect(screen.queryByText(WISHLIST[0].name)).not.toBeInTheDocument();
+  });
+
+  it('hides itself and drops the anchor id when the collection is showing', async () => {
+    mockVotes({});
+    const { container } = renderWishlist('/', true);
+    const section = container.querySelector('section.wishlist')!;
+    expect(section).toHaveAttribute('hidden');
+    expect(section).not.toHaveAttribute('id');
+    expect(await screen.findByText(WISHLIST[0].name)).not.toBeVisible();
   });
 
   it('shows the suggestion form', async () => {

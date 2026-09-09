@@ -1,21 +1,16 @@
 import { useFilter } from '../context/useFilter';
+import { isGrouped } from '../utils/filterGames';
+import NoResults from './NoResults';
 import { GROUPS, GROUP_ORDER } from '../data/keywords';
 import GameCard from './GameCard';
 import type { GroupId } from '../data/types';
 
 export default function GridView() {
-  const { state, dispatch, filteredGames } = useFilter();
+  const { state, filteredGames } = useFilter();
 
-  if (filteredGames.length === 0) {
-    return (
-      <div className="no-results">
-        <p>No games match your filters.</p>
-        <button className="no-results-btn" onClick={() => dispatch({ type: 'CLEAR_ALL' })}>Clear filters</button>
-      </div>
-    );
-  }
+  if (filteredGames.length === 0) return <NoResults message="No games match your filters." />;
 
-  if (state.sort === 'group' || state.baseSort === 'group') {
+  if (isGrouped(state)) {
     const groups = GROUP_ORDER.filter((g) => filteredGames.some((gm) => gm.group === g));
     return (
       <>

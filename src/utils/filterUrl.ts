@@ -1,4 +1,5 @@
 import type {
+  CollectionMode,
   DurationFilter,
   FilterState,
   KeywordId,
@@ -12,6 +13,7 @@ import { initialFilterState } from '../data/initialFilterState';
 const DURATIONS: Exclude<DurationFilter, 'all'>[] = ['quick', 'medium', 'long'];
 const KEYWORD_MODES: Exclude<KeywordMode, 'or'>[] = ['and'];
 const VIEWS: Exclude<ViewMode, 'list'>[] = ['grid'];
+const COLLECTIONS: Exclude<CollectionMode, 'own'>[] = ['want'];
 const SORTS: Exclude<SortMode, `${string}-${'asc' | 'desc'}`>[] = [
   'az', 'group', 'quick', 'long',
 ];
@@ -46,6 +48,15 @@ type _ViewsExhaustive = Exclude<
 const _viewsExhaustive: _ViewsExhaustive = true;
 void _viewsExhaustive;
 
+type _CollectionsExhaustive = Exclude<
+  Exclude<CollectionMode, 'own'>,
+  (typeof COLLECTIONS)[number]
+> extends never
+  ? true
+  : 'COLLECTIONS is missing a CollectionMode value';
+const _collectionsExhaustive: _CollectionsExhaustive = true;
+void _collectionsExhaustive;
+
 type _SortsExhaustive = Exclude<
   Exclude<SortMode, `${string}-${'asc' | 'desc'}`>,
   (typeof SORTS)[number]
@@ -74,6 +85,7 @@ export function filterToSearchParams(state: FilterState): URLSearchParams {
     params.set('s', state.baseSort);
   }
   if (state.view !== 'list') params.set('v', state.view);
+  if (state.collection !== 'own') params.set('c', state.collection);
   return params;
 }
 
@@ -116,6 +128,10 @@ export function searchParamsToFilter(params: URLSearchParams): FilterState {
   const view: ViewMode =
     v && (VIEWS as readonly string[]).includes(v) ? (v as ViewMode) : initialFilterState.view;
 
+  const c = params.get('c');
+  const collection: CollectionMode =
+    c && (COLLECTIONS as readonly string[]).includes(c) ? (c as CollectionMode) : initialFilterState.collection;
+
   return {
     duration,
     players,
@@ -125,6 +141,7 @@ export function searchParamsToFilter(params: URLSearchParams): FilterState {
     sort,
     baseSort: sort,
     view,
+    collection,
   };
 }
 

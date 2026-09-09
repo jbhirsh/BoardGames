@@ -12,13 +12,16 @@ interface Props {
   voted: boolean;
   onVote: () => void;
   disabled?: boolean;
+  /** h4 under a group heading, h3 in a flat list, so heading levels never skip. */
+  headingLevel?: 3 | 4;
 }
 
-export default function WishlistCard({ item, voteCount, voted, onVote, disabled }: Props) {
+export default function WishlistCard({ item, voteCount, voted, onVote, disabled, headingLevel = 4 }: Props) {
+  const Heading = headingLevel === 3 ? 'h3' : 'h4';
   return (
     <div className="wish-card" data-testid="wishlist-item" data-item-id={item.id}>
       <span className="wish-lbl">Wishlist</span>
-      <h4 className="wish-name">{item.name}</h4>
+      <Heading className="wish-name">{item.name}</Heading>
       <div className="wish-meta">
         {item.players && <span className="wish-players"><UserIcon /> {item.players}</span>}
         {item.dur && <span className="wish-players"><ClockIcon /> {item.dur}</span>}

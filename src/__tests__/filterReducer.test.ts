@@ -72,6 +72,22 @@ describe('filterReducer', () => {
     expect(state.view).toBe('grid');
   });
 
+  it('SET_COLLECTION switches between the owned games and the wishlist', () => {
+    expect(initialFilterState.collection).toBe('own');
+    const want = filterReducer(initialFilterState, { type: 'SET_COLLECTION', payload: 'want' });
+    expect(want.collection).toBe('want');
+    expect(filterReducer(want, { type: 'SET_COLLECTION', payload: 'own' }).collection).toBe('own');
+  });
+
+  it('SET_COLLECTION drops a column sort, which only the list view headers can show', () => {
+    const grouped = filterReducer(initialFilterState, { type: 'SET_SORT', payload: 'group' });
+    const byDuration = filterReducer(grouped, { type: 'SET_COLUMN_SORT', payload: 'dur' });
+    expect(byDuration.sort).toBe('dur-asc');
+    const want = filterReducer(byDuration, { type: 'SET_COLLECTION', payload: 'want' });
+    expect(want.sort).toBe('group');
+    expect(want.baseSort).toBe('group');
+  });
+
   it('HYDRATE replaces the state with the payload verbatim', () => {
     const payload: FilterState = {
       duration: 'long',
@@ -82,6 +98,7 @@ describe('filterReducer', () => {
       sort: 'group',
       baseSort: 'group',
       view: 'grid',
+      collection: 'want',
     };
     const next = filterReducer(initialFilterState, { type: 'HYDRATE', payload });
     expect(next).toBe(payload);
@@ -102,8 +119,10 @@ describe('filterReducer', () => {
       sort: 'name-asc',
       baseSort: 'group',
       view: 'grid',
+      collection: 'want',
     };
     const state = filterReducer(modified, { type: 'CLEAR_ALL' });
+    expect(state.collection).toBe('want');
     expect(state.duration).toBe('all');
     expect(state.players).toBe(0);
     expect(state.keywords.size).toBe(0);
