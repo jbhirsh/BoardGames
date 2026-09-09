@@ -52,6 +52,8 @@ export interface WishlistItem extends Filterable {
   awards: Award[];
   /** Amazon product id of the standard edition, when verified; buy links fall back to a search without it. */
   asin?: string;
+  /** Box art: a bundled file for compiled-in entries (see wishlistArt.ts), a BGG thumbnail for suggestions. */
+  img?: string;
   /** Set on approved friend suggestions: the display name that suggested it. */
   suggestedBy?: string;
   /** Present on entries that live in the suggestions store (editable by the owner); absent on compiled-in entries. */

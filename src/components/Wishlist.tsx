@@ -8,11 +8,9 @@ import CollectionToggle from './CollectionToggle';
 import ViewToggle from './ViewToggle';
 import NoResults from './NoResults';
 import AdminPanel from './AdminPanel';
-import OwnerSignIn from './OwnerSignIn';
 import { useFilter } from '../context/useFilter';
 import { useAuth } from '../context/useAuth';
 import { useWishlistItems } from '../context/useWishlistItems';
-import { OwnersProvider } from '../context/OwnersContext';
 import { useWishlistVotes } from '../hooks/useWishlistVotes';
 import { useKeepSectionInView } from '../hooks/useKeepSectionInView';
 import { filterWishlist, isGrouped } from '../utils/filterGames';
@@ -20,8 +18,8 @@ import { filterWishlist, isGrouped } from '../utils/filterGames';
 /**
  * The "We want" view: the static wishlist plus approved friend suggestions,
  * run through the same filter bar as the collection. The body mounts once
- * the suggestions have loaded, because the votes and owners hooks need
- * their id set fixed for life; until then only the header shows, with the
+ * the suggestions have loaded, because the votes hook needs its id set
+ * fixed for life; until then only the header shows, with the
  * count already filtered so a shared URL never flashes the full total.
  * Stays mounted while the collection is showing (just hidden) so nothing
  * refetches on a toggle; only the visible section carries the anchor id.
@@ -99,20 +97,17 @@ function WishlistBody({ items, filtered }: { items: WishlistItem[]; filtered: Wi
   return (
     <>
       {admin && <AdminPanel />}
-      <OwnersProvider ids={ids}>
-        {filtered.length === 0 ? (
-          <NoResults message="No wishlist games match your filters." />
-        ) : (
-          groups.map(({ type, items: groupItems }) => (
-            <div className="wish-group" key={type ?? 'all'}>
-              {type && <h3 className="wish-group-hd">{WISHLIST_TYPES[type]}</h3>}
-              {renderItems(groupItems)}
-            </div>
-          ))
-        )}
-      </OwnersProvider>
+      {filtered.length === 0 ? (
+        <NoResults message="No wishlist games match your filters." />
+      ) : (
+        groups.map(({ type, items: groupItems }) => (
+          <div className="wish-group" key={type ?? 'all'}>
+            {type && <h3 className="wish-group-hd">{WISHLIST_TYPES[type]}</h3>}
+            {renderItems(groupItems)}
+          </div>
+        ))
+      )}
       <SuggestForm />
-      <OwnerSignIn />
     </>
   );
 }

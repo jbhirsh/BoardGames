@@ -19,7 +19,6 @@ function mockVotes(counts: Record<string, number>, myVotes: string[] = [], sugge
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
     const url = String(input);
     if (url.startsWith('/api/suggestions')) return jsonResponse({ items: suggestions });
-    if (url.startsWith('/api/owners')) return jsonResponse({ owners: {}, mine: [] });
     return jsonResponse({ counts, myVotes });
   });
 }
@@ -190,7 +189,6 @@ describe('Wishlist', () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
       const url = String(input);
       if (url.startsWith('/api/suggestions')) return jsonResponse({ items: [] });
-      if (url.startsWith('/api/owners')) return jsonResponse({ owners: {}, mine: [] });
       if (init?.method === 'POST') return jsonResponse({ itemId: WISHLIST[0].id, count: 1, myVote: 1 });
       return jsonResponse({ counts: { [WISHLIST[0].id]: 0 }, myVotes: [] });
     });
@@ -251,11 +249,10 @@ describe('Wishlist', () => {
     expect(await screen.findByText(WISHLIST[0].name)).not.toBeVisible();
   });
 
-  it('shows the suggestion form and the owner sign-in, but no owner tools, when signed out', async () => {
+  it('shows the suggestion form but no owner tools when signed out', async () => {
     mockVotes({});
     renderWishlist();
     expect(await screen.findByRole('form', { name: 'Suggest a game' })).toBeInTheDocument();
-    expect(screen.getByText('Jess? Sign in to manage the wishlist')).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Owner tools' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Edit / })).not.toBeInTheDocument();
   });
@@ -266,7 +263,6 @@ describe('Wishlist', () => {
       const url = String(input);
       if (url.startsWith('/api/suggestions?action=pending')) return jsonResponse({ items: [{ id: 'sug-p', game: 'Ark Nova', name: 'Sam', note: '' }] });
       if (url.startsWith('/api/suggestions')) return jsonResponse({ items: [{ id: 'sug-abc123', game: 'Root', name: 'Alex', note: '' }] });
-      if (url.startsWith('/api/owners')) return jsonResponse({ owners: {}, mine: [] });
       return jsonResponse({ counts: {}, myVotes: [] });
     });
     renderWishlist('/?c=want', false, true);
@@ -276,6 +272,5 @@ describe('Wishlist', () => {
     expect(screen.getByRole('button', { name: 'Remove Root' })).toBeInTheDocument();
     // Compiled-in entries are edited in the source, not here.
     expect(screen.queryByRole('button', { name: `Edit ${WISHLIST[0].name}` })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
   });
 });

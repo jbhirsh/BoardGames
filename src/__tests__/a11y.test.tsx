@@ -6,6 +6,7 @@ import * as matchers from 'vitest-axe/matchers';
 import App, { HomePage } from '../App';
 import WordCheckerPage from '../components/WordCheckerPage';
 import ScoreCalculatorPage from '../components/ScoreCalculatorPage';
+import SignInPage from '../components/SignInPage';
 
 expect.extend(matchers);
 
@@ -32,7 +33,7 @@ describe('accessibility', () => {
       { element: <App />, children: [{ path: '/', element: <HomePage /> }] },
     ], { initialEntries: ['/?c=want'] });
     const { container } = render(<RouterProvider router={router} />);
-    // The wishlist body (cards, OwnButton, SuggestForm) mounts after the
+    // The wishlist body (cards, SuggestForm) mounts after the
     // suggestions fetch settles; scan once it is in the DOM.
     await screen.findByRole('form', { name: 'Suggest a game' });
     const results = await axe(container, axeOptions);
@@ -46,7 +47,6 @@ describe('accessibility', () => {
       if (url.startsWith('/api/auth')) return json({ admin: true });
       if (url.startsWith('/api/suggestions?action=pending')) return json({ items: [{ id: 'sug-p', game: 'Ark Nova', name: 'Sam', note: 'Zoo building' }] });
       if (url.startsWith('/api/suggestions')) return json({ items: [{ id: 'sug-r', game: 'Root', name: 'Alex', note: '', details: { min: 2, max: 4, mins: 90, desc: 'Woodland war.', kw: ['strategy'] } }] });
-      if (url.startsWith('/api/owners')) return json({ owners: {}, mine: [] });
       return json({ counts: {}, myVotes: [] });
     });
     try {
@@ -65,6 +65,29 @@ describe('accessibility', () => {
     } finally {
       fetchSpy.mockRestore();
     }
+  }, TIMEOUT_MS);
+
+  it('owner sign-in page has no axe violations', async () => {
+    const router = createMemoryRouter([
+      { element: <App />, children: [{ path: '/sign-in', element: <SignInPage /> }] },
+    ], { initialEntries: ['/sign-in'] });
+    const { container } = render(<RouterProvider router={router} />);
+    await screen.findByRole('form', { name: 'Owner sign-in' });
+    const results = await axe(container, axeOptions);
+    expect(results).toHaveNoViolations();
+  }, TIMEOUT_MS);
+
+  it('award popover has no axe violations while open', async () => {
+    const router = createMemoryRouter([
+      { element: <App />, children: [{ path: '/', element: <HomePage /> }] },
+    ]);
+    const { container } = render(<RouterProvider router={router} />);
+    // Cards carry the interactive badge; rows only show the static count.
+    fireEvent.click(screen.getByRole('button', { name: 'Grid view' }));
+    fireEvent.click(screen.getAllByRole('button', { name: /show which$/ })[0]);
+    await screen.findByRole('group', { name: /awards/ });
+    const results = await axe(container, axeOptions);
+    expect(results).toHaveNoViolations();
   }, TIMEOUT_MS);
 
   it('word checker page has no axe violations', async () => {

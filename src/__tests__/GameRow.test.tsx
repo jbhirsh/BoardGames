@@ -45,26 +45,24 @@ describe('GameRow', () => {
     const { container } = renderRow(game, true);
     // The count sits in the name column; the list lives in the expand section.
     const nameCell = container.querySelector('td.col-name')!;
-    expect(nameCell).toHaveTextContent('2 awards');
+    expect(nameCell.querySelector('.awards [aria-hidden="true"]')).toHaveTextContent(/🏆\s*2$/);
+    expect(nameCell.querySelector('.awards .sr-only')).toHaveTextContent('2 awards');
     expect(nameCell.querySelector('.awards-list')).toBeNull();
     const expand = container.querySelector('tr.row-expand')!;
     expect(expand.querySelector('.row-awards h3')).toHaveTextContent('Awards');
     expect(expand.querySelectorAll('.awards-list li')).toHaveLength(2);
   });
 
-  it('shows a plain zero-award label and no Awards section for games with no wins', () => {
-    renderRow(quickGame, true);
-    expect(screen.getByText('0 awards')).toBeInTheDocument();
+  it('shows neither an award pill nor an Awards section for games with no wins', () => {
+    const { container } = renderRow(quickGame, true);
+    expect(container.querySelector('.awards')).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Awards' })).not.toBeInTheDocument();
   });
 
-  it.each([
-    ['zero-award label', [], '0 awards'],
-    ['award count pill', [{ name: 'Mensa Select', year: 2009 }], /1 award/],
-  ])('toggles the row when the %s is clicked', (_name, awards, text) => {
+  it('toggles the row when the award count pill is clicked', () => {
     const onToggle = vi.fn();
-    renderRow({ ...quickGame, awards }, false, onToggle);
-    fireEvent.click(screen.getByText(text));
+    renderRow({ ...quickGame, awards: [{ name: 'Mensa Select', year: 2009 }] }, false, onToggle);
+    fireEvent.click(screen.getByText('1 award'));
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 

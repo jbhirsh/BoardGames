@@ -4,7 +4,6 @@ import { UserIcon, ClockIcon } from './Icons';
 import WishlistLinks from './WishlistLinks';
 import AwardsBadge from './AwardsBadge';
 import VoteButton from './VoteButton';
-import OwnButton from './OwnButton';
 import AdminItemControls from './AdminItemControls';
 
 interface Props {
@@ -22,6 +21,7 @@ export default function WishlistRow({ item, voteCount, voted, onVote, disabled, 
   return (
     <div className="wish-row" data-testid="wishlist-item" data-item-id={item.id}>
       <div className="wish-row-main">
+        {item.img && <img className="wish-art" src={item.img} alt={`${item.name} box art`} loading="lazy" />}
         <Heading className="wish-name">{item.name}</Heading>
         <div className="wish-meta">
           {item.players && <span className="wish-players"><UserIcon /> {item.players}</span>}
@@ -31,7 +31,6 @@ export default function WishlistRow({ item, voteCount, voted, onVote, disabled, 
           {!item.suggestedBy && <AwardsBadge itemName={item.name} awards={item.awards} />}
         </div>
         <p className="wish-desc">{item.desc}</p>
-        <OwnButton itemId={item.id} itemName={item.name} />
         <AdminItemControls item={item} />
       </div>
       <div className="wish-row-actions">

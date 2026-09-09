@@ -1,6 +1,7 @@
 // BoardGameGeek XML API 2 lookup used to fill in a suggested game's details
-// when the owner approves it. No API key; the XML is small enough to read
-// with a few targeted regexes rather than a parser dependency.
+// when the owner approves it. BGG requires a registered API token (sent as
+// a bearer header); the XML is small enough to read with a few targeted
+// regexes rather than a parser dependency.
 
 export interface GameDetails {
   bggId: number;
@@ -14,9 +15,11 @@ export interface GameDetails {
   desc: string;
   /** Keyword ids the app knows, derived from BGG ranks, categories and mechanics. */
   kw: string[];
+  /** Box-art thumbnail URL on BGG's image CDN, when the entry has one. */
+  img?: string;
 }
 
-export type FetchLike = (url: string, init?: { signal?: AbortSignal }) => Promise<{ status: number; text(): Promise<string> }>;
+export type FetchLike = (url: string, init?: { signal?: AbortSignal; headers?: Record<string, string> }) => Promise<{ status: number; text(): Promise<string> }>;
 
 const BASE = 'https://boardgamegeek.com/xmlapi2';
 
@@ -82,6 +85,8 @@ export function parseThing(xml: string): GameDetails | null {
   const playing = num('playingtime') || num('maxplaytime') || num('minplaytime') || 0;
   const year = num('yearpublished') || undefined;
   const descRaw = /<description>([\s\S]*?)<\/description>/.exec(xml)?.[1] ?? '';
+  const thumb = decodeEntities(/<thumbnail>\s*([^<]*?)\s*<\/thumbnail>/.exec(xml)?.[1] ?? '');
+  const img = /^https:\/\/\S+$/.test(thumb) ? thumb : undefined;
 
   const kw = new Set<string>();
   for (const tag of xml.match(/<rank\b[^>]*>/g) ?? []) {
@@ -107,6 +112,7 @@ export function parseThing(xml: string): GameDetails | null {
     mins: playing,
     desc: summarise(descRaw),
     kw: [...kw],
+    img,
   };
 }
 
@@ -137,11 +143,11 @@ export function pickSearchId(xml: string, wanted: string): number | null {
 const RETRY_MS = 1500;
 
 /** One GET within the overall deadline. BGG answers 202 while it queues a request; one short retry covers it. */
-async function get(fetchLike: FetchLike, url: string, deadline: number): Promise<string | null> {
+async function get(fetchLike: FetchLike, url: string, deadline: number, token?: string): Promise<string | null> {
   for (let attempt = 0; attempt < 2; attempt++) {
     const remaining = deadline - Date.now();
     if (remaining <= 0) return null;
-    const r = await fetchLike(url, { signal: AbortSignal.timeout(remaining) });
+    const r = await fetchLike(url, { signal: AbortSignal.timeout(remaining), ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}) });
     if (r.status === 200) return r.text();
     if (r.status !== 202 || deadline - Date.now() <= RETRY_MS) return null;
     await new Promise((resolve) => setTimeout(resolve, RETRY_MS));
@@ -152,18 +158,20 @@ async function get(fetchLike: FetchLike, url: string, deadline: number): Promise
 /**
  * Look a game up by name within `budgetMs` overall (the caller runs inside a
  * serverless function with its own limit). Returns null when BGG has no
- * confident match, errors, or runs out of time.
+ * confident match, errors, or runs out of time. Without `token` BGG answers
+ * 401, which reads as "no match" here: the app keeps working, just without
+ * details.
  */
-export async function lookupGame(name: string, fetchLike: FetchLike = fetch, budgetMs = 6000): Promise<GameDetails | null> {
+export async function lookupGame(name: string, fetchLike: FetchLike = fetch, budgetMs = 6000, token?: string): Promise<GameDetails | null> {
   const deadline = Date.now() + budgetMs;
   const q = encodeURIComponent(name);
-  const exact = await get(fetchLike, `${BASE}/search?type=boardgame,boardgameexpansion&exact=1&query=${q}`, deadline);
+  const exact = await get(fetchLike, `${BASE}/search?type=boardgame,boardgameexpansion&exact=1&query=${q}`, deadline, token);
   let id = exact ? pickSearchId(exact, name) : null;
   if (id === null) {
-    const loose = await get(fetchLike, `${BASE}/search?type=boardgame,boardgameexpansion&query=${q}`, deadline);
+    const loose = await get(fetchLike, `${BASE}/search?type=boardgame,boardgameexpansion&query=${q}`, deadline, token);
     id = loose ? pickSearchId(loose, name) : null;
   }
   if (id === null) return null;
-  const thing = await get(fetchLike, `${BASE}/thing?id=${id}&stats=1`, deadline);
+  const thing = await get(fetchLike, `${BASE}/thing?id=${id}&stats=1`, deadline, token);
   return thing ? parseThing(thing) : null;
 }

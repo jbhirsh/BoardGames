@@ -39,6 +39,8 @@ describe('suggestionToItem', () => {
       details: { min: 1, max: 4, mins: 150, desc: 'Zoo building.', kw: ['strategy'], type: 'heavy' },
     });
     expect(item).toMatchObject({ type: 'heavy', source: 'owner', desc: 'Zoo building.', blurb: 'Zoo building.' });
+    expect(item.img).toBeUndefined();
+    expect(suggestionToItem({ id: 's', game: 'G', name: 'Jess', note: '', details: { min: 1, max: 4, mins: 0, desc: '', kw: [], img: 'https://cf.geekdo-images.com/g.jpg' } }).img).toBe('https://cf.geekdo-images.com/g.jpg');
     expect(item.suggestedBy).toBeUndefined();
     // A note still shows, quoted; an unknown section falls back to the friends' one.
     expect(suggestionToItem({ id: 's', game: 'G', name: 'Jess', note: 'Big', source: 'owner', details: { min: 1, max: 4, mins: 0, desc: '', kw: [], type: 'suggested' } }))

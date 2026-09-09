@@ -1,5 +1,5 @@
 import { useId, useState, type FormEvent } from 'react';
-import { getDisplayName, setDisplayName } from '../hooks/useOwnersData';
+import { getDisplayName, setDisplayName } from '../hooks/displayName';
 import { isValidDisplayName, NAME_HINT } from '../utils/displayName';
 import { normalizeName } from '../utils/normalizeName';
 import { GAMES } from '../data/games';

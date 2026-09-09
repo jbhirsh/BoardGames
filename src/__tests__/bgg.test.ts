@@ -129,6 +129,14 @@ describe('parseThing', () => {
     expect(thing('<playingtime value="16"/>').kw).toEqual([]);
   });
 
+  it('keeps the thumbnail URL only when it is an https link', () => {
+    expect(parseThing(THING)?.img).toBe('https://cf.geekdo-images.com/x.jpg');
+    expect(thing('<thumbnail> https://cf.geekdo-images.com/y.png </thumbnail>').img).toBe('https://cf.geekdo-images.com/y.png');
+    expect(thing('<thumbnail>http://insecure.example/x.jpg</thumbnail>').img).toBeUndefined();
+    expect(thing('<thumbnail>not a url</thumbnail>').img).toBeUndefined();
+    expect(thing('').img).toBeUndefined();
+  });
+
   it('reads the primary name in any attribute order and tolerates its absence', () => {
     expect(thing('<name sortindex="1" type="primary" value="Order"/>').name).toBe('Order');
     expect(thing('<name value="Reversed" type="primary"/>').name).toBe('Reversed');
@@ -244,6 +252,21 @@ describe('lookupGame', () => {
     expect(d).toBeNull();
     expect(elapsed).toBe(0);
     expect(fetchLike).toHaveBeenCalledTimes(2);
+  });
+
+  it('sends the API token as a bearer header on every request, and no header without one', async () => {
+    const inits: Array<{ headers?: Record<string, string> } | undefined> = [];
+    const fetchLike: FetchLike = vi.fn(async (url: string, init?: { headers?: Record<string, string> }) => {
+      inits.push(init);
+      return respond(200, url.includes('/thing?') ? THING : SEARCH);
+    });
+    await lookupGame('Wingspan', fetchLike, 6000, 'bgg-test-token');
+    expect(inits).toHaveLength(2);
+    for (const init of inits) expect(init?.headers).toEqual({ Authorization: 'Bearer bgg-test-token' });
+
+    inits.length = 0;
+    await lookupGame('Wingspan', fetchLike);
+    expect(inits.every((init) => init?.headers === undefined)).toBe(true);
   });
 
   it('does not retry a non-202 error', async () => {

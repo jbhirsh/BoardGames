@@ -1,4 +1,5 @@
 import type { WishlistItem } from './types';
+import { WISHLIST_ART } from './wishlistArt';
 
 // Awards list confirmed wins from recognised award bodies only (Spiel des
 // Jahres family, Deutscher Spiele Preis, As d'Or, Golden Geek, Dice Tower,
@@ -11,7 +12,7 @@ import type { WishlistItem } from './types';
 // filters and sorts work on the wishlist (see Filterable in types.ts).
 // `cat` follows the collection's convention: quick <= 15 min, medium <= 60,
 // long beyond that.
-export const WISHLIST: WishlistItem[] = [
+const ENTRIES: WishlistItem[] = [
   { id:"lost-cities",             name:"Lost Cities",             players:"2",    type:"two-player", desc:"An elegant two-player card game of expeditions. Do you commit or hold back? Deceptively tense, quick, and endlessly replayable — the head-to-head filler you don't own yet.", yt:"how to play Lost Cities board game tutorial",
     min:2, max:2, dur:"30 min", mins:30, cat:"medium", kw:['card-game','strategy','quick-play'],
     awards:[{ name:"International Gamers Award", year:2000 }] },
@@ -125,3 +126,6 @@ export const WISHLIST: WishlistItem[] = [
     min:4, max:10, dur:"15–20 min", mins:20, cat:"medium", kw:['party','bluffing','social'],
     awards:[] },
 ];
+
+/** The entries with their bundled box art, where `npm run wishlist-art` has fetched it. */
+export const WISHLIST: WishlistItem[] = ENTRIES.map((w) => (WISHLIST_ART[w.id] ? { ...w, img: WISHLIST_ART[w.id] } : w));

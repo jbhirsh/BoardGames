@@ -29,13 +29,12 @@ describe('WishlistRow', () => {
     expect(screen.getByRole('link', { name: 'Buy Row Game on Amazon' })).toHaveAttribute('href', expect.stringContaining('amazon.com'));
   });
 
-  it('renders player count, type label and a non-interactive zero-award label', () => {
+  it('renders player count and type label, and no award pill when there are no wins', () => {
     render(<WishlistRow item={testItem} voteCount={0} voted={false} onVote={() => {}} />);
     expect(screen.getByText('3–8')).toBeInTheDocument();
     expect(screen.getByText('Party & Card')).toBeInTheDocument();
-    const label = screen.getByText('0 awards');
-    expect(label.tagName).toBe('SPAN');
-    expect(screen.queryByRole('group')).not.toBeInTheDocument();
+    expect(screen.queryByText(/award/)).not.toBeInTheDocument();
+    expect(document.querySelector('.awards')).toBeNull();
   });
 
   it('wraps player count and play time each in their own meta span', () => {
