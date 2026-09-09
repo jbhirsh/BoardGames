@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { useSuggestions, suggestionToItem } from '../hooks/useSuggestions';
+import { useSuggestions, suggestionToItem, durationCategory } from '../hooks/useSuggestions';
 
 function jsonResponse(body: unknown, ok = true): Response {
   return { ok, json: async () => body } as unknown as Response;
@@ -12,6 +12,25 @@ describe('suggestionToItem', () => {
     expect(item).toMatchObject({ id: 'sug-1', name: 'Root', type: 'suggested', suggestedBy: 'Alex', players: '', awards: [] });
     expect(item.desc).toBe('“Asymmetric and mean”');
     expect(item.yt).toContain('Root');
+  });
+
+  it('maps BoardGameGeek details into the filterable fields and leads with the description', () => {
+    const item = suggestionToItem({
+      id: 'sug-1', game: 'Root', name: 'Alex', note: 'Mean fun',
+      details: { year: 2018, min: 2, max: 4, mins: 90, desc: 'Woodland war.', kw: ['strategy', 'thematic', 'not-a-keyword'] },
+    });
+    expect(item).toMatchObject({ players: '2–4', min: 2, max: 4, mins: 90, dur: '90 min', cat: 'long', kw: ['strategy', 'thematic'] });
+    expect(item.desc).toBe('Woodland war. “Mean fun”');
+  });
+
+  it('renders open-ended player counts with a plus and matches every filter when details are missing', () => {
+    expect(suggestionToItem({ id: 's', game: 'G', name: 'A', note: '', details: { min: 3, max: 99, mins: 20, desc: '', kw: [] } }).players).toBe('3+');
+    const bare = suggestionToItem({ id: 's', game: 'G', name: 'A', note: '' });
+    expect(bare).toMatchObject({ players: '', min: 1, max: 99, mins: 0, dur: '', cat: 'medium', kw: [] });
+  });
+
+  it('buckets durations like the collection', () => {
+    expect([durationCategory(10), durationCategory(15), durationCategory(45), durationCategory(61)]).toEqual(['quick', 'quick', 'medium', 'long']);
   });
 
   it('falls back to a credit line when there is no note', () => {

@@ -8,21 +8,28 @@ export type KeywordId =
   | 'card-game' | 'word'
   | 'family' | 'classic' | 'thematic' | 'portable' | 'quick-play';
 
-export interface Game {
+/**
+ * What the filter bar, search and sort need. Both owned games and wishlist
+ * entries satisfy it, so one filter pipeline serves the Own and Want views.
+ */
+export interface Filterable {
   name: string;
-  slug: string;
-  img: string;
-  rules: string;
-  players: string;
+  desc: string;
   min: number;
   max: number;
   dur: string;
   mins: number;
   cat: DurationCategory;
-  group: GroupId;
   kw: KeywordId[];
+}
+
+export interface Game extends Filterable {
+  slug: string;
+  img: string;
+  rules: string;
+  players: string;
+  group: GroupId;
   short: string;
-  desc: string;
   detail: string;
   yt: string;
   awards: Award[];
@@ -36,10 +43,9 @@ export interface Award {
   year: number;
 }
 
-export interface WishlistItem {
+
+export interface WishlistItem extends Filterable {
   id: string;
-  name: string;
-  desc: string;
   yt: string;
   players: string;
   type: WishlistType;

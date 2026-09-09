@@ -49,7 +49,12 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
 - **`data/`** — the static data layer. `games.ts` is the source of truth for
   the collection; `wishlist.ts`, `keywords.ts`, `initialFilterState.ts`, and
   `types.ts` support it. No database on the read path — the collection is a
-  compiled-in constant.
+  compiled-in constant. `Game` and `WishlistItem` both extend `Filterable`
+  (name, desc, min/max players, mins, duration bucket, keywords). The filter
+  pipeline (`utils/filterGames.ts`) is generic over it: `filterItems` with
+  `filterGames` and `filterWishlist` wrappers that decide their own grouping.
+  Today only the collection is wired to the filter bar; the wishlist carries
+  the fields so the Own/Want toggle can reuse the pipeline.
 - **`context/`** — filtering state. `FilterContext` holds a `useReducer` store
   (`filterReducer.ts`); `useFilter.ts` is the consumer hook; `useFilterUrlSync.ts`
   keeps filter state mirrored to the URL query string so views are shareable.
@@ -94,8 +99,14 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   always resolve; if the send call fails the record is dropped from the
   active list and marked `unsent` so the suggester can retry, but its links
   keep working (a timeout can follow a real delivery), and approving an
-  unsent record returns it to the active list. `handleSuggestions()`
-  takes `{ redis, mailer, baseUrl }` so the mailer is a spy in tests. With no
+  unsent record returns it to the active list. On approval the handler
+  looks the game up on BoardGameGeek (`_lib/bgg.ts`, XML API 2, no key) and
+  stores players, playing time, a two-sentence description, year and mapped
+  keywords as a `details` JSON field, so the card renders and filters like
+  any other wishlist entry; a miss or outage still approves with details
+  empty. `handleSuggestions()`
+  takes `{ redis, mailer, baseUrl, lookup }` so the mailer and the BGG
+  lookup are spies in tests. With no
   Resend configuration the endpoint returns 503 rather than storing a
   suggestion the owner would never see.
 
@@ -113,6 +124,8 @@ read them at runtime.
   build time via `@sentry/vite-plugin` (org `solo-23`, project `game_room`).
 - **dictionaryapi.dev** — public dictionary API called directly from the Word
   Checker component (no key required).
+- **BoardGameGeek XML API 2** — server-side lookup of an approved suggestion's
+  details (no key required; answers 202 while queuing, retried once).
 
 ## Environment variables
 

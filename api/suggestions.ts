@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/node';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { enforceRateLimit, getLimiter } from './_lib/rateLimit.js';
 import { getRedis } from './_lib/redis.js';
+import { lookupGame, type GameDetails } from './_lib/bgg.js';
 import { SLUG_RE } from './_lib/slug.js';
 
 Sentry.init({
@@ -34,6 +35,17 @@ export type SuggestionStatus = 'pending' | 'approved' | 'denied' | 'unsent';
 
 const decidable = (s: SuggestionStatus) => s === 'pending' || s === 'unsent';
 
+/** Details filled in from BoardGameGeek when the owner approves. */
+export interface SuggestionDetails {
+  bggId?: number;
+  year?: number;
+  min: number;
+  max: number;
+  mins: number;
+  desc: string;
+  kw: string[];
+}
+
 export interface Suggestion {
   id: string;
   game: string;
@@ -42,6 +54,7 @@ export interface Suggestion {
   status: SuggestionStatus;
   createdAt: number;
   decidedAt?: number;
+  details?: SuggestionDetails;
 }
 
 export interface SuggestionsPipeline {
@@ -83,6 +96,8 @@ export interface SuggestionsResponse {
 
 export interface SuggestionsDeps {
   redis: SuggestionsRedis;
+  /** Fills in players, time, description and keywords on approval; null skips enrichment. */
+  lookup?: ((name: string) => Promise<GameDetails | null>) | null;
   /** null when email isn't configured: suggestions are then refused, never lost silently. */
   mailer: Mailer | null;
   /** Absolute origin the emailed links point at; only consulted when sending. */
@@ -117,7 +132,28 @@ function parse(hash: unknown): (Suggestion & { token: string }) | null {
     status: status === 'approved' || status === 'denied' || status === 'unsent' ? status : 'pending',
     createdAt: Number(h.createdAt) || 0,
     decidedAt: h.decidedAt !== undefined ? Number(h.decidedAt) || 0 : undefined,
+    details: parseDetails(h.details),
     token: str(h.token) ?? '',
+  };
+}
+
+// Details are stored as one JSON field; the client may hand it back parsed.
+function parseDetails(raw: unknown): SuggestionDetails | undefined {
+  let v: unknown = raw;
+  if (typeof v === 'string') {
+    try { v = JSON.parse(v); } catch { return undefined; }
+  }
+  if (!v || typeof v !== 'object') return undefined;
+  const d = v as Record<string, unknown>;
+  const n = (x: unknown, fallback: number) => (typeof x === 'number' && Number.isFinite(x) ? x : fallback);
+  return {
+    bggId: typeof d.bggId === 'number' ? d.bggId : undefined,
+    year: typeof d.year === 'number' ? d.year : undefined,
+    min: n(d.min, 1),
+    max: n(d.max, 99),
+    mins: n(d.mins, 0),
+    desc: typeof d.desc === 'string' ? d.desc : '',
+    kw: Array.isArray(d.kw) ? d.kw.filter((k): k is string => typeof k === 'string') : [],
   };
 }
 
@@ -130,8 +166,8 @@ async function loadList(redis: SuggestionsRedis, key: string): Promise<Array<Sug
   return hashes.map(parse).filter((s): s is Suggestion & { token: string } => s !== null);
 }
 
-const publicView = ({ id, game, name, note, status, createdAt, decidedAt }: Suggestion): Suggestion =>
-  ({ id, game, name, note, status, createdAt, decidedAt });
+const publicView = ({ id, game, name, note, status, createdAt, decidedAt, details }: Suggestion): Suggestion =>
+  ({ id, game, name, note, status, createdAt, decidedAt, details });
 
 const PAGE_STYLE = "body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:#F5F5F7;color:#1D1D1F;margin:0;padding:48px 20px;text-align:center}main{max-width:420px;margin:0 auto;background:#fff;border-radius:16px;padding:32px 24px;box-shadow:0 1px 3px rgba(0,0,0,.08)}h1{font-size:22px;margin:0 0 12px}p{color:#6E6E73;line-height:1.5;margin:0 0 20px}button{font:inherit;font-weight:600;padding:12px 22px;border-radius:10px;border:0;color:#fff;cursor:pointer}";
 
@@ -268,6 +304,25 @@ export async function handleSuggestions(
           // An unsent record left the active list; approving it puts it back
           // so the duplicate check sees it again.
           if (item.status === 'unsent') await redis.lpush(ACTIVE_KEY, item.id);
+          // Then fill in players, time, description and keywords from
+          // BoardGameGeek so the card looks like every other wishlist entry.
+          // Listed first so a slow lookup can never strand an approved game
+          // off the list. Best effort: a miss or an outage leaves details empty.
+          if (deps.lookup) {
+            try {
+              const found = await deps.lookup(item.game);
+              if (found) {
+                const details: SuggestionDetails = {
+                  bggId: found.bggId, year: found.year, min: found.min, max: found.max,
+                  mins: found.mins, desc: found.desc, kw: found.kw,
+                };
+                await redis.hset(itemKey(item.id), { details: JSON.stringify(details) });
+              }
+            } catch (err) {
+              Sentry.captureException(err);
+              console.error('suggestions: BoardGameGeek lookup failed', err);
+            }
+          }
         } else {
           await redis.lrem(ACTIVE_KEY, 0, item.id);
         }
@@ -320,7 +375,7 @@ export async function handleSuggestions(
       // resolve. If delivery fails, roll the record back out of the active
       // list so the suggester can retry instead of hitting the duplicate
       // check for a request the owner never received.
-      await redis.hset(itemKey(id), { ...item, token });
+      await redis.hset(itemKey(id), { id, game, name, note, status: 'pending', createdAt: item.createdAt, token });
       await redis.lpush(ACTIVE_KEY, id);
       try {
         await mailer.send(approvalMail(item, link('approve'), link('deny')));
@@ -378,5 +433,5 @@ function isCreate(req: VercelRequest): boolean {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (isCreate(req) && !(await enforceRateLimit(suggestLimiter, req, res))) return;
-  await handleSuggestions({ redis: getRedis(), mailer: resendMailer(), baseUrl }, req, res);
+  await handleSuggestions({ redis: getRedis(), mailer: resendMailer(), baseUrl, lookup: lookupGame }, req, res);
 }

@@ -10,6 +10,12 @@ const testItem: WishlistItem = {
   yt: 'row game review',
   players: '3–8',
   type: 'party',
+  min: 3,
+  max: 8,
+  dur: '20 min',
+  mins: 20,
+  cat: 'medium',
+  kw: ['party'],
   awards: [],
 };
 
@@ -30,6 +36,26 @@ describe('WishlistRow', () => {
     const label = screen.getByText('0 awards');
     expect(label.tagName).toBe('SPAN');
     expect(screen.queryByRole('group')).not.toBeInTheDocument();
+  });
+
+  it('wraps player count and play time each in their own meta span', () => {
+    render(<WishlistRow item={testItem} voteCount={0} voted={false} onVote={() => {}} />);
+    expect(screen.getByText('3–8')).toHaveClass('wish-players');
+    expect(screen.getByText('20 min')).toHaveClass('wish-players');
+  });
+
+  it('omits the play time span when the item has no known duration', () => {
+    const { container } = render(<WishlistRow item={{ ...testItem, dur: '' }} voteCount={0} voted={false} onVote={() => {}} />);
+    expect(screen.queryByText('20 min')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('.wish-players')).toHaveLength(1);
+    expect(screen.getByText('3–8')).toHaveClass('wish-players');
+  });
+
+  it('omits the players span when the item has no player count', () => {
+    const { container } = render(<WishlistRow item={{ ...testItem, players: '' }} voteCount={0} voted={false} onVote={() => {}} />);
+    expect(screen.queryByText('3–8')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('.wish-players')).toHaveLength(1);
+    expect(screen.getByText('20 min')).toHaveClass('wish-players');
   });
 
   it('fires onVote when the vote button is clicked', () => {

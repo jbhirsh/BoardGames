@@ -56,12 +56,16 @@ describe('Wishlist', () => {
     const counts = Object.fromEntries(WISHLIST.map((w, i) => [w.id, i + 1]));
     mockVotes(counts);
     renderWishlist();
+    await screen.findByText(WISHLIST[0].name);
     await waitFor(() => {
       for (const item of WISHLIST) {
         // Match the full label: an unanchored prefix would also hit an item
         // whose name extends this one (e.g. a base game and its expansion).
+        // Scoped to the item's own row so the accessible-name computation
+        // covers a handful of elements, not every control on the page.
         const n = counts[item.id];
-        const btn = screen.getByRole('button', { name: `Vote for ${item.name} (${n} ${n === 1 ? 'vote' : 'votes'})` });
+        const row = document.querySelector(`[data-item-id="${item.id}"]`) as HTMLElement;
+        const btn = within(row).getByRole('button', { name: `Vote for ${item.name} (${n} ${n === 1 ? 'vote' : 'votes'})` });
         expect(btn).toHaveTextContent(String(n));
       }
     });

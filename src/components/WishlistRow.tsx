@@ -1,6 +1,6 @@
 import type { WishlistItem } from '../data/types';
 import { WISHLIST_TYPES } from '../data/keywords';
-import { UserIcon } from './Icons';
+import { UserIcon, ClockIcon } from './Icons';
 import WishlistLinks from './WishlistLinks';
 import AwardsBadge from './AwardsBadge';
 import VoteButton from './VoteButton';
@@ -21,6 +21,7 @@ export default function WishlistRow({ item, voteCount, voted, onVote, disabled }
         <h4 className="wish-name">{item.name}</h4>
         <div className="wish-meta">
           {item.players && <span className="wish-players"><UserIcon /> {item.players}</span>}
+          {item.dur && <span className="wish-players"><ClockIcon /> {item.dur}</span>}
           {item.suggestedBy && <span className="wish-suggested">Suggested by {item.suggestedBy}</span>}
           {!item.suggestedBy && <span className="wish-type">{WISHLIST_TYPES[item.type]}</span>}
           {!item.suggestedBy && <AwardsBadge itemName={item.name} awards={item.awards} />}

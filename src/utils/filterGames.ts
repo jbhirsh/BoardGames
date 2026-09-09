@@ -1,14 +1,24 @@
-import type { Game, FilterState } from '../data/types';
-import { GROUP_ORDER, KW } from '../data/keywords';
+import type { Game, FilterState, Filterable, WishlistItem } from '../data/types';
+import { GROUP_ORDER, KW, WISHLIST_TYPE_ORDER } from '../data/keywords';
 
-export function filterGames(games: Game[], state: FilterState): Game[] {
-  let list = games;
+/**
+ * Apply the filter bar to any Filterable list. `groupIndex` orders items for
+ * the "group" sort; each list decides what its groups are.
+ */
+export function filterItems<T extends Filterable>(
+  items: T[],
+  state: FilterState,
+  groupIndex: (item: T) => number,
+): T[] {
+  let list = items;
 
   // Filter on the curated `cat` field, not a re-derivation from `mins`. The
-  // clickable DurationPill and SET_DURATION both use `game.cat`, so filtering
-  // by anything else lets the two disagree — e.g. a 90-minute game tagged
+  // clickable DurationPill and SET_DURATION both use `cat`, so filtering by
+  // anything else lets the two disagree — e.g. a 90-minute game tagged
   // "medium" would vanish when you click its own "medium" pill.
-  if (state.duration !== 'all') list = list.filter(g => g.cat === state.duration);
+  // An item with no known play time (mins 0, e.g. a suggestion BGG didn't
+  // resolve) can't be excluded by duration, so it stays under every bucket.
+  if (state.duration !== 'all') list = list.filter(g => g.mins === 0 || g.cat === state.duration);
 
   if (state.players > 0) list = list.filter(g => g.min <= state.players && g.max >= state.players);
 
@@ -22,12 +32,20 @@ export function filterGames(games: Game[], state: FilterState): Game[] {
     list = list.filter(g => g.name.toLowerCase().includes(q) || g.desc.toLowerCase().includes(q));
   }
 
-  return sortGames(list, state.sort);
+  return sortItems(list, state.sort, groupIndex);
+}
+
+export function filterGames(games: Game[], state: FilterState): Game[] {
+  return filterItems(games, state, (g) => GROUP_ORDER.indexOf(g.group));
+}
+
+export function filterWishlist(items: WishlistItem[], state: FilterState): WishlistItem[] {
+  return filterItems(items, state, (w) => WISHLIST_TYPE_ORDER.indexOf(w.type));
 }
 
 const CAT_ORDER = { quick: 0, medium: 1, long: 2 } as const;
 
-export function sortGames(list: Game[], sort: string): Game[] {
+export function sortItems<T extends Filterable>(list: T[], sort: string, groupIndex: (item: T) => number): T[] {
   if (sort === 'az' || sort === 'name-asc')  return [...list].sort((a, b) => a.name.localeCompare(b.name));
   if (sort === 'name-desc') return [...list].sort((a, b) => b.name.localeCompare(a.name));
   if (sort === 'quick' || sort === 'dur-asc') return [...list].sort((a, b) => a.mins - b.mins || CAT_ORDER[a.cat] - CAT_ORDER[b.cat]);
@@ -36,9 +54,13 @@ export function sortGames(list: Game[], sort: string): Game[] {
   if (sort === 'players-desc') return [...list].sort((a, b) => b.min - a.min || b.max - a.max);
   // group
   return [...list].sort((a, b) => {
-    const gi = GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group);
+    const gi = groupIndex(a) - groupIndex(b);
     return gi !== 0 ? gi : a.name.localeCompare(b.name);
   });
+}
+
+export function sortGames(list: Game[], sort: string): Game[] {
+  return sortItems(list, sort, (g) => GROUP_ORDER.indexOf(g.group));
 }
 
 export function sortedKw(kw: string[]): string[] {

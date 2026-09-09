@@ -178,6 +178,36 @@ describe('handleSuggestions', () => {
       expect(String(res.body)).toContain('Alex');
     });
 
+    it('approving looks the game up and stores its details; the public list returns them', async () => {
+      const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
+      const lookup = vi.fn(async () => ({ bggId: 266192, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'] }));
+      await handleSuggestions(deps({ redis, lookup }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, makeRes());
+      expect(lookup).toHaveBeenCalledWith('Wingspan');
+      const res = makeRes();
+      await handleSuggestions(deps({ redis }), { method: 'GET', query: {} }, res);
+      const [item] = (res.body as { items: Array<{ details?: Record<string, unknown> }> }).items;
+      expect(item.details).toEqual({ bggId: 266192, year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'] });
+    });
+
+    it('lists the game as approved before the lookup runs, so a hung lookup cannot strand it', async () => {
+      const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
+      let listedWhenLookedUp: string[] | undefined;
+      const lookup = vi.fn(async () => { listedWhenLookedUp = [...(redis.lists['suggestions:approved'] ?? [])]; return null; });
+      await handleSuggestions(deps({ redis, lookup }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, makeRes());
+      expect(listedWhenLookedUp).toEqual(['sug-aaaaaa']);
+    });
+
+    it('still approves when the lookup finds nothing or throws', async () => {
+      for (const lookup of [vi.fn(async () => null), vi.fn(async () => { throw new Error('bgg down'); })]) {
+        const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
+        const res = makeRes();
+        await handleSuggestions(deps({ redis, lookup }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, res);
+        expect(res.statusCode).toBe(200);
+        expect(redis.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
+        expect(redis.store['suggestions:sug-aaaaaa'].details).toBeUndefined();
+      }
+    });
+
     it('denies: flips status and drops it from the active list', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa', 'sug-other'] });
       const res = makeRes();
@@ -345,6 +375,239 @@ describe('handleSuggestions', () => {
       res = makeRes();
       await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { ...valid, game: 'Root' } }, res);
       expect(res.statusCode).toBe(201);
+    });
+  });
+
+  describe('POST new suggestion: input shaping', () => {
+    const post = async (body: unknown, d = deps()) => {
+      const res = makeRes();
+      await handleSuggestions(d, { method: 'POST', query: {}, body }, res);
+      return res;
+    };
+
+    it('rejects names with a leading or trailing invalid character, with the message', async () => {
+      for (const name of ['!Bob', 'Bob!!']) {
+        const res = await post({ ...valid, name });
+        expect(res.statusCode, name).toBe(400);
+        expect(res.body).toEqual({ error: 'name must be 1–30 letters, digits, spaces or basic punctuation' });
+      }
+    });
+
+    it('rejects a non-string game or name with 400, not a crash', async () => {
+      let res = await post({ ...valid, game: 42 });
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toEqual({ error: 'game must be 2–80 characters' });
+      res = await post({ ...valid, name: 42 });
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('treats a non-string note as empty', async () => {
+      const d = deps();
+      const res = await post({ ...valid, note: 7 }, d);
+      expect(res.statusCode).toBe(201);
+      expect(d.redis.hset).toHaveBeenCalledWith('suggestions:sug-bbbbbb', expect.objectContaining({ note: '' }));
+    });
+
+    it('trims game, name and note and collapses internal whitespace before storing', async () => {
+      const d = deps();
+      const res = await post({ game: '  Terra   Mystica \t Rules ', name: '  Sam  ', note: ' so   good\n\nreally ' }, d);
+      expect(res.statusCode).toBe(201);
+      expect(d.redis.hset).toHaveBeenCalledWith('suggestions:sug-bbbbbb', {
+        id: 'sug-bbbbbb', game: 'Terra Mystica Rules', name: 'Sam', note: 'so good really', status: 'pending', createdAt: 5000, token: NEW_TOKEN,
+      });
+    });
+
+    it('accepts games at exactly the min and max length and rejects one over', async () => {
+      expect((await post({ ...valid, game: 'Go' })).statusCode).toBe(201);
+      expect((await post({ ...valid, game: 'x'.repeat(80) })).statusCode).toBe(201);
+      const res = await post({ ...valid, game: 'x'.repeat(81) });
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toEqual({ error: 'game must be 2–80 characters' });
+    });
+
+    it('accepts a note at exactly the max length and rejects one over, with the message', async () => {
+      expect((await post({ ...valid, note: 'n'.repeat(200) })).statusCode).toBe(201);
+      const res = await post({ ...valid, note: 'n'.repeat(201) });
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toEqual({ error: 'note must be at most 200 characters' });
+    });
+
+    it('reports the exact 503 and 405 bodies', async () => {
+      let res = await post(valid, deps({ mailer: null }));
+      expect(res.body).toEqual({ error: 'Suggestions are not open yet' });
+      res = makeRes();
+      await handleSuggestions(deps(), { method: 'DELETE', query: {} }, res);
+      expect(res.body).toEqual({ error: 'Method not allowed' });
+    });
+  });
+
+  describe('POST new suggestion: duplicate check', () => {
+    it('lets a denied game be suggested again even if its id lingers on the active list', async () => {
+      const redis = makeRedis({
+        'suggestions:sug-d': { ...pending, id: 'sug-d', game: 'Root', status: 'denied', decidedAt: 1 },
+      }, { 'suggestions:active': ['sug-d'] });
+      const res = makeRes();
+      await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { ...valid, game: 'Root' } }, res);
+      expect(res.statusCode).toBe(201);
+    });
+
+    it('ignores punctuation and whitespace differences when spotting a duplicate', async () => {
+      const redis = makeRedis({
+        'suggestions:sug-w': { ...pending, id: 'sug-w', game: '7 Wonders' },
+      }, { 'suggestions:active': ['sug-w'] });
+      const res = makeRes();
+      await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { ...valid, game: '7 - Wonders!!' } }, res);
+      expect(res.statusCode).toBe(409);
+      expect(res.body).toEqual({ error: '7 Wonders has already been suggested and is waiting for approval' });
+    });
+  });
+
+  describe('decision links: authorisation edge cases', () => {
+    const decide = async (redis: SuggestionsRedis, body: Record<string, unknown>) => {
+      const res = makeRes();
+      await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN, ...body } }, res);
+      return res;
+    };
+
+    it('403s, rather than crashing, on a well-formed token of a different length', async () => {
+      const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending });
+      const res = await decide(redis, { token: 'test-token-' + 'a'.repeat(9) });
+      expect(res.statusCode).toBe(403);
+      expect(res.body).toEqual({ error: 'invalid token' });
+      expect(redis.hset).not.toHaveBeenCalled();
+    });
+
+    it('400s on tokens with a stray character at either end, or over 64 chars', async () => {
+      const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending });
+      for (const token of ['!' + 'a'.repeat(20), 'a'.repeat(20) + '!', 'a'.repeat(65)]) {
+        const res = await decide(redis, { token });
+        expect(res.statusCode, token).toBe(400);
+        expect(res.body).toEqual({ error: 'invalid id or token' });
+      }
+    });
+
+    it('400s on a non-string id or token instead of coercing them', async () => {
+      const redis = makeRedis({ 'suggestions:7': { ...pending, id: '7' }, 'suggestions:sug-aaaaaa': pending });
+      for (const body of [{ id: 7 }, { token: 1e19 }, { id: undefined }]) {
+        const res = await decide(redis, body);
+        expect(res.statusCode, JSON.stringify(body)).toBe(400);
+        expect(res.body).toEqual({ error: 'invalid id or token' });
+      }
+      const res = makeRes();
+      await handleSuggestions(deps({ redis }), { method: 'GET', query: { action: 'approve', token: TOKEN } }, res);
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('reports the exact bodies for an unknown id, action and decision', async () => {
+      const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending });
+      let res = await decide(redis, { id: 'sug-zzzzzz' });
+      expect(res.statusCode).toBe(404);
+      expect(res.body).toEqual({ error: 'suggestion not found' });
+      res = await decide(redis, { decision: 'maybe' });
+      expect(res.body).toEqual({ error: 'unknown decision' });
+      res = makeRes();
+      await handleSuggestions(deps({ redis }), { method: 'GET', query: { action: 'explode', id: 'sug-aaaaaa', token: TOKEN } }, res);
+      expect(res.body).toEqual({ error: 'unknown action' });
+    });
+
+    it('serves the decision result as HTML and tells a denier the game is off the wishlist', async () => {
+      const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
+      const res = await decide(redis, { decision: 'deny' });
+      expect(res.headers['Content-Type']).toBe('text/html; charset=utf-8');
+      expect(String(res.body)).toContain("Wingspan won't appear on the wishlist.");
+      expect(String(res.body)).not.toContain('is now on the wishlist');
+    });
+
+    it('treats an unrecognised stored status as pending and offers the form', async () => {
+      const redis = makeRedis({ 'suggestions:sug-aaaaaa': { ...pending, status: 'weird' } });
+      const res = makeRes();
+      await handleSuggestions(deps({ redis }), { method: 'GET', query: { action: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, res);
+      expect(String(res.body)).toContain('method="post"');
+      expect(String(res.body)).not.toContain('Already');
+    });
+  });
+
+  describe('GET list: parsing stored hashes', () => {
+    const list = async (redis: SuggestionsRedis) => {
+      const res = makeRes();
+      await handleSuggestions(deps({ redis }), { method: 'GET', query: {} }, res);
+      expect(res.statusCode).toBe(200);
+      return (res.body as { items: Array<Record<string, unknown>> }).items;
+    };
+    const approved = { ...pending, status: 'approved', decidedAt: 10 };
+    const without = (o: Record<string, unknown>, key: string) => Object.fromEntries(Object.entries(o).filter(([k]) => k !== key));
+
+    it('skips hashes missing an id, game or name, or with a null game, instead of crashing', async () => {
+      const redis = makeRedis({
+        'suggestions:sug-1': without(approved, 'id'),
+        'suggestions:sug-2': without(approved, 'game'),
+        'suggestions:sug-3': without(approved, 'name'),
+        'suggestions:sug-4': { ...approved, id: 'sug-4', game: null },
+        'suggestions:sug-5': { ...approved, id: 'sug-5', game: 'Kept' },
+      }, { 'suggestions:approved': ['sug-1', 'sug-2', 'sug-3', 'sug-4', 'sug-5', 'sug-missing'] });
+      expect((await list(redis)).map((i) => i.game)).toEqual(['Kept']);
+    });
+
+    it('excludes listed ids whose hash is not approved, including unknown statuses', async () => {
+      const redis = makeRedis({
+        'suggestions:sug-1': { ...approved, id: 'sug-1', status: 'denied' },
+        'suggestions:sug-2': { ...approved, id: 'sug-2', status: 'weird' },
+        'suggestions:sug-3': { ...approved, id: 'sug-3', status: 'pending' },
+        'suggestions:sug-4': { ...approved, id: 'sug-4' },
+      }, { 'suggestions:approved': ['sug-1', 'sug-2', 'sug-3', 'sug-4'] });
+      expect((await list(redis)).map((i) => i.id)).toEqual(['sug-4']);
+    });
+
+    it('orders by decidedAt descending whatever the list order', async () => {
+      const redis = makeRedis({
+        'suggestions:sug-1': { ...approved, id: 'sug-1', decidedAt: 1 },
+        'suggestions:sug-2': { ...approved, id: 'sug-2', decidedAt: 2 },
+        'suggestions:sug-3': { ...approved, id: 'sug-3', decidedAt: 3 },
+      }, { 'suggestions:approved': ['sug-1', 'sug-2', 'sug-3'] });
+      expect((await list(redis)).map((i) => i.id)).toEqual(['sug-3', 'sug-2', 'sug-1']);
+    });
+
+    it('keeps numeric timestamps, falls back to 0 for a garbled createdAt and leaves decidedAt unset when absent', async () => {
+      const redis = makeRedis({
+        'suggestions:sug-1': { ...approved, id: 'sug-1', createdAt: 1234 },
+        'suggestions:sug-2': { ...without(approved, 'decidedAt'), id: 'sug-2', createdAt: 'yesterday' },
+      }, { 'suggestions:approved': ['sug-1', 'sug-2'] });
+      const items = await list(redis);
+      expect(items[0]).toMatchObject({ id: 'sug-1', createdAt: 1234, decidedAt: 10 });
+      expect(items[1].createdAt).toBe(0);
+      expect(items[1].decidedAt).toBeUndefined();
+    });
+
+    it('does not open a pipeline when the list is empty', async () => {
+      const redis = makeRedis();
+      redis.pipeline = vi.fn(redis.pipeline);
+      expect(await list(redis)).toEqual([]);
+      expect(redis.pipeline).not.toHaveBeenCalled();
+    });
+
+    describe('details', () => {
+      const withDetails = async (details: unknown) => {
+        const redis = makeRedis({ 'suggestions:sug-1': { ...approved, id: 'sug-1', details } }, { 'suggestions:approved': ['sug-1'] });
+        return (await list(redis))[0].details;
+      };
+      const full = { bggId: 1, year: 2000, min: 2, max: 4, mins: 30, desc: 'Fun.', kw: ['party'] };
+
+      it('accepts details as a JSON string or as an already-parsed object', async () => {
+        expect(await withDetails(JSON.stringify(full))).toEqual(full);
+        expect(await withDetails(full)).toEqual(full);
+      });
+
+      it('drops details that are not JSON, not an object, or absent', async () => {
+        expect(await withDetails('not json')).toBeUndefined();
+        expect(await withDetails(42)).toBeUndefined();
+        expect(await withDetails(null)).toBeUndefined();
+      });
+
+      it('falls back field by field on the wrong types: min 1, max 99, mins 0, desc empty, only string keywords', async () => {
+        const raw = '{"bggId":"1","year":"2000","min":"2","max":1e999,"mins":null,"desc":5,"kw":["party",1,null,"family"]}';
+        expect(await withDetails(raw)).toEqual({ bggId: undefined, year: undefined, min: 1, max: 99, mins: 0, desc: '', kw: ['party', 'family'] });
+        expect(await withDetails({})).toEqual({ bggId: undefined, year: undefined, min: 1, max: 99, mins: 0, desc: '', kw: [] });
+      });
     });
   });
 });
