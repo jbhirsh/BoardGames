@@ -1,6 +1,5 @@
-// Request-shape helpers shared by the votes and owners endpoints, kept in one
-// place (like SLUG_RE) so the two can't drift: both key Redis by the same
-// anonymous browser id and accept the same comma-separated id list.
+// Request-shape helpers for the votes endpoint, kept beside SLUG_RE so the
+// anonymous browser id and the comma-separated id list have one definition.
 import { SLUG_RE } from './slug.js';
 
 /** Anonymous browser id minted client-side (crypto.randomUUID or similar). */

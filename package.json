@@ -11,6 +11,7 @@
     "depcruise": "depcruise src api",
     "preview": "vite preview",
     "eval": "node eval/run-eval.ts",
+    "wishlist-art": "node scripts/fetch-wishlist-art.ts",
     "test:mutation": "stryker run"
   },
   "dependencies": {

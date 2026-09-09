@@ -15,7 +15,7 @@ Sentry.init({
   tracesSampleRate: 1.0,
 });
 
-// Same display-name shape as the owners endpoint.
+// Same display-name shape as the client's utils/displayName.ts.
 const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} .'-]{0,29}$/u;
 const GAME_MIN = 2;
 const GAME_MAX = 80;
@@ -69,6 +69,8 @@ export interface SuggestionDetails {
   kw: string[];
   /** Wishlist section chosen by the owner; absent means "Suggested by friends". */
   type?: (typeof WISHLIST_SECTION_IDS)[number];
+  /** Box-art thumbnail from BoardGameGeek; set by the lookup, never by an edit. */
+  img?: string;
 }
 
 export interface Suggestion {
@@ -176,6 +178,7 @@ function parseDetails(raw: unknown): SuggestionDetails | undefined {
     desc: typeof d.desc === 'string' ? d.desc : '',
     kw: Array.isArray(d.kw) ? d.kw.filter((k): k is string => typeof k === 'string') : [],
     type: isWishlistType(d.type) ? d.type : undefined,
+    img: typeof d.img === 'string' && /^https:\/\/\S+$/.test(d.img) ? d.img : undefined,
   };
 }
 
@@ -212,7 +215,7 @@ function mergeDetails(current: SuggestionDetails | undefined, raw: unknown): { o
     if (d.type !== null && !isWishlistType(d.type)) return { ok: false, error: 'unknown wishlist type' };
     type = d.type === null ? undefined : d.type;
   }
-  return { ok: true, details: { bggId: base.bggId, year: base.year, min, max, mins, desc, kw, type } };
+  return { ok: true, details: { bggId: base.bggId, year: base.year, img: base.img, min, max, mins, desc, kw, type } };
 }
 
 async function loadList(redis: SuggestionsRedis, key: string): Promise<Array<Suggestion & { token: string }>> {
@@ -333,7 +336,7 @@ async function enrich(deps: SuggestionsDeps, item: Suggestion, extra: Partial<Su
     try {
       const found = await deps.lookup(item.game);
       if (found) {
-        details = { bggId: found.bggId, year: found.year, min: found.min, max: found.max, mins: found.mins, desc: found.desc, kw: found.kw };
+        details = { bggId: found.bggId, year: found.year, img: found.img, min: found.min, max: found.max, mins: found.mins, desc: found.desc, kw: found.kw };
       }
     } catch (err) {
       Sentry.captureException(err);
@@ -626,7 +629,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     redis,
     mailer: resendMailer(),
     baseUrl,
-    lookup: lookupGame,
+    lookup: (name) => lookupGame(name, fetch, 6000, process.env.BGG_API_TOKEN),
     admin: (r) => isAdmin(redis, r.headers ?? {}),
   }, req, res);
 }

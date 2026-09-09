@@ -1,11 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor, renderHook } from '@testing-library/react';
-import OwnerSignIn from '../components/OwnerSignIn';
+import { MemoryRouter } from 'react-router';
+import SignInPage from '../components/SignInPage';
 import { AuthContext } from '../context/authContextValue';
 import type { Auth } from '../hooks/useAuth';
 import { useAuth } from '../context/useAuth';
 
-function renderWith(over: Partial<Auth> = {}) {
+function renderPage(over: Partial<Auth> = {}) {
   const auth: Auth = {
     admin: false,
     loaded: true,
@@ -13,13 +14,13 @@ function renderWith(over: Partial<Auth> = {}) {
     logout: vi.fn(async () => {}),
     ...over,
   };
-  render(<AuthContext.Provider value={auth}><OwnerSignIn /></AuthContext.Provider>);
+  render(<MemoryRouter><AuthContext.Provider value={auth}><SignInPage /></AuthContext.Provider></MemoryRouter>);
   return auth;
 }
 
-describe('OwnerSignIn', () => {
+describe('SignInPage', () => {
   it('is signed out and unavailable outside the provider', async () => {
-    render(<OwnerSignIn />);
+    render(<MemoryRouter><SignInPage /></MemoryRouter>);
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'a@b.c' } });
     fireEvent.submit(screen.getByRole('form', { name: 'Owner sign-in' }));
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Sign-in is not available here'));
@@ -28,21 +29,25 @@ describe('OwnerSignIn', () => {
     await expect(result.current.logout()).resolves.toBeUndefined();
   });
 
-  it('renders nothing until the session check settles', () => {
-    const { container } = render(<AuthContext.Provider value={{ admin: false, loaded: false, requestLink: vi.fn(), logout: vi.fn() }}><OwnerSignIn /></AuthContext.Provider>);
-    expect(container).toBeEmptyDOMElement();
+  it('shows only the heading until the session check settles', () => {
+    renderPage({ loaded: false });
+    expect(screen.getByRole('heading', { name: 'Owner sign-in' })).toBeInTheDocument();
+    expect(screen.queryByRole('form')).not.toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
-  it('offers a sign-out when signed in', () => {
-    const auth = renderWith({ admin: true });
-    expect(screen.getByRole('status')).toHaveTextContent('Signed in as the owner');
+  it('offers the wishlist and a sign-out when signed in', () => {
+    const auth = renderPage({ admin: true });
+    expect(screen.getByRole('status')).toHaveTextContent("You're signed in as the owner");
+    expect(screen.getByRole('link', { name: 'Go to the wishlist' })).toHaveAttribute('href', '/?c=want');
     fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
     expect(auth.logout).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole('form')).not.toBeInTheDocument();
   });
 
   it('asks for a link with the trimmed address and never confirms whether it was the owner', async () => {
-    const auth = renderWith();
+    const auth = renderPage();
+    expect(screen.getByRole('link', { name: /Back to The Game Room/ })).toHaveAttribute('href', '/');
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: '  jess@example.com ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Email me a sign-in link' }));
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent("If that's the owner's address, a link is on its way."));
@@ -52,7 +57,7 @@ describe('OwnerSignIn', () => {
   it('shows the reason when the request fails and ignores a second submit while sending', async () => {
     let resolve: (v: { ok: false; error: string }) => void = () => {};
     const requestLink = vi.fn(() => new Promise<{ ok: false; error: string }>((r) => { resolve = r; }));
-    renderWith({ requestLink });
+    renderPage({ requestLink });
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'a@b.c' } });
     const form = screen.getByRole('form', { name: 'Owner sign-in' });
     fireEvent.submit(form);

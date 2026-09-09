@@ -46,6 +46,8 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   - `/rules/:slug` — bundled rule PDF viewer + AI rules assistant
   - `/score/:slug` — score calculator (currently 7 Wonders)
   - `/word-checker` — dictionary lookup for word games
+  - `/sign-in` — the owner's magic-link sign-in (`SignInPage`); nothing on
+    the home page links to it
 - **`App.tsx`** — layout shell: wraps the router `Outlet` in `FilterProvider`
   and mounts Vercel `Analytics`.
 - **`data/`** — the static data layer. `games.ts` is the source of truth for
@@ -64,9 +66,11 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   `WishlistContext` is the one definition of the wishlist for the page (static
   entries plus approved friend suggestions, loaded once and reloadable after
   an owner edit) for the wishlist section, the keyword counts and the hero's
-  count; `OwnersContext` does the same for "I own this" per section;
-  `AuthContext` holds the owner-session check that switches admin mode on
-  (`OwnerSignIn`, `AdminPanel`, `AdminItemControls`).
+  count; `AuthContext` holds the owner-session check that switches admin
+  mode on (`SignInPage`, `AdminPanel`, `AdminItemControls`). Its provider
+  wraps only the home page and the `/sign-in` route, each with its own
+  instance, so the rules, score and word-checker pages never call
+  `/api/auth`.
 - **`components/`** — presentational + interactive UI (grid/list views, filter
   bar, random picker, rules page, rules chat, word checker, score calculator,
   wishlist + voting). `Icons.tsx` holds inline SVGs.
@@ -90,10 +94,6 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   Redis sets keyed `wishlist:votes:<id>`, deduped by an anonymous browser id.
   Per-IP rate limited via `_lib/rateLimit.ts`. Errors reported to Sentry
   (`@sentry/node`).
-- **`owners.ts`** — "I own this" for collection and wishlist games. One Redis
-  hash per game keyed by the same anonymous browser id as votes, value = the
-  display name the friend typed once. `handleOwners()` is injectable like
-  `handleVotes()`.
 - **`suggestions.ts`** — friend suggestions with owner approval by email and
   no admin page. `POST` validates, emails the owner (Resend) approve/deny
   links carrying a per-suggestion token, then stores the suggestion as
@@ -110,11 +110,12 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   suggester can retry, but its links keep working (a timeout can follow a
   real delivery), it still shows in the owner's on-site queue, and
   approving an unsent record returns it to the active list. On approval the handler
-  looks the game up on BoardGameGeek (`_lib/bgg.ts`, XML API 2, no key) and
-  stores players, playing time, a two-sentence description, year and mapped
-  keywords as a `details` JSON field, so the card renders and filters like
-  any other wishlist entry; a miss or outage still approves with details
-  empty. `handleSuggestions()`
+  looks the game up on BoardGameGeek (`_lib/bgg.ts`, XML API 2, bearer token
+  from `BGG_API_TOKEN`) and stores players, playing time, a two-sentence
+  description, year, mapped keywords and the box-art thumbnail URL as a
+  `details` JSON field, so the card renders and filters like any other
+  wishlist entry; a miss, an outage or a missing token still approves with
+  details empty. `handleSuggestions()`
   takes `{ redis, mailer, baseUrl, lookup, admin }` so the mailer, the BGG
   lookup and the session check are spies in tests. With no
   Resend configuration the endpoint returns 503 rather than storing a
@@ -157,7 +158,10 @@ read them at runtime.
 - **dictionaryapi.dev** — public dictionary API called directly from the Word
   Checker component (no key required).
 - **BoardGameGeek XML API 2** — server-side lookup of an approved suggestion's
-  details (no key required; answers 202 while queuing, retried once).
+  details and box art (needs a registered token, `BGG_API_TOKEN`; answers 202
+  while queuing, retried once). `npm run wishlist-art` uses the same token to
+  bundle box art for the compiled-in wishlist into `public/images/wishlist/`
+  and `src/data/wishlistArt.ts`.
 
 ## Environment variables
 
@@ -176,6 +180,7 @@ secrets belong in tracked source.
 | `SUGGESTIONS_TO` | serverless (`api/suggestions.ts`, `api/auth.ts`) | address that receives approve/deny emails; the only address that can sign in as the owner |
 | `SUGGESTIONS_FROM` | serverless (optional) | sender; defaults to `The Game Room <onboarding@resend.dev>` |
 | `APP_URL` | serverless (optional) | origin for the emailed links; defaults to the Vercel production URL |
+| `BGG_API_TOKEN` | serverless (`api/suggestions.ts`) and `npm run wishlist-art` | BoardGameGeek API token; without it approvals go through with no details or art |
 
 ## Conventions
 

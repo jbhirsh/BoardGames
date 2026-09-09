@@ -11,6 +11,8 @@ export interface SuggestionDetails {
   kw: string[];
   /** Wishlist section the owner filed it under; absent means "Suggested by friends". */
   type?: string;
+  /** Box-art thumbnail URL from BoardGameGeek. */
+  img?: string;
 }
 
 export interface ApprovedSuggestion {
@@ -64,6 +66,7 @@ export function suggestionToItem(s: ApprovedSuggestion): WishlistItem {
     awards: [],
     suggestedBy: owner ? undefined : s.name,
     source: owner ? 'owner' : 'friend',
+    img: d?.img,
   };
 }
 

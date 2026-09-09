@@ -40,7 +40,7 @@ describe('WishlistCard', () => {
     render(<WishlistCard {...defaultProps()} />);
     expect(screen.getByText('2–4')).toBeInTheDocument();
     expect(screen.getByText('Strategy')).toBeInTheDocument();
-    expect(screen.getByText(/1 award/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /: 1 award, show which$/ })).toHaveTextContent(/🏆\s*1$/);
   });
 
   it('uses an h4 by default and an h3 when asked, so flat lists keep heading order', () => {
@@ -82,6 +82,13 @@ describe('WishlistCard', () => {
     expect(screen.getByText('Suggested by Dana')).toHaveClass('wish-suggested');
     expect(screen.queryByText('Strategy')).not.toBeInTheDocument();
     expect(screen.queryByText(/award/)).not.toBeInTheDocument();
+  });
+
+  it('shows box art when the entry has some, and nothing in its place otherwise', () => {
+    const { rerender } = render(<WishlistCard {...defaultProps({ item: { ...testItem, img: '/images/wishlist/x.jpg' } })} />);
+    expect(screen.getByRole('img', { name: `${testItem.name} box art` })).toHaveAttribute('src', '/images/wishlist/x.jpg');
+    rerender(<WishlistCard {...defaultProps()} />);
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
 
   it('shows no suggester line for a curated item', () => {

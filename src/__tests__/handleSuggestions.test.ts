@@ -608,6 +608,13 @@ describe('handleSuggestions', () => {
         expect(await withDetails(null)).toBeUndefined();
       });
 
+      it('drops a stored img that is not an https link', async () => {
+        const redis = makeRedis({ 'suggestions:sug-ok': { ...pending, id: 'sug-ok', status: 'approved', details: JSON.stringify({ min: 2, max: 4, mins: 90, desc: '', kw: [], img: 'javascript:alert(1)' }) } }, { 'suggestions:approved': ['sug-ok'] });
+        const res = makeRes();
+        await handleSuggestions(deps({ redis }), { method: 'GET', query: {} }, res);
+        expect((res.body as { items: Array<{ details?: { img?: string } }> }).items[0].details?.img).toBeUndefined();
+      });
+
       it('falls back field by field on the wrong types: min 1, max 99, mins 0, desc empty, only string keywords', async () => {
         const raw = '{"bggId":"1","year":"2000","min":"2","max":1e999,"mins":null,"desc":5,"kw":["party",1,null,"family"]}';
         expect(await withDetails(raw)).toEqual({ bggId: undefined, year: undefined, min: 1, max: 99, mins: 0, desc: '', kw: ['party', 'family'] });
@@ -675,14 +682,14 @@ describe('handleSuggestions', () => {
         expect(redis.store['suggestions:sug-aaaaaa'].status).toBe('pending');
       });
 
-      it('approves with enrichment and answers JSON, not a page', async () => {
+      it('approves with enrichment, box art included, and answers JSON, not a page', async () => {
         const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
-        const lookup = vi.fn(async () => ({ bggId: 1, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'] }));
+        const lookup = vi.fn(async () => ({ bggId: 1, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'], img: 'https://cf.geekdo-images.com/w.jpg' }));
         const res = makeRes();
         await handleSuggestions(asOwner({ redis, lookup }), decideReq({ decision: 'approve', id: 'sug-aaaaaa' }), res);
         expect(res.statusCode).toBe(200);
         expect(res.headers['Content-Type']).toBeUndefined();
-        expect(res.body).toMatchObject({ item: { id: 'sug-aaaaaa', status: 'approved', decidedAt: 5000, details: { min: 1, max: 5, mins: 70, desc: 'Birds.' } } });
+        expect(res.body).toMatchObject({ item: { id: 'sug-aaaaaa', status: 'approved', decidedAt: 5000, details: { min: 1, max: 5, mins: 70, desc: 'Birds.', img: 'https://cf.geekdo-images.com/w.jpg' } } });
         expect((res.body as { item: Record<string, unknown> }).item.token).toBeUndefined();
         expect(redis.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
         expect(lookup).toHaveBeenCalledWith('Wingspan');
@@ -785,6 +792,13 @@ describe('handleSuggestions', () => {
         const anon = makeRes();
         await handleSuggestions(deps(), { method: 'PATCH', query: {}, body: { id: 'sug-ok' }, headers: JSON_H }, anon);
         expect(anon.statusCode).toBe(403);
+      });
+
+      it('keeps the stored box art and ignores any img in the edit', async () => {
+        const redis = makeRedis({ 'suggestions:sug-ok': { ...approvedItem, details: JSON.stringify({ min: 2, max: 4, mins: 90, desc: '', kw: [], img: 'https://cf.geekdo-images.com/r.jpg' }) } });
+        const res = makeRes();
+        await handleSuggestions(asOwner({ redis }), { method: 'PATCH', query: {}, body: { id: 'sug-ok', details: { mins: 60, img: 'https://evil.example/x.jpg' } }, headers: JSON_H }, res);
+        expect(res.body).toMatchObject({ item: { details: { mins: 60, img: 'https://cf.geekdo-images.com/r.jpg' } } });
       });
 
       it('merges the given details over the stored ones and renames', async () => {

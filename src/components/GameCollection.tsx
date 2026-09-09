@@ -8,7 +8,7 @@ import ListView from './ListView';
 
 /**
  * The "We own" view. Stays mounted while the wishlist is showing (just
- * hidden) so its loaded ownership and expanded row survive a toggle; only
+ * hidden) so its expanded row survives a toggle; only
  * the visible section carries the `collection` anchor id.
  */
 export default function GameCollection({ hidden = false }: { hidden?: boolean }) {

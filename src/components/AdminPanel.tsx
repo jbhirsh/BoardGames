@@ -1,6 +1,6 @@
 import { useEffect, useId, useState, type FormEvent } from 'react';
 import { WISHLIST_SECTIONS, WISHLIST_TYPES } from '../data/keywords';
-import { getDisplayName, setDisplayName } from '../hooks/useOwnersData';
+import { getDisplayName, setDisplayName } from '../hooks/displayName';
 import { useWishlistItems } from '../context/useWishlistItems';
 import { isValidDisplayName, NAME_HINT } from '../utils/displayName';
 import { addGame, decideSuggestion, fetchPending, type PendingSuggestion } from '../hooks/adminApi';
