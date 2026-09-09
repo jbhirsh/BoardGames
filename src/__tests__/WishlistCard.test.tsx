@@ -10,6 +10,12 @@ const testItem: WishlistItem = {
   yt: 'test wishlist game review',
   players: '2–4',
   type: 'strategy',
+  min: 2,
+  max: 4,
+  dur: '30 min',
+  mins: 30,
+  cat: 'medium',
+  kw: ['strategy'],
   awards: [{ name: 'Spiel des Jahres', year: 2020 }],
 };
 
@@ -40,6 +46,39 @@ describe('WishlistCard', () => {
   it('renders the Wishlist label', () => {
     render(<WishlistCard {...defaultProps()} />);
     expect(screen.getByText('Wishlist')).toBeInTheDocument();
+  });
+
+  it('wraps player count and play time each in their own meta span', () => {
+    render(<WishlistCard {...defaultProps()} />);
+    expect(screen.getByText('2–4')).toHaveClass('wish-players');
+    expect(screen.getByText('30 min')).toHaveClass('wish-players');
+  });
+
+  it('omits the play time span when the item has no known duration', () => {
+    const { container } = render(<WishlistCard {...defaultProps({ item: { ...testItem, dur: '' } })} />);
+    expect(screen.queryByText('30 min')).not.toBeInTheDocument();
+    // Only the players span remains.
+    expect(container.querySelectorAll('.wish-players')).toHaveLength(1);
+    expect(screen.getByText('2–4')).toHaveClass('wish-players');
+  });
+
+  it('omits the players span when the item has no player count', () => {
+    const { container } = render(<WishlistCard {...defaultProps({ item: { ...testItem, players: '' } })} />);
+    expect(screen.queryByText('2–4')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('.wish-players')).toHaveLength(1);
+    expect(screen.getByText('30 min')).toHaveClass('wish-players');
+  });
+
+  it('shows who suggested the item in place of the type label and awards', () => {
+    render(<WishlistCard {...defaultProps({ item: { ...testItem, suggestedBy: 'Dana' } })} />);
+    expect(screen.getByText('Suggested by Dana')).toHaveClass('wish-suggested');
+    expect(screen.queryByText('Strategy')).not.toBeInTheDocument();
+    expect(screen.queryByText(/award/)).not.toBeInTheDocument();
+  });
+
+  it('shows no suggester line for a curated item', () => {
+    render(<WishlistCard {...defaultProps()} />);
+    expect(screen.queryByText(/Suggested by/)).not.toBeInTheDocument();
   });
 
   it('renders YouTube link that opens in new window on click', () => {
