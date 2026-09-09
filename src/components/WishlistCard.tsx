@@ -1,6 +1,9 @@
-import type { WishlistItem } from '../data/types';
-import { WISHLIST_TYPES } from '../data/keywords';
+import type { KeywordId, WishlistItem } from '../data/types';
+import { isKeywordLit } from '../utils/keywordLit';
+import { useFilter } from '../context/useFilter';
+import { sortedKw } from '../utils/filterGames';
 import { UserIcon, ClockIcon } from './Icons';
+import KeywordPill from './KeywordPill';
 import WishlistLinks from './WishlistLinks';
 import AwardsBadge from './AwardsBadge';
 import VoteButton from './VoteButton';
@@ -16,23 +19,41 @@ interface Props {
   headingLevel?: 3 | 4;
 }
 
+/** A wishlist entry in the grid: the collection's card, with a vote and buy links where Rules would be. */
 export default function WishlistCard({ item, voteCount, voted, onVote, disabled, headingLevel = 4 }: Props) {
+  const { state, dispatch } = useFilter();
   const Heading = headingLevel === 3 ? 'h3' : 'h4';
+  const lit = (kw: KeywordId) => isKeywordLit(state, kw);
+
   return (
-    <div className="wish-card" data-testid="wishlist-item" data-item-id={item.id}>
-      <span className="wish-lbl">Wishlist</span>
-      {item.img && <img className="wish-art" src={item.img} alt={`${item.name} box art`} loading="lazy" />}
-      <Heading className="wish-name">{item.name}</Heading>
-      <div className="wish-meta">
-        {item.players && <span className="wish-players"><UserIcon /> {item.players}</span>}
-        {item.dur && <span className="wish-players"><ClockIcon /> {item.dur}</span>}
-        {item.suggestedBy && <span className="wish-suggested">Suggested by {item.suggestedBy}</span>}
-        {!item.suggestedBy && <span className="wish-type">{WISHLIST_TYPES[item.type]}</span>}
-        {!item.suggestedBy && <AwardsBadge itemName={item.name} awards={item.awards} />}
+    <div className="game-card wish-card" data-testid="wishlist-item" data-item-id={item.id}>
+      <div className={`card-head${item.img ? '' : ' no-art'}`}>
+        {item.img && <img src={item.img} alt={`${item.name} box art`} className="card-corner-img" loading="lazy" />}
+        <Heading className="card-name">{item.name}</Heading>
+        <div className="card-meta">
+          {item.players && <span className="cmeta"><UserIcon /> {item.players}</span>}
+          {item.dur && <span className="cmeta"><ClockIcon /> {item.dur}</span>}
+          <AwardsBadge itemName={item.name} awards={item.awards} />
+        </div>
+        {item.kw.length > 0 && (
+          <div className="card-kw">
+            {sortedKw(item.kw).map((kw) => (
+              <KeywordPill
+                key={kw}
+                keyword={kw as KeywordId}
+                active={lit(kw as KeywordId)}
+                onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: kw as KeywordId })}
+              />
+            ))}
+          </div>
+        )}
       </div>
-      <p className="wish-desc">{item.desc}</p>
-      <AdminItemControls item={item} />
-      <div className="wish-footer">
+      <div className="card-body">
+        <p className="card-desc">{item.desc}</p>
+        {item.suggestedBy && <p className="card-credit">Suggested by {item.suggestedBy}</p>}
+        <AdminItemControls item={item} />
+      </div>
+      <div className="card-foot">
         <VoteButton
           itemName={item.name}
           voteCount={voteCount}

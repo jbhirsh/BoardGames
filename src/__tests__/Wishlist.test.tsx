@@ -54,7 +54,8 @@ describe('Wishlist', () => {
     await screen.findByText(WISHLIST[0].name);
     for (const item of WISHLIST) {
       expect(screen.getByText(item.name)).toBeInTheDocument();
-      expect(screen.getByText(item.desc)).toBeInTheDocument();
+      // The table shows the description twice: a short mobile line and the full column.
+      expect(screen.getAllByText(item.desc).length).toBeGreaterThan(0);
     }
   });
 
@@ -77,19 +78,20 @@ describe('Wishlist', () => {
     });
   });
 
-  it('groups items by type under the group sort, in the configured type order', async () => {
+  const expectedGroups = WISHLIST_TYPE_ORDER
+    .filter((t) => WISHLIST.some((w) => w.type === t))
+    .map((t) => WISHLIST_TYPES[t]);
+
+  it('groups the grid by type under the group sort, in the configured type order', async () => {
     mockVotes({});
-    renderWishlist('/?c=want&s=group');
+    renderWishlist('/?c=want&s=group&v=grid');
     await screen.findByText(WISHLIST[0].name);
 
     // Group headings only: the suggestion form has its own h3.
-    const headings = Array.from(document.querySelectorAll('.wish-group-hd')).map((h) => h.textContent);
-    const expected = WISHLIST_TYPE_ORDER
-      .filter((t) => WISHLIST.some((w) => w.type === t))
-      .map((t) => WISHLIST_TYPES[t]);
-    expect(headings).toEqual(expected);
+    const headings = Array.from(document.querySelectorAll('.group-hd')).map((h) => h.textContent);
+    expect(headings).toEqual(expectedGroups);
 
-    // Every item rendered under a group heading has that group's type.
+    // Every card rendered under a group heading has that group's type.
     for (const group of document.querySelectorAll('.wish-group')) {
       const label = group.querySelector('h3')!.textContent;
       const ids = Array.from(group.querySelectorAll('[data-item-id]')).map((el) => el.getAttribute('data-item-id'));
@@ -97,6 +99,21 @@ describe('Wishlist', () => {
       for (const id of ids) {
         expect(WISHLIST_TYPES[WISHLIST.find((w) => w.id === id)!.type]).toBe(label);
       }
+    }
+  });
+
+  it('groups the table by type with the collection\'s group rows, and each row belongs to its group', async () => {
+    mockVotes({});
+    renderWishlist('/?c=want&s=group');
+    await screen.findByText(WISHLIST[0].name);
+    const rows = Array.from(document.querySelectorAll('tbody tr.list-group-row, tbody tr.game-row'));
+    const labels = rows.filter((r) => r.classList.contains('list-group-row')).map((r) => r.textContent);
+    expect(labels).toEqual(expectedGroups);
+    let current: string | null = null;
+    for (const row of rows) {
+      if (row.classList.contains('list-group-row')) { current = row.textContent; continue; }
+      const id = row.getAttribute('data-item-id')!;
+      expect(WISHLIST_TYPES[WISHLIST.find((w) => w.id === id)!.type]).toBe(current);
     }
   });
 
@@ -109,7 +126,7 @@ describe('Wishlist', () => {
     const counts: Record<string, number> = {};
     WISHLIST.forEach((w) => { counts[w.id] = w.id === star.id ? 999 : byId[w.id]; });
     mockVotes(counts);
-    renderWishlist('/?c=want&s=group');
+    renderWishlist('/?c=want&s=group&v=grid');
 
     await waitFor(() => {
       const first = screen.getAllByRole('heading', { level: 4 })[0]?.textContent;
@@ -122,12 +139,38 @@ describe('Wishlist', () => {
     expect(groupCounts).toEqual([...groupCounts].sort((a, b) => b - a));
   });
 
-  it('lists items flat in A to Z order under the default sort', async () => {
+  it('orders each group by a column sort clicked on top of the group sort', async () => {
     mockVotes({});
-    renderWishlist();
+    renderWishlist('/?c=want&s=group');
     await screen.findByText(WISHLIST[0].name);
-    expect(document.querySelectorAll('.wish-group-hd')).toHaveLength(0);
-    // Flat layout: item headings sit directly under the section h2, so they are h3.
+    const name = screen.getByRole('columnheader', { name: /^Name/ });
+    fireEvent.click(name);
+    fireEvent.click(name);
+    expect(name).toHaveClass('sort-desc');
+    const rows = Array.from(document.querySelectorAll('tbody tr.list-group-row, tbody tr.game-row'));
+    expect(rows.filter((r) => r.classList.contains('list-group-row')).map((r) => r.textContent)).toEqual(expectedGroups);
+    let group: string[] = [];
+    const groups: string[][] = [];
+    for (const row of rows) {
+      if (row.classList.contains('list-group-row')) { group = []; groups.push(group); continue; }
+      group.push(row.querySelector('.col-name-wrap .col-name')!.textContent ?? '');
+    }
+    for (const names of groups) expect(names).toEqual([...names].sort((a, b) => b.localeCompare(a)));
+  });
+
+  it('lists items flat in A to Z order under the default sort, in both layouts', async () => {
+    mockVotes({});
+    const { unmount } = renderWishlist();
+    await screen.findByText(WISHLIST[0].name);
+    expect(document.querySelectorAll('.list-group-row')).toHaveLength(0);
+    const rowNames = Array.from(document.querySelectorAll('tr.game-row .col-name-wrap .col-name')).map((n) => n.textContent ?? '');
+    expect(rowNames).toEqual([...rowNames].sort((a, b) => a.localeCompare(b)));
+    unmount();
+
+    renderWishlist('/?c=want&v=grid');
+    await screen.findByText(WISHLIST[0].name);
+    expect(document.querySelectorAll('.group-hd')).toHaveLength(0);
+    // Flat grid: card headings sit directly under the section h2, so they are h3.
     const names = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent ?? '').filter((n) => n !== 'Suggest a game');
     expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
   });
@@ -137,7 +180,7 @@ describe('Wishlist', () => {
     renderWishlist('/?c=want&q=wingspan');
     await screen.findByText('Wingspan');
     expect(screen.queryByText('Dominion')).not.toBeInTheDocument();
-    expect(screen.getByText(/\b2 titles\b/)).toBeInTheDocument();
+    expect(screen.getByText(/\b2 games\b/)).toBeInTheDocument();
     cleanup();
 
     mockVotes({});
@@ -174,15 +217,16 @@ describe('Wishlist', () => {
     );
 
     await screen.findByText(WISHLIST[0].name);
-    // Default view is 'list' per initialFilterState
-    expect(container.querySelector('.wish-list')).toBeInTheDocument();
+    // Default view is 'list' per initialFilterState: the collection's table.
+    expect(container.querySelector('.table-wrap table.games-list')).toBeInTheDocument();
+    expect(container.querySelector('thead')).toHaveTextContent('Votes');
 
     fireEvent.click(screen.getByText('grid'));
-    expect(container.querySelector('.wish-grid')).toBeInTheDocument();
-    expect(container.querySelector('.wish-list')).not.toBeInTheDocument();
+    expect(container.querySelector('.games-grid.wish-grid')).toBeInTheDocument();
+    expect(container.querySelector('.table-wrap')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByText('list'));
-    expect(container.querySelector('.wish-list')).toBeInTheDocument();
+    expect(container.querySelector('.table-wrap')).toBeInTheDocument();
   });
 
   it('POSTs a vote when the vote button is clicked', async () => {
@@ -215,12 +259,12 @@ describe('Wishlist', () => {
 
   it('renders approved friend suggestions in their own group with the suggester credited', async () => {
     mockVotes({}, [], [{ id: 'sug-abc123', game: 'Root', name: 'Alex', note: 'Mean fun' }]);
-    renderWishlist('/?c=want&s=group');
+    renderWishlist('/?c=want&s=group&v=grid');
     await waitFor(() => expect(screen.getByText('Root')).toBeInTheDocument());
     expect(screen.getByRole('heading', { level: 3, name: 'Suggested by friends' })).toBeInTheDocument();
     expect(screen.getByText('Suggested by Alex')).toBeInTheDocument();
     expect(screen.getByText('“Mean fun”')).toBeInTheDocument();
-    expect(screen.getByText(`${WISHLIST.length + 1} titles`)).toBeInTheDocument();
+    expect(screen.getByText(`${WISHLIST.length + 1} games`)).toBeInTheDocument();
     // Votes were requested for the suggestion too. The request goes out
     // from a passive effect after the body mounts, so wait for it rather
     // than reading the calls the instant the name appears.
@@ -235,8 +279,8 @@ describe('Wishlist', () => {
     // must still reflect the search from the URL rather than the full total.
     vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise(() => {}));
     renderWishlist(`/?c=want&q=${encodeURIComponent(WISHLIST[0].name)}`);
-    expect(screen.getByText('1 titles')).toBeInTheDocument();
-    expect(screen.queryByText(`${WISHLIST.length} titles`)).not.toBeInTheDocument();
+    expect(screen.getByText('1 games')).toBeInTheDocument();
+    expect(screen.queryByText(`${WISHLIST.length} games`)).not.toBeInTheDocument();
     expect(screen.queryByText(WISHLIST[0].name)).not.toBeInTheDocument();
   });
 

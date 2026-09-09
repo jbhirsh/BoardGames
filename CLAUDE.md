@@ -73,9 +73,16 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   `/api/auth`.
 - **`components/`** — presentational + interactive UI (grid/list views, filter
   bar, random picker, rules page, rules chat, word checker, score calculator,
-  wishlist + voting). `Icons.tsx` holds inline SVGs.
+  wishlist + voting). `Icons.tsx` holds inline SVGs. The wishlist wears the
+  collection's clothes: `WishlistCard` reuses the `game-card` layout (vote
+  heart and buy/video links in the footer) and `WishlistListView` renders
+  the collection's table (`GamesTableHead` is the shared sortable header)
+  with a vote column and an expanded row for the full blurb, awards, owner
+  controls and links; the collapsed row shows the blurb's first sentence
+  (`utils/shortDesc.ts`) where a collection row shows its hand-written
+  short line. Both sections share the light theme.
 - **`utils/`** — pure helpers (`filterGames.ts`, `pickRandom.ts`, `filterUrl.ts`,
-  `urls.ts`). Keep these free of React and side effects.
+  `urls.ts`, `shortDesc.ts`). Keep these free of React and side effects.
 - **`instrument.ts`** — Sentry browser SDK init (`@sentry/react`), including
   browser tracing and session replay.
 

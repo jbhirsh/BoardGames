@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import type { Game, KeywordId } from '../data/types';
-import { KW } from '../data/keywords';
+import { isKeywordLit } from '../utils/keywordLit';
 import { useFilter } from '../context/useFilter';
 import { ytURL, rulesURL } from '../utils/urls';
 import { sortedKw } from '../utils/filterGames';
@@ -34,7 +34,7 @@ export default function GameCard({ game }: Props) {
             <KeywordPill
               key={kw}
               keyword={kw as KeywordId}
-              active={state.keywords.has(kw as KeywordId) || (!!state.search && KW[kw as KeywordId].toLowerCase().includes(state.search.toLowerCase().trim()))}
+              active={isKeywordLit(state, kw as KeywordId)}
               onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: kw as KeywordId })}
             />
           ))}
@@ -43,7 +43,7 @@ export default function GameCard({ game }: Props) {
       <div className="card-body">
         <p className="card-desc">{game.short}</p>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', padding: '0 18px 16px' }}>
+      <div className="card-foot">
         {game.rules ? (
           <Link className="rules-btn" to={`/rules/${game.slug}`} title="Rules">
             <AiRulesIcon /> Rules

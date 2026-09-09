@@ -2,55 +2,23 @@ import { useState, Fragment } from 'react';
 import { useFilter } from '../context/useFilter';
 import { isGrouped } from '../utils/filterGames';
 import NoResults from './NoResults';
+import GamesTableHead, { TABLE_COLUMNS } from './GamesTableHead';
 import { GROUPS, GROUP_ORDER } from '../data/keywords';
 import GameRow from './GameRow';
 import type { GroupId } from '../data/types';
 
 export default function ListView() {
-  const { state, dispatch, filteredGames } = useFilter();
+  const { state, filteredGames } = useFilter();
   const [openRow, setOpenRow] = useState<string | null>(null);
-
-  function clickColSort(col: string) {
-    dispatch({ type: 'SET_COLUMN_SORT', payload: col });
-  }
-
-  function thClass(col: string) {
-    const classes = ['sortable'];
-    if (state.sort === col + '-asc') classes.push('sort-asc');
-    if (state.sort === col + '-desc') classes.push('sort-desc');
-    return classes.join(' ');
-  }
-
-  function sortIcon(col: string) {
-    if (state.sort === col + '-asc') return '\u25B2';
-    if (state.sort === col + '-desc') return '\u25BC';
-    return '\u25B2';
-  }
 
   if (filteredGames.length === 0) return <NoResults message="No games match your filters." />;
 
   const grouped = isGrouped(state);
-  const colSpan = 6;
 
   return (
     <div className="table-wrap">
       <table className="games-list">
-        <thead>
-          <tr>
-            <th className={thClass('name')} onClick={() => clickColSort('name')}>
-              Name <span className="sort-icon">{sortIcon('name')}</span>
-            </th>
-            <th className={`col-hide col-players-h ${thClass('players')}`} onClick={() => clickColSort('players')}>
-              Players <span className="sort-icon">{sortIcon('players')}</span>
-            </th>
-            <th className={thClass('dur')} onClick={() => clickColSort('dur')}>
-              Duration <span className="sort-icon">{sortIcon('dur')}</span>
-            </th>
-            <th className="col-hide col-desc">Description</th>
-            <th className="col-hide col-tags">Tags</th>
-            <th><span className="sr-only">Actions</span></th>
-          </tr>
-        </thead>
+        <GamesTableHead />
         <tbody>
           {grouped
             ? GROUP_ORDER.map((groupId: GroupId) => {
@@ -59,7 +27,7 @@ export default function ListView() {
                 return (
                   <Fragment key={groupId}>
                     <tr className="list-group-row">
-                      <td colSpan={colSpan}>{GROUPS[groupId]}</td>
+                      <td colSpan={TABLE_COLUMNS}>{GROUPS[groupId]}</td>
                     </tr>
                     {games.map((g) => (
                       <GameRow

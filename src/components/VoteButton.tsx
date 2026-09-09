@@ -1,8 +1,10 @@
+import type { MouseEvent } from 'react';
+
 interface Props {
   itemName: string;
   voteCount: number;
   voted: boolean;
-  onClick: () => void;
+  onClick: (e: MouseEvent<HTMLButtonElement>) => void;
   disabled?: boolean;
 }
 
@@ -20,7 +22,7 @@ export default function VoteButton({ itemName, voteCount, voted, onClick, disabl
       onClick={onClick}
       disabled={disabled}
     >
-      <span className="vote-heart" aria-hidden="true">{voted ? '\u2665' : '\u2661'}</span>
+      <span className="vote-heart" aria-hidden="true">{voted ? '♥' : '♡'}</span>
       <span className="vote-count">{voteCount}</span>
     </button>
   );
