@@ -37,8 +37,6 @@ coverage
 # Eval harness output
 eval/results.json
 
-# Stryker mutation testing (temp sandboxes + HTML report output + the
-# break-disabled config copy CI generates for PR-scoped runs)
+# Stryker mutation testing (temp sandboxes + HTML report output)
 .stryker-tmp
 reports
-.stryker-pr.config.json

@@ -12,13 +12,12 @@
 #     catching test erosion PR-scoped runs can't see (e.g. a test refactor
 #     weakening assertions for untouched code).
 #
-# The `break: 68` threshold in stryker.config.json is calibrated against the
-# FULL mutation scope, so it only gates full sweeps (weekly/dispatch/local).
-# PR-scoped subset runs are report-only: a subset score isn't comparable to
-# the full-scope baseline (a PR touching only a weakly-mutated presentational
-# file would flunk 68 with the suite's overall health unchanged), and Stryker
-# has no --break CLI override, so the PR step generates a config copy with
-# break: null.
+# Both placements gate on the `break` threshold in stryker.config.json: a
+# PR whose touched files score below it fails the check. A subset score is
+# stricter than the full-scope one (a PR touching only a weakly-tested file
+# has nowhere to hide), which is the point — the files under review are the
+# ones whose tests must hold up. Stryker exits nonzero after writing the
+# report, so the report is still uploaded for diagnosis.
 name: Mutation
 
 on:
@@ -90,26 +89,19 @@ jobs:
             echo "mutate=$(echo "$CHANGED" | paste -sd, -)" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Run Stryker (changed files, report-only)
+      - name: Run Stryker (changed files)
         if: github.event_name == 'pull_request'
         env:
           MUTATE_SCOPE: ${{ steps.scope.outputs.mutate }}
-        run: |
-          node -e '
-            const fs = require("fs");
-            const cfg = JSON.parse(fs.readFileSync("stryker.config.json", "utf8"));
-            cfg.thresholds.break = null;
-            fs.writeFileSync(".stryker-pr.config.json", JSON.stringify(cfg, null, 2));
-          '
-          npx stryker run .stryker-pr.config.json --mutate "$MUTATE_SCOPE"
+        run: npx stryker run --mutate "$MUTATE_SCOPE"
 
       - name: Run Stryker (full sweep)
         if: github.event_name != 'pull_request'
         run: npx stryker run
 
-      # always(): when the full sweep trips the break threshold, Stryker exits
-      # nonzero after writing the report — that report is exactly what's needed
-      # to diagnose the failure, so upload it anyway.
+      # always(): when a run trips the break threshold, Stryker exits nonzero
+      # after writing the report — that report is exactly what's needed to
+      # diagnose the failure, so upload it anyway.
       - name: Upload mutation report
         if: always()
         uses: actions/upload-artifact@v7
