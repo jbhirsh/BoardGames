@@ -125,6 +125,16 @@ describe('GameRow', () => {
     expect(onToggle).not.toHaveBeenCalled();
   });
 
+  it('clicking the Score or Word Checker link does not trigger row toggle', () => {
+    const onToggle = vi.fn();
+    const { unmount } = renderRow(sevenWondersGame, true, onToggle);
+    fireEvent.click(screen.getByText('Score'));
+    unmount();
+    renderRow(bananagramsGame, true, onToggle);
+    fireEvent.click(screen.getByText('Word Checker'));
+    expect(onToggle).not.toHaveBeenCalled();
+  });
+
   it('renders fallback rules link when game has no rules', () => {
     const noRulesGame: Game = { ...quickGame, rules: '' };
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
