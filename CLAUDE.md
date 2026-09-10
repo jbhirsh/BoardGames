@@ -164,11 +164,13 @@ read them at runtime.
   build time via `@sentry/vite-plugin` (org `solo-23`, project `game_room`).
 - **dictionaryapi.dev** — public dictionary API called directly from the Word
   Checker component (no key required).
-- **BoardGameGeek XML API 2** — server-side lookup of an approved suggestion's
-  details and box art (needs a registered token, `BGG_API_TOKEN`; answers 202
-  while queuing, retried once). `npm run wishlist-art` uses the same token to
-  bundle box art for the compiled-in wishlist into `public/images/wishlist/`
-  and `src/data/wishlistArt.ts`.
+- **BoardGameGeek** — the XML API 2 does the server-side lookup of an
+  approved suggestion's details and box art by name (needs a registered
+  token, `BGG_API_TOKEN`; answers 202 while queuing, retried once). Every
+  compiled-in wishlist entry carries its BoardGameGeek id (`bgg`), and
+  `npm run wishlist-art` fetches each one's 200x200 box art by that id from
+  the site's own item endpoint, which needs no token, into
+  `public/images/wishlist/` and the generated `src/data/wishlistArt.ts`.
 
 ## Environment variables
 
@@ -187,7 +189,7 @@ secrets belong in tracked source.
 | `SUGGESTIONS_TO` | serverless (`api/suggestions.ts`, `api/auth.ts`) | address that receives approve/deny emails; the only address that can sign in as the owner |
 | `SUGGESTIONS_FROM` | serverless (optional) | sender; defaults to `The Game Room <onboarding@resend.dev>` |
 | `APP_URL` | serverless (optional) | origin for the emailed links; defaults to the Vercel production URL |
-| `BGG_API_TOKEN` | serverless (`api/suggestions.ts`) and `npm run wishlist-art` | BoardGameGeek API token; without it approvals go through with no details or art |
+| `BGG_API_TOKEN` | serverless (`api/suggestions.ts`) | BoardGameGeek XML API token; without it approvals go through with no details or art |
 
 ## Conventions
 

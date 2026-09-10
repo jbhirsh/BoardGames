@@ -2,69 +2,106 @@
 // it: one file per entry under public/images/wishlist/ plus the id -> path
 // map in src/data/wishlistArt.ts that wishlist.ts merges in.
 //
-//   BGG_API_TOKEN=... npm run wishlist-art
+//   npm run wishlist-art
 //
-// Needs the same token the API uses (BGG answers 401 without one). Entries
-// that already have a file are skipped, so re-running only fills gaps; pass
-// --refresh to refetch everything. Suggestions get their art at approval
-// time through the same lookup, not here.
-import { mkdir, readFile, writeFile, access } from 'node:fs/promises';
-import { lookupGame } from '../api/_lib/bgg.ts';
+// Every entry in src/data/wishlist.ts carries its BoardGameGeek id (`bgg`),
+// so no name search is needed: the site's own item endpoint answers by id
+// without a token (the XML API, which searches by name, needs one and is
+// what approved suggestions use). The map is rebuilt from whatever files
+// are on disk, so a run cut short by a rate limit or an outage keeps what
+// it fetched and the next run fills the gaps; entries that already have a
+// file are skipped unless --refresh is passed.
+import { mkdir, readFile, readdir, writeFile, unlink } from 'node:fs/promises';
 
-const token = process.env.BGG_API_TOKEN;
-if (!token) {
-  console.error('BGG_API_TOKEN is not set; register for one at boardgamegeek.com and export it first.');
-  process.exit(1);
-}
 const refresh = process.argv.includes('--refresh');
 const ART_DIR = 'public/images/wishlist';
 const MAP_FILE = 'src/data/wishlistArt.ts';
+const EXTS = ['jpg', 'png', 'webp'];
+// The 200x200 square crop matches the collection's art; the item's own
+// representative image is the fallback for an entry that lacks the crop.
+const ITEM_URL = (bgg: number) => `https://api.geekdo.com/api/geekitems?objectid=${bgg}&objecttype=thing&nosession=1`;
 
-// The entries are data literals; read the ids and names straight off the
-// source rather than importing it (its path-less imports are Vite's, not Node's).
+interface Item { name?: string; imageurl?: string; images?: Record<string, string> }
+
+// The entries are data literals; read them straight off the source rather
+// than importing it (its path-less imports are Vite's, not Node's). Each
+// literal runs from its `id:` to the next one, and the fields inside can
+// come in any order.
 const source = await readFile('src/data/wishlist.ts', 'utf8');
-const entries = [...source.matchAll(/\{\s*id:"([^"]+)",\s*name:"([^"]+)"/g)].map((m) => ({ id: m[1], name: m[2] }));
+const starts = [...source.matchAll(/\{\s*id:"([^"]+)"/g)];
+const entries = starts.flatMap((m, i) => {
+  const id = m[1];
+  const literal = source.slice(m.index, starts[i + 1]?.index ?? source.length);
+  const bgg = /\bbgg:(\d+)/.exec(literal)?.[1];
+  if (!bgg) {
+    console.warn(`${id} has no bgg id in src/data/wishlist.ts; add one to fetch its art`);
+    return [];
+  }
+  // Every entry has a name; the id (a readable slug) only stands in for a
+  // literal the regex could not read.
+  const name = /\bname:"([^"]+)"/.exec(literal)?.[1] ?? id;
+  return [{ id, bgg: Number(bgg), name }];
+});
 if (entries.length === 0) throw new Error('no wishlist entries found in src/data/wishlist.ts');
 
-// One probe first: the lookup reads every non-200 as "no match", which
-// would turn a rejected token or a rate limit into a page of misleading
-// warnings and a rewritten map.
-const probe = await fetch('https://boardgamegeek.com/xmlapi2/thing?id=13', { headers: { Authorization: `Bearer ${token}` } });
-if (probe.status === 401) {
-  console.error('BoardGameGeek rejected BGG_API_TOKEN (401). Check the token and try again.');
-  process.exit(1);
-}
-if (probe.status === 429) {
-  console.error('BoardGameGeek is rate limiting this token (429). Wait a while and try again.');
-  process.exit(1);
-}
-
 await mkdir(ART_DIR, { recursive: true });
-const existing = /export const WISHLIST_ART[^{]*(\{[\s\S]*?\});/.exec(await readFile(MAP_FILE, 'utf8'))?.[1] ?? '{}';
-const art: Record<string, string> = refresh ? {} : (Function(`return (${existing})`)() as Record<string, string>);
+const onDisk = async () => {
+  const files = await readdir(ART_DIR);
+  const map: Record<string, string> = {};
+  for (const { id } of entries) {
+    const file = files.find((f) => EXTS.some((ext) => f === `${id}.${ext}`));
+    if (file) map[id] = `/images/wishlist/${file}`;
+  }
+  return map;
+};
 
-for (const { id, name } of entries) {
-  if (art[id] && !refresh && await access(`public${art[id]}`).then(() => true, () => false)) continue;
-  const details = await lookupGame(name, fetch, 15_000, token);
-  if (!details?.img) {
-    console.warn(`no art for ${name} (${details ? 'entry has no thumbnail' : 'no confident BGG match'})`);
-    continue;
-  }
-  const r = await fetch(details.img);
+// Either host answering 429 ends the run; the map still gets written with
+// what was fetched, and the next run picks up the rest.
+const rateLimited = (res: Response, name: string) => {
+  if (res.status !== 429) return false;
+  console.error(`BoardGameGeek is rate limiting (429) at ${name}; keeping what was fetched, re-run later for the rest.`);
+  return true;
+};
+
+let have = await onDisk();
+for (const { id, bgg, name } of entries) {
+  if (have[id] && !refresh) continue;
+  const r = await fetch(ITEM_URL(bgg));
+  if (rateLimited(r, name)) break;
   if (!r.ok) {
-    console.warn(`could not download art for ${name}: ${r.status}`);
+    console.warn(`no art for ${name}: BoardGameGeek answered ${r.status} for item ${bgg}`);
     continue;
   }
-  const ext = /\.(png|webp)(?:$|\?)/i.exec(details.img)?.[1]?.toLowerCase() ?? 'jpg';
-  const file = `${ART_DIR}/${id}.${ext}`;
-  await writeFile(file, Buffer.from(await r.arrayBuffer()));
-  art[id] = `/images/wishlist/${id}.${ext}`;
-  console.log(`${name}: ${art[id]}`);
+  let item: Item | undefined;
+  try {
+    item = ((await r.json()) as { item?: Item }).item;
+  } catch {
+    console.warn(`no art for ${name}: item ${bgg} did not answer with JSON`);
+    continue;
+  }
+  const url = item?.images?.square200 ?? item?.imageurl;
+  if (!url) {
+    console.warn(`no art for ${name}: item ${bgg} has no image`);
+    continue;
+  }
+  const img = await fetch(url);
+  if (rateLimited(img, name)) break;
+  if (!img.ok) {
+    console.warn(`could not download art for ${name}: ${img.status}`);
+    continue;
+  }
+  const ext = /\.(png|webp)(?:$|\?)/i.exec(url)?.[1]?.toLowerCase() ?? 'jpg';
+  // A refresh can change the format; one file per entry.
+  if (have[id] && have[id] !== `/images/wishlist/${id}.${ext}`) await unlink(`public${have[id]}`);
+  await writeFile(`${ART_DIR}/${id}.${ext}`, Buffer.from(await img.arrayBuffer()));
+  have[id] = `/images/wishlist/${id}.${ext}`;
+  console.log(`${name} (BGG "${item?.name ?? '?'}"): ${have[id]}`);
   // BGG asks clients to keep a gentle pace.
   await new Promise((resolve) => setTimeout(resolve, 1200));
 }
 
-const lines = Object.keys(art).sort().map((id) => `  '${id}': '${art[id]}',`).join('\n');
+have = await onDisk();
+const lines = Object.keys(have).sort().map((id) => `  '${id}': '${have[id]}',`).join('\n');
 await writeFile(MAP_FILE, `// Generated by \`npm run wishlist-art\` (scripts/fetch-wishlist-art.ts): the
 // bundled box-art file for each compiled-in wishlist entry, by id. Entries
 // missing here render without art. Do not edit by hand; re-run the script.
@@ -72,4 +109,4 @@ export const WISHLIST_ART: Record<string, string> = {
 ${lines}
 };
 `);
-console.log(`${Object.keys(art).length} of ${entries.length} entries have art.`);
+console.log(`${Object.keys(have).length} of ${entries.length} entries have art.`);
