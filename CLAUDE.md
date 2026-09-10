@@ -231,5 +231,13 @@ unit tests with coverage, and a build on `ubuntu-latest` for every PR to `main`,
 followed by an automated Claude review; `claude-autofix.yml` addresses
 unresolved review comments. `mutation.yml` runs StrykerJS over the source
 files a PR touched and fails below the `break` score in
-`stryker.config.json` (a weekly full sweep applies the same bar). All CI runs on GitHub-hosted `ubuntu-latest`
-runners.
+`stryker.config.json` (a weekly full sweep applies the same bar). All CI runs
+on GitHub-hosted `ubuntu-latest` runners.
+
+Every PR check is a required status check on `main` (`ci`, Claude Review,
+Secret scan, StrykerJS, Answer-Quality Eval, Semgrep, Vercel, API smoke
+test), so nothing merges until all of them report. A required check that
+never reports blocks the PR forever, so PR workflows must not use a
+workflow-level `paths:` filter; decide inside the job instead and skip the
+expensive step (a skipped step still reports success). Don't arm auto-merge
+until every check has reported.

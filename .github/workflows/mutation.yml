@@ -4,10 +4,10 @@
 #
 # Two placements (the pattern from jbhirsh/sift#67):
 #   - Pull requests: mutate only the in-scope files the PR touched — fast,
-#     targeted feedback on exactly the code under review. PRs that trigger the
-#     workflow without changing mutable source (test/config-only edits, pure
-#     deletions) run a small utils smoke scope instead, so the Stryker wiring
-#     itself stays validated at PR time, not just weekly.
+#     targeted feedback on exactly the code under review. PRs that change no
+#     mutable source (data, docs, styles, workflow edits, pure deletions) run a
+#     small utils smoke scope instead, so the Stryker wiring itself stays
+#     validated at PR time and the required check always reports.
 #   - Weekly schedule (+ manual dispatch): full sweep as a drift sensor,
 #     catching test erosion PR-scoped runs can't see (e.g. a test refactor
 #     weakening assertions for untouched code).
@@ -21,18 +21,12 @@
 name: Mutation
 
 on:
+  # No `paths:` filter: StrykerJS is a required status check on main, and a
+  # workflow skipped by path filtering never reports, which leaves the PR
+  # pending forever. PRs that touch no mutable source fall through to the
+  # utils smoke scope below (a few minutes) so the check always lands.
   pull_request:
     branches: [main]
-    paths:
-      - "src/utils/**"
-      - "src/context/**"
-      - "src/components/**"
-      - "src/App.tsx"
-      - "api/**"
-      - "src/__tests__/**"
-      - "stryker.config.json"
-      - "package.json"
-      - ".github/workflows/mutation.yml"
   schedule:
     - cron: "0 6 * * 1"
   workflow_dispatch:
