@@ -46,6 +46,8 @@ export interface Award {
 
 export interface WishlistItem extends Filterable {
   id: string;
+  /** BoardGameGeek id of a compiled-in entry; `npm run wishlist-art` fetches its box art by this. */
+  bgg?: number;
   yt: string;
   players: string;
   type: WishlistType;
