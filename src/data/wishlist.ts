@@ -125,6 +125,9 @@ const ENTRIES: WishlistItem[] = [
   { id:"sounds-fishy", bgg:359893,            name:"Sounds Fishy",            players:"4–10", type:"party",      desc:"A bluffing party game built on questions nobody knows the answer to. One player holds the true answer and everyone else improvises a fake; the guesser flips fish tokens one at a time, trying to weed out every Red Herring before landing on the True Blue Kipper. Quick to teach, 20 minutes, and best with a big table.", yt:"how to play Sounds Fishy party game tutorial",
     min:4, max:10, dur:"15–20 min", mins:20, cat:"medium", kw:['party','bluffing','social'],
     awards:[] },
+  { id:"glyphics", bgg:373991,                name:"Glyphics",                players:"3+",   type:"party",      desc:"Charades for people who can't draw. Pick a prompt from your card and build it out of the forty-odd plastic shapes in the box while the table has sixty seconds to shout out what it is — builder and guesser both score, and phrases are worth double. By Eric Olsen, who went on to design Flip 7, and it takes as many players as you can fit round the table.", yt:"how to play Glyphics board game tutorial",
+    min:3, max:99, dur:"20–30 min", mins:30, cat:"medium", kw:['party','creative','quick-play'],
+    awards:[] },
 ];
 
 /** The entries with their bundled box art, where `npm run wishlist-art` has fetched it. */
