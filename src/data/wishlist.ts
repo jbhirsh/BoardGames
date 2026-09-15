@@ -128,6 +128,9 @@ const ENTRIES: WishlistItem[] = [
   { id:"glyphics", bgg:373991,                name:"Glyphics",                players:"3+",   type:"party",      desc:"Charades for people who can't draw. Pick a prompt from your card and build it out of the forty-odd plastic shapes in the box while the table has sixty seconds to shout out what it is — builder and guesser both score, and phrases are worth double. By Eric Olsen, who went on to design Flip 7, and it takes as many players as you can fit round the table.", yt:"how to play Glyphics board game tutorial",
     min:3, max:99, dur:"20–30 min", mins:30, cat:"medium", kw:['party','creative','quick-play'],
     awards:[] },
+  { id:"lovestruck", bgg:395306,              name:"Lovestruck",              players:"5–10", type:"party",      desc:"A reality dating show as a social deduction game. Every contestant swears they are looking for love, but some are only chasing screen time — go on dates, play action cards to stir up love or drama, and work out who means it before the season finale makes you couple up. Guess wrong, or let the viewing figures hit ten million, and the fame-hunters win. Five to ten players, and the table talk is the whole game.", yt:"how to play Lovestruck board game tutorial",
+    min:5, max:10, dur:"45–90 min", mins:75, cat:"long", kw:['party','social','deduction','bluffing'],
+    awards:[] },
 ];
 
 /** The entries with their bundled box art, where `npm run wishlist-art` has fetched it. */
