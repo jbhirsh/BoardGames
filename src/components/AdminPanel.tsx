@@ -2,8 +2,10 @@ import { useEffect, useId, useState, type FormEvent } from 'react';
 import { WISHLIST_SECTIONS, WISHLIST_TYPES } from '../data/keywords';
 import { getDisplayName, setDisplayName } from '../hooks/displayName';
 import { useWishlistItems } from '../context/useWishlistItems';
+import { alreadyListed } from '../utils/alreadyListed';
 import { isValidDisplayName, NAME_HINT } from '../utils/displayName';
 import { addGame, decideSuggestion, fetchPending, type PendingSuggestion } from '../hooks/adminApi';
+import AdminItemControls from './AdminItemControls';
 
 type Queue = { kind: 'loading' } | { kind: 'ready'; items: PendingSuggestion[] } | { kind: 'error' };
 
@@ -89,6 +91,13 @@ function AddGameForm() {
       setStatus({ kind: 'error', message: NAME_HINT });
       return;
     }
+    // The server only compares against stored suggestions, so without this a
+    // compiled-in game would be stored, hidden, and need removing again.
+    const known = alreadyListed(game);
+    if (known) {
+      setStatus({ kind: 'error', message: known });
+      return;
+    }
     setStatus({ kind: 'sending' });
     const result = await addGame({ game: game.trim(), name: trimmedName, note: note.trim(), type: type || null });
     if (!result.ok) {
@@ -131,12 +140,44 @@ function AddGameForm() {
   );
 }
 
+/**
+ * Stored entries the wishlist leaves out because a compiled-in entry already
+ * covers that game. Without this they would have no card, and so no controls:
+ * invisible on the page but still returned by the API on every load.
+ */
+function HiddenDuplicates() {
+  const { hidden } = useWishlistItems();
+  if (hidden.length === 0) return null;
+  return (
+    <div className="admin-queue" aria-live="polite">
+      <h4 className="admin-subtitle">Already on the wishlist</h4>
+      <p className="admin-muted">
+        {hidden.length === 1
+          ? 'Stored entry for a game the wishlist already lists, so it is hidden from the page. Remove it to clear the record, or rename it if it is really a different game.'
+          : 'Stored entries for games the wishlist already lists, so they are hidden from the page. Remove them to clear the records, or rename one if it is really a different game.'}
+      </p>
+      <ul className="admin-list">
+        {hidden.map((item) => (
+          <li key={item.id} className="admin-item">
+            <div className="admin-item-main">
+              <span className="admin-item-game">{item.name}</span>
+              {item.suggestedBy && <span className="admin-muted"> from {item.suggestedBy}</span>}
+            </div>
+            <AdminItemControls item={item} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 /** Everything the signed-in owner can do that isn't tied to one card. */
 export default function AdminPanel() {
   return (
     <section className="admin-panel" aria-label="Owner tools">
       <h3 className="admin-title">Owner tools</h3>
       <PendingQueue />
+      <HiddenDuplicates />
       <AddGameForm />
     </section>
   );

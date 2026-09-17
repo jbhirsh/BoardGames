@@ -317,4 +317,32 @@ describe('Wishlist', () => {
     // Compiled-in entries are edited in the source, not here.
     expect(screen.queryByRole('button', { name: `Edit ${WISHLIST[0].name}` })).not.toBeInTheDocument();
   });
+
+  it('shows a game once when it is both compiled in and suggested', async () => {
+    const compiled = WISHLIST[0];
+    // Loose match: the stored record's name differs only in case and punctuation.
+    mockVotes({}, [], [{ id: 'sug-dup', game: `${compiled.name.toLowerCase()}!`, name: 'Alex', note: '' }]);
+    renderWishlist();
+    await screen.findByText(compiled.name);
+    expect(screen.queryAllByText(`${compiled.name.toLowerCase()}!`)).toHaveLength(0);
+    expect(document.querySelectorAll('[data-item-id="sug-dup"]')).toHaveLength(0);
+    // The hidden record must not inflate the count either.
+    expect(screen.getByText(`${WISHLIST.length} games`)).toBeInTheDocument();
+  });
+
+  it('offers the owner controls for a suggestion the compiled list already covers', async () => {
+    const compiled = WISHLIST[0];
+    const fetchSpy = mockVotes({}, [], []);
+    fetchSpy.mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.startsWith('/api/suggestions?action=pending')) return jsonResponse({ items: [] });
+      if (url.startsWith('/api/suggestions')) return jsonResponse({ items: [{ id: 'sug-dup', game: compiled.name, name: 'Alex', note: '' }] });
+      return jsonResponse({ counts: {}, myVotes: [] });
+    });
+    renderWishlist('/?c=want', false, true);
+    expect(await screen.findByText('Already on the wishlist')).toBeInTheDocument();
+    // The compiled entry keeps its card; only the stored record gets controls.
+    expect(screen.getByRole('button', { name: `Remove ${compiled.name}` })).toBeInTheDocument();
+    expect(screen.getAllByText(compiled.name)).toHaveLength(2);
+  });
 });

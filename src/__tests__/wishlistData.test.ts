@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { WISHLIST } from '../data/wishlist';
 import { KW } from '../data/keywords';
+import { normalizeName } from '../utils/normalizeName';
 import { durationCategory } from '../hooks/useSuggestions';
 
 /** The wishlist shares the collection's filter fields; keep them coherent. */
@@ -21,6 +22,13 @@ describe('wishlist data', () => {
       expect(w.img, w.id).toMatch(new RegExp(`^/images/wishlist/${w.id}\\.(jpg|png|webp)$`));
       expect(existsSync(join('public', w.img!)), w.img).toBe(true);
     }
+  });
+
+  it('gives every entry a name no other entry matches', () => {
+    // mergeWishlist keys on the normalised name, so two entries sharing one
+    // would make an approved suggestion vanish behind the wrong game.
+    const keys = WISHLIST.map((w) => normalizeName(w.name));
+    expect(new Set(keys).size).toBe(keys.length);
   });
 
   it.each(WISHLIST.map((w) => [w.id, w] as const))('%s has coherent filter fields', (_id, w) => {

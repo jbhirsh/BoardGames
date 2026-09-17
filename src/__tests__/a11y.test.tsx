@@ -7,6 +7,7 @@ import App, { HomePage } from '../App';
 import WordCheckerPage from '../components/WordCheckerPage';
 import ScoreCalculatorPage from '../components/ScoreCalculatorPage';
 import SignInPage from '../components/SignInPage';
+import { WISHLIST } from '../data/wishlist';
 
 expect.extend(matchers);
 
@@ -46,7 +47,12 @@ describe('accessibility', () => {
       const url = String(input);
       if (url.startsWith('/api/auth')) return json({ admin: true });
       if (url.startsWith('/api/suggestions?action=pending')) return json({ items: [{ id: 'sug-p', game: 'Ark Nova', name: 'Sam', note: 'Zoo building' }] });
-      if (url.startsWith('/api/suggestions')) return json({ items: [{ id: 'sug-r', game: 'Root', name: 'Alex', note: '', details: { min: 2, max: 4, mins: 90, desc: 'Woodland war.', kw: ['strategy'] } }] });
+      if (url.startsWith('/api/suggestions')) return json({ items: [
+        { id: 'sug-r', game: 'Root', name: 'Alex', note: '', details: { min: 2, max: 4, mins: 90, desc: 'Woodland war.', kw: ['strategy'] } },
+        // Duplicates a compiled entry, so it renders in the owner tools
+        // instead of on a card; scan that list too.
+        { id: 'sug-d', game: WISHLIST[0].name, name: 'Alex', note: '' },
+      ] });
       return json({ counts: {}, myVotes: [] });
     });
     try {
