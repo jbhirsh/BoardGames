@@ -62,6 +62,10 @@ describe('App', () => {
     renderApp();
     // Both sections have loaded (the wishlist body mounts after suggestions).
     expect(await screen.findByText('Lost Cities')).not.toBeVisible();
+    // The votes request is fired by an effect in that same commit, so the row
+    // can be in the DOM a tick before it goes out; wait for it, or the
+    // baseline races it and the toggle looks like it refetched.
+    await waitFor(() => expect(fetchSpy.mock.calls.some((c) => String(c[0]).startsWith('/api/votes'))).toBe(true));
     const requestsAfterLoad = fetchSpy.mock.calls.length;
 
     fireEvent.click(screen.getByRole('button', { name: 'We want' }));
