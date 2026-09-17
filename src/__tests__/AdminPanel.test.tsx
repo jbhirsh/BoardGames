@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import AdminPanel from '../components/AdminPanel';
+import { AuthContext } from '../context/authContextValue';
 import { WishlistContext } from '../context/wishlistContextValue';
+import { WISHLIST } from '../data/wishlist';
+import type { WishlistItem } from '../data/types';
 
 function jsonResponse(body: unknown, ok = true): Response {
   return { ok, json: async () => body } as unknown as Response;
@@ -21,9 +24,20 @@ function mockApi(pending: unknown = { items: PENDING }, mutation: Response = jso
   });
 }
 
-function renderPanel() {
+const HIDDEN: WishlistItem = {
+  id: 'sug-9', name: 'Glyphics', desc: 'Jess thinks we should try this one.', yt: '', players: '',
+  min: 1, max: 99, dur: '', mins: 0, cat: 'medium', kw: [], type: 'suggested', awards: [],
+  suggestedBy: 'Jess', source: 'friend',
+};
+
+function renderPanel(hidden: WishlistItem[] = []) {
   const reload = vi.fn();
-  render(<WishlistContext.Provider value={{ items: [], loaded: true, reload }}><AdminPanel /></WishlistContext.Provider>);
+  const auth = { admin: true, loaded: true, requestLink: vi.fn(), logout: vi.fn() };
+  render(
+    <AuthContext.Provider value={auth}>
+      <WishlistContext.Provider value={{ items: [], hidden, loaded: true, reload }}><AdminPanel /></WishlistContext.Provider>
+    </AuthContext.Provider>,
+  );
   return reload;
 }
 
@@ -81,12 +95,13 @@ describe('AdminPanel', () => {
     const reload = renderPanel();
     const form = await screen.findByRole('form', { name: 'Add a game' });
     expect(within(form).getByLabelText('Added by')).toHaveValue('Jess H');
-    fireEvent.change(within(form).getByLabelText('Game'), { target: { value: ' Ark Nova ' } });
+    // A game the compiled wishlist doesn't already carry; the form refuses those.
+    fireEvent.change(within(form).getByLabelText('Game'), { target: { value: ' Faraway ' } });
     fireEvent.change(within(form).getByLabelText('Section'), { target: { value: 'heavy' } });
-    fireEvent.change(within(form).getByLabelText(/Note/), { target: { value: 'Zoo building' } });
+    fireEvent.change(within(form).getByLabelText(/Note/), { target: { value: 'Card drafting' } });
     fireEvent.click(within(form).getByRole('button', { name: 'Add to wishlist' }));
-    await waitFor(() => expect(within(form).getByRole('status')).toHaveTextContent('Ark Nova is on the wishlist.'));
-    expect(postBodies(spy)).toEqual([{ action: 'add', game: 'Ark Nova', name: 'Jess H', note: 'Zoo building', type: 'heavy' }]);
+    await waitFor(() => expect(within(form).getByRole('status')).toHaveTextContent('Faraway is on the wishlist.'));
+    expect(postBodies(spy)).toEqual([{ action: 'add', game: 'Faraway', name: 'Jess H', note: 'Card drafting', type: 'heavy' }]);
     expect(reload).toHaveBeenCalledTimes(1);
     expect(within(form).getByLabelText('Game')).toHaveValue('');
   });
@@ -114,5 +129,40 @@ describe('AdminPanel', () => {
     fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Root' } });
     fireEvent.submit(form);
     await waitFor(() => expect(within(form).getByRole('status')).toHaveTextContent('Root is already on the list'));
+  });
+
+  it('lists a stored entry the compiled wishlist already covers, with its controls', async () => {
+    mockApi({ items: [] });
+    renderPanel([HIDDEN]);
+    expect(await screen.findByText('Already on the wishlist')).toBeInTheDocument();
+    expect(screen.getByText(/Stored entry for a game the wishlist already lists/)).toBeInTheDocument();
+    expect(screen.getByText('Glyphics')).toBeInTheDocument();
+    expect(screen.getByText(/from Jess$/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove Glyphics' })).toBeInTheDocument();
+  });
+
+  it('reads as a list when more than one entry is held back', async () => {
+    mockApi({ items: [] });
+    renderPanel([HIDDEN, { ...HIDDEN, id: 'sug-8', name: 'Lovestruck', suggestedBy: undefined }]);
+    expect(await screen.findByText(/Stored entries for games the wishlist already lists/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove Lovestruck' })).toBeInTheDocument();
+    expect(screen.queryByText(/from Jess$/)).toBeInTheDocument();
+  });
+
+  it('refuses to add a game the wishlist already lists, before posting', async () => {
+    const spy = mockApi({ items: [] });
+    renderPanel();
+    const form = await screen.findByRole('form', { name: 'Add a game' });
+    fireEvent.change(within(form).getByLabelText('Game'), { target: { value: WISHLIST[0].name.toUpperCase() } });
+    fireEvent.submit(form);
+    expect(within(form).getByRole('status')).toHaveTextContent(`${WISHLIST[0].name} is already on the wishlist.`);
+    expect(postBodies(spy)).toEqual([]);
+  });
+
+  it('says nothing about duplicates when there are none', async () => {
+    mockApi({ items: [] });
+    renderPanel();
+    expect(await screen.findByText('Nothing waiting.')).toBeInTheDocument();
+    expect(screen.queryByText('Already on the wishlist')).not.toBeInTheDocument();
   });
 });

@@ -1,20 +1,7 @@
 import { useId, useState, type FormEvent } from 'react';
 import { getDisplayName, setDisplayName } from '../hooks/displayName';
 import { isValidDisplayName, NAME_HINT } from '../utils/displayName';
-import { normalizeName } from '../utils/normalizeName';
-import { GAMES } from '../data/games';
-import { WISHLIST } from '../data/wishlist';
-
-/** Games already owned or already on the wishlist don't need suggesting. */
-function alreadyListed(game: string): string | null {
-  const key = normalizeName(game);
-  if (!key) return null;
-  const owned = GAMES.find((g) => normalizeName(g.name) === key);
-  if (owned) return `We already own ${owned.name}.`;
-  const wanted = WISHLIST.find((w) => normalizeName(w.name) === key);
-  if (wanted) return `${wanted.name} is already on the wishlist.`;
-  return null;
-}
+import { alreadyListed } from '../utils/alreadyListed';
 
 type Status = { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent'; game: string } | { kind: 'error'; message: string };
 

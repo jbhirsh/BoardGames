@@ -19,7 +19,7 @@ function renderControls(over: Partial<WishlistItem> = {}, admin = true) {
   const auth = { admin, loaded: true, requestLink: vi.fn(), logout: vi.fn() };
   const { container } = render(
     <AuthContext.Provider value={auth}>
-      <WishlistContext.Provider value={{ items: [], loaded: true, reload }}>
+      <WishlistContext.Provider value={{ items: [], hidden: [], loaded: true, reload }}>
         <AdminItemControls item={{ ...item, ...over }} />
       </WishlistContext.Provider>
     </AuthContext.Provider>,
