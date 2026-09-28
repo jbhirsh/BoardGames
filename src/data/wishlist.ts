@@ -131,6 +131,9 @@ const ENTRIES: WishlistItem[] = [
   { id:"lovestruck", bgg:395306,              name:"Lovestruck",              players:"5–10", type:"party",      desc:"A reality dating show as a social deduction game. Every contestant swears they are looking for love, but some are only chasing screen time — go on dates, play action cards to stir up love or drama, and work out who means it before the season finale makes you couple up. Guess wrong, or let the viewing figures hit ten million, and the fame-hunters win. Five to ten players, and the table talk is the whole game.", yt:"how to play Lovestruck board game tutorial",
     min:5, max:10, dur:"45–90 min", mins:75, cat:"long", kw:['party','social','deduction','bluffing'],
     awards:[] },
+  { id:"herd-mentality", bgg:311322,          name:"Herd Mentality",          players:"4–20", type:"party",      desc:"A question is read out, everyone writes an answer in secret, and the goal is to agree with the herd rather than be right. Match the most common answer and you take a cow; be the only one who went your own way and you are stuck with the Pink Cow, which stops you winning until someone else earns it. First to eight cows wins. Nothing to teach, twenty minutes, and it plays from four to twenty, so it holds up when the whole party wants in.", yt:"how to play Herd Mentality party game tutorial",
+    min:4, max:20, dur:"20–30 min", mins:30, cat:"medium", kw:['party','social','family'],
+    awards:[] },
 ];
 
 /** The entries with their bundled box art, where `npm run wishlist-art` has fetched it. */

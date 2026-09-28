@@ -16,6 +16,7 @@ export const WISHLIST_ART: Record<string, string> = {
   'flip-7': '/images/wishlist/flip-7.jpg',
   'glyphics': '/images/wishlist/glyphics.jpg',
   'harmonies': '/images/wishlist/harmonies.png',
+  'herd-mentality': '/images/wishlist/herd-mentality.png',
   'just-one': '/images/wishlist/just-one.png',
   'lost-cities': '/images/wishlist/lost-cities.jpg',
   'love-letter': '/images/wishlist/love-letter.jpg',
