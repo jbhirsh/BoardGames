@@ -51,7 +51,7 @@ describe('App', () => {
 
     renderApp('/?c=want');
     expect(await screen.findByText('Lost Cities')).toBeVisible();
-    expect(screen.getByText('Dominion')).toBeVisible();
+    expect(screen.getByText('Splendor')).toBeVisible();
     expect(screen.getByText(/Our Collection/)).not.toBeVisible();
     expect(document.querySelectorAll('#collection')).toHaveLength(1);
     expect(document.getElementById('collection')).toHaveClass('wishlist');

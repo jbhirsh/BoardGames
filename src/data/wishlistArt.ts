@@ -10,7 +10,6 @@ export const WISHLIST_ART: Record<string, string> = {
   'cascadia': '/images/wishlist/cascadia.jpg',
   'decrypto': '/images/wishlist/decrypto.jpg',
   'dnup': '/images/wishlist/dnup.jpg',
-  'dominion': '/images/wishlist/dominion.jpg',
   'everdell': '/images/wishlist/everdell.png',
   'exploding-kittens-board-game': '/images/wishlist/exploding-kittens-board-game.jpg',
   'flip-7': '/images/wishlist/flip-7.jpg',
