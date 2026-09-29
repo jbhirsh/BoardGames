@@ -5,7 +5,7 @@ Guidance for Claude Code (claude.ai/code) when working in this repository.
 ## What this is
 
 **The Game Room** — a single-page app for browsing a personal board game
-collection. Filter and sort 26 games, get a random pick, read bundled rule
+collection. Filter and sort 28 games, get a random pick, read bundled rule
 PDFs, ask an AI rules assistant, tally a 7 Wonders score, check whether a word
 is playable in Bananagrams, and vote on a wishlist. React 19 + TypeScript SPA
 built with Vite, deployed on Vercel with a small serverless API.

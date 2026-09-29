@@ -1,0 +1,4506 @@
+Introduction ◄
+Page 1► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Complete Rules for Dominion
+and All Its Expansions
+I. Introduction and Setup .......................................................1
+Introduction ......................................................................1
+Guide to this document.....................................................2
+Published games ...............................................................2
+Overview of the game ......................................................3
+Components of the game ..................................................4
+Reading a card ..................................................................6
+Basic setup........................................................................8
+Special setup.....................................................................8
+Setup with an app ...........................................................11
+II. Game Rules: Essential Rules ..........................................12
+Your turn ........................................................................12
+Locations in the game.....................................................14
+Game end........................................................................15
+Playing a card .................................................................15
+Terms used on cards .......................................................15
+III. Game Rules: Basic Rules ..............................................17
+Card abilities...................................................................17
+Resolving effects ............................................................18
+Discarding cards .............................................................19
+Gaining a card.................................................................20
+Moving cards from your deck ........................................20
+Revealing or looking at cards .........................................20
+Reaction cards ................................................................20
+Basic timing rules ...........................................................21
+Advanced timing rules....................................................24
+IV. Game Rules: Additional Rules......................................27
+New editions and errata ..................................................27
+Duration cards ................................................................28
+Victory point tokens .......................................................29
+Potions / Debt .................................................................29
+Coffers and Villagers......................................................30
+Favors / Overpaying .......................................................30
+Exchanging / Reserve cards / Exile ................................31
+Events and Projects.........................................................32
+Landmarks and Allies.....................................................33
+Ways...............................................................................33
+Traits / Prophecies ..........................................................34
+Adventures tokens ..........................................................35
+Boons and Hexes ............................................................35
+States and Artifacts.........................................................36
+Night cards / Shadow cards ............................................36
+Split piles (Rotate, Pile type and cost)............................37
+V. Overviews and Summaries .............................................38
+Overviews of timing of abilities .....................................38
+Summary of your turn ....................................................43
+Summary of player activities..........................................43
+Summary of timing rules ................................................44
+Common mistakes ..........................................................44
+VI. Card and Token Reference............................................45
+Common effects..............................................................45
+Card Reference ...............................................................56
+Previous versions of some cards...................................170
+VII. Detailed Timing for Certain Cards ............................179
+VIII. Index.........................................................................184
+I. INTRODUCTION AND SETUP
+Introduction
+IntroductionDominion was created by Donald X. Vaccarino
+and is published by Rio Grande Games. The origi-
+nal game was released in 2008, and to date 16
+expansions have been released. (Also, in 2016 the
+base game and first expansion were released in
+Second Editions, with certain cards replaced with
+new ones; in 2022 three other expansions got this
+treatment, and one in 2024.) This document, Com-
+plete Rules for Dominion and All Its Expansions,
+was compiled and edited by me, Nick Knutsen.
+Most of the language in this document (except for
+quotes from texts in the actual game, such as card
+texts) was authored by me, while some of it was
+inspired by or partially quoted from the published
+rulebooks.
+The idea behind this document is to have one place
+where all the rules are collected—both from pub-
+lished rulebooks and from rulings that the game
+designer has made elsewhere—and where you can
+learn and easily understand how to play Dominion
+while everything is stated unambiguously, clearly
+and accurately. The small-print indented text is
+meant as additional information and clarifications,
+and is not necessary to learn to play the game.
+The designer has made several official rulings on
+BoardGameGeek and on the Dominion Strategy Forum,
+and this is where I have found them.
+Several of the rulings are also compiled in the Complete
+and All-Encompassing Dominion FAQ on BoardGameGeek,
+and here are also links included to the original rulings by
+the designer. Note that this FAQ is no longer maintained.
+Dominion and all associated published materials men-
+tioned in this document, as well as all artwork in this
+document is ©2008-2024 Rio Grande Games. Game de-
+sign by Donald X. Vaccarino. This document has been ap-
+proved for free-use publication by Rio Grande Games with
+permission from the game’s creator. Nick Knutsen is the
+creator of all original language in this document.
+Thanks to Polk5440 and others on f.ds, and Stig, for sug-
+gestions, m_knox on BGG for most expansion icons, and
+special thanks to Erika. Introduction
+
+Reading a card ◄
+Page 7► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Types
+A card’s types (e.g. Action, Treasure, Victory)
+are written on the bottom of the card. For example,
+an Action card is a card that has the type Action,
+regardless of whether that card also has other
+types.
+Cards are often referred to as follows: Treasure means
+Treasure card, Attack means Attack card, Reaction means
+Reaction card, etc. Action when referring to a card means
+Action card, but otherwise means available Action in your
+Action pool, see YOUR TURN § II.
+The frame color (on the top and bottom) also indi-
+cates the type. Dominion has these card types:
+Action (white frame) — The card may be played
+in your Action phase, see YOUR TURN § II.
+Treasure (yellow frame) — The card may be
+played in your Buy phase, see YOUR TURN § II.
+Reaction (blue frame) — The card describes when
+and how it can be used (even outside your turn).
+See REACTION CARDS § III.
+Victory (green frame) — The card is worth if
+you have it at the end of the game.
+Curse (purple frame) — The card is worth −1
+if you have it at the end of the game.
+Attack — The card often harms the other players
+when played, and certain cards refer to this
+type, mostly Reactions.
+Duration (orange frame) — The card isn’t dis-
+carded from play as normal if it still has un-
+resolved effects. See DURATION CARDS § IV.
+Ruins (brown frame) — The Ruins pile is in-
+cluded if a Looter is in the game. See SPECIAL
+SETUP : DARK AGES.
+Traveller — The card can be upgraded into an-
+other card. See EXCHANGING § IV.
+Reserve (tan frame) — The card is put on your
+Tavern mat when played. Most Reserve cards
+can be called from the Tavern mat. See
+RESERVE CARDS § IV.
+Night (black frame) — The card may be played
+in your Night phase, see NIGHT CARDS § IV.
+Shadow — The card is shuffled to the bottom of
+your deck, and may be played from your
+deck, see SHADOW CARDS § IV.
+The following types mainly allow the card to be
+referred to by other cards or special setup rules.
+Doom, Fate, Heirloom, Liaison, Looter, Omen,
+Shelter (red frame), Spirit, Zombie — have
+special setup rules. Heirlooms and Shelters may
+be part of the players’ starting decks. See
+SPECIAL SETUP.
+Augur, Castle, Clash, Fort, Knight, Loot, Odys-
+sey, Prize, Reward, Townsfolk, Wizard —
+indicate that the cards belong to the same pile.
+See SPECIAL SETUP.
+Command, Gathering — no special rules.
+Note: A card with multiple types has a frame of mixed
+color. However, Actions that are also another type are
+usually only the color of the other type, except for Ac-
+tions that are also Victory, Shelter, Treasure or Night, to
+make it clear that these cards can be played as Actions.
+
+Card abilities
+Text and symbols in the middle of the card are the
+card’s abilities, which usually come into effect
+when the card is played. See TERMS USED ON
+CARDS § II and CARD ABILITIES § III.
+Treasure cards have their Coin value (e.g. ) in
+the middle of the card and in both upper corners.
+This is produced when the Treasure is played.
+Victory and Curse cards have their Victory point
+value (e.g. 6 ) in the middle of the card. This is
+counted at the end of the game if you have the
+card.
+In the first edition of the Base Cards set, these values are
+only found in the corners, not in the middle of the card.
+
+Expansion symbol and card artist
+In the lower right corner is the expansion symbol. See
+PUBLISHED GAMES.
+At the bottom left, in the black footer, is the name of the
+artist who created the card illustration. (The standard
+frame artwork on every card and the Treasure and Victory
+point icons were made by Matthias Catrein.) 
+
+Reading a card ◄
+Page 8► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Changing card properties
+Some abilities (such as Bridge, Highway and
+your − Cost token) can cause cards to have an-
+other cost than the printed cost at periods during
+the game. Costs can’t go below . (The costs of
+Events and Projects cannot be changed.)
+Your Estate token can change the abilities and types of
+your Estates. Capitalism and Enlightenment can change
+the types of certain cards. Coppersmith and Envious can
+change the play ability of certain Treasures. Charlatan
+changes the play ability and type of Curse.
+The pre-2019 version of Band of Misfits (and Overlord)
+could change its own abilities, name, cost and types.
+The pre-2019 version of Lantern could change the play
+ability of Border Guard.  Readingacard
+Basic setup
+BasicsetupEach player takes 7 Coppers and 3 Estates to form
+their starting deck.
+The cards in the Supply are the cards that are
+available to be bought. Place the following piles
+of cards face up on the table to form the Supply:
+Basic Treasure card piles: Copper (60 cards
+minus the cards players start with), Silver (40
+cards), and Gold (30 cards).
+Basic Victory card piles: 12 Estates, 12 Duch-
+ies, and 12 Provinces.
+Curses: 10 cards in a 2-player game. Add an-
+other 10 to the pile for each additional player.
+10 Kingdom card piles: You can select which
+Kingdom card piles to include in any way you
+choose, but here’s how to select them ran-
+domly: Shuffle the Randomizer cards of the
+Kingdom cards you have (or want to include),
+and draw 10. Each pile of Victory cards should
+include 12 cards; all other Kingdom card piles
+should include 10 cards.
+Also place the Trash card or Trash mat to indicate
+the trash pile (or “the trash”).
+If playing with 2 players: Use 8 cards instead of
+12 in all Victory piles—both basic and Kingdom
+card piles.
+If playing with 5 or 6 players: Use 3 more Prov-
+inces per player (so either 15 or 18). It’s recom-
+mended to use more Coppers, Silvers and Golds;
+with the Treasures from Intrigue (1st ed.), Base
+Cards or another copy of the Base game, you have
+twice as many.
+You may also use more basic Treasures when playing with
+less than 5 players. This should be decided during setup;
+don’t add more Treasure cards during the game.
+Randomly choose the starting player. When play-
+ing several games, the starting player is the player
+to the left of the winner of the last game. If there
+was a tie in the previous game, randomly choose
+the starting player from the players that didn’t win.
+Players take turns in clockwise order.
+Each player shuffles their deck and draws 5
+cards to form their starting hand. Basicsetup
+Special setup
+Alchemy
+Special setupIf any Kingdom card has in its cost, include the
+16 Potion cards in the Supply. 
+Prosperity
+Determine randomly whether to play with Colo-
+nies, based on the proportion of cards from Pros-
+perity among the 10 random Kingdom cards. This
+can be done by checking whether one of the Ran-
+domizer cards is from Prosperity, e.g. the first card
+drawn. (It should not be the same card you check
+for Shelters.) If Colonies are used, include piles
+of 12 Colonies and 12 Platinums in the Supply. (In
+a 2-player game, use 8 Colonies.)
+If Trade Route (not included in 2nd Edition) is in
+the game: Put a Coin token on each Victory Sup-
+ply pile, and put the Trade Route mat on the table.
+Regarding identifying Victory piles, see SPLIT PILES: PILE
+TYPE AND COST § IV. 
+Cornucopia
+If Young Witch is in the game: Choose (randomly)
+an extra Kingdom card pile costing or and
+add it to the Supply. Cards from that pile are Bane
+cards (referred to by Young Witch).
+
+Your turn ◄
+Page 12► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+II. GAME RULES: ESSENTIAL RULES
+Your turn
+Yourt urnYour turn consists of the Action phase, followed
+by the Buy phase, followed by the Clean-up phase.
+You start your turn with 1 Action and 1 Buy. This
+means you can play one Action card in your Ac-
+tion phase, and buy one card in your Buy phase.
+A clearer way to view this might be that you have
+three pools in the game: your Action pool, your
+Buy pool and your money pool. Each turn
+always starts like this: Your Action pool has 1
+Action, your Buy pool has 1 Buy, and your
+money pool is empty. In this document we will
+use this terminology. 
+A—Action phase
+You may play an Action card from your hand.
+Follow the instructions on the card. See PLAYING A
+CARD. This uses up one Action from your Action
+pool.
+Certain cards add one or more Actions to your
+Action pool. These cards say +1 Action,
++2 Actions, etc. If you have an Action left in your
+Action pool after you have fully resolved the
+last Action card you played from your hand, you
+may play another Action card. You may keep
+playing Actions as long as your Action pool is
+not empty. 
+B—Buy phase
+Your Buy phase consists of two parts.
+In the first part of your Buy phase, you may
+play as many Treasure cards as you like from
+your hand, in any order. For each card, follow the
+instructions on the card. Treasures produce
+(Coins), which are added to your money pool,
+but may also do other things. See PLAYING A
+CARD.
+The Action card Market tells
+you to draw one card,
+then add 1 to your Action
+pool, then add 1 to your
+Buy pool, and then add
+to your money pool.
+Individual playmat showing your play area and what you do on your turn. (Your draw pile is called your deck.)
+Published by Spielbox magazine on behalf of Hans im Glück (issues 1 and 2 in 2010).
+
+Your turn ◄
+Page 13► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+In the second part of your Buy phase, you may
+buy a card by using (paying) any of the you
+produced this turn. The card can cost no more
+than the in your money pool, but may cost
+less. You may only buy a card that is available in
+the Supply (see LOCATIONS IN THE GAME: THE
+SUPPLY). This uses up one Buy from your Buy
+pool.
+You can buy any card in the Supply, even Curse or Ruins
+cards. A card costing can be bought even when you
+have no (but you still have to use a Buy).
+After buying the card, you gain it, which usually
+means you take it from the Supply and place it in
+your discard pile. See GAINING A CARD § III.
+You can’t play any Treasures in the second part
+of your Buy phase (i.e. after buying a card).
+Certain cards add one or more Buys to your Buy
+pool. These cards say +1 Buy etc. If you have a
+Buy left in your Buy pool, you may buy another
+card, for whatever you have left in your
+money pool. You may keep buying cards as
+long as your Buy pool is not empty. 
+C—Clean-up phase
+Discard all the cards in play (see LOCATIONS IN
+THE GAME: PLAY AREA—“IN PLAY”) and all cards
+left in your hand. Discard these cards in any
+order, but when you discard your hand, discard
+it all at once. The order in which you discard the
+cards in play can matter for card abilities that
+trigger on discard. See DISCARDING CARDS § III.
+Then draw a new hand of 5 cards from your
+deck. See MOVING CARDS FROM YOUR DECK § III.
+
+More about your turn
+Action pool, Buy pool and money pool
+During your turn, you can keep track of the contents of
+these pools by observing the cards you have played.
+However, you should keep a count of how many Actions
+you have left. Also, sometimes a card will no longer be in
+the play area in front of you, so you need to remember
+if such a card gave you Actions, or Buys. Some cards
+give you several choices; you might want to indicate what
+such cards produced by placing them in different ways.
+The contents of your pools persist until your turn ends.
+(Buys and produced in your Action phase can be used
+in your Buy phase.) Also see COMMON EFFECTS: ACTIONS IN
+YOUR BUY PHASE § VI, and see Capital 4, Cavalry 2, Continue
+2, Diadem 2, Flourishing Trade 2, Innovation 14, Launch 2
+and Villa 3 in the CARD REFERENCE § VI.
+Some cards can give you Actions, Buys or during an-
+other player’s turn. See COMMON EFFECTS: EFFECTS WHEN IT’S
+NOT YOUR TURN § VI for more on this.
+Action phase
+In your Action phase, you may also spend Villager to-
+kens. See COFFERS AND VILLAGERS § IV.
+Any start-of-turn abilities happen in the beginning of
+your Action phase.
+Buy phase
+You can’t use the card’s ability when you buy it or gain
+it (except if it has a when-buy or a when-gain ability,
+see CARD ABILITIES § III).
+In the second part of your Buy phase, you may also buy
+Events and Projects. See EVENTS AND PROJECTS, and also
+POTIONS, DEBT, COFFERS AND VILLAGERS, OVERPAYING (all §
+IV).
+Clean-up phase
+Duration cards are not always discarded in Clean-up,
+see DURATION CARDS § IV.
+If other players have cards in their play area in your
+Clean-up phase, they are discarded now too. This can
+happen with Berserker, Duplicate and certain Reactions
+and Durations (see COMMON EFFECTS: REACTION THAT PLAYS
+ITSELF and “NEXT TIME” DURATIONS § VI).
+In Clean-up, even though technically (for the sake of tim-
+ing of when-discard abilities) you discard the cards in
+play one by one and cards from your hand in one sepa-
+rate lump, you are allowed to put cards from play on top
+to keep from showing your opponents any of your hand
+cards.
+Night phase
+If any Night cards are in the game, they can be played in
+your Night phase, which comes after your Buy phase. See
+NIGHT CARDS § IV.
+At any time during your turn, you may spend Coffers
+tokens, and you may pay off Debt. See COFFERS AND VIL-
+LAGERS § IV and DEBT § IV.  Your turn
+The Treasure card Treas-
+ure Trove first tells you to
+add to your money
+pool, and then has an
+additional instruction.
+
+Locations in the game ◄
+Page 14► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Locations in the game
+Piles
+Locati onsinthegameA pile is a stack of cards on the table where cer-
+tain cards belong. This includes Kingdom card
+piles, other Supply piles, and non-Kingdom piles.
+If a pile is empty, it still counts as a pile, and
+therefore a card or a token can be placed on it.
+Regarding cards belonging to a pile, see Shelters and
+Heirlooms under COMPONENTS OF THE GAME: NON-KINGDOM
+CARDS § I; SPLIT PILES § IV; EXCHANGING § IV; and Ambassa-
+dor 1, Black Market 6, Panic 7, Swap 2, Way of the Butter-
+fly/Horse 2/1, and the pre-2019 versions of Band of Misfits
+(4+18) and Your Estate token (3+15) in the CARD REFERENCE
+§ VI. 
+The Supply
+The Supply is the default place from which cards
+can be bought or gained. Only the top card of
+each pile is available and can be bought,
+gained or chosen (see SPLIT PILES § IV).
+These piles are in the Supply: Basic Treasure
+cards (Copper, Silver, Gold, Platinum, Potion),
+basic Victory cards (Estate, Duchy, Province,
+Colony), Curse cards, Ruins cards, and Kingdom
+cards (ten piles). The added Kingdom card piles
+for Young Witch and Approaching Army are also
+in the Supply.
+These cards are not in the Supply: Non-kingdom cards
+(see COMPONENTS OF THE GAME: NON-KINGDOM CARDS § I),
+landscape cards, Boons, Hexes, States, Artifacts, the
+Black Market deck, Way of the Mouse’s and Riverboat’s
+set-aside cards, Ferryman’s Kingdom card pile. 
+The trash pile
+When you trash a card, you place it face up in the
+trash pile. The trash pile is not really a pile in
+the sense described above. The cards in the trash
+are not in any particular order. They belong to no
+player and are not part of the Supply. 
+Your cards
+The cards that belong to you are the cards in your
+deck, hand, discard pile or play area, or
+cards set aside by you (including on any of your
+player mats). Boons, Hexes, States and Artifacts
+can never belong to you. 
+Play area—“in play”
+Your play area is the place on the table in front
+of you where you put your played cards. These
+cards are in play. Your deck, your discard pile,
+your hand, and set-aside cards (including on
+any player mats) are not in your play area. Cards
+are in play until they are moved from your play
+area, usually when discarded during Clean-up.
+Calling a card also puts it in play (see RESERVE
+CARDS § IV).
+Boons, Hexes, States and Artifacts are never in play.
+Some cards that are in play say to set aside cards “on
+this” or “under this” (e.g. Crypt); these set-aside cards
+are nevertheless not in play.
+A card that has an effect for “you” while it’s in play, re-
+fers to the player who has it in play; e.g. Lighthouse
+(pre-2022 version). This is clarified in new printings start-
+ing late 2020. 
+Your deck
+Your deck is where you draw cards from. Your
+deck can sometimes be empty; a card or a token
+can be put on an empty deck.
+However, if you need cards from your deck and it’s
+empty, you have to shuffle your discard pile. See
+MOVING CARDS FROM YOUR DECK § III. 
+Open information to all players
+ All cards in the trash
+ The number of cards in all Supply piles and
+non-Supply piles
+ All cards in your play area
+ All cards you have set aside face up (includ-
+ing on any player mats)
+ The number of cards you have set aside face
+down
+ The number of cards in your hand
+ The top card only in your discard pile
+ All your tokens 
+Open information to you only
+ The cards in your hand
+ The cards you have set aside face down
+ The number of cards in your deck
+You normally can’t look through your discard pile. You
+may look through it if an ability lets you count it, or lets
+you choose or take a card that isn’t on top. When looking
+through your discard pile, you may reorder it. Locat ionsint hegame 
+
+Game end ◄
+Page 15► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Game end
+GameendThe game ends at the end of a player’s turn if
+either the pile of Provinces is empty or any three
+Supply piles are empty (see LOCATIONS IN THE
+GAME: THE SUPPLY). If playing with 5 or 6 play-
+ers, it takes four Supply piles. If playing with
+Colonies, the game ends when either the Province
+pile or Colony pile is empty.
+Any after-turn abilities (like extra turns from cards like
+Possession, Outpost and Mission) after this turn are not
+resolved. However, see Fleet 3–4 in the CARD REFERENCE §
+VI.
+Gather all your cards into your deck before scor-
+ing. See LOCATIONS IN THE GAME: YOUR CARDS.
+(When an ability mentions “cards in your deck”,
+this includes all your cards.) Add from your
+Victory cards and Curses, your tokens, and any
+Landmarks and Allies that apply.
+You can end up with a negative score.
+If several players are tied for , the tied player
+who had the fewest turns wins. (Any extra turns
+during the game are not counted.) If they had the
+same number of turns, they share the victory. Gameend
+Playing a card
+Playingacard(ActionorTreasure)When you play a card, do the following. This
+applies to all cards (Action, Treasure, Night).
+ Announce the card you are playing, and place
+it in your play area. (See LOCATIONS IN THE
+GAME: PLAY AREA—“IN PLAY”)
+ Follow the instructions on the card, stopping if
+you reach a dividing line. (See TERMS USED ON
+CARDS § II, CARD ABILITIES § III and RESOLVING
+EFFECTS § III.)
+Sometimes the card can’t be moved to the play area.
+See ADVANCED TIMING RULES: THE “LOSE TRACK” RULE § III for
+more on this.
+Certain cards (like Golem, Throne Room, Vassal, and Herb
+Gatherer) instruct you to play other cards. Playing these
+other cards are then part of resolving the first card. They
+should also be placed in the play area.
+When this document mentions a “played” card, this nor-
+mally means also resolved. However, technically a card
+is considered played after it’s announced. This only mat-
+ters in rare cases (see for instance Kiln 9–10 in the CARD
+REFERENCE § VI).  Pl ayi ng acard(Acti onor Treasure)
+Terms used on cards
++x Action(s)—TermsusedoncardsAdd x to your Action pool. See
+YOUR TURN.
++ (or on Treasure cards: or worth )—Add x
+Coin(s) to your money pool. See YOUR
+TURN.
++x Buy(s)—Add x to your Buy pool. See YOUR
+TURN.
++x Card(s), or draw x card(s)—Draw x card(s)
+from your deck into your hand. See MOVING
+CARDS FROM YOUR DECK § III.
+x or worth x —You get x if you have this
+card at the end of the game.
+discard—Unless otherwise specified, cards are
+discarded from your hand. See DISCARDING
+CARDS § III.
+trash—When trashing a card, place it face up in
+the trash pile.
+gain—See GAINING A CARD § III.
+reveal, look at—See REVEALING OR LOOKING AT
+CARDS § III.
+set aside—When setting aside a card, place it
+face up (unless instructed to place it face down)
+on the table outside of your play area.
+cards cost less—This cost reduction applies to
+all cards in the game (Supply, all players’ cards,
+trash, etc). It does not apply to Events or Pro-
+jects.
+any number, or up to x—This includes zero.
++x —Take x tokens. Also take/add/put —
+See VICTORY POINT TOKENS § IV.
++x Coffers—Put x tokens on your Coffers mat.
+See COFFERS AND VILLAGERS § IV.
++x Coin token(s)—means the same as +x Coffers,
+used on cards in the 1st edition of Guilds.
++x Villager(s)—Put x tokens on your Villagers
+mat. See COFFERS AND VILLAGERS § IV.
++x Favor(s)—Put x tokens on your Favors mat.
+See Favors § IV.
++ —Take x tokens. Also take/add/pay off
+—See DEBT § IV.
+
+Terms used on cards ◄
+Page 16► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
++ —Remove a Sun token from the Prophecy
+card. See PROPHECIES § IV.
+Exile a card—Put the card on your Exile mat.
+Cards in Exile—Exiled cards. See Exile § IV.
+Other terms: (Also see the INDEX in the back.)
+pass—See the entry on Masquerade in the
+CARD REFERENCE § VI.
+overpay—See OVERPAYING § IV.
+exchange—See EXCHANGING § IV.
+call—See RESERVE CARDS § IV.
+receive—See BOONS AND HEXES § IV.
+rotate—See SPLIT PILES: ROTATE § IV.
+play—See PLAYING A CARD.
+buy, pay—See YOUR TURN: B—BUY PHASE.
+name—See COMMON EFFECTS: NAME A CARD §
+VI.
+deck, hand, Supply, trash pile, discard pile, in
+play—See LOCATIONS IN THE GAME.
+cost, name, type—See READING A CARD § I
+The symbol “ ” denotes an unspecified Coin amount.
+(Apprentice and Storyteller said “per ” instead of “per
+”; this is corrected in new 2017–18 editions.)  Termsusedoncards
+* * *
+The next chapter, III. GAME RULES: BASIC RULES,
+lays out the rules in more detail. Reading that
+chapter is necessary to play Dominion without
+making any mistakes. However, in addition to
+what has been described so far, you generally only
+need the rules in the paragraphs marked with a
+golden shield ( ).
+The chapter IV. GAME RULES: ADDITIONAL RULES
+concerns specific mechanics that are presented in
+expansions.
+* * *
+
+Card abilities ◄
+Page 17► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+III. GAME RULES: BASIC RULES
+Card abilities
+Different abilities, and the dividing line
+CardabilitiesA card’s play ability is the set of instructions (or
+effects) that you follow when playing the card.
+All Actions and Treasures have this play ability.
+Certain cards have abilities that happen at other
+times. These cards always tell you when that abil-
+ity triggers. A dividing line separates abilities
+that happen at different times. On Actions and
+Treasures, the topmost ability is always the play
+ability, and any ability beneath a dividing line is
+triggered as described on the card. Also see
+BASIC TIMING RULES.
+For instance, Reaction cards have an ability that only
+applies to reacting with the card (see REACTION CARDS § IV).
+Capital does something when you discard it from play.
+Border Village does something when you gain it. Goons
+has an ability that triggers when it’s in play and you
+buy a card. Most Reserve cards do something when you
+call them (see RESERVE CARDS § IV).
+When a card says “when you trash this” or “when you dis-
+card this”, that’s not a way to trash or discard the card.
+Some other effect has to tell you to trash or discard
+the card in order to trigger that ability. (See BASIC TIM-
+ING RULES: WHEN ABILITIES ARE TRIGGERED AND RESOLVED.) 
+Triggering and resolving abilities
+An ability often consists of several effects.
+When an ability is triggered (see above), you
+follow the instructions (effects) from top to bot-
+tom. This is resolving the ability. When you
+have carried out all the effects, the ability is re-
+solved.
+Sometimes several abilities are triggered at the
+same time. In this case you have to resolve the
+abilities one after the other, in a certain order.
+See BASIC TIMING RULES. 
+Playing a card multiple times
+Throne Room, King’s Court, Counterfeit, Proces-
+sion, Disciple, Royal Carriage, Crown, Ghost,
+Citadel, Scepter, Mastermind, Specialist, Tiara,
+Flagship, King’s Cache, Coronet, Daimyo and
+Practice let you play a card multiple times. These
+are here called throne-rooms. Only the play
+ability (above the dividing line) is resolved
+multiple times.
+Consequently, playing Throne Room + Goons will not let
+you take two tokens when you buy a card. And Throne
+Room + Herbalist (pre-2022 version) will not let you put
+two Treasures onto your deck.
+Completely resolve the play ability of the card
+before playing it again.
+For instance, Throne Room + Warehouse means you first
+draw 3 cards and discard 3 cards, then again draw 3
+and discard 3.
+Remember that playing Throne Room + an Action card
+uses up one less Action than just playing two copies of
+the Action card. The same applies to the other throne-
+rooms that let you play an Action card twice.
+Playing Throne Room + Throne Room will let you play
+two other cards twice each. Playing King’s Court + King’s
+Court will let you play three other cards three times each.
+Also see COMMON EFFECTS: PLAY A CARD MULTIPLE TIMES § VI.
+
+Border Village, a card with a dividing line.
+See BASIC TIMING RULES for more about abilities.
+
+Card abilities ◄
+Page 18► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Setting up a later ability
+Some cards, when you play them, set up an abil-
+ity to trigger later (e.g. Charm, Merchant,
+Scheme and Duration cards). When played mul-
+tiple times with a throne-room (see previous
+section), they set up that ability multiple times.
+For instance, if you play Throne Room + Merchant, you
+get + when you play your first Silver. If you play
+Throne Room + Scheme, in Clean-up you may choose two
+Action cards to put onto your deck.
+Later abilities can also be set up in other ways, e.g.
+Faithful Hound and Horse Traders when you set it aside
+(as a Reaction), and Blessed Village when you gain it.
+Also see ADVANCED TIMING RULES: RESOLVING MULTIPLE ABILI-
+TIES . Cardabilities
+
+Resolving effects
+Effects are immediate
+ResolvingeffectsEffects that produce things like Actions, Buys
+and (see TERMS USED ON CARDS § II), do this
+immediately when they are resolved, and the
+amount produced doesn’t change if the card is
+subsequently moved somewhere else (such as to
+the trash or to a discard pile) or other condi-
+tions are changed. The same goes for effects that
+do something (e.g. draw cards) based on certain
+conditions, and effects that set up later abilities
+(see previous section).
+For instance, a Mining Village gives +2 Actions even if you
+trash it; a Copper produces even if it’s trashed by a
+Counterfeit; a Scheme has its future effects even if it’s
+trashed by a Procession; a Conspirator doesn’t give
++1 Action and +1 Card even if you later play a third Ac-
+tion card; and a City only draws 1 card even if the first
+Supply pile empties later in the turn. 
+Do as much as you can
+You may play a card (or otherwise resolve an
+ability) even though you’re not able to carry out
+all the instructions (effects).
+If there’s a choice between several options, you
+can pick any option, even one you’re not able to
+carry out fully or at all.
+You can for instance choose to gain a Curse when your
+opponent plays Torturer even when the Curse pile is
+empty. You can also choose to pick up all your cards from
+your Native Village mat even if it’s empty.
+However, you must do as much of an effect as
+you can (if it’s not optional). For instance, draw
+as many cards as you can even though you can’t
+draw all the cards instructed to (after shuffling
+your discard pile and adding it); or gain the
+cards you can even though you can’t gain all the
+cards instructed to. The same goes for trashing
+cards, discarding cards, etc.
+However, when instructed to choose a card from a loca-
+tion or group, you must choose one of those cards, if pos-
+sible: You can’t choose to “gain a card from the Supply”
+that isn’t available in the Supply. See GAINING A CARD.
+An effect can’t be carried out if it refers to a card that
+doesn’t exist (see next section), and a card can’t be
+moved (and can only be played by a throne-room) if it
+has been moved from where it’s expected to be (see AD-
+VANCED TIMING RULES: THE “LOSE TRACK” RULE). 
+Scheme’s play ability sets up a later (when-discard)
+ability. (This is the 2016 version, see NEW EDITIONS AND
+ERRATA § IV.)
+See BASIC TIMING RULES for more about abilities.
+
+Resolving effects ◄
+Page 19► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Effects contingent on other effects
+“If you do/did” means that the effect following is
+contingent on the previous one. Effects contin-
+gent on other effects don’t happen if you didn’t
+do the first effect.
+For instance, if you’re not able to trash two cards with
+Trading Post, you don’t gain a Silver, because the effect
+says “if you did”. Feast’s “gain a card” effect and Acting
+Troupe’s “+4 Villagers” effect, on the other hand, are not
+contingent on trashing the card: If you play Throne
+Room + Feast or Acting Troupe, you do that effect twice,
+even though you can only trash the card once.
+You may do the first effect even if you can’t do
+the second.
+For instance, you may react with a Market Square even if
+there are no Golds left in the Supply.
+Certain abilities use phrasings like “do X to” or
+“do X for”. For instance, Mill says: You may dis-
+card 2 cards, for + . This has the same meaning
+as “if you do”: If you didn’t discard 2 cards, you
+don’t get + .
+Several cards that used to say “if you do X” are changed
+in their 2016–18 editions so that they say “do X to” or “do
+X for” instead, e.g. Moat and Baron.
+If an effect refers to a card that doesn’t exist, that effect
+can’t be carried out. For instance, if you’re not able to
+trash a card with Remodel or Upgrade, you can’t gain a
+card. Also see Possession 6 and Trader (pre-2020) 15 in
+the CARD REFERENCE § VI. 
+Abilities are cumulative
+All abilities are cumulative and are in effect on
+every copy of each card (given the stated condi-
+tions). For instance, if you play two Hoards and
+buy a Victory card, you gain two Golds, and
+every copy of Gardens gives you at the end of
+the game.
+However, the ability on Duchess to gain a Duchess is to
+be considered a global rule, not ten rules. The same is
+true for Embargo (1st version) (gain a Curse per token),
+Changeling (exchange a gained card), Shaman (gain a
+card each turn), Ferryman (gain a card from the extra
+pile), Footpad (draw 1 card) and all setup rules printed
+on cards.
+Resolvingeffects
+Discarding cards
+DiscardingcardsDiscard cards by placing them face up in your
+discard pile.
+When an effect tells you to discard cards, you
+must discard them from your hand (unless in-
+structed otherwise).
+When discarding several cards at once, you
+don’t need to show the cards to the other players.
+You can put these cards in any order before dis-
+carding them. You need to show how many cards
+you are discarding if an effect on a card (such
+as Cellar) is contingent on this number.
+Also see YOUR TURN: C—CLEAN-UP PHASE § II and BASIC TIM-
+ING RULES: WHEN-DISCARD ABILITIES. Discardingcards
+Bridge Troll has an ongoing ability and a start-of-
+turn ability, both of which are cumulative. (This is the
+2022 version.)
+See BASIC TIMING RULES: WHEN ABILITIES ARE TRIGGERED AND
+RESOLVED below. See BASIC TIMING RULES for more about
+abilities. Also see DURATION CARDS § IV.
+
+Gaining a card ◄
+Page 20► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Gaining a card
+GainingacardBuying a card results in gaining it.
+When you gain a card, it’s always taken from the
+Supply, unless an effect tells you otherwise; and
+then placed face up in your discard pile, unless
+an effect tells you otherwise.
+Cards from non-Supply piles can only be gained by ef-
+fects that specifically say to gain them from that pile or
+(per the 2019 rules errata ) effects that name the card.
+When an effect tells you to gain a card or choose
+a card from the Supply, you can only choose
+among cards that are available—and on top of a
+pile—in the Supply. For instance when instructed
+to gain a card costing up to , you must choose
+an available card as long as there is one of that
+cost ( to ) in the Supply.
+Also see Changeling 2, Smugglers 2 and Tools 3, and
+BASIC TIMING RULES: WHEN-GAIN ABILITIES. Gainingacard
+Moving cards from your deck
+MovingcardsfromyourdeckWhen you need a card or cards from your deck
+(when drawing, revealing, looking at, trash-
+ing, setting aside or discarding cards from
+your deck) and there aren’t enough cards, shuf-
+fle the cards in your discard pile and add them
+to the bottom of your deck, then get the cards you
+need from the top. If there still aren’t enough
+cards, just get the cards you can.
+This is a rules change introduced in the Second Edition of
+the Base game. Previously you shuffled at the moment
+your deck was empty and you needed more cards. (Func-
+tionally this only matters for Stash, see its entry (3–4) in
+the CARD REFERENCE § VI.)
+With the rules change from 2021, you may always look at
+the remaining cards in your deck when shuffling your
+discard pile. This matters for Stash, Star Chart, Order of
+Astrologers, Order of Masons, Avoid and Fated.
+Don’t shuffle your discard pile until you need
+more cards than you have in your deck, even if
+your deck is empty.
+Abilities that “dig for” cards (see COMMON EFFECTS: “DIG
+FOR CARDS” § VI) always reveal one card at a time, so you
+don’t shuffle until your deck is empty and you need to
+reveal another card.  Movingcardsfromyourdeck
+Revealing or looking at cards
+Reveal ingorlookingatcardsWhen you reveal cards, you show them to all
+players. When you look at cards, you look at
+them without showing them to the other players.
+Then you return them to where they came from.
+Revealing or looking at cards from your deck means
+from the top of your deck.
+When you reveal or look at cards from your
+hand, the cards stay in your hand.
+When you reveal or look at cards from your
+deck, keep them aside until you’ve finished re-
+vealing/looking at all the cards. (They do not
+count as being in your deck at that point.) You
+might need to shuffle in the meantime (see
+MOVING CARDS FROM YOUR DECK); if so, don’t
+include the cards you kept aside. When you’re
+done revealing/looking at the cards, return
+them to where they came from (unless instructed
+otherwise). Revealingorlookingatcards
+Reaction cards
+The Reaction ability
+Reacti oncardsReaction cards have an ability that you may re-
+solve at certain times, as described on the card.
+Resolving the Reaction ability does not count
+as playing the card (unless the ability specifi-
+cally involves playing it, like Caravan Guard or
+Sheepdog). Also see CARD ABILITIES.
+Reactions often trigger when it’s not your turn, but note
+that there are some other cards that also do this.
+Several Reactions, like Moat, trigger when an-
+other player plays an Attack card. The Reaction
+ability then triggers (and is resolved) before
+the Attack card’s play ability is resolved, see
+BASIC TIMING RULES: BEFORE-PLAY ABILITIES.
+This means that you resolve Reactions before an oppo-
+nent playing e.g. Minion or Pirate Ship decides what op-
+tion to choose, and before an opponent playing an Attack
+chooses whether to use a Way.
+You may resolve Reactions even if the Attack doesn’t
+affect you (such as when you have a Lighthouse in play).
+
+Reaction cards ◄
+Page 21► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Several Reactions, like Sheepdog, let you play the
+Reaction card. If you react during an opponent’s
+turn, you discard the card in the Clean-up of that
+turn instead of waiting for your turn. 
+Resolving Reactions and timing
+Reaction abilities usually have an optional ef-
+fect that you do first in order to resolve the rest
+of the ability. This can be revealing it, setting
+it aside, trashing it or discarding it. This is the
+first thing you do as part of resolving it, so you
+immediately resolve the rest of the ability.
+Multiple Reactions (and also other abilities) can
+trigger at the same time. When abilities for
+several players trigger at the same time, resolve
+them in turn order.
+For instance, when a Witch is played, the first player re-
+solves their Reactions (e.g. revealing a Moat), then the
+next player, etc.
+Also see BASIC TIMING RULES: TIMING OF CONCURRENT ABILITIES
+OR EFFECTS.
+However, you get a new chance to use a Reac-
+tion whenever a player after you resolves an
+ability: You could use a Reaction again (if it’s
+still in your hand) or use one that you didn’t use
+before.
+Technically this means that each time a player resolves
+an ability (Reaction or otherwise), you start back with the
+first player, who again gets to use a Reaction. When a
+player doesn’t resolve anything (Reactions or otherwise),
+continue with the next player in turn order. (If you choose
+to not use a Reaction because you first want to see what
+the others do, you risk that nobody else does anything
+and you miss the opportunity to use it.)
+This is a rules change introduced with the 2019 errata of
+rules; previously each player had only one chance to use
+their Reactions.
+You can keep using Reactions that trigger on
+the same occurrence, even ones that were not
+available at first.
+For instance, you can reveal Diplomat and draw a Moat,
+and after resolving the Diplomat, reveal the Moat to the
+same Attack. See ADVANCED TIMING RULES: MORE CONCURRENT
+ABILITIES CAN TRIGGER for more on this.
+and means that if an opponent gains a Victory Card,
+and you finish reacting to that, and the next player reacts
+with a Black Cat, and you react to that with a Diplomat
+drawing a Black Cat, it’s not too late to use it.
+Note: Reaction abilities that let you resolve
+the card from your hand, can be resolved sev-
+eral times for the same occurrence.
+For instance, you can reveal the same Diplomat or Secret
+Chamber several times to the same played Attack card.
+Also see Market Square 4 in the CARD REFERENCE § VI.  Reactioncards
+Basic timing rules
+When abilities are triggered and resolved
+Basict imingrulesThere are a number of different occurrences in the
+game that can make an ability trigger. It might
+happen that several trigger at the same time; see
+the next section, TIMING OF CONCURRENT ABILI-
+TIES OR EFFECTS.
+Sometimes another ability is triggered in the
+middle of resolving an ability. You then re-
+solve the triggered ability before continuing.
+See ADVANCED TIMING RULES: RESOLVING MULTI-
+PLE ABILITIES .
+The most common triggers are before-play,
+after-play, when-buy, when-gain, when-
+discard, when-trash and start-of-turn. See
+OVERVIEW OF ABILITY TRIGGERS § V for a com-
+plete list.
+The Reaction card Market Square has a when-trash
+ability. See CARD ABILITIES and BASIC TIMING RULES for
+more about abilities.
+
+Basic timing rules ◄
+Page 22► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Before-play abilities trigger when another card
+is played, before the played card is re-
+solved. Most of these are Reaction abilities
+(see REACTION CARDS § IV): A Reaction to a
+played Attack is resolved before the Attack
+is resolved. The ability always refers to an-
+other card being played.
+Others are Kiln and Urchin. — These cards all say
+“when you play”. (New-edition cards add “first” to
+make the before-play timing clearer.)
+In earlier printings (before late 2020), Treasures with
+special play abilities, as well as Noble Brigand, said
+“when you play this”; these were normal play abili-
+ties (resolved after any before-play abilities).
+After-play abilities trigger when another card is
+played, after the played card is resolved.
+Some examples are Royal Carriage, Citadel, Fellowship
+of Scribes, Flagship and Inspiring. — These abilities
+trigger even if the played card was not actually re-
+solved. See Enchantress 7–8, Enlightenment 8 and
+Highwayman 12 in the CARD REFERENCE § VI, and see
+WAYS § IV.
+When-buy abilities trigger when you buy a card
+(but not when you buy an Event or Project).
+You resolve the ability after having paid for
+the card, but before gaining it.
+With Trader (pre-2020 version) or Possession you can
+buy a card without gaining it. See WHEN-WOULD ABILI-
+TIES below.
+In new printings starting 2022, cards are changed to
+no longer have when-buy triggers. — Also see
+Common effects: Gain on when-buy § vi.
+When-gain abilities trigger when you gain a
+card. You resolve the ability after the card is
+gained and moved to its destination (which is
+usually your discard pile).
+If an effect (such as on Bureaucrat or Mine) tells you
+to put the gained card in your hand or onto your
+deck, the card is placed directly there. This happens
+before any when-gain abilities. (See COMMON EF-
+FECTS: GAIN TO YOUR HAND/DECK § VI.)
+Some when-gain abilities, such as Watchtower, can
+move the gained card. (See COMMON EFFECTS: MOVE
+GAINED CARD § VI.) This of course means that they
+move it after it has been gained. They can move the
+card no matter where it was gained to (your discard
+pile, hand or deck.)
+If one effect tells you to gain several cards, you re-
+solve each gain in turn, resolving any when-gain
+abilities after each. If this involves choosing cards,
+you choose each card in turn. See ADVANCED TIMING
+RULES: GROUPING OF EFFECTS .
+Also see ADVANCED TIMING RULES: THE “LOSE TRACK” RULE,
+and COMMON EFFECTS: GAIN ON WHEN-GAIN § VI.
+When-discard abilities trigger when you dis-
+card a card or cards. You resolve the ability
+after the cards are discarded. Most when-
+discard abilities trigger when you discard
+a card from play.
+When one effect tells you to discard several cards
+from your hand, the cards are all discarded at once,
+before resolving any when-discard abilities.
+This includes effects that tell you to discard “down
+to x cards in hand” (such as Militia). This is a rules
+change from 2022: Before, you would discard one
+card at a time until you have x cards in hand. (This
+change matters for Trail, Tunnel and Village Green.)
+When-trash abilities trigger when you trash a
+card or cards. You resolve the ability after
+the cards are trashed. When one effect tells
+you to trash several cards, they are trashed all
+at once, before resolving any when-trash
+abilities.
+Even if another player’s card makes you trash a card,
+you are the one who trashed it, so any “when you
+trash” abilities will then trigger for you.
+Start-of-turn abilities trigger at the start of your
+turn, which means the start of your Action
+phase.
+Horse Traders has a play ability and a before-play
+ability. The before-play ability sets up a later abil-
+ity (at start-of-turn).
+
+Basic timing rules ◄
+Page 23► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+When-would abilities trigger when you are
+about to do something, but only if you would
+have otherwise done it. You resolve the
+when-would ability before doing the thing.
+When-would-gain and when-would-resolve are
+most important. 
+Timing of concurrent abilities or effects
+When an effect affects several players at the
+same time, the effect is resolved in turn order
+starting with the current player.
+For instance, when you play Spy or Scrying Pool and re-
+solve its “each player” effect, start with yourself, and
+then go around the table. When you play Witch, the play-
+ers gain a Curse in turn order.
+When a player has several concurrent abilities
+to resolve, they choose which to resolve first.
+After resolving it, they choose which to resolve
+next, etc.
+For instance, if you trash a Rats and have a Market
+Square in hand, you can choose whether to resolve
+Rats’ or Market Square’s when-trash ability first.
+Also see ADVANCED TIMING RULES: MORE CONCURRENT ABILITIES
+CAN TRIGGER.
+When multiple abilities trigger at the same
+time, first the current player resolves their abili-
+ties, and then each player in turn does. However,
+Reactions may still be used later, as explained in
+REACTION CARDS: RESOLVING REACTIONS AND
+TIMING .
+Also see ADVANCED TIMING RULES: ORDERING SEVERAL PLAYERS’
+CONCURRENT ABILITIES for more on this. 
+Ongoing abilities
+Some abilities are not triggered, but change
+something in the game for a time. These abilities
+are here called ongoing. The most common are
+cost reduction (e.g. Bridge and Highway), and the
+enabling of a triggered ability (see next para-
+graph). Ongoing abilities are active under cer-
+tain conditions, such as a when a card is in play,
+during your Buy phase or during your turn.
+Enabling a triggered ability means making it
+possible to trigger an ability that otherwise is
+inactive.
+Examples: Galleria’s when-gain ability, Goons’ when-
+buy ability, Urchin’s before-play ability, Travelling
+Fair’s when-gain ability, and the abilities of many
+States, Artifacts and Projects).
+Ongoing abilities that are activated by play-
+ing a card (see list below), have cumulative ef-
+fects if that card is played several times. These
+effects could entail setting up future abilities,
+see CARD ABILITIES: SETTING UP A LATER ABILITY.
+For instance, playing Throne Room + Priest means you
+get + when you trash a card that turn.
+Other ongoing abilities: making you immune to an At-
+tack (Champion, Guardian, Lighthouse, Moat, Shield);
+preventing you from buying cards (Contraband, Deluded,
+Grand Market, Mission); preventing you from playing
+cards (Voyage, Warlord); and changing card properties
+(see READING A CARD: CHANGING CARD PROPERTIES § I).
+Ongoing abilities activated by playing a card: Bauble,
+Blockade, Bridge, Champion, Collection, Coppersmith,
+Contraband, Corsair, Crypt, Enchantress, Endless Chalice,
+Frigate, Galleria, Garrison, Gatekeeper, Guardian, Guild-
+master, Haunted Woods, Highwayman, Hireling, Insignia,
+Inventor, Livery, Monkey, Priest, Prince, Quartermaster,
+Samurai, Skirmisher, Snowy Village, Swamp Hag, Tiara,
+Warlord, Way of the Seal, (all 2022 versions:) Bridge
+Troll, Groundskeeper, Haggler, Herbalist, Highway, Hoard,
+Lighthouse, Princess, Quarry, Renown, Sauna, Tracker.
+Ongoing abilities activated by buying an Event: De-
+liver, Invest, Mission, Travelling Fair.
+Ongoing abilities that are always active: Charlatan,
+Changeling, Duchess, Ferryman, Footpad, Shaman, Trade
+Route
+A State or Artifact lasts as long as you have the card. A
+bought Project lasts for the rest of the game. An acti-
+vated Prophecy lasts for the rest of the game. See
+OVERVIEW OF ONGOING ABILITY TIMERS § V for a complete list.
+ Basictimingrules
+Merchant Guild (prior to 2nd Edition) has an ongoing
+ability that lasts as long as it’s in play and which
+consists of enabling its when-buy ability.
+
+Advanced timing rules ◄
+Page 24► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Advanced timing rules
+Grouping of effects
+Advancedtimingrules “Do X and Y” or “do X twice” means that two
+effects are resolved after each other. Abilities
+can trigger after each effect. This also applies to
+gaining cards.
+Examples: “Set this and another card aside” (Island),
+“gains a Curse and a Copper” (Mountebank), “gains a
+Curse and discards down to 3 cards in hand” (Followers).
+“gain two cards” (Ball, Develop, Stonemason), “gain two
+Ruins” (Death Cart), “do this twice” (Remake), “play it
+twice” (Throne Room).
+Some abilities (e.g. Bandit) say “each (other)
+player...”. Resolve all the effects for the first
+player (including any choices by you or the
+player), then all the effects for the next player,
+etc., in turn order. This timing usually only matters
+for tactical decisions, but might sometimes matter
+with certain Reactions.
+For instance, if you play Scrying Pool on your turn, start
+with yourself.
+See COMMON EFFECTS: EACH PLAYER/EACH OTHER PLAYER and
+REACTION THAT PLAYS ITSELF § VI.
+You can’t choose to start your next phase while
+still resolving abilities that triggered in the
+current phase. (See YOUR TURN § II.) 
+Resolving multiple abilities
+If the resolution of an ability triggers an-
+other ability, resolve this other ability before
+continuing on the first one.
+For instance, if you play Graverobber and use it to trash
+a Cultist, first draw three cards from Cultist’s when-
+trash ability, then continue resolving Graverobber
+(gaining a card costing up to ).
+But if two abilities are triggered at the same
+time, each must be resolved separately, as de-
+scribed previously.
+For instance, if you react to an Attack with Beggar and
+Diplomat, you can resolve Diplomat before or after
+gaining two Silvers with Beggar, not in between. If you
+trash several cards at once, you resolve when-trash
+abilities separately afterwards.
+When a card is played several times, setting up
+a future ability each time, separate future abili-
+ties are created.
+For instance, when you play Throne Room + Caravan, the
+two start-of-turn abilities don’t have to be resolved
+right after each other; other start-of-turn abilities can
+be resolved in between. With Throne Room + Archive or
+Church, you set aside two separate sets of cards. Also
+see Ghost 6, Mastermind 3 and Quartermaster 4 in the
+CARD REFERENCE § VI.
+See COMMON EFFECTS: TRIGGERED ABILITY § VI for more on
+resolving triggered abilities. 
+Abilities between turns
+Extra turns are triggered after the current turn. If
+there are several, they are resolved one after the
+other.
+Between turns, the player who last had a turn is
+considered to be the current player, so that player
+will resolve after-turn abilities first.
+For instance, in a two-player game Alice plays two Pos-
+sessions (pre-2023 version), giving Bob two extra turns,
+and on the first extra turn Bob (controlled by Alice) plays
+Possession. There are now two extra turns in queue, one
+for Alice and one for Bob. Since Bob last had a turn, he
+plays his turn first (controlled by Alice).
+If one player has several after-turn abilities to
+resolve, they choose which to resolve first, see
+BASIC TIMING RULES: TIMING OF CONCURRENT
+ABILITIES OR EFFECTS . 
+Resolve all triggered abilities
+Once an ability is triggered, resolve it (to the
+extent possible) even if the condition that enabled
+the ability to trigger changes in the meantime.
+For examples, see the entries for Cavalry (9), Gatekeeper
+(7), Mandarin (4), Mint (5+9) and Pilgrimage (4) in the
+CARD REFERENCE § VI. 
+More concurrent abilities can trigger
+While you are resolving concurrent abilities,
+you are in a “trigger window” of resolving
+abilities for this particular trigger. If a condition
+changes during this window, new abilities might
+be triggered on the same occurrence.
+See REACTION CARDS: RESOLVING REACTIONS AND TIMING §
+III and COMMON EFFECTS: PLAY A CARD AT THE START OF YOUR
+TURN § VI. Also see Black Cat 3, Caravan Guard 4, Dupli-
+cate 6, Falconer 6, Fool’s Gold 7, Gondola 9, Guard Dog 3,
+Innovation 9–10, Mapmaker 3, Market Square 4, Pirate 6,
+Secret Chamber 4, Sheepdog 2+5, Sleigh 5–6, Stowaway
+5–6, Trader (2020 version) 8–9, Watchtower 5–6 and Way
+of the Mouse 12 in the CARD REFERENCE § VI.
+
+Advanced timing rules ◄
+Page 25► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+If a card with a while-in-play ability enters play while
+you’re resolving a triggered ability, it can also trigger
+based on the original occurrence. For instance, if you buy
+a card and this leads to Goons entering play, Goons will
+trigger based on the buy. See the entry on Innovation
+(12).
+Triggers are based on the actual occurrence. For in-
+stance, Livery only triggers if you gain a card costing
+or more, no matter if the gained card changes cost
+(like a Fisherman) before you resolve Livery. See
+COMMON EFFECTS: GAIN A CARD THAT CHANGES COST § VI, and
+see Enlightenment (15) and the pre-2019 versions of Band
+of Misfits (15) and Your Estate token (12).
+However, if a card says “when X, if...”, only “when X” is
+the trigger. You check the if-condition at the time you
+resolve it. This applies to Basilica, Berserker, Colonnade,
+Emporium, Walled Village, Wealthy Village and Wine Mer-
+chant. 
+Ordering several players’ concurrent abilities
+Concurrent abilities for several players is intro-
+duced in BASIC TIMING RULES: TIMING OF CON-
+CURRENT ABILITIES OR EFFECTS. For the sake of
+timing, the player actually doing it is the one who
+resolves the ability. (You draw for Road Net-
+work; the other player gains for Swamp Hag.)
+See OVERVIEW OF ABILITY TRIGGERS § V for the
+timing of all abilities.
+For instance, if you play an Attack with an Urchin in
+play, you first resolve Urchin’s before-play ability
+(the choice to trash it for a Mercenary) and then other
+players resolve any Reactions they might have.
+However, if an ability refers to “each other
+player” doing something, for timing the ability is
+still considered to be resolved by one player.
+(But of course then the other players resolve their
+individual effects as part of the ability.)
+For instance, if you buy a Noble Brigand with an Embargo
+token on the pile—or gain a Blockaded Attack card after
+having played Skirmisher—two when-buy—or when-
+gain—abilities trigger. You choose which to resolve
+first. Likewise, if you gain a Lost City as your third card
+triggering your played Cauldron, you choose the order
+of the two when-gain abilities. 
+The “lose track” rule
+An ability that refers to a card always expects
+that card to be in a certain location, keeping track
+of it until the ability is fully resolved. If the card
+is moved from that location by another ability,
+the first ability loses track of it. An ability
+cannot move a card if it has lost track of it.
+If an ability refers to a played card, it expects the card
+to be in play. Note: A play ability on a card always ex-
+pects the card itself to be in play. A when-discard abil-
+ity expects the card to be in the discard pile. If an abil-
+ity refers to a gained card, it expects the card to be
+where the gaining effect put it (usually in your discard
+pile, but possibly in your hand or on your deck). If an
+ability moves a card, it subsequently expects the card to
+be where it moved it.
+An ability loses track of a card that is on top of
+your deck and gets covered up, since it’s then not
+on top anymore. This also happens if your deck is
+shuffled. A card that is moved from the expected
+location and then moved back again, is neverthe-
+less lost track of.
+With the 2019 errata of rules, abilities can always move
+a card from your discard pile. (See LOCATIONS IN THE
+GAME: OPEN INFORMATION TO YOU ONLY § II.) Previously, a
+card in your discard pile was lost track of if it was cov-
+ered up.
+With the 2021 errata of rules, an ability additionally can-
+not play a card if it has lost track of it. But there is an
+exception: A throne-room (see CARD ABILITIES: PLAYING A
+CARD MULTIPLE TIMES § III) can replay a card even if it has
+lost track of it. This means that it can replay a card that
+was removed from play the first time, such as Tragic
+Hero or Mining Village. (This rules change mainly matters
+for Faithful Hound, Village Green and Vassal.)
+Example 1: You have a Watchtower in hand, and gain an
+Inn onto your deck (e.g. with an Artificer). You can now
+resolve Inn’s and Watchtower’s when-gain abilities in
+any order. If you do Inn’s first, the Inn is shuffled into your
+deck. Watchtower has now lost track of the Inn (it’s
+expected to be on your deck), so you can’t reveal Watch-
+tower to move the Inn.
+Example 2: You play Throne Room + Mining Village, and
+trash the Mining Village the first time Throne Room plays
+it. This causes Throne Room to lose track of the Mining
+Village, since it expects it to be in play, where it placed it.
+When Throne Room plays it the second time, the Mining
+Village should normally be placed in play (see PLAYING A
+CARD § II). But Throne Room has lost track of it and can’t
+move it. Therefore it stays in the trash—which means it
+can’t be trashed again when played the second time (but
+you still get +1 Card and +2 Actions). — Also, when the
+Mining Village is played the second time, its own play
+ability immediately loses track of it, since it expects it to
+be in play. See Possession 17, and COMMON EFFECTS: EFFECT
+WHEN MOVED FROM PLAY § VI.
+Example 3: Changeling is in the game, you have a Project
+cube on Innovation, and you have a Watchtower in hand.
+You gain an Action card, and can choose which of the three
+when-gain abilities to resolve. You choose to ex-
+change it for a Changeling. This means the card moves
+back to the Supply, so both Innovation and Watchtower
+lose track of it. (Whichever you choose, that ability will
+move the card so that the others lose track of it.)
+
+Advanced timing rules ◄
+Page 26► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Example 4: You have a Watchtower in hand, and gain a
+Border Village onto your deck (e.g. with an Artificer). You
+choose to resolve Border Village’s when-gain ability
+first, gaining a Smithy to your discard pile. You move the
+Smithy onto your deck with Watchtower, thereby covering
+the Border Village and causing Watchtower to lose track of
+it. You could now react with Watchtower to the gaining of
+Border Village, but Watchtower can’t move it. (It’s impossi-
+ble to end up with the Border Village on top of the Smithy.)
+— Likewise, you can’t use Innovation to play the Border
+Village (in order to draw the Smithy) after putting the
+Smithy on top.
+Example 5: Compare with the previous example. Before the
+2019 errata, gaining a Border Village and Smithy normally
+(i.e. to your discard pile) would also cause the covered
+Border Village to be lost track of. You could end up with
+the Border Village on your deck and the Smithy on top, but
+not vice versa. However, currently (per the 2019 errata),
+cards in your discard pile are never lost track of: you can
+move the Border Village after it was covered by the Smithy
+(and even if it’s still covered). Advancedtimingrules
+
+The Project Innovation might lose track of the gained
+card if you resolve another when-gain ability first
+(see example 3 above). This means Innovation can’t
+move or play that card. (This is the 2022 version.)
+
+New editions and errata ◄
+Page 27► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+IV. GAME RULES: ADDITIONAL RULES
+New editions and errata
+In 2016New editions and errataSecond Editions of the Base game and
+Intrigue were released. In each set, 6 Kingdom
+cards were removed and 7 new ones are added.
+These new cards were available separately as Update
+Packs. All cards in the Second Editions also have new ex-
+pansion symbols (see PUBLISHED GAMES § I). The Second
+Edition of Intrigue doesn’t include Base cards. See
+COMPONENTS OF THE GAME § I for more differences.
+In the Second Edition of the Base game, the rules for
+shuffling was changed; see MOVING CARDS FROM YOUR DECK
+§ III.
+From 2016 to 2018 all Dominion sets prior to
+Empires were released in new editions with new
+rulebooks, improved text layouts, and several
+cards rephrased for clarity or gender neutral lan-
+guage. A few cards were functionally changed.
+Cards that were slightly changed functionally: Embargo,
+Masquerade, Mine, Moneylender, Outpost, Possession,
+Scheme, Soothsayer, Stash, Throne Room and Trade
+Route. See the CARD REFERENCE § VI for details. Also see
+Way of the Chameleon 4.
+The new edition of Hinterlands was released in
+2016; Prosperity, Seaside, Adventures and Dark
+Ages in 2017; and Guilds, Cornucopia and Al-
+chemy in 2018.
+Several rules were not in the 1st-edition rulebook of the
+Base game but were found in those expansion rulebooks
+where they mattered. The Second-Edition Base game
+rulebook is more comprehensive, and consequently new-
+edition expansion rulebooks contain fewer of these rules.
+2019 errata: In 2019 the designer announced func-
+tional changes to 9 cards, as well as some rules
+changes. They were printed in 2020 and 2021. The
+old card versions are here referred to as pre-2019
+versions.
+Changed cards: Band of Misfits, Captain, Death Cart, Em-
+bargo, Inheritance, Lantern, Overlord, Pillage and Proces-
+sion. See the CARD REFERENCE § VI for details.
+There were rules changes for gaining cards from non-
+Supply piles (see GAINING A CARD § III), the timing of Re-
+actions (see REACTION CARDS: RESOLVING REACTIONS AND TIM-
+ING § III), and the “lose track” rule (see ADVANCED TIM-
+ING RULES: THE “LOSE TRACK” RULE § III). Also, “Card costs
+don’t go below ” was made a global rule.
+2020 errata: In 2020 two cards were changed
+functionally, and several cards were rephrased.
+Changed cards: Trader (printed 2020) and Village Green.
+See the CARD REFERENCE § VI for details.
+In addition, cards will no longer say “when you play this”
+(see LOCATIONS IN THE GAME: PLAY AREA—“IN PLAY”); and
+many cards that said “while this is in play” will instead say
+“while you have this in play” (see BASIC TIMING RULES: BE-
+FORE-PLAY ABILITIES). These rewordings are for clarity.
+2021 errata: Some cards were changed function-
+ally, and some rules changes were introduced.
+Changed cards: Citadel, Donate, Innovation, Mountain
+Pass and Opulent Castle. See the CARD REFERENCE § VI for
+details.
+There were rules changes for playing cards (see AD-
+VANCED TIMING RULES: THE “LOSE TRACK” RULE § III), and look-
+ing at cards when shuffling (see MOVING CARDS FROM YOUR
+DECK § III).
+Second Editions of Seaside, Prosperity and Hin-
+terlands were released in 2022. 8 Kingdom cards
+were removed from Seaside, 9 from Prosperity
+and 9 from Hinterlands, and 9 new ones added in
+each set. Some cards were functionally changed.
+The new cards were available separately as Update Packs.
+All cards in the Second Editions also have new expansion
+symbols (see PUBLISHED GAMES § I).
+Many cards from other sets (from Alchemy to
+Renaissance) were also functionally changed on
+Dominion Online, and will be available in print as
+those sets get reprinted. (Mainly when-buy
+triggers were changed to when-gain, and
+while-in-play timers were removed.) There
+were also some rules changes.
+Changed cards: Alchemist, Basilica, Bonfire, Bridge Troll,
+Charm, Colonnade, Counterfeit, Crypt, Defiled Shrine,
+Doctor, Donate, Exploration, Farmland, Forum, Grounds-
+keeper, Haggler, Haunted Woods, Herald, Herbalist, Her-
+mit, Highway, Hoard, Hovel, Inheritance, Innovation,
+Lighthouse, Masterpiece, Merchant Guild, Messenger,
+Mint, Mountain Pass, Patron, Plan, Port, Prince, Princess,
+Quarry, Sauna, Stonemason, Swamp Hag, Storyteller,
+Tax, Tracker, Treasury. See the CARD REFERENCE § VI for
+details.
+The rule for when you can spend Coffers tokens was
+changed: Now you can spend them at any time during
+your turn; see COFFERS AND VILLAGERS. The rule for dis-
+carding down to x cards in hand was changed; see
+BASIC TIMING RULES: WHEN-DISCARD ABILITIES.
+
+New editions and errata ◄
+Page 28► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+2023 errata: 6 cards were changed to prevent
+taking more than two turns in a row.
+Changed cards: Island Folk, Journey, Mission, Outpost,
+Possession and Voyage.
+A Second Edition of Cornucopia & Guilds was
+released in 2024, as a combined set. 5 Kingdom
+cards were removed from Cornucopia (plus the 5
+Prizes) and 3 from Guilds. 8 new ones were added
+(plus 6 Rewards). 2024 also saw a rules change
+and a card errata.
+The new cards were available separately as an Update
+Pack. All cards in the Second Edition have a new, shared
+expansion symbol (see PUBLISHED GAMES § I).
+With the release of Rising Sun, the rule for when you can
+pay off Debt was changed: Now you can do so at any
+time during your turn; see DEBT. Also, the card Scepter
+was changed, See the CARD REFERENCE § VI.  Neweditionsanderrata
+Duration cards
+ Durati oncardsSeaside, Adventures, Empires, Nocturne, Ren-
+aissance, Menagerie, Allies, Plunder, Rising
+Sun, Captain & Church, Prince (2022 version) (promos)
+Setting up later abilities
+When you play a Duration card, it sets up an
+ability (or several) to trigger after your current
+turn. See CARD ABILITIES: SETTING UP A LATER
+ABILITY § III. When you get to the Clean-up phase,
+leave the card in play instead of discarding it if
+the ability hasn’t been resolved yet at that point.
+Most often a Duration will be discarded in the
+Clean-up of your next turn.
+To keep track of when to discard Durations, you might
+play them in a separate row above the other cards. When
+a Duration has its last effect, move it down to the row of
+cards that will be discarded this turn.
+Also see COMMON EFFECTS: REMOVED FROM PLAY § VI.
+Some Durations set up an ability to trigger “the
+next time” something happens. If that happens on
+the same turn, the Duration is discarded in
+Clean-up that turn and does not stay in play.
+“Next time” Durations: Abundance, Cage, Cutthroat, Flag-
+ship, Search, Secluded Shrine
+Playing a Duration card multiple times
+If you play a throne-room to play a Duration
+multiple times, leave the throne-room in play
+too. Don’t discard it until the Clean-up phase
+wherein the Duration is discarded.
+As of now this pertains to Throne Room, King’s Court,
+Counterfeit (pre-2022), Procession (pre-2019), Disciple,
+Royal Carriage, Crown, Ghost, Scepter, Mastermind, Spe-
+cialist, Tiara, Flagship, King’s Cache, Coronet and Daimyo.
+Only the throne-room that directly played a
+Duration stays in play.
+For instance if you play Throne Room + Throne Room +
+Duration + Duration, only the second Throne Room stays
+in play, since that was the card that directly played the
+two Durations.
+Daimyo, Flagship, Royal Carriage and Scepter
+only play a Duration once, but since this means
+the Duration is played an extra time this turn, this
+throne-room stays in play.
+Additionally, there is a special rule for playing Durations
+with Captain and similar cards. See COMMON EFFECTS: PLAY
+A CARD WHILE LEAVING IT § VI for this rule.
+The Duration card Fishing Village sets up a start-of-
+turn ability. See CARD ABILITIES § III and BASIC TIMING
+RULES § III for more about abilities.
+
+Summary of your turn ◄
+Page 43► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Summary of your turn
+Summaryofyour turnPhrases in bold italics below are explained in the next
+section, SUMMARY OF PLAYER ACTIVITIES. The  symbol denotes
+triggered abilities.
+At any time during your turn:
+ Spend any amount of Coffers tokens for + each.
+ Pay any amount of (by deducting it from your
+money pool), paying off (removing) for each .
+Action phase
+At any time during your Action phase:  Spend
+any amount of Villager tokens for +1 Action each.
+ At the start of your turn, your Action pool has 1 Action,
+your Buy pool has 1 Buy, and your money pool is
+empty.
+ Start-of-turn abilities (Donate [2022] first)
+ Do this as many times as you want, as long as you have
+Actions in your Action pool: Deduct 1 from your Ac-
+tion pool to play an Action card from your hand.
+Buy phase
+First part:
+ Start-of-Buy-phase abilities
+ Do this as many times as you want: Play a Treasure
+card from your hand.
+Second part:
+ Do this as many times as you want, as long as you have
+Buys in your Buy pool: Deduct 1 from your Buy pool
+to either buy a card from the Supply, buy an Event
+or buy a Project.
+ End-of-Buy-phase abilities
+Night phase
+ Do this as many times as you want: Play a Night card
+from your hand.
+Clean-up phase
+ Start-of-Clean-up abilities
+ Do this as many times as you want: Discard a card
+from play.
+ Discard your hand. ( modified by Coastal Haven)
+ Do this until you have no cards in play left to discard:
+Discard a card from play. (The other players also
+do this if they have cards to discard from play.)
+ Draw 5 cards. ( modified by Outpost)
+ Expedition’s and Flag’s when-draw abilities
+ End-of-turn abilities
+After turn
+ If the game-end conditions are met (see GAME END § II),
+the game ends now—unless any player has bought Fleet;
+in that case the game ends immediately after the last
+turn from Fleet.
+ If the game has not ended: After-turn abilities Summaryofyourturn
+Summary of player activities
+Play a card
+ SummaryofplayeractivitiesAnnounce the card and put it in play face up.
+ The card is now considered played.
+ Before-play abilities (Reactions etc.)
+ When-would-resolve abilities (Enchantress, Enlight-
+enment, Highwayman, Ways)
+ Resolve the card’s play ability
+ After-play abilities (e.g. Royal Carriage)
+Buy a card
+Unless otherwise specified, cards are bought from the
+Supply.
+ Choose a non-covered card with a cost no higher than
+what you have in your money pool.
+ Take a token per in its cost. Pay by deducting
+the rest of its cost from your money pool.
+ When-buy abilities
+ Gain the copy of the card that is on top of the pile.
+Buy an Event
+ Choose an Event with a cost no higher than what you
+have in your money pool.
+ Take a token per in its cost. Pay by deducting
+the rest of its cost from your money pool.
+ Resolve the Event’s buy ability
+Buy a Project
+ Choose a Project with a cost no higher than what you
+have in your money pool, and which you don’t already
+have a Project cube on.
+ Pay by deducting its cost from your money pool.
+ Put a free Project cube of your color on the Project card.
+Gain a card
+Unless otherwise specified, cards are gained from the
+Supply and the gaining destination is your discard pile.
+ When-would-gain abilities (Possession)
+ Put the card in the gaining destination face up.
+ When-gain abilities (if the card was gained)
+Discard a card from play
+ Discard the card unless one of the following is true:
+ It is a Duration card that has set up an ability to be
+resolved after this turn.
+ It played a Duration card an extra time that turn,
+and that Duration now stays in play.
+ It played a card while leaving it, and the played
+card would otherwise now stay in play.
+Discard card(s)
+Unless otherwise specified, cards are discarded from your
+hand.
+ Put the card(s) at once in your discard pile face up.
+You may order them first.
+ When-discard abilities
+
+Summary of player activities ◄
+Page 44► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Trash card(s)
+ Put the card(s) at once in the trash face up.
+ When-trash abilities
+Draw card(s)
+ Your −1 Card token’s ability
+ Move card(s) from your deck into your hand.
+Move x card(s) from your deck
+Moving cards from your deck includes drawing, reveal-
+ing, looking at, trashing, setting aside or discarding
+cards from your deck.
+ If there are less than x cards in your deck, shuffle your
+discard pile and add it to the bottom of your deck.
+ Move cards from your deck until you have moved x
+cards total, if possible.
+Reveal or look at card(s)
+When revealing or looking at cards from your deck,
+keep them aside until you’re done. Then return them, unless
+instructed otherwise.  Summaryofplayeractivities
+Summary of timing rules
+ SummaryoftimingrulesWhen you resolve an ability, resolve all its effects.
+Actions, Buys and are produced immediately.
+ When you’re given several options, you can pick any
+option. If you’re not able to complete an effect, do as
+much as you can. If an effect refers to a card that
+doesn’t exist, the effect fails.
+ Triggered abilities can interrupt after each effect.
+Resolve these before continuing.
+ When something allows you to resolve a Reaction card
+in your hand, you can do so several times.
+ All abilities are cumulative.
+ An effect affecting several players is resolved in turn
+order starting with the current player.
+ When multiple abilities are triggered, they are re-
+solved in turn order, starting with the current player.
+Each ability is resolved by the affected player; “each
+other player...” affects the player being addressed.
+ When one player has multiple concurrent abilities to
+resolve, the player chooses which one to resolve next.
+ Between turns, the player who last had a turn is consid-
+ered to be the current player.
+ Once an ability is triggered, resolve it even if condi-
+tions change.
+ While resolving concurrent abilities, if a condition
+changes so that another ability also can be triggered
+at this moment, it will also be triggered.
+ An ability always expects cards to be where they would
+normally be if no other abilities had moved them. If a
+card moves from that place (even if it moves back), the
+ability loses track of it. This means that the ability
+can’t move it and the ability (if not a throne room)
+can’t play it. (A played card is expected to be in play,
+a discarded card in your discard pile, and a gained
+card where the gaining effect put it.)  Summaryoftimingrules
+Common mistakes
+ Curses are included in every game of Dominion.Commonmistakes
+ When you play a card, it stays in play until Clean-up.
+Don’t discard it before.
+ You need to play the Treasures you want to produce .
+You can’t keep them in your hand or put them straight
+in your discard pile.
+ Don’t discard cards from your hand just because you
+can’t play them. Wait until Clean-up.
+ Don’t shuffle your discard pile just because your
+deck is empty. Wait until you need a card from your
+deck.
+ When you need to draw but have too few cards in your
+deck, don’t shuffle your discard pile in with the re-
+maining cards in your deck. Shuffle it and then add it
+to the bottom of your deck.
+ +1 Action just means to add 1 to your Action pool. It
+doesn’t mean to play another Action card immediately.
+ + just means to add 1 Coin to your money pool. It
+doesn’t mean to gain a Copper.
+ Playing Throne Room + Throne Room doesn’t let you
+play one Action card four times. It lets you play two
+Action cards twice each.
+ You don’t have to play all your Action cards even if
+you’re able to. You don’t have to play all your Treasure
+cards.
+ You play Treasures first, then buy card(s). You can’t
+buy a card and then play more Treasures.
+ You can play an Action card even if you can’t do all the
+instructions. Just do as much as you can.
+ You can choose an option on a card even if you can’t do
+all the instructions. Just do as much as you can.
+ When you are revealing several cards from your deck
+and have to shuffle to get more cards, don’t include the
+revealed cards. If they are to be discarded, don’t do
+that until the end.
+ Buying a card usually results in gaining it, but buying
+happens first. When-buy abilities trigger when you
+buy it, then when-gain abilities trigger.
+ When you gain a card (through buying it or in other
+ways), it normally goes to your discard pile, not your
+hand or in play.
+ When you’re instructed to gain a card of a certain cost,
+you can’t add anything to that cost (from your money
+pool or from anywhere else).
+ Reaction cards that react to Attacks are resolved before
+the Attack card is resolved, which means before the
+choice on e.g. Minion or Legionary is made.
+ Moat and Shield are the only Reactions that nullify the
+Attack’s effect on you. Other Reactions to Attacks just let
+you do something before the Attack affects you.
+ Cards that you reveal from your hand stay in your
+hand. Don’t put them in play or in your discard pile.
+ Don’t mix up play abilities (above the dividing line)
+with abilities that happen at other times. Playing
+Throne Room on a Reaction or a Reserve or a card that
+says “while this is in play” only lets you do the play
+ability twice. Having a “+” Adventures token on such a
+pile only gives you the bonus when you play the card.
+ Commonmistakes
+
+Card Reference ◄
+Page 61► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Baron
+New version: See “DO X FOR”.
+Barracks p. 40
+You start each turn with 1 extra Action in your
+Action pool, so normally 2.
+Basilica p. 9, 25, 39, 42
+ 2022 (current) version. See PREVIOUS VERSIONS
+OF SOME CARDS for the pre-2022 version.
+New version 2022: Basilica now has a when-
+gain instead of when-buy ability, but only
+when you gain a card in your Buy phase.
+Basilica can trigger several times on your
+turn. If you buy several cards, then for each of
+them, check if you have at least left in your
+money pool at that time. If so, take 2 to-
+kens from Basilica.
+Clarification: If you gain a card that gives or
++Coffers, you may resolve that (spending the Cof-
+fers) before Basilica checks your money pool. This
+could be Blessed Village (with certain Boons), March-
+land, Nomads, Silk Merchant, Spices, a Treasure via
+Guildhall or Mining Road, or an Action card via Abun-
+dance. Also see TRIGGERED ABILITY (you could also use
+a Way that gives ).
+Likewise, you can get from trashing Nomads or
+trashing via Priest; see GAIN ON WHEN-TRASH: Trash on
+when-gain.
+ Also see Possession 7.
+Bat p. 10
+You may choose to not trash any cards.
+If you trashed any cards, you must ex-
+change this for a Vampire. (See EXCHANGING
+§ IV.)
+You can trash cards even if it’s impossible to
+exchange the Bat for a Vampire.
+The cost of Bat is for any ability that refers to its
+cost.
+ See TRIGGERED ABILITY (first trash, then exchange).
+You trash several cards at once. Also see Divine Wind 9.
+Baths p. 9, 40
+ See Possession 5.
+Battle Plan
+Battle Plan lets you rotate any Supply pile,
+but it only makes a difference to rotate a split
+pile.
+Clarification: If you rotate the Ruins or
+Knight pile, you get to look at the necessary
+cards on top of the pile, one at a time, to see
+how many identical ones there are.
+See “DO X FOR”.
+Battlefield p. 9, 39, 171
+This might trigger on an opponent’s turn.
+Bauble p. 23, 39, 42, 179
+SEVERAL OPTIONS (four): +Buy; + , +Favor;
+or the ongoing ability mentioned below.
+(Pick two.)
+You may SET UP A LATER ABILITY (ongoing
+ability) for the rest of this turn: When you
+gain a card, you may put it onto your deck.
+Clarification: You have to choose the options
+first, then do them, in the order given.
+See MOVE GAINED CARD and TRIGGERED ABIL-
+ITY (when-gain).
+Clarification: See TRIGGERED ABILITY (playing Bauble
+on when-gain, you can put the gained card on your
+deck). Also see Gondola 9.
+ Also see Kiln 5.
+Bazaar
+Beggar p. 24, 38
+The Coppers are GAINED TO YOUR HAND.
+See REACTION TO ATTACK. New version: See
+“DO X TO”.
+You may react with several Beggars to the
+same played Attack.
+From rulebook: Beggar may only be dis-
+carded from your hand.
+If you react with for instance Caravan Guard or
+Diplomat and draw a Beggar, you may still
+react with it. (See REACTION CARDS: RESOLVING
+REACTIONS AND TIMING § III.)
+From rulebook: When you discard this as a
+Reaction, the first Silver is GAINED TO YOUR
+DECK. The second one is gained to your dis-
+card pile.
+ You gain each card in turn, see TRIGGERED ABILITY.
+Berserker p. 13, 25, 39
+You gain a card, see CARD COSTS.
+
+Card Reference ◄
+Page 64► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Bonfire
+Trash up to 2 cards from play. See CARDS
+YOU HAVE IN PLAY and REMOVED FROM PLAY.
+New version 2022: Bonfire can now only
+trash Coppers.
+Border Guard p. 10, 41, 40, 42
+If you have Lantern when you play a Border
+Guard, you instead reveal 3 cards and dis-
+card 2.
+If both cards (or all 3 with Lantern) are Ac-
+tions, you get SEVERAL OPTIONS (two): Either
+take Lantern or take Horn.
+From rulebook: If you don’t have enough cards
+(after shuffling) to reveal 2 cards (or 3 with
+Lantern), you don’t take Lantern or Horn.
+If you only have one card to reveal, put it into
+your hand.
+Also see Lantern.
+Border Village p. 17, 26, 39, 177
+Gain a card; see CARD COSTS.
+See GAIN ON WHEN-GAIN.
+ See TRIGGERED ABILITY (when-gain). Also see Your −
+Cost token.
+Borrow
+ See Your −1 Card token.
+After resolving this Event, you still have the
+same number of Buys as you had before.
+Clarification (1st version): You can only buy this Event
+once per turn. +1 Buy is part of the buy ability.
+Bounty Hunter
+You have to Exile a card (if you have one in
+hand.)
+If the card you Exiled is now the only COPY
+OF THAT CARD you have in Exile, you get + .
+See VARIABLE PRODUCTION.
+Throne Room + Bounty Hunter will give you
++ twice if you Exile a different card each
+time (with no copies in Exile already).
+From rulebook: If you can’t Exile a card, you
+don’t get + .
+ Also see Gondola 9, Innovation 9 and Your Exile mat 3.
+Bridge p. 8, 23, 32, 42, 179
+Playing this causes a COST REDUCTION. See
+SET UP A LATER ABILITY (ongoing ability). It
+has a cumulative effect if played multiple
+times.
+Bridge Troll p. 19, 23, 33, 40, 42, 42, 42, 48, 179
+ See Your − token.
+This SETS UP A LATER ABILITY for next turn
+(+1 Buy).
+New version 2022: The COST REDUCTION is
+now caused by playing the Bridge Troll, be-
+ing in effect both for the rest of this turn and
+during your next turn. See SET UP A LATER
+ABILITY (ongoing ability). It has a cumula-
+tive effect if played with a throne-room.
+(Pre-2022 version:) WHILE THIS IS IN PLAY, it causes a
+COST REDUCTION on your turn.
+Broker
+You get a bonus based on the cost of the
+trashed card: You get SEVERAL OPTIONS
+(four): +Cards, +Actions, + or +Favors.
+If there is a COST REDUCTION, Broker will give
+a lower bonus.
+ See TRIGGERED ABILITY (first trash, then check cost, then
+get the bonus).
+Bureaucracy p. 39, 171
+With Bureaucracy active, when you gain a
+card that doesn’t cost exactly , you gain a
+Copper. See CARD COSTS.
+Bureaucracy is not optional and also triggers
+when you gain a card on an opponent’s turn.
+When you play an Omen that activates this
+Prophecy, you don’t gain a Copper for cards
+gained previously. (EFFECTS ARE IMMEDIATE.)
+You gain the Copper on when-gain. See
+GAIN ON WHEN-GAIN.
+Clarification: Bureaucracy triggers based on
+the card’s cost right when you gain it, no mat-
+ter if it changes cost afterwards. See GAIN A
+CARD THAT CHANGES COST.
+Clarification: see TRIGGERED ABILITY (playing Omen
+on when-gain, activating this Prophecy, you gain a
+Copper). Also see Gondola 9 and Innovation 9.
+ Also see Kiln 5, Territory 4, Triumph 3 and Your −
+Cost token.
+
+Card Reference ◄
+Page 73► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+but only when you gain a card in your Buy
+phase.
+See COPY OF A CARD.
+You only take 2 tokens when Colonnade
+triggers even if you have more than one copy
+of the card in play. Also see CARDS YOU HAVE
+IN PLAY.
+Clarification: When you gain a card, you may play it
+via Innovation (or City-state etc.) before resolving Col-
+onnade, thereby taking 2 tokens. This doesn’t work if
+the played card removes itself from play (like Acting
+Troupe or a Reserve card). You could also play a
+gained Berserker, Infirmary, Trail, or (with Enlighten-
+ment) Buried Treasure; you could play a Falconer,
+Sheepdog, Stowaway, or (with Enlightenment) Gondola,
+after gaining one. Also see TRIGGERED ABILITY .
+ Also see Enlightenment 15 and Possession 7.
+Commerce
+Counts DIFFERENTLY NAMED CARDS.
+Only the cards gained before buying Com-
+merce are counted. (EFFECTS ARE IMMEDIATE.)
+ Also see Possession 5.
+Conclave
+Conclave lets you PLAY AN ACTION CARD.
+Each time you play a Conclave, check the
+CARDS YOU HAVE IN PLAY. (EFFECTS ARE IM-
+MEDIATE.) The Action you play must be
+DIFFERENTLY NAMED from all of the cards you
+have in play.
+This includes the played Conclave, so it
+doesn’t let you play another Conclave.
+ Also see Capitalism 3.
+Conjurer p. 29, 40
+Gain a card; see CARD COSTS.
+This SETS UP A LATER ABILITY for next turn.
+Clarification: If you play Conjurer without
+moving it into play (with e.g. the 2019 version
+of Band of Misfits; see PLAY A CARD WHILE
+LEAVING IT), you gain a card, but Conjurer’s
+ability loses track of Conjurer, so it will fail
+to set up the next-turn ability. The card you
+played it with (like the Band of Misfits) is
+then discarded in Clean-up this turn.
+Clarification: If you play Conjurer with a
+throne-room, the throne-room loses
+track of it when it goes into your hand next
+turn. So if you play the same Conjurer again,
+the throne-room still won’t stay in play after
+that turn (but will stay in play until Clean-up).
+ Also see Reckless 9.
+Conquest
+If there are no Silvers left in the Supply, you
+still get + for any Silvers you gained previ-
+ously this turn.
+Only Silvers gained up to and including this
+Conquest are counted. (EFFECTS ARE IMMEDI-
+ATE.)
+See TRIGGERED ABILITY (first gain, then take ).
+Gaining Silver could make you gain more Silvers be-
+fore counting (also with Duplicate). See Way of the But-
+terfly 6.
+ Also see Possession 5.
+Conspirator p. 18, 170
+When you play this, if it’s the third time you
+play an Action card this turn, you get +1 Ac-
+tion and draw 1 card. (EFFECTS ARE IMMEDI-
+ATE.) Each time you play an Action counts as
+one, so for example Throne Room + Conspira-
+tor is three played Actions: The second time
+you play Conspirator will be your third time
+playing an Action, so it will give you
++1 Action and +1 Card.
+A played Action that is no longer in play
+(such as a trashed Mining Village) still counts
+as one played Action. Duration and Reserve
+cards that were not played this turn, don’t
+count.
+ Also see Capitalism 5, Coronet 3, Crown 3, Enlighten-
+ment 11+17, Kiln 9 and Spell Scroll 4.
+Continue
+Clarification: “Once per turn” applies to the
+whole buy ability.
+When you buy Continue, you first gain a
+card, then return to your Action phase, keeping
+the Actions, Buys and you had left, and then
+getting +1 Action and +1 Buy. (You will have
+the same number of Buys as before buying
+Continue.)
+This works similarly to Cavalry’s when-gain
+ability. See Cavalry 3–6, except you don’t
+draw cards with Continue (as in Cavalry 5).
+
+Card Reference ◄
+Page 75► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+it produces even though it’s REMOVED FROM
+PLAY (trashed) afterwards.
+If an opponent gets an extra turn, the first Silver/Gold
+played on that turn will also be trashed.
+If you play Corsair multiple times, it still only affects
+the first-played Silver/Gold of each player.
+Clarification: Because of the wording in the card text,
+Corsair also applies if a player somehow plays a Sil-
+ver/Gold during another player’s turn.
+Clarification: If a player plays Corsair on your turn after
+you have already played a Silver/Gold, none of your
+Treasures will be trashed by Corsair that turn.
+Council Room
+Count
+SEVERAL OPTIONS (three): Discard; put onto
+your deck; or gain. Then, SEVERAL OPTIONS
+(three): + ; trash; or gain.
+If you choose to discard but don’t have 2
+cards in hand, you still get the second effect
+of your choice. (If you have 1 card, discard
+that one.) The same applies if you choose to
+put a card on your deck with no cards in
+hand.
+See TRIGGERED ABILITY (first discard or gain, then
+trash or gain). When-gain or when-discard abili-
+ties might make you draw before you trash. Also see
+Sleigh 7.
+ You trash several cards at once, see TRIGGERED ABILITY.
+Counterfeit p. 17, 18, 28
+See PLAY A CARD MULTIPLE TIMES.
+If the Treasure leaves play when it’s played
+(like Spoils or Stockpile), Counterfeit will
+play it twice but be unable to trash it (as it has
+lost track of it).
+The Treasure produces even though it’s
+REMOVED FROM PLAY (trashed) afterwards. It
+will also resolve any other play ability. Also
+see Capitalism 9.
+New version 2022: Counterfeit can no longer
+play Duration cards.
+ See TRIGGERED ABILITY (first play twice, then trash). Also
+see Capital 2, Capitalism 8, Horn of Plenty 5, Idol 1,
+Magic Lamp 5, Spoils 1, Stockpile 1 and Storyteller 1.
+Counting House
+ Not included in the 2022 Second Edition.
+Courier
+Courier lets you PLAY AN ACTION CARD or a
+Treasure card.
+This card lets you play a Treasure in your
+Action phase. If you play a Treasure like
+Counterfeit or Tiara, more Treasures will be
+played in addition. Also see Crown 6 and
+Highwayman 6.
+Clarification: See ACTIONS IN YOUR BUY
+PHASE (second part of Buy phase).
+Clarification: If your discard pile is empty
+after discarding the card (which can happen
+if the discarded card lets you play it, such as
+Village Green or Weaver), you can’t play any
+card with Courier.
+See TRIGGERED ABILITY (first discard, then play).
+Also see Sleigh 7.
+ Also see Capitalism 3, Envious 1, Merchant 2 and Scepter
+6.
+Courser see Reward: p. 7, 9
+SEVERAL OPTIONS (four): Draw; +Actions;
++ ; or gain. (Pick two.)
+From rulebook: You have to choose two dif-
+ferent options first, then do them, in the order
+given.
+The cost of Courser is for any ability that refers to
+its cost.
+Courtier
+SEVERAL OPTIONS (four): +Action; +Buy; + ;
+or gain. (Pick different options, one per type
+the revealed card has. It’s not optional: You
+can’t choose to do less.)
+Clarification: You have to choose the options
+first, then do them, in the order given.
+Clarification: You get maximum four bonuses,
+even if the revealed card has more types.
+ Also see Capitalism 6, Charlatan 3, Elder 8, Enlighten-
+ment 13, Young Witch 4 and Your Estate token 4.
+Courtyard
+See GET FROM DECK, THEN PUT BACK. (You
+draw 3, then put 1 onto your deck.)
+Coven
+You get the initial +1 Action and + even if
+there are no Curses left in the Supply.
+
+Card Reference ◄
+Page 76► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+See NOT OPTIONAL “IF YOU DO”. If a player
+can’t gain a Curse, they discard their Curses
+instead.
+Crafters’ Guild p. 40, 49
+The card is GAINED TO YOUR DECK. Also see
+CARD COSTS and “DO X TO”.
+Craftsman
+Gain a card; see CARD COSTS.
+Credit
+You gain a card, see CARD COSTS.
+Clarification: If you gain a card that changes
+cost right after you gain it, you follow the
+new cost when taking . See GAIN A CARD
+THAT CHANGES COST.
+Clarification: “It” refers to the gained card. If you
+didn’t gain the card, you don’t take any ; see Pos-
+session 6.
+See TRIGGERED ABILITY (first gain, then check cost).
+Crew p. 29, 40
+This SETS UP A LATER ABILITY for next turn.
+Clarification: If you play Crew without mov-
+ing it into play (see PLAY A CARD WHILE LEAV-
+ING IT), you draw now, but Crew’s ability
+loses track of Crew, so it will fail to set up
+the next-turn ability. The card you played it
+with (e.g. the 2019 version of Overlord) is then
+discarded in Clean-up this turn.
+If you play Crew with a throne-room, the
+throne-room will stay in play until Clean-up
+next turn.
+ Also see Reckless 9.
+Crop Rotation p. 40
+See DISCARD, THEN GET FROM DECK.
+See “DO X FOR”. You may only do this once
+per turn.
+Crossroads p. 177
+If it’s played again with a throne-room, you
+will get +3 Actions only the first time.
+If your Crossroads is “Enchanted” (by Enchantress) or
+you play it using a Way, playing Crossroads again
+won’t give +Actions, since it won’t be the first time you
+play Crossroads.
+ Also see Reckless 5.
+Crown p. 17, 28, 48, 171, 171
+This is a Treasure that does not give you .
+See PLAY A CARD MULTIPLE TIMES.
+Crown always counts as both an Action and a
+Treasure, regardless of what phase it is. You
+can replay Crown with Citadel, Daimyo, Flag-
+ship, Royal Carriage or Scepter even when
+played in your Buy phase. Adventures tokens
+put on its pile have their effects even in your
+Buy phase. You can play it using a Way even
+in your Buy phase. It counts as a played Ac-
+tion (e.g. if you later play Conspirator) even if
+played in your Buy phase.
+If you play Crown via an ability that lets you
+play an Action in your Buy phase (such as
+Citadel, Scepter or Toil; see ACTIONS IN YOUR
+BUY PHASE), Crown will still play a Treasure
+card twice.
+See ACTIONS IN YOUR BUY PHASE.
+If you play Crown via an ability that lets you
+play a Treasure in your Action phase (such as
+Black Market, Coronet, Courier, Fortune
+Hunter, Herb Gatherer, Mining Road, Special-
+ist or Storyteller), Crown will still play an Ac-
+tion card twice.
+Clarification: If you play Crown at the start of your
+turn, you’re in your Action phase at that point. See PLAY
+A CARD AT THE START OF YOUR TURN.
+Clarification: If you play Throne Room + Crown, Crown
+will play an Action card twice. (You can’t choose to start
+your Buy phase in the middle of resolving an ability.
+However, see Cavalry 9.)
+If you gain Crown in your Night phase and play it with
+Innovation (or City-state etc.), it will do nothing. Also
+see TRIGGERED ABILITY (when-gain).
+ Also see Aqueduct 4, Capitalism, Enchantress 4, Enlight-
+enment 3, Highwayman 6, Horn of Plenty 5, Magic Lamp
+5, Spoils 1 and Stockpile 1.
+Crucible
+If there is a COST REDUCTION, Crucible will
+give you less + .
+ See TRIGGERED ABILITY (first trash, then check cost).
+Crumbling Castle p. 39, 40, see Castle: p. 10, 37,
+46, 48, 50
+See WHEN YOU TRASH THIS.
+You get +1 even if there are no Silvers left
+in the Supply.
+
+Card Reference ◄
+Page 80► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Likewise, if you buy Ball, or overpay for
+Stonemason, or use Stonemason or Develop to
+trash another card, Destrier costs less after
+you gain the first card. You could for instance
+Develop a Gold to first gain a -cost card,
+reducing Destrier’s cost to , then gain
+Destrier. If you overpay for Stonemason to
+gain a Destrier, you can’t gain a second
+Destrier.
+With the 2022 version of Stonemason, when choosing
+each card to gain from overpaying, the cost of
+Destrier has been reduced by gaining Stonemason it-
+self. With the pre-2022 version of Stonemason, the cost
+is not reduced, since you haven’t gained Stonemason
+yet.
+Clarification: The cost change happens before any
+when-gain abilities.
+ Also see GAIN A CARD THAT CHANGES COST, and see Change
+4, Charm (pre-2022) 12, Haggler (pre-2022) 12, Posses-
+sion 5, Talisman 3 and Wayfarer 4.
+Develop p. 24, 29, 49
+“REMODEL” a card into a card that costs ex-
+actly more and a card that costs exactly
+less. If you “remodel” a card that costs , you
+won’t gain a card costing less.
+The cards are GAINED TO YOUR DECK. The first
+will be lost track of, see GAIN ON WHEN-GAIN.
+You choose and gain each card in turn, see TRIGGERED
+ABILITY . Any cost reduction or when-gain ability
+(like Taskmaster or Galleria) applied after the first card
+will be in effect when you gain the next.
+ Also see Destrier 3 and Wayfarer 8–9.
+Devil’s Workshop p. 10
+When you play this, count how many cards
+you’ve gained this turn up until now. You
+then gain a card (unless the relevant pile is
+empty), so if you play another Devil’s Work-
+shop, the count will be 1 higher. (EFFECTS ARE
+IMMEDIATE.)
+Gain a card costing up to ; see CARD
+COSTS.
+ Also see Possession 5.
+Diadem p. 48, see Prize: p. 7, 9
+ Not included in the 2024 Second Edition.
+This has VARIABLE PRODUCTION.
+You get + per Action you have in your Ac-
+tion pool. If you played no Action cards
+normally this turn, you get + . See ACTIONS
+IN YOUR BUY PHASE. (Playing Diadem doesn’t
+use up your Actions.)
+The cost of Diadem is for any ability that refers to
+its cost.
+Clarification: If you play Diadem in your
+Action phase (e.g. via Black Market or Story-
+teller), you can spend Villager tokens right
+then, even though you are in the middle of re-
+solving an ability.
+Diplomat p. 21, 21, 24, 38
+See REACTION TO ATTACK, and see “DO X TO”.
+For the Reaction ability, see GET FROM DECK,
+THEN DISCARD.
+When you discard cards (as part of the Reac-
+tion), you can discard the revealed Diplomat
+itself.
+If you react with for instance Caravan Guard
+and draw a Diplomat, you may still reveal it.
+You may react with the same Diplomat several
+times, if you still have 5 or more cards in hand
+after resolving it. (See REACTION CARDS: RE-
+SOLVING REACTIONS AND TIMING § III.)
+Each time you play a Diplomat, check how
+many cards you have in hand. (EFFECTS ARE
+IMMEDIATE.)
+If you react with Diplomat and discard Trail, Village
+Green or Weaver, you can use Way of the Mouse, see
+that entry (11–12).
+Disciple p. 9, 17, 28, 29, 40, 171
+See PLAY A CARD MULTIPLE TIMES.
+You GAIN A COPY of the Action card you
+played.
+This is a TRAVELLER and a TRAVELLER UP-
+GRADE.
+Dismantle (promo)
+“REMODEL” a card into a card that costs less,
+provided the trashed card costs or more
+(see CARD COSTS). If it does, also gain a Gold.
+If not, you just trash the card.
+See TRIGGERED ABILITY (first trash, then check
+cost, then gain each card in turn and in the order
+given). Any when-gain ability (like Guildmaster or
+Growth) applied after the first card will be in effect when
+you gain the Gold.
+
+Card Reference ◄
+Page 83► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Each player chooses to discard or put back the
+top card of their deck. (This is clearer in the
+new 2016-version card text.)
+You gain the Duchess on when-gain. See
+GAIN ON WHEN-GAIN. This might happen on an
+opponent’s turn.
+The when-gain ability doesn’t work with a Duchess in
+the Black Market deck, or as the card set aside by Way
+of the Mouse.
+Duke
+Dungeon p. 40
+See GET FROM DECK, THEN DISCARD.
+This SETS UP A LATER ABILITY for next turn.
+Duplicate p. 13, 31, 37, 39, 171, 171
+When you call this, you GAIN A COPY of the
+card you gained. (Also see CARD COSTS and
+“DO X TO”.)
+This happens on when-gain. See GAIN ON
+WHEN-GAIN.
+You may call several Duplicates to gain mul-
+tiple copies of the gained card.
+You may call Duplicate if you gain a card on
+another player’s turn. Your Duplicate is then
+discarded in the Clean-up of that player.
+Clarification: Duplicate triggers based the card’s cost
+right when you gain it, no matter if it changes cost af-
+terwards. See GAIN A CARD THAT CHANGES COST.
+Clarification: See TRIGGERED ABILITY (playing Dupli-
+cate on when-gain, you may gain a copy of the
+gained card). Also see Innovation 9.
+ Also see Conquest 3, Emporium 2, Scepter 5, Territory 4,
+Triumph 3 and Your − Cost token.
+Earth’s Gift, The
+Gain a card; see CARD COSTS.
+See “DO X TO”.
+ Also see Your − Cost token.
+Elder p. 41, 178, 180
+Elder lets you PLAY AN ACTION CARD.
+Clarification: While you are resolving the
+chosen Action card, if the card tells you to
+choose among a number of effects, Elder lets
+you choose one more option. (With “choose
+one”, you choose two, etc.)
+Clarification: You have to choose the options
+first, before doing them.
+From rulebook: You do them in the order
+given. (They have to be different.) Also see
+TRIGGERED ABILITY.
+You can choose to get the extra option or not.
+For instance, with Count you could take an ex-
+tra option for one of the two “choose” effects
+and not for the other.
+From rulebook: Elder only affects the Action
+card if it tells you to choose among several op-
+tions with the word “choose”. This effectively
+includes all cards that say “choose one” and
+“choose two”, plus Scrap. It doesn’t include
+cards like Barge, Jester or Swindler. (This is
+clearer in the revised 2024 card text.)
+Elder only works on “choose” effects that you
+resolve this turn. For instance, Amulet gives
+you a choice now and next turn; only the
+“now” choice gets an extra option. (However,
+Elder + Stronghold lets you choose both op-
+tions.)
+From rulebook: If you play Elder + Courtier,
+you get one extra option, not an extra option
+per type. Likewise, Elder + Scrap also yields
+one extra option.
+Clarification: If you play Elder + Scrap and
+trash a -cost card (like Copper or Curse),
+you do get 1 option with Elder. However, if
+you don’t trash any card (because your hand
+is empty), you don’t do the “choose” effect at
+all, so Elder gives no extra option.
+If you play Elder + a card that PLAYS A CARD WHILE LEAV-
+ING IT (e.g. Captain, Necromancer or via Way of the
+Mouse), Elder has no effect. The card that is being left
+(in the Supply, in the trash, or set aside) might have
+a “choose” effect but is not the card being played by
+Elder.
+After playing a card with Elder, if you replay it with
+Royal Carriage or Scepter, Elder has no effect that time.
+Clarification: Elder affects what the chosen card makes
+you do: If the chosen card is affected by Enchantress,
+Highwayman or Enlightenment, Elder will have no effect
+on it. Likewise, if you use a Way when playing the cho-
+sen card, Elder will have no effect; however, see Way of
+the Chameleon (11). Also see Reckless 7.
+Clarification: If you play Elder + Catacombs and choose
+both options, you put the 3 cards into your hand and
+then discard them. It’s technically possible to cheat
+(discarding other cards), but in practice you have no
+
+Card Reference ◄
+Page 101► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Harbor Village p. 38, 170, 178, 181
+This SETS UP A LATER ABILITY for this turn:
+After you have played and resolved your
+next Action card, Harbor Village checks
+whether it gave you + , and if so gives you
++ . (This means Harbor Village checks on af-
+ter-play of the next Action card.)
+From rulebook: Harbor Village checks if the
+Action card gave you + , not if you got +
+from other abilities when playing it, such as
+your + token or The Field’s Gift. Getting
+Coffers tokens is not getting + . However, see
+8 below.
+From rulebook: If the next card you play is
+also a Harbor Village (for instance if you play
+Throne Room + Harbor Village), it has not
+given you + when the first Harbor Village
+checks, even if it gives you + after you play
+a third Action card. So the first Harbor Village
+will not give you the bonus. (EFFECTS ARE IM-
+MEDIATE.) However, see 9 below.
+From rulebook/clarification: You’ll get the
+bonus even if you lost the , such as with Sto-
+ryteller (pre-2022 version) or Poor House.
+However, your − token makes you get +
+instead of + , so you won’t get the bonus.
+If you play a card like Black Market, Storyteller or
+Capital City (that lets you pay ) on after-play of an
+Action card (e.g. with Inspiring), you can choose +
+from Harbor Village before or after.
+Clarification: If you play an Action card that plays
+Harbor Village (e.g. Vassal), that Action card won’t be
+“the next Action” played. Also, if you play Harbor Vil-
+lage on after-play of an Action card (e.g. with Inspir-
+ing), that card won’t be “the next Action” played.
+Clarification: Harbor Village checks the next time you
+play an Action card, so if you replay the card (e.g. with
+Royal Carriage) before Harbor Village checks, Harbor
+Village still checks the first play. For example, if you
+play a Steward choosing +2 Cards, and then replay the
+Steward choosing + , Harbor Village won’t give you
+the bonus.
+Clarification: If you don’t resolve the Action card’s
+play ability because of Enchantress or Enlightenment
+(or Highwayman via Capitalism), Harbor Village gives
+you nothing. However, if you play the Action card using
+a Way that gives + , such as Way of the Sheep, you’ll
+get the bonus (because of a 2023 rules change about
+Ways, see WAYS § IV). Also see Reckless 7.
+Clarification: If the next Action card gives + on af-
+ter-play of itself, you can resolve this before Harbor
+Village checks, thereby getting the bonus from Harbor
+Village: If you play another Harbor Village as the next
+card and Inspiring lets you play a card giving + (e.g.
+Festival), the 2nd Harbor Village gives you the bonus, so
+the 1st one does as well. Also, if you play an Inspiring
+Merchant as the next card, playing a card such as Sto-
+ryteller to play a Silver, Merchant gives + , so Harbor
+Village gives you the bonus. Also see Kiln 9.
+Clarification: A card is considered played even before
+it’s resolved: For example, if you play a Sheepdog be-
+fore resolving a played Attack card as in Urchin 8,
+Harbor Village still checks the Attack, even though the
+Sheepdog was resolved first.
+If you somehow play Harbor Village itself before re-
+solving a played card (see Kiln 7 and Urchin 8), the
+Harbor Village will not check that card, but the next one
+played.
+Clarification: With Enlightenment active, Action–
+Treasures that give you without a “+” (such as Cop-
+per, Silver and Gold), if played in your Buy phase, still
+count as giving you + for Harbor Village.
+ Also see Enlightenment 17 and Reckless 3.
+Harem
+ In 2023 this card was renamed “Farm”.
+Harsh Winter p. 39, 42, 171
+When you play an Omen that activates this
+Prophecy, you don’t take or add for cards
+gained previously. (EFFECTS ARE IMMEDIATE.)
+This triggers when you gain a card that be-
+longs to a pile, wherever you gain the card
+from (e.g. the trash pile). This includes non-
+Kingdom cards and Ferryman’s extra pile (but
+not the Black Market deck). Starting Coppers
+and Estates belong to their respective piles.
+Clarification: See TRIGGERED ABILITY (playing Omen
+on when-gain, activating this Prophecy, you add or
+take from the gained card’s pile). Also see Gondola
+9 and Innovation 9.
+ Also see Ferryman 8, Kiln 5 and Possession 7.
+Harvest
+ Not included in the 2024 Second Edition.
+Counts DIFFERENTLY NAMED CARDS.
+Hasty p. 39, 40, 171
+See TRIGGERED ABILITY (when-gain). If you
+gain a Hasty card on your turn or on an oppo-
+nent’s turn, you set it aside.
+See MOVE GAINED CARD. If you move it with
+another ability first, Hasty can’t set it aside,
+and therefore can’t play it next turn. (With the
+expanded “lose track” rule from 2021, cards
+that are lost track of can’t be played.)
+
+Card Reference ◄
+Page 102► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Hasty lets you PLAY AN ACTION CARD or a
+Treasure card. (This is not optional.)
+If the Hasty card is a Treasure, this lets you
+play a Treasure in your Action phase (at start
+of turn). If you play a Treasure like Counter-
+feit or Tiara, more Treasures will be played in
+addition. Also see Highwayman 6.
+Clarification: Hasty makes it possible to play Territory
+(if the Clash pile is Hasty), a card that can’t normally be
+played. Territory then goes into play but has no play
+ability; but any Adventures token on the Clash pile will
+trigger.
+Hasty PLAYS A CARD AT THE START OF YOUR TURN.
+Haunted Castle p. 39, see Castle: p. 10, 37, 46,
+48, 50
+If there are no Golds left in the Supply, the
+players still put cards onto their deck.
+You gain a Gold on when-gain. See GAIN
+ON WHEN-GAIN.
+When you gain this, the other players can’t
+use Reactions that trigger on an Attack being
+played, since you didn’t play an Attack.
+Clarification: First you gain a Gold, then your oppo-
+nents resolve any Monkeys, Pirates and Searches trig-
+gering from that; then they put two cards on their
+decks, and then resolve Road Network and any Black
+Cats, Falconers, Mapmakers and Monkeys from your
+gaining Haunted Castle. (See ADVANCED TIMING RULES:
+ORDERING SEVERAL PLAYERS’ CONCURRENT ABILITIES § III.)
+See TRIGGERED ABILITY . When gaining Haunted Cas-
+tle, you may resolve other when-gain abilities af-
+fecting your opponents before or after.
+See TRIGGERED ABILITY (first gain Gold, then oppo-
+nents put cards). When-gain abilities might make
+them draw before they put cards.
+ Also see Aqueduct 6 and Possession 7.
+Haunted Mirror p. 10, 40, see Heirloom: p. 4, 7,
+10
+See WHEN YOU TRASH THIS. Also see “DO X
+TO”.
+If you have a Market Square in hand when
+you trash a Haunted Mirror, it’s not possible
+to resolve both, since you can only discard
+Market Square once. You have to choose
+whether to gain a Gold or a Ghost.
+See TRIGGERED ABILITY : When trashing Haunted
+Mirror, you may resolve other when-trash abilities,
+such as drawing, before discarding an Action card.
+ Also see GAIN ON WHEN-TRASH, and TRIGGERED ABILITY
+(when-trash: first discard, then gain).
+Haunted Woods p. 23, 39, 40, 42, 181
+ 2022 (current) version. See PREVIOUS VERSIONS
+OF SOME CARDS for the pre-2022 version.
+This SETS UP TWO LATER ABILITIES: You draw
+3 cards at the start of your next turn; and until
+then, other players have to put all cards from
+their hand onto their deck whenever they
+buy a card. See ATTACK UNTIL YOUR NEXT
+TURN.
+New version 2022: Haunted Woods now trig-
+gers when the player gains the card instead of
+when they buy it, but only a card that they
+bought.
+If you buy Nomad Camp when another player has
+played Haunted Woods, you first gain the Nomad
+Camp onto your deck, then put your hand on your
+deck. Likewise, if you buy a Den of Sin, Ghost Town,
+Guardian or Night Watchman, it’s gained to your hand
+before Haunted Woods’s effect.
+See TRIGGERED ABILITY . You may resolve other
+when-gain abilities, such as drawing, before or after
+putting cards on your deck.
+Clarification: See TRIGGERED ABILITY (playing Haunted
+Woods on an opponent’s when-gain, you can make
+them put their hand on their deck): See Way of the
+Mouse 12.
+ Also see Possession 7.
+Haunting
+Haven p. 29, 40
+This SETS UP A LATER ABILITY for next turn.
+If you play Haven but have no cards to set
+aside, Haven doesn’t stay in play beyond the
+current turn.
+ For the new 2017 version, see REMOVED FROM PLAY regard-
+ing “under this”.
+Herald p. 38, 39, 181
+Herald lets you PLAY AN ACTION CARD. (This
+is not optional.)
+When you buy Herald, you overpay before
+you’re allowed to look through your discard
+pile. Then you have to put the appropriate
+number of cards onto your deck (in any order).
+New version 2022: The overpay ability is
+now resolved on when-gain (instead of
+when-buy); see OVERPAYING § IV. The Her-
+ald will already be gained, so you may choose
+it from your discard pile.
+
+Card Reference ◄
+Page 110► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Clarification: “It” refers to the gained Loot. If you
+didn’t gain the Loot (for instance if you were Pos-
+sessed), Invasion can’t play it. See Possession 6.
+If you gain another card on top of the Loot in your
+discard pile (see GAIN ON WHEN-GAIN)—e.g. the Gold
+from Doubloons—Invasion won’t lose track of the Loot
+(because of the 2019 errata of the “lose track” rule).
+ You first play an Attack, then gain a Duchy, an Action
+and a Loot in that order, then play the Loot, see
+TRIGGERED ABILITY . Any when-gain ability from the
+Attack (like Skirmisher) or applied after gaining the Ac-
+tion card (like Livery) will be in effect when you gain the
+subsequent cards.
+Inventor p. 23, 42, 181
+Gain a card; see CARD COSTS.
+Playing this causes a COST REDUCTION. See
+SET UP A LATER ABILITY (ongoing ability). It
+has a cumulative effect if played multiple
+times.
+Card costs are not reduced when you gain the
+card, since the cost reduction happens after-
+wards. (EFFECTS ARE IMMEDIATE.) However, if
+you play Inventor one more time, the cost re-
+duction from the first play of Inventor applies
+when you gain a card with the second.
+See TRIGGERED ABILITY (first gain, then cost reduc-
+tion). The cost reduction will not be in effect when you
+resolve any when-gain abilities for the gain.
+Invest p. 23, 39, 41, 42, 171, 181
+From rulebook: “Invest in” a card means to
+buy Invest to Exile that card.
+You Exile an Action card from the Supply,
+then activate an ongoing ability that lasts as
+long as that particular card is still on your Exile
+mat: When another player gains or Invests in a
+COPY OF THAT CARD, you draw 2 cards.
+This is cumulative: If you Invest in another
+copy of the same card, you draw 4 cards, etc.
+Keep the Invested cards separate from any
+other cards you might Exile. (You can put
+them half under the mat.) Other Exiled
+cards—even if they happen to be copies of an
+Invested card—do not draw you cards.
+If you choose to discard the copies of an In-
+vested card (via your Exile mat’s ability), re-
+member that you have to discard all; you can’t
+keep only the Invested cards.
+Note: Exiling a card from the Supply does not
+mean gaining it.
+Invest can trigger in the middle of an opponent re-
+solving an ability (like Pillage [2019] or Soothsayer);
+see TRIGGERED ABILITY .
+ Also see Berserker 7, Cauldron 3, Embassy 2, Messenger
+(2022) 6, Search 9 and Skirmisher 4.
+Investment
+SEVERAL OPTIONS (two): + ; or trash the
+Investment to get + .
+For the second option, see “DO X TO” and NOT
+OPTIONAL “IF YOU DO”.
+Counts DIFFERENTLY NAMED CARDS (Treas-
+ures) in your hand.
+If you have no cards in your hand to trash,
+you still choose one of the two options.
+If you play Investment without moving it into
+play, you can’t get tokens. (Crown + In-
+vestment means you trash a card from your
+hand both times, but get + no more than
+once.) See EFFECT WHEN MOVED FROM PLAY.
+See TRIGGERED ABILITY (first trash from hand, then
+reveal hand). When-trash abilities (e.g. Rats or
+Trail) might let you draw before you reveal your
+hand.
+Ironmonger
+See DISCARD, THEN GET FROM DECK.
+If a card is revealed that has several of the
+types, you get all relevant bonuses (+1 Action,
++ , +1 Card).
+Ironworks p. 171, 177, 178
+If you gain a card that has several of the
+types, you get all relevant bonuses (+1 Action,
++ , +1 Card). Also see CARD COSTS.
+Clarification: “It” refers to the gained card. (On the
+Second-Edition version, this is instead explicitly stated.)
+If you didn’t gain the card, you don’t get any bonus;
+see Possession 6.
+ Also see Enlightenment 16.
+Island p. 24, 170, 181
+Put the Island and the other card you set aside
+on your Island mat. The cards there are face up.
+If you have no cards left in your hand, just set
+aside Island.
+
+Card Reference ◄
+Page 111► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+If you play Island without moving it into
+play, you still set aside a card from your
+hand. (Throne Room + Island lets you set
+aside the Island and two other cards.) Also see
+PLAY A CARD WHILE LEAVING IT.
+Island Folk p. 40, 41, 182
+Clarification: You may use this at the end of
+your turn, either before or after resolving
+other end-of-turn abilities. You will already
+have drawn your next hand. If you use it
+(spending Favors), you will get an extra turn
+after this turn (this is clearer in the 2023 ver-
+sion).
+See “DO X TO”.
+New version 2023: Island Folk now cannot
+give you a third turn in a row. See Outpost 4–5.
+(Pre-2023 version:) Island Folk checks if the previous
+turn was yours when you spend Favors to use it. See
+Outpost 9–10 in PREVIOUS VERSIONS OF SOME CARDS.
+ Also see Lich 5+10 and Possession 12–13+15–16.
+Jack of All Trades
+See DISCARD, THEN GET FROM DECK.
+See TRIGGERED ABILITY (first gain, then discard,
+then draw, then trash). When-gain or when-
+discard abilities might make you draw before you
+trash.
+ Also see Your −1 Card token 2.
+Jester p. 29, 37
+See EACH OTHER PLAYER.
+If the revealed card is a non-Victory card, you
+get SEVERAL OPTIONS (two): You GAIN A COPY;
+or the player does.
+ See TRIGGERED ABILITY (each opponent first discards,
+then gains).
+Jewelled Egg p. 40
+See WHEN YOU TRASH THIS.
+ Also see GAIN ON WHEN-TRASH and TRIGGERED ABILITY
+(when-trash).
+Jewels p. 40 (see Loot)
+This SETS UP A LATER ABILITY for next turn.
+If you play a throne-room (like Specialist) +
+Jewels, the throne-room is discarded in
+Clean-up next turn as usual.
+ Also see Panic 6.
+Journey p. 41, 41, 42, 179
+New version 2023: Journey now cannot give
+you a third turn in a row. See Outpost 4–5.
+(2023 version:) If you buy Journey, you don’t
+discard any cards from play this turn, even if
+Journey fails to give you an extra turn. The rea-
+son it might fail could be that you resolve an
+extra turn from another ability first, or you
+bought Journey on an extra turn, or you
+played Lich.
+The cards in play don’t do anything special
+(you don’t resolve their play ability) on the
+extra turn. While-in-play abilities continue
+to work of course. Durations that would have
+stayed in play anyway behave as normal.
+On the turn you buy Journey, start-of-
+Clean-up abilities like River Shrine and
+Walled Village trigger, but not abilities like
+Improve or Scheme.
+(Pre-2023 version:) Journey checks if the previous turn
+was yours when you buy it. If it was, buying Journey
+has no effect. See Outpost 9–10 in PREVIOUS VERSIONS OF
+SOME CARDS.
+(Pre-2023 version:) If you buy Journey successfully,
+you don’t discard any cards from play this turn, even
+if you resolve an extra turn from another ability first,
+or if Lich makes you skip the Journey turn. The cards
+stay in play until the Clean-up phase of whatever turn
+happens first.
+ Also see Lich 5+9–10 and Possession 12–13+15–16.
+Journeyman
+See NAME A CARD.
+“DIG FOR” 3 cards that don’t have the name
+you said.
+Erratum: The description in the Guilds rulebook says
+“This draws you three cards...” This is not correct; it
+puts cards into your hand. This matters for your
+−1 Card token.
+Joust p. 9, 40
+If you set aside a Province, you gain a Re-
+ward. (See “DO X TO”.) The card is GAINED TO
+YOUR HAND.
+From rulebook: When you gain a Reward, you
+gain whichever you want from the Reward
+pile. The available Rewards are always open
+to see.
+From rulebook: You discard the set-aside
+Province when you discard your cards in
+
+Card Reference ◄
+Page 116► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Livery p. 23, 25, 39, 42, 171, 182
+This SETS UP A LATER ABILITY (ongoing abil-
+ity) for the rest of this turn: When you gain a
+card costing or more, you gain a Horse.
+Also see CARD COSTS. It has a cumulative ef-
+fect if played multiple times.
+Only cards gained after playing Livery give
+you a Horse. (EFFECTS ARE IMMEDIATE.)
+You gain the Horse on when-gain. See GAIN
+ON WHEN-GAIN.
+Clarification: Livery triggers based on the
+card’s cost right when you gain it, no matter
+if it changes cost afterwards. See GAIN A CARD
+THAT CHANGES COST. So if you play Livery
+twice and then gain a Wayfarer costing or
+more, you gain two Horses.
+Clarification: See TRIGGERED ABILITY (playing Livery
+on when-gain of a card with the right cost, you gain
+a Horse). Also see Gondola 9 and Innovation 9.
+ Also see TRIGGERED ABILITY (when-gain), and see Kiln 5.
+Loan p. 13
+ Not included in the 2022 Second Edition.
+“DIG FOR” a Treasure.
+ See TRIGGERED ABILITY (first trash, then discard).
+Locusts p. 178
+Unless you trashed a Copper or an Estate, you
+“REMODEL” a card into a card that costs less
+and has at least one type in common with the
+trashed card.
+ See TRIGGERED ABILITY (first trash, then gain). Also see
+Capitalism 6, Enlightenment 13, Your − Cost token
+and Your Estate token 4.
+Longship p. 40
+This SETS UP A LATER ABILITY for next turn.
+Lookout
+Look at 3 cards, then decide what to do with
+which. If you only have 2 cards to look at,
+you must trash one and discard one. If you
+only have one to look at, you must trash it.
+See REVEAL / LOOK AT CARDS AND TRASH.
+ See TRIGGERED ABILITY (first trash, then discard, then
+put card back).
+Loot (type) p. 4, 7, 11, 46, 50
+ See SPECIAL SETUP § I.
+From rulebook: Loot cards are not in the Sup-
+ply; they can only be gained from their pile
+with abilities that say “gain a Loot”.
+From rulebook: All cards in the Loot pile are
+face down. When you gain a Loot, you gain
+the top card, showing it to the other players.
+A Loot card may be returned to its pile with Changeling,
+Panic or Trader (2020 version), or—if the Loot is Spell
+Scroll or Enlightenment is active—Swap or Way of the
+Butterfly/Horse. The returned card will go on top as in
+normal piles.
+The cost of a Loot is for any ability that refers to its
+cost.
+Looting
+Lost Arts p. 37
+ See Your +1 Action token.
+Also see SPLIT PILES: PILE TYPE AND COST § IV.
+Lost City p. 25, 39
+See TRIGGERED ABILITY . When gaining Lost City, you
+may resolve other when-gain abilities affecting your
+opponents (like Cauldron) before or after.
+Lost in the Woods p. 10, 36, 40
+ See Fool.
+This State is active every turn as long as you
+have it. Also see “DO X TO”.
+See PLAY A CARD AT THE START OF YOUR TURN regarding
+taking Lost in the Woods.
+Lucky Coin p. 45, see Heirloom: p. 4, 7, 10
+You get the initial + even if there are no
+Silvers left in the Supply.
+Lurker p. 29, 51
+SEVERAL OPTIONS (two): Trash from the Sup-
+ply; or gain from the trash.
+Remember that when-trash abilities and
+when-gain abilities will trigger.
+It’s possible to gain non-Kingdom cards from
+the trash, and cards with or in their cost.
+You can only trash the top card of a pile.
+ Also see Market Square 5, Priest 5, Sewers 2 and Tomb
+2.
+Madman p. 9
+See NOT OPTIONAL “IF YOU DO”.
+This is REMOVED FROM PLAY.
+
+Card Reference ◄
+Page 117► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+If you play Madman without moving it into
+play, you don’t draw cards. (Throne Room +
+Madman means you get +2 Actions both times
+but you only draw once.) See EFFECT WHEN
+MOVED FROM PLAY.
+The cost of Madman is for any ability that refers to
+its cost.
+Maelstrom
+If you buy this with less than 3 cards in your
+hand (even 0), you trash the cards you have,
+and the other players still have to trash a card.
+ You trash several cards at once, see TRIGGERED ABILITY.
+Magic Lamp see Heirloom: p. 4, 7, 10
+If 6 or more of the CARDS YOU HAVE IN PLAY
+(including the Magic Lamp) are unique—i.e.
+DIFFERENTLY NAMED from all of the others—
+you trash Magic Lamp to gain 3 Wishes.
+This is REMOVED FROM PLAY when you trash
+it.
+See NOT OPTIONAL “IF YOU DO”.
+You don’t gain Wishes if you trash Magic
+Lamp some other way.
+If you play Magic Lamp without moving it
+into play, you don’t gain Wishes. (Using
+Coronet, Counterfeit, Crown, Specialist or Ti-
+ara to play Magic Lamp twice means you get
++ both times, but you only gain Wishes
+once.) See EFFECT WHEN MOVED FROM PLAY.
+ See TRIGGERED ABILITY (first trash, then gain).
+Magnate
+Count the number of Treasure cards in your
+hand.
+Magpie p. 177
+If a card is revealed that is both a Treasure
+and a Victory, or a Treasure and an Action, you
+do both: put it into your hand, and gain a
+Magpie.
+ Also see Ferryman 5.
+Mandarin p. 39
+ Not included in the 2022 Second Edition.
+You get + even if you have no cards in your
+hand to put onto your deck.
+Before gaining Mandarin, remember that you
+don’t have to play all your Treasures. (You
+can’t play more Treasures after buying a
+card.)
+See CARDS YOU HAVE IN PLAY and REMOVED
+FROM PLAY. Also see Capitalism 9.
+If you gain a Mandarin with Royal Seal in
+play, both cards’ when-gain abilities trig-
+ger. You may choose to put the Mandarin onto
+your deck before or after putting all Treasures
+from play onto your deck. (See ADVANCED
+TIMING RULES: RESOLVE ALL TRIGGERED ABILI-
+TIES § III.) Also see Pilgrimage 4.
+If you gain Mandarin onto your deck (with a card like
+Artificer), it will be covered by the Treasures and lost
+track of. But you could use an ability like Cargo Ship
+(see MOVE GAINED CARD) before moving the Treasures.
+See TRIGGERED ABILITY . When gaining Mandarin, if
+you play Treasure cards on when-gain (which via
+Capitalism may include the Mandarin itself) before re-
+solving Mandarin’s when-gain, you put the Treasures
+on your deck.
+ Also see Capital 2.
+Mapmaker p. 39, 171
+If you only have 1 or 2 cards to look at, put
+it/them into your hand.
+You may react with several Mapmakers to the
+same gain.
+If you react with Mapmaker and put another
+one in your hand (or for instance react with
+Falconer to gain one to your hand), you may
+still play that Mapmaker. (See REACTION
+CARDS: RESOLVING REACTIONS AND TIMING
+§ III.) You might also draw one with Band of
+Nomads, Black Cat, etc.—see TRIGGERED
+ABILITY (when-gain)—and react with it.
+See REACTION THAT PLAYS ITSELF.
+You may react with Mapmaker when you buy
+& gain a Victory card in your Buy phase. If
+this makes you put Treasures in your hand,
+you cannot play them. Also see ACTIONS IN
+YOUR BUY PHASE.
+For reacting with Mapmaker, see Sheepdog 6–7—the
+timing is the same. Mapmaker can affect Cemetery,
+Farmland, Followers, Governor, Grand Castle and Pious.
+Also see Way of the Mouse 7–8+12.
+When you react with Mapmaker, you might end up
+moving the gained card: See MOVE GAINED CARD.
+
+Card Reference ◄
+Page 118► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+ Also see Berserker 7, Cauldron 3, Fool’s Gold 7, Haunted
+Castle 4, Kiln 4, Messenger (2022) 6 and Skirmisher 4.
+Marauder p. 9
+As the Ruins are different, it’s important that
+players gain them in turn order even if they
+are not running out.
+The other players gain a Ruins even if you
+can’t gain a Spoils.
+See TRIGGERED ABILITY (first you gain, then each
+opponent gains). When-gain abilities from your
+gain might get them a card like Watchtower or Trader
+in hand before gaining.
+March
+March lets you PLAY AN ACTION CARD.
+It lets you play an Action card in your Buy
+phase (the second part of your Buy phase). See
+ACTIONS IN YOUR BUY PHASE.
+Marchland (promo) p. 39
+Marchlands also count themselves when scor-
+ing.
+See EFFECTS WHEN IT’S NOT YOUR TURN.
+See “DO X FOR”.
+When you gain Marchland and discard cards,
+when-discard abilities (such as Faithful
+Hound, Trail, Tunnel, Village Green and
+Weaver) trigger. See TRIGGERED ABILITY.
+Also see GAIN ON WHEN-DISCARD.
+When gaining Marchland you might end up moving it if
+you discard a card that draws, like Trail; see MOVE
+GAINED CARD.
+ Also see Basilica 3+(pre-2022)7 and Doctor 5+(pre-
+2022)7.
+Margrave
+Each other player draws 1, then DISCARDS
+DOWN TO 3 cards in hand. (See GET FROM
+DECK, THEN DISCARD.)
+Market p. 12
+Market Square p. 21, 23, 40
+See TRIGGERED ABILITY (when-trash). New
+version: Also see “DO X TO”.
+Trashing one of your cards might happen on
+your turn or on an opponent’s turn.
+You may react with several Market Squares to
+the same trashed card.
+If a when-trash ability causes you to draw
+cards (such as Cultist, Overgrown Estate or
+Rats), and you draw a Market Square, you can
+still react with that Market Square. (See REAC-
+TION CARDS: RESOLVING REACTIONS AND TIM-
+ING § III.) This way it’s even possible to
+discard the same Market Square twice for the
+same trashing, if you discarded it first and
+then happened to draw it again.
+Trashing a card from the Supply (with Gladi-
+ator, Lurker or Salt the Earth) doesn’t trigger
+Market Square.
+If an effect tells you to trash a card, but you
+fail to do so (e.g. if you have no cards in your
+hand to trash), Market Square doesn’t trig-
+ger.
+ Also see GAIN ON WHEN-TRASH, and see Haunted Mirror 2.
+Market Towns p. 40
+Market Towns lets you PLAY AN ACTION CARD.
+It lets you play an Action card in your Buy
+phase (the first part of your Buy phase). See
+ACTIONS IN YOUR BUY PHASE.
+After completely resolving the Action card,
+you may spend another Favor to play another
+one. This still counts as one ability, which
+means you can’t resolve other start-of-Buy
+phase abilities in between.
+You can resolve Market Towns before or after other
+start-of-Buy-phase abilities. See Deluded 4, Envious
+3 and Treasure Chest 1.
+ Also see Arena 2 and Cavalry 4 (and Continue, Launch
+and Villa).
+Maroon p. 178
+ See TRIGGERED ABILITY (first trash, then count types).
+Also see Capitalism 6, Charlatan 3, Enlightenment 13,
+Young Witch 4 and Your Estate token 4.
+Marquis
+See GET FROM DECK, THEN DISCARD.
+You DISCARD DOWN TO 10 cards in hand.
+Masquerade
+From rulebook: You pass a card to another
+player by giving it to them face down so that
+no other players can see it. This is not gaining
+a card, so no when-gain abilities will trig-
+ger.
+
+Card Reference ◄
+Page 119► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+All players pass cards simultaneously. You
+can’t look at the card being passed to you un-
+til you’ve passed a card.
+(1st version only:) See GET FROM DECK, THEN...
+(You draw 2, then pass 1.)
+New version: The card text was changed in the
+Second Edition, so that only players with any
+cards in hand pass one, and do so to the next
+player to their left who also has cards in hand.
+(With the old version it was possible in a two
+player game to construct a deck to trash all or
+most cards in your opponent’s deck.)
+Mastermind p. 17, 28, 40
+You choose a card from your hand next turn.
+See PLAY A CARD MULTIPLE TIMES. If the card
+is a Duration, Mastermind stays in play as
+long as that Duration stays in play. Also see
+Enchantress 7.
+If you Mastermind another Mastermind, the
+first one stays in play as long as the Duration
+it played—the second Mastermind—stays in
+play. If you next turn use the second Master-
+mind on another Duration, both Masterminds
+stay in play as long as that Duration does.
+Mastermind PLAYS A CARD AT THE START OF YOUR TURN.
+From rulebook: Mastermind’s start-of-turn ability is
+one ability, so you can’t resolve any other start-of-
+turn abilities in between playing the Action card three
+times. (See ADVANCED TIMING RULES: RESOLVING MULTIPLE
+ABILITIES § III.)
+ Also see Enchantress 7.
+Masterpiece p. 30, 38, 39, 179
+ Not included in the 2024 Second Edition. This
+means the 2022 version was never printed.
+New version 2022: The overpay ability is
+now resolved on when-gain (instead of
+when-buy); see OVERPAYING § IV. See GAIN
+ON WHEN-GAIN.
+(Pre-2022 version:) You may overpay. (Also see GAIN
+ON WHEN-BUY.)
+See Doctor 5+(pre-2022)7 for more about overpaying.
+Menagerie
+ Note: Menagerie is also the name of a Dominion expan-
+sion. See Dominion: Menagerie in the INDEX in the back.
+If all the cards in your hand have different
+names, you draw 3 cards. If you have no
+cards in your hand, you draw 3 cards. See
+DIFFERENTLY NAMED CARDS.
+Mercenary p. 9
+Each other player possibly DISCARDS DOWN TO
+3 cards in hand.
+With one card in hand you can choose to
+trash that card, but then Mercenary would do
+nothing further.
+The cost of Mercenary is for any ability that refers
+to its cost.
+ See TRIGGERED ABILITY (first trash, then draw). You
+trash several cards at once.
+Merchant p. 18, 18, 38, 182
+This SETS UP A LATER ABILITY for this turn
+(when you first play a Silver), and has a cumu-
+lative effect if played multiple times.
+The first Silver only gives you + if it’s
+played after Merchant. If you play a Silver
+before playing Merchant, Merchant doesn’t
+give + that turn. (EFFECTS ARE IMMEDIATE.)
+(Silver might be played first with Black Mar-
+ket, Coronet, Courier, Enlightenment, Farm-
+hand, Fortune Hunter, Herb Gatherer, Mining
+Road, Prepare, Rapid Expansion, Specialist or
+Storyteller, or by playing Merchant in your
+Buy phase—see ACTIONS IN YOUR BUY PHASE.)
+Merchant triggers on after-play, just like Sauna. See
+TRIGGERED ABILITY. If you use Sauna to trash a Trail or a
+card that gains a card on when-trash, and play Mer-
+chant (via e.g. Innovation or Way of the Mouse), you
+get + . (See ADVANCED TIMING RULES: MORE CONCURRENT
+ABILITIES CAN TRIGGER § III.)
+ Also see Harbor Village 9.
+Merchant Camp p. 40
+See Panic 5, Prince (pre-2022) 13, Reckless 8
+and Tireless 1.
+Merchant Guild p. 40, 182
+ 2022 (current) version. See PREVIOUS VERSIONS
+OF SOME CARDS for the pre-2022 version.
+New version 2022: Merchant Guild now SETS
+UP A LATER ABILITY for this turn: At the end of
+your Buy phase, you get +1 Coffers for each
+card you gained in that Buy phase. It’s cumu-
+lative if played with a throne-room. Also, it
+counts all gained (not just bought) cards, but
+only in your Buy phase.
+
+Card Reference ◄
+Page 120► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Merchant Guild was changed because of the new 2022
+rule that you may spend Coffers tokens at any time
+during your turn. It gives you the tokens at the end of
+your Buy phase instead of during it, so that you can’t
+spend them the same turn.
+If you play Merchant Guild in your Buy phase (see
+ACTIONS IN YOUR BUY PHASE), any cards you gained pre-
+viously in the Buy phase still count.
+Clarification: If you have several Buy phases due to
+Cavalry, Continue, Launch or Villa, a played Merchant
+Guild triggers each time, checking the Buy phase that
+just ended. See Cavalry 5.
+ Also see Possession 5 and Wine Merchant 5.
+Merchant Ship p. 40
+This SETS UP A LATER ABILITY for next turn.
+Messenger p. 39, 171
+ 2022 (current) version. See PREVIOUS VERSIONS
+OF SOME CARDS for the pre-2022 version.
+You may not look through your deck as you
+put it into your discard pile.
+This doesn’t trigger cards that say “WHEN
+YOU DISCARD THIS”.
+New version 2022: Messenger now triggers
+when you gain it (rather than when you buy
+it): If it’s the first card you gain in your Buy
+phase, you gain a card costing up to and
+the other players GAIN A COPY of it. See GAIN
+ON WHEN-GAIN. Also see CARD COSTS.
+Clarification: “It” refers to the gained card. If you
+didn’t gain the card, the other players don’t gain a
+copy; see Possession 6.
+Clarification: If you have several Buy phases due to
+Cavalry, Continue, Launch or Villa, Messenger’s when-
+gain ability can trigger each time.
+Clarification: When gaining Messenger, you gain a
+card, then your opponents resolve Invest, Road Net-
+work and any Black Cats, Falconers, Mapmakers, Mon-
+keys, Pirates, Searches and Stowaways triggering from
+that; then you make them gain a copy; and in the end
+they resolve any abilities triggering from your gain-
+ing Messenger. (See ADVANCED TIMING RULES: ORDERING
+SEVERAL PLAYERS’ CONCURRENT ABILITIES § III.)
+See TRIGGERED ABILITY . Cost reduction might be
+applied on when-gain before you gain a card costing
+up to . Also, you may resolve Messenger before
+other when-gain abilities. And when buying a card,
+gaining Messenger on when-buy (see GAIN ON WHEN-
+BUY), you can resolve it before resolving the when-
+buy ability; see TRIGGERED ABILITY .
+See TRIGGERED ABILITY (when-gain). See TRIGGERED
+ABILITY (first you gain, then each opponent gains).
+When-gain abilities from your gain might get them a
+card like Watchtower or Trader in hand before gain-
+ing.
+ Also see Cavalry 5 and Possession 7.
+Militia p. 22
+Each other player DISCARDS DOWN TO 3 cards
+in hand.
+Mill
+If you choose to discard 2 cards with only 1
+card in your hand, you discard that card but
+do not get any + .
+Also see “DO X FOR”.
+Miller
+If you only have one card to look at, put it
+into your hand.
+Mine p. 22
+“REMODEL” a Treasure into a Treasure that
+costs up to more.
+The card is GAINED TO YOUR HAND.
+New version: The card text was changed in the
+Second Edition, so that the effect is optional.
+Mining Road p. 39, 42, 179
+This SETS UP A LATER ABILITY for this turn:
+You may choose to play any one Treasure
+card you gain during this turn (but only a card
+you gained after you played Mining Road;
+EFFECTS ARE IMMEDIATE.) You make the
+choice right when you gain a card.
+If you play Mining Road twice, you may play
+two gained Treasures (but not the same card
+twice, due to the expanded “lose track” rule
+from 2021).
+See TRIGGERED ABILITY (when-gain). This
+when-gain ability works like Innovation’s,
+except that Mining Road can only be used on
+Treasures. See the Innovation entry (except 1–
+3+6+15)—note that many examples there are
+non-Treasure cards and so do not apply to Min-
+ing Road; but playing a card like Crown or
+Orb allows Action cards to be played (also
+see Capitalism 8).
+Mining Road can play Treasures like Bauble, Cauldron,
+Collection, Royal Seal and Tiara on when-gain.
+Mining Road lets you play a Treasure in your
+Action phase. See ACTIONS IN YOUR BUY
+PHASE (second part of Buy phase). Also see
+Crown 6 and Highwayman 6.
+
+Card Reference ◄
+Page 121► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Mining Road lets you play a Treasure in the
+second part of your Buy phase (if you gain a
+Treasure then), which is normally not possible.
+Clarification: See TRIGGERED ABILITY (playing Mining
+Road on when-gain of a Treasure, you can play the
+gained card). Also see Gondola 9.
+ Also see Basilica 3+(pre-2022)7, Crown 9, Doctor 5+
+(pre-2022)7, Envious 1, Kiln 8, Merchant 2 and Werewolf
+4.
+Mining Village p. 18, 25
+You get +2 Actions even if you trash this. See
+REMOVED FROM PLAY. (New version: Also see
+“DO X FOR”.)
+If you play Mining Village without moving it
+into play, you can’t get + . (Throne Room +
+Mining Village means you get +1 card and
++2 Actions both times, but + no more than
+once.) See EFFECT WHEN MOVED FROM PLAY.
+Minion p. 20, 44
+SEVERAL OPTIONS (two): 1: + ; or 2: discard
+your hand, draw cards, and make each other
+player discard and draw.
+See DISCARD, THEN GET FROM DECK.
+The other players have to resolve any Reac-
+tions before you choose an option.
+If you choose option 2 with no cards in your
+hand to discard, you still draw 4 cards.
+Mint p. 29, 39
+ 2022 (current) version. See PREVIOUS VERSIONS
+OF SOME CARDS for the pre-2022 version.
+New version 2022: Mint now has a when-
+gain instead of when-buy ability: It
+trashes non-Duration Treasures in play.
+Before buying Mint, remember that you can
+play any Treasures you want. You can’t play
+more Treasures after buying a card.
+See CARDS YOU HAVE IN PLAY and REMOVED
+FROM PLAY. Also see Capitalism 9.
+You GAIN A COPY of the Treasure you reveal.
+If you gain a Mint with Royal Seal in play,
+both cards’ when-gain abilities trigger.
+You may put the Mint onto your deck even if
+you trash the Royal Seal first. (See ADVANCED
+TIMING RULES: RESOLVE ALL TRIGGERED ABILI-
+TIES § III.) Also see Pilgrimage 4.
+You trash several cards at once, see TRIGGERED ABILITY.
+Also see GAIN ON WHEN-TRASH.
+See TRIGGERED ABILITY . When gaining Mint, if you
+play Treasure cards on when-gain (e.g. gain a
+Treasure and play it with Mining Road, or gain a Crown
+and play it with Innovation) before resolving Mint’s
+when-gain, you trash the Treasures.
+ Also see Capital 2.
+Mirror p. 29, 39, 171, 177, 178, 179
+After resolving this Event, you still have the
+same number of Buys as you had before.
+When you buy this, you SET UP A LATER ABIL-
+ITY for this turn: The next time you gain an
+Action card, you GAIN A COPY of it. If that
+doesn’t happen this turn, Mirror does nothing.
+You gain the copy on when-gain. See GAIN
+ON WHEN-GAIN.
+Mirror has a cumulative effect if bought mul-
+tiple times: If you buy it twice, you get two
+copies of the next gained Action card.
+ Also see Enlightenment 15.
+Miser p. 9
+SEVERAL OPTIONS (two): Put Copper on Tavern
+mat; or + .
+This has VARIABLE PRODUCTION.
+Miserable p. 10
+ See Misery.
+Misery p. 10
+If you already have Twice Miserable, nothing
+happens.
+Mission p. 15, 23, 23, 41, 42, 182
+You can’t buy any cards on this extra turn
+(even via Black Market), but you can gain or
+obtain cards in other ways, and you can buy
+Events and Projects.
+New version 2023: Mission now cannot give
+you a third turn in a row. See Outpost 4–5.
+(Pre-2023 version:) Mission checks if the previous turn
+was yours when you buy it. See Outpost 9–10 in
+PREVIOUS VERSIONS OF SOME CARDS.
+ Also see Lich 5+10 and Possession 12–13+15–16.
+
+Card Reference ◄
+Page 124► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Nobles
+SEVERAL OPTIONS (two): Draw; or +Actions.
+Nomad Camp p. 49, 178
+ Not included in the 2022 Second Edition.
+From rulebook: Nomad Camp isn’t when-
+gain (despite being worded that way on the 1st
+version of the card); rather it’s GAINED TO
+YOUR DECK instead of to your discard pile.
+This is made clearer in the new 2016-version
+card text.
+Clarification: If an ability tells you to gain
+Nomad Camp to your hand, it will be gained
+to your hand. (This changes a previous ruling
+by the game designer.)
+ Also see Continue 6, Haunted Woods 3, Hill Fort 3, Spell
+Scroll 8 and Summon 3.
+Nomads p. 39, 40
+See WHEN YOU TRASH THIS.
+See EFFECTS WHEN IT’S NOT YOUR TURN.
+ Also see Basilica 3+(pre-2022)7 and Doctor 5+(pre-
+2022)7.
+Oasis
+See GET FROM DECK, THEN DISCARD.
+You get +1 Action and + even if you don’t
+have a card in your hand to discard.
+Obelisk p. 9, 37, 177
+ See SPECIAL SETUP § I. All cards from the cho-
+sen pile count.
+ Also see Divine Wind 11.
+Old Map
+See GET FROM DECK, THEN DISCARD, and
+DISCARD, THEN GET FROM DECK.
+If you have no cards in hand to discard (because your
+−1 Card token canceled the initial “+1 Card”), you still
+draw a card for the last “+1 Card”.
+Old Witch
+See EACH OTHER PLAYER.
+If the Curse pile is empty, the other players
+may still trash a Curse from their hand.
+If a player is unaffected by Attacks (with
+Champion, Guardian, Lighthouse, Moat or
+Shield), they neither gain a Curse nor may
+trash one.
+See TRIGGERED ABILITY (opponents first gain Curse,
+then may trash). When-gain abilities might make
+them draw before they trash. Also see Sleigh 7.
+Opulent Castle p. 55, see Castle: p. 10, 37, 46,
+48, 50
+(2021 version:) You reveal the Victory cards
+as you discard them.
+Oracle
+ Not included in the 2022 Second Edition.
+See EACH PLAYER.
+See DISCARD, THEN GET FROM DECK.
+If you put back the cards you revealed, you
+will draw them.
+ Also see Way of the Chameleon 4.
+Orb (see Loot)
+SEVERAL OPTIONS (two): Play a card; or +Buy
+and + .
+You may play an Action or Treasure from
+your discard pile. See PLAY AN ACTION
+CARD.
+This lets you play an Action card in your Buy
+phase. Usually you will play Orb in the first
+part of your Buy phase, i.e. before buying
+anything. See ACTIONS IN YOUR BUY PHASE.
+Orchard
+For each of your DIFFERENTLY NAMED Action
+cards, you get 4 if you have 3 or more cop-
+ies of it. (See COPY OF A CARD.)
+ Also see Enlightenment 14.
+Order of Astrologers p. 41
+If you spend at least 1 Favor, you may look
+through the cards you will shuffle and keep
+some of them aside. For each Favor spent you
+may keep one card. After shuffling, you put
+the chosen cards on top of the shuffled cards
+(in any order you wish).
+From rulebook: First spend 1 Favor, look
+through the cards, then spend any amount of
+additional Favors.
+If there are cards remaining in your deck (per
+the rules change for shuffling introduced in
+the Second Edition of the Base game), your
+chosen cards go under those, on top of the
+shuffled cards.
+
+Card Reference ◄
+Page 127► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+tient cards. (See ADVANCED TIMING RULES: RESOLVING MUL-
+TIPLE ABILITIES § III.)
+Clarification: Patient makes it possible to play Territory
+(if the Clash pile is Patient), a card that can’t normally
+be played. Territory then goes into play (for abilities
+that check the CARDS YOU HAVE IN PLAY) but does nothing
+when played; but any Adventures token on the Clash
+pile will trigger.
+Patient PLAYS A CARD AT THE START OF YOUR TURN.
+ Also see Biding Time 2.
+Patrician p. 9
+Checks CARD COST.
+Patrol
+Patron p. 41, 41, 42
+From rulebook: When an effect tells you to
+reveal a card or cards, and Patron is one of the
+revealed cards, you get +1 Coffers.
+New version 2022: Patron now only gives you
+Coffers during an Action phase (which includes
+an opponent’s Action phase).
+This change was made to prevent the possibility of get-
+ting infinite by buying Pursue and revealing Pa-
+trons. Additionally, you can’t trigger Patron with Foray,
+Foresight, Gamble, Ghost, Investment, Loan, Raider or
+Venture.
+Discarding or trashing a Patron does not
+count as revealing it, even though the other
+players can see it.
+Revealing your hand or discard pile does
+count, since you reveal all cards in it.
+Archer, Bureaucrat, Pillage, Raider, Snake Witch, Tax-
+man and Villain can make you reveal your hand. Bad
+Omens can make you reveal your discard pile.
+Clarification (2022 version): If you reveal Patron at the
+start of your turn, you’re in your Action phase at that
+point. See PLAY A CARD AT THE START OF YOUR TURN.
+Clarification: If you play Black Market and Patron is one
+of the three revealed cards, you get +1 Coffers.
+ Also see Fated 7, Hostelry 3 and Witch’s Hut 3.
+Pawn
+SEVERAL OPTIONS (four): Draw; +Action;
++Buy; or + . (Pick two.)
+From rulebook: You have to choose two dif-
+ferent options first, before doing them.
+Clarification: You do them in the order given.
+Peaceful Cult p. 33, 40, 45
+First spend the Favors, then choose and trash
+the cards.
+Resolving Peaceful Cult could let you draw cards or
+play a card, see TRIGGERED ABILITY (when-trash), and
+you can do this before or after other start-of-Buy-
+phase abilities. See Deluded 4, Envious 3 and Treas-
+ure Chest 1.
+ You trash several cards at once, see TRIGGERED ABILITY.
+Also see Arena 2 and Cavalry 4 (and Continue, Launch
+and Villa).
+Pearl Diver
+ Not included in the 2022 Second Edition.
+Peasant p. 9, 31, 40, 170, 171, 178
+This is a TRAVELLER.
+ Also see EMPTY SUPPLY PILES, and see Divine Wind 9,
+Prince (pre-2022) 13, Reckless 8 and Tireless 1.
+Peddler p. 6, 42, 46
+This checks the number of Action CARDS YOU
+HAVE IN PLAY in your Buy phase.
+Clarification: During your Buy phase, Ped-
+dler’s cost is modified for all players (based on
+the number of Action cards in your play
+area). This is made clearer in the 2020 print-
+ing.
+The cost of Peddler is modified during your
+Buy phase, but is at all other times (barring
+other COST REDUCTION). For instance if you
+trash Peddler with a Remodel during your Ac-
+tion phase, it normally costs . Also see
+Black Market 2, Improve 4 and River Shrine 4.
+But if you play ACTIONS IN YOUR BUY PHASE, Peddler’s
+cost is modified.
+ Also see GAIN A CARD THAT CHANGES COST.
+Pendant
+This checks the Treasure CARDS YOU HAVE IN
+PLAY (including itself), and counts DIFFERENT-
+LY NAMED CARDS.
+This has VARIABLE PRODUCTION. (Count the
+cards in play right when you play it.)
+Peril
+See “DO X TO”.
+ See TRIGGERED ABILITY (first trash, then gain).
+
+Card Reference ◄
+Page 136► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Renown p. 23, 42, 179, see Reward: p. 7, 9
+Playing this causes a COST REDUCTION. See
+SET UP A LATER ABILITY (ongoing ability). It
+has a cumulative effect if played multiple
+times.
+The cost of Renown is for any ability that refers to
+its cost.
+Replace p. 171
+“REMODEL” a card into a card that costs up to
+more.
+If you gain a card that is both an Action and a
+Victory, or a Treasure and a Victory, you get
+both bonuses: Put it onto your deck, and each
+other player gains a Curse.
+If you move the gained card (e.g. with Watch-
+tower), Replace loses track of it and can’t put
+it on your deck. See MOVE GAINED CARD.
+Also see Gatekeeper 4 and Siren 3.
+If you didn’t gain the card (for instance if you
+were Possessed), Replace doesn’t move any
+card or give out Curses. See Possession 6.
+Before the 2019 errata of the “lose track” rule, if you
+gained the card to your discard pile and gained an-
+other card on top of it (see GAIN ON WHEN-GAIN), Replace
+would immediately lose track of the covered card.
+However, currently (per the 2019 errata), cards in your
+discard pile are never lost track of.
+ See TRIGGERED ABILITY (first trash, then gain). Also see
+Enlightenment 16 and Way of the Mouse 11.
+Research p. 29, 40
+This SETS UP A LATER ABILITY for next turn.
+If there is a COST REDUCTION, Research will
+set aside fewer cards.
+Clarification: If you trash a card that costs
+, or you don’t have any cards in your deck
+to set aside, the Research doesn’t stay in play
+beyond the current turn.
+ See TRIGGERED ABILITY (first trash, then check cost, then
+set aside), and see REMOVED FROM PLAY regarding “on
+this”.
+Rice
+This has VARIABLE PRODUCTION.
+Count the unique types on all CARDS YOU
+HAVE IN PLAY (including the Rice): A type that
+appears on several of the cards only counts
+once. (Also see EFFECTS ARE IMMEDIATE.)
+ Also see Capitalism 6, Charlatan 3, Enlightenment 13,
+Young Witch 4 and Your Estate token 4.
+Rice Broker p. 178
+If you trash a card that has both types, you
+draw 7 cards.
+Rich p. 39, 171
+You gain a Silver on when-gain. See GAIN
+ON WHEN-GAIN.
+See Embassy 4.
+ Also see Aqueduct 6 and Territory 4.
+Ride
+Ritual p. 178
+See NOT OPTIONAL “IF YOU DO”.
+If there is a COST REDUCTION, Ritual will give
+you less + .
+Clarification: This Event says, “per it cost”. Accord-
+ingly, the cost of that card when you trashed it is
+what matters, not the current cost. (See TRIGGERED
+ABILITY.)
+See TRIGGERED ABILITY (first gain, then trash).
+When-gain abilities might make you draw before
+you trash.
+ Also see Possession 5.
+River Shrine p. 40, 183
+You may choose to not trash any cards.
+Whether you trash any cards or not, you SET
+UP A LATER ABILITY: At the start of Clean-up
+this turn, you gain a card if you didn’t gain
+any cards in your Buy phase this turn. You will
+gain multiple cards if you played River
+Shrine multiple times.
+Gain a card; see CARD COSTS.
+Remember that COST REDUCTIONS for this turn,
+or from cards in play, still apply in Clean-up
+(except Peddler’s cost reduction).
+From rulebook: If you had several Buy phases
+(via Cavalry, Villa, Continue or Launch), you
+only gain a card from River Shrine if you
+didn’t gain any cards in any of them. It doesn’t
+matter when in your turn you played the River
+Shrine.
+Clarification: If you somehow discard a Faithful Hound,
+Trail, Tunnel, Village Green or Weaver via gaining a
+card with River Shrine, the when-discard ability
+doesn’t trigger, since it’s your Clean-up phase.
+
+Card Reference ◄
+Page 143► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+If you react with for instance Caravan Guard
+and draw a Secret Chamber, you may still re-
+veal it. You may react with the same Secret
+Chamber several times. (See REACTION CARDS:
+RESOLVING REACTIONS AND TIMING § III.)
+Secret Passage
+See GET FROM DECK, THEN PUT BACK. (You
+draw 2, then put 1 in your deck.)
+Clarification: If you put the card in a certain
+position in your deck (the top, the bottom, or a
+position counted from the top/bottom), that po-
+sition is open information to all players.
+Seer
+This checks CARD COSTS.
+Seize the Day p. 41
+Clarification: Each player can buy this Event
+once per game.
+With 2023 versions of Outpost, Voyage, Jour-
+ney, Mission and Island Folk: See Outpost 4. If
+you trigger Seize the Day and (for instance)
+Outpost on the same turn, you will get both ex-
+tra turns as long as you take the Seize the Day
+turn last. This would give you three turns in a
+row. Buying Seize the Day on an extra turn
+would also result in three turns in a row.
+With pre-2023 versions of Outpost, Voyage, Journey,
+Mission and Island Folk: See Outpost (2017/pre-2023)
+9.
+ Also see Possession 12–13+16.
+Sentinel
+See REVEAL / LOOK AT CARDS AND TRASH.
+ See TRIGGERED ABILITY (first trash, then put back). You
+trash several cards at once.
+Sentry
+You look at 2 cards, then trash any of them,
+then discard any of the remaining cards, then
+put the rest back.
+See REVEAL / LOOK AT CARDS AND DISCARD/
+TRASH.
+ See TRIGGERED ABILITY (first trash, then discard, then
+put cards back). You trash several cards at once.
+Settlers p. 9
+Sewers p. 40, 54
+When you trash a card, Sewers lets you addi-
+tionally trash a card (any card) from your
+hand. Trashing with Sewers will not trigger
+Sewers again. Also see Priest 4.
+This might happen on your turn or on an oppo-
+nent’s turn. Sewers triggers even when you
+trash a card from the Supply (with Gladiator,
+Lurker or Salt the Earth).
+If you trash several cards at once—e.g. with
+Chapel—Sewers triggers once for each (see
+TRIGGERED ABILITY: when-trash), so that you
+may afterwards use Sewers to trash one card
+per card trashed with Chapel. Each is a sepa-
+rate when-trash ability: You resolve each
+one in turn, optionally trashing a card (and
+possibly triggering and resolving other
+when-trash abilities after each).
+This means that if you initially trashed cards like Cult-
+ist, Overgrown Estate or Rats, you resolve all when-
+trash abilities (from those cards and from Sewers) in
+any order. (You might for instance first draw from Rats,
+then optionally trash.) If you use Sewers itself to trash
+a card like Rats, you draw right away, before resolv-
+ing any more Sewers trashings (see TRIGGERED ABILITY
+).
+If an effect tells you to trash a card, but you
+fail to do so (e.g. if you have no cards in your
+hand to trash), Sewers doesn’t trigger.
+ Also see Forager 4 and Priest 4.
+Sextant (see Loot)
+See REVEAL / LOOK AT CARDS AND DISCARD.
+Shaman p. 19, 23, 40
+In games with Shaman, every player must gain
+a card from the trash every turn, if possible.
+Also see CARD COSTS. It doesn’t matter if any-
+one has any Shamans. When-gain abilities
+will trigger.
+It’s possible to gain non-Kingdom cards from
+the trash.
+If you trash a card at the start of your turn (e.g.
+with Amulet or Rope), you may first resolve
+Shaman, gaining nothing if the trash pile is
+empty, and then trash with e.g. Amulet. —
+You can first trash Cabin Boy, then gain it
+back with Shaman.
+ Also see Divine Wind 12+14.
+
+Card Reference ◄
+Page 144► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Shanty Town
+Sheepdog p. 20, 39
+You may react with several Sheepdogs to the
+same gain.
+If you react with Sheepdog and draw another
+one (or for instance react with Falconer to gain
+one to your hand), you may still play that
+Sheepdog. (See REACTION CARDS: RESOLVING
+REACTIONS AND TIMING § III.) You might
+also draw one with Band of Nomads, etc.—
+see TRIGGERED ABILITY (when-gain)—and
+react with it.
+See REACTION THAT PLAYS ITSELF.
+You may react with Sheepdog when you buy
+& gain a card in your Buy phase. If this makes
+you draw Treasures, you cannot play them.
+Also see ACTIONS IN YOUR BUY PHASE.
+If you gain a Sheepdog to your hand, you may react
+with that same Sheepdog. (See ADVANCED TIMING RULES:
+MORE CONCURRENT ABILITIES CAN TRIGGER § III.)
+You can react with Sheepdog in the middle of resolving
+an ability (like Artisan); see TRIGGERED ABILITY . When
+gaining a card with a “when you gain this” ability (like
+Grand Castle) or that triggers another when-gain
+ability, you can play Sheepdog before or after resolv-
+ing it; see TRIGGERED ABILITY . When you buy a card,
+gaining a card on when-buy (see GAIN ON WHEN-BUY),
+you can play Sheepdog before resolving the bought
+card’s when-buy ability; see TRIGGERED ABILITY .
+In the interactions above, you might also play Sheep-
+dog using a Way.
+When you react with Sheepdog, you might end up
+moving the gained card: See MOVE GAINED CARD.
+ Also see Colonnade 4+(pre-2022)8, Hill Fort 4, Kiln 4+10
+and Way of the Butterfly/Mouse/Rat 6/7/2.
+Shepherd
+See DISCARD, THEN GET FROM DECK.
+Shield p. 23, 35, 38 (see Loot)
+See REACTION TO ATTACK. Also see “DO X
+TO”.
+If you reveal this, any effects of the Attack
+card won’t affect you. (Also see ATTACK UNTIL
+YOUR NEXT TURN.)
+If you react with for instance Caravan Guard or
+Diplomat and draw a Shield, you may still
+reveal it. (See REACTION CARDS: RESOLVING
+REACTIONS AND TIMING § III.)
+ Also see Cultist 3.
+Shop
+Shop lets you PLAY AN ACTION CARD.
+Each time you play a Shop, check the CARDS
+YOU HAVE IN PLAY. (EFFECTS ARE IMMEDIATE.)
+The Action you play must be DIFFERENTLY
+NAMED from all of the cards you have in play.
+This includes the played Shop, so it doesn’t
+let you play another Shop.
+ Also see Capitalism 3 and Way of the Mouse 3.
+Shy p. 40
+See DISCARD, THEN GET FROM DECK.
+See “DO X FOR”. You can only do this once at
+the start of your turn.
+Sibyl
+See GET FROM DECK, THEN PUT BACK. (You
+draw 4, then put 2 back.)
+Sickness p. 40
+You get SEVERAL OPTIONS (two): Discard; or
+gain.
+The Curse is GAINED TO YOUR DECK.
+You can resolve this before or after other
+start-of-turn abilities.
+Silk Merchant p. 39, 40
+See WHEN YOU TRASH THIS.
+Clarification: After the 2022 rules change, you
+may spend Coffers tokens at any time during
+your turn. This means you can even spend it
+the same turn after buying Silk Merchant.
+ Also see Basilica 3+(pre-2022)7 and Doctor 5+(pre-
+2022)7.
+Silk Road
+ Not included in the 2022 Second Edition.
+Silk Roads also count themselves.
+Erratum (2016 edition): The description in the Hinter-
+lands rulebook says that Silk Road is worth 3 if you
+have 11 Victory cards. This is wrong; it’s worth 2 .
+Silos p. 40
+See DISCARD, THEN GET FROM DECK.
+You reveal the Coppers as you discard them.
+
+Card Reference ◄
+Page 149► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+ Also see Emissary 3 and Stash 5.
+Stash (promo) p. 41
+From rulebook: You may only place Stashes
+that you are shuffling in your deck. This is
+made clearer in the new 2017-version card text.
+You can’t look at the other cards you are shuf-
+fling when you shuffle.
+Clarification: You may look at the remaining cards in
+your deck when shuffling your discard pile. —
+Longer explanation: Since the rules change introduced
+in the Second Edition of the Base game, you must shuf-
+fle before you start drawing when there aren’t enough
+cards in your deck. (Before the change, you would
+draw the remaining cards, look at them, and then
+shuffle, deciding where to place Stash.) However, the
+new 2017 version of Stash is changed so that you’re al-
+lowed to look through your remaining deck (meaning
+look at the front of the cards), thereby returning Stash
+to how it functioned before the new shuffling rule. You
+then put Stash among the shuffled cards and put those
+cards under your remaining deck. With the 2021 rules
+change, the 2017-version clause is no longer necessary,
+since you may always look at the remaining cards in
+your deck when you shuffle your discard pile.
+Clarification (2017 version): Annex, Donate, Famine and
+Inn let you shuffle your existing deck. If you shuffle
+Stash with these abilities, you are not allowed to look
+through any part of your deck.
+You can put Stashes anywhere among placed Shadow
+cards or cards placed by Order of Astrologers or Star
+Chart.
+ Also see Inherited 2.
+Steward
+SEVERAL OPTIONS (three): Draw; + ; or
+trash.
+ You trash several cards at once, see TRIGGERED ABILITY.
+Stockpile
+This is REMOVED FROM PLAY. If you use Coro-
+net, Counterfeit, Crown, Specialist or Tiara to
+play Stockpile twice, you get + and +1 Buy
+both times. Also see Counterfeit 2.
+You don’t have to play all your Treasures.
+Stonemason p. 24, 29, 30, 38, 39, 179
+“REMODEL” a card into two cards that cost
+less.
+When you overpay for Stonemason, the two
+Action cards you gain can be different. Over-
+paying with a will let you gain two cards
+with in their costs. You can’t overpay with
+. (See CARD COSTS.)
+New version 2022: The overpay ability is
+now resolved on when-gain (instead of
+when-buy); see OVERPAYING § IV. See GAIN
+ON WHEN-GAIN.
+(Pre-2022 version:) Also see GAIN ON WHEN-BUY.
+(2022 version:) See TRIGGERED ABILITY . Cost reduc-
+tion might be applied on when-gain before you re-
+solve the overpay ability. Also see Doctor (2022) 5
+for more.
+(Pre-2022 version:) See TRIGGERED ABILITY . Cost
+reduction might be applied on when-buy before you
+overpay. Also see Doctor (pre-2022) 7 for more.
+You choose and gain each card in turn (both when
+“remodeling” and overpaying), see TRIGGERED ABILITY
+. Any cost reduction or when-gain ability (like
+Bauble or Garrison) applied after the first card will be in
+effect when you gain the next.
+ See TRIGGERED ABILITY (when-gain). Also see Destrier
+3–4, Fisherman 3–4 and Wayfarer 8–9.
+Storeroom
+See DISCARD, THEN GET FROM DECK.
+You may discard zero cards first (and so
+draw zero cards), and then discard cards to
+get .
+See TRIGGERED ABILITY (first discard, then draw,
+then discard again). When-discard abilities might
+let you draw more before you discard again.
+ Also see Way of the Chameleon 4.
+Storyteller p. 16, 48
+This card lets you play Treasures in your Ac-
+tion phase: Storyteller lets you play three from
+your hand. If you play Treasures like Coun-
+terfeit or Tiara, more Treasures will be played
+in addition. Also see Crown 6 and Highway-
+man 6.
+You may choose to not play any Treasures.
+You pay all the you have in your money
+pool at that point. You will draw a number of
+cards equal to the number of you paid. You
+will be left with in your money pool (but
+will keep any you had).
+Clarification: See ACTIONS IN YOUR BUY
+PHASE (second part of Buy phase).
+New version 2022: This version gives you +1 Card
+before you pay instead of giving you + extra to
+pay. The result is almost always the same.
+Clarification: After the 2022 rules change, you may
+spend Coffers tokens at any time during your turn. Af-
+ter the 2024 rules change, you may pay off Debt at
+
+Card Reference ◄
+Page 151► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+buy a card. (Also see GAIN ON WHEN-BUY.)
+See ATTACK UNTIL YOUR NEXT TURN.
+This has a cumulative effect if played multi-
+ple times: Swamp Hag played twice will give
+the other players two Curses when they buy a
+card.
+New version 2022: Swamp Hag now triggers
+when the player gains a card instead of when
+they buy it, but only a card that they bought.
+See GAIN ON WHEN-GAIN.
+See TRIGGERED ABILITY . When-gain abilities (like Ill-
+Gotten Gains or Cauldron) might affect the Curse pile
+before you gain one.
+Clarification: See TRIGGERED ABILITY (playing Swamp
+Hag on an opponent’s when-gain, you can make them
+gain a Curse): See Way of the Mouse 12.
+ Also see Possession 7 and Territory 4.
+Swamp Shacks
+Each time you play a Swamp Shacks, count
+the CARDS YOU HAVE IN PLAY (including the
+Swamp Shacks). (EFFECTS ARE IMMEDIATE.)
+ Also see Kiln 8.
+Swamp’s Gift, The p. 10
+Swap p. 14, 37, 49
+Return an Action card to gain a DIFFERENTLY
+NAMED Action card costing up to . Also see
+CARD COSTS. Also see “DO X TO”.
+You may return a non-Kingdom card, as long
+as it belongs to a pile. You may not return
+cards that don’t belong to a pile, such as Heir-
+looms, Shelters or Zombies, or cards from the
+Black Market deck. Also see Ferryman 6.
+The card is GAINED TO YOUR HAND.
+You can’t gain a card from the same pile you
+returned a card to (such as a split pile), since
+the returned card will be on top.
+ Also see EMPTY SUPPLY PILES.
+Swashbuckler p. 10
+If your discard pile is empty after drawing,
+you do nothing further. Otherwise you take a
+Coffers token and possibly Treasure Chest.
+If drawing causes you to shuffle, you can
+leave cards in your discard pile with Avoid
+or Order of Masons in order to get +1 Coffers.
+ Also see Treasure Chest 1.
+Swindler p. 29
+See EACH OTHER PLAYER.
+For each player, you have to choose a card in
+the Supply of the required cost, if there is one.
+(See CARD COSTS.)
+ See TRIGGERED ABILITY (each opponent first trashes,
+then gains). Also see Your − Cost token.
+Sword (see Loot)
+Each other player DISCARDS DOWN TO 4 cards
+in hand.
+Sycophant p. 39, 40
+See NOT OPTIONAL “IF YOU DO”. If you can’t
+discard all three cards, you still get + as
+long you discarded it least one.
+See WHEN YOU TRASH THIS.
+ Also see Architects’ Guild 6, City-state 3 and Trappers’
+Lodge 3.
+Tactician p. 29, 29, 40, 183
+This SETS UP A LATER ABILITY for next turn.
+You have to discard at least one card to set up
+the start-of-turn ability. Consequently,
+Throne Room + Tactician will not do this
+twice. (The exception to this is if you somehow
+draw cards in between, for example with your
++1 Card token on the Tactician pile.)
+The new 2017 version first checks if you have at least
+one card in hand, but it makes no functional difference.
+(1st version:) See NOT OPTIONAL “IF YOU DO”.
+Talisman p. 38, 42, 176
+ Not included in the 2022 Second Edition.
+WHILE THIS IS IN PLAY, when you buy a non-
+Victory card costing up to , you GAIN A
+COPY of it. (Also see CARD COSTS and GAIN ON
+WHEN-BUY.)
+You don’t gain a copy if you gain a card in
+another way than through buying it.
+Clarification: See TRIGGERED ABILITY . If the bought
+card changes cost (like Destrier, Fisherman or Way-
+farer) because you resolve another when-buy ability
+before resolving Talisman, this won’t matter for Talis-
+man: You gain a copy if the bought card cost or
+less when you bought it.
+Clarification: See TRIGGERED ABILITY . When buying a
+non-Victory card costing up to , if you play Talis-
+
+Card Reference ◄
+Page 154► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+or Prince.) If you resolve Tireless first, the
+other ability can’t move the card. Also see
+Hermit (pre-2022) 11.
+At the end of this turn (after drawing your
+next hand) you put the set-aside card onto
+your deck.
+If you draw cards at the end of this turn (from
+Farrier, The River’s Gift or Way of the Squir-
+rel), you may put the Tireless card on your
+deck first in order to draw it. But Expedition
+and Flag happens when you draw your hand,
+before Tireless triggers.
+ Also see Capital 3 and Highwayman 9.
+Toil
+After resolving this Event, you still have the
+same number of Buys as you had before.
+Toil lets you PLAY AN ACTION CARD.
+It lets you play an Action card in your Buy
+phase (the second part of your Buy phase). See
+ACTIONS IN YOUR BUY PHASE.
+Tomb p. 40
+When you trash cards, you get +1 per card.
+This might happen on your turn or on an oppo-
+nent’s turn.
+Tomb triggers even when you trash a card
+from the Supply (with Gladiator, Lurker or Salt
+the Earth).
+If an effect tells you to trash a card, but you
+fail to do so (e.g. if you have no cards in your
+hand to trash), Tomb doesn’t trigger.
+Tools p. 29
+This Treasure does not give you , but it lets
+you GAIN A COPY of a card you or any of your
+opponents have in play (including itself).
+See CARDS YOU HAVE IN PLAY.
+Clarification: You can choose any of the cards any player
+has in play. However, you will only gain a copy of a
+card if it’s available in the Supply.
+Tormentor p. 10
+This checks the CARDS YOU HAVE IN PLAY. If
+you have no cards in play other than this Tor-
+mentor, you gain an Imp. Otherwise the other
+players receive a Hex.
+The other players have to resolve any Reac-
+tions before the Hex is drawn.
+ Also see Kiln 8 and Urchin 5.
+Torturer p. 18
+Each other player gets SEVERAL OPTIONS (two):
+Discard; or gain.
+For the other players, the Curse is GAINED TO
+THEIR HAND.
+Tournament p. 9
+ Not included in the 2024 Second Edition.
+All players may reveal a Province. If you do,
+discard it and gain a Prize or a Duchy. The
+other players may not do this.
+From rulebook: If you reveal a Province, you
+get SEVERAL OPTIONS (two): Gain Duchy; or
+gain Prize. The card is GAINED TO YOUR DECK.
+From rulebook: All players reveal any Prov-
+inces before you decide what do gain.
+From rulebook: When you gain a Prize, you
+gain whichever you want from the Prize pile.
+The available Prizes are always open to see.
+If no other player reveals a Province, you
+draw a card (which will be the card you
+gained if you gained one) and get + .
+Tower
+Counts EMPTY SUPPLY PILES.
+Town
+SEVERAL OPTIONS (two): Draw and +Actions;
+or +Buy and + .
+Town Crier
+SEVERAL OPTIONS (three): + ; gain; or draw
+and +Action.
+Tracker p. 23, 39, 39, 42, 42, 179
+New version 2022: Tracker now SETS UP A
+LATER ABILITY (ongoing ability) for the rest
+of this turn: When you gain a card, you may
+put it onto your deck.
+If receiving the Boon makes you gain a card,
+you can put it onto your deck.
+(Pre-2022 version:) WHILE THIS IS IN PLAY, when you gain
+a card, you may put it onto your deck.
+
+Card Reference ◄
+Page 155► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+See MOVE GAINED CARD and TRIGGERED ABIL-
+ITY (when-gain).
+Clarification: See TRIGGERED ABILITY (playing Tracker
+on when-gain, you can put the gained card on your
+deck). (Pre-2022 version: See ADVANCED TIMING RULES:
+MORE CONCURRENT ABILITIES CAN TRIGGER § III.) Also see
+Gondola 9.
+Trade
+ See TRIGGERED ABILITY (first trash, then gain). You
+trash several cards at once.
+Trade Route p. 8, 23, 37
+ Not included in the 2022 Second Edition.
+ See SPECIAL SETUP § I.
+This has VARIABLE PRODUCTION.
+You get +1 Buy and + even if you have no
+cards in your hand to trash.
+When a card is gained from a Victory card
+pile for the first time, move the Coin token
+from that pile to the Trade Route mat. The
+Coin token then stays on the mat for the rest of
+the game.
+Trashing a Victory card from the Supply
+(with Lurker or Salt the Earth) does not move
+the token from the pile.
+New version: With the new 2017 version, you trash a
+card first, which could lead to gaining a Victory card
+and thus adding a token to the mat before you get + .
+See TRIGGERED ABILITY (first trash, then count to-
+kens).
+ Also see Divine Wind 5–6+12+14.
+Trader p. 37, 39, 50, 178
+ Note: 2020 (current) version. See the entry in
+PREVIOUS VERSIONS OF SOME CARDS for the pre-
+2020 version.
+If there is a COST REDUCTION, Trader will give
+you fewer Silvers when you trash a card.
+ See TRIGGERED ABILITY (first trash, then check cost, then
+gain).
+You may use the Reaction when you gain a
+card on your turn or on an opponent’s turn.
+See “DO X TO”.
+Trader’s Reaction is now a when-gain abil-
+ity that exchanges the gained card for a
+Silver. (See EXCHANGING § IV.) You may only
+do this if there are any Silvers left in the Sup-
+ply. You return the card to its pile no matter
+where you gained it from. You place the Sil-
+ver in your discard pile no matter where you
+gained the card to.
+See MOVE GAINED CARD and TRIGGERED ABIL-
+ITY (when-gain).
+Even if you exchanged it, you did gain the
+card (and triggered any when-gain abil-
+ity). You didn’t gain the Silver.
+You may exchange a non-Kingdom card, as
+long as it belongs to a pile. You may not ex-
+change cards that don’t belong to a pile, such
+as Heirlooms, Shelters or Zombies, or cards
+from the Black Market deck. Also see Ferry-
+man 6.
+When gaining a card, if a when-gain ability (e.g.
+Footpad or Sheepdog) puts a Trader in your hand, you
+may react with it (as long as the gained card hasn’t
+moved). See TRIGGERED ABILITY (when-gain). (See RE-
+ACTION CARDS: RESOLVING REACTIONS AND TIMING § III.)
+If you gain a Trader to your hand, you may react with
+that same Trader to exchange it for a Silver. (See AD-
+VANCED TIMING RULES: MORE CONCURRENT ABILITIES CAN TRIG-
+GER § III.)
+ Also see Black Market 6, Blockade 6, Innovation 4 and
+Loot 3.
+Trading Post p. 19
+See NOT OPTIONAL “IF YOU DO”.
+The Silver is GAINED TO YOUR HAND.
+If you only have 1 card in hand, you trash it
+but don’t gain a Silver.
+ See TRIGGERED ABILITY (first trash, then gain). You
+trash several cards at once.
+Tragic Hero
+This is REMOVED FROM PLAY when you trash
+it.
+Gain a Treasure of your choice from the Sup-
+ply (even one with or in its cost).
+If you play Tragic Hero without moving it into
+play, you still draw cards and gain a Treas-
+ure. (With Throne Room you draw twice and
+gain two Treasures even if the Tragic Hero is
+trashed the first time) Also see PLAY A CARD
+WHILE LEAVING IT.
+ See TRIGGERED ABILITY (first trash, then gain).
+
+Card Reference ◄
+Page 156► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Trail p. 39, 40, 40, 42, 47, 170, 177, 178
+From rulebook: Trail has a when-gain,
+when-trash and when-discard ability, and
+none of them trigger during Clean-up.
+Trail’s when-discard ability is similar to
+Village Green’s. See Village Green 3–6 and 9.
+WHEN YOU TRASH THIS, you may play it (mov-
+ing it from trash to play). This is not gaining
+it, but it’s yours again. It was still trashed.
+See TRIGGERED ABILITY (when-gain). When
+you gain this, you may play it (moving it to
+play).
+When you buy & gain a Trail in your Buy
+phase, you cannot play any Treasures you
+draw with it. Also see ACTIONS IN YOUR BUY
+PHASE.
+See REACTION THAT PLAYS ITSELF. (Also see
+EFFECTS WHEN IT’S NOT YOUR TURN.)
+See MOVE GAINED CARD. When you gain Trail
+and play it, cards like Innovation and Watch-
+tower lose track of it, and Innovation fails to
+play it. (With the expanded “lose track” rule
+from 2021, cards that are lost track of can’t
+be played.) If you instead move it with
+Watchtower or play it with Innovation first,
+Trail fails to play itself.
+If you are Possessed and trash Trail, the Possessor may
+make you resolve Possession’s when-trash ability
+first, setting aside the Trail. In that case Trail’s ability
+loses track of it, so you can’t play it (due to the ex-
+panded “lose track” rule.)
+Likewise, if you use Watchtower to trash a Trail on
+when-gain, Trail has triggered both on when-gain
+and on when-trash, but can only play itself once.
+You can play Trail when discarding it in the middle of
+resolving an ability (like Artisan); see TRIGGERED ABIL-
+ITY .
+You can react with Trail when gaining it in the middle
+of resolving an ability (like Artisan); see TRIGGERED
+ABILITY . You can react with Trail before resolving
+other when-gain abilities (like your Trashing token
+[2022]), or before resolving a “when you gain this”
+ability (like Hostelry) if you gain Trail on when-gain
+(e.g. with Architects’ Guild or Falconer); see TRIGGERED
+ABILITY . You can also gain Trail on when-buy as in
+TRIGGERED ABILITY .
+ Also see TRIGGERED ABILITY (when-trash), and see
+Arena 2, Colonnade 4+(pre-2022)8, Diplomat 6, Faithful
+Hound 5, Friendly 4, Improve 6, River Shrine 6, Witch’s
+Hut 2 and Way of the Mouse 7+9–10.
+Training p. 37
+ See Your + token.
+Also see SPLIT PILES: PILE TYPE AND COST § IV.
+Transmogrify p. 40, 49
+When you play this, it’s REMOVED FROM
+PLAY.
+If you play Transmogrify without moving it
+into play, it won’t go to your Tavern mat. See
+PLAY A CARD WHILE LEAVING IT.
+You may call this to “REMODEL” one card into
+a card that costs up to more. (Also see “DO
+X TO”.)
+Clarification: The card is GAINED TO YOUR
+HAND. (This is clear in the new 2017-version
+card text.)
+Transmute p. 178
+If you trash a card that has several of the
+types, you gain all relevant cards (Duchy,
+Transmute, Gold).
+ See TRIGGERED ABILITY (first trash, then gain each card
+in turn and in the order given).
+Transport
+SEVERAL OPTIONS (two): Exile a card; or
+move an Exiled card.
+You may move an Action card from your Exile
+mat whether it was put there by Transport or by
+another ability.
+Note: Exiling a card from the Supply does not
+mean gaining it.
+Trappers’ Lodge p. 39
+You may use this when you gain a card on
+your turn or on an opponent’s turn. (Also see
+“DO X TO”.)
+See MOVE GAINED CARD and TRIGGERED ABIL-
+ITY (when-gain).
+If you gain Sycophant, you may resolve its when-
+gain ability first to get a Favor to spend on Trappers’
+Lodge. See TRIGGERED ABILITY : if a Liaison is played
+as the result of another when-gain ability, you can do
+this first to get Favors.
+Travelling Fair p. 23, 32, 39, 42, 183
+After resolving this Event, you will have one
+more Buy than you had before.
+
+Card Reference ◄
+Page 158► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Triumph
+See NOT OPTIONAL “IF YOU DO”.
+Only the cards gained up to and including this
+Triumph are counted. (EFFECTS ARE IMMEDI-
+ATE.)
+See TRIGGERED ABILITY (first gain, then take ).
+Gaining the Estate could make you gain more cards
+before counting (also via Blockade, Bureaucracy or Du-
+plicate.) Also see Your Estate token 7 and Way of the
+Butterfly/Rat 6/2.
+ Also see Possession 5.
+Triumphal Arch
+Out of all your DIFFERENTLY NAMED Action
+cards, the one you have the second most copies
+of scores you 3 per copy (i.e. per card). (See
+COPY OF A CARD.)
+If it’s a tie for most copies or for second most
+copies, you score for one of the tied cards.
+ Also see Enlightenment 14.
+Trusty Steed see Prize: p. 7, 9
+ Not included in the 2024 Second Edition.
+SEVERAL OPTIONS (four): Draw; +Actions;
++ ; or gain and put deck in discard pile.
+(Pick two.)
+From rulebook: You have to choose two dif-
+ferent options first, then do them, in the order
+given.
+You may not look through your deck as you
+put it into your discard pile.
+This doesn’t trigger cards that say “WHEN
+YOU DISCARD THIS”.
+The cost of Trusty Steed is for any ability that
+refers to its cost.
+Tunnel p. 40, 42, 47
+See TRIGGERED ABILITY (when-discard).
+(New version: Also see “DO X TO”.)
+See WHEN YOU DISCARD THIS.
+You don’t gain a Gold if Tunnel is revealed
+for some other reason, for instance if you have
+to reveal your hand and you have a Tunnel.
+If you have a Tunnel and a Watchtower in hand when
+your opponent plays Minion and makes you discard
+your hand, you can reveal Tunnel to gain a Gold after
+all cards are discarded, but at this time you no longer
+have Watchtower in your hand, so you can’t use it.
+(See BASIC TIMING RULES: WHEN-DISCARD ABILITIES.)
+The above also applies when an opponent plays Militia
+and you discard Tunnel and Watchtower. (Before a
+2022 rules change, you discarded one card at a time
+when DISCARDING DOWN TO X CARDS IN HAND, so you could
+use the Watchtower in this example.)
+Before the 2019 errata of the “lose track” rule, if an
+opponent played Warrior and you discarded a Tunnel
+and gained a Gold on top of it, Warrior would lose
+track of Tunnel and wouldn’t be able to trash it. How-
+ever, currently (per the 2019 errata), cards in your dis-
+card pile are never lost track of.
+ Also see GAIN ON WHEN-DISCARD, and see Blessed Village
+2, Cursed Village 2, Friendly 4, Improve 6 and River
+Shrine 6.
+Twice Miserable p. 10
+ See Misery.
+Underling
+University
+Gain a card; see CARD COSTS.
+Upgrade p. 19, 29, 46
+“REMODEL” a card into a card that costs ex-
+actly more.
+Urchin p. 9, 22, 25, 33, 38, 183
+Each other player DISCARDS DOWN TO 4 cards
+in hand.
+If you play another Attack card with Urchin in
+play, you may trash the Urchin, thereby
+gaining a Mercenary. You do this before re-
+solving the other Attack card. (New version:
+Also see “DO X TO”.)
+From rulebook: The before-play ability
+(below the dividing line) only triggers if you
+play another Attack card, not if you play the
+same Urchin multiple times with a throne-
+room.
+You don’t gain a Mercenary if you trash
+Urchin some other way.
+If you play a Skirmisher with Urchin in play,
+you gain a Mercenary before resolving the
+Skirmisher, so Skirmisher’s when-gain abil-
+ity is not active yet: you don’t make the other
+players discard. If you play a Tormentor with
+Urchin in play, you gain an Imp, since the
+Urchin is trashed.
+Clarification: If you have your +1 Card token on the
+other Attack card’s pile, you may choose to gain Mer-
+cenary before or after drawing a card.
+
+Card Reference ◄
+Page 167► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Clarification: After the 2022 rules change, you may
+spend Coffers tokens at the end of your Buy phase.
+Clarification: With in your money pool, you may
+first discard Wine Merchants, then pay for a Cof-
+fers token If you have bought Pageant. — If you get
+Coffers from Merchant Guild (2022 version), you may
+spend those in order to discard Wine Merchants.
+ Also see Cavalry 5 (and Continue, Launch and Villa).
+Wish p. 10, 49
+This is REMOVED FROM PLAY.
+See NOT OPTIONAL “IF YOU DO”.
+The card is GAINED TO YOUR HAND. Also see
+CARD COSTS.
+If you play Wish without moving it into play,
+you don’t gain a card. (Throne Room + Wish
+means you get +1 Action both times but only
+gain one card.) See EFFECT WHEN MOVED
+FROM PLAY.
+The cost of Wish is for any ability that refers to its
+cost.
+Wishing Well
+See NAME A CARD.
+Witch p. 21, 23
+Witch’s Hut
+See GET FROM DECK, THEN DISCARD.
+Clarification: You reveal both cards before
+discarding them. So if you discard a Trail or
+Village Green and playing it makes you
+shuffle the other discarded card into your
+deck, you still give out Curses.
+Clarification: If you discard Patron, you get
++1 Coffers when you reveal it.
+Wolf Den
+Wolf Den counts your unique cards, i.e. cards
+that are DIFFERENTLY NAMED from all your
+other cards.
+Woodcutter
+ Not included in the 2016 Second Edition.
+Woodworkers’ Guild p. 29, 40, 45
+See NOT OPTIONAL “IF YOU DO”: You gain an
+Action card if you trashed one. Also see “DO
+X TO”.
+Gain an Action card of your choice from the
+Supply (even one with or in its cost).
+Resolving Woodworkers’ Guild could let you draw
+cards or play a card, see TRIGGERED ABILITY (when-
+trash), and you can do this before or after other start-
+of-Buy-phase abilities. See Deluded 4, Envious 3 and
+Treasure Chest 1.
+ See TRIGGERED ABILITY (first trash, then gain). Also see
+Arena 2 and Cavalry 4 (and Continue, Launch and Villa).
+Worker’s Village
+Workshop
+Gain a card; see CARD COSTS.
+Young Witch p. 8, 11, 14, 37, 177
+ See SPECIAL SETUP § I (and see CARD COSTS).
+See GET FROM DECK, THEN DISCARD.
+You “attack” the other players even if you
+don’t have 2 cards in your hand to discard.
+Reactions to the Attack are as always re-
+solved first. Then you draw 2 cards and dis-
+card 2. Then the other players may reveal a
+Bane card. Consequently, if a Reaction card is
+the Bane card, they need to have it in their
+hand at that point to block Young Witch.
+“Bane” is not a type (for Courtier, Falconer, Maroon or
+Rice).
+See TRIGGERED ABILITY (first you discard, then oppo-
+nents reveal Bane).
+ Also see Divine Wind 2+11 and Way of the Mouse 11.
+Your +1 Action token p. 38, 45
+ See Lost Arts.
+See ACTIONS IN YOUR BUY PHASE.
+Your +1 Buy token p. 38
+ See Seaway.
+Your +1 Card token p. 38
+ See Pathfinding.
+ Also see Emissary 2, Tactician 2 and Urchin 6.
+Your + token p. 38
+ See Training.
+Your −1 Card token p. 35, 41, 42, 44
+ See Borrow, Raid and Relic.
+Your −1 Card token is only removed from your
+deck when you’re instructed to draw a card
+(indicated by “+Cards” or “draw”). When
+you reveal or look at cards from your deck
+(even if you then put some of those cards into
+your hand), the token has no effect and stays

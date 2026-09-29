@@ -179,7 +179,7 @@ describe('Wishlist', () => {
     mockVotes({});
     renderWishlist('/?c=want&q=wingspan');
     await screen.findByText('Wingspan');
-    expect(screen.queryByText('Dominion')).not.toBeInTheDocument();
+    expect(screen.queryByText('Splendor')).not.toBeInTheDocument();
     expect(screen.getByText(/\b2 games\b/)).toBeInTheDocument();
     cleanup();
 
