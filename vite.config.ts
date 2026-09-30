@@ -20,6 +20,9 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/setupTests.ts',
     coverage: {
+      // vitest's defaults plus Cobertura, which ci.yml uploads to GitHub for
+      // the code coverage rule on main.
+      reporter: ['text', 'html', 'clover', 'json', 'cobertura'],
       thresholds: {
         perFile: true,
         lines: 80,
