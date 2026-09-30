@@ -53,9 +53,9 @@ describe('SuggestForm', () => {
     fireEvent.change(screen.getByLabelText('Game'), { target: { value: 'codenames' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send suggestion' }));
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('We already own Codenames.'));
-    fireEvent.change(screen.getByLabelText('Game'), { target: { value: 'DOMINION' } });
+    fireEvent.change(screen.getByLabelText('Game'), { target: { value: 'SPLENDOR' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send suggestion' }));
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Dominion is already on the wishlist.'));
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Splendor is already on the wishlist.'));
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 

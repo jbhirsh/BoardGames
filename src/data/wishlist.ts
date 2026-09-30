@@ -16,9 +16,6 @@ const ENTRIES: WishlistItem[] = [
   { id:"lost-cities", bgg:50,             name:"Lost Cities",             players:"2",    type:"two-player", desc:"An elegant two-player card game of expeditions. Do you commit or hold back? Deceptively tense, quick, and endlessly replayable — the head-to-head filler you don't own yet.", yt:"how to play Lost Cities board game tutorial",
     min:2, max:2, dur:"30 min", mins:30, cat:"medium", kw:['card-game','strategy','quick-play'],
     awards:[{ name:"International Gamers Award", year:2000 }] },
-  { id:"dominion", bgg:36218,                name:"Dominion",                players:"2–4",  type:"strategy",   desc:"The game that invented deck-building. Each session uses a different set of 10 kingdom cards — no two games alike. Strategic depth in a 30-minute package.", yt:"how to play Dominion board game tutorial",
-    min:2, max:4, dur:"30 min", mins:30, cat:"medium", kw:['deck-building','strategy','card-game'],
-    awards:[{ name:"Spiel des Jahres", year:2009 },{ name:"Deutscher Spiele Preis", year:2009 },{ name:"Mensa Select", year:2009 },{ name:"Golden Geek Game of the Year", year:2009 },{ name:"Golden Geek Best Card Game", year:2009 },{ name:"Dice Tower Game of the Year", year:2008 },{ name:"Dice Tower Best New Designer", year:2008 },{ name:"Dice Tower Best Small Publisher", year:2008 },{ name:"Origins Award Best Card Game", year:2009 }] },
   { id:"nemesis", bgg:167355,                 name:"Nemesis",                 players:"1–5",  type:"heavy",      desc:"Cinematic sci-fi survival on an alien-infested spaceship. Semi-cooperative with secret objectives — expect tension, betrayal, and dramatic deaths.", yt:"how to play Nemesis board game tutorial",
     min:1, max:5, dur:"90–180 min", mins:150, cat:"long", kw:['thematic','strategy','bluffing'],
     awards:[{ name:"Board Game Quest Best Thematic Game", year:2019 },{ name:"Cardboard Republic Immersionist Laurel", year:2019 }] },
@@ -130,6 +127,9 @@ const ENTRIES: WishlistItem[] = [
     awards:[] },
   { id:"lovestruck", bgg:395306,              name:"Lovestruck",              players:"5–10", type:"party",      desc:"A reality dating show as a social deduction game. Every contestant swears they are looking for love, but some are only chasing screen time — go on dates, play action cards to stir up love or drama, and work out who means it before the season finale makes you couple up. Guess wrong, or let the viewing figures hit ten million, and the fame-hunters win. Five to ten players, and the table talk is the whole game.", yt:"how to play Lovestruck board game tutorial",
     min:5, max:10, dur:"45–90 min", mins:75, cat:"long", kw:['party','social','deduction','bluffing'],
+    awards:[] },
+  { id:"herd-mentality", bgg:311322,          name:"Herd Mentality",          players:"4–20", type:"party",      desc:"A question is read out, everyone writes an answer in secret, and the goal is to agree with the herd rather than be right. Match the most common answer and you take a cow; be the only one who went your own way and you are stuck with the Pink Cow, which stops you winning until someone else earns it. First to eight cows wins. Nothing to teach, twenty minutes, and it plays from four to twenty, so it holds up when the whole party wants in.", yt:"how to play Herd Mentality party game tutorial",
+    min:4, max:20, dur:"20–30 min", mins:30, cat:"medium", kw:['party','social','family'],
     awards:[] },
 ];
 

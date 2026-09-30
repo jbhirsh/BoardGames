@@ -5,7 +5,7 @@ Guidance for Claude Code (claude.ai/code) when working in this repository.
 ## What this is
 
 **The Game Room** — a single-page app for browsing a personal board game
-collection. Filter and sort 26 games, get a random pick, read bundled rule
+collection. Filter and sort 28 games, get a random pick, read bundled rule
 PDFs, ask an AI rules assistant, tally a 7 Wonders score, check whether a word
 is playable in Bananagrams, and vote on a wishlist. React 19 + TypeScript SPA
 built with Vite, deployed on Vercel with a small serverless API.
@@ -231,7 +231,8 @@ non-API, non-file routes to `index.html`, and `api/*` maps to the serverless
 functions. CI (`.github/workflows/ci.yml`) runs lint, type-check, a11y tests,
 unit tests with coverage, and a build on `ubuntu-latest` for every PR to `main`,
 followed by an automated Claude review; `claude-autofix.yml` addresses
-unresolved review comments. `mutation.yml` runs StrykerJS over the source
+unresolved review comments on Dependabot's PRs (a person's PR is left to its
+author). `mutation.yml` runs StrykerJS over the source
 files a PR touched and fails below the `break` score in
 `stryker.config.json` (a weekly full sweep applies the same bar). All CI runs
 on GitHub-hosted `ubuntu-latest` runners.
@@ -241,5 +242,12 @@ Secret scan, StrykerJS, Answer-Quality Eval, Semgrep, Vercel, API smoke
 test), so nothing merges until all of them report. A required check that
 never reports blocks the PR forever, so PR workflows must not use a
 workflow-level `paths:` filter; decide inside the job instead and skip the
-expensive step (a skipped step still reports success). Don't arm auto-merge
-until every check has reported.
+expensive step (a skipped step still reports success). Because every check
+is required, arming auto-merge early is safe: GitHub waits for all of them.
+
+Dependabot's npm PRs merge themselves: `dependabot-merge.yml` turns on
+auto-merge as each one opens, and branch protection does the gating — every
+required check green and every review thread resolved (conversation
+resolution is required on `main`). A Claude Review finding therefore holds
+the PR until claude-autofix (or a person) fixes and resolves it. A new PR
+workflow must be added to the required checks, or bot PRs merge without it.
