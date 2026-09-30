@@ -46,6 +46,10 @@ jobs:
       # Lets the agent `gh workflow run ci.yml` on its branch so the PR gets
       # real CI checks despite the Actions-token recursion guard.
       actions: write
+      # claude-code-action exchanges an OIDC token for the Claude GitHub App's
+      # token before it starts; without this every run that has work to do
+      # fails with "Could not fetch an OIDC token".
+      id-token: write
     steps:
       - uses: actions/checkout@v5
         with:
