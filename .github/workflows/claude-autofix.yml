@@ -227,7 +227,7 @@ jobs:
             Run, in order:
               - `npm ci` (only if `node_modules` is missing)
               - `npm run lint`
-              - `npx tsc -b`
+              - `npm run typecheck`
               - `npx vitest run --coverage`
 
             If any step fails, fix the regression (as an additional fixup

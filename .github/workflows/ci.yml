@@ -42,7 +42,7 @@ jobs:
         run: npm run depcruise
 
       - name: Type check
-        run: npx tsc -b
+        run: npm run typecheck
 
       - name: Accessibility tests (axe-core on rendered components)
         run: npx vitest run src/__tests__/a11y.test.tsx

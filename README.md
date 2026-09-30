@@ -31,7 +31,7 @@ functions for the AI and voting features.
   BoardGameGeek.
 - **Owner sign-in by magic link** (`/sign-in`): signed in, the wishlist shows
   the pending queue, an add-a-game form and edit/remove controls.
-- **Accessibility-tested UI** — `eslint-plugin-jsx-a11y` static checks plus
+- **Accessibility-tested UI** — `eslint-plugin-jsx-a11y-x` static checks plus
   `axe-core` assertions on rendered components in CI.
 
 ## Screenshots
@@ -49,17 +49,17 @@ A sortable list view is also available:
 
 ## Tech stack
 
-- **Frontend:** React 19, TypeScript 5.9 (strict), React Router 7, Vite 8
+- **Frontend:** React 19, TypeScript 7 (strict), React Router 7, Vite 8
 - **Content:** `react-markdown` for AI answers; rule PDFs rendered inline
 - **Backend:** Vercel serverless functions (`@vercel/node`)
 - **AI:** Google Gemini via `@google/genai` (`gemini-2.5-flash`, streamed)
 - **Data / KV:** Upstash Redis (`@upstash/redis`) for wishlist votes, suggestions and owner sessions
 - **Email:** Resend (REST, no SDK) for suggestion approvals
 - **Monitoring:** Sentry (browser + serverless) and Vercel Analytics
-- **Testing:** Vitest 4, React Testing Library, jsdom, `axe-core` / `vitest-axe`
+- **Testing:** Vitest 5, React Testing Library, jsdom, `axe-core` / `vitest-axe`
   (per-file 80% line coverage enforced); StrykerJS mutation testing over the
   pure-logic and component code
-- **Tooling:** ESLint 9 (flat config, `typescript-eslint`, `jsx-a11y`,
+- **Tooling:** ESLint 10 (flat config, `typescript-eslint`, `jsx-a11y-x`,
   `react-hooks`), Node 24
 - **Rules pipeline:** `unpdf` for text extraction with a `tesseract.js` OCR
   fallback for image-only PDFs

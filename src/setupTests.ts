@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom'
+import '@testing-library/jest-dom/vitest'
 
 // ResizeObserver is not available in jsdom
 globalThis.ResizeObserver = class ResizeObserver {

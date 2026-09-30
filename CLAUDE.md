@@ -15,7 +15,8 @@ built with Vite, deployed on Vercel with a small serverless API.
 ```bash
 npm install          # install dependencies
 npm run dev          # Vite dev server (http://localhost:5173)
-npm run build        # tsc -b (type-check, project refs) then vite build -> dist/
+npm run build        # npm run typecheck, then vite build -> dist/
+npm run typecheck    # TypeScript 7 `tsc -b` across the project refs
 npm run lint         # eslint . (flat config; includes jsx-a11y static checks)
 npm run depcruise    # dependency-cruiser: layering rules (.dependency-cruiser.cjs)
 npm run preview      # serve the production build locally
@@ -26,7 +27,6 @@ npx vitest                              # watch mode
 npx vitest run                          # single run (CI uses this)
 npx vitest run --coverage               # with coverage (thresholds enforced)
 npx vitest run src/__tests__/a11y.test.tsx   # accessibility suite only
-npx tsc -b                              # type-check without emitting
 ```
 
 Node 24 is used in CI. Git hooks in `.githooks/` (activated by `npm install`
@@ -197,6 +197,21 @@ secrets belong in tracked source.
   `tsconfig.app.json` (`src`, DOM libs), `tsconfig.api.json` (`api`, Node libs),
   `tsconfig.node.json` (`vite.config.ts`). `npm run build` runs `tsc -b` across
   all of them.
+- **TypeScript 7 runs side by side with the TypeScript 6 API.** TS 7 (the
+  native compiler) ships no JavaScript API, and typescript-eslint loads that
+  API through `require('typescript')` (its peer range stops below 6.1). So
+  `@typescript/native` is an alias of `typescript@7`, the compiler, and
+  `typescript` is an alias of `@typescript/typescript6`, the 6.0 API. Two
+  packages then provide a `tsc` command and which one wins can change on any
+  `npm install`, so type-check with `npm run typecheck`, which calls the TS 7
+  compiler by path, never bare `npx tsc`. Drop the aliases once
+  typescript-eslint supports TS 7.
+- **`patches/` holds `patch-package` fixes** applied on `postinstall`. The one
+  patch makes Stryker's vitest runner name tests the way Vitest 5 matches them
+  (stryker-js#6210); without it every mutant survives. The runner is pinned
+  to the patched version (10.0.0) so a release can't break the patch under a
+  routine bump. Once a Stryker release carries the fix, delete the patch and
+  unpin the runner.
 - **Tests live in `src/__tests__/`** (Vitest + React Testing Library, jsdom).
   Coverage thresholds are enforced **per file at 80% lines** (`vite.config.ts`),
   so new reducer actions, filter utilities, and API handlers need their own
