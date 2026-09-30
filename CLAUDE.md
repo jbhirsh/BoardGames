@@ -241,5 +241,12 @@ Secret scan, StrykerJS, Answer-Quality Eval, Semgrep, Vercel, API smoke
 test), so nothing merges until all of them report. A required check that
 never reports blocks the PR forever, so PR workflows must not use a
 workflow-level `paths:` filter; decide inside the job instead and skip the
-expensive step (a skipped step still reports success). Don't arm auto-merge
-until every check has reported.
+expensive step (a skipped step still reports success). Because every check
+is required, arming auto-merge early is safe: GitHub waits for all of them.
+
+Dependabot's npm PRs merge themselves: `dependabot-merge.yml` turns on
+auto-merge as each one opens, and branch protection does the gating — every
+required check green and every review thread resolved (conversation
+resolution is required on `main`). A Claude Review finding therefore holds
+the PR until claude-autofix (or a person) fixes and resolves it. A new PR
+workflow must be added to the required checks, or bot PRs merge without it.
