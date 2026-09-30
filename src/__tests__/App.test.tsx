@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, waitFor, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import App, { HomePage } from '../App';
 import { GAMES } from '../data/games';
@@ -68,10 +68,13 @@ describe('App', () => {
     await waitFor(() => expect(fetchSpy.mock.calls.some((c) => String(c[0]).startsWith('/api/votes'))).toBe(true));
     const requestsAfterLoad = fetchSpy.mock.calls.length;
 
-    fireEvent.click(screen.getByRole('button', { name: 'We want' }));
+    // Role queries over the whole page get slower with every game and wishlist
+    // entry; look in the visible Own/Want group rather than every button.
+    const toggle = () => within(screen.getByRole('group', { name: 'Which games to show' }));
+    fireEvent.click(toggle().getByRole('button', { name: 'We want' }));
     expect(screen.getByText('Lost Cities')).toBeVisible();
     expect(screen.getByText(/Our Collection/)).not.toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'We own' }));
+    fireEvent.click(toggle().getByRole('button', { name: 'We own' }));
     expect(screen.getByText(/Our Collection/)).toBeVisible();
     expect(screen.getByText('Lost Cities')).not.toBeVisible();
 
