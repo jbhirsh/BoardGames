@@ -26,10 +26,7 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
-      # write (not just read): the agent dispatches CI onto the branch after
-      # force-pushing, because pushes made with the Actions token don't
-      # retrigger pull_request workflows and the PR's checks would go stale.
-      actions: write
+      actions: read
       # claude-code-action exchanges an OIDC token for the Claude GitHub App's
       # token before it starts; without this every run that has work to do
       # fails with "Could not fetch an OIDC token".
@@ -231,20 +228,16 @@ jobs:
             thresholds are per-file 80% lines — add tests for any code you
             introduced to pass them.
 
-            ## Step 6 — push, then re-trigger CI
+            ## Step 6 — push
 
             `git push --force-with-lease`
 
             NEVER use `--no-verify`.
 
-            Pushes made with the Actions token don't retrigger pull_request
-            workflows, so the PR's checks would stay pinned to the old HEAD.
-            workflow_dispatch is exempt from that guard — dispatch CI onto
-            the branch so the checks rerun against your push:
-
-            ```
-            gh workflow run ci.yml --ref "$(git branch --show-current)"
-            ```
+            The push goes out with the Claude GitHub App's token, so it
+            triggers the PR's workflows itself; do not dispatch CI as well
+            (a dispatched run reports Claude Review as skipped on the new
+            head, and branch protection counts a skipped check as passed).
 
             ## Step 7 — resolve threads (REQUIRED)
 
