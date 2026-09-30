@@ -53,9 +53,12 @@ describe('Wishlist', () => {
     renderWishlist();
     await screen.findByText(WISHLIST[0].name);
     for (const item of WISHLIST) {
-      expect(screen.getByText(item.name)).toBeInTheDocument();
-      // The table shows the description twice: a short mobile line and the full column.
-      expect(screen.getAllByText(item.desc).length).toBeGreaterThan(0);
+      // Scoped to the item's own rows: the same check, but each lookup walks
+      // one entry rather than the whole list, which grows with every entry.
+      const row = document.querySelector(`[data-item-id="${item.id}"]`) as HTMLElement;
+      expect(within(row).getByText(item.name)).toBeInTheDocument();
+      // The full description sits in the expandable detail, the next table row.
+      expect(within(row.nextElementSibling as HTMLElement).getByText(item.desc)).toBeInTheDocument();
     }
   });
 
