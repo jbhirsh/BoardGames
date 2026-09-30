@@ -131,6 +131,9 @@ const ENTRIES: WishlistItem[] = [
   { id:"herd-mentality", bgg:311322,          name:"Herd Mentality",          players:"4–20", type:"party",      desc:"A question is read out, everyone writes an answer in secret, and the goal is to agree with the herd rather than be right. Match the most common answer and you take a cow; be the only one who went your own way and you are stuck with the Pink Cow, which stops you winning until someone else earns it. First to eight cows wins. Nothing to teach, twenty minutes, and it plays from four to twenty, so it holds up when the whole party wants in.", yt:"how to play Herd Mentality party game tutorial",
     min:4, max:20, dur:"20–30 min", mins:30, cat:"medium", kw:['party','social','family'],
     awards:[] },
+  { id:"two-rooms-and-a-boom", bgg:134352,    name:"Two Rooms and a Boom",    players:"6–30", type:"party",      desc:"Two teams, two rooms, one bomb. Everyone is secretly Red or Blue: Blue protects the President, and Red wins if the Bomber ends up in the same room as the President when the last round runs out. Over a few short timed rounds each room picks a leader who sends hostages across, while you decide who gets a look at your card and who you are lying to. Six to thirty players, so it only gets better the bigger the party.", yt:"how to play Two Rooms and a Boom tutorial",
+    min:6, max:30, dur:"10–20 min", mins:15, cat:"quick", kw:['party','social','deduction','bluffing','team'],
+    awards:[] },
 ];
 
 /** The entries with their bundled box art, where `npm run wishlist-art` has fetched it. */

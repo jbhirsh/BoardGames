@@ -33,6 +33,7 @@ export const WISHLIST_ART: Record<string, string> = {
   'terraforming-mars': '/images/wishlist/terraforming-mars.jpg',
   'the-crew': '/images/wishlist/the-crew.jpg',
   'the-mind': '/images/wishlist/the-mind.png',
+  'two-rooms-and-a-boom': '/images/wishlist/two-rooms-and-a-boom.png',
   'wavelength': '/images/wishlist/wavelength.png',
   'wingspan': '/images/wishlist/wingspan.jpg',
   'wyrmspan': '/images/wishlist/wyrmspan.jpg',
