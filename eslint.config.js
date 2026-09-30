@@ -2,7 +2,7 @@ import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
-import jsxA11y from 'eslint-plugin-jsx-a11y'
+import jsxA11y from 'eslint-plugin-jsx-a11y-x'
 import tseslint from 'typescript-eslint'
 import eslintComments from '@eslint-community/eslint-plugin-eslint-comments'
 import { defineConfig, globalIgnores } from 'eslint/config'
@@ -16,7 +16,7 @@ export default defineConfig([
       tseslint.configs.recommended,
       reactHooks.configs.flat.recommended,
       reactRefresh.configs.vite,
-      jsxA11y.flatConfigs.recommended,
+      jsxA11y.configs.recommended,
     ],
     languageOptions: {
       ecmaVersion: 2020,
@@ -39,8 +39,8 @@ export default defineConfig([
     // backdrop <div> uses onClick for mouse dismiss; Escape + close button cover keyboard
     files: ['src/components/Backdrop.tsx'],
     rules: {
-      'jsx-a11y/no-static-element-interactions': 'off',
-      'jsx-a11y/click-events-have-key-events': 'off',
+      'jsx-a11y-x/no-static-element-interactions': 'off',
+      'jsx-a11y-x/click-events-have-key-events': 'off',
     },
   },
   {

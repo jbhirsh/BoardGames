@@ -21,7 +21,26 @@ updates:
       time: "06:00"
       timezone: Etc/UTC
     open-pull-requests-limit: 5
+    # `typescript` is an alias of @typescript/typescript6 (the 6.0 API that
+    # typescript-eslint needs); a major bump would swap in TS 7, which has no
+    # API, and break lint. The TS 7 compiler is @typescript/native.
+    ignore:
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
     groups:
+      # Packages that must move in lockstep: vitest 5 with coverage-v8 4
+      # fails every coverage run, and @eslint/js 10 needs eslint 10, so split
+      # PRs could never pass alone. Listed first so they claim these before
+      # minor-and-patch, and with no update-types so majors ride together too.
+      vitest:
+        patterns:
+          - vitest
+          - "@vitest/*"
+      eslint:
+        patterns:
+          - eslint
+          - "@eslint/js"
       minor-and-patch:
         update-types:
           - minor

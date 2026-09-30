@@ -14,4 +14,4 @@ npx eslint . --cache --cache-location node_modules/.cache/eslint/
 echo "▶ pre-commit: dependency-cruiser"
 npm run depcruise
 echo "▶ pre-commit: tsc"
-npx tsc -b
+npm run typecheck

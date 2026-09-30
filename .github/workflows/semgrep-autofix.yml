@@ -122,7 +122,7 @@ jobs:
             step). Run, in order, and fix any regression before pushing:
               - `npm run lint`
               - `npm run depcruise` (skip if this script doesn't exist yet)
-              - `npx tsc -b`
+              - `npm run typecheck`
               - `npx vitest run --coverage`
               - `npm run build`
 
