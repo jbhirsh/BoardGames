@@ -1,7 +1,7 @@
 # The Game Room
 
 A single-page web app for browsing a personal board game collection — filter and
-sort 28 games by length, player count, and vibe; get a "pick for us" random
+sort 29 games by length, player count, and vibe; get a "pick for us" random
 suggestion; read bundled rulebooks; ask an **AI rules assistant**; tally a
 **7 Wonders** score; check whether a word is playable in **Bananagrams**; and
 vote on a shared wishlist.
