@@ -295,7 +295,7 @@ export const GAMES: Game[] = [
     awards:[{ name:"Mensa Select", year:2017 }],
     subgames:[
       { name:"The Monster Box of Monsters", slug:"monster-box-of-monsters", kind:'expansion', players:"2–4", min:2, max:4, dur:"30–60 min", mins:60, cat:"medium",
-        short:"Adds Luna Lovegood as a fifth hero, creatures and encounters to face, and four more boxes that open in order. Its rules come on sheets inside those boxes.",
-        yt:"Hogwarts Battle Monster Box of Monsters expansion how to play" },
+        short:"Adds Luna Lovegood as a fifth hero, creatures and encounters to face, and four more boxes that open in order.",
+        yt:"Hogwarts Battle Monster Box of Monsters expansion how to play", rules:"/rules/hogwarts-battle.monster-box-of-monsters.pdf" },
     ] },
 ];

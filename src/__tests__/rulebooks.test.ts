@@ -79,14 +79,14 @@ describe('a game\'s further rulebooks', () => {
     ]);
   });
 
-  it('go to the rules assistant up to the one on screen, and not for an add-on\'s tab', () => {
+  it('go to the rules assistant up to the one on screen, and all of them for an add-on\'s tab', () => {
     const exp = sub({ name: 'Box', slug: 'box', kind: 'expansion', rules: '/rules/quick-game.box.pdf' });
     const game: Game = { ...quickGame, moreRules: more, subgames: [exp] };
     const [base, game2, game3, box] = rulebooks(game);
     expect(chatParts(game, base)).toEqual([]);
     expect(chatParts(game, game2)).toEqual(['game-2']);
     expect(chatParts(game, game3)).toEqual(['game-2', 'game-3']);
-    expect(chatParts(game, box)).toEqual(['box']);
+    expect(chatParts(game, box)).toEqual(['game-2', 'game-3', 'box']);
   });
 
   it('leave a deck sending every game in it, whichever tab is open', () => {

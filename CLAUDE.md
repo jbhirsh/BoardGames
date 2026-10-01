@@ -68,7 +68,8 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   the list view's expanded row list the ones that fit (`SubGameList`). A game
   can also carry `moreRules`, further rulebooks for the same game (Hogwarts
   Battle's sheets for Games 2 to 7), each a rules-page tab; they build on
-  each other, so the assistant reads the one on screen and those before it.
+  each other, so the assistant reads the one on screen and those before it
+  (and all of them on an add-on's tab, which is played on the finished game).
   `rulesLabel` names the tab for its own rulebook.
   Both views share the filter bar: `FilterState.collection` (`'own' | 'want'`,
   mirrored to the URL as `c=want`) picks which list the section renders and

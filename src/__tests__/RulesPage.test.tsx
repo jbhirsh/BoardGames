@@ -54,10 +54,10 @@ describe('RulesPage', () => {
       expect(screen.queryByRole('navigation', { name: 'Rulebooks' })).not.toBeInTheDocument();
     });
 
-    it('gives a game\'s own further rulebooks a tab each, but not an add-on whose rules came in the box', () => {
+    it('gives a game\'s own further rulebooks a tab each, then its add-ons', () => {
       renderAt('/rules/hogwarts-battle/game-4');
       const links = within(tabs()).getAllByRole('link');
-      expect(links.map(l => l.textContent)).toEqual(['Game 1', 'Game 2', 'Game 3', 'Game 4', 'Game 5', 'Game 6', 'Game 7']);
+      expect(links.map(l => l.textContent)).toEqual(['Game 1', 'Game 2', 'Game 3', 'Game 4', 'Game 5', 'Game 6', 'Game 7', 'The Monster Box of Monstersexpansion']);
       expect(within(tabs()).getByRole('link', { current: 'page' })).toHaveTextContent('Game 4');
       expect(viewer()).toHaveAttribute('src', '/rules/hogwarts-battle.game-4.pdf');
       expect(viewer()).toHaveAttribute('title', 'Hogwarts Battle: Game 4 rules');
