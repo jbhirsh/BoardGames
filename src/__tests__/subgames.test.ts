@@ -27,6 +27,16 @@ describe('subgameNoun and subgameTitle', () => {
     expect(subgameTitle(deck)).toBe('Games in this deck');
     expect(subgameTitle(addons)).toBe('Add-ons');
   });
+
+  it('names versions as versions, but a mix of a version and an add-on as add-ons', () => {
+    const version = { ...addons[0], slug: 'europe', name: 'Europe', kind: 'version' as const };
+    expect(subgameNoun([version], 1)).toBe('version');
+    expect(subgameNoun([version, version], 2)).toBe('versions');
+    expect(subgameTitle([version])).toBe('Versions');
+    expect(subgameNoun([version, ...addons], 2)).toBe('add-ons');
+    expect(subgameTitle([version, ...addons])).toBe('Add-ons');
+    expect(subgameNoun([], 0)).toBe('add-ons');
+  });
 });
 
 describe('shownKind', () => {
@@ -36,6 +46,7 @@ describe('shownKind', () => {
     expect(shownKind('5–6 Player Extension', 'extension')).toBeNull();
     expect(shownKind('The Expansion Pack', 'expansion')).toBeNull();
     expect(shownKind('Euchre', 'card-game')).toBeNull();
+    expect(shownKind('Europe', 'version')).toBe('version');
   });
 });
 

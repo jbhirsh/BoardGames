@@ -54,6 +54,13 @@ describe('SubGameList', () => {
     expect(screen.getByText('expansion')).toHaveClass('kind-chip', 'kind-expansion');
   });
 
+  it('shows a game\'s own award wins, and no badge without any', () => {
+    const game = { ...addonGame, subgames: [{ ...addonGame.subgames![0], awards: [{ name: 'International Gamers Award', year: 2005 }] }] };
+    renderList(game);
+    fireEvent.click(screen.getByRole('button', { name: 'Big Box: 1 award, show which' }));
+    expect(screen.getByText(/International Gamers Award/)).toBeInTheDocument();
+  });
+
   it('marks no kind on a deck\'s card games', () => {
     renderList(deckGame);
     expect(document.querySelector('.kind-chip')).toBeNull();
