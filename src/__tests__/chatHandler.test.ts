@@ -84,6 +84,28 @@ describe('chat handler', () => {
     expect(vi.mocked(loadRulesText)).not.toHaveBeenCalled();
   });
 
+  it('reads the rulebooks named in parts along with the game\'s own', async () => {
+    await run({ slug: 'catan', message: 'hi', parts: ['cities-and-knights'] });
+    expect(vi.mocked(loadRulesText)).toHaveBeenCalledWith('catan', ['cities-and-knights']);
+    expect(vi.mocked(streamRulesAnswer)).toHaveBeenCalled();
+  });
+
+  it('reads only the game\'s own rules when no parts are named', async () => {
+    await run({ slug: 'catan', message: 'hi' });
+    expect(vi.mocked(loadRulesText)).toHaveBeenCalledWith('catan', undefined);
+  });
+
+  it('rejects parts that are not a short list of clean identifiers', async () => {
+    for (const parts of ['euchre', [42], ['../../etc/passwd'], Array.from({ length: 17 }, (_, i) => `p${i}`), ['euchre', 'speed', 'euchre']]) {
+      const res = await run({ slug: 'card-deck', message: 'hi', parts });
+      expect(res.statusCode, JSON.stringify(parts)).toBe(400);
+    }
+    expect(vi.mocked(loadRulesText)).not.toHaveBeenCalled();
+    // Sixteen is the cap, not one under it.
+    await run({ slug: 'card-deck', message: 'hi', parts: Array.from({ length: 16 }, (_, i) => `p${i}`) });
+    expect(vi.mocked(loadRulesText)).toHaveBeenCalledTimes(1);
+  });
+
   it('rejects a history entry with a bad role or non-string content', async () => {
     expect((await run({ slug: 'catan', message: 'hi', history: [{ role: 'system', content: 'x' }] })).statusCode).toBe(400);
     expect((await run({ slug: 'catan', message: 'hi', history: [{ role: 'user', content: 123 }] })).statusCode).toBe(400);

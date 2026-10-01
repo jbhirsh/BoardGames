@@ -1,0 +1,13 @@
+Spades
+Card Deck · 4 players in two partnerships · about 45 minutes
+House rules written for The Game Room. These are the common rules; plenty of tables play their own variations, so
+agree on any before you start.
+How to play
+Deal all 52 cards, 13 each. Each player bids the number of tricks they expect to take; a partnership’s
+bids add up to its contract. A bid of nil means you will take no tricks at all.
+The player left of the dealer leads. Follow suit if you can; otherwise play anything. Spades are always
+trump. Spades cannot be led until one has been played on another suit, unless you hold nothing but
+spades.
+Scoring: make your contract and score 10 points per trick bid, plus 1 per extra trick (a bag). Fall short
+and lose 10 per trick bid. Every 10 bags costs 100 points. A successful nil scores 100 and a failed nil
+loses 100; the partner’s tricks count separately. First partnership to 500 wins.

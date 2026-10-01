@@ -1,0 +1,12 @@
+Golf
+Card Deck · 2 to 6 players · about 20 minutes
+House rules written for The Game Room. These are the common rules; plenty of tables play their own variations, so
+agree on any before you start.
+How to play
+Deal 6 cards face down to each player, laid out in two rows of three. Each player turns any two face up.
+Turn the next card face up to start the discard pile.
+On your turn, draw from the stock or take the top discard. Swap it for one of your six cards (the new card
+goes face up and the old one is discarded), or, if you drew from the stock, discard it unused.
+When one player has all six cards face up, everyone else gets one more turn. Score: ace 1, 2 counts
+minus 2, number cards face value, jacks and queens 10, kings 0, and a matching pair in the same
+column counts 0. Play nine hands; the lowest total wins.

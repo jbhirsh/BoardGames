@@ -26,7 +26,8 @@ export function RulesChatToggle() {
   );
 }
 
-export function RulesChatPanel({ slug, gameName }: { slug: string; gameName: string }) {
+/** `parts` names the rulebooks of games inside this one that the assistant reads along with the game's own. */
+export function RulesChatPanel({ slug, gameName, parts = [] }: { slug: string; gameName: string; parts?: string[] }) {
   const { isOpen } = useContext(ChatContext);
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: 'Hi! Ask me anything about the rules for ' + gameName + '.' },
@@ -62,7 +63,7 @@ export function RulesChatPanel({ slug, gameName }: { slug: string; gameName: str
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug, message: userMsg, history }),
+        body: JSON.stringify({ slug, message: userMsg, history, ...(parts.length > 0 ? { parts } : {}) }),
       });
 
       if (!response.ok) {

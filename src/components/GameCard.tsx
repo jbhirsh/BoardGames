@@ -1,3 +1,4 @@
+import { useId, useState } from 'react';
 import { Link } from 'react-router';
 import type { Game, KeywordId } from '../data/types';
 import { isKeywordLit } from '../utils/keywordLit';
@@ -6,6 +7,8 @@ import { ytURL, rulesURL } from '../utils/urls';
 import { sortedKw } from '../utils/filterGames';
 import KeywordPill from './KeywordPill';
 import AwardsBadge from './AwardsBadge';
+import SubGameList from './SubGameList';
+import { fittingSubgames, subgameLabel } from '../utils/subgames';
 import { YouTubeIcon, AiRulesIcon, UserIcon, ClockIcon, CalculatorIcon, SearchIcon } from './Icons';
 
 interface Props {
@@ -14,6 +17,10 @@ interface Props {
 
 export default function GameCard({ game }: Props) {
   const { state, dispatch } = useFilter();
+  const [subsOpen, setSubsOpen] = useState(false);
+  const subsId = useId();
+  // The button and its list go away while no game inside fits the filters.
+  const hasFitting = game.subgames !== undefined && fittingSubgames(game.subgames, state).length > 0;
 
   return (
     <div className="game-card">
@@ -39,10 +46,30 @@ export default function GameCard({ game }: Props) {
             />
           ))}
         </div>
+        {game.subgames && hasFitting && (
+          <button
+            type="button"
+            className="sub-pill"
+            aria-expanded={subsOpen}
+            aria-controls={subsId}
+            aria-label={`${game.name}: ${subgameLabel(game.subgames, state)}`}
+            onClick={() => setSubsOpen(o => !o)}
+          >
+            {subgameLabel(game.subgames, state)}
+            <svg className="sub-pill-chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+              <path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" />
+            </svg>
+          </button>
+        )}
       </div>
       <div className="card-body">
         <p className="card-desc">{game.short}</p>
       </div>
+      {game.subgames && hasFitting && subsOpen && (
+        <div className="sub-panel" id={subsId}>
+          <SubGameList game={{ ...game, subgames: game.subgames }} />
+        </div>
+      )}
       <div className="card-foot">
         {game.rules ? (
           <Link className="rules-btn" to={`/rules/${game.slug}`} title="Rules">

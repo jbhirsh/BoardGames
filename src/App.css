@@ -386,6 +386,22 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
    Same section, cards and table as the collection; only the footer
    controls differ (a vote and buy links instead of Rules). */
 .wish-group+.wish-group{margin-top:12px;}
+.sub-pill{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:5px 11px;font-size:11.5px;font-weight:600;color:var(--blue);background:var(--blue-bg);border:1px solid rgba(0,113,227,0.25);border-radius:999px;cursor:pointer;font-family:inherit;transition:background .15s,border-color .15s;}
+.sub-pill:hover{background:var(--blue-bg2);border-color:rgba(0,113,227,0.4);}
+.sub-pill-chev{transition:transform .2s;}
+.sub-pill[aria-expanded="true"] .sub-pill-chev{transform:rotate(180deg);}
+.sub-panel{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:8px;margin-bottom:14px;}
+.sub-list{list-style:none;display:flex;flex-direction:column;gap:6px;}
+.sub-row{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);}
+.sub-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;}
+.sub-name{display:flex;flex-wrap:wrap;align-items:center;gap:7px;font-size:13.5px;font-weight:600;color:var(--dark);}
+.sub-meta{display:flex;flex-wrap:wrap;gap:4px 12px;}
+.sub-short{font-size:12px;line-height:1.55;color:var(--text2);}
+.sub-links{display:flex;gap:4px;flex-shrink:0;}
+.sub-link{width:30px;height:30px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text2);transition:color .15s,border-color .15s,background .15s;}
+.sub-link:hover{color:var(--blue);border-color:rgba(0,113,227,0.3);background:var(--blue-bg);}
+.sub-link svg{width:14px;height:14px;display:block;}
+.row-subgames .sub-row{background:var(--bg);}
 .card-foot{display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:0 18px 16px;}
 .card-head.no-art .card-name,.card-head.no-art .card-meta,.card-head.no-art .card-kw{padding-right:0;}
 .card-credit{font-size:12px;color:var(--text3);margin-top:8px;}
@@ -469,6 +485,14 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .rules-game-desc{font-size:14px;color:var(--text2);line-height:1.5;}
 .rules-title-row .rules-chat-toggle{flex-shrink:0;}
 .rules-not-found{font-family:'Playfair Display',serif;font-size:28px;color:var(--dark);margin-top:24px;}
+.rules-books{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:thin;}
+.rules-book{display:inline-flex;align-items:center;gap:7px;flex-shrink:0;padding:8px 14px;font-size:13px;font-weight:500;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);text-decoration:none;white-space:nowrap;transition:background .15s,color .15s,border-color .15s;}
+.rules-book:hover{color:var(--blue);border-color:rgba(0,113,227,0.3);background:var(--blue-bg);}
+.rules-book[aria-current="page"]{background:var(--dark);border-color:var(--dark);color:#fff;}
+.kind-chip{font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:5px;white-space:nowrap;line-height:1.3;}
+.kind-expansion{background:rgba(176,108,0,0.12);color:#8A5200;}
+.kind-extension{background:rgba(30,123,75,0.12);color:#1A6B41;}
+.rules-book[aria-current="page"] .kind-chip{background:rgba(255,255,255,0.18);color:#fff;}
 .rules-viewer{border-radius:var(--r);overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow-md);margin-bottom:16px;}
 /* svh, not vh: on iOS `vh` resolves to the large viewport, so 80vh renders
    a frame taller than the space actually visible with the toolbars up. */

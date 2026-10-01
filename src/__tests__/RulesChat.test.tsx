@@ -24,11 +24,11 @@ function streamResponse(chunks: string[]): Response {
   } as unknown as Response;
 }
 
-function setup() {
+function setup(parts?: string[]) {
   render(
     <RulesChatProvider>
       <RulesChatToggle />
-      <RulesChatPanel slug="cranium" gameName="Cranium" />
+      <RulesChatPanel slug="cranium" gameName="Cranium" parts={parts} />
     </RulesChatProvider>,
   );
 }
@@ -83,6 +83,17 @@ describe('RulesChat', () => {
     await waitFor(() =>
       expect(screen.getByPlaceholderText('Ask a rules question...')).toBeEnabled(),
     );
+  });
+
+  it('names the rulebooks to read along with the game\'s own', async () => {
+    const fetchMock = vi.fn(async () => streamResponse(['ok']));
+    vi.stubGlobal('fetch', fetchMock);
+    setup(['cities-and-knights']);
+    openPanel();
+    send('How do knights work?');
+    await screen.findByText('ok');
+    const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
+    expect(body).toEqual({ slug: 'cranium', message: 'How do knights work?', history: [], parts: ['cities-and-knights'] });
   });
 
   it('shows the error bubble and reports to Sentry on a non-OK response', async () => {

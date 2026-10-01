@@ -3,12 +3,13 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import GameCard from '../components/GameCard';
 import { FilterProvider } from '../context/FilterContext';
-import { quickGame, mediumGame, bananagramsGame, sevenWondersGame } from './testData';
+import { useFilter } from '../context/useFilter';
+import { quickGame, mediumGame, bananagramsGame, sevenWondersGame, deckGame, addonGame } from './testData';
 import type { Game } from '../data/types';
 
-function renderWithContext(ui: React.ReactElement) {
+function renderWithContext(ui: React.ReactElement, url = '/') {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[url]}>
       <FilterProvider>{ui}</FilterProvider>
     </MemoryRouter>
   );
@@ -116,5 +117,61 @@ describe('GameCard', () => {
     fireEvent.click(pill);
     // After clicking, the pill should be active (lit class)
     expect(pill).toHaveClass('lit');
+  });
+
+  describe('games inside a game', () => {
+    it('has no games button when nothing is inside', () => {
+      renderWithContext(<GameCard game={quickGame} />);
+      expect(screen.queryByRole('button', { expanded: false })).not.toBeInTheDocument();
+    });
+
+    it('opens and closes the list of games from the button', () => {
+      renderWithContext(<GameCard game={deckGame} />);
+      const pill = screen.getByRole('button', { name: 'Deck: +2 games' });
+      expect(pill).toHaveAttribute('aria-expanded', 'false');
+      expect(screen.queryByRole('list', { name: 'Deck games' })).not.toBeInTheDocument();
+
+      fireEvent.click(pill);
+      expect(pill).toHaveAttribute('aria-expanded', 'true');
+      const list = screen.getByRole('list', { name: 'Deck games' });
+      expect(pill).toHaveAttribute('aria-controls', list.parentElement!.id);
+      expect(list.parentElement!.id).not.toBe('');
+
+      fireEvent.click(pill);
+      expect(screen.queryByRole('list', { name: 'Deck games' })).not.toBeInTheDocument();
+    });
+
+    it('calls add-ons add-ons', () => {
+      renderWithContext(<GameCard game={addonGame} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Island: +1 add-on' }));
+      expect(screen.getByRole('list', { name: 'Island add-ons' })).toBeInTheDocument();
+    });
+
+    it('says how many fit once players are chosen, and lists only those', () => {
+      renderWithContext(<GameCard game={deckGame} />, '/?p=2');
+      fireEvent.click(screen.getByRole('button', { name: 'Deck: 1 of 2 games fit' }));
+      expect(screen.getAllByRole('listitem').map((li) => li.querySelector('.sub-name')!.textContent)).toEqual(['Speed']);
+    });
+
+    it('closes the list when a filter leaves nothing in it', () => {
+      function NinePlayers() {
+        const { dispatch } = useFilter();
+        return <button type="button" onClick={() => dispatch({ type: 'SET_PLAYERS', payload: 9 })}>Nine players</button>;
+      }
+      renderWithContext(<><NinePlayers /><GameCard game={deckGame} /></>);
+      fireEvent.click(screen.getByRole('button', { name: 'Deck: +2 games' }));
+      expect(screen.getByRole('list', { name: 'Deck games' })).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Nine players' }));
+      expect(screen.queryByRole('list', { name: 'Deck games' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Deck:/ })).not.toBeInTheDocument();
+    });
+
+    it('has no add-ons button when the base game fits but none of its add-ons do', () => {
+      // Island fits a medium game on its own; its long expansion doesn't, and
+      // the button would open an empty list.
+      renderWithContext(<GameCard game={addonGame} />, '/?d=medium');
+      expect(screen.getByRole('heading', { name: 'Island' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /add-on/ })).not.toBeInTheDocument();
+    });
   });
 });
