@@ -1,0 +1,1982 @@
+Klaus Teuber
+Game RulesGame Rules
+&& almanacalmanac
+
+22
+Game Rules
+Except where noted below, Catan: Cities & Knights (aka “Cities
+& Knights”) uses all the rules from Catan® (aka “The Settlers of
+Catan”). The additional rules include:
+• a revised turn order;
+• rules for placing and using knights;
+• rules for city development and progress cards; and
+• rules for the attacking barbarians!
+These 12-page rules (pages 2-13) contain all the important
+information that you need to play! Look for specific information
+about the individual progress cards in the “Almanac,” which
+follows after these rules (see pages 14-18).
+Game Components
+• 1 “barbarian tile” with movement spaces for
+the barbarian ship
+• 36 commodity cards, including:
+– 12 paper (from forest)
+– 12 cloth (from pasture)
+– 12 coin (from mountains)
+• 54 progress cards:
+– 18 trade progress cards (yellow flag on the back)
+– 18 politics progress cards (blue flag on the back)
+– 18 science progress cards (green flag on the back)
+• 6 “Defender of Catan” victory point (VP) cards
+• 4 development flip-charts (“city calendars”)
+• wooden playing pieces in 4 colors:
+– 12 city walls (square wooden tokens; 3 of each color)
+– 24 knights (round wooden tokens; 6 of each color)
+• 3 metropolis pieces (yellow wooden city gate pieces)
+• 3 metropolis tokens (die cut cardboard)
+• 2 sheets of knight labels
+• 1 barbarian ship (wooden ship piece)
+• 1 merchant (wooden cone piece)
+• 1 Game Rules & Almanac booklet
+• 1 game overview (on back of this booklet)
+• 1 event die (with 3 ships and 3 city gate symbols)
+What You need From Your Catan Game
+To play Cities & Knights you will
+need most of the components
+from a copy of Catan. Set aside
+the following Catan pieces, as you
+won’t need them:
+• The development card deck;
+• The “Largest Army” card; and
+• The building costs cards.
+See Illustrations A and B.
+Cities & Knights pieces replace
+these components. Use all of the
+remaining pieces from Catan.
+Dear Knights of Catan,
+This booklet contains all of the guidelines you need to play Catan: Cities & Knights®. We recommend that you first read
+the “Game Overview” on the back of these rules. Then read the “Game Rules” to familiarize yourself with the basic changes
+in this expansion. Finally, refer to the “Almanac” when special questions arise during play. Also note that the Almanac
+includes instructions on how to label the game parts.
+You can find further information online at:
+catan.com klausteuber.com catanstudio.comThe New World is Winter and We create wonders knowing onlee truth transcends decay
+A general note on Catan rules. This is the 5th English-
+language edition of Catan (aka Settlers of Catan). Over the
+years, the rules have been clarified, refined, and occasionally
+updated. As of January 1, 2015, all of the rules in this version of
+Catan take precedence over any previously-published rules.
+Illustration A
+laRGest aRmy
+2 Victory Points!
+The first player to play 3 Knight cards
+gets this card. Another player who plays
+more Knight cards takes this card.
+Set aside all of these
+Catan pieces before
+you start—you don’t
+need them in C&K.
+
+33
+You use the development flip-charts to track the city
+improvements that you purchase. Each page of the flip-chart
+shows the building costs of each piece. Each section also shows
+the cost of the next level of improvement. When you buy a
+city improvement, you flip the page section matching the
+improvement you purchased.
+Each page section depicts an illustration of the improvements
+that you’ve purchased, and a number of red dice. These red
+dice tell you if you acquire progress cards. The third level of
+improvement in each category describes the special ability
+you’ve just earned for that development track.
+City Walls
+City walls are low, square wooden
+blocks that you can place beneath your
+cities. To build a city wall, you pay 2
+brick resources to the bank. Each city wall you have on the board
+increases the maximum number of cards you can safely hold in
+your hand when a “7” is rolled on the production dice. Each city
+wall adds 2 cards to your “safe” hand limit.
+You may only build a city wall under a city. You can not
+place a city wall under a settlement. If one of your cities with
+a city wall is reduced to a settlement (by the barbarians), you
+must also remove that city wall from the board. Also, you may
+only build 1 city wall under a given city, and you can have a
+maximum of 3 city walls on the board at any given time.
+settinG up the island oF Catan
+Normally, you play Cities & Knights on a random, variable
+game board, just like the Catan base game. However, we
+recommend that you use the prepared board set-up shown
+in Illustration D (see page 4), it’s ideal for your first game of
+Cities & Knights. This layout provides a balanced production of
+resources (most especially grain) and commodities that may
+prove scarce during the game.
+Hexagon Tiles and the Barbarian Tile
+After constructing the frame, place the hexagonal tiles (hexes)
+within the frame as shown in the Game Overview.
+If you are constructing a random
+board, place the land hexes in the
+center of the framed area as you
+would normally.
+Next, place the “barbarian tile”
+as noted. The barbarian ship will
+move along this track toward
+Catan. Again, if using a random
+board, shuffle the harbor tokens
+and place them normally.
+neW Game pieCes
+Progress Cards
+In Cities & Knights, these
+three card decks replace the
+development card deck from
+Catan.
+Knights
+Before you play Cities & Knights for the first time, you need to
+label all 24 knight tokens (the round wooden “disks”). There are
+6 tokens of each color.
+There are 6 knights per player (color):
+• 2 basic knights
+(1 ring, open helmet)
+• 2 strong knights
+(2 rings, full helmet)
+• 2 mighty knights (3 rings,
+great-helm with crest)
+You need to attach 2 labels to
+each knight token. Label each
+tokes as shown in illustration
+C. The front side of each token
+gets the “inactive” symbol
+(a black & white image), the
+reverse side of each token gets
+the “active” symbol (a full-
+color head).
+Important: Make sure to affix the correct stickers to each token.
+The “inactive” front and “active” back of each token must be
+a knight of matching level. For example, inactive basic on the
+front, active basic on the back, etc.
+Development Flip-chart
+Before playing your first game, you must separate the spiral-
+bound pages of the development flip-charts. Each page of the
+flip-charts is perforated, so there are 3 parts to each page. Gently
+pull the sections of each page apart. When finished, you should
+have 5 pages, each divided into 3 separate sections.
+Illustration B
+Illustration C
+KniGhts
+Inactive Active
+
+44
+settinG up the Game
+Sort the resource cards into 5 stacks, 1 for each resource. Place
+them face-up near the island.
+Sort the new commodity cards into 3 stacks, one for each
+commodity. Place them face-up by the resource cards.
+Divide the progress cards into 3 stacks by the flag color on the
+back of each card (green, blue, and yellow). Shuffle each stack
+separately and place them face down near the island.
+Place the 3 metropolises, the merchant cone, the 3 dice
+(1 yellow, 1 red, and 1 event die), and the “Longest Road” card
+near the island.
+Place the black wooden ship on the “barbarian ship” space on
+the Barbarian Tile. The barbarian ship moves along this track on
+its way to Catan.
+Place the robber on the desert hex.
+Each player selects a color and takes all of the pieces of that
+color. Each player receives:
+• 5 settlements, 4 cities, and 15 roads
+(all from the Catan base game);
+• 6 knights (2 each of basic, strong, and mighty knights);
+• 3 city walls; and
+• 1 development flip-chart.
+set-up phase
+Once you’ve constructed the board and arranged the pieces,
+begin the set-up phase. Now the players place their initial
+settlements, cities, and roads. Each player rolls the dice; the
+player with the highest roll begins.
+Starting with the first player and continuing clockwise around
+the table, each player places 1
+settlement and 1 road (as in basic
+Catan).
+Then, the second placement
+round begins with the last player
+to place a settlement. It continues
+counterclockwise around the
+table (so the first player to place
+a settlement will be the last to
+place). Each player now places 1
+city and 1 road, following all of
+the normal rules for placement
+described in the Catan base game
+(i.e., no city may be placed fewer
+than 2 spaces away from all
+settlements, etc.).
+You receive your first
+resources immediately after you
+place your city. You get 1 resource
+for each terrain that your city is
+adjacent to.
+Place your development flip-
+chart in front of you with the
+first page showing (indicating
+that you have not built any city
+improvements).
+55••••••••
+22
+••
+1010••••••
+1010••••••
+88••••••••••
+1212
+••99••••••••
+33••••
+66••••••••••
+55••••••••
+1111••••
+1111••••
+33••••
+66••••••••••
+99••••••••
+44••••••
+44••••••
+88••••••••••
+Illustration D
+Starting Map
+for Beginners
+Beginners should set up
+the game according to
+the example shown here.
+Place the barbarian tile
+beside the board.
+Place the barbarian
+ship here.
+
+55
+turn overvieW
+The player who placed the last city takes the first turn;
+afterwards, in clockwise direction, one by one the other players
+take their turns. On your turn, the following actions are
+performed, in the order listed:
+• You roll all 3 dice.
+• The results of the event (symbol) die are resolved.
+• Progress cards may be drawn (depending on the result of
+the event die).
+• All players produce the resources indicated by the red and
+yellow dice.
+• All players produce the commodities indicated by the red
+and yellow dice.
+• You may do any or all of the following in any order:
+– Trade resources and/or commodities with the bank and/
+or other players.
+– Build roads, settlements, cities, knights, city walls, and/
+or city improvements.
+– Activate, promote, and/or perform actions with your
+knights.
+– Play any number of progress cards.
+Note: The “Alchemist” progress card can only be played before
+the dice are rolled. It is the only progress card that can be used
+before the dice are rolled and the results resolved.
+speCiFiC aCtions
+Dice Rolls
+Each player begins their turn by rolling
+all 3 of the dice. The result of the dice will
+determine not only which terrain hexes
+produce resources and commodities, but also what actions the
+barbarians will take, and if any progress cards are drawn. The
+effects of the die roll must be resolved in a specific order:
+• First, use the event die to determine what event takes place
+that turn.
+• If the ship symbol is showing, then move the
+barbarian ship 1 space closer to the island of
+Catan. The ship follows the track on the
+Barbarian Tile. The ship begins its journey on the
+space illustrated with the ship. The barbarians
+attack when the ship reaches the last space. (See “Attack
+of the Barbarians” on page 11.)
+• If one of the three city gate symbols (blue, green, or
+yellow) is showing, then all players may be
+eligible to draw a progress card. To be eligible,
+a player must be able to match the number
+rolled on the red die with one of the red die icons
+showing on their flip-chart in the section that matches the
+color of the city gate rolled on the symbol die
+(see example).
+Example: See Illustration
+F. The event die shows a
+yellow gate, and the red
+die shows the number
+“1.” All those players
+who have purchased at
+least the first level yellow
+city improvement (the
+market) are eligible to
+draw a yellow progress
+card.
+Beginning with the player whose turn it is, and continuing
+clockwise, each eligible player draws the topmost card from
+the progress card stack that matches the color of the city
+gate showing on the event die. Keep your progress cards
+secret from your opponents until you play them. You may
+never have more than 4 progress cards in your hand. See
+“Progress Cards” on page 9.
+• Add the red and the yellow dice together to determine
+which hexes produce resources and commodities for
+all players. All hexes whose number matches this sum
+produces 1 of the appropriate resources for each
+settlement adjacent to it. Production for a city bordering
+a producing hex depends on the type of terrain rolled. See
+Illustration J.
+As in Catan base game, any hex that is occupied by the robber
+does not produce any resources or
+commodities. Also, if a “7” is rolled
+on the dice, no hexes produce:
+instead, the player who rolled the
+“7” must move the robber and
+may be able to steal 1 card from
+any opponent whose settlement or
+city is adjacent to the robber. The
+robber cannot be moved until after
+the barbarians reach the island of
+Catan for the first time. Until the
+first barbarian attack, if you roll
+a “7”, all players must check if
+they are holding too many cards
+as usual; however, you do not
+move the robber from the desert
+and you do not steal a card from
+another player. Further, you are
+not allowed to move the robber by
+playing of any progress cards (like
+the Bishop) or knight actions until
+after the first barbarian attack.
+Illustration F
+© 2015 Catan GmbH
+1 Wool + 1 Cloth
+© 2015 Catan GmbH
+1 Lumber + 1 Paper
+© 2015 Catan GmbH
+1 Ore + 1 Coin
+© 2015 Catan GmbH
+© 2015 Catan GmbH
+2 Brick
+© 2015 Catan GmbH
+© 2015 Catan GmbH
+2 Grain
+A City on a: Produces
+Illustration G
+Cities Produce
+Resource &
+Commodity Cards
+
+66
+Trading and Building
+In Cities & Knights, you are allowed to build and trade any
+number of times and in any order. You do not need to finish all
+of your trading before you begin your building. All of the rules
+from Catan apply to trades made in Cities & Knights (with the
+addition of the commodity cards). Progress cards may never be
+traded at any time.
+All of the basic rules for building remain in effect. The cost
+of roads, settlements, and cities remain unchanged. There are,
+however, 2 new items that you may elect to build during your
+turn. Also, you may no longer purchase development cards with
+resources.
+The 2 new items are city walls and knights.
+City Walls
+To build a city wall, you must pay two brick resources to the
+bank. Place the city wall (the square wooden piece) under any
+city you own on the board. There are three restrictions on the
+placement of city walls:
+a. You may only build city walls under cities—never
+under settlements.
+b. You may only build one city wall under each city.
+c. You may never have more than 3 city walls at one time.
+Each city wall you control increases the maximum number of
+cards you safely hold in your hand when a “7” is rolled on the
+production dice. Each city wall adds 2 cards to this limit.
+Example: If you have 2 cities, each with a city wall, you may
+safely hold up to 11 cards in your hand without having to
+discard half of them when a “7” is rolled.
+If the barbarians pillage your city (i.e., reduce it to a
+settlement), the city wall is also destroyed. You must remove the
+city wall from the board.
+Knights
+Knights are represented
+by the round wooden tokens.
+Each knight token is labeled
+on both sides. One side—
+showing the symbol of a
+knight’s helmet in black
+and white—is the inactive
+side. An inactive knight may
+not perform any actions.
+The other side of the token,
+which depicts the helmet
+in color, is the active side.
+The type of helmet and the
+number of rings indicate the
+strength of the knight.
+Reminder: See Illustration H. The open-face helmet and single
+ring denotes a “basic knight.” The full helmet surrounded by
+a pair of rings indicates a “strong knight.” The great-helm
+adorned with the glowing sun and trio of rings represents a
+“mighty knight.”
+If you wish to “hire” a knight, you must pay one wool and one
+ore to the bank. This allows you to take a basic knight (open
+helmet/one ring) and place it on the board. Newly placed knights
+are always placed with the inactive side up. You may place your
+knight on any unoccupied intersection connected to your roads.
+There are 2 special purchases you can make once you have a
+knight:
+Activating a Knight
+In order for a knight to take an action, it must first be
+activated. To activate a knight, you must pay one grain to the
+bank. Then you may turn the knight token over to the active
+side, which depicts the helmet in color. The strength of the
+knight does not affect the cost to activate it. It costs only one
+grain, regardless of whether it is a basic knight, or a mighty
+knight. A knight may be activated on the same turn it was built;
+however, the knight may not perform an action on that same
+turn.
+Promoting a Knight
+You can increase the strength and effectiveness of your knights
+by paying additional resources. The cost to promote a basic
+knight to a strong knight or a strong knight to a mighty knight
+is one wool and one ore. When you promote a knight, return the
+old knight token (which may be repurchased later) and replace
+it with a token showing the next higher strength level. The new,
+stronger knight must be placed in the same location as the
+knight you have promoted. The status of the knight, active or
+inactive, is not changed when you promote the knight. You may
+promote a knight on the same turn that it was originally built,
+or on any later turn. A knight may only be promoted once per
+turn. You may only promote a strong knight to a mighty knight
+after you have purchased the third level of the politics (blue) city
+improvement (the “Fortress”).
+Playing Progress Cards
+During your turn, after you have rolled the dice, you may play
+any number of progress cards in any order. You may play them
+between other actions taken during your turn. When you play a
+progress card, resolve all of its effects, then place it, face down,
+under the progress card stack of the matching color.
+For more information about progress cards, see “Progress
+Cards” on page 9 or consult the Cities & Knights Almanac.
+Illustration H
+BasiC KniGht
+Value = 1
+stronG KniGht
+Value = 2
+miGhtY KniGht
+Value = 3
+
+77
+Commodities
+In Cities & Knights, we’ve added 3 new, “refined” materials to
+the game (see Illustration I). As in Catan, we refer to the 5 basic
+materials (lumber, wool, grain, brick, and ore) as “resources.”
+The 3 new materials (cloth, coin, and paper) are called
+“commodities.” In many ways, the commodities are treated the
+same as resources, but there are also some ways in which they
+differ. Here are all of the details about commodities:
+• Commodities are produced only by cities, and only in forest,
+pasture, and mountains.
+• Commodities, when produced, are added to your hand of
+resource cards. They count toward the robber or limit when
+a “7” is rolled. They may be stolen by the robber, or lost as
+a discard.
+• The borders on commodity cards are intertwined with
+ribbons that match the color of the commodity (gold
+for cloth, green for paper, and gray for coin). The borders
+on the resource cards all are plain knot work. Both
+commodity cards and resource cards have the same card
+backs (i.e., a map).
+• Commodities may be traded in all the same ways as
+resources. You may trade them freely with other players.
+You may exchange 4 of the same commodity for 1 of any
+resource or commodity you choose. If you have a settlement
+or a city on a 3:1 harbor, you may trade 3 of any commodity
+for 1 of any resource or commodity of your choice. You
+may also trade 4 of any resource for 1 of any commodity
+you choose (3:1 at a harbor; 2:1 if you have the matching
+special harbor).
+• You need commodities to acquire city improvements.
+• Some progress cards specifically mention “resources” or
+“commodities.” These cards can only affect the type of
+material they specifically mention.
+CitY improvements
+One of your most important considerations as a prince
+of Catan is the continued improvement of your cities. This
+improvement is made possible through the use of commodity
+cards. You are able to improve your cities in three areas of
+development: trade (yellow); politics (blue); and science (green).
+You may purchase improvements in all 3 areas even if you own
+only 1 city.
+Your city improvements are tracked with your development
+flip-chart. Your flip-chart is divided into 3 separate parts,
+1 for each of the 3 areas of development. Each section has
+5 pages, which correspond to the 5 levels of improvement
+you can acquire in each area. At the beginning of the game,
+open page 1 of your flip-chart; the page indicates that you have
+no improvements.
+The various improvements are represented by important
+buildings that can be constructed in your cities, such as a
+market, a cathedral, or a library. The cost of a building is shown
+in the lower right corner of each flip-chart page.
+Example: See Illustration J. The market costs 1 cloth.
+Pay 1 cloth and flip the Market section of your development
+flip-chart.
+The first improvement in each area always costs 1 commodity
+of the matching type. The second improvement in each
+area costs 2 of that commodity. The cost of each subsequent
+improvement is again increased by 1.
+There is one restriction on the purchase of improvements,
+however. If you have no cities on the board (because the
+barbarians have pillaged your last city), you may not purchase
+any city improvements until you have built at least 1 city. (See
+“Attack of the Barbarians” on page 11.)
+Each improvement increases your chance of being eligible to
+draw progress cards. Each improvement shows a picture of the
+improvement. Above that picture is a row of red dice.
+© 2015 Catan GmbH
+© 2015 Catan GmbH
+5 Resource Card Types
+© 2015 Catan GmbH
+© 2015 Catan GmbH
+© 2015 Catan GmbH
+Illustration I
+3 Commodity Card Types
+Illustration J
+
+88
+Each die shows a number. If the event die roll shows a city gate,
+you may draw a progress card of like color—but only if the
+number on the red die matches one of the dice pictured on that
+color’s section on your development flip-chart. A higher level of
+improvement increases your chance to draw progress cards.
+Example: See Illustration K. If you have built the market
+improvement, it shows 2 red dice. If the event die rolls the
+yellow city gate, and the red die shows a “1” or “2,” then you
+may draw a yellow progress card.
+In addition,
+when you
+build the third
+improvement in
+each area, you
+receive a special
+ability. You are
+able to use this
+ability for the
+remainder of
+the game, even
+if other players
+also achieve the
+third level of
+improvement (in which case they also get the advantage)
+or if you purchase improvements beyond the third level.
+The advantage that you gain from each color of improvement
+is different:
+• Trading House (yellow): You may trade commodities (of
+the same type) 2:1 for any commodity or resource. You may
+make this trade only during your turn, as if you were using
+a harbor. This special trade advantage does not include
+resources, only the three commodities.
+• Fortress (blue): You may promote strong knights to mighty
+knights after you have built the fortress. You must still pay
+to promote the knights normally.
+• Aqueduct (green): If, when the dice are rolled for
+production, you do not receive any resources or
+commodities, you may take any one resource of your choice
+from the bank. You many not, however, use this ability when
+a “7” is rolled.
+the metropolis
+Building city improvements is
+also important if you want to have a
+metropolis. A metropolis is represented
+by a yellow city gate. These gates
+are designed to fit over the wooden
+city pieces.
+Only 3 metropolises may be in play at any given time: one
+each for trade, politics, and science.
+The first player who achieves the fourth level of improvement
+in any one of these 3 areas (the bank, the cathedral, or the
+theater) may place one of the metropolis gates on any one of
+their own cities on the board. You may take the metropolis only
+if no other player already controls the fourth level improvement
+of that color, for there can be only 1 metropolis for science,
+trade, or politics. When you acquire a metropolis, place the
+metropolis token of the appropriate color on your flip-chart to
+show which area is associated with your metropolis.
+A city with a metropolis is worth a total of 4 victory points!
+This includes 2 points for the city and 2 additional points for
+the metropolis.
+You may take another player’s metropolis if you are able to
+acquire the fifth level of improvement in the matching color
+before they do. If another player reaches the fifth level of
+improvement before the metropolis owner does, that player
+may take both the metropolis piece and the colored
+metropolis token.
+If you have reached the fifth level of improvement in any area,
+no player may take your metropolis away.
+A metropolis is immune to the barbarians. It can never be
+pillaged or reduced. However, the metropolis is counted when
+determining the strength of the barbarian army.
+You may build more than one metropolis. If you are the first
+player to reach the fourth level of improvement in more than
+one area (or if you reach the fifth level, thereby taking another
+player’s metropolis away), you may place another metropolis
+gate on one of your cities. But, you may not purchase any
+improvements beyond the third level of a given color unless you
+have a city where you could build a metropolis. If you do not
+have such a city on the board, you must wait until you have built
+at least one more city.
+Illustration K
+Illustration L 3 City Improvements
+
+99
+proGress Cards
+In Cities & Knights,
+progress cards replace
+the development
+cards from the Catan
+base game. You don’t
+purchase progress
+cards like development
+cards; instead you draw
+them with the right
+combination of event die
+and red die.
+Acquiring Progress Cards
+To be able to draw a progress card:
+• You must possess at least one level of city improvement
+in one or more areas of development. The first level of
+improvement displays two red dice, the second level displays
+three, and so on.
+• The event die, when rolled on any player’s turn, must
+show the city gate symbol matches the color of one of
+your city improvements.
+• The number on the red die, rolled at the same time,
+must match one of the red dice displayed on your city
+improvement matching the color of the city gate on the
+symbol die.
+If these three conditions are met, you may draw the top card
+from the progress card stack that matches the color of the city
+gate on the event die. If more than one player is allowed to
+draw on the same turn, then each player draws in turn order,
+beginning with the player who rolled the dice this turn.
+Example: Player A rolls a “6” on the yellow die, a “3” on the
+red die, and the yellow city gate on the event die. Player B
+has already built a town hall (blue) and a merchant guild
+(yellow). Since player B’s yellow improvement shows a red die
+with “3,” showing player B may draw a yellow
+progress card.
+Playing Progress Cards
+During your turn, you may play as many progress cards
+as you wish. All progress cards may only be played after you
+roll the dice (exception: the “Alchemist”). Here are some
+specific rules about the play of progress cards. More detailed
+instructions about each card can be found in the Cities &
+Knights Almanac:
+• Victory point cards must be played immediately when
+drawn. The Spy may not steal them, and they cannot be
+hidden in your hand. These cards do not count toward your
+hand limit of 4 cards.
+• You may never hold more than four progress cards in your
+hand. If you draw a fifth progress card, and you cannot play
+it because it is not your turn, you must discard one card (of
+your choice) to the bottom of the appropriate stack.
+• Progress cards may be played on the same turn they
+are drawn.
+• Progress cards may not be traded with other players, nor
+may the robber steal them.
+• When you play a progress card, place it face down under
+the appropriate progress card stack. Victory points, however,
+remain face-up and in play.
+KniGhts
+Knights are essential for achieving victory in Cities & Knights
+of Catan. Without them, the barbarians will surely pillage your
+cities and ruin your hopes for victory.
+Like settlements, knights are placed at the intersection of three
+hexes. However, knights do not have to observe the distance rule.
+Knights can be placed to block construction of other players, and
+they can also be used to break another player’s “longest road.”
+Example: See Illustration N. A knight placed at the
+intersection of two players’ roads will keep the opposing
+player from
+building past
+the knight. The
+red player has
+four available
+intersections for
+knight placement
+(marked with
+arrows). If Red
+places a knight at
+intersection “A,”
+Blue will not be
+able to build past
+that knight. Only Red can build a road there. If Red places her
+knight at “B,” it will break Blue’s road–thus shortening it for
+purposes of determining the longest road.
+There are 3 strengths of knights: basic knights, strong
+knights, and mighty knights. A basic knight has a strength of 1,
+a strong knight has a strength of 2, and a mighty knight has a
+strength of 3.
+Knights serve you in 2 ways. First, they help protect Catan
+from the barbarian army (See “Attack of the Barbarians” on
+page 11). Second, your active knights can perform one action
+during your turn. Each knight may perform any 1 of the actions
+each turn. A knight may not be activated and then perform
+an action on the same turn. A knight can, however, perform
+© 2020 Catan GmbH
+Select an opponent who has
+more victory points than you.
+You may examine their hand of
+resource and commodity cards
+and select any 2 cards, which
+you may add to your hand.
+MASTER MERCHANT
+© 2020 Catan GmbH
+You may remove any open road
+(a road with nothing attached at
+one end). If you remove one of
+your own roads, you may place
+it in another location.
+DIPLOMAT
+© 2020 Catan GmbH
+You may take 2 grain cards
+from the bank for each fields
+hex which is adjacent to
+at least one of your
+cities or settlements.
+IRRIGATION
+Illustration M
+Trade Politics Science
+Illustration N
+BB AA
+
+1010
+an action and then be activated again later on the same turn
+(although this knight cannot perform another action on the
+same turn). When a knight performs an action, turn the knight
+token over to the inactive side. To activate that knight again, you
+must pay one grain.
+Here are all of the actions that you may perform with an active
+knight:
+Moving a Knight
+You may move an active knight to another intersection. In
+order for the knight to move, you must have built roads linking
+the intersection the knight is moving from to the intersection
+that it is moving to.
+An intersection may only be occupied by one knight at a
+time. However, a moving knight may pass through any number
+of intersections that are occupied by pieces of the same color
+(assuming that they are all connected by roads, as above).
+After you have moved the knight, it becomes inactive.
+If you wish to build a settlement on an intersection occupied
+by one of your knights, then you must first move the knight. If
+there is no empty intersection for you to move your knight to,
+then it may not move and you may not build at that intersection.
+Example: See Illustration O. Red may elect to move her active
+knight from intersection “A” to either intersection marked
+with an arrow. The
+knight may not be
+moved to “B” or
+“C,” as red does
+not have roads
+connecting these
+intersections to “A.”
+Displacing a Knight
+On your turn, you
+may move one of
+your active knights to
+an intersection that
+is occupied by one of
+your opponent’s knights. This is called “displacing” a knight. You
+may only displace a knight if it is weaker than the knight that
+you are moving. Thus, a strong knight can only displace a basic
+knight, and a mighty knight may displace a basic or a strong
+knight. A basic knight may never displace another knight.
+The owner of the displaced knight must move this knight to
+any empty intersection that is connected, by roads, to the place
+from which it was displaced. The status of the displaced knight
+(active or inactive) does not change.
+If there is no empty intersection for the displaced knight to
+move to, it is removed from the board.
+You may not displace your own knights.
+After you displace an opponent’s knight, move your
+(displacing) knight to the displaced knight’s former intersection.
+Your knight is then turned over to it’s inactive side.
+Example: See Illustration P. Red is at it again! She moves
+her strong knight to the intersection indicated by the red
+arrow. Red may do this because her knight is stronger than
+Blue’s (basic) knight (note the number of rings), and Red
+has a road that connects the two intersections. Blue must now
+move his displaced knight to “A” or “B,” which are
+both connected to
+the knight’s original
+position by roads. Blue
+moves his knight to “B.”
+Note that “C” is not a
+connected site, so he
+cannot move to that
+spot.
+Chasing Away the
+Robber
+You may use one of
+your active knights to chase away the robber. Any knight may
+do so, regardless of its strength. A knight may only chase away a
+robber if the robber is on one of the three hexes adjacent to that
+knight.
+When you chase away the robber, move it to any numbered
+hex and steal one resource from any player who has a settlement
+or city adjacent to that hex (as if you had played a knight card
+from the Catan base game development deck). After you chase
+away the robber, your knight is turned over to its inactive side.
+Example: See Illustration Q. Red’s knight can only chase
+away the robber from the gray hexes. In order for Red to
+chase away the robber, she must first move her knight to
+intersection “A” or “B” (which makes the knight inactive).
+Then Red must pay one grain to activate her knight. On a
+future turn, she could then use this knight to chase away the
+robber.
+attaCK oF the
+BarBarians!
+Catan is in constant
+danger of attack from
+the barbarians that live
+across the sea. Each turn
+the event die shows a
+black ship, the barbarian
+navy moves one space
+closer towards Catan.
+Illustration P
+BBAA
+CC
+Illustration Q
+BB
+AA
+Illustration O
+AA
+CC
+BB
+
+1111
+When the ship reaches the red-circled space that depicts
+barbarians landing on the shore,
+the barbarians attack Catan!
+When the barbarians attack, follow
+these steps:
+Determine the Barbarians’
+Strength
+The strength of the barbarians
+is equal to the number of cities
+(including metropolises) owned by
+all players. Add up all of the cities owned by all of the players
+anywhere on the island to determine this strength.
+Determine the Strength of Catan’s Knights
+All active knights of all players (even those who do not own
+any cities) will defend against the barbarians. Only the active
+knights are counted, the inactive knights do not assist in
+defending the island in any way. Remember that the strength
+of each knight is based upon its type: basic (1), strong (2),
+or mighty (3). Sum up the value of all the active knights to
+determine the strength of the defending army.
+Compare Attackers’ and Defenders’ Strengths
+There are 2 possible outcomes of this battle:
+• If the barbarians are stronger, they are victorious! If the
+barbarians win the battle, they pillage one or more cities.
+Pillaged cities are reduced to settlements (replace the city
+piece with a settlement). The barbarians pillage one city
+belonging to the player who had the lowest total strength of
+active knights when the barbarians attacked. Any player who
+contributed no knights are automatically considered to have
+the lowest total strength of active knights. If various players
+tie for having the lowest total strength of active knights,
+each of those players loses 1 of their own cities.
+Important: When determining which player has contributed
+the weakest group of knights, do not count any player who
+has no cities or any player who has only metropolises. These
+players are immune to the effects of the barbarian attack.
+If the barbarians pillage a city that has a city wall, the city
+wall is destroyed and removed from the board.
+Example: Players A and B each have two cities. Player C has
+only a metropolis, and player D has only settlements. The
+barbarians attack, and their strength is 5 (i.e., 4 cities plus 1
+metropolis). Players A, B, and D each have one simple knight
+activated, and player C has no active knights. Therefore, the
+knights defend with a strength of 3. Since the knights are
+weaker, the barbarians win and Catan loses. Because of
+the loss, players A and B each lose one of their cities. Player
+C cannot lose anything because she has only a metropolis.
+Similarly, player D has no cities to lose. Even though C
+contributed fewer knights than all the other players, since she
+is immune to the attack it is the next smallest contributor who
+thus suffers the effects of the barbarians.
+• If the knights have a strength equal to or greater than the
+barbarians, the knights win and Catan is saved! The player
+with the highest total strength of active knights (this will
+not always be the greatest number
+of knights) will be declared the
+“Defender of Catan!” As a reward,
+that player is presented with one
+“Defender of Catan” victory point
+(VP) cards. Each VP card is worth
+1 VP and is placed face-up in front
+of the player. If 2 or more players
+tie for the highest total strength
+of knights, no player is declared
+Defender of Catan, and no one
+receives a VP card. Instead, each of
+the players who tie for the highest
+strength draws the top card from
+any 1 of the 3 progress card stacks
+(his choice). In clockwise order,
+each eligible player selects 1 card,
+starting with the player who rolled
+the dice this turn.
+Barbarians Return Home
+Regardless of the outcome of the attack, the barbarian ship
+is returned to its starting position. All knights on the board
+are turned so that their inactive (black & white) side faces up.
+Starting with the next player’s turn, the barbarians will begin a
+new journey to the rich island of Catan.
+Victory Point
+1
+© 2020 Catan GmbH
+DEFENDER OF CATAN
+Victory Point Card
+(Back & Front)
+
+1212
+Losing Your Last City
+If you are unfortunate enough to have your last city
+pillaged by the barbarians, you are allowed to keep any city
+improvements that you may have built before the attack. You
+also keep all of your progress cards. You may continue to draw
+and play progress cards normally. Note, however, that you may
+not build any additional city improvements until you have built
+at least one city. Once you own a city again, you may continue to
+purchase city improvements normally.
+the merChant
+The merchant piece is put into play whenever any player uses
+one of the “Merchant” progress cards (from the yellow stack). If
+you play one of these cards, you may place the merchant piece
+on any land hex adjacent to one of your cities or settlements.
+Until another merchant card is played, you may trade the
+resource (not commodity) that is produced in that land hex at a
+2:1 rate. All of the normal rules for trading at a 2:1 harbor are in
+effect for these trades.
+Note: In addition, as long as you retain control of the
+merchant, you receive 1 victory point!
+If another merchant card is played, whoever played that card
+(it could be you) takes control of the merchant. If you played
+that card, you may move the Merchant to any hex adjacent to
+one of your settlements or cities. You receive the trade benefit,
+and gets the bonus victory point.
+endinG the Game
+The first player to accumulate 13 or more victory points
+during their turn immediately wins the game. This player
+becomes the “Lord of All Catan” and receives the endless praise
+and love of all the people of Catan!
+© 2020 Catan GmbH
+CONSTITUTION
+1 Victory Point!
+Reveal this card immediately
+when you draw it. This card
+cannot be stolen by a spy.
+© 2020 Catan GmbH
+Each player who has as many
+or more victory points than you
+must discard half of their
+own cards to the bank
+(resource and/or commodity).
+SABOTEUR
+© 2020 Catan GmbH
+You may activate all of
+your knights for free.
+WARLORD
+© 2020 Catan GmbH
+Name a resource
+(brick, grain, ore, lumber, or wool).
+Each opponent must give you
+2 cards of that type
+(if they have any).
+RESOURCE MONOPOLY
+© 2020 Catan GmbH
+For the rest of your turn, you
+may trade one resource or
+commodity of your choice with
+the bank at a 2:1 rate.
+You may make as many
+trades as you wish.
+MERCHANT FLEET
+© 2020 Catan GmbH
+When you play this card,
+you may place 2 roads for free
+(if playing with Catan: Seafarers,
+you may place 2 ships or
+1 ship and 1 road instead).
+ROAD BUILDING
+© 2020 Catan GmbH
+You may build
+1 city wall for free.
+ENGINEER
+© 2020 Catan GmbH
+You may take 2 grain cards
+from the bank for each fields
+hex which is adjacent to
+at least one of your
+cities or settlements.
+IRRIGATION
+© 2020 Catan GmbH
+Play this card before you
+roll the dice. You decide
+what the results of both
+numbered dice will be. Then
+roll the event die normally.
+Resolve the event die first.
+ALCHEMIST
+© 2020 Catan GmbH
+Choose 1 opponent.
+They must remove 1 knight
+of their choice from the board.
+You may place 1 of your own
+knights on the board (its
+strength must be equal to
+the knight removed).
+DESERTER
+© 2020 Catan GmbH
+You may displace one of your
+opponent’s knights, without using
+a knight of your own. The knight
+must be on an intersection
+connected to one of your
+roads or lines of ships.
+INTRIGUE
+© 2020 Catan GmbH
+You may remove any open road
+(a road with nothing attached at
+one end). If you remove one of
+your own roads, you may place
+it in another location.
+DIPLOMAT
+© 2020 Catan GmbH
+Name a commodity
+(cloth, coin, or paper).
+Each opponent must
+give you 1 card of that
+type (if they have any).
+TRADE MONOPOLY
+© 2020 Catan GmbH
+You may offer each opponent
+1 resource card from your hand.
+In exchange, each player must
+give you 1 commodity card of
+their choice. If they have none,
+your resource card is returned.
+COMMERCIAL HARBOR
+© 2020 Catan GmbH
+You may promote up to
+2 of your knights for free
+(the normal rules for promoting
+knights still apply). Mighty
+knights may not be promoted.
+SMITH
+© 2020 Catan GmbH
+You may swap 2 number
+tokens of your choice
+on the game board.
+You may not choose any
+2, 12, 6, or 8 tokens.
+INVENTOR
+© 2020 Catan GmbH
+You may take 2 ore cards from
+the bank for each mountains
+hex adjacent to at least one
+of your cities or settlements.
+MINING
+© 2020 Catan GmbH
+Examine an opponent’s hand
+of progress cards. You may take
+1 card of your choice and
+add it to your hand.
+SPY
+© 2020 Catan GmbH
+Each player who has more
+victory points than you must
+give you 2 cards of their choice
+(resource and/or commodity).
+WEDDING
+© 2020 Catan GmbH
+Move the robber. You may
+draw 1 random card (resource
+or commodity) from the hand
+of each player who has a
+settlement or city adjacent
+to the robber’s new hex.
+BISHOP
+© 2020 Catan GmbH
+Select an opponent who has
+more victory points than you.
+You may examine their hand of
+resource and commodity cards
+and select any 2 cards, which
+you may add to your hand.
+MASTER MERCHANT
+© 2020 Catan GmbH
+Place the merchant on a
+land hex next to your settlement
+or city. While the merchant
+remains here, you may trade
+the resource produced by this
+terrain at a 2:1 ratio.
+MERCHANT
+© 2020 Catan GmbH
+For 2 ore and 1 grain,
+you may upgrade one of your
+settlements into a city.
+MEDICINE
+© 2020 Catan GmbH
+PRINTER
+1 Victory Point!
+Reveal this card immediately
+when you draw it. This card
+cannot be stolen by a spy.
+© 2020 Catan GmbH
+One city improvement
+(abbey, town hall, etc.)
+that you build this turn
+costs one less commodity
+than usual.
+CRANE
+See the Almanac on pages 14-18 for card details.
+Progress
+Cards
+ScienceScience
+TradeTrade
+PoliticsPolitics
+© 2020 Catan GmbH
+Place the merchant on a
+land hex next to your settlement
+or city. While the merchant
+remains here, you may trade
+the resource produced by this
+terrain at a 2:1 ratio.
+MERCHANT
+Merchant Card
+(Front & Back)
+Merchant Piece
+
+1313
+variants and optional rules
+These rules are strictly optional and should only be used if
+agreed on by all players before the game begins.
+seaFarers oF Catan variant
+You may use the Catan: Seafarers Expansion along with the
+Cities & Knights Expansion. The best scenarios to use are those
+that do not involve the exploration of hidden portions of the
+board (such as “The Fog Islands”) or many small islands (such
+as “The Four Islands”), as these types of scenarios may make it
+too difficult to combat the barbarian army. Scenarios such as
+“Heading for New Shores,” or “Through the Desert” both work
+very well with the new rules included in Cities & Knights. If you
+choose to play Cities & Knights with the Seafarers, here are some
+important rules:
+• All rules in Cities & Knights that concern “roads” also apply
+to “ships” as well.
+• When the barbarians attack, they are assumed to attack all
+the islands, counting all cities and knights on all of them.
+• Knights may be moved across sea hexes if roads and ships
+connect the intersection the knight starts from to the
+intersection it is moved to.
+• You may move a knight to an intersection of sea hexes (but
+not place a new knight there) if you have a line of ships
+to that intersection. The knight is considered to be on the
+adjacent ship.
+• A knight must always be connected to a settlement or city
+of its color. If you have a knight at sea, or across the sea on
+another island, you may not move any ships if they would
+break this connection (the route is considered “closed”).
+• You can use a knight on a sea hex intersection to chase
+away the pirate, just as you would chase away the robber.
+nastY variant For experienCed plaYers
+This rule adds a new level of strategy and politics to the battle
+between the barbarians and the knights. Be warned: Using this
+rule can make the game very nasty (and longer as well).
+When the barbarians land, all of the knights are no longer
+assumed to aid in the defense of Catan. Beginning with the
+player who rolled the dice this turn, one after another each
+player will declare how many of their own active knights will be
+defending Catan. Each player may choose to commit some, none,
+or all of their active knights to the defense. This may cause Catan
+to lose the battle (due to a shortage of knight strength), which
+would resulting in some players losing a city. Only knights that
+are committed to the defense count toward the strength of the
+knight army, and only committed knights are taken into account
+when determining who contributed the weakest force (and will
+have a city pillaged).
+KniGht-errant variant
+This rule allows you to use one of your active knights to chase
+away the robber before rolling the dice on your turn. Your knight
+becomes deactivated. (See Illustration R.) This has the same
+effect as playing a knight card before rolling in the Catan base
+game.
+easY start variant
+Many players, especially those new to the game, find it difficult
+to get started if a lot of “7”s are rolled and/or the barbarians
+strike early. For these players, or for players who wish a friendlier
+game, use these rules:
+• If any player rolls a “7” on that player’s first two turns, they
+should re-roll. Continue rolling until a result other than “7”
+is obtained. Beginning with the first player’s 3rd turn, all of
+the normal rules for rolling a “7” apply.
+• Do not roll the event die during the first two turns of each
+player. The barbarian ship does not move, and no player
+draws any progress cards during this time. Starting with the
+first player’s third turn, roll all three dice and resolve
+them normally.
+This variant is designed to give all players a chance to
+get “rolling” at the beginning of the game without being
+handicapped by an early barbarian attack or by rolling
+a lot of “7”s.
+the almanaC
+The following pages (14-19) contain a list with the names and
+descriptions of all of the progress cards in Cities & Knights. You
+may find it useful to familiarize yourself with all of the cards
+before playing. You may then refer to this section as needed
+during play.
+Note: The number after the name of each card is the total
+number of that type of card in the deck.
+44••••••
+88••••••••••
+Red player
+uses knight to
+move robber
+from the “8”
+hex to the
+“4” hex.
+Illustration R
+
+1414
+Inventor (2)
+Switch two number tokens of
+your choice, but not 2, 12, 6, or 8.
+You can improve your
+production! You may choose any
+two number tokens (except 2, 12 6
+or 8) and switch their places on the
+board. You do not have to have a
+settlement or city next to the hexes
+with the numbers you are swapping.
+If, for example, you choose a “9”
+and an “11”, take the “9” token
+and put it on the hex where the
+“11” token is. Take the “11” token
+and put it on the hex where the
+“9” token was. You can choose to
+exchange a token that is on the hex
+occupied by the robber.
+Irrigation (2)
+Collect 2 grain cards for each
+fields hex adjacent to at least one of
+your settlements or cities.
+You receive 2 grain cards for each
+fields hex next to any of your
+settlements and cities. Unlike
+normal production, cities do not
+increase this bonus.
+Example: You have two cities
+next to a fields hex. You have
+a settlement next to a different
+field. If you play the Irrigation
+card, you will receive 4 grain
+cards.
+Medicine (2)
+You may upgrade a settlement to
+a city for 2 ore and 1 grain.
+When you play this card, you save
+1 ore and 1 grain. You may not
+combine two of these cards for the
+same city.
+Alchemist (2)
+This is the only progress card you
+can play before you roll the dice. It
+allows you to choose the results of
+both production dice. Then, roll the
+event die as normal and resolve the
+event.
+When you play this card, take the
+red and yellow dice and turn
+them so the result you want is
+face up. You can even make the
+dice roll “7.” However, the event
+has to be resolved first. Then
+players receive their production
+as normal. You may not play this
+card after you roll the dice.
+Crane (2)
+You can build a city improvement
+(abbey, town hall, etc.) for
+1 commodity less than normal.
+The Crane can only be used to
+reduce the cost of building one
+city improvement (turning over
+a page of your flip-chart). If you
+build a city, you must pay the
+normal resource costs. You may
+use a Crane to reduce the cost
+of a first-level improvement (to
+nothing). You may not combine
+2 Crane cards for the same
+improvement.
+Engineer (1)
+You may build one city wall
+for free.
+Take a city wall and put it under
+one of your cities. A city wall
+increases the number of cards
+you can safely hold in your hand
+when a “7” is rolled, by 2 cards.
+Each city can only have 1 city
+wall, and you cannot have more
+than 3 city walls at a time.
+science caRds
+© 2020 Catan GmbH
+You may build
+1 city wall for free.
+ENGINEER
+© 2020 Catan GmbH
+Play this card before you
+roll the dice. You decide
+what the results of both
+numbered dice will be. Then
+roll the event die normally.
+Resolve the event die first.
+ALCHEMIST
+© 2020 Catan GmbH
+One city improvement
+(abbey, town hall, etc.)
+that you build this turn
+costs one less commodity
+than usual.
+CRANE
+© 2020 Catan GmbH
+You may swap 2 number
+tokens of your choice
+on the game board.
+You may not choose any
+2, 12, 6, or 8 tokens.
+INVENTOR
+© 2020 Catan GmbH
+You may take 2 grain cards
+from the bank for each fields
+hex which is adjacent to
+at least one of your
+cities or settlements.
+IRRIGATION
+© 2020 Catan GmbH
+For 2 ore and 1 grain,
+you may upgrade one of your
+settlements into a city.
+MEDICINE
+
+1515
+Mining (2)
+Collect 2 ore cards for each
+mountains hex adjacent to at least
+one of your settlements or cities.
+You receive 2 ore cards for each
+mountains hex next to any of
+your settlements and cities.
+Unlike normal production, cities
+do not increase this bonus.
+Example: You have 2 settlements
+next to a mountains hex, and a
+city next to a different mountains
+hex. If you play the Mining card,
+you will receive 4 ore cards.
+Printer (1)
+This card awards you 1 victory
+point.
+You must play this card face up
+in front of you immediately when
+you draw it, even if it is not your
+turn. You may not keep VP cards
+in your hand. It does not count
+toward your hand limit of 4
+progress cards, and it may not be
+stolen by the Spy.
+Road Building (2)
+This card allows you to build 2
+roads for free.
+The roads you build do not have
+to be adjacent to each other.
+These roads cost you nothing to
+build. You must follow all the
+normal building rules. If you are
+also playing with the Seafarers
+expansion, you may build 2
+roads, 1 road and 1 ship, or 2
+ships when you play this card.
+Smith (2)
+You may promote 2 of your knights
+1 level each for free.
+You may not promote “mighty”
+knights. You may promote a knight
+regardless of whether it is active or
+inactive. The condition of the knight
+(active or inactive) does not change.
+You may only promote a “strong”
+knight (level 2) if you have built the
+“Fortress” city improvement (politics–
+blue). You may only promote a knight
+one level per turn.
+© 2020 Catan GmbH
+When you play this card,
+you may place 2 roads for free
+(if playing with Catan: Seafarers,
+you may place 2 ships or
+1 ship and 1 road instead).
+ROAD BUILDING
+© 2020 Catan GmbH
+You may promote up to
+2 of your knights for free
+(the normal rules for promoting
+knights still apply). Mighty
+knights may not be promoted.
+SMITH
+© 2020 Catan GmbH
+You may take 2 ore cards from
+the bank for each mountains
+hex adjacent to at least one
+of your cities or settlements.
+MINING
+© 2020 Catan GmbH
+PRINTER
+1 Victory Point!
+Reveal this card immediately
+when you draw it. This card
+cannot be stolen by a spy.
+City Development Generates
+Progress Card Production
+
+1616
+Bishop (2)
+Move the robber, following the
+normal rules. Draw 1 random
+resource/commodity card from each
+player who has a settlement or city
+next to the robber’s new hex.
+When you use this card to
+move the robber, you can steal 1
+random card from each player
+who has a settlement or city
+next to the hex that you move to,
+instead of stealing from only
+1 player. If a player has more
+than 1 settlement or city there,
+you can still only steal one card
+from that player.
+Constitution (1)
+This card awards you 1 victory
+point. You must play this card face
+up in front of you immediately
+when you draw it, even if it is not
+your turn.
+You may not keep Victory Point
+in your hand. It does not count
+toward your hand limit of
+4 progress cards, and it may not
+be stolen by the Spy.
+Deserter (2)
+Choose 1 opponent. They must
+remove 1 knight of their choice
+from the board. You may then place
+1 of your own knights, on the board.
+Its strength must equal to the
+knight removed (the normal rules
+for placing knights apply).
+When you play this card, your
+opponent chooses which of their
+own knights to remove from the
+board. If they choose a knight that
+you do not have available (for
+example, a “strong” knight and
+both of your “strong” knights are
+already on the board), you may
+place a basic knight instead. If
+you cannot place any knights,
+your opponent must still remove
+one of their own knights. You just
+lose the opportunity to place a
+knight for free. If your opponent removes a “mighty” knight,
+you may place one of your “mighty” knights even if you have
+not yet built the “Fortress” city improvement (politics—blue).
+The knight you place has the same status (active or inactive)
+as the knight your opponent removed.
+Diplomat (2)
+You may remove an “open”
+road (without another road or
+other piece at one end). If you
+remove your own road, you may
+immediately place it somewhere
+else on the island (following all the
+normal building rules) for free.
+An “open” road is a road at the
+beginning or end of a chain of
+roads that does not have a knight,
+city, or settlement of the same
+color attached at one end. If you
+remove an opponent’s road, it
+returns to their supply. If you
+remove your own road, then you
+may place it immediately on the
+board, free of charge (following
+the normal building rules—
+connected to your own road or
+settlement/city). You may remove
+your own road and choose not to
+replace it.
+Intrigue (2)
+You may displace an opponent’s
+knight. The knight must be on an
+intersection connected to at least
+one of your roads or shipping
+routes.
+With this card you can displace
+an opponent’s knight without
+using a knight of your own. You
+can play this card even if you
+have no knights of your own. The
+displaced knight must be moved
+to an empty space. If the knight
+cannot be displaced, then remove
+it from the board (return it to
+its owner). After the knight is
+displaced), you may place a basic
+knight instead, following the
+normal rules.
+Politics caRds
+© 2020 Catan GmbH
+Choose 1 opponent.
+They must remove 1 knight
+of their choice from the board.
+You may place 1 of your own
+knights on the board (its
+strength must be equal to
+the knight removed).
+DESERTER
+© 2020 Catan GmbH
+Move the robber. You may
+draw 1 random card (resource
+or commodity) from the hand
+of each player who has a
+settlement or city adjacent
+to the robber’s new hex.
+BISHOP
+© 2020 Catan GmbH
+CONSTITUTION
+1 Victory Point!
+Reveal this card immediately
+when you draw it. This card
+cannot be stolen by a spy.
+© 2020 Catan GmbH
+You may remove any open road
+(a road with nothing attached at
+one end). If you remove one of
+your own roads, you may place
+it in another location.
+DIPLOMAT
+© 2020 Catan GmbH
+You may displace one of your
+opponent’s knights, without using
+a knight of your own. The knight
+must be on an intersection
+connected to one of your
+roads or lines of ships.
+INTRIGUE
+
+1717
+Saboteur (2)
+When you play this card, each
+player who has as many or more
+victory points than you must
+discard half (round down) of their
+cards to the bank (resource and/or
+commodity cards).
+Your agents spread chaos in your
+opponents’ cities! Each of the
+other players who has at least as
+many victory points as you must
+discard half of their resource/
+commodity cards. Each player
+chooses which of their own cards
+to discard.
+Spy (3)
+Look at another player’s hand
+of progress cards. You may choose
+1 card to take and add to
+your hand.
+You may even steal another Spy
+and play it immediately or save
+it for later. Victory point cards
+cannot be stolen.
+Warlord (2)
+You may activate all of your
+knights for free.
+When you play this card, you can
+activate your knights without
+paying any grain. Remember
+that a knight may not perform
+any actions during the turn
+after it is activated, but you can
+activate it after it has performed
+an action that turn.
+Wedding (2)
+Each of your opponents who has
+more victory points than you must
+give you 2 resource/commodity
+cards of their choice.
+If any of these players only have
+1 card in hand, that player must
+give you that card. If any of these
+players have no cards, then that
+player gives you nothing. Players
+whose victory points are equal
+to or lower than yours, are not
+affected by this card.
+Commercial Harbor (2)
+You may force each of the other
+players to make a special trade.
+You may offer each opponent any 1
+resource card from your hand. They
+must exchange it for any
+1 commodity card of their choice
+from their hand, if they have any.
+You may use this ability at any
+time during the turn you play
+the card. However, you may
+only force each player to make
+this trade with you once that
+turn. Opponent choose which
+commodity card to give you if
+they have more than 1. If you
+offer a resource to a player who
+has no commodity cards, take
+your resource card back and the
+trade is void.
+Master Merchant (2)
+Choose another player who
+has more victory points than you
+do. Look at the player’s hand of
+resource and commodity cards and
+choose 2 cards to take and add to
+your hand.
+You can only play this card on an
+opponent who has more victory
+points than you. There is no
+defense against this “trade.”
+Merchant (6)
+Place the Merchant on any land
+hex next to 1 of your settlements
+or cities. You may exchange the
+resources produced by this type of
+hex with the supply at a 2:1 rate, as
+long as the merchant remains on
+that hex.
+When you play this card, take the
+merchant and put it on any land
+hex next to one or more of your
+settlements or cities. As long as the
+merchant remains here (under
+your control), you may trade the
+type of resource produced by this
+© 2020 Catan GmbH
+You may activate all of
+your knights for free.
+WARLORD
+© 2020 Catan GmbH
+Each player who has more
+victory points than you must
+give you 2 cards of their choice
+(resource and/or commodity).
+WEDDING
+© 2020 Catan GmbH
+Each player who has as many
+or more victory points than you
+must discard half of their
+own cards to the bank
+(resource and/or commodity).
+SABOTEUR
+© 2020 Catan GmbH
+Examine an opponent’s hand
+of progress cards. You may take
+1 card of your choice and
+add it to your hand.
+SPY
+© 2020 Catan GmbH
+You may offer each opponent
+1 resource card from your hand.
+In exchange, each player must
+give you 1 commodity card of
+their choice. If they have none,
+your resource card is returned.
+COMMERCIAL HARBOR
+© 2020 Catan GmbH
+Select an opponent who has
+more victory points than you.
+You may examine their hand of
+resource and commodity cards
+and select any 2 cards, which
+you may add to your hand.
+MASTER MERCHANT
+© 2020 Catan GmbH
+Place the merchant on a
+land hex next to your settlement
+or city. While the merchant
+remains here, you may trade
+the resource produced by this
+terrain at a 2:1 ratio.
+MERCHANT
+tRade
+caRds
+
+1818
+hex with the supply at a 2:1 rate (as is the case with a special
+harbor). As usual, you may also exchange these resources for
+commodities. If another player plays a merchant card, that
+player takes control of the merchant and receives the trade
+advantage and the victory point. If you want to move the
+merchant to a different hex, you will have to play another
+merchant card. The robber does not affect the merchant.
+You also receive 1 victory point for as long as you control the
+merchant.
+Credits
+Design: Klaus Teuber (www.klausteuber.com)
+Original Development: TM-Spiele GmbH
+5th Ed. Development Team: Pete Fenlon, Arnd Fischer,
+Ron Magin, Benjamin Teuber, and Guido Teuber
+Art: Michael Menzel, Harald Lieske, Stephen Graham Walsh
+Art Direction & Graphic Design: Pete Fenlon,
+Michaela Kienle, and Ron Magin
+Production: Ron Magin & Pete Fenlon
+Special Thanks: Robert T. Carty, Jr., Coleman Charlton,
+Morgan Dontanville, Chris Funk, Alex Colón Hernández,
+Stephanie Newman, Antonio Pigafetta (LSKC/39-444), Donna
+Prior, and Kelli Schmitz.
+Original Game Development: William Niebling, Guido Teuber, Coleman
+Charlton, Robert T. Carty Jr., Will Niebling, William Niebling, Alex Yeager, Larry
+Roznai, Nick Johnson, and Pete Fenlon.
+With Thanks To: Arnd Beenen, Peter Bromley, Darwin Bromley, Ariel Butler,
+Keywood Cheeves, Emily Johnson, Nick Johnson, Olivia Johnston, Wolfgang Lüdtke,
+Luc Mertens, Mike Szul, Reiner Müller, Schar Niebling, David Platnick, Lou Rexing,
+Karl Roelofs, Alan Roireau, Bridget Roznai, Loren Roznai, Benny Teuber, Claudia
+Teuber, Liam Teuber, Leif Teuber, Tom Smith, Mike Strack, Karl Roelofs, H. Jean
+Vanaise, Trella Wilhite, Bill Wordelmann, Elaine Wordelmann.
+Copyright © 2020 Catan GmbH and Catan Studio. Catan,
+Catan–Cities & Knights, The Settlers of Catan, the “Catan Sun”
+logo, the “Glowing Yellow Sun” and “Catan Board” marks, and
+all marks herein are trademarks of Catan GmbH and are used
+under license by Catan Studio. Published by Catan Studio,
+1995 W. County Rd. B2, Roseville, MN 55113.
+Phone +1.651.639.1905.
+Gamegenic and the Gamegenic logo are TM & © Gamegenic
+GmbH, Germany. All rights reserved.
+You have purchased a game of the highest quality.
+However, if you find any components missing
+or damaged, please visit:
+www.catanstudio.com/parts
+For all other inquiries, contact us at:
+info@catanstudio.com
+© 2020 Catan GmbH
+Name a commodity
+(cloth, coin, or paper).
+Each opponent must
+give you 1 card of that
+type (if they have any).
+TRADE MONOPOLY
+© 2020 Catan GmbH
+For the rest of your turn, you
+may trade one resource or
+commodity of your choice with
+the bank at a 2:1 rate.
+You may make as many
+trades as you wish.
+MERCHANT FLEET
+© 2020 Catan GmbH
+Name a resource
+(brick, grain, ore, lumber, or wool).
+Each opponent must give you
+2 cards of that type
+(if they have any).
+RESOURCE MONOPOLY
+Merchant Fleet (2)
+You may use one resource or
+commodity of your choice to make
+any number of 2:1 trades with the
+supply during the turn that you play
+this card.
+For the rest of the turn, you may
+trade one resource or commodity
+of your choice at a 2:1 rate.
+You can make as many such
+trades as you wish. As usual, you
+may exchange commodities for
+resources and vice versa.
+Resource Monopoly (4)
+Name a resource. Each player
+must give you 2 of that type of
+resource if they have them.
+You may name any of the
+5 resources (ore, grain, wool,
+lumber, or brick). Each player
+that has the named resource must
+give you 2. Any player that has
+only has 1 of that resource, must
+give you that 1 card.
+Trade Monopoly (2)
+Name a commodity. Each player
+must give you 1 commodity of that
+type if they have them.
+You may name any of the
+3 commodities (coin, paper,
+or cloth). Each player that has
+the named commodity must give
+you 1.
+Studio™
+catanstudio.com catan.com
+
+1919
+almanaC index
+Entries Page
+Game Rules . . . . . . . . . . . . . . . . . . . . . . . . . .2
+Game Components. . . . . . . . . . . . . . . . . . . . . . . .2
+What You Need From Your Catan Game . . . . . . . . . . . .2
+New Game Pieces . . . . . . . . . . . . . . . . . . . . . . . .3
+Knights . . . . . . . . . . . . . . . . . . . . . . . . . . . 3
+Development Flip-chart. . . . . . . . . . . . . . . . . . . .3
+City Walls . . . . . . . . . . . . . . . . . . . . . . . . . . .3
+Setting Up the Island of Catan . . . . . . . . . . . . . . . . .3
+Tiles and the Barbarian Tile . . . . . . . . . . . . . . . . .3
+Setting Up the Game. . . . . . . . . . . . . . . . . . . . . . .4
+Set-Up Phase . . . . . . . . . . . . . . . . . . . . . . . . . . .4
+Turn Overview . . . . . . . . . . . . . . . . . . . . . . . . . 5
+Specific Actions . . . . . . . . . . . . . . . . . . . . . . . . 5
+Dice Rolls . . . . . . . . . . . . . . . . . . . . . . . . . . .5
+Trading and Building . . . . . . . . . . . . . . . . . . . . .6
+City Walls . . . . . . . . . . . . . . . . . . . . . . . . . . .6
+Knights . . . . . . . . . . . . . . . . . . . . . . . . . . . .6
+Playing Progress Cards . . . . . . . . . . . . . . . . . . . .6
+Commodities . . . . . . . . . . . . . . . . . . . . . . . . . . .7
+City Improvements. . . . . . . . . . . . . . . . . . . . . . . .7
+The Metropolis . . . . . . . . . . . . . . . . . . . . . . . . . .8
+Progress Cards . . . . . . . . . . . . . . . . . . . . . . . . . .9
+Acquiring Progress Cards . . . . . . . . . . . . . . . . . . .9
+Playing Progress Cards . . . . . . . . . . . . . . . . . . . .9
+Knights . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .9
+Moving a Knight. . . . . . . . . . . . . . . . . . . . . . . 10
+Displacing a Knight . . . . . . . . . . . . . . . . . . . . . 10
+Chasing Away the Robber . . . . . . . . . . . . . . . . . . 10
+Attack of the Barbarians! . . . . . . . . . . . . . . . . . . . 11
+Determine the Barbarian Strength . . . . . . . . . . . . . 11
+Determine the Strength of Catan’s Knights . . . . . . . . 11
+Compare Attackers’ and Defenders’ Strengths . . . . . . . 11
+Barbarians Return Home . . . . . . . . . . . . . . . . . . 11
+Losing Your Last City . . . . . . . . . . . . . . . . . . . . 12
+The Merchant . . . . . . . . . . . . . . . . . . . . . . . . . 12
+Ending the Game . . . . . . . . . . . . . . . . . . . . . . . 12
+Variants and Optional Rules . . . . . . . . . . . . . . . . . 13
+Catan: Seafarers Variant . . . . . . . . . . . . . . . . . . 13
+Nasty Variant for Experienced Players . . . . . . . . . . . 13
+Knight-Errant Variant. . . . . . . . . . . . . . . . . . . . 13
+Easy Start Variant . . . . . . . . . . . . . . . . . . . . . . 13
+Almanac . . . . . . . . . . . . . . . . . . . . . . . . . . . 14
+Science Cards . . . . . . . . . . . . . . . . . . . . . . . . 14
+Politics Cards . . . . . . . . . . . . . . . . . . . . . . . . 16
+Trade Cards . . . . . . . . . . . . . . . . . . . . . . . . . 17
+If you would like to protect your cards in this game, we
+recommend Gamegenic card sleeves.
+The badge below indicates what style of sleeves and the
+number of packs required to sleeve all of the cards in this CATAN
+expansion.
+
+2020
+settinG up the Game
+• Construct the frame around the board.
+• Construct the board as shown, according to the scenario or using random set-up.
+• Place number markers on the board.
+• Sort the new commodity cards according to type into 3 face-up stacks.
+• Divide the progress cards according to type (by flag color) into 3 face-down stacks.
+• Place the 3 metropolises, the merchant cone, the 3 dice (1 yellow, 1 red, and 1 event die),
+and the “Longest Road” card near the island.
+• Place the black wooden ship on the “barbarian ship” space on the barbarian tile. On its
+way to Catan, the barbarian ship will move along the depicted track.
+• Place the robber on the desert hex.
+• First, starting with the first player and continuing clockwise, each player places
+1 settlement and 1 road (as in Catan).
+• Second, starting with the last player who placed a
+settlement and continuing counterclockwise, each
+player places 1 city and 1 road. (The first player to
+place a settlement will be the last to place a city).
+No city may be placed fewer than 2 hex edges away
+from any city or settlement.
+• Each player receives their first
+resources when they place their city—
+receiving 1 resource for each
+terrain adjacent to their city.
+• Players place their
+development flip-charts
+in front of themselves
+with the first page
+showing
+(indicating no city
+improvements).
+Studio™
+55••••••••
+22
+••
+1010••••••
+1010••••••
+88••••••••••
+1212
+••99••••••••
+33••••
+66••••••••••
+55••••••••
+1111••••
+1111••••
+33••••
+66••••••••••
+99••••••••
+44••••••
+44••••••
+88••••••••••
+Starting Set-up
+for Beginners
+Beginners should set up
+the game according to
+the example shown here.
+turn sequenCe
+• Roll all 3 dice.
+• Resolve the results of the white event die.
+• Depending on the white event die and
+the red die, players may draw progress
+cards.
+• All players produce the resources
+indicated by the red and yellow dice.
+• All players produce the commodities
+indicated by the red and yellow dice.
+• You do any or all of the following in any
+order:
+– Trade resources and/or commodities
+with bank and/or other players.
+– Build roads, settlements, cities,
+knights, city walls, and/or city
+improvements.
+– Activate, promote, and/or perform
+actions with knights.
+– Play any number of progress cards.
+City Production
+Terrain Resources Commodities
+Forest 1 Wood 1 Paper
+Pasture 1 Wool 1 Cloth
+Fields 2 Grain None
+Hills 2 Brick None
+Mountains 1 Ore 1 Coin
