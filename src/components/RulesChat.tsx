@@ -26,8 +26,11 @@ export function RulesChatToggle() {
   );
 }
 
-/** `parts` names the rulebooks of games inside this one that the assistant reads along with the game's own. */
-export function RulesChatPanel({ slug, gameName, parts = [] }: { slug: string; gameName: string; parts?: string[] }) {
+/**
+ * `parts` names the extra rulebooks the assistant reads along with the game's
+ * own, and `scope` says in words what it is reading.
+ */
+export function RulesChatPanel({ slug, gameName, parts = [], scope }: { slug: string; gameName: string; parts?: string[]; scope?: string }) {
   const { isOpen } = useContext(ChatContext);
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: 'Hi! Ask me anything about the rules for ' + gameName + '.' },
@@ -110,6 +113,7 @@ export function RulesChatPanel({ slug, gameName, parts = [] }: { slug: string; g
 
   return (
     <div className="rules-chat-panel">
+        {scope && <p className="rules-chat-scope" aria-live="polite">{scope}</p>}
         <div className="rules-chat-messages" ref={messagesContainerRef}>
         {messages.map((msg, i) => (
           <div key={i} className={`rules-chat-msg rules-chat-msg-${msg.role}`}>

@@ -14,6 +14,13 @@ export type KeywordId =
  */
 export type SubGameKind = 'expansion' | 'extension' | 'card-game';
 
+/** A further rulebook for a game or a game inside one; its tab is `label`. */
+export interface ExtraRulebook {
+  slug: string;
+  label: string;
+  pdf: string;
+}
+
 /**
  * A game that lives under another one: Catan's add-ons, or the games a deck of
  * cards plays. Each has its own players, time, video and (usually) rulebook, so
@@ -34,6 +41,14 @@ export interface SubGame {
   yt: string;
   /** Absent when no rulebook is bundled (the rules came in the box). */
   rules?: string;
+  /** The tab for `rules`; the sub-game's name when absent. */
+  rulesLabel?: string;
+  /**
+   * Further rulebooks for this sub-game, like the Monster Box's sheets for
+   * Boxes 2 to 4, each a tab after its own. Their slugs share the parent's
+   * namespace: /rules/<parent>.<slug>.pdf.
+   */
+  moreRules?: ExtraRulebook[];
 }
 
 /**
@@ -65,7 +80,7 @@ export interface Game extends Filterable {
    * game's own rules and on each other, so the rules assistant reads the one
    * on screen and those before it.
    */
-  moreRules?: { slug: string; label: string; pdf: string }[];
+  moreRules?: ExtraRulebook[];
   players: string;
   group: GroupId;
   short: string;

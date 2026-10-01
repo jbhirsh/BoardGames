@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link, Navigate } from 'react-router';
 import { GAMES } from '../data/games';
-import { rulebooks, rulebookPath, chatParts } from '../utils/rulebooks';
+import { rulebooks, rulebookPath, chatParts, chatScope } from '../utils/rulebooks';
 import { shownKind } from '../utils/subgames';
 import RulesChatProvider, { RulesChatToggle, RulesChatPanel } from './RulesChat';
 import WordChecker from './WordChecker';
@@ -59,8 +59,6 @@ export default function RulesPage() {
             )}
           </div>
         </header>
-        <RulesChatPanel slug={game.slug} gameName={game.name} parts={chatParts(game, book)} />
-        {wordCheckerOpen && <WordChecker />}
         {books.length > 1 && (
           <nav className="rules-books" aria-label="Rulebooks">
             {books.map(b => (
@@ -81,6 +79,8 @@ export default function RulesPage() {
             ))}
           </nav>
         )}
+        <RulesChatPanel slug={game.slug} gameName={game.name} parts={chatParts(game, book)} scope={chatScope(game, book)} />
+        {wordCheckerOpen && <WordChecker />}
         <div className="rules-viewer">
           <iframe src={book.pdf} title={`${book.name} rules`} />
         </div>

@@ -70,7 +70,9 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   Battle's sheets for Games 2 to 7), each a rules-page tab; they build on
   each other, so the assistant reads the one on screen and those before it
   (and all of them on an add-on's tab, which is played on the finished game).
-  `rulesLabel` names the tab for its own rulebook.
+  `rulesLabel` names the tab for its own rulebook. A sub-game takes both too:
+  the Monster Box has a tab per box. The rules page shows the tabs above the
+  chat, which says what it is reading for the tab on screen (`chatScope`).
   Both views share the filter bar: `FilterState.collection` (`'own' | 'want'`,
   mirrored to the URL as `c=want`) picks which list the section renders and
   which one the keyword counts tally; `CLEAR_ALL` keeps the mode.
