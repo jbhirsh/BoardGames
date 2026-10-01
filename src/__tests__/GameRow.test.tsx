@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import GameRow from '../components/GameRow';
 import { FilterProvider } from '../context/FilterContext';
@@ -83,7 +83,9 @@ describe('GameRow', () => {
     const onToggle = vi.fn();
     renderRow({ ...quickGame, awards: [{ name: 'Mensa Select', year: 2009 }] }, false, onToggle);
     fireEvent.click(screen.getByRole('button', { name: 'Quick Game: 1 award, show which' }));
-    expect(screen.getByRole('group', { name: 'Quick Game: 1 award' })).toHaveTextContent('Mensa Select');
+    const list = screen.getByRole('group', { name: 'Quick Game: 1 award' });
+    expect(list).toHaveTextContent('Mensa Select');
+    fireEvent.click(within(list).getByText('Mensa Select'));
     expect(onToggle).not.toHaveBeenCalled();
   });
 
@@ -242,7 +244,11 @@ describe('GameRow', () => {
     fireEvent.mouseLeave(tag);
     expect(screen.queryByRole('group')).not.toBeInTheDocument();
     fireEvent.click(tag);
-    expect(screen.getByRole('group')).toBeInTheDocument();
+    const pinned = screen.getByRole('group');
+    // The panel is portalled out of the row, but React still bubbles its
+    // clicks up the component tree to the row's handler.
+    fireEvent.click(within(pinned).getByText('Speed'));
+    fireEvent.click(within(pinned).getByText('Deck: 1 of 2 games fit'));
     expect(onToggle).not.toHaveBeenCalled();
   });
 

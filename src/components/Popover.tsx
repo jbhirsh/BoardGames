@@ -25,7 +25,8 @@ const GAP = 6;
  * around it. The button carries the disclosure semantics (aria-expanded and
  * aria-controls) and the panel is a labelled group, not a tooltip: a tooltip
  * is hover-only supplementary text, and this one stays pinned after a click.
- * The click stops there, so a table row behind the button doesn't toggle.
+ * Clicks on the button and in the panel stop there, so a table row behind
+ * them doesn't toggle.
  */
 export default function Popover({ className, buttonClassName, label, title, trigger, children }: Props) {
   const [pinned, setPinned] = useState(false);
@@ -96,9 +97,14 @@ export default function Popover({ className, buttonClassName, label, title, trig
         {trigger}
       </button>
       {open && createPortal(
-        <div id={id} ref={popRef} className="pop" role="group" aria-labelledby={`${id}-title`} style={pos}>
-          <div id={`${id}-title`} className="pop-title">{title}</div>
-          {children}
+        // React bubbles a click inside a portal up the component tree, not the
+        // page, so one on the panel would still reach a table row behind it.
+        // The wrapper only stops it; it means nothing to assistive tech.
+        <div role="presentation" onClick={(e) => e.stopPropagation()}>
+          <div id={id} ref={popRef} className="pop" role="group" aria-labelledby={`${id}-title`} style={pos}>
+            <div id={`${id}-title`} className="pop-title">{title}</div>
+            {children}
+          </div>
         </div>,
         document.body,
       )}
