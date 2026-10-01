@@ -62,19 +62,24 @@ describe('games ↔ assets integrity', () => {
   // <parent>.<slug>.pdf, and its text as <parent>.<slug>.txt: the chat API
   // reads every rules-text/<parent>.*.txt along with the parent's own, so a
   // sub-game rulebook under any other name would never reach the assistant.
-  const withRules = GAMES.flatMap((g) => (g.subgames ?? []).filter((s) => s.rules).map((s) => [`${g.slug}.${s.slug}`, s.rules!] as const));
+  const withRules = GAMES.flatMap((g) => [
+    ...(g.moreRules ?? []).map((r) => [`${g.slug}.${r.slug}`, r.pdf] as const),
+    ...(g.subgames ?? []).filter((s) => s.rules).map((s) => [`${g.slug}.${s.slug}`, s.rules!] as const),
+  ]);
 
-  it.each(GAMES.filter((g) => g.subgames).map((g) => [g.slug, g] as const))(
-    'game "%s" names each game inside it once, in the slug shape',
+  // Its further rulebooks and the games inside it share one set of tabs and
+  // one rules-text namespace, so their slugs must not collide.
+  it.each(GAMES.filter((g) => g.subgames || g.moreRules).map((g) => [g.slug, g] as const))(
+    'game "%s" names each extra rulebook and game inside it once, in the slug shape',
     (_slug, game) => {
-      const subSlugs = game.subgames!.map((s) => s.slug);
+      const subSlugs = [...(game.moreRules ?? []), ...(game.subgames ?? [])].map((s) => s.slug);
       expect(new Set(subSlugs).size).toBe(subSlugs.length);
       for (const s of subSlugs) expect(s).toMatch(SLUG_RE);
     },
   );
 
   it.each(withRules)(
-    'sub-game "%s" has its rules PDF and rules-text',
+    'extra rulebook "%s" has its rules PDF and rules-text',
     (key, rules) => {
       expect(rules).toBe(`/rules/${key}.pdf`);
       expect(existsSync(join(PUBLIC, rules)), `missing rules PDF: ${rules}`).toBe(true);

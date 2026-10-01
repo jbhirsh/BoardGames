@@ -63,3 +63,35 @@ describe('chatParts', () => {
     expect(chatParts(quickGame, rulebooks(quickGame)[0])).toEqual([]);
   });
 });
+
+describe('a game\'s further rulebooks', () => {
+  const more = [
+    { slug: 'game-2', label: 'Game 2', pdf: '/rules/quick-game.game-2.pdf' },
+    { slug: 'game-3', label: 'Game 3', pdf: '/rules/quick-game.game-3.pdf' },
+  ];
+
+  it('come after its own, which takes the label it names', () => {
+    const game: Game = { ...quickGame, rulesLabel: 'Game 1', moreRules: more };
+    expect(rulebooks(game)).toEqual([
+      { label: 'Game 1', name: 'Quick Game', short: 'A quick card game.', pdf: '/rules/quick-game.pdf' },
+      { part: 'game-2', label: 'Game 2', name: 'Quick Game: Game 2', short: 'A quick card game.', pdf: '/rules/quick-game.game-2.pdf' },
+      { part: 'game-3', label: 'Game 3', name: 'Quick Game: Game 3', short: 'A quick card game.', pdf: '/rules/quick-game.game-3.pdf' },
+    ]);
+  });
+
+  it('go to the rules assistant up to the one on screen, and not for an add-on\'s tab', () => {
+    const exp = sub({ name: 'Box', slug: 'box', kind: 'expansion', rules: '/rules/quick-game.box.pdf' });
+    const game: Game = { ...quickGame, moreRules: more, subgames: [exp] };
+    const [base, game2, game3, box] = rulebooks(game);
+    expect(chatParts(game, base)).toEqual([]);
+    expect(chatParts(game, game2)).toEqual(['game-2']);
+    expect(chatParts(game, game3)).toEqual(['game-2', 'game-3']);
+    expect(chatParts(game, box)).toEqual(['box']);
+  });
+
+  it('leave a deck sending every game in it, whichever tab is open', () => {
+    const deck: Game = { ...quickGame, subgames: [sub({ slug: 'speed', rules: '/rules/quick-game.speed.pdf' }), sub({ slug: 'golf', rules: '/rules/quick-game.golf.pdf' })] };
+    const books = rulebooks(deck);
+    for (const shown of books) expect(chatParts(deck, shown)).toEqual(['speed', 'golf']);
+  });
+});
