@@ -5,6 +5,7 @@ import { ytURL } from '../utils/urls';
 import { rulebookPath } from '../utils/rulebooks';
 import { fittingSubgames, shownKind, subgameNoun } from '../utils/subgames';
 import { YouTubeIcon, AiRulesIcon, UserIcon, ClockIcon } from './Icons';
+import AwardsBadge from './AwardsBadge';
 
 interface Props {
   game: Game & { subgames: NonNullable<Game['subgames']> };
@@ -31,6 +32,7 @@ export default function SubGameList({ game }: Props) {
             <span className="sub-meta">
               <span className="cmeta"><UserIcon /> {sub.players}</span>
               <span className="cmeta"><ClockIcon /> {sub.dur}</span>
+              <AwardsBadge itemName={sub.name} awards={sub.awards ?? []} />
             </span>
             <p className="sub-short">{sub.short}</p>
           </div>

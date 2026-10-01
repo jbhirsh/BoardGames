@@ -94,6 +94,7 @@ async function main(): Promise<number> {
     try {
       answer = await askRulesAssistant({
         slug: entry.game,
+        parts: entry.parts,
         message: entry.question,
         apiKey,
         temperature: 0,

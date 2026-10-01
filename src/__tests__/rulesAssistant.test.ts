@@ -195,6 +195,15 @@ describe('askRulesAssistant', () => {
     });
   });
 
+  it('reads the named parts with the game\'s own rules', async () => {
+    mocks.generateContentStream.mockResolvedValue(fakeStream('Three.'));
+    await askRulesAssistant({ slug: 'ticket-to-ride', parts: ['europe'], message: 'Stations?', apiKey: 'k', temperature: 0 });
+    expect(lastRequest().contents[0].parts[0].text).toBe(
+      'Here are the complete rules for the game:\n\n' + loadRulesText('ticket-to-ride', ['europe']),
+    );
+    expect(loadRulesText('ticket-to-ride', ['europe'])).toContain(rulebookHeader('europe'));
+  });
+
   it('propagates a missing-rules error before any Gemini call', async () => {
     await expect(
       askRulesAssistant({ slug: 'no-such-game', message: 'q', apiKey: 'test-key' }),

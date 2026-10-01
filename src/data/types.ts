@@ -10,9 +10,11 @@ export type KeywordId =
 
 /**
  * What a game inside another one is: an expansion adds rules or pieces, an
- * extension adds seats, and a card game is one played with the parent's deck.
+ * extension adds seats, a version is a complete game of its own in the same
+ * line (Ticket to Ride - Europe), and a card game is one played with the
+ * parent's deck.
  */
-export type SubGameKind = 'expansion' | 'extension' | 'card-game';
+export type SubGameKind = 'expansion' | 'extension' | 'version' | 'card-game';
 
 /** A further rulebook for a game or a game inside one; its tab is `label`. */
 export interface ExtraRulebook {
@@ -49,6 +51,8 @@ export interface SubGame {
    * namespace: /rules/<parent>.<slug>.pdf.
    */
   moreRules?: ExtraRulebook[];
+  /** Confirmed award wins of its own, like a game's. */
+  awards?: Award[];
 }
 
 /**

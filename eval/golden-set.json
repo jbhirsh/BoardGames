@@ -44,7 +44,8 @@
     },
     {
       "id": "ttr-europe-unused-station-points",
-      "game": "ticket-to-ride-europe",
+      "game": "ticket-to-ride",
+      "parts": ["europe"],
       "question": "In Ticket to Ride Europe, how many points do I score at the end of the game for each train station I never used?",
       "expected": "\\b(4|four)\\b",
       "matchType": "regex",
@@ -52,7 +53,8 @@
     },
     {
       "id": "ttr-europe-max-stations",
-      "game": "ticket-to-ride-europe",
+      "game": "ticket-to-ride",
+      "parts": ["europe"],
       "question": "How many train stations can a single player build over the course of a game of Ticket to Ride Europe?",
       "expected": "\\b(3|three)\\b",
       "matchType": "regex",

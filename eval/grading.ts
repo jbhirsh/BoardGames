@@ -13,6 +13,12 @@ export interface GoldenEntry {
   matchType: MatchType;
   sourceQuote: string;
   notes?: string;
+  /**
+   * Extra rulebooks the assistant reads with the game's own, as the rules
+   * page sends them: a question about Ticket to Ride - Europe asks about
+   * ticket-to-ride with parts ["europe"].
+   */
+  parts?: string[];
 }
 
 export interface GoldenSet {
@@ -68,6 +74,10 @@ export function parseGoldenSet(data: unknown): GoldenSet {
     if (typeof sourceQuote !== 'string') {
       throw new Error(`golden set entry ${index}: "sourceQuote" must be a string`);
     }
+    const parts = raw.parts;
+    if (parts !== undefined && (!Array.isArray(parts) || !parts.every((p) => typeof p === 'string' && p.trim() !== ''))) {
+      throw new Error(`golden set entry ${index}: "parts" must be a list of rulebook names when present`);
+    }
     const entry: GoldenEntry = {
       id: requireString(raw, 'id', index),
       game: requireString(raw, 'game', index),
@@ -78,6 +88,9 @@ export function parseGoldenSet(data: unknown): GoldenSet {
     };
     if (notes !== undefined) {
       entry.notes = notes;
+    }
+    if (parts !== undefined) {
+      entry.parts = parts;
     }
     return entry;
   });

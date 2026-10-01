@@ -126,6 +126,8 @@ export async function streamRulesAnswer(
 
 export interface AskRulesAssistantOptions {
   slug: string;
+  /** Extra rulebooks to read with the game's own, as loadRulesText takes them. */
+  parts?: string[];
   message: string;
   history?: ChatHistoryEntry[];
   apiKey: string;
@@ -137,7 +139,7 @@ export interface AskRulesAssistantOptions {
  * prompt, call Gemini, and collect the streamed reply into one string.
  */
 export async function askRulesAssistant(options: AskRulesAssistantOptions): Promise<string> {
-  const rulesText = loadRulesText(options.slug);
+  const rulesText = loadRulesText(options.slug, options.parts);
   const stream = await streamRulesAnswer({
     rulesText,
     message: options.message,

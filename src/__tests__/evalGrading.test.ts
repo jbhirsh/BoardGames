@@ -238,6 +238,19 @@ describe('parseGoldenSet', () => {
     expect(parsed.entries[0]).toEqual({ ...validEntry, notes: 'boundary case' });
   });
 
+  it('keeps the rulebook parts an entry reads, and leaves them off when absent', () => {
+    const parsed = parseGoldenSet({ status: 'ready', entries: [{ ...validEntry, parts: ['europe'] }, validEntry] });
+    expect(parsed.entries[0].parts).toEqual(['europe']);
+    expect(parsed.entries[1]).not.toHaveProperty('parts');
+  });
+
+  it('rejects parts that are not a list of names', () => {
+    for (const parts of ['europe', [3], [''], ['  ']]) {
+      expect(() => parseGoldenSet({ status: 'ready', entries: [{ ...validEntry, parts }] }), JSON.stringify(parts))
+        .toThrow('golden set entry 0: "parts" must be a list of rulebook names when present');
+    }
+  });
+
   it('accepts entries without the optional notes field', () => {
     const parsed = parseGoldenSet({ status: 'ready', entries: [validEntry] });
     expect(parsed.entries[0].notes).toBeUndefined();

@@ -5,7 +5,7 @@ Guidance for Claude Code (claude.ai/code) when working in this repository.
 ## What this is
 
 **The Game Room** — a single-page app for browsing a personal board game
-collection. Filter and sort 34 games, get a random pick, read bundled rule
+collection. Filter and sort 30 games, get a random pick, read bundled rule
 PDFs, ask an AI rules assistant, tally a 7 Wonders score, check whether a word
 is playable in Bananagrams, and vote on a wishlist. React 19 + TypeScript SPA
 built with Vite, deployed on Vercel with a small serverless API.
@@ -58,8 +58,9 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   (name, desc, min/max players, mins, duration bucket, keywords). The filter
   pipeline (`utils/filterGames.ts`) is generic over it: `filterItems` with
   `filterGames` and `filterWishlist` wrappers that decide their own grouping.
-  A game can hold `subgames` (`SubGame`, kind `expansion`, `extension` or
-  `card-game`): Catan's add-ons, the games the Card Deck plays. Each has its
+  A game can hold `subgames` (`SubGame`, kind `expansion`, `extension`,
+  `version` or `card-game`): Catan's, Dominion's and One Night's add-ons,
+  Ticket to Ride - Europe as a version, the games the Card Deck plays. Each has its
   own players, time, video and usually a rulebook at
   `/rules/<parent>.<sub>.pdf`. The players and time filters keep a parent
   when it fits on its own or one of its games fits both (a deck only by its
