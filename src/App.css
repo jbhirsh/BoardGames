@@ -283,7 +283,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .sub-tag:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
 .sub-tag-short{display:none;}
 .sub-tag-list{list-style:none;margin:0;padding:0;color:var(--text2);font-size:12px;line-height:1.5;display:flex;flex-direction:column;gap:3px;}
-.mobile-short{display:none;font-size:11.5px;color:var(--text2);line-height:1.35;white-space:normal;font-weight:400;}
+.mobile-short{display:none;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;font-size:11.5px;color:var(--text2);line-height:1.35;white-space:normal;font-weight:400;}
 
 /* col: players */
 .col-players{white-space:nowrap;font-size:12.5px;color:var(--text2);}
@@ -640,23 +640,29 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 @media(max-width:900px){
   .hero{ padding:48px var(--gutter) 40px; }
 
-  /* hide Tags, keep Description */
+  /* Hide Tags, and fold the description under the name as on phones: four
+     columns this narrow left names and descriptions wrapping to three or
+     four lines beside mostly empty players and duration cells. */
   .games-list th.col-tags,
-  .games-list td.col-tags{ display:none; }
+  .games-list td.col-tags,
+  .games-list th.col-desc,
+  .games-list td.col-short{ display:none; }
+  .mobile-short{ display:block; font-size:12.5px; }
 
   .games-list{ table-layout:fixed; }
   .col-name{ white-space:normal; font-size:13.5px; }
-  /* the name column is narrow from here, so the add-on tag is just its count
-     and the badges sit at the top of a wrapped name */
-  .col-name-line{ align-items:flex-start; }
+  /* Under table-layout:fixed the header row sets the widths: the name
+     column takes what players, duration and the chevron leave. */
+  .games-list th.col-players-h{ width:72px; }
+  .games-list th.col-dur-h{ width:104px; }
+  .games-list th.col-vote{ width:64px; }
+  .games-list th.col-actions-h{ width:52px; }
+  /* the name column is narrower from here, so the add-on tag is just its
+     count; a wrapped name keeps the badges centred beside it */
   .sub-tag-full{ display:none; }
   .sub-tag-short{ display:inline; }
   .game-row td{ padding:10px 10px; }
   .game-row td:first-child{ padding-left:16px; }
-  /* No column widths here: under table-layout:fixed the widths come from
-     <col> or the FIRST row, and the first row is the <thead>. Percentages
-     on tbody cells are ignored, so the columns divide equally. Setting them
-     on th:nth-child(...) would make them bind — see the follow-up note. */
 }
 
 /* Hide Players too. 720 rather than 680 so landscape phones (756px and
@@ -673,8 +679,11 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
   .games-list th.col-hide,
   .games-list td.col-hide{ display:none; }
 
-  /* reset table to auto layout (no widths left to reset — see above) */
+  /* reset table to auto layout, and the column widths set for it above */
   .games-list{ table-layout:auto; }
+  /* the duration and the chevron shrink to their content, leaving the name
+     and its subtitle the rest */
+  .games-list th:is(.col-dur-h,.col-actions-h,.col-vote){ width:1%; }
   .game-row td:first-child{ padding-left:14px; }
   .game-row td{ padding:11px 10px; }
   .game-row td:last-child{ padding-right:14px; }
@@ -688,9 +697,9 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
   table.games-list thead tr th:first-child{ padding-left:14px; }
   table.games-list thead tr th:last-child{ padding-right:14px; }
 
-  /* name wraps and shows subtitle */
+  /* name wraps, with the subtitle under it a size smaller */
   .col-name{ font-size:13.5px; white-space:normal; }
-  .mobile-short{ display:block; }
+  .mobile-short{ font-size:11.5px; }
 
   /* filterbar: search on its own row, pills wrap beneath it */
   .filterbar{ flex-wrap:wrap; gap:6px; padding:8px var(--gutter); }
