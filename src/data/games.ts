@@ -151,7 +151,7 @@ export const GAMES: Game[] = [
     detail:`<div class="detail-section"><h3>How It Plays</h3><p>Build the tower in levels of three, each crosswise to the one below. On your turn, use one hand to slide out a block from below the top complete level, answer the truth or do the dare printed on it, then place it on top. Whoever makes the tower fall loses the round, and by house rule the others choose a dare for them.</p></div><div class="detail-section"><h3>Who It’s For</h3><p>Made for date night, and it scales to a group of couples. The house rules sheet is written from the publisher’s description of the game.</p></div>`,
     yt:"how to play truth or dare block stacking game",
     awards:[] },
-  { name:"These Cards Will Get You Drunk", slug:"these-cards-will-get-you-drunk", img:"/images/these-cards-will-get-you-drunk.webp", rules:"/rules/these-cards-will-get-you-drunk.pdf", players:"2–8",  min:2,  max:8,  dur:"30–60 min", mins:60,  cat:"medium", group:'party',
+  { name:"These Cards Will Get You Drunk", slug:"these-cards-will-get-you-drunk", img:"/images/these-cards-will-get-you-drunk.webp", rules:"/rules/these-cards-will-get-you-drunk.pdf", players:"2+",   min:2,  max:99, dur:"30–60 min", mins:60,  cat:"medium", group:'party',
     kw:['party','adult','card-game','social'],
     short:"A 100-card drinking game: draw a card, read it out, and do what it says. Ages 21+.",
     desc:"ASM Games’ drinking game for ages 21 and up: 100 cards that make you compete, vote on each other and screw your friends over. Take turns drawing and reading a card out loud, and follow it to see who drinks. No winners; play until the deck runs out.",
