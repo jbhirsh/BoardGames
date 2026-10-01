@@ -8,10 +8,10 @@ interface Props {
 }
 
 /**
- * The tag beside a list row's name that says a game holds others ("+2
- * add-ons", or just "+2" where the name column is narrow) and lists the
- * names of the ones that fit on hover or tap, the way the award count lists
- * the wins. Nothing when none fit.
+ * The tag under a list row's description that says a game holds others
+ * ("+2 add-ons", "1 of 12 games fit") and lists the names of the ones that
+ * fit on hover or tap, the way the award count lists the wins. Nothing when
+ * none fit.
  */
 export default function SubGamesTag({ game }: Props) {
   const { state } = useFilter();
@@ -24,12 +24,7 @@ export default function SubGamesTag({ game }: Props) {
       buttonClassName="sub-tag"
       label={`${game.name}: ${label}, show which`}
       title={`${game.name}: ${label}`}
-      trigger={(
-        <>
-          <span className="sub-tag-full">{label}</span>
-          <span className="sub-tag-short">+{fitting.length}</span>
-        </>
-      )}
+      trigger={label}
     >
       <ul className="sub-tag-list">
         {fitting.map((s) => <li key={s.slug}>{s.name}</li>)}

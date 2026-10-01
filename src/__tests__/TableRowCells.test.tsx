@@ -58,7 +58,10 @@ describe('TableRowCells', () => {
     expect(row.querySelector('td.col-name .col-name-wrap .col-name')).toHaveTextContent('Cell Game');
     expect(row.querySelector('.col-name-wrap .mobile-short')).toHaveTextContent('A game of cells.');
     // The award count sits on the name's line and opens the list of wins.
-    expect(row.querySelector('.col-name-line .awards')).toContainElement(screen.getByRole('button', { name: 'Cell Game: 1 award, show which' }));
+    // The award count closes the description, in its column and in the copy
+    // folded under the name for narrow widths.
+    expect(row.querySelector('td.col-short .row-badges .awards')).toContainElement(screen.getAllByRole('button', { name: 'Cell Game: 1 award, show which' })[1]);
+    expect(row.querySelector('.col-name-wrap .mobile-short .row-badges .awards')).toBeInTheDocument();
     expect(row.querySelector('td.col-players')).toHaveTextContent('2–5');
     expect(row.querySelector('.row-dur')).toHaveClass('dur-long');
     expect(row.querySelector('.row-dur')).toHaveTextContent('Long');
@@ -76,8 +79,7 @@ describe('TableRowCells', () => {
     const badge = second.row.querySelector('.col-name-wrap .group-badge')!;
     expect(badge).toHaveTextContent('strat');
     // The badge sits between the name and the mobile description.
-    expect(badge.previousElementSibling).toHaveClass('col-name-line');
-    expect(badge.previousElementSibling!.firstElementChild).toHaveClass('col-name');
+    expect(badge.previousElementSibling).toHaveClass('col-name');
     expect(badge.nextElementSibling).toHaveClass('mobile-short');
   });
 

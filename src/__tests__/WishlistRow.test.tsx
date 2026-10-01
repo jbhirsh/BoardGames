@@ -83,7 +83,8 @@ describe('WishlistRow', () => {
     expect(expand.querySelector('.row-credit')).toHaveTextContent('Suggested by Alex');
     expect(expand.querySelector('.row-awards h3')).toHaveTextContent('Awards');
     expect(expand.querySelectorAll('.awards-list li')).toHaveLength(1);
-    expect(container.querySelector('.col-name-line .awards')).toContainElement(screen.getByRole('button', { name: 'Row Game: 1 award, show which' }));
+    expect(container.querySelector('td.col-short .row-badges .awards')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Row Game: 1 award, show which' })).toHaveLength(2);
     expect(screen.getByRole('link', { name: 'Buy Row Game on Amazon' })).toHaveAttribute('href', expect.stringContaining('amazon.com'));
     expect(screen.getByRole('link', { name: /YouTube/ })).toHaveAttribute('href', expect.stringContaining('youtube.com'));
   });

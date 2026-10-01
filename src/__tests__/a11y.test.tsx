@@ -62,7 +62,9 @@ describe('accessibility', () => {
       { element: <App />, children: [{ path: '/', element: <HomePage /> }] },
     ], { initialEntries: ['/?q=catan'] });
     render(<RouterProvider router={router} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Catan: +2 add-ons, show which' }));
+    // The tag is in the description column and again in the description
+    // folded under the name for narrow widths; open the column's.
+    fireEvent.click(screen.getAllByRole('button', { name: 'Catan: +2 add-ons, show which' })[1]);
     expect(screen.getByRole('group', { name: 'Catan: +2 add-ons' })).toBeInTheDocument();
     // The panel is portalled onto the body, outside the render container.
     const results = await axe(document.body, bodyAxeOptions);
