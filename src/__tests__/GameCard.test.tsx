@@ -125,6 +125,18 @@ describe('GameCard', () => {
       expect(screen.queryByRole('button', { expanded: false })).not.toBeInTheDocument();
     });
 
+    it('sits bottom left with the award count, apart from the links, so the head holds the same things on every card', () => {
+      renderWithContext(<GameCard game={{ ...deckGame, awards: [{ name: 'Mensa Select', year: 2009 }] }} />);
+      const start = document.querySelector('.card-foot .card-foot-start')!;
+      expect(start).toContainElement(screen.getByRole('button', { name: 'Deck: +2 games' }));
+      expect(start).toContainElement(screen.getByRole('button', { name: 'Deck: 1 award, show which' }));
+      expect(document.querySelector('.card-head .awards')).toBeNull();
+      expect(document.querySelector('.card-foot-end')).toContainElement(screen.getByRole('link', { name: /Rules/ }));
+      // The full label for a wide card, the count alone for a narrow one.
+      expect(document.querySelector('.sub-pill-full')).toHaveTextContent('+2 games');
+      expect(document.querySelector('.sub-pill-short')).toHaveTextContent('+2');
+    });
+
     it('opens and closes the list of games from the button', () => {
       renderWithContext(<GameCard game={deckGame} />);
       const pill = screen.getByRole('button', { name: 'Deck: +2 games' });

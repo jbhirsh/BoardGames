@@ -67,10 +67,14 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   games, since it is never played on its own), and search matches their
   names. The card's "+N games" button ("k of N games fit" under a filter),
   named by kind ("+1 expansion", "+1 version"; "add-ons" when kinds mix),
-  opens a list of the ones that fit (`SubGameList`); a list row wears the
-  same label as a tag beside the name (just "+N" on phones) and lists them
-  when expanded. An add-on with a fuller `desc` or `detail` opens in place
-  with More. A game
+  sits bottom left beside the award count (just "+N" on a narrow card) and
+  opens a list of the ones that fit (`SubGameList`) above the footer; a card
+  spans four subgrid rows of the grid, so heads and footers line up across
+  a row. A list row wears the same label as a tag beside the name, with the
+  award count (just "+N" where the name column narrows); both list their
+  names on hover or tap (`Popover`, shared with `AwardsBadge`), and the
+  expanded row lists the games in full. An add-on with a fuller `desc` or
+  `detail` opens in place with More. A game
   can also carry `moreRules`, further rulebooks for the same game (Hogwarts
   Battle's sheets for Games 2 to 7), each a rules-page tab; they build on
   each other, so the assistant reads the one on screen and those before it

@@ -5,7 +5,8 @@ import { AwardsList } from './AwardsBadge';
 import { TABLE_COLUMNS } from './GamesTableHead';
 import TableRowCells, { TableRowExpand } from './TableRowCells';
 import SubGameList from './SubGameList';
-import { fittingSubgames, subgameLabel, subgameTitle } from '../utils/subgames';
+import SubGamesTag from './SubGamesTag';
+import { fittingSubgames, subgameTitle } from '../utils/subgames';
 import { useFilter } from '../context/useFilter';
 import { YouTubeIcon, AiRulesIcon, CalculatorIcon, SearchIcon } from './Icons';
 
@@ -18,8 +19,7 @@ interface Props {
 
 export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Props) {
   const { state } = useFilter();
-  const fitting = game.subgames ? fittingSubgames(game.subgames, state).length : 0;
-  const hasFitting = fitting > 0;
+  const hasFitting = game.subgames !== undefined && fittingSubgames(game.subgames, state).length > 0;
   return (
     <>
       <tr className={`game-row${isOpen ? ' open' : ''}`} onClick={onToggle}>
@@ -32,7 +32,7 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
           kw={game.kw}
           awards={game.awards}
           groupBadge={showGroupBadge ? game.group : undefined}
-          subTag={game.subgames && hasFitting ? { label: subgameLabel(game.subgames, state), count: fitting } : undefined}
+          subTag={game.subgames && <SubGamesTag game={{ ...game, subgames: game.subgames }} />}
           isOpen={isOpen}
           onToggle={onToggle}
         />

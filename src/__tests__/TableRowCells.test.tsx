@@ -57,7 +57,8 @@ describe('TableRowCells', () => {
     ]);
     expect(row.querySelector('td.col-name .col-name-wrap .col-name')).toHaveTextContent('Cell Game');
     expect(row.querySelector('.col-name-wrap .mobile-short')).toHaveTextContent('A game of cells.');
-    expect(row.querySelector('.col-name-wrap .awards')).toHaveTextContent('1 award');
+    // The award count sits on the name's line and opens the list of wins.
+    expect(row.querySelector('.col-name-line .awards')).toContainElement(screen.getByRole('button', { name: 'Cell Game: 1 award, show which' }));
     expect(row.querySelector('td.col-players')).toHaveTextContent('2–5');
     expect(row.querySelector('.row-dur')).toHaveClass('dur-long');
     expect(row.querySelector('.row-dur')).toHaveTextContent('Long');

@@ -33,7 +33,6 @@ export default function WishlistCard({ item, voteCount, voted, onVote, disabled,
         <div className="card-meta">
           {item.players && <span className="cmeta"><UserIcon /> {item.players}</span>}
           {item.dur && <span className="cmeta"><ClockIcon /> {item.dur}</span>}
-          <AwardsBadge itemName={item.name} awards={item.awards} />
         </div>
         {item.kw.length > 0 && (
           <div className="card-kw">
@@ -54,14 +53,19 @@ export default function WishlistCard({ item, voteCount, voted, onVote, disabled,
         <AdminItemControls item={item} />
       </div>
       <div className="card-foot">
-        <VoteButton
-          itemName={item.name}
-          voteCount={voteCount}
-          voted={voted}
-          onClick={onVote}
-          disabled={disabled}
-        />
-        <WishlistLinks item={item} />
+        <div className="card-foot-start">
+          <AwardsBadge itemName={item.name} awards={item.awards} />
+        </div>
+        <div className="card-foot-end">
+          <VoteButton
+            itemName={item.name}
+            voteCount={voteCount}
+            voted={voted}
+            onClick={onVote}
+            disabled={disabled}
+          />
+          <WishlistLinks item={item} />
+        </div>
       </div>
     </div>
   );
