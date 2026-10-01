@@ -39,14 +39,16 @@ export function rulebooks(game: Game): Rulebook[] {
  * dice from Game 4. Of the games inside it: every one for a deck, whose games
  * are short and separate, so any of them can be asked about from any tab;
  * otherwise only the one on screen, since an expansion changes the base
- * game's rules and all of them at once crowd out the answer.
+ * game's rules and all of them at once crowd out the answer. An add-on's tab
+ * also takes all of the game's further rulebooks: it is played on top of the
+ * finished game (the Monster Box assumes Hogwarts Battle through Game 7).
  */
 export function chatParts(game: Game, shown: Rulebook): string[] {
   const own = (game.moreRules ?? []).map((r) => r.slug);
   if (isDeck(game.subgames)) return rulebooks(game).filter((b) => b.kind !== undefined).map((b) => b.part!);
   const upTo = own.indexOf(shown.part ?? '');
   if (upTo >= 0) return own.slice(0, upTo + 1);
-  return shown.kind !== undefined ? [shown.part!] : [];
+  return shown.kind !== undefined ? [...own, shown.part!] : [];
 }
 
 /** Where a game's rules page shows the given rulebook. */
