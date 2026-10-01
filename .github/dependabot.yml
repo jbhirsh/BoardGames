@@ -2,8 +2,7 @@ version: 2
 updates:
   # npm dependencies. An 11-advisory backlog (including a critical react-router
   # RCE) accumulated silently because nothing watched for vulnerable deps; this
-  # keeps them patched. Grouped so routine minor/patch bumps arrive as one PR
-  # rather than a swarm. Security updates come through regardless of the group.
+  # keeps them patched.
   #
   # Only npm is enabled — not github-actions — because this repo intentionally
   # tracks floating major action tags (@v5, @v1); Dependabot's actions updater
@@ -14,7 +13,8 @@ updates:
       - jbhirsh
     # Pinned to the shared Monday 06:00 UTC sweep slot (mutation.yml,
     # gitleaks.yml, semgrep-autofix.yml) so all weekly robot output lands
-    # together on Monday morning.
+    # together on Monday morning. Security updates don't wait for it: they
+    # open as soon as an alert does.
     schedule:
       interval: weekly
       day: monday
@@ -28,20 +28,16 @@ updates:
       - dependency-name: typescript
         update-types:
           - version-update:semver-major
+    # One PR per run for everything, majors included, and one for every
+    # security fix found at once, instead of a PR per package. This also keeps
+    # lockstep packages together (vitest with @vitest/*, eslint with
+    # @eslint/js), which can't pass as separate bumps. The cost: a major that
+    # needs code changes holds the whole bundle until it's fixed.
     groups:
-      # Packages that must move in lockstep: vitest 5 with coverage-v8 4
-      # fails every coverage run, and @eslint/js 10 needs eslint 10, so split
-      # PRs could never pass alone. Listed first so they claim these before
-      # minor-and-patch, and with no update-types so majors ride together too.
-      vitest:
+      all-updates:
         patterns:
-          - vitest
-          - "@vitest/*"
-      eslint:
+          - "*"
+      security-updates:
+        applies-to: security-updates
         patterns:
-          - eslint
-          - "@eslint/js"
-      minor-and-patch:
-        update-types:
-          - minor
-          - patch
+          - "*"
