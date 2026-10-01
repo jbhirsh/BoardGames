@@ -41,6 +41,18 @@ describe('accessibility', () => {
     expect(results).toHaveNoViolations();
   }, TIMEOUT_MS);
 
+  it('list row with an add-on opened to more about it has no axe violations', async () => {
+    const router = createMemoryRouter([
+      { element: <App />, children: [{ path: '/', element: <HomePage /> }] },
+    ], { initialEntries: ['/?q=catan'] });
+    const { container } = render(<RouterProvider router={router} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Show details for Catan' }));
+    fireEvent.click(screen.getByRole('button', { name: 'More about Cities & Knights' }));
+    expect(screen.getByRole('button', { name: 'Less about Cities & Knights' })).toHaveAttribute('aria-expanded', 'true');
+    const results = await axe(container, axeOptions);
+    expect(results).toHaveNoViolations();
+  }, TIMEOUT_MS);
+
   it('rules page with rulebook tabs has no axe violations', async () => {
     const router = createMemoryRouter([
       { element: <App />, children: [{ path: '/rules/:slug/:part?', element: <RulesPage /> }] },

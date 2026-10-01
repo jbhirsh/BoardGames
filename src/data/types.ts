@@ -53,6 +53,10 @@ export interface SubGame {
   moreRules?: ExtraRulebook[];
   /** Confirmed award wins of its own, like a game's. */
   awards?: Award[];
+  /** The fuller description its row opens to, after `short`. */
+  desc?: string;
+  /** Detail sections, HTML like a game's `detail`, shown under `desc`. */
+  detail?: string;
 }
 
 /**

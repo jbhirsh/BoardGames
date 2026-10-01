@@ -263,6 +263,9 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   letter-spacing:.6px;text-transform:uppercase;
   color:var(--text3);opacity:.6;
 }
+.col-name-line{display:flex;flex-wrap:wrap;align-items:center;gap:3px 8px;}
+.sub-tag-short{display:none;}
+.sub-tag{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;white-space:nowrap;font-size:10.5px;font-weight:600;color:var(--blue);background:var(--blue-bg);border:1px solid rgba(0,113,227,0.2);border-radius:999px;padding:1px 8px;}
 .mobile-short{display:none;font-size:11.5px;color:var(--text2);line-height:1.35;white-space:normal;font-weight:400;}
 
 /* col: players */
@@ -397,6 +400,14 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .sub-name{display:flex;flex-wrap:wrap;align-items:center;gap:7px;font-size:13.5px;font-weight:600;color:var(--dark);}
 .sub-meta{display:flex;flex-wrap:wrap;gap:4px 12px;}
 .sub-short{font-size:12px;line-height:1.55;color:var(--text2);}
+.sub-more-btn{align-self:flex-start;margin-top:2px;padding:0;background:none;border:none;font-family:inherit;font-size:11.5px;font-weight:600;color:var(--blue);cursor:pointer;}
+.sub-more-btn:hover{text-decoration:underline;}
+.sub-more{margin-top:6px;padding-top:8px;border-top:1px solid var(--border);}
+.sub-desc{font-size:12.5px;line-height:1.65;color:var(--text);margin-bottom:10px;}
+.sub-detail .detail-section{margin-bottom:10px;}
+.sub-detail .detail-section:last-child{margin-bottom:0;}
+.sub-detail .detail-section h3{font-size:12px;margin-bottom:3px;}
+.sub-detail .detail-section p{font-size:12px;line-height:1.6;}
 .sub-links{display:flex;gap:4px;flex-shrink:0;}
 .sub-link{width:30px;height:30px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text2);transition:color .15s,border-color .15s,background .15s;}
 .sub-link:hover{color:var(--blue);border-color:rgba(0,113,227,0.3);background:var(--blue-bg);}
@@ -643,6 +654,13 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
   /* name wraps and shows subtitle */
   .col-name{ font-size:13.5px; white-space:normal; }
   .mobile-short{ display:block; }
+
+  /* the add-on tag shrinks to its count and stays to the right of the name,
+     which wraps on its own; the full label stays for screen readers */
+  .col-name-line{ flex-wrap:nowrap; align-items:flex-start; }
+  .sub-tag{ flex-shrink:0; margin-top:1px; }
+  .sub-tag-full{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  .sub-tag-short{ display:inline; }
 
   /* filterbar: search on its own row, pills wrap beneath it */
   .filterbar{ flex-wrap:wrap; gap:6px; padding:8px var(--gutter); }

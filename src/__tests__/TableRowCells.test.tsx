@@ -75,7 +75,8 @@ describe('TableRowCells', () => {
     const badge = second.row.querySelector('.col-name-wrap .group-badge')!;
     expect(badge).toHaveTextContent('strat');
     // The badge sits between the name and the mobile description.
-    expect(badge.previousElementSibling).toHaveClass('col-name');
+    expect(badge.previousElementSibling).toHaveClass('col-name-line');
+    expect(badge.previousElementSibling!.firstElementChild).toHaveClass('col-name');
     expect(badge.nextElementSibling).toHaveClass('mobile-short');
   });
 

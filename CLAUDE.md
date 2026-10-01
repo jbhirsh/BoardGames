@@ -65,8 +65,12 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   `/rules/<parent>.<sub>.pdf`. The players and time filters keep a parent
   when it fits on its own or one of its games fits both (a deck only by its
   games, since it is never played on its own), and search matches their
-  names. The card's "+N games" button ("k of N games fit" under a filter) and
-  the list view's expanded row list the ones that fit (`SubGameList`). A game
+  names. The card's "+N games" button ("k of N games fit" under a filter),
+  named by kind ("+1 expansion", "+1 version"; "add-ons" when kinds mix),
+  opens a list of the ones that fit (`SubGameList`); a list row wears the
+  same label as a tag beside the name (just "+N" on phones) and lists them
+  when expanded. An add-on with a fuller `desc` or `detail` opens in place
+  with More. A game
   can also carry `moreRules`, further rulebooks for the same game (Hogwarts
   Battle's sheets for Games 2 to 7), each a rules-page tab; they build on
   each other, so the assistant reads the one on screen and those before it
