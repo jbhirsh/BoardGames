@@ -62,12 +62,12 @@ describe('GameRow', () => {
   it('shows the award count in the row and the full list when expanded', () => {
     const game: Game = { ...quickGame, awards: [{ name: 'Mensa Select', year: 2009 }, { name: 'As d\'Or', year: 2010 }] };
     const { container } = renderRow(game, true);
-    // The count sits in the name column; the list lives in the expand section.
-    const nameCell = container.querySelector('td.col-name')!;
-    const pill = screen.getByRole('button', { name: 'Quick Game: 2 awards, show which' });
-    expect(nameCell).toContainElement(pill);
+    // The count closes the description; the list lives in the expand section.
+    const column = container.querySelector('td.col-short') as HTMLElement;
+    const pill = within(column).getByRole('button', { name: 'Quick Game: 2 awards, show which' });
     expect(pill).toHaveTextContent(/🏆\s*2$/);
-    expect(nameCell.querySelector('.awards-list')).toBeNull();
+    expect(column.querySelector('.awards-list')).toBeNull();
+    expect(container.querySelector('td.col-name > .col-name-wrap > .col-name .awards')).toBeNull();
     const expand = container.querySelector('tr.row-expand')!;
     expect(expand.querySelector('.row-awards h3')).toHaveTextContent('Awards');
     expect(expand.querySelectorAll('.awards-list li')).toHaveLength(2);
@@ -81,8 +81,9 @@ describe('GameRow', () => {
 
   it('lists the wins from the award count, like a card, without toggling the row', () => {
     const onToggle = vi.fn();
-    renderRow({ ...quickGame, awards: [{ name: 'Mensa Select', year: 2009 }] }, false, onToggle);
-    fireEvent.click(screen.getByRole('button', { name: 'Quick Game: 1 award, show which' }));
+    const { container } = renderRow({ ...quickGame, awards: [{ name: 'Mensa Select', year: 2009 }] }, false, onToggle);
+    const column = container.querySelector('td.col-short') as HTMLElement;
+    fireEvent.click(within(column).getByRole('button', { name: 'Quick Game: 1 award, show which' }));
     const list = screen.getByRole('group', { name: 'Quick Game: 1 award' });
     expect(list).toHaveTextContent('Mensa Select');
     fireEvent.click(within(list).getByText('Mensa Select'));
@@ -198,15 +199,22 @@ describe('GameRow', () => {
     expect(document.querySelector('.row-subgames')).toBeNull();
   });
 
-  it('tags a game that holds others beside its name, and no game that holds none', () => {
-    renderRow(addonGame);
-    expect(screen.getByRole('button', { name: 'Island: +1 expansion, show which' })).toBeInTheDocument();
-    expect(document.querySelector('.col-name-line .sub-tag-full')).toHaveTextContent('+1 expansion');
+  it('closes the description with the add-ons tag, then the award count, and tags no game that holds none', () => {
+    renderRow({ ...addonGame, awards: [{ name: 'Mensa Select', year: 2009 }] });
+    // One copy in the description column, one in the description folded
+    // under the name for narrow widths; CSS shows one of them.
+    const inColumn = document.querySelector('td.col-short > .row-badges') as HTMLElement;
+    const folded = document.querySelector('td.col-name .mobile-short > .row-badges') as HTMLElement;
+    for (const badges of [inColumn, folded]) {
+      expect(within(badges).getByRole('button', { name: 'Island: +1 expansion, show which' })).toHaveTextContent('+1 expansion');
+      expect(Array.from(badges.children).map((c) => c.className)).toEqual(['sub-tag-wrap', 'awards']);
+      expect(badges.parentElement!.firstChild!.textContent).toBe(addonGame.short);
+    }
+    // The name stands alone.
+    expect(document.querySelector('td.col-name .col-name')!.textContent).toBe('Island');
     cleanup();
     renderRow(deckGame);
-    expect(document.querySelector('.sub-tag-full')).toHaveTextContent('+2 games');
-    // A narrow name column shows just the count.
-    expect(document.querySelector('.sub-tag-short')).toHaveTextContent('+2');
+    expect(document.querySelector('td.col-short .sub-tag')).toHaveTextContent('+2 games');
     cleanup();
     renderRow(quickGame);
     expect(document.querySelector('.sub-tag')).toBeNull();
@@ -221,8 +229,7 @@ describe('GameRow', () => {
       </MemoryRouter>,
     );
     renderAt('/?p=2');
-    expect(document.querySelector('.sub-tag-full')).toHaveTextContent('1 of 2 games fit');
-    expect(document.querySelector('.sub-tag-short')).toHaveTextContent('+1');
+    expect(document.querySelector('td.col-short .sub-tag')).toHaveTextContent('1 of 2 games fit');
     cleanup();
     renderAt('/?p=9');
     expect(document.querySelector('.sub-tag')).toBeNull();
@@ -237,7 +244,8 @@ describe('GameRow', () => {
         </FilterProvider>
       </MemoryRouter>,
     );
-    const tag = screen.getByRole('button', { name: 'Deck: 1 of 2 games fit, show which' });
+    const column = document.querySelector('td.col-short') as HTMLElement;
+    const tag = within(column).getByRole('button', { name: 'Deck: 1 of 2 games fit, show which' });
     fireEvent.mouseEnter(tag);
     const list = screen.getByRole('group', { name: 'Deck: 1 of 2 games fit' });
     expect(Array.from(list.querySelectorAll('li')).map((li) => li.textContent)).toEqual(['Speed']);

@@ -20,7 +20,7 @@ interface CellsProps {
   awards: Award[];
   /** Group label to show beside the name (the collection's grouped sort). */
   groupBadge?: string;
-  /** A tag for the games this one holds (`SubGamesTag`), beside the name. */
+  /** A tag for the games this one holds (`SubGamesTag`), after the description. */
   subTag?: ReactNode;
   /** Any list-specific cell, slotted in before the actions cell to match `GamesTableHead`. */
   extra?: ReactNode;
@@ -37,18 +37,25 @@ export default function TableRowCells({
   name, players, cat, dur, short, kw, awards, groupBadge, subTag, extra, isOpen, onToggle,
 }: CellsProps) {
   const { state, dispatch } = useFilter();
+  // The add-ons tag and the award count close the description, on its last
+  // line when there is room, so the name column holds only names. They go
+  // in the description column and again in the copy folded under the name
+  // for narrow widths; CSS shows one of the two. A plain space comes
+  // before them, so if they wrap they start flush on their own line.
+  const badges = (
+    <span className="row-badges">
+      {subTag}
+      <AwardsBadge itemName={name} awards={awards} />
+    </span>
+  );
 
   return (
     <>
       <td className="col-name">
         <div className="col-name-wrap">
-          <span className="col-name-line">
-            <span className="col-name">{name}</span>
-            {subTag}
-            <AwardsBadge itemName={name} awards={awards} />
-          </span>
+          <span className="col-name">{name}</span>
           {groupBadge && <span className="group-badge">{groupBadge}</span>}
-          <span className="mobile-short">{short}</span>
+          <span className="mobile-short">{short} {badges}</span>
         </div>
       </td>
       <td className="col-hide col-players-h col-players">{players}</td>
@@ -61,7 +68,7 @@ export default function TableRowCells({
           />
         )}
       </td>
-      <td className="col-hide col-short">{short}</td>
+      <td className="col-hide col-short">{short} {badges}</td>
       <td className="col-hide col-tags col-kw">
         {sortedKw(kw).map((k) => (
           <KeywordPill

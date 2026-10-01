@@ -271,17 +271,16 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   letter-spacing:.6px;text-transform:uppercase;
   color:var(--text3);opacity:.6;
 }
-/* The name, its add-on tag and its award count read as one line, so the
-   names still run straight down the left edge; where the name wraps, the
-   tags stay to its right. */
-.col-name-line{display:flex;align-items:center;gap:8px;}
-.col-name-line>.col-name{min-width:0;}
-.col-name-line>.sub-tag-wrap,.col-name-line>.awards{flex-shrink:0;}
+/* The add-ons tag and the award count close the description, kept
+   together and on its last line when they fit. */
+.row-badges{white-space:nowrap;}
+.row-badges:empty{display:none;}
+.row-badges>*{vertical-align:1px;}
+.row-badges>*+*{margin-left:6px;}
 .sub-tag-wrap{display:inline-flex;}
 .sub-tag{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;white-space:nowrap;font-size:10.5px;font-weight:600;line-height:1.5;color:var(--blue);background:var(--blue-bg);border:1px solid rgba(0,113,227,0.2);border-radius:999px;padding:1px 8px;cursor:pointer;transition:background .2s,border-color .2s;}
 .sub-tag:hover,.sub-tag.open{background:var(--blue-bg2);border-color:rgba(0,113,227,0.45);}
 .sub-tag:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
-.sub-tag-short{display:none;}
 .sub-tag-list{list-style:none;margin:0;padding:0;color:var(--text2);font-size:12px;line-height:1.5;display:flex;flex-direction:column;gap:3px;}
 .mobile-short{display:none;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;font-size:11.5px;color:var(--text2);line-height:1.35;white-space:normal;font-weight:400;}
 
@@ -657,10 +656,6 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
   .games-list th.col-dur-h{ width:104px; }
   .games-list th.col-vote{ width:64px; }
   .games-list th.col-actions-h{ width:52px; }
-  /* the name column is narrower from here, so the add-on tag is just its
-     count; a wrapped name keeps the badges centred beside it */
-  .sub-tag-full{ display:none; }
-  .sub-tag-short{ display:inline; }
   .game-row td{ padding:10px 10px; }
   .game-row td:first-child{ padding-left:16px; }
 }

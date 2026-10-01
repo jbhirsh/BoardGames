@@ -70,10 +70,11 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   sits bottom left beside the award count (just "+N" on a narrow card) and
   opens a list of the ones that fit (`SubGameList`) above the footer; a card
   spans four subgrid rows of the grid, so heads and footers line up across
-  a row. A list row wears the same label as a tag beside the name, with the
-  award count (just "+N" where the name column narrows); both list their
-  names on hover or tap (`Popover`, shared with `AwardsBadge`), and the
-  expanded row lists the games in full. An add-on with a fuller `desc` or
+  a row. A list row's name stands alone; the same label as a tag, then the
+  award count, close its description (in its column, or under the name
+  where the description folds in there), and both list their names on
+  hover or tap (`Popover`, shared with `AwardsBadge`); the expanded row
+  lists the games in full. An add-on with a fuller `desc` or
   `detail` opens in place with More. A game
   can also carry `moreRules`, further rulebooks for the same game (Hogwarts
   Battle's sheets for Games 2 to 7), each a rules-page tab; they build on
