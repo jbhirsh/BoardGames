@@ -246,7 +246,8 @@ non-API, non-file routes to `index.html`, and `api/*` maps to the serverless
 functions. CI (`.github/workflows/ci.yml`) runs lint, type-check, a11y tests,
 unit tests with coverage, and a build on `ubuntu-latest` for every PR to `main`,
 followed by an automated Claude review; `claude-autofix.yml` addresses
-unresolved review comments on Dependabot's PRs (a person's PR is left to its
+unresolved review comments on bots' PRs (Dependabot's) and attempts mechanical
+fixes when their npm bumps fail a check (a person's PR is left to its
 author). `mutation.yml` runs StrykerJS over the source
 files a PR touched and fails below the `break` score in
 `stryker.config.json` (a weekly full sweep applies the same bar). All CI runs
@@ -264,5 +265,11 @@ Dependabot's npm PRs merge themselves: `dependabot-merge.yml` turns on
 auto-merge as each one opens, and branch protection does the gating — every
 required check green and every review thread resolved (conversation
 resolution is required on `main`). A Claude Review finding therefore holds
-the PR until claude-autofix (or a person) fixes and resolves it. A new PR
-workflow must be added to the required checks, or bot PRs merge without it.
+the PR until claude-autofix (or a person) fixes and resolves it. A failed
+check works the same way: autofix fixes mechanical breakage from the bump
+(one attempt per head, two per PR), and when every fix would change behavior
+(privacy or data-collection settings, auth, features, a test's expected
+values) it comments and leaves the decision to the owner. A new PR workflow
+must be added to the required checks, or bot PRs merge without it; list a
+gating `pull_request` workflow in `workflows:` in `claude-autofix.yml` too, or
+autofix won't fix its failures.
