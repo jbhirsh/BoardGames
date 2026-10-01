@@ -277,7 +277,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .row-badges:empty{display:none;}
 .row-badges>*{vertical-align:1px;}
 .row-badges>*+*{margin-left:6px;}
-.sub-tag-wrap{display:inline-flex;}
+.sub-tag-wrap,.sub-pill-wrap{display:inline-flex;}
 .sub-tag{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;white-space:nowrap;font-size:10.5px;font-weight:600;line-height:1.5;color:var(--blue);background:var(--blue-bg);border:1px solid rgba(0,113,227,0.2);border-radius:999px;padding:1px 8px;cursor:pointer;transition:background .2s,border-color .2s;}
 .sub-tag:hover,.sub-tag.open{background:var(--blue-bg2);border-color:rgba(0,113,227,0.45);}
 .sub-tag:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}

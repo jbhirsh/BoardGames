@@ -137,6 +137,36 @@ describe('GameCard', () => {
       expect(document.querySelector('.sub-pill-short')).toHaveTextContent('+2');
     });
 
+    it('previews the names on hover, gone once the pointer leaves, like the award count', () => {
+      renderWithContext(<GameCard game={deckGame} />);
+      const pill = screen.getByRole('button', { name: 'Deck: +2 games' });
+      fireEvent.mouseEnter(pill);
+      const preview = screen.getByRole('tooltip');
+      expect(Array.from(preview.querySelectorAll('li')).map((li) => li.textContent)).toEqual(['Speed', 'President']);
+      expect(pill).toHaveAttribute('aria-describedby', preview.id);
+      // The preview is no disclosure of its own: the button still says
+      // whether the full list is open.
+      expect(pill).toHaveAttribute('aria-expanded', 'false');
+      fireEvent.mouseLeave(pill);
+      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+      expect(pill).not.toHaveAttribute('aria-describedby');
+    });
+
+    it('swaps the preview for the full list on click, and previews nothing while that is open', () => {
+      renderWithContext(<GameCard game={deckGame} />);
+      const pill = screen.getByRole('button', { name: 'Deck: +2 games' });
+      fireEvent.mouseEnter(pill);
+      fireEvent.click(pill);
+      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+      expect(screen.getByRole('list', { name: 'Deck games' })).toBeInTheDocument();
+      fireEvent.mouseLeave(pill);
+      fireEvent.mouseEnter(pill);
+      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+      expect(screen.getByRole('list', { name: 'Deck games' })).toBeInTheDocument();
+      fireEvent.click(pill);
+      expect(screen.queryByRole('list', { name: 'Deck games' })).not.toBeInTheDocument();
+    });
+
     it('opens and closes the list of games from the button', () => {
       renderWithContext(<GameCard game={deckGame} />);
       const pill = screen.getByRole('button', { name: 'Deck: +2 games' });
