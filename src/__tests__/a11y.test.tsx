@@ -14,6 +14,10 @@ expect.extend(matchers);
 
 // color-contrast needs real layout, which jsdom does not compute; skip it.
 const axeOptions = { rules: { 'color-contrast': { enabled: false } } };
+// For a scan of the whole body, which takes in a popover portalled outside
+// the render container. The test renders the app without the page shell's
+// landmarks, so the best-practice "region" rule would flag everything.
+const bodyAxeOptions = { rules: { ...axeOptions.rules, region: { enabled: false } } };
 
 // axe on a full page in jsdom is slow on GitHub Actions runners — default
 // 5s can flake, and a timeout here cascades because vitest-axe's axe
@@ -50,6 +54,18 @@ describe('accessibility', () => {
     fireEvent.click(screen.getByRole('button', { name: 'More about Cities & Knights' }));
     expect(screen.getByRole('button', { name: 'Less about Cities & Knights' })).toHaveAttribute('aria-expanded', 'true');
     const results = await axe(container, axeOptions);
+    expect(results).toHaveNoViolations();
+  }, TIMEOUT_MS);
+
+  it('list row with its add-ons listed from the tag has no axe violations', async () => {
+    const router = createMemoryRouter([
+      { element: <App />, children: [{ path: '/', element: <HomePage /> }] },
+    ], { initialEntries: ['/?q=catan'] });
+    render(<RouterProvider router={router} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Catan: +2 add-ons, show which' }));
+    expect(screen.getByRole('group', { name: 'Catan: +2 add-ons' })).toBeInTheDocument();
+    // The panel is portalled onto the body, outside the render container.
+    const results = await axe(document.body, bodyAxeOptions);
     expect(results).toHaveNoViolations();
   }, TIMEOUT_MS);
 
@@ -122,12 +138,12 @@ describe('accessibility', () => {
     const router = createMemoryRouter([
       { element: <App />, children: [{ path: '/', element: <HomePage /> }] },
     ]);
-    const { container } = render(<RouterProvider router={router} />);
-    // Cards carry the interactive badge; rows only show the static count.
+    render(<RouterProvider router={router} />);
     fireEvent.click(screen.getByRole('button', { name: 'Grid view' }));
-    fireEvent.click(screen.getAllByRole('button', { name: /show which$/ })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: /awards?, show which$/ })[0]);
     await screen.findByRole('group', { name: /awards/ });
-    const results = await axe(container, axeOptions);
+    // The panel is portalled onto the body, outside the render container.
+    const results = await axe(document.body, bodyAxeOptions);
     expect(results).toHaveNoViolations();
   }, TIMEOUT_MS);
 

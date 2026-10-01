@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import AwardsBadge, { AwardsCount } from '../components/AwardsBadge';
+import AwardsBadge from '../components/AwardsBadge';
 
 const awards = [
   { name: 'Spiel des Jahres', year: 2024 },
@@ -11,7 +11,7 @@ describe('AwardsBadge', () => {
   afterEach(() => vi.restoreAllMocks());
 
   it('renders nothing at all for an entry with no wins', () => {
-    const { container } = render(<><AwardsBadge itemName="Nothing Yet" awards={[]} /><AwardsCount awards={[]} /></>);
+    const { container } = render(<AwardsBadge itemName="Nothing Yet" awards={[]} />);
     expect(container).toBeEmptyDOMElement();
   });
 
@@ -107,15 +107,6 @@ describe('AwardsBadge', () => {
     render(<button type="button" onClick={onRow}><AwardsBadge itemName="Sky Team" awards={awards} /></button>);
     fireEvent.click(screen.getByRole('button', { name: /Sky Team/ }));
     expect(onRow).not.toHaveBeenCalled();
-  });
-
-  it('renders a static count for rows, with the wording as visually hidden text', () => {
-    render(<AwardsCount awards={awards} />);
-    const wording = screen.getByText('2 awards');
-    expect(wording).toHaveClass('sr-only');
-    const pill = wording.parentElement!;
-    expect(pill.tagName).toBe('SPAN');
-    expect(pill.querySelector('[aria-hidden="true"]')).toHaveTextContent(/🏆\s*2$/);
   });
 
   it('closes on a second tap even though touch never sends mouseleave', () => {

@@ -20,7 +20,8 @@ export default function GameCard({ game }: Props) {
   const [subsOpen, setSubsOpen] = useState(false);
   const subsId = useId();
   // The button and its list go away while no game inside fits the filters.
-  const hasFitting = game.subgames !== undefined && fittingSubgames(game.subgames, state).length > 0;
+  const fitting = game.subgames ? fittingSubgames(game.subgames, state).length : 0;
+  const hasFitting = fitting > 0;
 
   return (
     <div className="game-card">
@@ -34,7 +35,6 @@ export default function GameCard({ game }: Props) {
           <span className="cmeta">
             <ClockIcon /> {game.dur}
           </span>
-          <AwardsBadge itemName={game.name} awards={game.awards} />
         </div>
         <div className="card-kw">
           {sortedKw(game.kw).map((kw) => (
@@ -46,65 +46,73 @@ export default function GameCard({ game }: Props) {
             />
           ))}
         </div>
-        {game.subgames && hasFitting && (
-          <button
-            type="button"
-            className="sub-pill"
-            aria-expanded={subsOpen}
-            aria-controls={subsId}
-            aria-label={`${game.name}: ${subgameLabel(game.subgames, state)}`}
-            onClick={() => setSubsOpen(o => !o)}
-          >
-            {subgameLabel(game.subgames, state)}
-            <svg className="sub-pill-chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-              <path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" />
-            </svg>
-          </button>
-        )}
       </div>
       <div className="card-body">
         <p className="card-desc">{game.short}</p>
+      </div>
+      <div className="card-foot">
+        {/* What the card holds besides its own game sits bottom left, so
+            every card's head carries the same things and lines up. */}
+        <div className="card-foot-start">
+          <AwardsBadge itemName={game.name} awards={game.awards} />
+          {game.subgames && hasFitting && (
+            <button
+              type="button"
+              className="sub-pill"
+              aria-expanded={subsOpen}
+              aria-controls={subsId}
+              aria-label={`${game.name}: ${subgameLabel(game.subgames, state)}`}
+              onClick={() => setSubsOpen(o => !o)}
+            >
+              <span className="sub-pill-full">{subgameLabel(game.subgames, state)}</span>
+              <span className="sub-pill-short">+{fitting}</span>
+              <svg className="sub-pill-chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+                <path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" />
+              </svg>
+            </button>
+          )}
+        </div>
+        <div className="card-foot-end">
+          {game.rules ? (
+            <Link className="rules-btn" to={`/rules/${game.slug}`} title="Rules">
+              <AiRulesIcon /> Rules
+            </Link>
+          ) : (
+            <a
+              className="rules-btn"
+              href={rulesURL(game.name)}
+              onClick={(e) => { e.preventDefault(); window.open(rulesURL(game.name), '_blank'); }}
+              title="Rules"
+            >
+              <AiRulesIcon /> Rules
+            </a>
+          )}
+          {game.slug === '7-wonders' && (
+            <Link className="rules-btn" to={`/score/${game.slug}`} title="Score Calculator">
+              <CalculatorIcon /> Score
+            </Link>
+          )}
+          {game.slug === 'bananagrams' && (
+            <Link className="rules-btn" to="/word-checker" title="Word Checker">
+              <SearchIcon /> Word Checker
+            </Link>
+          )}
+          <a
+            className="row-yt"
+            href={ytURL(game.yt)}
+            onClick={(e) => { e.preventDefault(); window.open(ytURL(game.yt), '_blank'); }}
+            title="Watch Tutorial"
+            aria-label={`Watch ${game.name} tutorial on YouTube`}
+          >
+            <YouTubeIcon />
+          </a>
+        </div>
       </div>
       {game.subgames && hasFitting && subsOpen && (
         <div className="sub-panel" id={subsId}>
           <SubGameList game={{ ...game, subgames: game.subgames }} />
         </div>
       )}
-      <div className="card-foot">
-        {game.rules ? (
-          <Link className="rules-btn" to={`/rules/${game.slug}`} title="Rules">
-            <AiRulesIcon /> Rules
-          </Link>
-        ) : (
-          <a
-            className="rules-btn"
-            href={rulesURL(game.name)}
-            onClick={(e) => { e.preventDefault(); window.open(rulesURL(game.name), '_blank'); }}
-            title="Rules"
-          >
-            <AiRulesIcon /> Rules
-          </a>
-        )}
-        {game.slug === '7-wonders' && (
-          <Link className="rules-btn" to={`/score/${game.slug}`} title="Score Calculator">
-            <CalculatorIcon /> Score
-          </Link>
-        )}
-        {game.slug === 'bananagrams' && (
-          <Link className="rules-btn" to="/word-checker" title="Word Checker">
-            <SearchIcon /> Word Checker
-          </Link>
-        )}
-        <a
-          className="row-yt"
-          href={ytURL(game.yt)}
-          onClick={(e) => { e.preventDefault(); window.open(ytURL(game.yt), '_blank'); }}
-          title="Watch Tutorial"
-          aria-label={`Watch ${game.name} tutorial on YouTube`}
-        >
-          <YouTubeIcon />
-        </a>
-      </div>
     </div>
   );
 }

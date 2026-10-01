@@ -64,8 +64,9 @@ describe('GameRow', () => {
     const { container } = renderRow(game, true);
     // The count sits in the name column; the list lives in the expand section.
     const nameCell = container.querySelector('td.col-name')!;
-    expect(nameCell.querySelector('.awards [aria-hidden="true"]')).toHaveTextContent(/🏆\s*2$/);
-    expect(nameCell.querySelector('.awards .sr-only')).toHaveTextContent('2 awards');
+    const pill = screen.getByRole('button', { name: 'Quick Game: 2 awards, show which' });
+    expect(nameCell).toContainElement(pill);
+    expect(pill).toHaveTextContent(/🏆\s*2$/);
     expect(nameCell.querySelector('.awards-list')).toBeNull();
     const expand = container.querySelector('tr.row-expand')!;
     expect(expand.querySelector('.row-awards h3')).toHaveTextContent('Awards');
@@ -78,11 +79,12 @@ describe('GameRow', () => {
     expect(screen.queryByRole('heading', { name: 'Awards' })).not.toBeInTheDocument();
   });
 
-  it('toggles the row when the award count pill is clicked', () => {
+  it('lists the wins from the award count, like a card, without toggling the row', () => {
     const onToggle = vi.fn();
     renderRow({ ...quickGame, awards: [{ name: 'Mensa Select', year: 2009 }] }, false, onToggle);
-    fireEvent.click(screen.getByText('1 award'));
-    expect(onToggle).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Quick Game: 1 award, show which' }));
+    expect(screen.getByRole('group', { name: 'Quick Game: 1 award' })).toHaveTextContent('Mensa Select');
+    expect(onToggle).not.toHaveBeenCalled();
   });
 
   it('shows group badge when showGroupBadge is true', () => {
@@ -196,13 +198,13 @@ describe('GameRow', () => {
 
   it('tags a game that holds others beside its name, and no game that holds none', () => {
     renderRow(addonGame);
-    expect(document.querySelector('.sub-tag-full')).toHaveTextContent('+1 expansion');
+    expect(screen.getByRole('button', { name: 'Island: +1 expansion, show which' })).toBeInTheDocument();
+    expect(document.querySelector('.col-name-line .sub-tag-full')).toHaveTextContent('+1 expansion');
     cleanup();
     renderRow(deckGame);
     expect(document.querySelector('.sub-tag-full')).toHaveTextContent('+2 games');
-    // Phones show just the count; it is hidden from screen readers, which read the full label.
+    // A narrow name column shows just the count.
     expect(document.querySelector('.sub-tag-short')).toHaveTextContent('+2');
-    expect(document.querySelector('.sub-tag-short')).toHaveAttribute('aria-hidden', 'true');
     cleanup();
     renderRow(quickGame);
     expect(document.querySelector('.sub-tag')).toBeNull();
@@ -222,6 +224,26 @@ describe('GameRow', () => {
     cleanup();
     renderAt('/?p=9');
     expect(document.querySelector('.sub-tag')).toBeNull();
+  });
+
+  it('lists the names of the games that fit from the tag, without toggling the row', () => {
+    const onToggle = vi.fn();
+    render(
+      <MemoryRouter initialEntries={['/?p=2']}>
+        <FilterProvider>
+          <table><tbody><GameRow game={deckGame} isOpen={false} onToggle={onToggle} showGroupBadge={false} /></tbody></table>
+        </FilterProvider>
+      </MemoryRouter>,
+    );
+    const tag = screen.getByRole('button', { name: 'Deck: 1 of 2 games fit, show which' });
+    fireEvent.mouseEnter(tag);
+    const list = screen.getByRole('group', { name: 'Deck: 1 of 2 games fit' });
+    expect(Array.from(list.querySelectorAll('li')).map((li) => li.textContent)).toEqual(['Speed']);
+    fireEvent.mouseLeave(tag);
+    expect(screen.queryByRole('group')).not.toBeInTheDocument();
+    fireEvent.click(tag);
+    expect(screen.getByRole('group')).toBeInTheDocument();
+    expect(onToggle).not.toHaveBeenCalled();
   });
 
   it('heads expansions as expansions, and has no such section without any', () => {

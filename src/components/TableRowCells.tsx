@@ -5,7 +5,7 @@ import { sortedKw } from '../utils/filterGames';
 import { isKeywordLit } from '../utils/keywordLit';
 import DurationPill from './DurationPill';
 import KeywordPill from './KeywordPill';
-import { AwardsCount } from './AwardsBadge';
+import AwardsBadge from './AwardsBadge';
 import { ChevronIcon } from './Icons';
 
 interface CellsProps {
@@ -20,11 +20,8 @@ interface CellsProps {
   awards: Award[];
   /** Group label to show beside the name (the collection's grouped sort). */
   groupBadge?: string;
-  /**
-   * What the game holds, beside the name: "+2 expansions", "1 of 12 games
-   * fit". Phones show only the count of the ones that fit ("+2").
-   */
-  subTag?: { label: string; count: number };
+  /** A tag for the games this one holds (`SubGamesTag`), beside the name. */
+  subTag?: ReactNode;
   /** Any list-specific cell, slotted in before the actions cell to match `GamesTableHead`. */
   extra?: ReactNode;
   isOpen: boolean;
@@ -47,16 +44,11 @@ export default function TableRowCells({
         <div className="col-name-wrap">
           <span className="col-name-line">
             <span className="col-name">{name}</span>
-            {subTag && (
-              <span className="sub-tag">
-                <span className="sub-tag-full">{subTag.label}</span>
-                <span className="sub-tag-short" aria-hidden="true">+{subTag.count}</span>
-              </span>
-            )}
+            {subTag}
+            <AwardsBadge itemName={name} awards={awards} />
           </span>
           {groupBadge && <span className="group-badge">{groupBadge}</span>}
           <span className="mobile-short">{short}</span>
-          <AwardsCount awards={awards} />
         </div>
       </td>
       <td className="col-hide col-players-h col-players">{players}</td>

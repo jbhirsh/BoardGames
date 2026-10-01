@@ -61,6 +61,13 @@ describe('WishlistCard', () => {
     expect(screen.queryByText('Wishlist')).not.toBeInTheDocument();
   });
 
+  it('shows the award count bottom left, with the vote and links on the right', () => {
+    renderCard();
+    expect(document.querySelector('.card-foot-start')).toContainElement(screen.getByRole('button', { name: /1 award, show which/ }));
+    expect(document.querySelector('.card-head .awards')).toBeNull();
+    expect(document.querySelector('.card-foot-end')).toContainElement(screen.getByRole('button', { name: /vote/i }));
+  });
+
   it('uses an h4 by default and an h3 when asked, so flat lists keep heading order', () => {
     const { unmount } = renderCard();
     expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Test Wishlist Game');

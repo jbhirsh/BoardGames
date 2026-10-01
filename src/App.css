@@ -209,9 +209,14 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 /* ══ GRID VIEW ═════════════════════════════════════════════ */
 .games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;}
 
+/* Each card spans four rows of the grid and shares them with the cards
+   beside it (subgrid), so heads, descriptions and footers line up across a
+   row whatever wraps inside them. The last row is the add-ons panel under
+   the footer's button, empty until a card opens it. */
 .game-card{
   background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;
+  border-radius:var(--r);overflow:hidden;
+  display:grid;grid-row:span 4;grid-template-rows:subgrid;row-gap:0;
   box-shadow:var(--shadow-sm);
   transition:transform .25s cubic-bezier(.16,1,.3,1),box-shadow .25s cubic-bezier(.16,1,.3,1),border-color .2s;
 }
@@ -228,7 +233,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .kw-pill{font-size:10.5px;color:var(--text2);background:var(--bg2);border:1px solid var(--border);padding:2px 8px;border-radius:20px;cursor:pointer;transition:background .13s,color .13s,border-color .13s,transform .12s;user-select:none;display:inline-block;text-align:center;line-height:1.3;max-width:100px;width:max-content;flex-shrink:0;flex-grow:0;}
 .kw-pill:hover{background:var(--blue-bg);border-color:rgba(0,113,227,0.25);color:var(--blue);transform:scale(1.05);}
 .kw-pill.lit{background:var(--blue-bg);border-color:rgba(0,113,227,0.35);color:var(--blue);font-weight:500;}
-.card-body{padding:12px 18px 16px;flex:1;}
+.card-head{grid-row:1;}
+.card-body{grid-row:2;padding:12px 18px 16px;}
+.card-foot{grid-row:3;align-self:end;}
+.game-card>.sub-panel{grid-row:4;align-self:start;margin-bottom:0;border-bottom:none;}
 .card-desc{font-size:13px;line-height:1.68;color:var(--text2);}
 
 /* ══ LIST / TABLE VIEW ════════════════════════════════════ */
@@ -263,9 +271,18 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   letter-spacing:.6px;text-transform:uppercase;
   color:var(--text3);opacity:.6;
 }
-.col-name-line{display:flex;flex-wrap:wrap;align-items:center;gap:3px 8px;}
+/* The name, its add-on tag and its award count read as one line, so the
+   names still run straight down the left edge; where the name wraps, the
+   tags stay to its right. */
+.col-name-line{display:flex;align-items:center;gap:8px;}
+.col-name-line>.col-name{min-width:0;}
+.col-name-line>.sub-tag-wrap,.col-name-line>.awards{flex-shrink:0;}
+.sub-tag-wrap{display:inline-flex;}
+.sub-tag{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;white-space:nowrap;font-size:10.5px;font-weight:600;line-height:1.5;color:var(--blue);background:var(--blue-bg);border:1px solid rgba(0,113,227,0.2);border-radius:999px;padding:1px 8px;cursor:pointer;transition:background .2s,border-color .2s;}
+.sub-tag:hover,.sub-tag.open{background:var(--blue-bg2);border-color:rgba(0,113,227,0.45);}
+.sub-tag:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
 .sub-tag-short{display:none;}
-.sub-tag{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;white-space:nowrap;font-size:10.5px;font-weight:600;color:var(--blue);background:var(--blue-bg);border:1px solid rgba(0,113,227,0.2);border-radius:999px;padding:1px 8px;}
+.sub-tag-list{list-style:none;margin:0;padding:0;color:var(--text2);font-size:12px;line-height:1.5;display:flex;flex-direction:column;gap:3px;}
 .mobile-short{display:none;font-size:11.5px;color:var(--text2);line-height:1.35;white-space:normal;font-weight:400;}
 
 /* col: players */
@@ -413,7 +430,23 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .sub-link:hover{color:var(--blue);border-color:rgba(0,113,227,0.3);background:var(--blue-bg);}
 .sub-link svg{width:14px;height:14px;display:block;}
 .row-subgames .sub-row{background:var(--bg);}
-.card-foot{display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:0 18px 16px;}
+/* Awards and add-ons bottom left, the links bottom right; on a card too
+   narrow for both, the links drop to their own line together. */
+.card-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:0 18px 16px;}
+.card-foot-start{display:flex;align-items:center;gap:6px;}
+.card-foot-start:empty{display:none;}
+.card-foot-end{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.card-foot-start .sub-pill{margin-top:0;}
+/* On a footer too narrow for the full label beside the award count and the
+   links, the add-ons pill is just its count, like the list's tag. The query
+   container is the footer, not the card: containment on the card would make
+   it give up its subgrid rows. */
+.sub-pill-short{display:none;}
+.card-foot{container-type:inline-size;}
+@container (max-width:323px){
+  .sub-pill-full{display:none;}
+  .sub-pill-short{display:inline;}
+}
 .card-head.no-art .card-name,.card-head.no-art .card-meta,.card-head.no-art .card-kw{padding-right:0;}
 .card-credit{font-size:12px;color:var(--text3);margin-top:8px;}
 .row-credit{font-size:12.5px;color:var(--text3);margin-top:6px;}
@@ -441,12 +474,11 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .awards-trophy{font-size:11px;line-height:1;}
 .awards-n{font-variant-numeric:tabular-nums;}
 /* The list floats over the page (position set inline from the pill's rect). */
-.awards-pop{z-index:400;padding:10px 12px;border-radius:var(--r-sm);background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow-lg);text-align:left;white-space:normal;font-weight:400;animation:pick-pop .16s ease-out;}
-.awards-pop-title{font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
+.pop{z-index:400;padding:10px 12px;border-radius:var(--r-sm);background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow-lg);text-align:left;white-space:normal;font-weight:400;animation:pick-pop .16s ease-out;}
+.pop-title{font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
 .awards-list{list-style:none;margin:0;padding:0;color:var(--text2);font-size:12px;line-height:1.5;display:flex;flex-direction:column;gap:3px;}
 .awards-year{color:var(--text3);margin-left:4px;}
 .card-meta{flex-wrap:wrap;padding-right:86px;}
-.col-name-wrap .awards{margin-top:4px;width:max-content;}
 .row-awards .awards-list{margin-top:6px;max-width:520px;padding:8px 10px;border-radius:8px;background:var(--surface);border:1px solid var(--border);}
 .awards-list li{overflow-wrap:anywhere;}
 /* Suggest a game */
@@ -614,6 +646,11 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 
   .games-list{ table-layout:fixed; }
   .col-name{ white-space:normal; font-size:13.5px; }
+  /* the name column is narrow from here, so the add-on tag is just its count
+     and the badges sit at the top of a wrapped name */
+  .col-name-line{ align-items:flex-start; }
+  .sub-tag-full{ display:none; }
+  .sub-tag-short{ display:inline; }
   .game-row td{ padding:10px 10px; }
   .game-row td:first-child{ padding-left:16px; }
   /* No column widths here: under table-layout:fixed the widths come from
@@ -654,13 +691,6 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
   /* name wraps and shows subtitle */
   .col-name{ font-size:13.5px; white-space:normal; }
   .mobile-short{ display:block; }
-
-  /* the add-on tag shrinks to its count and stays to the right of the name,
-     which wraps on its own; the full label stays for screen readers */
-  .col-name-line{ flex-wrap:nowrap; align-items:flex-start; }
-  .sub-tag{ flex-shrink:0; margin-top:1px; }
-  .sub-tag-full{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
-  .sub-tag-short{ display:inline; }
 
   /* filterbar: search on its own row, pills wrap beneath it */
   .filterbar{ flex-wrap:wrap; gap:6px; padding:8px var(--gutter); }
