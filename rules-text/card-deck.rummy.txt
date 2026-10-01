@@ -1,0 +1,26 @@
+Rummy
+Card Deck · 2 to 6 players · about 30 minutes
+House rules written for The Game Room. These are the common rules; plenty of tables play their own variations, so
+agree on any before you start.
+Setup
+Deal 10 cards each with 2 players, 7 each with 3 or 4, and 6 each with 5 or 6. Turn the next card face up
+to start the discard pile; the rest is the stock.
+How to play
+On your turn, take the top card of the stock or the discard pile. You may then lay melds face up in front of
+you: three or four cards of the same rank (a set), or three or more cards in sequence in one suit (a run;
+ace is low). You may also lay off single cards onto any meld already on the table. End your turn by
+discarding one card.
+If the stock runs out, turn the discard pile over, without shuffling, to make a new stock.
+Going out and scoring
+The first player to get rid of every card goes out and wins the hand; the last card may be a discard or
+part of a meld. The winner scores the cards left in everyone else’s hands: face cards 10, aces 1,
+everything else its face value. First to 100 wins.
+Gin Rummy, for two
+Deal 10 cards each. Turn the next card face up to start the discard pile; the rest is the stock.
+On your turn, take the top card of the stock or the discard pile, then discard one card. You are building
+melds: three or four cards of the same rank, or three or more cards in sequence in one suit (ace is low).
+Cards outside melds are deadwood: face cards count 10, aces 1, others face value.
+When your deadwood totals 10 or less you may knock: lay out your melds and deadwood. Your opponent
+lays out theirs and may add cards to your melds. If your deadwood is lower, you score the difference.
+Going gin (no deadwood) scores the difference plus 25, and your opponent may not add to your melds.
+If the opponent’s deadwood is equal or lower, they score the difference plus 25. First to 100 wins.

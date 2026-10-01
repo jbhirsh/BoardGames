@@ -20,6 +20,10 @@ Sentry.init({
 // right after one full-length answer got echoed back as history.)
 const MAX_HISTORY_CONTENT = RULES_ASSISTANT_MAX_OUTPUT_TOKENS * 10 * 4;
 
+// The most rulebooks a request can add: the Card Deck sends all twelve of its
+// games' sheets.
+const MAX_PARTS = 16;
+
 // Expensive paid AI call, unauthenticated endpoint: bound requests per IP.
 const chatLimiter = getLimiter('chat', 10, 60);
 
@@ -30,11 +34,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (!(await enforceRateLimit(chatLimiter, req, res))) return;
 
-  const { slug, message, history } = req.body;
+  const { slug, message, history, parts } = req.body;
 
   // Validate slug
   if (!slug || typeof slug !== 'string' || !SLUG_RE.test(slug)) {
     return res.status(400).json({ error: 'slug is required' });
+  }
+
+  // Validate the rulebooks of games inside this one to read alongside it.
+  // Each picks a file, so it gets the same shape check as slug; a repeat would
+  // only resend the same rulebook to a paid model, so none are allowed.
+  if (parts !== undefined && (
+    !Array.isArray(parts) || parts.length > MAX_PARTS ||
+    !parts.every((p) => typeof p === 'string' && SLUG_RE.test(p)) ||
+    new Set(parts).size !== parts.length
+  )) {
+    return res.status(400).json({ error: 'parts must be a list of rulebook names' });
   }
 
   // Validate message
@@ -71,7 +86,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Read rules text
   let rulesText: string;
   try {
-    rulesText = loadRulesText(slug);
+    rulesText = loadRulesText(slug, parts);
   } catch {
     return res.status(404).json({ error: 'Rules not found for this game' });
   }

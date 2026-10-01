@@ -1,0 +1,12 @@
+Klondike Solitaire
+Card Deck · 1 player · about 10 minutes
+House rules written for The Game Room. These are the common rules; plenty of tables play their own variations, so
+agree on any before you start.
+How to play
+Deal seven piles left to right of 1 to 7 cards, with only the top card of each face up. The rest is the stock.
+Build the piles down in alternating colours (a red 9 on a black 10). You may move a whole face-up run,
+and turn up any face-down card that is uncovered. Only a king, or a run starting with a king, may fill an
+empty pile.
+Turn cards from the stock one at a time (or three, for a harder game) onto a waste pile; its top card is in
+play. Move aces to four foundation piles and build each up by suit to the king. You win when all 52 cards
+are on the foundations.

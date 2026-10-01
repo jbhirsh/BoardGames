@@ -4,6 +4,9 @@ import { ytURL, rulesURL } from '../utils/urls';
 import { AwardsList } from './AwardsBadge';
 import { TABLE_COLUMNS } from './GamesTableHead';
 import TableRowCells, { TableRowExpand } from './TableRowCells';
+import SubGameList from './SubGameList';
+import { fittingSubgames, subgameTitle } from '../utils/subgames';
+import { useFilter } from '../context/useFilter';
 import { YouTubeIcon, AiRulesIcon, CalculatorIcon, SearchIcon } from './Icons';
 
 interface Props {
@@ -14,6 +17,7 @@ interface Props {
 }
 
 export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Props) {
+  const { state } = useFilter();
   return (
     <>
       <tr className={`game-row${isOpen ? ' open' : ''}`} onClick={onToggle}>
@@ -35,6 +39,12 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
           className="detail-section"
           dangerouslySetInnerHTML={{ __html: game.detail }}
         />
+        {isOpen && game.subgames && fittingSubgames(game.subgames, state).length > 0 && (
+          <div className="detail-section row-subgames">
+            <h3>{subgameTitle(game.subgames)}</h3>
+            <SubGameList game={{ ...game, subgames: game.subgames }} />
+          </div>
+        )}
         {game.awards.length > 0 && (
           <div className="detail-section row-awards">
             <h3>Awards</h3>

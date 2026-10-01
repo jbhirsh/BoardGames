@@ -1,4 +1,4 @@
-import type { Game } from '../data/types';
+import type { Game, SubGame } from '../data/types';
 
 export const quickGame: Game = {
   name: 'Quick Game',
@@ -101,3 +101,35 @@ export const sevenWondersGame: Game = {
 };
 
 export const testGames: Game[] = [quickGame, mediumGame, longGame];
+
+export const speedSub: SubGame = {
+  name: 'Speed', slug: 'speed', kind: 'card-game', players: '2', min: 2, max: 2,
+  dur: '5 min', mins: 5, cat: 'quick', short: 'Race to empty your hand.', yt: 'how to play speed',
+  rules: '/rules/deck.speed.pdf',
+};
+
+export const presidentSub: SubGame = {
+  name: 'President', slug: 'president', kind: 'card-game', players: '4–8', min: 4, max: 8,
+  dur: '30 min', mins: 30, cat: 'medium', short: 'Shed your hand first.', yt: 'how to play president',
+  rules: '/rules/deck.president.pdf',
+};
+
+/** A deck whose games are what the filters find it by. */
+export const deckGame: Game = {
+  ...mediumGame,
+  name: 'Deck',
+  slug: 'deck',
+  rules: '/rules/deck.pdf',
+  subgames: [speedSub, presidentSub],
+};
+
+/** A board game with one add-on whose rules came in the box (no rulebook). */
+export const addonGame: Game = {
+  ...mediumGame,
+  name: 'Island',
+  slug: 'island',
+  subgames: [{
+    name: 'Big Box', slug: 'big-box', kind: 'expansion', players: '3–6', min: 3, max: 6,
+    dur: '90 min', mins: 90, cat: 'long', short: 'More of everything.', yt: 'how to play big box',
+  }],
+};

@@ -9,6 +9,34 @@ export type KeywordId =
   | 'family' | 'classic' | 'thematic' | 'portable' | 'quick-play';
 
 /**
+ * What a game inside another one is: an expansion adds rules or pieces, an
+ * extension adds seats, and a card game is one played with the parent's deck.
+ */
+export type SubGameKind = 'expansion' | 'extension' | 'card-game';
+
+/**
+ * A game that lives under another one: Catan's add-ons, or the games a deck of
+ * cards plays. Each has its own players, time, video and (usually) rulebook, so
+ * the filters can find the parent through it.
+ */
+export interface SubGame {
+  name: string;
+  /** Unique within the parent; its rulebook is /rules/<parent>.<slug>.pdf. */
+  slug: string;
+  kind: SubGameKind;
+  players: string;
+  min: number;
+  max: number;
+  dur: string;
+  mins: number;
+  cat: DurationCategory;
+  short: string;
+  yt: string;
+  /** Absent when no rulebook is bundled (the rules came in the box). */
+  rules?: string;
+}
+
+/**
  * What the filter bar, search and sort need. Both owned games and wishlist
  * entries satisfy it, so one filter pipeline serves the Own and Want views.
  */
@@ -21,6 +49,8 @@ export interface Filterable {
   mins: number;
   cat: DurationCategory;
   kw: KeywordId[];
+  /** Games inside this one; the filters match the item when it or any of these fits. */
+  subgames?: SubGame[];
 }
 
 export interface Game extends Filterable {

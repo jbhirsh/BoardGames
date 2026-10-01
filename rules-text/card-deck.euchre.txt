@@ -1,0 +1,19 @@
+Euchre
+Card Deck · 4 players in two partnerships · about 30 minutes
+House rules written for The Game Room. These are the common rules; plenty of tables play their own variations, so
+agree on any before you start.
+How to play
+Use 24 cards: the 9, 10, J, Q, K and A of each suit. Partners sit opposite each other. Deal 5 cards each,
+turn the next card face up and set the rest aside.
+Choosing trump: starting left of the dealer, each player may tell the dealer to pick up the face-up card,
+making its suit trump, or pass. If someone orders it up, the dealer takes it and discards a card. If
+everyone passes, the card is turned down and, starting left of the dealer again, each player may name a
+different suit as trump or pass. If everyone passes twice, redeal. The team that chose trump are the
+makers. The player who chose trump may go alone, and their partner sits out the hand.
+Card order in trump: the jack of trump (right bower) is highest, then the other jack of the same colour
+(left bower, which counts as a trump), then A, K, Q, 10, 9. Other suits run A, K, Q, J, 10, 9, except that
+the suit of the same colour as trump has lost its jack to the left bower.
+Play: the player left of the dealer leads. Follow suit if you can; otherwise play anything. The highest trump
+wins the trick, or the highest card of the suit led if no trump was played. The winner leads next.
+Scoring: makers who take 3 or 4 tricks score 1; all 5 tricks score 2; a lone hand taking all 5 scores 4.
+Makers who take fewer than 3 are euchred and the other team scores 2. First team to 10 wins.

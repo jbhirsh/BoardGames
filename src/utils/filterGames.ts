@@ -1,4 +1,4 @@
-import type { Game, FilterState, Filterable, WishlistItem } from '../data/types';
+import type { Game, FilterState, Filterable, SubGame, WishlistItem } from '../data/types';
 import { GROUP_ORDER, KW, WISHLIST_TYPE_ORDER } from '../data/keywords';
 
 /**
@@ -10,17 +10,12 @@ export function filterItems<T extends Filterable>(
   state: FilterState,
   groupIndex: (item: T) => number,
 ): T[] {
-  let list = items;
-
-  // Filter on the curated `cat` field, not a re-derivation from `mins`. The
-  // clickable DurationPill and SET_DURATION both use `cat`, so filtering by
-  // anything else lets the two disagree — e.g. a 90-minute game tagged
-  // "medium" would vanish when you click its own "medium" pill.
-  // An item with no known play time (mins 0, e.g. a suggestion BGG didn't
-  // resolve) can't be excluded by duration, so it stays under every bucket.
-  if (state.duration !== 'all') list = list.filter(g => g.mins === 0 || g.cat === state.duration);
-
-  if (state.players > 0) list = list.filter(g => g.min <= state.players && g.max >= state.players);
+  // Players and time are checked together per game: a card deck stays when
+  // one of its games fits both, not when one fits the players and another
+  // the time. A deck is never played on its own, so its own players and time
+  // (a summary of its games) never keep it; a base game with add-ons is.
+  let list = items.filter(g => (!isDeck(g.subgames) && fitsTable(g, state))
+    || (g.subgames ?? []).some(s => fitsTable(s, state)));
 
   if (state.keywords.size > 0) {
     const match = state.keywordMode === 'and' ? 'every' : 'some';
@@ -29,10 +24,37 @@ export function filterItems<T extends Filterable>(
 
   if (state.search) {
     const q = state.search.toLowerCase().trim();
-    list = list.filter(g => g.name.toLowerCase().includes(q) || g.desc.toLowerCase().includes(q));
+    list = list.filter(g => g.name.toLowerCase().includes(q) || g.desc.toLowerCase().includes(q)
+      || (g.subgames ?? []).some(s => s.name.toLowerCase().includes(q)));
   }
 
   return sortItems(list, state.sort, groupIndex);
+}
+
+type Table = Pick<Filterable, 'min' | 'max' | 'mins' | 'cat'>;
+
+/** True when every game inside is played with the parent's deck. */
+export function isDeck(subs: SubGame[] = []): boolean {
+  return subs.length > 0 && subs.every((s) => s.kind === 'card-game');
+}
+
+/** Whether the players and time filters are narrowing anything. */
+export function tableFiltered(state: FilterState): boolean {
+  return state.players > 0 || state.duration !== 'all';
+}
+
+/**
+ * Whether a game (or a game inside one) fits the players and time filters.
+ * Filter on the curated `cat` field, not a re-derivation from `mins`: the
+ * clickable DurationPill and SET_DURATION both use `cat`, so filtering by
+ * anything else lets the two disagree (a 90-minute game tagged "medium" would
+ * vanish when you click its own "medium" pill). An item with no known play
+ * time (mins 0, e.g. a suggestion BGG didn't resolve) can't be excluded by
+ * duration, so it stays under every bucket.
+ */
+export function fitsTable(g: Table, state: FilterState): boolean {
+  if (state.duration !== 'all' && g.mins !== 0 && g.cat !== state.duration) return false;
+  return state.players === 0 || (g.min <= state.players && g.max >= state.players);
 }
 
 export function filterGames(games: Game[], state: FilterState): Game[] {

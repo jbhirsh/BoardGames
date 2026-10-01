@@ -1,0 +1,11 @@
+President
+Card Deck · 4 to 8 players · about 30 minutes
+House rules written for The Game Room. These are the common rules; plenty of tables play their own variations, so
+agree on any before you start.
+How to play
+Deal out the whole deck. Cards rank 3 (low) up to A, with 2 the highest.
+The leader plays a single card, a pair, three or four of a kind. Each following player must play the same
+number of cards of a higher rank, or pass. When everyone passes, the last player to play clears the pile
+and leads again.
+The first player out becomes President and the last becomes Scum. At the start of the next hand, Scum
+gives the President their two best cards and the President gives back any two.

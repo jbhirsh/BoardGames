@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { readFileSync } from 'fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
 import { join } from 'path';
 import {
   askRulesAssistant,
@@ -9,6 +10,7 @@ import {
   RULES_ASSISTANT_MODEL,
   RULES_ASSISTANT_SYSTEM_INSTRUCTION,
   RULES_ASSISTANT_MAX_OUTPUT_TOKENS,
+  rulebookHeader,
 } from '../../api/_lib/rulesAssistant';
 
 const mocks = vi.hoisted(() => ({
@@ -76,6 +78,48 @@ describe('loadRulesText', () => {
 
   it('throws when no rules text exists for the slug', () => {
     expect(() => loadRulesText('no-such-game')).toThrow(/ENOENT/);
+  });
+
+  it('follows a game\'s own rules with the named games inside it, in the order asked', () => {
+    const root = mkdtempSync(join(tmpdir(), 'rules-'));
+    mkdirSync(join(root, 'rules-text'));
+    const files: Record<string, string> = {
+      'deck.txt': 'DECK',
+      'deck.speed.txt': 'SPEED',
+      'deck.euchre.txt': 'EUCHRE',
+      // A different game that shares the prefix, and a stray non-text file.
+      'deck-builder.txt': 'OTHER GAME',
+      'deck.notes.md': 'NOT RULES',
+    };
+    for (const [name, text] of Object.entries(files)) writeFileSync(join(root, 'rules-text', name), text);
+    const cwd = vi.spyOn(process, 'cwd').mockReturnValue(root);
+    try {
+      expect(loadRulesText('deck')).toBe('DECK');
+      expect(loadRulesText('deck', ['speed', 'euchre'])).toBe(`DECK${rulebookHeader('speed')}SPEED${rulebookHeader('euchre')}EUCHRE`);
+      // A part with no file (a stale page) is skipped, not an error.
+      expect(loadRulesText('deck', ['euchre', 'mahjong'])).toBe(`DECK${rulebookHeader('euchre')}EUCHRE`);
+      expect(loadRulesText('deck-builder')).toBe('OTHER GAME');
+      expect(() => loadRulesText('deck', ['../deck-builder'])).not.toThrow();
+      expect(loadRulesText('deck', ['../deck-builder'])).toBe('DECK');
+    } finally {
+      cwd.mockRestore();
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('reads the real Card Deck\'s game rulebooks when asked', () => {
+    const parts = ['euchre', 'spades', 'hearts', 'crazy-eights', 'rummy', 'president', 'spoons', 'egyptian-ratscrew', 'speed', 'golf', 'go-fish', 'klondike'];
+    const text = loadRulesText('card-deck', parts);
+    expect(text.startsWith(readFileSync(join(process.cwd(), 'rules-text', 'card-deck.txt'), 'utf-8'))).toBe(true);
+    expect(text).toContain(readFileSync(join(process.cwd(), 'rules-text', 'card-deck.euchre.txt'), 'utf-8'));
+    expect(text.split('=== Next rulebook:')).toHaveLength(13);
+  });
+
+  it('names each rulebook in its header and says how it relates to the game\'s own', () => {
+    expect(rulebookHeader('cities-and-knights')).toBe(
+      '\n\n=== Next rulebook: Cities And Knights. It goes with the game above; where it differs, say which rulebook a rule comes from. ===\n\n',
+    );
+    expect(rulebookHeader('5-6-player-extension')).toContain('Next rulebook: 5 6 Player Extension.');
   });
 });
 

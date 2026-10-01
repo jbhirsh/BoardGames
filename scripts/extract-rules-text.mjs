@@ -5,7 +5,10 @@ import { extractText } from "unpdf";
 
 const RULES_DIR = join(import.meta.dirname, "..", "public", "rules");
 const OUTPUT_DIR = join(import.meta.dirname, "..", "rules-text");
-const MIN_CHARS = 1000;
+// A page with real text runs to hundreds of characters; an image-only scan
+// gives next to none. Judge per page, so a one-page house-rules sheet of a few
+// hundred characters isn't mistaken for a scan and sent to OCR.
+const MIN_CHARS_PER_PAGE = 200;
 
 await mkdir(OUTPUT_DIR, { recursive: true });
 
@@ -26,7 +29,7 @@ for (const file of files) {
       ? result.text.join("\n\n")
       : result.text;
 
-    if (text.trim().length >= MIN_CHARS) {
+    if (text.trim().length >= MIN_CHARS_PER_PAGE * result.totalPages) {
       await writeFile(join(OUTPUT_DIR, outName), text);
       console.log(`${file} -> ${outName} (${Buffer.byteLength(text)} bytes)`);
     } else {

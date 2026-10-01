@@ -7,6 +7,7 @@ import App, { HomePage } from '../App';
 import WordCheckerPage from '../components/WordCheckerPage';
 import ScoreCalculatorPage from '../components/ScoreCalculatorPage';
 import SignInPage from '../components/SignInPage';
+import RulesPage from '../components/RulesPage';
 import { WISHLIST } from '../data/wishlist';
 
 expect.extend(matchers);
@@ -26,6 +27,28 @@ describe('accessibility', () => {
     ]);
     const { container } = render(<RouterProvider router={router} />);
     const results = await axe(container, axeOptions);
+    expect(results).toHaveNoViolations();
+  }, TIMEOUT_MS);
+
+  it('home page with a card\'s games open has no axe violations', async () => {
+    const router = createMemoryRouter([
+      { element: <App />, children: [{ path: '/', element: <HomePage /> }] },
+    ], { initialEntries: ['/?p=2&v=grid'] });
+    const { container } = render(<RouterProvider router={router} />);
+    fireEvent.click(screen.getByRole('button', { name: /games fit$/ }));
+    expect(screen.getByRole('list', { name: 'Card Deck games' })).toBeInTheDocument();
+    const results = await axe(container, axeOptions);
+    expect(results).toHaveNoViolations();
+  }, TIMEOUT_MS);
+
+  it('rules page with rulebook tabs has no axe violations', async () => {
+    const router = createMemoryRouter([
+      { element: <App />, children: [{ path: '/rules/:slug/:part?', element: <RulesPage /> }] },
+    ], { initialEntries: ['/rules/catan/cities-and-knights'] });
+    const { container } = render(<RouterProvider router={router} />);
+    expect(screen.getByRole('navigation', { name: 'Rulebooks' })).toBeInTheDocument();
+    // jsdom can't host the PDF iframe's document, so axe skips into frames.
+    const results = await axe(container, { ...axeOptions, iframes: false });
     expect(results).toHaveNoViolations();
   }, TIMEOUT_MS);
 

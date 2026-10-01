@@ -14,7 +14,7 @@ const router = createBrowserRouter([
     element: <App />,
     children: [
       { path: '/', element: <HomePage /> },
-      { path: '/rules/:slug', element: <RulesPage /> },
+      { path: '/rules/:slug/:part?', element: <RulesPage /> },
       { path: '/score/:slug', element: <ScoreCalculatorPage /> },
       { path: '/word-checker', element: <WordCheckerPage /> },
       { path: '/sign-in', element: <AuthProvider><SignInPage /></AuthProvider> },

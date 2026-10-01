@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import GameRow from '../components/GameRow';
 import { FilterProvider } from '../context/FilterContext';
-import { quickGame, bananagramsGame, sevenWondersGame } from './testData';
+import { quickGame, bananagramsGame, sevenWondersGame, deckGame, addonGame } from './testData';
 import type { Game } from '../data/types';
 
 function renderRow(game: Game, isOpen = false, onToggle = vi.fn(), showGroupBadge = false) {
@@ -181,5 +181,36 @@ describe('GameRow', () => {
       '_blank',
     );
     openSpy.mockRestore();
+  });
+
+  it('lists the games inside under their own heading in the expanded row', () => {
+    renderRow(deckGame, true);
+    expect(screen.getByRole('heading', { name: 'Games in this deck' })).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Deck games' })).toBeInTheDocument();
+  });
+
+  it('builds the list of games inside only once the row is open', () => {
+    renderRow(deckGame, false);
+    expect(document.querySelector('.row-subgames')).toBeNull();
+  });
+
+  it('heads add-ons as add-ons, and has no such section without any', () => {
+    renderRow(addonGame, true);
+    expect(screen.getByRole('heading', { name: 'Add-ons' })).toBeInTheDocument();
+    cleanup();
+    renderRow(quickGame, true);
+    expect(screen.queryByRole('heading', { name: 'Add-ons' })).not.toBeInTheDocument();
+    expect(document.querySelector('.row-subgames')).toBeNull();
+  });
+
+  it('leaves the section out when none of the games inside fit the filters', () => {
+    render(
+      <MemoryRouter initialEntries={['/?p=9']}>
+        <FilterProvider>
+          <table><tbody><GameRow game={deckGame} isOpen onToggle={vi.fn()} showGroupBadge={false} /></tbody></table>
+        </FilterProvider>
+      </MemoryRouter>,
+    );
+    expect(screen.queryByRole('heading', { name: 'Games in this deck' })).not.toBeInTheDocument();
   });
 });

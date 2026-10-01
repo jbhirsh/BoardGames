@@ -2,10 +2,10 @@ import { filterWishlist } from '../utils/filterGames';
 import { WISHLIST } from '../data/wishlist';
 import { WISHLIST_TYPE_ORDER } from '../data/keywords';
 import { describe, it, expect } from 'vitest';
-import { filterGames, sortGames, sortItems, sortedKw, isGrouped } from '../utils/filterGames';
+import { filterGames, sortGames, sortItems, sortedKw, isGrouped, fitsTable, tableFiltered } from '../utils/filterGames';
 import { initialFilterState } from '../data/initialFilterState';
 import { testGames, quickGame, mediumGame, longGame } from './testData';
-import type { FilterState, Game } from '../data/types';
+import type { FilterState, Game, SubGame } from '../data/types';
 
 function makeState(overrides: Partial<FilterState> = {}): FilterState {
   return { ...initialFilterState, ...overrides };
@@ -143,6 +143,81 @@ describe('filterGames', () => {
       const result = filterGames(testGames, makeState({ duration: 'quick', keywords: new Set(['strategy']) }));
       expect(result).toHaveLength(0);
     });
+  });
+  describe('games inside a game', () => {
+    const speed: SubGame = {
+      name: 'Speed', slug: 'speed', kind: 'card-game', players: '2', min: 2, max: 2,
+      dur: '5 min', mins: 5, cat: 'quick', short: 'Race.', yt: 'how to play speed',
+    };
+    const president: SubGame = {
+      name: 'President', slug: 'president', kind: 'card-game', players: '4–8', min: 4, max: 8,
+      dur: '30 min', mins: 30, cat: 'medium', short: 'Shed your hand.', yt: 'how to play president',
+    };
+    // The deck's own summary would fit one player and a long game; it is
+    // never played on its own, so only its games may keep it.
+    const deck: Game = { ...longGame, name: 'Deck', slug: 'deck', min: 1, max: 1, subgames: [speed, president] };
+    // A base game with an add-on is a game in its own right.
+    const island: Game = { ...longGame, name: 'Island', slug: 'island', subgames: [{ ...president, kind: 'expansion' }] };
+
+    it('keeps the parent when one of its games fits the players and time', () => {
+      expect(filterGames([deck], makeState({ players: 2, duration: 'quick' }))).toEqual([deck]);
+      expect(filterGames([deck], makeState({ players: 6 }))).toEqual([deck]);
+    });
+
+    it('needs one game to fit both, not one each', () => {
+      // Speed fits 2 players and President fits medium, but neither fits both.
+      expect(filterGames([deck], makeState({ players: 2, duration: 'medium' }))).toEqual([]);
+    });
+
+    it('still drops a parent when nothing in it fits', () => {
+      expect(filterGames([deck], makeState({ players: 9 }))).toEqual([]);
+    });
+
+    it('drops a deck whose own summary fits when none of its games do', () => {
+      expect(filterGames([deck], makeState({ players: 1 }))).toEqual([]);
+      expect(filterGames([deck], makeState({ duration: 'long' }))).toEqual([]);
+    });
+
+    it('keeps a base game that fits on its own when none of its add-ons do', () => {
+      expect(filterGames([island], makeState({ players: 2, duration: 'long' }))).toEqual([island]);
+      expect(filterGames([island], makeState({ players: 7 }))).toEqual([island]);
+      expect(filterGames([island], makeState({ players: 9 }))).toEqual([]);
+    });
+
+    it('finds the parent by the name of a game inside it', () => {
+      expect(filterGames([deck, quickGame], makeState({ search: 'presid' }))).toEqual([deck]);
+    });
+  });
+});
+
+describe('fitsTable', () => {
+  const g = { min: 2, max: 4, mins: 30, cat: 'medium' as const };
+
+  it('fits everything with no players or time chosen', () => {
+    expect(fitsTable(g, makeState())).toBe(true);
+  });
+
+  it('checks the players at both ends of the range', () => {
+    expect(fitsTable(g, makeState({ players: 2 }))).toBe(true);
+    expect(fitsTable(g, makeState({ players: 4 }))).toBe(true);
+    expect(fitsTable(g, makeState({ players: 1 }))).toBe(false);
+    expect(fitsTable(g, makeState({ players: 5 }))).toBe(false);
+  });
+
+  it('checks the time bucket, letting an unknown time through', () => {
+    expect(fitsTable(g, makeState({ duration: 'medium' }))).toBe(true);
+    expect(fitsTable(g, makeState({ duration: 'quick' }))).toBe(false);
+    expect(fitsTable({ ...g, mins: 0 }, makeState({ duration: 'quick' }))).toBe(true);
+  });
+});
+
+describe('tableFiltered', () => {
+  it('is on when players or time narrows the list', () => {
+    expect(tableFiltered(makeState())).toBe(false);
+    expect(tableFiltered(makeState({ players: 3 }))).toBe(true);
+    expect(tableFiltered(makeState({ duration: 'long' }))).toBe(true);
+    // Keywords and search don't change which games inside a card fit.
+    expect(tableFiltered(makeState({ search: 'x', keywords: new Set(['party']) }))).toBe(false);
   });
 });
 

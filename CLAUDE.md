@@ -5,7 +5,7 @@ Guidance for Claude Code (claude.ai/code) when working in this repository.
 ## What this is
 
 **The Game Room** — a single-page app for browsing a personal board game
-collection. Filter and sort 36 games, get a random pick, read bundled rule
+collection. Filter and sort 34 games, get a random pick, read bundled rule
 PDFs, ask an AI rules assistant, tally a 7 Wonders score, check whether a word
 is playable in Bananagrams, and vote on a wishlist. React 19 + TypeScript SPA
 built with Vite, deployed on Vercel with a small serverless API.
@@ -43,7 +43,8 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   - `/` — `HomePage` (hero, filter bar, then the collection or the wishlist,
     switched by the Own/Want toggle; both stay mounted so a toggle never
     refetches, and only the visible one carries the `#collection` anchor)
-  - `/rules/:slug` — bundled rule PDF viewer + AI rules assistant
+  - `/rules/:slug/:part?` — bundled rule PDF viewer + AI rules assistant;
+    a game with rulebooks for games inside it gets a tab per rulebook
   - `/score/:slug` — score calculator (currently 7 Wonders)
   - `/word-checker` — dictionary lookup for word games
   - `/sign-in` — the owner's magic-link sign-in (`SignInPage`); nothing on
@@ -57,6 +58,14 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   (name, desc, min/max players, mins, duration bucket, keywords). The filter
   pipeline (`utils/filterGames.ts`) is generic over it: `filterItems` with
   `filterGames` and `filterWishlist` wrappers that decide their own grouping.
+  A game can hold `subgames` (`SubGame`, kind `expansion`, `extension` or
+  `card-game`): Catan's add-ons, the games the Card Deck plays. Each has its
+  own players, time, video and usually a rulebook at
+  `/rules/<parent>.<sub>.pdf`. The players and time filters keep a parent
+  when it fits on its own or one of its games fits both (a deck only by its
+  games, since it is never played on its own), and search matches their
+  names. The card's "+N games" button ("k of N games fit" under a filter) and
+  the list view's expanded row list the ones that fit (`SubGameList`).
   Both views share the filter bar: `FilterState.collection` (`'own' | 'want'`,
   mirrored to the URL as `c=want`) picks which list the section renders and
   which one the keyword counts tally; `CLEAR_ALL` keeps the mode.
@@ -82,16 +91,19 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   (`utils/shortDesc.ts`) where a collection row shows its hand-written
   short line. Both sections share the light theme.
 - **`utils/`** — pure helpers (`filterGames.ts`, `pickRandom.ts`, `filterUrl.ts`,
-  `urls.ts`, `shortDesc.ts`). Keep these free of React and side effects.
+  `urls.ts`, `shortDesc.ts`, `subgames.ts`, `rulebooks.ts`). Keep these free of React and side effects.
 - **`instrument.ts`** — Sentry browser SDK init (`@sentry/react`), including
   browser tracing and session replay.
 
 ### Serverless API (`api/`) — Vercel Functions (`@vercel/node`)
-- **`chat.ts`** — the AI rules assistant. Reads `rules-text/<slug>.txt`, sends
+- **`chat.ts`** — the AI rules assistant. Reads `rules-text/<slug>.txt` plus the
+  `parts` the rules page names (`rules-text/<slug>.<sub>.txt`: every game in a
+  deck, or just the add-on on screen, since an expansion's rules on top of the
+  base game's crowd out the answer), sends
   it plus the recent chat history to Google Gemini (`@google/genai`,
   `gemini-2.5-flash`) and streams the reply back as plain text. Validates slug
-  format (must match the same slug regex as `votes.ts`, since it becomes a
-  filesystem path), message length (<=500), history length (<=10) and total
+  format and each of `parts` (must match the same slug regex as `votes.ts`,
+  since they pick a file), message length (<=500), history length (<=10) and total
   history content size, and caps Gemini output tokens. Per-IP rate limited via
   `_lib/rateLimit.ts`. Errors reported to Sentry (`@sentry/node`).
 - **`votes.ts`** — anonymous wishlist voting backed by Upstash Redis
