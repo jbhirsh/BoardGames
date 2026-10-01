@@ -14,6 +14,12 @@ interface Props {
   trigger: ReactNode;
   /** The panel's body. */
   children: ReactNode;
+  /**
+   * For a button that already does something on click (the card's add-ons
+   * button opens its full list): the panel becomes a hover-only preview,
+   * described by the button rather than pinned, and the click is this.
+   */
+  activate?: { onClick: () => void; expanded: boolean; controls: string };
 }
 
 const POP_WIDTH = 260;
@@ -28,7 +34,7 @@ const GAP = 6;
  * Clicks on the button and in the panel stop there, so a table row behind
  * them doesn't toggle.
  */
-export default function Popover({ className, buttonClassName, label, title, trigger, children }: Props) {
+export default function Popover({ className, buttonClassName, label, title, trigger, children, activate }: Props) {
   const [pinned, setPinned] = useState(false);
   const [hover, setHover] = useState(false);
   const [pos, setPos] = useState<CSSProperties>({});
@@ -36,7 +42,8 @@ export default function Popover({ className, buttonClassName, label, title, trig
   const btnRef = useRef<HTMLButtonElement>(null);
   const popRef = useRef<HTMLDivElement>(null);
   const id = useId();
-  const open = pinned || hover;
+  // A preview has nothing to add once the full list it previews is open.
+  const open = pinned || (hover && !activate?.expanded);
 
   // Rendered on the body with fixed positioning measured from the button, so
   // neither a card's overflow clip nor its hover transform (which would make
@@ -86,11 +93,17 @@ export default function Popover({ className, buttonClassName, label, title, trig
         type="button"
         className={`${buttonClassName}${open ? ' open' : ''}`}
         aria-label={label}
-        aria-expanded={open}
-        aria-controls={open ? id : undefined}
+        aria-expanded={activate ? activate.expanded : open}
+        aria-controls={activate ? activate.controls : open ? id : undefined}
+        aria-describedby={activate && open ? id : undefined}
         // A tap fires mouseenter before click and never mouseleave, so the
         // click owns the state from then on: hover must not keep it open.
-        onClick={(e) => { e.stopPropagation(); setHover(false); setPinned((p) => !p); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          setHover(false);
+          if (activate) activate.onClick();
+          else setPinned((p) => !p);
+        }}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
       >
@@ -101,7 +114,14 @@ export default function Popover({ className, buttonClassName, label, title, trig
         // page, so one on the panel would still reach a table row behind it.
         // The wrapper only stops it; it means nothing to assistive tech.
         <div role="presentation" onClick={(e) => e.stopPropagation()}>
-          <div id={id} ref={popRef} className="pop" role="group" aria-labelledby={`${id}-title`} style={pos}>
+          <div
+            id={id}
+            ref={popRef}
+            className="pop"
+            role={activate ? 'tooltip' : 'group'}
+            aria-labelledby={activate ? undefined : `${id}-title`}
+            style={pos}
+          >
             <div id={`${id}-title`} className="pop-title">{title}</div>
             {children}
           </div>

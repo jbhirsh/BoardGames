@@ -8,6 +8,7 @@ import { sortedKw } from '../utils/filterGames';
 import KeywordPill from './KeywordPill';
 import AwardsBadge from './AwardsBadge';
 import SubGameList from './SubGameList';
+import Popover from './Popover';
 import { fittingSubgames, subgameLabel } from '../utils/subgames';
 import { YouTubeIcon, AiRulesIcon, UserIcon, ClockIcon, CalculatorIcon, SearchIcon } from './Icons';
 
@@ -20,8 +21,9 @@ export default function GameCard({ game }: Props) {
   const [subsOpen, setSubsOpen] = useState(false);
   const subsId = useId();
   // The button and its list go away while no game inside fits the filters.
-  const fitting = game.subgames ? fittingSubgames(game.subgames, state).length : 0;
-  const hasFitting = fitting > 0;
+  const fitting = game.subgames ? fittingSubgames(game.subgames, state) : [];
+  const hasFitting = fitting.length > 0;
+  const subsLabel = game.subgames ? subgameLabel(game.subgames, state) : '';
 
   return (
     <div className="game-card">
@@ -56,20 +58,26 @@ export default function GameCard({ game }: Props) {
         <div className="card-foot-start">
           <AwardsBadge itemName={game.name} awards={game.awards} />
           {game.subgames && hasFitting && (
-            <button
-              type="button"
-              className="sub-pill"
-              aria-expanded={subsOpen}
-              aria-controls={subsId}
-              aria-label={`${game.name}: ${subgameLabel(game.subgames, state)}`}
-              onClick={() => setSubsOpen(o => !o)}
+            <Popover
+              className="sub-pill-wrap"
+              buttonClassName="sub-pill"
+              label={`${game.name}: ${subsLabel}`}
+              title={`${game.name}: ${subsLabel}`}
+              activate={{ onClick: () => setSubsOpen((o) => !o), expanded: subsOpen, controls: subsId }}
+              trigger={(
+                <>
+                  <span className="sub-pill-full">{subsLabel}</span>
+                  <span className="sub-pill-short">+{fitting.length}</span>
+                  <svg className="sub-pill-chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+                    <path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                  </svg>
+                </>
+              )}
             >
-              <span className="sub-pill-full">{subgameLabel(game.subgames, state)}</span>
-              <span className="sub-pill-short">+{fitting}</span>
-              <svg className="sub-pill-chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-                <path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" />
-              </svg>
-            </button>
+              <ul className="sub-tag-list">
+                {fitting.map((s) => <li key={s.slug}>{s.name}</li>)}
+              </ul>
+            </Popover>
           )}
         </div>
         <div className="card-foot-end">
