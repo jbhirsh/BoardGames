@@ -39,7 +39,8 @@
       "question": "What triggers the end of the game in Ticket to Ride?",
       "expected": "When any player is down to 0, 1, or 2 plastic trains left in their stock at the end of their turn, every player (including that player) gets one final turn, and then the game ends and final scores are calculated.",
       "matchType": "judge",
-      "sourceQuote": "When one player’s stock of colored plastic trains gets down to only 0,1 or 2 trains left at the end of his turn, each player, including that player, gets\none final turn. The game then ends and players calculate their final scores."
+      "sourceQuote": "When one player’s stock of colored plastic trains gets down to only 0,1 or 2 trains left at the end of his turn, each player, including that player, gets\none final turn. The game then ends and players calculate their final scores.",
+      "notes": "Describing the trigger as when the game \"ends\" is acceptable as long as the response also says every player, including the one who triggered it, then gets one final turn. Only a response that leaves out the final round fails."
     },
     {
       "id": "ttr-europe-unused-station-points",
@@ -119,7 +120,8 @@
       "question": "What happens when someone rolls a 7 in Catan?",
       "expected": "No one receives any resources. Every player who has more than 7 resource cards must select half of their resource cards (rounded down) and return them to the bank. Then the player who rolled must move the robber.",
       "matchType": "judge",
-      "sourceQuote": "If you roll a “7,” no one receives any resources.\nInstead, every player who has more than 7 resource cards\nmust select half (rounded down) of their resource cards and\nreturn them to the bank.\nThen you must move the robber Y."
+      "sourceQuote": "If you roll a “7,” no one receives any resources.\nInstead, every player who has more than 7 resource cards\nmust select half (rounded down) of their resource cards and\nreturn them to the bank.\nThen you must move the robber Y.",
+      "notes": "The rulebook goes on to say the roller then steals 1 random resource card from a player with a settlement or city on the robber's new hex, and that the robber blocks that hex's production. Either is correct and acceptable, but not required."
     },
     {
       "id": "catan-longest-road-length",
@@ -143,7 +145,8 @@
       "question": "What happens if a field operative touches the assassin word in Codenames?",
       "expected": "The game ends immediately and the team that contacted the assassin loses.",
       "matchType": "judge",
-      "sourceQuote": "If the field operative touches the assassin, the word is covered by the assassin card. This ends the\ngame! The team that contacted the assassin loses."
+      "sourceQuote": "If the field operative touches the assassin, the word is covered by the assassin card. This ends the\ngame! The team that contacted the assassin loses.",
+      "notes": "The rulebook also says the assassin card is placed on the word (\"the word is covered by the assassin card\"). Mentioning that is correct and acceptable, but not required."
     },
     {
       "id": "bananagrams-dump-exchange",
