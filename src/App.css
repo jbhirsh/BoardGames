@@ -506,6 +506,7 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 
 .rules-chat-panel{margin-bottom:20px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow-md);overflow:hidden;display:flex;flex-direction:column;height:420px;}
 
+.rules-chat-scope{padding:10px 20px;font-size:12.5px;font-weight:500;color:var(--text2);background:var(--bg);border-bottom:1px solid var(--border);}
 .rules-chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;}
 
 .rules-chat-msg{display:flex;}

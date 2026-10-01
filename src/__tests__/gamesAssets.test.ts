@@ -64,7 +64,10 @@ describe('games ↔ assets integrity', () => {
   // sub-game rulebook under any other name would never reach the assistant.
   const withRules = GAMES.flatMap((g) => [
     ...(g.moreRules ?? []).map((r) => [`${g.slug}.${r.slug}`, r.pdf] as const),
-    ...(g.subgames ?? []).filter((s) => s.rules).map((s) => [`${g.slug}.${s.slug}`, s.rules!] as const),
+    ...(g.subgames ?? []).filter((s) => s.rules).flatMap((s) => [
+      [`${g.slug}.${s.slug}`, s.rules!] as const,
+      ...(s.moreRules ?? []).map((r) => [`${g.slug}.${r.slug}`, r.pdf] as const),
+    ]),
   ]);
 
   // Its further rulebooks and the games inside it share one set of tabs and
@@ -72,7 +75,8 @@ describe('games ↔ assets integrity', () => {
   it.each(GAMES.filter((g) => g.subgames || g.moreRules).map((g) => [g.slug, g] as const))(
     'game "%s" names each extra rulebook and game inside it once, in the slug shape',
     (_slug, game) => {
-      const subSlugs = [...(game.moreRules ?? []), ...(game.subgames ?? [])].map((s) => s.slug);
+      const subs = game.subgames ?? [];
+      const subSlugs = [...(game.moreRules ?? []), ...subs, ...subs.flatMap((s) => s.moreRules ?? [])].map((s) => s.slug);
       expect(new Set(subSlugs).size).toBe(subSlugs.length);
       for (const s of subSlugs) expect(s).toMatch(SLUG_RE);
     },

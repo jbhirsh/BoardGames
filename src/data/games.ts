@@ -296,6 +296,8 @@ export const GAMES: Game[] = [
     subgames:[
       { name:"The Monster Box of Monsters", slug:"monster-box-of-monsters", kind:'expansion', players:"2–4", min:2, max:4, dur:"30–60 min", mins:60, cat:"medium",
         short:"Adds Luna Lovegood as a fifth hero, creatures and encounters to face, and four more boxes that open in order.",
-        yt:"Hogwarts Battle Monster Box of Monsters expansion how to play", rules:"/rules/hogwarts-battle.monster-box-of-monsters.pdf" },
+        yt:"Hogwarts Battle Monster Box of Monsters expansion how to play", rules:"/rules/hogwarts-battle.monster-box-of-monsters.pdf",
+        rulesLabel:"Monster Box 1",
+        moreRules:[{ slug:"monster-box-2", label:"Monster Box 2", pdf:"/rules/hogwarts-battle.monster-box-2.pdf" },{ slug:"monster-box-3", label:"Monster Box 3", pdf:"/rules/hogwarts-battle.monster-box-3.pdf" },{ slug:"monster-box-4", label:"Monster Box 4", pdf:"/rules/hogwarts-battle.monster-box-4.pdf" }] },
     ] },
 ];

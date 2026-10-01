@@ -1,0 +1,55 @@
+
+
+
+
+Text version
+Harry Potter: Hogwarts Battle
+The Monster Box of Monsters Expansion
+Transcribed from the rule sheets in the four expansion boxes. Icons are written as words: [Attack] is the lightning
+bolt, [Influence] the gold token, [Health] the heart.
+BOX 2
+OBJECT
+As in Box 1, complete all the Encounters and defeat the Villains and Creatures before they gain control of all the
+Locations.
+CONTENTS AND SET UP
+- 3 Location cards (1): Use only the Box 2 Locations. Stack in order.
+- 7 Dark Arts cards (2): Shuffle all Dark Arts cards together.
+- 3 Encounter cards (3): Use only the Box 2 Encounters. Stack in order.
+- 3 Creature cards (4): Shuffle these cards with Peter Pettigrew, Fenrir Greyback and 6 other randomly selected
+Villains/Creatures to create the stack. Place the Game 6 LORD VOLDEMORT face up on the bottom.
+- 9 HOGWARTS cards (5): Shuffle all HOGWARTS cards together.
+- 1 Creature Die (NEW, see below).
+- 8 Reminder tokens (NEW): Carefully punch out, then recycle the waste. Place near game board.
+Distribute cards on game board as in previous games.
+CREATURE DIE
+Some of the Creature rewards and HOGWARTS cards will let you roll the Creature Die. Your die roll generates
+one of six effects that benefit Heroes as follows:
+- One heart: ALL Heroes gain 1 [Health].
+- Two hearts: ALL Heroes gain 2 [Health].
+- Lightning bolt: ALL Heroes gain 1 [Attack].
+- One card: ALL Heroes draw a card.
+- Two cards: ALL Heroes draw two cards.
+- Villain control token (skull): Remove 1 Villain control token from the Location.
+The Creature Die symbol on a card is a red phoenix crest.
+HERO SET UP
+Place your Hero card and chosen Game 6 Proficiency above your player board. Remember, you do not get to
+start with any of the additional HOGWARTS cards you acquired from previous games.
+GAMEPLAY
+Gameplay proceeds with the same four steps from Box 1.
+STEP 1. Reveal and resolve Dark Arts events and the Encounter.
+Careful, the second Encounter effect will trigger every time a Villain control token is added.
+
+STEP 2. Resolve Creature and Villain abilities.
+Note: If you roll a one-heart or two-heart result, the Boggart will remove [Attack] and/or [Influence] from ALL
+Creatures, including itself.
+STEP 3. Play HOGWARTS cards and take Hero actions.
+The BOGGART and WEREWOLF require Heroes to assign both [Attack] and [Influence] to defeat them. Note: a
+maximum of 1 [Influence] can be assigned to each Creature on your turn.
+STEP 4. End your turn.
+Remember to check if you completed the Encounter. Also, don't forget, you may place any Detention! cards in
+your discard pile with no penalty at this time.
+END OF GAME
+- ALL the Villains and Creatures are defeated: Heroes win! Congratulations on your stellar wand work! Open Box
+3, and follow the rules enclosed.
+- Villains and Creatures control ALL of the Locations: Heroes lose! You have some studying to do. Reset the
+game to its starting configuration and try again!

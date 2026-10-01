@@ -57,7 +57,10 @@ describe('RulesPage', () => {
     it('gives a game\'s own further rulebooks a tab each, then its add-ons', () => {
       renderAt('/rules/hogwarts-battle/game-4');
       const links = within(tabs()).getAllByRole('link');
-      expect(links.map(l => l.textContent)).toEqual(['Game 1', 'Game 2', 'Game 3', 'Game 4', 'Game 5', 'Game 6', 'Game 7', 'The Monster Box of Monstersexpansion']);
+      expect(links.map(l => l.textContent)).toEqual([
+        'Game 1', 'Game 2', 'Game 3', 'Game 4', 'Game 5', 'Game 6', 'Game 7',
+        'Monster Box 1expansion', 'Monster Box 2expansion', 'Monster Box 3expansion', 'Monster Box 4expansion',
+      ]);
       expect(within(tabs()).getByRole('link', { current: 'page' })).toHaveTextContent('Game 4');
       expect(viewer()).toHaveAttribute('src', '/rules/hogwarts-battle.game-4.pdf');
       expect(viewer()).toHaveAttribute('title', 'Hogwarts Battle: Game 4 rules');
@@ -126,6 +129,23 @@ describe('RulesPage', () => {
         await screen.findByText(/something went wrong/);
         const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
         expect(body).toMatchObject({ slug: 'catan', parts: ['cities-and-knights'] });
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+
+    it('tells the chat which rulebooks it reads for the tab on screen', async () => {
+      const fetchMock = vi.fn(async () => ({ ok: false, status: 500 }) as Response);
+      vi.stubGlobal('fetch', fetchMock);
+      try {
+        renderAt('/rules/hogwarts-battle/monster-box-3');
+        fireEvent.click(screen.getByRole('button', { name: /ai rules assistant/i }));
+        expect(screen.getByText('Reading: Monster Box 3, plus Game 1–7 and Monster Box 1–2.')).toBeInTheDocument();
+        fireEvent.change(screen.getByPlaceholderText('Ask a rules question...'), { target: { value: 'Patronus?' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+        await screen.findByText(/something went wrong/);
+        const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
+        expect(body.parts).toEqual(['game-2', 'game-3', 'game-4', 'game-5', 'game-6', 'game-7', 'monster-box-of-monsters', 'monster-box-2', 'monster-box-3']);
       } finally {
         vi.unstubAllGlobals();
       }

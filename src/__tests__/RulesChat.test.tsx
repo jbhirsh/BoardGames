@@ -24,11 +24,11 @@ function streamResponse(chunks: string[]): Response {
   } as unknown as Response;
 }
 
-function setup(parts?: string[]) {
+function setup(parts?: string[], scope?: string) {
   render(
     <RulesChatProvider>
       <RulesChatToggle />
-      <RulesChatPanel slug="cranium" gameName="Cranium" parts={parts} />
+      <RulesChatPanel slug="cranium" gameName="Cranium" parts={parts} scope={scope} />
     </RulesChatProvider>,
   );
 }
@@ -83,6 +83,18 @@ describe('RulesChat', () => {
     await waitFor(() =>
       expect(screen.getByPlaceholderText('Ask a rules question...')).toBeEnabled(),
     );
+  });
+
+  it('says what it is reading when told, and nothing when not', () => {
+    setup(['game-2'], 'Reading: Game 2, plus Game 1.');
+    openPanel();
+    expect(screen.getByText('Reading: Game 2, plus Game 1.')).toHaveClass('rules-chat-scope');
+  });
+
+  it('shows no reading line without a scope', () => {
+    setup();
+    openPanel();
+    expect(document.querySelector('.rules-chat-scope')).toBeNull();
   });
 
   it('names the rulebooks to read along with the game\'s own', async () => {

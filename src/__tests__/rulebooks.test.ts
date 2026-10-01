@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { rulebooks, rulebookPath, chatParts } from '../utils/rulebooks';
+import { rulebooks, rulebookPath, chatParts, chatScope } from '../utils/rulebooks';
 import { quickGame } from './testData';
 import type { Game, SubGame } from '../data/types';
 
@@ -93,5 +93,60 @@ describe('a game\'s further rulebooks', () => {
     const deck: Game = { ...quickGame, subgames: [sub({ slug: 'speed', rules: '/rules/quick-game.speed.pdf' }), sub({ slug: 'golf', rules: '/rules/quick-game.golf.pdf' })] };
     const books = rulebooks(deck);
     for (const shown of books) expect(chatParts(deck, shown)).toEqual(['speed', 'golf']);
+  });
+});
+
+describe('an add-on\'s further rulebooks', () => {
+  const more = [{ slug: 'game-2', label: 'Game 2', pdf: '/rules/quick-game.game-2.pdf' }];
+  const box = sub({
+    name: 'Box', slug: 'box', kind: 'expansion', rules: '/rules/quick-game.box.pdf', rulesLabel: 'Box 1',
+    moreRules: [
+      { slug: 'box-2', label: 'Box 2', pdf: '/rules/quick-game.box-2.pdf' },
+      { slug: 'box-3', label: 'Box 3', pdf: '/rules/quick-game.box-3.pdf' },
+    ],
+  });
+  const game: Game = { ...quickGame, rulesLabel: 'Game 1', moreRules: more, subgames: [box] };
+
+  it('follow its own tab, named and marked as the add-on', () => {
+    expect(rulebooks(game).slice(2)).toEqual([
+      { part: 'box', label: 'Box 1', name: 'Box', short: 'A sub-game.', pdf: '/rules/quick-game.box.pdf', kind: 'expansion' },
+      { part: 'box-2', label: 'Box 2', name: 'Box: Box 2', short: 'A sub-game.', pdf: '/rules/quick-game.box-2.pdf', kind: 'expansion' },
+      { part: 'box-3', label: 'Box 3', name: 'Box: Box 3', short: 'A sub-game.', pdf: '/rules/quick-game.box-3.pdf', kind: 'expansion' },
+    ]);
+  });
+
+  it('go to the rules assistant up to the box on screen, after all of the game\'s own', () => {
+    const books = rulebooks(game);
+    expect(chatParts(game, books[2])).toEqual(['game-2', 'box']);
+    expect(chatParts(game, books[3])).toEqual(['game-2', 'box', 'box-2']);
+    expect(chatParts(game, books[4])).toEqual(['game-2', 'box', 'box-2', 'box-3']);
+  });
+
+  it('say what the assistant is reading, numbered tabs run together', () => {
+    const books = rulebooks(game);
+    expect(chatScope(game, books[0])).toBe('Reading: Game 1.');
+    expect(chatScope(game, books[1])).toBe('Reading: Game 2, plus Game 1.');
+    expect(chatScope(game, books[4])).toBe('Reading: Box 3, plus Game 1–2 and Box 1–2.');
+  });
+});
+
+describe('chatScope', () => {
+  it('lists unnumbered rulebooks by name', () => {
+    const exp = sub({ name: 'Knights', slug: 'knights', kind: 'expansion', rules: '/rules/quick-game.knights.pdf' });
+    const game: Game = { ...quickGame, subgames: [exp] };
+    expect(chatScope(game, rulebooks(game)[1])).toBe('Reading: Knights, plus Base game.');
+  });
+
+  it('says a deck reads every game in it', () => {
+    const deck: Game = { ...quickGame, subgames: [sub({ slug: 'a', rules: '/rules/quick-game.a.pdf' }), sub({ slug: 'b', rules: '/rules/quick-game.b.pdf' })] };
+    expect(chatScope(deck, rulebooks(deck)[0])).toBe('Reading: all 2 games in the deck.');
+  });
+
+  it('keeps a gap in the numbers as separate runs', () => {
+    const game: Game = { ...quickGame, rulesLabel: 'Part 1', moreRules: [
+      { slug: 'p3', label: 'Part 3', pdf: '/rules/quick-game.p3.pdf' },
+      { slug: 'p4', label: 'Part 4', pdf: '/rules/quick-game.p4.pdf' },
+    ] };
+    expect(chatScope(game, rulebooks(game)[2])).toBe('Reading: Part 4, plus Part 1 and Part 3.');
   });
 });
