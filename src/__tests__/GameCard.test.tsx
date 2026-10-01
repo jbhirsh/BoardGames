@@ -141,10 +141,10 @@ describe('GameCard', () => {
       expect(screen.queryByRole('list', { name: 'Deck games' })).not.toBeInTheDocument();
     });
 
-    it('calls add-ons add-ons', () => {
+    it('calls expansions expansions', () => {
       renderWithContext(<GameCard game={addonGame} />);
-      fireEvent.click(screen.getByRole('button', { name: 'Island: +1 add-on' }));
-      expect(screen.getByRole('list', { name: 'Island add-ons' })).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Island: +1 expansion' }));
+      expect(screen.getByRole('list', { name: 'Island expansions' })).toBeInTheDocument();
     });
 
     it('says how many fit once players are chosen, and lists only those', () => {
@@ -166,12 +166,12 @@ describe('GameCard', () => {
       expect(screen.queryByRole('button', { name: /Deck:/ })).not.toBeInTheDocument();
     });
 
-    it('has no add-ons button when the base game fits but none of its add-ons do', () => {
+    it('has no expansions button when the base game fits but none of its add-ons do', () => {
       // Island fits a medium game on its own; its long expansion doesn't, and
       // the button would open an empty list.
       renderWithContext(<GameCard game={addonGame} />, '/?d=medium');
       expect(screen.getByRole('heading', { name: 'Island' })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /add-on/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /expansion/ })).not.toBeInTheDocument();
     });
   });
 });

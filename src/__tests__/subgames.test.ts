@@ -19,21 +19,28 @@ describe('isDeck', () => {
 });
 
 describe('subgameNoun and subgameTitle', () => {
-  it('names a deck\'s games as games and anything else as add-ons, singular for one', () => {
+  const extension = { ...addons[0], slug: 'more-seats', name: 'More Seats', kind: 'extension' as const };
+  const version = { ...addons[0], slug: 'europe', name: 'Europe', kind: 'version' as const };
+
+  it('names a deck\'s games as games, singular for one', () => {
     expect(subgameNoun(deck, 2)).toBe('games');
     expect(subgameNoun(deck, 1)).toBe('game');
-    expect(subgameNoun(addons, 1)).toBe('add-on');
-    expect(subgameNoun(addons, 3)).toBe('add-ons');
     expect(subgameTitle(deck)).toBe('Games in this deck');
-    expect(subgameTitle(addons)).toBe('Add-ons');
   });
 
-  it('names versions as versions, but a mix of a version and an add-on as add-ons', () => {
-    const version = { ...addons[0], slug: 'europe', name: 'Europe', kind: 'version' as const };
-    expect(subgameNoun([version], 1)).toBe('version');
+  it('names games of one kind by that kind', () => {
+    expect(subgameNoun(addons, 1)).toBe('expansion');
+    expect(subgameNoun(addons, 3)).toBe('expansions');
+    expect(subgameTitle(addons)).toBe('Expansions');
+    expect(subgameNoun([extension], 1)).toBe('extension');
+    expect(subgameTitle([extension])).toBe('Extensions');
     expect(subgameNoun([version, version], 2)).toBe('versions');
     expect(subgameTitle([version])).toBe('Versions');
-    expect(subgameNoun([version, ...addons], 2)).toBe('add-ons');
+  });
+
+  it('names a mix of kinds as add-ons', () => {
+    expect(subgameNoun([extension, ...addons], 2)).toBe('add-ons');
+    expect(subgameNoun([version, ...addons], 1)).toBe('add-on');
     expect(subgameTitle([version, ...addons])).toBe('Add-ons');
     expect(subgameNoun([], 0)).toBe('add-ons');
   });
@@ -65,9 +72,9 @@ describe('fittingSubgames', () => {
 describe('subgameLabel', () => {
   it('counts the games inside, or how many fit once players or time is chosen', () => {
     expect(subgameLabel(deck, state())).toBe('+2 games');
-    expect(subgameLabel(addons, state())).toBe('+1 add-on');
+    expect(subgameLabel(addons, state())).toBe('+1 expansion');
     expect(subgameLabel(deck, state({ players: 2 }))).toBe('1 of 2 games fit');
     expect(subgameLabel(deck, state({ players: 9 }))).toBe('0 of 2 games fit');
-    expect(subgameLabel(addons, state({ duration: 'long' }))).toBe('1 of 1 add-on fit');
+    expect(subgameLabel(addons, state({ duration: 'long' }))).toBe('1 of 1 expansion fit');
   });
 });

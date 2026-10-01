@@ -88,4 +88,64 @@ describe('SubGameList', () => {
     expect(rows()[0]).toHaveTextContent('President');
     expect(screen.queryByText('Speed')).not.toBeInTheDocument();
   });
+
+  describe('more about a game', () => {
+    const fuller = {
+      ...addonGame,
+      subgames: [{
+        ...addonGame.subgames![0],
+        desc: 'Every piece doubled, and a sea to sail.',
+        detail: '<div class="detail-section"><h3>What It Adds</h3><p>Ships and a harbour.</p></div>',
+      }],
+    };
+
+    it('opens in place to the full description and its sections, and closes again', () => {
+      renderList(fuller);
+      const more = screen.getByRole('button', { name: 'More about Big Box' });
+      expect(more).toHaveTextContent('More');
+      expect(more).toHaveAttribute('aria-expanded', 'false');
+      expect(screen.queryByText('Every piece doubled, and a sea to sail.')).not.toBeInTheDocument();
+
+      fireEvent.click(more);
+      const less = screen.getByRole('button', { name: 'Less about Big Box' });
+      expect(less).toHaveAttribute('aria-expanded', 'true');
+      const panel = document.getElementById(less.getAttribute('aria-controls')!)!;
+      expect(panel).toBeVisible();
+      expect(panel).toHaveTextContent('Every piece doubled, and a sea to sail.');
+      expect(within(panel).getByRole('heading', { name: 'What It Adds' })).toBeInTheDocument();
+      expect(panel).toHaveTextContent('Ships and a harbour.');
+
+      fireEvent.click(less);
+      expect(screen.getByRole('button', { name: 'More about Big Box' })).toHaveAttribute('aria-expanded', 'false');
+      expect(panel).not.toBeVisible();
+      expect(screen.queryByText('Ships and a harbour.')).not.toBeInTheDocument();
+    });
+
+    it('shows a description without sections', () => {
+      const descOnly = { ...fuller, subgames: [{ ...fuller.subgames[0], detail: undefined }] };
+      renderList(descOnly);
+      fireEvent.click(screen.getByRole('button', { name: 'More about Big Box' }));
+      expect(screen.getByText('Every piece doubled, and a sea to sail.')).toBeInTheDocument();
+      expect(screen.queryByRole('heading')).not.toBeInTheDocument();
+    });
+
+    it('shows sections without a description', () => {
+      const detailOnly = { ...fuller, subgames: [{ ...fuller.subgames[0], desc: undefined }] };
+      renderList(detailOnly);
+      fireEvent.click(screen.getByRole('button', { name: 'More about Big Box' }));
+      expect(screen.getByRole('heading', { name: 'What It Adds' })).toBeInTheDocument();
+      expect(document.querySelector('.sub-desc')).toBeNull();
+    });
+
+    it('keeps the toggle from toggling the row around it', () => {
+      const { onParentClick } = renderList(fuller);
+      fireEvent.click(screen.getByRole('button', { name: 'More about Big Box' }));
+      expect(onParentClick).not.toHaveBeenCalled();
+    });
+
+    it('has no toggle when there is nothing more to say', () => {
+      renderList(deckGame);
+      expect(screen.queryByRole('button', { name: /More about/ })).not.toBeInTheDocument();
+    });
+  });
 });

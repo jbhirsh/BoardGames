@@ -194,12 +194,42 @@ describe('GameRow', () => {
     expect(document.querySelector('.row-subgames')).toBeNull();
   });
 
-  it('heads add-ons as add-ons, and has no such section without any', () => {
+  it('tags a game that holds others beside its name, and no game that holds none', () => {
+    renderRow(addonGame);
+    expect(document.querySelector('.sub-tag-full')).toHaveTextContent('+1 expansion');
+    cleanup();
+    renderRow(deckGame);
+    expect(document.querySelector('.sub-tag-full')).toHaveTextContent('+2 games');
+    // Phones show just the count; it is hidden from screen readers, which read the full label.
+    expect(document.querySelector('.sub-tag-short')).toHaveTextContent('+2');
+    expect(document.querySelector('.sub-tag-short')).toHaveAttribute('aria-hidden', 'true');
+    cleanup();
+    renderRow(quickGame);
+    expect(document.querySelector('.sub-tag')).toBeNull();
+  });
+
+  it('tags how many fit once players or time is chosen, and leaves the tag off when none do', () => {
+    const renderAt = (url: string) => render(
+      <MemoryRouter initialEntries={[url]}>
+        <FilterProvider>
+          <table><tbody><GameRow game={deckGame} isOpen={false} onToggle={vi.fn()} showGroupBadge={false} /></tbody></table>
+        </FilterProvider>
+      </MemoryRouter>,
+    );
+    renderAt('/?p=2');
+    expect(document.querySelector('.sub-tag-full')).toHaveTextContent('1 of 2 games fit');
+    expect(document.querySelector('.sub-tag-short')).toHaveTextContent('+1');
+    cleanup();
+    renderAt('/?p=9');
+    expect(document.querySelector('.sub-tag')).toBeNull();
+  });
+
+  it('heads expansions as expansions, and has no such section without any', () => {
     renderRow(addonGame, true);
-    expect(screen.getByRole('heading', { name: 'Add-ons' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Expansions' })).toBeInTheDocument();
     cleanup();
     renderRow(quickGame, true);
-    expect(screen.queryByRole('heading', { name: 'Add-ons' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Expansions' })).not.toBeInTheDocument();
     expect(document.querySelector('.row-subgames')).toBeNull();
   });
 

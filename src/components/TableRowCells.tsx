@@ -20,6 +20,11 @@ interface CellsProps {
   awards: Award[];
   /** Group label to show beside the name (the collection's grouped sort). */
   groupBadge?: string;
+  /**
+   * What the game holds, beside the name: "+2 expansions", "1 of 12 games
+   * fit". Phones show only the count of the ones that fit ("+2").
+   */
+  subTag?: { label: string; count: number };
   /** Any list-specific cell, slotted in before the actions cell to match `GamesTableHead`. */
   extra?: ReactNode;
   isOpen: boolean;
@@ -32,7 +37,7 @@ interface CellsProps {
  * the row click and any data attributes.
  */
 export default function TableRowCells({
-  name, players, cat, dur, short, kw, awards, groupBadge, extra, isOpen, onToggle,
+  name, players, cat, dur, short, kw, awards, groupBadge, subTag, extra, isOpen, onToggle,
 }: CellsProps) {
   const { state, dispatch } = useFilter();
 
@@ -40,7 +45,15 @@ export default function TableRowCells({
     <>
       <td className="col-name">
         <div className="col-name-wrap">
-          <span className="col-name">{name}</span>
+          <span className="col-name-line">
+            <span className="col-name">{name}</span>
+            {subTag && (
+              <span className="sub-tag">
+                <span className="sub-tag-full">{subTag.label}</span>
+                <span className="sub-tag-short" aria-hidden="true">+{subTag.count}</span>
+              </span>
+            )}
+          </span>
           {groupBadge && <span className="group-badge">{groupBadge}</span>}
           <span className="mobile-short">{short}</span>
           <AwardsCount awards={awards} />

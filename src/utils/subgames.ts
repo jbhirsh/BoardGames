@@ -1,14 +1,18 @@
 import type { FilterState, SubGame, SubGameKind } from '../data/types';
 import { fitsTable, isDeck, tableFiltered } from './filterGames';
 
-/** "game(s)" for a deck's card games, "version(s)" when all are versions, "add-on(s)" otherwise. */
+/**
+ * What the games inside a game are: "game(s)" for a deck's card games, the
+ * kind when they all share one ("expansion(s)", "version(s)"), "add-on(s)"
+ * when they mix.
+ */
 export function subgameNoun(subs: SubGame[], count: number): string {
-  const word = isDeck(subs) ? 'game' : allVersions(subs) ? 'version' : 'add-on';
+  const word = isDeck(subs) ? 'game' : sharedKind(subs) ?? 'add-on';
   return count === 1 ? word : `${word}s`;
 }
 
-function allVersions(subs: SubGame[]): boolean {
-  return subs.length > 0 && subs.every((s) => s.kind === 'version');
+function sharedKind(subs: SubGame[]): SubGameKind | null {
+  return subs.length > 0 && subs.every((s) => s.kind === subs[0].kind) ? subs[0].kind : null;
 }
 
 /**
@@ -22,7 +26,9 @@ export function shownKind(name: string, kind: SubGameKind): Exclude<SubGameKind,
 
 /** What a list of games inside a game is called. */
 export function subgameTitle(subs: SubGame[]): string {
-  return isDeck(subs) ? 'Games in this deck' : allVersions(subs) ? 'Versions' : 'Add-ons';
+  if (isDeck(subs)) return 'Games in this deck';
+  const plural = subgameNoun(subs, 2);
+  return plural[0].toUpperCase() + plural.slice(1);
 }
 
 /**
