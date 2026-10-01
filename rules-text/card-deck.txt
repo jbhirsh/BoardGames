@@ -1,0 +1,111 @@
+Card Deck
+A dozen games for a standard 52-card deck
+House rules written for The Game Room. These are the common rules for each game; plenty of tables play their
+own variations, so agree on any before you start.
+Euchre (4 players, two partnerships)
+Use 24 cards: the 9, 10, J, Q, K and A of each suit. Partners sit opposite each other. Deal 5 cards each,
+turn the next card face up and set the rest aside.
+Choosing trump: starting left of the dealer, each player may tell the dealer to pick up the face-up card,
+making its suit trump, or pass. If someone orders it up, the dealer takes it and discards a card. If
+everyone passes, the card is turned down and, starting left of the dealer again, each player may name a
+different suit as trump or pass. If everyone passes twice, redeal. The team that chose trump are the
+makers. The player who chose trump may go alone, and their partner sits out the hand.
+Card order in trump: the jack of trump (right bower) is highest, then the other jack of the same colour
+(left bower, which counts as a trump), then A, K, Q, 10, 9. Other suits run A, K, Q, J, 10, 9, except that
+the suit of the same colour as trump has lost its jack to the left bower.
+Play: the player left of the dealer leads. Follow suit if you can; otherwise play anything. The highest trump
+wins the trick, or the highest card of the suit led if no trump was played. The winner leads next.
+Scoring: makers who take 3 or 4 tricks score 1; all 5 tricks score 2; a lone hand taking all 5 scores 4.
+Makers who take fewer than 3 are euchred and the other team scores 2. First team to 10 wins.
+Spades (4 players, two partnerships)
+Deal all 52 cards, 13 each. Each player bids the number of tricks they expect to take; a partnership’s
+bids add up to its contract. A bid of nil means you will take no tricks at all.
+The player left of the dealer leads. Follow suit if you can; otherwise play anything. Spades are always
+trump. Spades cannot be led until one has been played on another suit, unless you hold nothing but
+spades.
+Scoring: make your contract and score 10 points per trick bid, plus 1 per extra trick (a bag). Fall short
+and lose 10 per trick bid. Every 10 bags costs 100 points. A successful nil scores 100 and a failed nil
+loses 100; the partner’s tricks count separately. First partnership to 500 wins.
+Hearts (4 players, every player for themselves)
+Deal all 52 cards, 13 each. Before each hand, pass three cards: to the left, then to the right, then across,
+then no pass, and repeat.
+The player holding the 2 of clubs leads it. Follow suit if you can; otherwise play anything. There is no
+trump: the highest card of the suit led wins the trick. Hearts cannot be led until a heart has been played
+on another suit, unless you hold nothing but hearts. By common house rule, no hearts or queen of
+
+spades may be played on the first trick.
+Scoring: each heart you take is 1 point and the queen of spades is 13. Take every heart and the queen
+of spades (shooting the moon) and you score 0 while everyone else scores 26. When someone reaches
+100, the lowest score wins.
+Crazy Eights (2 to 7 players)
+Deal 5 cards each (7 each with two players). Turn the top card of the stock face up to start the discard
+pile.
+On your turn, play a card that matches the top discard’s rank or suit. Eights are wild: play one at any
+time and name the suit to follow. If you cannot play, draw from the stock until you can.
+The first player out of cards wins the hand. To keep score, the winner collects points for everyone else’s
+cards: 50 per eight, 10 per face card, 1 per ace and face value for the rest.
+President (4 to 8 players)
+Deal out the whole deck. Cards rank 3 (low) up to A, with 2 the highest.
+The leader plays a single card, a pair, three or four of a kind. Each following player must play the same
+number of cards of a higher rank, or pass. When everyone passes, the last player to play clears the pile
+and leads again.
+The first player out becomes President and the last becomes Scum. At the start of the next hand, Scum
+gives the President their two best cards and the President gives back any two.
+Spoons (3 or more players)
+Put spoons in the middle of the table, one fewer than the number of players. Deal 4 cards each.
+The dealer draws from the deck, keeps 4 cards and passes one face down to the left. Everyone keeps
+passing a card left as fast as they can, and the last player discards. You are trying to collect four of a
+kind.
+Whoever gets four of a kind quietly takes a spoon, and then everyone grabs one. The player left without
+a spoon takes a letter of S-P-O-O-N; spell it and you are out.
+Egyptian Ratscrew (2 to 6 players)
+Deal out the whole deck face down; nobody looks at their cards. In turn, flip your top card onto the
+middle pile.
+When an ace or face card is played, the next player gets a limited number of flips to play another ace or
+face card: 4 for an ace, 3 for a king, 2 for a queen, 1 for a jack. If they turn up an ace or face card in time,
+the challenge passes to the next player; if they fail, whoever played the last ace or face card takes the
+pile.
+Anyone may slap the pile when the top two cards match in rank (a double) or when the top card
+matches the one two below it (a sandwich), and the first to slap takes the pile. A wrong slap costs a card
+
+under the pile. A player with no cards can still slap back in. Win by collecting every card.
+Speed (2 players)
+Each player takes a 20-card draw pile and picks up 5 cards from it as a hand. Place two face-down piles
+of 5 cards in the middle as spares, and put the last two cards face down between them.
+Both players flip one of the two middle cards at the same time to start two centre piles. Then, as fast as
+you like and without taking turns, play a card from your hand onto either centre card if it is one rank
+higher or lower (ace connects to both king and 2). Keep your hand at 5 cards by drawing from your pile.
+If neither player can play, both flip a new card from the spares onto the centre piles. The first player to
+run out of cards in hand and pile wins.
+Gin Rummy (2 players)
+Deal 10 cards each. Turn the next card face up to start the discard pile; the rest is the stock.
+On your turn, take the top card of the stock or the discard pile, then discard one card. You are building
+melds: three or four cards of the same rank, or three or more cards in sequence in one suit (ace is low).
+Cards outside melds are deadwood: face cards count 10, aces 1, others face value.
+When your deadwood totals 10 or less you may knock: lay out your melds and deadwood. Your opponent
+lays out theirs and may add cards to your melds. If your deadwood is lower, you score the difference.
+Going gin (no deadwood) scores the difference plus 25, and your opponent may not add to your melds.
+If the opponent’s deadwood is equal or lower, they score the difference plus 25. First to 100 wins.
+Golf (2 to 6 players)
+Deal 6 cards face down to each player, laid out in two rows of three. Each player turns any two face up.
+Turn the next card face up to start the discard pile.
+On your turn, draw from the stock or take the top discard. Swap it for one of your six cards (the new card
+goes face up and the old one is discarded), or, if you drew from the stock, discard it unused.
+When one player has all six cards face up, everyone else gets one more turn. Score: ace 1, 2 counts
+minus 2, number cards face value, jacks and queens 10, kings 0, and a matching pair in the same
+column counts 0. Play nine hands; the lowest total wins.
+Go Fish (2 to 6 players)
+Deal 7 cards each (5 each with four or more players). The rest is the pond.
+On your turn, ask one player for a rank you already hold. If they have any, they hand them all over and
+you go again. If not, they say “go fish” and you draw from the pond; if you draw the rank you asked for,
+show it and go again.
+Lay down every set of four (a book). When all thirteen books are made, the player with the most wins.
+
+Klondike Solitaire (1 player)
+Deal seven piles left to right of 1 to 7 cards, with only the top card of each face up. The rest is the stock.
+Build the piles down in alternating colours (a red 9 on a black 10). You may move a whole face-up run,
+and turn up any face-down card that is uncovered. Only a king, or a run starting with a king, may fill an
+empty pile.
+Turn cards from the stock one at a time (or three, for a harder game) onto a waste pile; its top card is in
+play. Move aces to four foundation piles and build each up by suit to the king. You win when all 52 cards
+are on the foundations.

@@ -1,0 +1,311 @@
+Trade
+Build
+SettleLeave no trace
+Leave a legacee
+wood®
+You have arrived on the island of Catan. Its uninhabited lands lie before you,
+stretching for miles in all directions. It offers the promise of bountiful harvests
+and plentiful resources. As you make plans to build a new life here, you discover
+that you are not alone. Several other newly-arrived leaders are planning their
+futures here as well. The race to build a bright and prosperous new community has
+begun!
+The CATAN ® – 5-6 Player Extension™ (aka CATAN 5-6) allows you to add one to two
+players to your CATAN games. The island is larger, the demand for resources is fiercer, and
+the thrills are even greater!
+NOTE: This 2022 revision has new “paired player” rules that replace the special building phase
+found in previous editions of CATAN 5-6. Longtime CATAN fans should take note. You can
+download the new rules from catan.com for free.
+
+22
+Note: When you want to play with 3-4 players again, we have made it easy to separate the
+cardboard CATAN 5-6 components from the CATAN components.
+• Look at the front of the terrain hexes. The CATAN 5-6 hexes all have a
+watermark icon (depicted here) printed in the lower left corner.
+CATAN terrain hexes have no watermarks.
+• Look at the back of the number tokens. The letters on the back of the
+CATAN 5-6 tokens are dark brown. The letters on the standard CATAN
+number tokens are black.
+Game Components
+To play CATAN 5-6, you need nearly all of the components from the CATAN base game,
+plus the following pieces:
+11 terrain hexes
+(1 Desert, 2 ea. Forest, Hills, Pasture,
+Fields, and Mountains)
+25 resource
+cards
+9 development
+cards 2 optional
+harbor pieces
+28 number tokens
+(brown text on back)
+4 small sea frames
+(2 with harbors, 2 without)
+Player 1 and player 2 markers
+with plastic bases
+A A
+88••••••••••
+10 settlements
+(5 per player) 8 cities
+(4 per player)
+30 roads
+(15 per player)
+2 Building Costs
+cards
+• A city replaces an already-built settlement.
+• You may only play 1 development card per turn.*
+• You cannot play a development card on the turn you buy it.*
+*Exception: Playing VP cards for the win.
+• A city replaces an already-built settlement.
+• You may only play 1 development card per turn.*
+• You cannot play a development card on the turn you buy it.*
+*Exception: Playing VP cards for the win.
+
+33
+Game Rules foR 5-6 playeRs
+Except as noted below, CATAN 5-6 uses the same rules found in CATAN. The additional
+rules include:
+• Assembling the larger board (add small frame pieces)
+• Creating the supply (add more cards)
+• The 5-6 player set-up phase
+• The paired players turn
+settinG up a 5-6 playeR Game
+Assembling the Larger Board
+To begin each game, you need to assemble the board. CATAN 5-6 uses a board very
+similar to the one in CATAN, but expanded with additional small sea frames.
+Note: The 5 and 6 player games use all of the hexagonal tiles from CATAN 5-6 and all of the
+tiles from the CATAN base game. However, you only use the number tokens from this extension
+(lettered A to Y and ZA, ZB, and ZB).
+Assemble the frame as specified in CATAN and add the 4 small sea frame pieces from
+CATAN 5-6 as shown here:
+• Place the small “2-2” all-sea frame
+piece between the “2-2” joint of the
+CATAN frames (A).
+• Place the small “3-3” 2:1 wool harbor
+frame piece between the
+“3-3” joint of the CATAN frames (B).
+• Place the samll “5-5” 3:1 harbor
+frame piece between the “5-5” joint of
+the CATAN frames (C).
+• Place the small “6-6” all-sea frame
+piece between the “6-6” joint of the
+CATAN frames (D).
+55 5 5
+3
+4
+22
+4
+2 2
+6 6 6
+3 3 3
+11
+6
+AA
+BB
+CC
+DD
+Add the Small Sea Frames
+
+44
+Create the Supply
+Add the 25 resource cards and 9 development cards to the cards for 3-4 players. Sort the
+resource cards into 5 stacks. Put them face up beside the board. Shuffle the development
+cards and place them face down beside the board. These card stacks form the supply.
+Place the “Longest Road” and “Largest Army” special VP cards beside the supply.
+The 5-6 Player Set-up Phase
+Take your starting pieces
+Select a color and take your 5 settlements, 4 cities, and 15 roads. Also take your color’s
+“Building Costs” card. If this is your first 5-player game, see the note on page 5.
+For your first 5-6 player game: Use the Starting Set-up for 5-6 New Players
+(see image on page 5). Once set-up is complete, give each player their starting resources
+from the settlements marked with white stars (HH) as shown.
+For 5-6 experienced players: Once you are comfortable with the 5-6 player rules, add
+the terrain hexes to the frame as follows:
+1. Shuffle all 30 terrain hexes face down and place them face down inside the frame.
+2. Turn the hexes face up, without changing their location.
+3. Take the number tokens from CATAN 5-6 (brown letters on back).
+Place the number token labeled “A” on any one of the six corner hexes (we chose the
+upper right in our example on page 5). Continue placing the tokens in alphabetical
+order along a spiral, starting on the outside hexes and proceeding counter-clockwise
+toward the center of the board. Place each token so that the numbered side is facing
+up. When the series of tokens reaches a desert hex, skip over that hex and continue on
+the other side.
+Note: The last three tokens are each marked with two letters: ZA, ZB, ZC.
+4. Place the robber on either of the desert hexes.
+Optional: Some experienced players like to randomize their harbors. To do so,
+here’s how: Take the 11 harbor pieces (9 from CATAN + 2 from CATAN 5-6) and
+shuffle them face down. Randomly place them on top of each harbor on the
+frame as shown.
+Starting settlements and resources
+Random harbor
+option
+
+55
+55 5 5
+3
+4
+22
+4
+2 2
+6 6 6
+3 3 3
+11
+6
+1010••••••
+66••••••••••
+88••••••••••
+66••••••••••
+22
+••
+1212
+••
+55••••••••
+1010••••••
+33••••
+99••••••••
+22
+•• 1111••••
+88••••••••••
+44••••••
+1111••••
+55•••••••• 88••••••••••
+44••••••
+99••••••••
+33••••
+44••••••
+33••••66••••••••••
+55••••••••
+1111••••
+1010••••••
+1212
+••
+99••••••••
+Starting Set-up for 5-6 New Players*
+ABC
+D OpQ
+R NXY
+Za MWZcE S
+ZbF T
+G KVU
+JIH
+L
+Number Token Placement Order
+Orange
+Brown
+WhiteWhite
+Blue
+Green
+Red
+* For your first 5 player
+game: One color remains
+inactive in the game. To
+determine which color, a
+player takes 1 road of each
+color and hides them in
+their hand. Each player
+takes 1 road at random
+from this hand (unseen).
+The remaining road is
+the inactive color. Leave
+that color’s settlements
+on the board as inactive
+settlements, but remove
+the roads. This will
+maintain a fair starting
+set-up for all players.
+HH HH
+HH
+HH
+HH
+HH
+
+66
+• Each player, in turn, rolls the dice to determine the starting player as in CATAN.
+• Place your first 2 settlements, 2 roads, and receive your starting resources, using the
+method described in Set-Up on page 12 of the CATAN Almanac.
+new Rules foR 5-6 playeRs
+The phases used in CATAN remain the same–resource production, trade, and build. For
+5-6 players, use the new paired player rules during trading and building.
+Note: If you have played previous versions of CATAN 5-6, this paired player rule replaces the
+special building phase.
+Determine the Paired Players
+• If you are the starting player, place the player 1 marker in front of yourself.
+• Place the player 2 marker in front of the third player to the left of player 1.
+Note: For the remainder of these rules, we will refer to the players with these markers as
+player 1 and player 2, respectively.
+Paired Player Rules
+The phases used in CATAN remain generally the same. Player 1 rolls the dice for the
+turn. However, during the trade/build phase, both player 1 and player 2 can take actions.
+Player 1 must always complete their portion of the paired turn before player 2 can begin
+their portion.
+1.
+2. 3.
+5 players
+The starting player
+is player 1.
+The third player to the left of the
+starting player is player 2.
+6 players
+1.
+2.
+3.
+The starting player
+is player 1.
+The third player to the left of the
+starting player is player 2.
+Paired Players
+
+77
+Paired Player Turn Order
+Player 1 performs this part of a turn just as you would in CATAN.
+• Begin the turn with the production dice roll. All players take their resources
+(or any “7” roll is resolved) as usual in CATAN.
+The Combined Trade/Build Phase is slightly different with the paired players rule.
+Player 1 goes first and may do the following in any order:
+• Trade resource cards with all players as usual AND trade resource cards with the
+supply as usual.
+• Build anything shown on your “Building Costs” card and play 1 development card
+as usual.
+After player 1 completes their portion of the paired turn, player 2 takes their part of
+the paired turn.
+Player 2 may do the following in any order:
+• Trade cards ONLY with the supply.
+• Build anything shown on your “Building Costs” card and play 1 development card
+as usual (even VP cards to win the game).
+After player 2 completes their part of the turn, the paired players each pass their
+respective markers to the player on their left. Player 1 also passes the dice. The new
+player 1 starts a new turn.
+Ending the Game Clarifications
+You win the game if you are the first player to reach 10 or more victory points on your
+turn (as in CATAN). However, if there is ever an instance when both player 1 and
+player 2 reach 10 points during the same turn, player 1 wins the game before player 2
+can take their part of the paired turn.
+
+88
+Player 1 and 2 Actions Overview
+CRedits
+Design: Klaus Teuber
+Art: Michael Menzel, Pete Fenlon
+Graphic Design: Pete Fenlon, Michaela Kienle, and Ron Magin
+Production: Ron Magin, Alex Colón Hernández, Az Sperry
+Paired Player Turn Development: Team CATAN
+Special Thanks: Gavin Allister, Brea Blankenfeld, Arnd Beenen, Sebastian Castro Casas, Morgan
+Dontanville, Pete Fenlon, Arnd Fischer, Jasmin Fuss, Ralph Hamor (LSKC/1-804), Sonja
+Krützfeldt, Stephanie Newman, Donna Prior, Anne Reynolds, Kelli Schmitz, Benjamin Teuber,
+Guido Teuber
+Copyright © 2023 CATAN GmbH and CATAN Studio. CATAN, CATAN – 5-6 Player Extension, The Settlers of
+Catan, the “Catan Sun” logo, the “Glowing Yellow Sun” and “CATAN Board” marks, and all marks herein are
+trademarks of CATAN GmbH (catan.com) and are used under license by CATAN Studio. Published by CATAN
+Studio, 1995 W. County Rd. B2, Roseville, MN 22113. Phone +1.651.639.1905.
+You have purchased a game of the highest quality.
+However, if you find any components
+missing or damaged, please visit:
+catanstudio.com/support
+If you would like to protect your cards in this game, we recommend Gamegenic™ card
+sleeves. This badge indicates the style of sleeve via the color code (RED) and the number
+of packs required (1) to sleeve all the cards in this extension.
+Studio™
+catanstudio.com catan.comPlayer 1 Player 2
+Roll for production (mandatory)
+Trade with other players and the supply Trade with the supply only
+Build Build
+Play 1 development card Play 1 development card
