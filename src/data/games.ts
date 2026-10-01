@@ -285,6 +285,8 @@ export const GAMES: Game[] = [
     yt:"how to play Mysterium board game tutorial",
     awards:[{ name:"As d'Or", year:2016 },{ name:"Golden Geek Best Artwork & Presentation", year:2016 },{ name:"Japan Boardgame Prize Voters' Selection", year:2015 }] },
   { name:"Hogwarts Battle",          slug:"hogwarts-battle",       img:"/images/hogwarts-battle.webp",       rules:"/rules/hogwarts-battle.pdf",       players:"2–4",  min:2,  max:4,  dur:"30–60 min", mins:60,  cat:"medium", group:'coop',
+    rulesLabel:"Game 1",
+    moreRules:[{ slug:"game-2", label:"Game 2", pdf:"/rules/hogwarts-battle.game-2.pdf" },{ slug:"game-3", label:"Game 3", pdf:"/rules/hogwarts-battle.game-3.pdf" },{ slug:"game-4", label:"Game 4", pdf:"/rules/hogwarts-battle.game-4.pdf" },{ slug:"game-5", label:"Game 5", pdf:"/rules/hogwarts-battle.game-5.pdf" },{ slug:"game-6", label:"Game 6", pdf:"/rules/hogwarts-battle.game-6.pdf" },{ slug:"game-7", label:"Game 7", pdf:"/rules/hogwarts-battle.game-7.pdf" }],
     kw:['cooperative','deck-building','thematic'],
     short:"Cooperative Harry Potter deck-builder spanning seven chapters that unlock new cards.",
     desc:"A cooperative deck-builder following Harry Potter across seven progressively harder chapters. Play as Harry, Hermione, Ron, or Neville, acquiring spells while fighting villains. New cards unlock each chapter.",

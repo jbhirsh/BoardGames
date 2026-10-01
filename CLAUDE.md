@@ -65,7 +65,11 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   when it fits on its own or one of its games fits both (a deck only by its
   games, since it is never played on its own), and search matches their
   names. The card's "+N games" button ("k of N games fit" under a filter) and
-  the list view's expanded row list the ones that fit (`SubGameList`).
+  the list view's expanded row list the ones that fit (`SubGameList`). A game
+  can also carry `moreRules`, further rulebooks for the same game (Hogwarts
+  Battle's sheets for Games 2 to 7), each a rules-page tab; they build on
+  each other, so the assistant reads the one on screen and those before it.
+  `rulesLabel` names the tab for its own rulebook.
   Both views share the filter bar: `FilterState.collection` (`'own' | 'want'`,
   mirrored to the URL as `c=want`) picks which list the section renders and
   which one the keyword counts tally; `CLEAR_ALL` keeps the mode.

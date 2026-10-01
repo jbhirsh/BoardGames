@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, within, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router';
 import RulesPage from '../components/RulesPage';
 
@@ -49,13 +49,18 @@ describe('RulesPage', () => {
     const tabs = () => screen.getByRole('navigation', { name: 'Rulebooks' });
     const viewer = () => document.querySelector('iframe')!;
 
-    it('shows no tabs for a game with one rulebook, even with an add-on whose rules came in the box', () => {
+    it('shows no tabs for a game with one rulebook', () => {
       renderAt('/rules/7-wonders');
       expect(screen.queryByRole('navigation', { name: 'Rulebooks' })).not.toBeInTheDocument();
-      cleanup();
-      renderAt('/rules/hogwarts-battle');
-      expect(screen.getByRole('heading', { name: 'Hogwarts Battle' })).toBeInTheDocument();
-      expect(screen.queryByRole('navigation', { name: 'Rulebooks' })).not.toBeInTheDocument();
+    });
+
+    it('gives a game\'s own further rulebooks a tab each, but not an add-on whose rules came in the box', () => {
+      renderAt('/rules/hogwarts-battle/game-4');
+      const links = within(tabs()).getAllByRole('link');
+      expect(links.map(l => l.textContent)).toEqual(['Game 1', 'Game 2', 'Game 3', 'Game 4', 'Game 5', 'Game 6', 'Game 7']);
+      expect(within(tabs()).getByRole('link', { current: 'page' })).toHaveTextContent('Game 4');
+      expect(viewer()).toHaveAttribute('src', '/rules/hogwarts-battle.game-4.pdf');
+      expect(viewer()).toHaveAttribute('title', 'Hogwarts Battle: Game 4 rules');
     });
 
     it('opens on the base game, with a tab per add-on marked by its kind', () => {

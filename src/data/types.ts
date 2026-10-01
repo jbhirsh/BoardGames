@@ -57,6 +57,15 @@ export interface Game extends Filterable {
   slug: string;
   img: string;
   rules: string;
+  /** The rules page's tab for `rules`; "Base game" (or "Overview" for a deck) when absent. */
+  rulesLabel?: string;
+  /**
+   * More rulebooks for this same game, such as Hogwarts Battle's sheets for
+   * Games 2 to 7, each a tab at /rules/<game>.<slug>.pdf. They build on the
+   * game's own rules and on each other, so the rules assistant reads the one
+   * on screen and those before it.
+   */
+  moreRules?: { slug: string; label: string; pdf: string }[];
   players: string;
   group: GroupId;
   short: string;
