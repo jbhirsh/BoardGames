@@ -34,11 +34,11 @@ export default function GamesTableHead({ extra }: { extra?: ReactNode }) {
       <tr>
         {sortable('name', 'Name')}
         {sortable('players', 'Players', 'col-hide col-players-h')}
-        {sortable('dur', 'Duration')}
+        {sortable('dur', 'Duration', 'col-dur-h')}
         <th className="col-hide col-desc">Description</th>
         <th className="col-hide col-tags">Tags</th>
         {extra}
-        <th><span className="sr-only">Actions</span></th>
+        <th className="col-actions-h"><span className="sr-only">Actions</span></th>
       </tr>
     </thead>
   );
