@@ -38,7 +38,10 @@ function makeRes() {
     json(data: unknown) { res.body = data; return res; },
     setHeader(name: string, value: string) { res.headers[name] = value; },
     write(chunk: string) { res.chunks.push(chunk); },
-    end() { res.ended = true; },
+    end(chunk?: string) {
+      if (chunk !== undefined) res.chunks.push(chunk);
+      res.ended = true;
+    },
   };
   return res;
 }
@@ -134,6 +137,13 @@ describe('chat handler', () => {
     expect(res.body).toEqual({ error: 'slug is required' });
   });
 
+  it.each([undefined, null, 'not json'])('returns 400 when the body is %s', async (body) => {
+    const res = await run(body);
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toEqual({ error: 'slug is required' });
+    expect(vi.mocked(streamRulesAnswer)).not.toHaveBeenCalled();
+  });
+
   it('returns 400 when message is missing or blank', async () => {
     expect((await run({ slug: 'catan' })).statusCode).toBe(400);
     expect((await run({ slug: 'catan', message: '   ' })).statusCode).toBe(400);
@@ -192,6 +202,38 @@ describe('chat handler', () => {
     const res = await run({ slug: 'catan', message: 'hi' });
     expect(res.statusCode).toBe(500);
     expect(res.body).toEqual({ error: 'Failed to generate response' });
+    expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(boom);
+  });
+
+  // Once the first chunk is written the 200 and its headers are sent, so a
+  // status can no longer be set; the stream ends with a note instead, so the
+  // partial reply doesn't read as a finished answer.
+  it('ends a reply already streaming with a cut-off note when the pipeline fails mid-stream', async () => {
+    const boom = new Error('stream reset');
+    async function* failing() {
+      yield { text: 'Each player ' };
+      throw boom;
+    }
+    vi.mocked(streamRulesAnswer).mockResolvedValue(failing() as unknown as Stream);
+    const res = await run({ slug: 'catan', message: 'hi' });
+    expect(res.chunks).toEqual(['Each player ', '\n\n_(Answer cut off — please try again.)_']);
+    expect(res.ended).toBe(true);
+    expect(res.statusCode).toBe(0);
+    expect(res.body).toBeUndefined();
+    expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(boom);
+  });
+
+  it('still returns 500 when the stream fails before its first chunk', async () => {
+    const boom = new Error('blocked');
+    async function* failing(): AsyncGenerator<{ text: string }> {
+      yield* [];
+      throw boom;
+    }
+    vi.mocked(streamRulesAnswer).mockResolvedValue(failing() as unknown as Stream);
+    const res = await run({ slug: 'catan', message: 'hi' });
+    expect(res.statusCode).toBe(500);
+    expect(res.body).toEqual({ error: 'Failed to generate response' });
+    expect(res.chunks).toEqual([]);
     expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(boom);
   });
 });
