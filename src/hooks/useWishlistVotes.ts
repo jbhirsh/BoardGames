@@ -2,13 +2,33 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 const ANON_KEY = 'wishlist:anonId';
 
+/**
+ * The anonymous id shape the votes API accepts (ANON_RE in api/_lib/ids.ts).
+ * src can't import api, so it is mirrored here and a test keeps them in step.
+ */
+export const ANON_ID_RE = /^[a-zA-Z0-9-]{8,64}$/;
+
+// The id for this page load when localStorage is blocked or full, so voting
+// still works, just without being remembered across visits.
+let sessionAnonId: string | null = null;
+
+/**
+ * This browser's anonymous voter id. A stored value the API would reject (it
+ * ignores one on GET and answers 400 to every vote) is replaced with a fresh
+ * id; when storage can't be read or written, an in-memory id serves the
+ * session.
+ */
 export function getAnonId(): string {
-  let id = localStorage.getItem(ANON_KEY);
-  if (!id) {
-    id = crypto.randomUUID();
+  try {
+    const stored = localStorage.getItem(ANON_KEY);
+    if (stored !== null && ANON_ID_RE.test(stored)) return stored;
+    const id = crypto.randomUUID();
     localStorage.setItem(ANON_KEY, id);
+    return id;
+  } catch {
+    sessionAnonId ??= crypto.randomUUID();
+    return sessionAnonId;
   }
-  return id;
 }
 
 export interface VotesSnapshot {
