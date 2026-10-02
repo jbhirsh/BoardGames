@@ -24,6 +24,10 @@ const MAX_HISTORY_CONTENT = RULES_ASSISTANT_MAX_OUTPUT_TOKENS * 10 * 4;
 // games' sheets.
 const MAX_PARTS = 16;
 
+// Ends a reply Gemini fails partway through: a clean end would read as a
+// finished answer. The client renders the reply as Markdown.
+const CUT_OFF_NOTE = '\n\n_(Answer cut off — please try again.)_';
+
 // Expensive paid AI call, unauthenticated endpoint: bound requests per IP.
 const chatLimiter = getLimiter('chat', 10, 60);
 
@@ -34,7 +38,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (!(await enforceRateLimit(chatLimiter, req, res))) return;
 
-  const { slug, message, history, parts } = req.body;
+  // Vercel leaves body undefined with no payload (and null for a JSON null),
+  // which would throw here, outside any try, as a bare 500. Treating it as an
+  // empty body sends it through the same 400s as any other bad input.
+  const { slug, message, history, parts } = req.body ?? {};
 
   // Validate slug
   if (!slug || typeof slug !== 'string' || !SLUG_RE.test(slug)) {
@@ -94,6 +101,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   Sentry.setTag("game_slug", slug);
   Sentry.setContext("chat", { slug, messageLength: message.length, historyLength: history?.length ?? 0 });
 
+  // Set once the first chunk is written: the 200 and its headers are then on
+  // the wire, so a later failure can only end the response with a note.
+  let streaming = false;
   try {
     const response = await streamRulesAnswer({
       rulesText,
@@ -108,6 +118,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const text = chunk.text;
       if (text) {
         res.write(text);
+        streaming = true;
       }
     }
 
@@ -116,6 +127,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     Sentry.captureException(err);
     await Sentry.flush(2000);
     console.error('Gemini API error:', err);
+    if (streaming) {
+      res.end(CUT_OFF_NOTE);
+      return;
+    }
     return res.status(500).json({ error: 'Failed to generate response' });
   }
 }
