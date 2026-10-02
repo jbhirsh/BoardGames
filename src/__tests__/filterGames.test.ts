@@ -34,9 +34,9 @@ describe('filterGames', () => {
     });
 
     // Regression: filtering must follow the curated `cat`, not a re-derivation
-    // from `mins`. Cards Against Humanity ships as mins:90, cat:"medium" — the
-    // one game where the two disagree. Under mins-bucketing it vanished from
-    // its own "medium" filter and wrongly appeared under "long".
+    // from `mins`. Cards Against Humanity once shipped as mins:90,
+    // cat:"medium"; under mins-bucketing it vanished from its own "medium"
+    // filter and wrongly appeared under "long".
     it('follows cat even when mins would fall in a different bucket', () => {
       const mismatched = { ...mediumGame, name: 'Party 90', slug: 'party-90', mins: 90, cat: 'medium' as const };
       const games = [mismatched, longGame];
