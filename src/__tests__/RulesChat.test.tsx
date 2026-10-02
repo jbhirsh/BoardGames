@@ -8,16 +8,18 @@ vi.mock('@sentry/react', () => ({
   captureException: vi.fn(),
 }));
 
-function streamResponse(chunks: string[]): Response {
+/** A streamed reply; a string chunk is sent as its UTF-8 bytes, a byte array as is. */
+function streamResponse(chunks: (string | Uint8Array)[]): Response {
   const encoder = new TextEncoder();
   let i = 0;
+  const bytes = (c: string | Uint8Array) => (typeof c === 'string' ? encoder.encode(c) : c);
   return {
     ok: true,
     body: {
       getReader: () => ({
         read: () =>
           i < chunks.length
-            ? Promise.resolve({ done: false, value: encoder.encode(chunks[i++]) })
+            ? Promise.resolve({ done: false, value: bytes(chunks[i++]) })
             : Promise.resolve({ done: true, value: undefined }),
       }),
     },
@@ -83,6 +85,30 @@ describe('RulesChat', () => {
     await waitFor(() =>
       expect(screen.getByPlaceholderText('Ask a rules question...')).toBeEnabled(),
     );
+  });
+
+  // The network splits the stream wherever it likes, including inside a
+  // multi-byte character, which must be joined, not decoded half at a time.
+  it('joins a character split across two chunks', async () => {
+    const bytes = new TextEncoder().encode('Lead the 10 of ♠ — café rules.');
+    const cut = bytes.indexOf(0xe2) + 1; // one byte into the three-byte ♠
+    vi.stubGlobal('fetch', vi.fn(async () => streamResponse([bytes.slice(0, cut), bytes.slice(cut)])));
+    setup();
+    openPanel();
+    send('Which suit leads?');
+
+    expect(await screen.findByText('Lead the 10 of ♠ — café rules.')).toBeInTheDocument();
+    expect(screen.queryByText(/\uFFFD/)).toBeNull();
+  });
+
+  it('marks a character the stream cut off at its end', async () => {
+    const bytes = new TextEncoder().encode('Spades ♠');
+    vi.stubGlobal('fetch', vi.fn(async () => streamResponse([bytes.slice(0, -1)])));
+    setup();
+    openPanel();
+    send('Which suit?');
+
+    expect(await screen.findByText('Spades \uFFFD')).toBeInTheDocument();
   });
 
   it('says what it is reading when told, and nothing when not', () => {

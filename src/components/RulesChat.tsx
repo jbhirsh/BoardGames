@@ -87,17 +87,24 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope }: { slug: st
 
       setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const text = decoder.decode(value);
+      const append = (text: string) =>
         setMessages((prev) => {
           const updated = [...prev];
           const last = updated[updated.length - 1];
           updated[updated.length - 1] = { ...last, content: last.content + text };
           return updated;
         });
+
+      // A chunk can end partway through a multi-byte character; `stream`
+      // holds those bytes for the next chunk instead of garbling them, and
+      // the final decode() flushes any the stream cut off.
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        append(decoder.decode(value, { stream: true }));
       }
+      const tail = decoder.decode();
+      if (tail) append(tail);
     } catch (err) {
       Sentry.captureException(err, { tags: { slug } });
       setMessages((prev) => [
