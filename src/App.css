@@ -587,6 +587,7 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .word-badge-status{font-weight:600;font-size:13px;}
 .word-valid{background:rgba(52,199,89,0.12);color:#2d8a4e;border:1px solid rgba(52,199,89,0.25);}
 .word-invalid{background:rgba(255,59,48,0.1);color:#d42020;border:1px solid rgba(255,59,48,0.2);}
+.word-unchecked{background:rgba(142,142,147,0.12);color:var(--text2);border:1px solid rgba(142,142,147,0.25);}
 .word-meanings{display:flex;flex-direction:column;gap:12px;}
 .word-phonetic{color:var(--text3);font-size:13px;font-style:italic;}
 .word-meaning{display:flex;flex-direction:column;gap:4px;}
