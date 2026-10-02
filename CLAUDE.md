@@ -257,7 +257,9 @@ secrets belong in tracked source.
   with the `Co-Authored-By:` trailer. One logical change per commit; squash
   "fix typo"/"oops" churn before opening or updating a PR. Linear history
   (rebase, not merge). Amend or squash your own feature branch freely before it
-  merges, but never amend, rebase, or force-push `main`.
+  merges, but never amend, rebase, or force-push `main`. CI's commit-message
+  step (`.github/scripts/check-commits.sh`) fails a PR on a subject over 72
+  chars, a missing body, a fixup/"oops" commit or a merge commit.
 - **Never** `git add -A`/`git add .` (stage files explicitly), modify a test to
   make it pass (fix the implementation instead), install packages outside the
   project root, or use `--no-verify`.
