@@ -133,10 +133,9 @@ jobs:
 
             **TypeScript / ESLint:**
               - All new code must be typed (strict mode).
-              - NEVER use inline `// eslint-disable-next-line` or
-                `/* eslint-disable */` comments. If a rule needs to be relaxed,
-                it must be a file-scoped override in `eslint.config.js`. Flag
-                any inline disable as a blocking issue.
+              - A lint rule may only be relaxed by a narrow, file-scoped
+                override in `eslint.config.js` with a comment saying why.
+                Flag a rule turned off or downgraded globally.
 
             **Commit hygiene (inspect `git log` on the PR branch):**
               - Each commit subject should be imperative and ≤72 chars, with a
@@ -158,13 +157,88 @@ jobs:
                 can't happen. Only validate at system boundaries.
 
             **Security / safety:**
-              - Flag any committed secrets, API keys, or `.env` files.
               - Flag use of `git add -A` or `--no-verify` patterns if visible
                 in commit messages or scripts.
               - DO NOT flag floating GitHub Action version tags
                 (e.g. `@v5`, `@v1`) as a supply-chain risk or suggest pinning
                 to commit SHAs. The maintainer has accepted this trade-off
                 and prefers automatic patch/minor updates.
+
+            ## Server API (`api/`)
+
+            The serverless handlers are the trust boundary. Flag:
+              - An owner-only action (listing the queue, deciding, adding,
+                editing or removing) that doesn't go through `requireAdmin` in
+                `suggestions.ts`, or, in `auth.ts`, through `isAdmin` and
+                `isJsonRequest` from `_lib/session.ts`: the session check, plus a
+                JSON-only body for mutations. Requiring JSON is the CSRF
+                protection: a cross-site form can post urlencoded data with the
+                cookie attached but can't send JSON without a preflight.
+              - An emailed-link flow (approve/deny, magic-link sign-in) that
+                changes state on a plain GET, since mail scanners follow every
+                link, or that doesn't verify its token. Sign-in tokens must stay
+                single-use (`getdel`).
+              - A new endpoint or parameter that takes untrusted input without
+                validating it (slug format, lengths, counts, allowed values).
+              - A new public (unauthenticated) path that writes data, sends
+                mail or calls a paid API without the per-IP limit from
+                `_lib/rateLimit.ts` (`enforceRateLimit`), as voting, chat,
+                suggesting and sign-in requests have.
+              - A caught error in a handler that isn't reported to Sentry.
+              - The session cookie losing `HttpOnly`, `Secure` or `SameSite=Lax`.
+              - An external call (Gemini, Resend, BoardGameGeek) whose failure
+                breaks a path CLAUDE.md says keeps working: a BoardGameGeek miss
+                still approves the suggestion, and missing Resend configuration
+                returns 503 rather than storing a suggestion.
+
+            ## Beyond the diff
+
+            A change can break code it doesn't touch. When the PR changes a
+            function's signature or behavior, a type, an exported constant, an
+            API response, a storage key or a route, find every caller and reader
+            (Grep the repo) and check each still works. Flag a breakage on the
+            changed line and name the file it breaks.
+
+            ## Stored data
+
+            Redis holds live production data that outlives every deploy: the
+            vote sets (`wishlist:votes:<id>`), the suggestion hashes and the
+            `suggestions:active` / `suggestions:approved` / `suggestions:unsent`
+            lists, sessions and magic-link tokens (`auth:*`) and rate-limit
+            counters. Each browser also keeps localStorage: the anonymous voter
+            id (`wishlist:anonId`), which dedupes votes, and the remembered
+            display name (`gameroom:name`). Flag a change to a key name or to a
+            stored value's shape (a renamed or removed field, a changed
+            encoding) unless the code still reads the old shape or migrates it;
+            otherwise existing records are orphaned or unreadable, and a renamed
+            voter id lets every browser vote again.
+
+            ## New dependencies
+
+            When `package.json` gains a runtime dependency (`dependencies`, not
+            `devDependencies`), flag it if existing code, the platform or an
+            already-installed package covers the need. This is about whether the
+            package is needed at all; known vulnerabilities are checked elsewhere.
+
+            ## Documentation drift
+
+            The docs are the tracked Markdown files that describe the code as it
+            is now (`git ls-files '*.md'`): README.md, CLAUDE.md and the like.
+            Plans, changelogs and learnings logs record intent or history; leave
+            those alone. Read the docs against the diff. A statement the PR makes
+            false (a renamed file, function or component; a changed command,
+            script, route, env var, default, limit or version; a moved test
+            location; an architecture description that no longer holds) is a
+            blocking issue:
+              - If the PR's diff includes that line of the doc, put the inline
+                comment on it with a GitHub suggestion block (a fenced block
+                tagged `suggestion`) holding the corrected line(s), so it can be
+                applied in one click.
+              - Otherwise put the inline comment on the changed code line that
+                made the doc wrong. Name the doc file and line, quote the stale
+                text, and give the replacement text.
+            Something the PR adds that the docs don't mention yet is not drift:
+            note it in the top-level summary, not inline.
 
             ## Output format
 
