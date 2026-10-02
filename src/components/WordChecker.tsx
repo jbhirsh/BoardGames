@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import * as Sentry from '@sentry/react';
 
 interface Definition {
   definition: string;
@@ -12,15 +13,57 @@ interface Meaning {
 }
 
 interface DictEntry {
-  word: string;
   phonetic?: string;
   meanings: Meaning[];
 }
 
-interface Result {
-  valid: boolean;
-  word: string;
-  entries?: DictEntry[];
+/**
+ * `invalid` only when the dictionary answered 404 (it has no such word);
+ * `unchecked` when it couldn't be asked or answered something unexpected,
+ * which says nothing about the word.
+ */
+type Result =
+  | { status: 'valid'; word: string; entries: DictEntry[] }
+  | { status: 'invalid'; word: string }
+  | { status: 'unchecked'; word: string };
+
+const STATUS_TEXT: Record<Result['status'], string> = {
+  valid: 'Valid word',
+  invalid: 'Not a valid word',
+  unchecked: "Couldn't check right now",
+};
+
+const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
+const optionalText = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+
+function parseDefinition(v: unknown): Definition | null {
+  if (!isObject(v) || typeof v.definition !== 'string') return null;
+  return { definition: v.definition, example: optionalText(v.example) };
+}
+
+function parseMeaning(v: unknown): Meaning | null {
+  if (!isObject(v) || typeof v.partOfSpeech !== 'string' || !Array.isArray(v.definitions)) return null;
+  const definitions = v.definitions.map(parseDefinition);
+  if (definitions.some((d) => d === null)) return null;
+  return { partOfSpeech: v.partOfSpeech, definitions: definitions as Definition[] };
+}
+
+function parseEntry(v: unknown): DictEntry | null {
+  if (!isObject(v) || !Array.isArray(v.meanings)) return null;
+  const meanings = v.meanings.map(parseMeaning);
+  if (meanings.some((m) => m === null)) return null;
+  return { phonetic: optionalText(v.phonetic), meanings: meanings as Meaning[] };
+}
+
+/**
+ * The dictionary's answer for a word it knows, or null when the body isn't
+ * the non-empty list of entries the renderer needs. Only the fields shown are
+ * checked; an optional one of the wrong type is dropped.
+ */
+function parseEntries(data: unknown): DictEntry[] | null {
+  if (!Array.isArray(data) || data.length === 0) return null;
+  const entries = data.map(parseEntry);
+  return entries.some((e) => e === null) ? null : (entries as DictEntry[]);
 }
 
 export default function WordChecker() {
@@ -41,14 +84,22 @@ export default function WordChecker() {
         `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`
       );
 
-      if (res.ok) {
-        const data: DictEntry[] = await res.json();
-        setResult({ valid: true, word, entries: data });
+      if (res.status === 404) {
+        setResult({ status: 'invalid', word });
+      } else if (!res.ok) {
+        setResult({ status: 'unchecked', word });
       } else {
-        setResult({ valid: false, word });
+        const entries = parseEntries(await res.json());
+        if (entries) {
+          setResult({ status: 'valid', word, entries });
+        } else {
+          Sentry.captureMessage('word checker: unexpected dictionary response', { level: 'warning' });
+          setResult({ status: 'unchecked', word });
+        }
       }
     } catch {
-      setResult({ valid: false, word });
+      // Offline, or a body that isn't JSON: the word went unchecked.
+      setResult({ status: 'unchecked', word });
     }
 
     setIsLoading(false);
@@ -59,13 +110,11 @@ export default function WordChecker() {
       <div className="word-checker-body">
         {result && (
           <div className="word-result">
-            <div className={`word-badge ${result.valid ? 'word-valid' : 'word-invalid'}`}>
+            <div className={`word-badge word-${result.status}`}>
               <span className="word-badge-word">{result.word}</span>
-              <span className="word-badge-status">
-                {result.valid ? 'Valid word' : 'Not a valid word'}
-              </span>
+              <span className="word-badge-status">{STATUS_TEXT[result.status]}</span>
             </div>
-            {result.valid && result.entries?.map((entry, i) => (
+            {result.status === 'valid' && result.entries.map((entry, i) => (
               <div key={i} className="word-meanings">
                 {entry.phonetic && (
                   <div className="word-phonetic">{entry.phonetic}</div>
