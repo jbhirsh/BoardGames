@@ -58,7 +58,8 @@ A sortable list view is also available:
 - **Monitoring:** Sentry (browser + serverless) and Vercel Analytics
 - **Testing:** Vitest 5, React Testing Library, jsdom, `axe-core` / `vitest-axe`
   (per-file 80% line coverage enforced); StrykerJS mutation testing over the
-  pure-logic and component code
+  pure-logic and component code; Playwright end-to-end tests in Chromium
+  against the production build, with the API stubbed
 - **Tooling:** ESLint 10 (flat config, `typescript-eslint`, `jsx-a11y-x`,
   `react-hooks`), Node 24
 - **Rules pipeline:** `unpdf` for text extraction with a `tesseract.js` OCR
@@ -92,6 +93,7 @@ suggestion emails). Real secrets live in `.env.local`, which is gitignored.
 | `npm run lint` | Run ESLint (includes static a11y checks) |
 | `npx vitest run` | Run the test suite once (`--coverage` to enforce thresholds) |
 | `npm run test:mutation` | Run StrykerJS mutation testing (see below) |
+| `npm run test:e2e` | Build, serve and run the Playwright end-to-end suite in `e2e/` |
 
 ## Architecture
 
@@ -104,8 +106,9 @@ suggestion emails). Real secrets live in `.env.local`, which is gitignored.
 - `scripts/` — the PDF-to-text pipeline that generates `rules-text/` from
   `public/rules/*.pdf` for the AI assistant.
 - CI runs lint, type-check, accessibility tests, unit tests with coverage, and a
-  production build on every PR (`.github/workflows/`), plus a mutation-testing
-  workflow — PR-scoped runs and a weekly full sweep (see below).
+  production build on every PR (`.github/workflows/`), plus the Playwright
+  end-to-end suite (`e2e.yml`) and a mutation-testing workflow — PR-scoped
+  runs and a weekly full sweep (see below).
 
 See [`CLAUDE.md`](CLAUDE.md) for a deeper tour of the codebase and conventions.
 

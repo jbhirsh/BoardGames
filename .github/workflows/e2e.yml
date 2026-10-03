@@ -1,0 +1,60 @@
+# End-to-end tests (Playwright): the production build, served by vite
+# preview, driven in Chromium through the flows people use — browsing and
+# filtering the collection, the wishlist and its votes, the random picker, a
+# rules page and its assistant, the score calculator and the word checker.
+# Every /api call and the dictionary API are stubbed (e2e/fixtures.ts), so
+# the job needs no secrets and touches no live service.
+name: E2E
+
+on:
+  # No `paths:` filter: E2E Tests (Playwright) is a required status check on
+  # main, and a workflow skipped by path filtering never reports, which
+  # leaves the PR pending forever.
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # The browser matching the installed @playwright/test, plus the system
+      # libraries it needs on the runner.
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # playwright.config.ts builds the app and serves it with vite preview.
+      - name: Run Playwright tests
+        run: npm run test:e2e
+
+      # cancelled() too, so a run that hits the timeout still leaves its traces.
+      - name: Upload Playwright report
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14

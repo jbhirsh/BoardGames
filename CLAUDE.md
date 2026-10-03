@@ -27,7 +27,17 @@ npx vitest                              # watch mode
 npx vitest run                          # single run (CI uses this)
 npx vitest run --coverage               # with coverage (thresholds enforced)
 npx vitest run src/__tests__/a11y.test.tsx   # accessibility suite only
+
+# End-to-end (Playwright, Chromium): builds the app, serves it with
+# `vite preview` on port 4174, and drives it with every /api call stubbed
+npm run test:e2e
+npx playwright test e2e/home.spec.ts    # one spec file
+npx playwright show-report              # open the last HTML report
 ```
+
+`npm run test:e2e` needs a Chromium matching the installed `@playwright/test`
+(`npx playwright install chromium`). Where a different preinstalled build has
+to stand in, point `PLAYWRIGHT_CHROMIUM_EXECUTABLE` at it.
 
 Node 24 is used in CI. Git hooks in `.githooks/` (activated by `npm install`
 via `core.hooksPath`) run the same checks locally so failures surface before
@@ -222,10 +232,11 @@ secrets belong in tracked source.
 
 ## Conventions
 
-- **TypeScript strict everywhere.** Three project configs under one solution:
+- **TypeScript strict everywhere.** Project configs under one solution:
   `tsconfig.app.json` (`src`, DOM libs), `tsconfig.api.json` (`api`, Node libs),
-  `tsconfig.node.json` (`vite.config.ts`). `npm run build` runs `tsc -b` across
-  all of them.
+  `tsconfig.node.json` (`vite.config.ts`), `tsconfig.eval.json` (`eval`) and
+  `tsconfig.e2e.json` (`e2e`, `playwright.config.ts`). `npm run build` runs
+  `tsc -b` across all of them.
 - **TypeScript 7 runs side by side with the TypeScript 6 API.** TS 7 (the
   native compiler) ships no JavaScript API, and typescript-eslint loads that
   API through `require('typescript')` (its peer range stops below 6.1). So
@@ -245,11 +256,23 @@ secrets belong in tracked source.
   Coverage thresholds are enforced **per file at 80% lines** (`vite.config.ts`),
   so new reducer actions, filter utilities, and API handlers need their own
   tests. Tests must be pure logic or RTL — no real network, no real browser.
+- **End-to-end tests live in `e2e/`** (Playwright, Chromium only), run
+  against the production build. They are the one place with a real browser,
+  and still no real network: `e2e/fixtures.ts` stubs every `/api/*` call
+  with fixed data, fails a test that makes an unstubbed one, and aborts any
+  request off the preview origin; a spec that needs the dictionary API stubs
+  it itself. Import `test` and `expect` from `./fixtures`. Find elements by
+  role, label, placeholder or text, never CSS (lint enforces it with
+  `playwright/no-raw-locators`), and wait on UI state with web-first
+  assertions, never on a timer. A spec may import `src/data` for expected
+  values but nothing else from the app (dependency-cruiser). Vitest
+  excludes `e2e/`, and it is outside coverage and the Stryker mutate scope.
+  Add a test here for a new user-facing flow.
 - **Pure utilities stay pure.** Filtering/sorting/URL logic in `src/utils/` and
   `src/context/filterReducer.ts` should have no side effects and be directly
   unit-testable. The import side of this (utils/data may not reach React or
-  app layers, api and src stay separate) is enforced by dependency-cruiser
-  (`.dependency-cruiser.cjs`, run in CI).
+  app layers, api and src stay separate, e2e reaches only `src/data`) is
+  enforced by dependency-cruiser (`.dependency-cruiser.cjs`, run in CI).
 - **Validate only at boundaries.** The serverless handlers validate untrusted
   input (slug format, lengths, vote values); don't add defensive checks for
   states that can't occur inside the app.
@@ -285,14 +308,20 @@ the review have both passed, and attempts mechanical fixes when their npm
 bumps fail a check (a person's PR is left to its author). `mutation.yml`
 runs StrykerJS over the source files a PR touched and fails below the
 `break` score in `stryker.config.json` (a weekly full sweep applies the
-same bar). All CI runs
+same bar). `e2e.yml` (workflow `E2E`, job `E2E Tests (Playwright)`) runs
+the Playwright suite on every PR, installing its own Chromium, and uploads
+the HTML report and the failing attempt's trace when it fails or times
+out; in CI a failed test is retried once, and a test that passes only on
+that retry still fails the run (`failOnFlakyTests`). All CI runs
 on GitHub-hosted `ubuntu-latest` runners.
 
 Every PR check is a required status check on `main` (`ci`, Claude Review,
-Secret scan, StrykerJS, Answer-Quality Eval, Semgrep, Vercel, API smoke
-test), so nothing merges until all of them report. A required check that
-never reports blocks the PR forever, so PR workflows must not use a
-workflow-level `paths:` filter; decide inside the job instead and skip the
+Secret scan, StrykerJS, Answer-Quality Eval, E2E Tests (Playwright),
+Semgrep, Vercel, API smoke test), so nothing merges until all of them
+report. (E2E Tests (Playwright) is new: the owner adds it to the `main`
+rule's required checks; until then bot PRs can merge past it.) A required
+check that never reports blocks the PR forever, so PR workflows must not use
+a workflow-level `paths:` filter; decide inside the job instead and skip the
 expensive step (a skipped step still reports success). Because every check
 is required, arming auto-merge early is safe: GitHub waits for all of them.
 

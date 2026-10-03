@@ -40,3 +40,8 @@ eval/results.json
 # Stryker mutation testing (temp sandboxes + HTML report output)
 .stryker-tmp
 reports
+
+# Playwright end-to-end output
+test-results
+playwright-report
+blob-report
