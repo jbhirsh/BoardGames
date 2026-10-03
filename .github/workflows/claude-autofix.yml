@@ -9,7 +9,7 @@ on:
     # every completion here, so whichever run comes last does the work.
     # The rest are the other gating workflows a dependency bump can break;
     # when one fails on a Dependabot PR, the CI-fix step below takes it.
-    workflows: ["CI", "Claude Review", "Mutation", "Rules Assistant Eval"]
+    workflows: ["CI", "Claude Review", "Mutation", "Rules Assistant Eval", "E2E"]
     types: [completed]
 
 concurrency:
@@ -244,8 +244,9 @@ jobs:
               - `npm run typecheck`
               - `npx vitest run --coverage`
               - `npm run build`
+              - `npx playwright install --with-deps chromium && npm run test:e2e`
 
-            Some failing checks can't run here (E2E, visual regression,
+            Some failing checks can't run here (visual regression,
             deployment smoke tests, mutation testing). For those, fix only
             what the log makes certain and the checks above confirm;
             otherwise treat it as B or C. If you can't get everything green,

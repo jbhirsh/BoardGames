@@ -8,6 +8,7 @@
  *   utils → utils, data               (pure helpers; no React, no context)
  *   context ↛ components              (state layer under the UI, not beside it)
  *   api ⇹ src                         (serverless bundle and SPA stay separate)
+ *   e2e → src/data                    (browser tests drive the built app)
  *
  * CommonJS (.cjs) because the package is "type": "module" and
  * dependency-cruiser loads its config via require().
@@ -69,6 +70,13 @@ module.exports = {
       comment: 'The SPA talks to the API over HTTP, never by importing server code into the browser bundle. src/__tests__ is exempt: api handlers are deliberately written against small interfaces so those tests can drive them with fakes.',
       from: { path: '^src/', pathNot: '^src/__tests__/' },
       to: { path: '^api/' },
+    },
+    {
+      name: 'e2e-through-the-browser',
+      severity: 'error',
+      comment: 'The Playwright suite drives the built app in a browser. It may read the static data layer for expected values, never import components, state or server code.',
+      from: { path: '^e2e/' },
+      to: { path: '^(src|api)/', pathNot: '^src/data/' },
     },
   ],
   options: {
