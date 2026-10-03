@@ -275,7 +275,9 @@ secrets belong in tracked source.
 Vercel (`vercel.json`): `framework: vite`, output `dist/`, SPA rewrites send
 non-API, non-file routes to `index.html`, and `api/*` maps to the serverless
 functions. CI (`.github/workflows/ci.yml`) runs lint, type-check, a11y tests,
-unit tests with coverage, and a build on `ubuntu-latest` for every PR to `main`.
+unit tests with coverage, a build and a production dependency audit
+(`npm audit --omit=dev`, high and above) on `ubuntu-latest` for every PR to
+`main`.
 The automated Claude review runs alongside it in its own workflow,
 `claude-review.yml` (not waiting for CI, so a red PR is reviewed too):
 claude-code-action skips any PR that edits the workflow file it runs from,

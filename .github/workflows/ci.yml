@@ -77,3 +77,10 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      # Fail the PR on known high/critical vulnerabilities in the code that
+      # actually ships. Scoped to production deps and high+ severity — a
+      # personal repo shouldn't block on moderate dev-dependency churn, which
+      # Dependabot handles on its own cadence.
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
