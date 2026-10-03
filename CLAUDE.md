@@ -275,13 +275,17 @@ secrets belong in tracked source.
 Vercel (`vercel.json`): `framework: vite`, output `dist/`, SPA rewrites send
 non-API, non-file routes to `index.html`, and `api/*` maps to the serverless
 functions. CI (`.github/workflows/ci.yml`) runs lint, type-check, a11y tests,
-unit tests with coverage, and a build on `ubuntu-latest` for every PR to `main`,
-followed by an automated Claude review; `claude-autofix.yml` addresses
-unresolved review comments on bots' PRs (Dependabot's) and attempts mechanical
-fixes when their npm bumps fail a check (a person's PR is left to its
-author). `mutation.yml` runs StrykerJS over the source
-files a PR touched and fails below the `break` score in
-`stryker.config.json` (a weekly full sweep applies the same bar). All CI runs
+unit tests with coverage, and a build on `ubuntu-latest` for every PR to `main`.
+The automated Claude review runs alongside it in its own workflow,
+`claude-review.yml` (not waiting for CI, so a red PR is reviewed too):
+claude-code-action skips any PR that edits the workflow file it runs from,
+so a separate file keeps PRs that change CI reviewed. `claude-autofix.yml`
+addresses unresolved review comments on bots' PRs (Dependabot's) once CI and
+the review have both passed, and attempts mechanical fixes when their npm
+bumps fail a check (a person's PR is left to its author). `mutation.yml`
+runs StrykerJS over the source files a PR touched and fails below the
+`break` score in `stryker.config.json` (a weekly full sweep applies the
+same bar). All CI runs
 on GitHub-hosted `ubuntu-latest` runners.
 
 Every PR check is a required status check on `main` (`ci`, Claude Review,
