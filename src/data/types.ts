@@ -23,6 +23,13 @@ export interface ExtraRulebook {
   pdf: string;
 }
 
+/** One of our table's changes to a game's printed rules. */
+export interface HouseRule {
+  name: string;
+  /** What to do, in plain text. */
+  text: string;
+}
+
 /**
  * A game that lives under another one: Catan's add-ons, or the games a deck of
  * cards plays. Each has its own players, time, video and (usually) rulebook, so
@@ -89,6 +96,12 @@ export interface Game extends Filterable {
    * on screen and those before it.
    */
   moreRules?: ExtraRulebook[];
+  /**
+   * The ways we play it differently from the printed rules, listed above the
+   * rulebook on every tab of its rules page (an add-on's tabs included, since
+   * it is played on top of the game).
+   */
+  houseRules?: HouseRule[];
   players: string;
   group: GroupId;
   short: string;

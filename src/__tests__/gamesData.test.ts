@@ -67,6 +67,14 @@ describe('games data', () => {
   });
 
 
+  const withHouseRules = GAMES.filter((g) => g.houseRules).map((g) => [g.slug, g.houseRules!] as const);
+
+  it.each(withHouseRules)('%s has named, written house rules', (_slug, rules) => {
+    expect(rules.length).toBeGreaterThan(0);
+    expect(new Set(rules.map((r) => r.name)).size).toBe(rules.length);
+    for (const r of rules) for (const text of [r.name, r.text]) expect(text.trim()).not.toBe('');
+  });
+
   const subgames = GAMES.flatMap((g) => (g.subgames ?? []).map((s) => [`${g.slug}/${s.slug}`, s] as const));
 
   it('has games inside games to check', () => {
