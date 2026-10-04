@@ -93,6 +93,9 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   `rulesLabel` names the tab for its own rulebook. A sub-game takes both too:
   the Monster Box has a tab per box. The rules page shows the tabs above the
   chat, which says what it is reading for the tab on screen (`chatScope`).
+  A game's `houseRules` (Hogwarts Battle's) are listed in a folded section
+  above the rulebook on every one of its tabs; the assistant still answers
+  from the printed rules only.
   Both views share the filter bar: `FilterState.collection` (`'own' | 'want'`,
   mirrored to the URL as `c=want`) picks which list the section renders and
   which one the keyword counts tally; `CLEAR_ALL` keeps the mode.

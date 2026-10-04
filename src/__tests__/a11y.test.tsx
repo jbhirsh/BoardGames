@@ -82,6 +82,16 @@ describe('accessibility', () => {
     expect(results).toHaveNoViolations();
   }, TIMEOUT_MS);
 
+  it('rules page with house rules open has no axe violations', async () => {
+    const router = createMemoryRouter([
+      { element: <App />, children: [{ path: '/rules/:slug/:part?', element: <RulesPage /> }] },
+    ], { initialEntries: ['/rules/hogwarts-battle'] });
+    const { container } = render(<RouterProvider router={router} />);
+    screen.getByText('House rules').closest('details')!.open = true;
+    const results = await axe(container, { ...axeOptions, iframes: false });
+    expect(results).toHaveNoViolations();
+  }, TIMEOUT_MS);
+
   it('home page (wishlist) has no axe violations', async () => {
     const router = createMemoryRouter([
       { element: <App />, children: [{ path: '/', element: <HomePage /> }] },

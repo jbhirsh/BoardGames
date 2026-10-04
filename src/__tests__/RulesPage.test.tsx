@@ -45,6 +45,31 @@ describe('RulesPage', () => {
     expect(screen.queryByPlaceholderText('Enter a word...')).not.toBeInTheDocument();
   });
 
+  describe('house rules', () => {
+    const houseRules = () => screen.getByText('House rules').closest('details')!;
+
+    it('lists the game\'s house rules, folded so the rulebook stays in view', () => {
+      renderAt('/rules/hogwarts-battle');
+      expect(houseRules()).not.toHaveAttribute('open');
+      expect(within(houseRules()).getByText('7')).toHaveTextContent('7 rules');
+      const names = within(houseRules()).getAllByRole('term').map(t => t.textContent);
+      expect(names).toEqual(['Altered villain setup', 'Split by cost', 'Stack duplicates', 'Clear the market', 'Dismiss for half', 'Detention amnesty', 'Epic mode']);
+      expect(within(houseRules()).getByText(/pay half its cost in Influence, rounded up/)).toBeInTheDocument();
+    });
+
+    it('keeps them on an add-on\'s tabs, which are played on top of the game', () => {
+      renderAt('/rules/hogwarts-battle/monster-box-2');
+      // An unknown tab falls back to Game 1, which has them too: pin the tab.
+      expect(within(screen.getByRole('navigation', { name: 'Rulebooks' })).getByRole('link', { current: 'page' })).toHaveTextContent('Monster Box 2');
+      expect(within(houseRules()).getByText('Altered villain setup')).toBeInTheDocument();
+    });
+
+    it('shows nothing for a game without any', () => {
+      renderAt('/rules/7-wonders');
+      expect(screen.queryByText('House rules')).not.toBeInTheDocument();
+    });
+  });
+
   describe('rulebook tabs', () => {
     const tabs = () => screen.getByRole('navigation', { name: 'Rulebooks' });
     const viewer = () => document.querySelector('iframe')!;

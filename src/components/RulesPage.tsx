@@ -79,6 +79,20 @@ export default function RulesPage() {
             ))}
           </nav>
         )}
+        {game.houseRules && (
+          // Folded so the rulebook stays in view; the count says it's there.
+          <details className="house-rules">
+            <summary>House rules <span className="house-rules-count">{game.houseRules.length}<span className="sr-only"> rules</span></span></summary>
+            <dl>
+              {game.houseRules.map(r => (
+                <div key={r.name} className="house-rule">
+                  <dt>{r.name}</dt>
+                  <dd>{r.text}</dd>
+                </div>
+              ))}
+            </dl>
+          </details>
+        )}
         <RulesChatPanel slug={game.slug} gameName={game.name} parts={chatParts(game, book)} scope={chatScope(game, book)} />
         {wordCheckerOpen && <WordChecker />}
         <div className="rules-viewer">
