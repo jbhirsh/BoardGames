@@ -7,12 +7,11 @@ interface Props {
   isActive: boolean;
   isOpen: boolean;
   onToggle: () => void;
-  onClear: (e: React.MouseEvent) => void;
   children: ReactNode;
   style?: React.CSSProperties;
 }
 
-export default function Dropdown({ id, label, isActive, isOpen, onToggle, onClear, children, style }: Props) {
+export default function Dropdown({ id, label, isActive, isOpen, onToggle, children, style }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const close = useCallback(() => {
     if (isOpen) onToggle();
@@ -33,11 +32,6 @@ export default function Dropdown({ id, label, isActive, isOpen, onToggle, onClea
           </svg>
         </span>
       </button>
-      {isActive && (
-        <button className="dd-clear-x" onClick={onClear}>
-          {'\u2715'}
-        </button>
-      )}
       {isOpen && (
         <div className="dd-panel open" data-dd={id}>
           {children}

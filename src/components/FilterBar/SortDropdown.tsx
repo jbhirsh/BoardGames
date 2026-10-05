@@ -26,7 +26,6 @@ export default function SortDropdown({ isOpen, onToggle }: Props) {
       isActive={false}
       isOpen={isOpen}
       onToggle={onToggle}
-      onClear={(e) => e.stopPropagation()}
     >
       {SORT_OPTIONS.map((opt) => (
         <button

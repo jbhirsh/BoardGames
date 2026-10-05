@@ -27,10 +27,6 @@ export default function DurationDropdown({ isOpen, onToggle }: Props) {
       isActive={isActive}
       isOpen={isOpen}
       onToggle={onToggle}
-      onClear={(e) => {
-        e.stopPropagation();
-        dispatch({ type: 'SET_DURATION', payload: 'all' });
-      }}
     >
       {OPTIONS.map((opt) => (
         <button

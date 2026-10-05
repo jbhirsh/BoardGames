@@ -38,10 +38,6 @@ export default function KeywordsDropdown({ isOpen, onToggle }: Props) {
       isActive={isActive}
       isOpen={isOpen}
       onToggle={onToggle}
-      onClear={(e) => {
-        e.stopPropagation();
-        dispatch({ type: 'CLEAR_KEYWORDS' });
-      }}
     >
       <div className="kw-mode-toggle">
         <button
