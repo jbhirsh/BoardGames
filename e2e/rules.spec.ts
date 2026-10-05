@@ -55,3 +55,28 @@ test('a game\'s house rules open above its rulebook, on every tab', async ({ pag
   await expect(page).toHaveURL(/\/rules\/hogwarts-battle\/monster-box-of-monsters$/);
   await expect(page.getByText('House rules')).toBeVisible();
 });
+
+test('a rate-limited question comes back to the box and Retry asks it again', async ({ page }) => {
+  // The first ask is rate limited; the retry falls through to the fixture's answer.
+  let asked = 0;
+  await page.route('**/api/chat', (route) =>
+    asked++ === 0
+      ? route.fulfill({ status: 429, contentType: 'application/json', body: '{"error":"Too many requests."}' })
+      : route.fallback(),
+  );
+  await page.goto(`/rules/${SLUG}`);
+  await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
+
+  const box = page.getByPlaceholder('Ask a rules question...');
+  const question = 'Does everyone answer each question?';
+  await box.fill(question);
+  await page.getByRole('button', { name: 'Send' }).click();
+
+  await expect(page.getByRole('alert')).toHaveText(/Too many questions just now/);
+  await expect(box).toHaveValue(question);
+
+  await page.getByRole('button', { name: 'Retry' }).click();
+  await expect(page.getByText('Yes. Every player answers each question, then you vote.')).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await expect(page.getByText(question)).toHaveCount(1);
+});
