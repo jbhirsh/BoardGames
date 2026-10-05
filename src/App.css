@@ -566,11 +566,18 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 /* ══ RULES CHAT ══════════════════════════════════════════════ */
 .rules-chat-toggle{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-size:14px;font-weight:600;color:var(--blue);background:var(--blue-bg);border:1px solid rgba(0,113,227,0.2);border-radius:var(--r-sm);cursor:pointer;transition:background .15s,border-color .15s;}
 .rules-chat-toggle:hover{background:rgba(0,113,227,0.12);border-color:rgba(0,113,227,0.35);}
+a.rules-chat-toggle{text-decoration:none;}
 
 .rules-chat-panel{margin-bottom:20px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow-md);overflow:hidden;display:flex;flex-direction:column;height:420px;}
 
 .rules-chat-scope{padding:10px 20px;font-size:12.5px;font-weight:500;color:var(--text2);background:var(--bg);border-bottom:1px solid var(--border);}
 .rules-chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;}
+/* Unused, the panel is just the greeting and the starters, not 420px of blank. */
+.rules-chat-panel-fresh{height:auto;}
+.rules-chat-panel-fresh .rules-chat-messages{flex:none;}
+.rules-chat-starters{display:flex;flex-wrap:wrap;gap:8px;}
+.rules-chat-starter{padding:7px 12px;font-size:13px;font-weight:500;color:var(--blue);background:var(--surface);border:1px solid rgba(0,113,227,0.3);border-radius:999px;cursor:pointer;font-family:inherit;text-align:left;}
+.rules-chat-starter:hover{background:var(--blue-bg);}
 
 .rules-chat-msg{display:flex;}
 .rules-chat-msg-user{justify-content:flex-end;}
@@ -774,8 +781,10 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
   .rules-box-art{ width:64px; height:64px; }
   .rules-title-info{ flex:1 1 calc(100% - 78px); min-width:0; }
   .rules-game-name{ white-space:normal; overflow:visible; text-overflow:clip; font-size:22px; margin-bottom:6px; }
-  /* basis is half-row minus half-gap so two buttons (Bananagrams) sit side-by-side; a lone button grows to fill the row. */
-  .rules-title-row .rules-chat-toggle{ flex:1 1 calc(50% - 7px); justify-content:center; }
+  /* basis is half-row minus half-gap so two buttons (Bananagrams' word checker,
+     7 Wonders' calculator) sit side-by-side where they fit, else stack; a lone
+     button grows to fill the row. A label never wraps inside its button. */
+  .rules-title-row .rules-chat-toggle{ flex:1 1 calc(50% - 7px); justify-content:center; padding:10px 12px; white-space:nowrap; }
 
   /* Chat + word checker panel. A hard 420px is taller than the space left
      under the page header on a small phone, which pushed the text field
@@ -783,6 +792,7 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
      browser toolbars showing, so the panel fits without resizing as they
      collapse. The cap keeps it from growing on larger phones. */
   .rules-chat-panel{ height:min(420px, 60svh); }
+  .rules-chat-panel-fresh{ height:auto; }
   .rules-chat-messages{ padding:14px; }
   .rules-chat-input{ padding:10px 12px; padding-bottom:max(10px, env(safe-area-inset-bottom)); }
 

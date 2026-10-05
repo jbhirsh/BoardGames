@@ -100,3 +100,18 @@ test('an answer that names another rulebook links to its tab', async ({ page }) 
   await page.getByRole('link', { name: 'Open 5–6 Player Extension' }).click();
   await expect(page).toHaveURL(/\/rules\/catan\/5-6-player-extension$/);
 });
+
+test('a starter question asks itself, and a game with a calculator links to it', async ({ page }) => {
+  await page.goto('/rules/7-wonders');
+  await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
+  const starters = page.getByRole('group', { name: 'Try asking' });
+  const sent = nextPost(page, '/api/chat');
+  await starters.getByRole('button', { name: 'How does a turn go?' }).click();
+
+  expect((await sent).postDataJSON()).toEqual({ slug: '7-wonders', message: 'How does a turn go?', history: [] });
+  await expect(page.getByText('Yes. Every player answers each question, then you vote.')).toBeVisible();
+  await expect(starters).toHaveCount(0);
+
+  await page.getByRole('link', { name: 'Score calculator' }).click();
+  await expect(page).toHaveURL(/\/score\/7-wonders$/);
+});

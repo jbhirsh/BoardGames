@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { rulebooks, rulebookPath, chatParts, chatScope, rulesPathFor, mentionedRulebooks } from '../utils/rulebooks';
+import { rulebooks, rulebookPath, chatParts, chatScope, rulesPathFor, mentionedRulebooks, starterQuestions } from '../utils/rulebooks';
 import { initialFilterState } from '../data/initialFilterState';
 import { GAMES } from '../data/games';
 import { quickGame } from './testData';
@@ -217,5 +217,59 @@ describe('mentionedRulebooks', () => {
     expect(mentionedRulebooks('Game 3 adds that.', game, two)).toEqual([three]);
     // Spaces bound the match: "Game 20" is not Game 2.
     expect(mentionedRulebooks('Score 20 at game 20.', game, rulebooks(game)[0])).toEqual([]);
+  });
+});
+
+describe('starterQuestions', () => {
+  const game = (slug: string) => GAMES.find((g) => g.slug === slug)!;
+
+  it('asks setup, turn and win for a game\'s own rulebook, at a table it seats', () => {
+    const wonders = game('7-wonders');
+    expect(starterQuestions(wonders, rulebooks(wonders)[0])).toEqual([
+      'How do we set up for 4 players?', 'How does a turn go?', 'How do you win?',
+    ]);
+    const two: Game = { ...quickGame, min: 2, max: 2 };
+    expect(starterQuestions(two, rulebooks(two)[0])[0]).toBe('How do we set up for 2 players?');
+    const solo: Game = { ...quickGame, min: 1, max: 1 };
+    expect(starterQuestions(solo, rulebooks(solo)[0])[0]).toBe('How do we set up for 1 player?');
+    const big: Game = { ...quickGame, min: 5, max: 10 };
+    expect(starterQuestions(big, rulebooks(big)[0])[0]).toBe('How do we set up for 5 players?');
+  });
+
+  it('asks across a deck\'s games on its overview, and how to deal on a game\'s tab', () => {
+    const deck = game('card-deck');
+    const [overview, first] = rulebooks(deck);
+    const [a, b] = deck.subgames!;
+    expect(starterQuestions(deck, overview)).toEqual([
+      'Which of these games work for 4 players?', `How do you play ${a.name}?`, `How do you win at ${b.name}?`,
+    ]);
+    expect(starterQuestions(deck, first)).toEqual([
+      `How do we deal ${a.name} for ${Math.min(Math.max(4, a.min), a.max)} players?`, `How does a turn go in ${a.name}?`, `How do you win at ${a.name}?`,
+    ]);
+    const solitaire = rulebooks(deck).find((r) => deck.subgames!.find((s) => s.slug === r.part)?.max === 1)!;
+    expect(starterQuestions(deck, solitaire)[0]).toBe(`How do we deal ${solitaire.name}?`);
+    const lone: Game = { ...quickGame, subgames: [sub({ name: 'Snap', slug: 'snap', rules: '/rules/q.snap.pdf' })] };
+    expect(starterQuestions(lone, rulebooks(lone)[0])[2]).toBe('How do you win at Snap?');
+  });
+
+  it('asks what an add-on changes, at a table the add-on seats', () => {
+    const catan = game('catan');
+    const ext = rulebooks(catan).find((r) => r.part === '5-6-player-extension')!;
+    expect(starterQuestions(catan, ext)).toEqual([
+      'What does 5–6 Player Extension change?', 'How do we set up for 5 players?', 'How do you win?',
+    ]);
+  });
+
+  it('asks what an add-on\'s further rulebook changes too', () => {
+    const game: Game = { ...quickGame, subgames: [sub({
+      name: 'Big Box', slug: 'big', kind: 'expansion', rulesLabel: 'Box 1', rules: '/rules/q.big.pdf',
+      moreRules: [{ slug: 'big-2', label: 'Box 2', pdf: '/rules/q.big-2.pdf' }],
+    })] };
+    expect(starterQuestions(game, rulebooks(game)[2])[0]).toBe('What does Box 2 change?');
+  });
+
+  it('asks what is new in a further rulebook of the same game', () => {
+    const more: Game = { ...quickGame, moreRules: [{ slug: 'game-2', label: 'Game 2', pdf: '/rules/q.2.pdf' }] };
+    expect(starterQuestions(more, rulebooks(more)[1])[0]).toBe("What's new in Game 2?");
   });
 });

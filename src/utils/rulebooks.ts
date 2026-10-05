@@ -134,3 +134,32 @@ export function mentionedRulebooks(answer: string, game: Game, shown: Rulebook):
     (text.includes(words(b.label)) || text.includes(words(b.part))),
   );
 }
+
+/** A table size to ask about: four where the game seats four, else the nearest it does. */
+function seats(t: { min: number; max: number }): string {
+  const n = Math.min(Math.max(4, t.min), t.max);
+  return `${n} ${n === 1 ? 'player' : 'players'}`;
+}
+
+/**
+ * Three questions to start the rules assistant with on a tab, shaped by what
+ * the tab is: a deck's overview asks across its games and a deck game's tab
+ * names that game, an add-on (or one of its further rulebooks) asks what it
+ * changes, a game's further rulebook what is new, and anything else the
+ * setup, turn and win questions every table asks first.
+ */
+export function starterQuestions(game: Game, book: Rulebook): string[] {
+  const subs = game.subgames ?? [];
+  if (book.part === undefined) {
+    if (isDeck(subs)) return [`Which of these games work for ${seats(game)}?`, `How do you play ${subs[0].name}?`, `How do you win at ${(subs[1] ?? subs[0]).name}?`];
+    return [`How do we set up for ${seats(game)}?`, 'How does a turn go?', 'How do you win?'];
+  }
+  const sub = subs.find((s) => s.slug === book.part || s.moreRules?.some((r) => r.slug === book.part));
+  if (!sub) return [`What's new in ${book.label}?`, 'How does a turn go?', 'How do you win?'];
+  // A deck's games are all read on every tab, so a question names its game.
+  if (isDeck(subs)) {
+    const deal = sub.max === 1 ? `How do we deal ${sub.name}?` : `How do we deal ${sub.name} for ${seats(sub)}?`;
+    return [deal, `How does a turn go in ${sub.name}?`, `How do you win at ${sub.name}?`];
+  }
+  return [`What does ${book.label} change?`, `How do we set up for ${seats(sub)}?`, 'How do you win?'];
+}
