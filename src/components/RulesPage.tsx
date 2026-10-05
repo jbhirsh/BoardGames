@@ -5,6 +5,7 @@ import { rulebooks, rulebookPath, chatParts, chatScope } from '../utils/rulebook
 import { shownKind } from '../utils/subgames';
 import RulesChatProvider, { RulesChatToggle, RulesChatPanel } from './RulesChat';
 import WordChecker from './WordChecker';
+import NotFoundPage from './NotFoundPage';
 
 // Scrolls the tab strip sideways to the chosen tab. scrollIntoView would also
 // scroll the page to bring the strip itself into view.
@@ -19,12 +20,7 @@ export default function RulesPage() {
   const [wordCheckerOpen, setWordCheckerOpen] = useState(false);
 
   if (!game) {
-    return (
-      <div className="rules-page">
-        <Link to="/" className="back-link">&larr; Back to The Game Room</Link>
-        <h1 className="rules-not-found">Game not found</h1>
-      </div>
-    );
+    return <NotFoundPage title="Game not found" message="We don't have a rulebook at this address. Pick a game from the collection to read its rules." />;
   }
 
   // An unknown tab goes to the game's own rulebook rather than a not-found

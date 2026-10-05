@@ -526,7 +526,9 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .rules-game-name{font-family:'Playfair Display',serif;font-size:clamp(24px,4vw,36px);font-weight:700;color:var(--dark);line-height:1.2;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rules-game-desc{font-size:14px;color:var(--text2);line-height:1.5;}
 .rules-title-row .rules-chat-toggle{flex-shrink:0;}
-.rules-not-found{font-family:'Playfair Display',serif;font-size:28px;color:var(--dark);margin-top:24px;}
+/* Not found: the hero, filling the screen since it is the whole page. */
+.not-found{min-height:100svh;display:flex;flex-direction:column;justify-content:center;border-bottom:none;}
+.not-found .pick-btn{text-decoration:none;}
 .rules-books{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:thin;}
 .rules-book{display:inline-flex;align-items:center;gap:7px;flex-shrink:0;padding:8px 14px;font-size:13px;font-weight:500;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);text-decoration:none;white-space:nowrap;transition:background .15s,color .15s,border-color .15s;}
 .rules-book:hover{color:var(--blue);border-color:rgba(0,113,227,0.3);background:var(--blue-bg);}
