@@ -80,3 +80,23 @@ test('a rate-limited question comes back to the box and Retry asks it again', as
   await expect(page.getByRole('alert')).toHaveCount(0);
   await expect(page.getByText(question)).toHaveCount(1);
 });
+
+test('under a players filter, Rules opens the add-on the game fits through', async ({ page }) => {
+  // Catan seats 3–4; at five it is listed for its 5–6 Player Extension.
+  await page.goto('/?q=catan&p=5&v=grid');
+  await page.getByRole('link', { name: 'Rules' }).click();
+  await expect(page).toHaveURL(/\/rules\/catan\/5-6-player-extension$/);
+});
+
+test('an answer that names another rulebook links to its tab', async ({ page }) => {
+  await page.route('**/api/chat', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/plain; charset=utf-8', body: "That's in the 5 6 Player Extension." }),
+  );
+  await page.goto('/rules/catan');
+  await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
+  await page.getByPlaceholder('Ask a rules question...').fill('How do we play with five?');
+  await page.getByRole('button', { name: 'Send' }).click();
+
+  await page.getByRole('link', { name: 'Open 5–6 Player Extension' }).click();
+  await expect(page).toHaveURL(/\/rules\/catan\/5-6-player-extension$/);
+});

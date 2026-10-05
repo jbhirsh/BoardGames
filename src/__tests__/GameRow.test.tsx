@@ -5,6 +5,7 @@ import GameRow from '../components/GameRow';
 import { FilterProvider } from '../context/FilterContext';
 import { quickGame, bananagramsGame, sevenWondersGame, deckGame, addonGame } from './testData';
 import type { Game } from '../data/types';
+import { GAMES } from '../data/games';
 
 function renderRow(game: Game, isOpen = false, onToggle = vi.fn(), showGroupBadge = false) {
   return render(
@@ -112,6 +113,18 @@ describe('GameRow', () => {
     renderRow(quickGame);
     const pill = screen.getByText('Card Game');
     fireEvent.click(pill);
+  });
+
+  it('points Rules at the add-on the players filter admits the game through', () => {
+    const catan = GAMES.find((g) => g.slug === 'catan')!;
+    render(
+      <MemoryRouter initialEntries={['/?p=5']}>
+        <FilterProvider>
+          <table><tbody><GameRow game={catan} isOpen onToggle={vi.fn()} showGroupBadge={false} /></tbody></table>
+        </FilterProvider>
+      </MemoryRouter>
+    );
+    expect(screen.getByRole('link', { name: /Rules/ })).toHaveAttribute('href', '/rules/catan/5-6-player-extension');
   });
 
   it('renders Rules link to /rules/slug when game has rules', () => {

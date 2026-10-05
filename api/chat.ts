@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as Sentry from '@sentry/node';
-import { loadRulesText, streamRulesAnswer, RULES_ASSISTANT_MAX_OUTPUT_TOKENS } from './_lib/rulesAssistant.js';
+import { loadRulesText, otherRulebooks, otherRulebooksNote, streamRulesAnswer, RULES_ASSISTANT_MAX_OUTPUT_TOKENS } from './_lib/rulesAssistant.js';
 import { enforceRateLimit, getLimiter } from './_lib/rateLimit.js';
 import { SLUG_RE } from './_lib/slug.js';
 
@@ -93,7 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Read rules text
   let rulesText: string;
   try {
-    rulesText = loadRulesText(slug, parts);
+    rulesText = loadRulesText(slug, parts) + otherRulebooksNote(otherRulebooks(slug, parts));
   } catch {
     return res.status(404).json({ error: 'Rules not found for this game' });
   }

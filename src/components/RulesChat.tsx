@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, createContext, useContext } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import * as Sentry from '@sentry/react';
+import { Link } from 'react-router';
 import Markdown from 'react-markdown';
 import { AiRulesIcon } from './Icons';
 
@@ -35,11 +36,25 @@ export function RulesChatToggle() {
   );
 }
 
+/** A tab an answer points to: what it is called and where it opens. */
+export interface RulebookLink {
+  label: string;
+  to: string;
+}
+
 /**
  * `parts` names the extra rulebooks the assistant reads along with the game's
- * own, and `scope` says in words what it is reading.
+ * own, and `scope` says in words what it is reading. `linksFor` finds the
+ * other tabs an answer names, so "that's in the 5–6 Player Extension" comes
+ * with a way there.
  */
-export function RulesChatPanel({ slug, gameName, parts = [], scope }: { slug: string; gameName: string; parts?: string[]; scope?: string }) {
+export function RulesChatPanel({ slug, gameName, parts = [], scope, linksFor }: {
+  slug: string;
+  gameName: string;
+  parts?: string[];
+  scope?: string;
+  linksFor?: (answer: string) => RulebookLink[];
+}) {
   const { isOpen } = useContext(ChatContext);
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: 'Hi! Ask me anything about the rules for ' + gameName + '.' },
@@ -185,6 +200,10 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope }: { slug: st
             ) : (
               <div className="rules-chat-bubble">
                 {msg.role === 'assistant' ? <Markdown>{msg.content}</Markdown> : msg.content}
+                {/* Once the answer is whole, so links don't come and go mid-stream. */}
+                {msg.role === 'assistant' && i > 0 && !(isLoading && i === messages.length - 1) && linksFor?.(msg.content).map((l) => (
+                  <Link key={l.to} className="rules-chat-tablink" to={l.to}>Open {l.label} <span aria-hidden="true">→</span></Link>
+                ))}
               </div>
             )}
           </div>

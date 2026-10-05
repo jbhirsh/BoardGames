@@ -87,7 +87,10 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   award count, close its description (in its column, or under the name
   where the description folds in there), and both list their names on
   hover or tap (`Popover`, shared with `AwardsBadge`); the expanded row
-  lists the games in full. An add-on with a fuller `desc` or
+  lists the games in full. When the players and time filters admit a game
+  only through an add-on with its own rulebook, its Rules link opens that
+  tab (`rulesPathFor`: Catan at five opens the 5–6 Player Extension).
+  An add-on with a fuller `desc` or
   `detail` opens in place with More. A game
   can also carry `moreRules`, further rulebooks for the same game (Hogwarts
   Battle's sheets for Games 2 to 7), each a rules-page tab; they build on
@@ -132,7 +135,10 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
 - **`chat.ts`** — the AI rules assistant. Reads `rules-text/<slug>.txt` plus the
   `parts` the rules page names (`rules-text/<slug>.<sub>.txt`: every game in a
   deck, or just the add-on on screen, since an expansion's rules on top of the
-  base game's crowd out the answer), sends
+  base game's crowd out the answer), then the names alone of the game's
+  other rulebooks (`otherRulebooksNote`, from the files beside it; the eval's
+  `askRulesAssistant` adds it too) so an answer can point to the tab that
+  covers a question, which the chat then links (`mentionedRulebooks`); sends
   it plus the recent chat history to Google Gemini (`@google/genai`,
   `gemini-2.5-flash`) and streams the reply back as plain text. Validates slug
   format and each of `parts` (must match the same slug regex as `votes.ts`,

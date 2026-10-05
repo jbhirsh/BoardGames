@@ -11,6 +11,8 @@ vi.mock('@sentry/node', () => ({
 
 vi.mock('../../api/_lib/rulesAssistant.js', () => ({
   loadRulesText: vi.fn(),
+  otherRulebooks: vi.fn(() => []),
+  otherRulebooksNote: vi.fn(() => ''),
   streamRulesAnswer: vi.fn(),
   RULES_ASSISTANT_MAX_OUTPUT_TOKENS: 1024,
 }));
@@ -22,7 +24,7 @@ vi.mock('../../api/_lib/rateLimit.js', () => ({
 
 import * as Sentry from '@sentry/node';
 import handler from '../../api/chat';
-import { loadRulesText, streamRulesAnswer } from '../../api/_lib/rulesAssistant.js';
+import { loadRulesText, otherRulebooks, otherRulebooksNote, streamRulesAnswer } from '../../api/_lib/rulesAssistant.js';
 import { enforceRateLimit } from '../../api/_lib/rateLimit.js';
 
 type Stream = Awaited<ReturnType<typeof streamRulesAnswer>>;
@@ -91,6 +93,15 @@ describe('chat handler', () => {
     await run({ slug: 'catan', message: 'hi', parts: ['cities-and-knights'] });
     expect(vi.mocked(loadRulesText)).toHaveBeenCalledWith('catan', ['cities-and-knights']);
     expect(vi.mocked(streamRulesAnswer)).toHaveBeenCalled();
+  });
+
+  it('names the game\'s other rulebooks after the ones it reads', async () => {
+    vi.mocked(otherRulebooks).mockReturnValueOnce(['5-6-player-extension']);
+    vi.mocked(otherRulebooksNote).mockReturnValueOnce(' + the extension exists');
+    await run({ slug: 'catan', message: 'hi', parts: ['cities-and-knights'] });
+    expect(vi.mocked(otherRulebooks)).toHaveBeenCalledWith('catan', ['cities-and-knights']);
+    expect(vi.mocked(otherRulebooksNote)).toHaveBeenCalledWith(['5-6-player-extension']);
+    expect(vi.mocked(streamRulesAnswer).mock.calls[0][0].rulesText).toBe('the rules + the extension exists');
   });
 
   it('reads only the game\'s own rules when no parts are named', async () => {

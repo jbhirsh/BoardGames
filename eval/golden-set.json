@@ -220,6 +220,15 @@
       "matchType": "judge",
       "sourceQuote": "",
       "notes": "UNANSWERABLE. Searched uno.txt for 'jump', 'out of turn', and 'identical' — zero matches. Jump-in is a common house rule (and appears in other UNO editions) but this rulebook text does not cover it."
+    },
+    {
+      "id": "catan-five-players-points-to-extension",
+      "game": "catan",
+      "question": "How do we play Catan with 5 players?",
+      "expected": "5\\W{0,3}6\\W{0,3}player\\W{0,3}extension",
+      "matchType": "regex",
+      "sourceQuote": "",
+      "notes": "Asked on Catan's base tab, which sends only the base rulebook: it covers 3-4 players and says nothing about five. The assistant is told the game's other rulebooks by name (otherRulebooksNote), so it should point to the 5-6 Player Extension instead of saying the rules don't cover it (#140)."
     }
   ]
 }
