@@ -23,7 +23,7 @@ export default function GameCollection({ hidden = false }: { hidden?: boolean })
   return (
     <section id={hidden ? undefined : 'collection'} ref={sectionRef} hidden={hidden}>
       <div className="sec-hd">
-        <h2 className="sec-title">Our Collection</h2>
+        <h2 className="sec-title" tabIndex={-1}>Our Collection</h2>
         <span className="sec-count">{filteredGames.length} {filteredGames.length === 1 ? 'game' : 'games'}</span>
         <div className="sec-right">
           <CollectionToggle />

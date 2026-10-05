@@ -8,7 +8,7 @@ import type { GroupId } from '../data/types';
 export default function GridView() {
   const { state, filteredGames } = useFilter();
 
-  if (filteredGames.length === 0) return <NoResults message="No games match your filters." />;
+  if (filteredGames.length === 0) return <NoResults kind="games" />;
 
   if (isGrouped(state)) {
     const groups = GROUP_ORDER.filter((g) => filteredGames.some((gm) => gm.group === g));

@@ -139,3 +139,17 @@ test('pages carry their own titles and the site has a link preview', async ({ pa
   await page.goto('/rules/catan');
   await expect(page).toHaveTitle('Catan rules · The Game Room');
 });
+
+test('an empty result names the filters and offers to drop one', async ({ page }) => {
+  // Nothing long seats ten and is a word game.
+  await page.goto('/?d=long&p=10&k=word');
+  await expect(page.getByText('No games match your filters.')).toBeVisible();
+  // The hidden wishlist section has its own empty state; act on the one showing.
+  await expect(page.getByText('Filtering for 60+ min, 10 players and Word.').filter({ visible: true })).toBeVisible();
+
+  await page.getByRole('button', { name: /^Drop Word, \d+ games?$/ }).filter({ visible: true }).click();
+  await expect(page).toHaveURL(/\/\?d=long&p=10$/);
+  await expect(page.getByRole('button', { name: rowToggles }).first()).toBeVisible();
+  // The button that was clicked is gone; focus lands on the list's heading.
+  await expect(page.getByRole('heading', { level: 2, name: 'Our Collection' })).toBeFocused();
+});
