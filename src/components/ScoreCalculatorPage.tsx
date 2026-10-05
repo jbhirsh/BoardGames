@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { GAMES } from '../data/games';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
@@ -12,22 +12,77 @@ const SCIENCE_ICONS: Record<string, string> = {
   gears: '/images/science-gear.png',
 };
 
-interface PlayerScores {
-  id: number;
-  name: string;
-  military: number;
-  coins: number;
-  wonder: number;
-  civilian: number;
-  tablets: number;
-  compasses: number;
-  gears: number;
-  commercial: number;
-  guilds: number;
-}
+const SCORE_FIELDS = ['military', 'coins', 'wonder', 'civilian', 'tablets', 'compasses', 'gears', 'commercial', 'guilds'] as const;
+type ScoreField = typeof SCORE_FIELDS[number];
+
+// Each field keeps the text as typed, so an empty box or a lone "-" survives
+// while someone is mid-entry; totals read it through num().
+type PlayerScores = { id: number; name: string } & Record<ScoreField, string>;
 
 function emptyScores(name: string): PlayerScores {
-  return { id: nextPlayerId++, name, military: 0, coins: 0, wonder: 0, civilian: 0, tablets: 0, compasses: 0, gears: 0, commercial: 0, guilds: 0 };
+  const fields = Object.fromEntries(SCORE_FIELDS.map(f => [f, ''])) as Record<ScoreField, string>;
+  return { id: nextPlayerId++, name, ...fields };
+}
+
+function num(text: string): number {
+  const n = parseInt(text, 10);
+  return isNaN(n) ? 0 : n;
+}
+
+// Typed text to stored text: drops leading zeros ("07" -> "7"), allows a sign
+// only on military, and floors any other field at 0.
+// A number input reports a half-typed "-" as "", so that arrives here as
+// empty and the browser keeps showing the minus until the digit follows.
+function cleanInput(text: string, allowNeg: boolean): string {
+  const n = parseInt(text, 10);
+  if (isNaN(n)) return '';
+  return String(allowNeg ? n : Math.max(0, n));
+}
+
+function hasScores(p: PlayerScores): boolean {
+  return SCORE_FIELDS.some(f => num(p[f]) !== 0);
+}
+
+// The game in progress survives a reload, a back-swipe or a discarded tab.
+const STORAGE_KEY = 'gameroom:score:7-wonders';
+
+interface SavedGame { players: PlayerScores[]; active: number }
+
+function newGame(): SavedGame {
+  return { players: [emptyScores('Player 1'), emptyScores('Player 2')], active: 0 };
+}
+
+function isPlayer(p: unknown): p is PlayerScores {
+  if (typeof p !== 'object' || p === null) return false;
+  const r = p as Record<string, unknown>;
+  return Number.isSafeInteger(r.id) && (r.id as number) >= 0 && typeof r.name === 'string'
+    && SCORE_FIELDS.every(f => typeof r[f] === 'string' && /^-?\d*$/.test(r[f] as string));
+}
+
+function loadGame(): SavedGame {
+  try {
+    const saved: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
+    if (typeof saved === 'object' && saved !== null) {
+      const { players, active } = saved as Record<string, unknown>;
+      if (Array.isArray(players) && players.length >= 2 && players.length <= 7 && players.every(isPlayer)
+        && new Set(players.map(p => p.id)).size === players.length) {
+        nextPlayerId = Math.max(nextPlayerId, ...players.map(p => p.id + 1));
+        const idx = typeof active === 'number' && active >= 0 && active < players.length ? active : 0;
+        return { players, active: idx };
+      }
+    }
+  } catch {
+    // Unreadable or unavailable storage: start a fresh game.
+  }
+  return newGame();
+}
+
+function saveGame(game: SavedGame): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(game));
+  } catch {
+    // Storage unavailable (private mode); the game just isn't remembered.
+  }
 }
 
 function calcScience(t: number, c: number, g: number): number {
@@ -35,7 +90,8 @@ function calcScience(t: number, c: number, g: number): number {
 }
 
 function calcTotal(p: PlayerScores): number {
-  return p.military + Math.floor(p.coins / 3) + p.wonder + p.civilian + calcScience(p.tablets, p.compasses, p.gears) + p.commercial + p.guilds;
+  return num(p.military) + Math.floor(num(p.coins) / 3) + num(p.wonder) + num(p.civilian)
+    + calcScience(num(p.tablets), num(p.compasses), num(p.gears)) + num(p.commercial) + num(p.guilds);
 }
 
 const CATEGORIES = [
@@ -47,17 +103,17 @@ const CATEGORIES = [
   { key: 'guilds', label: 'Guilds (Purple)', color: '#8b5cf6', icon: '🟣' },
 ] as const;
 
-type ScoreField = keyof Omit<PlayerScores, 'id' | 'name'>;
-
 export default function ScoreCalculatorPage() {
   const { slug } = useParams<{ slug: string }>();
   const game = GAMES.find(g => g.slug === slug && SCORE_CALCULATORS.has(g.slug));
-  const [players, setPlayers] = useState<PlayerScores[]>(() => [
-    emptyScores('Player 1'),
-    emptyScores('Player 2'),
-  ]);
-  const [activePlayer, setActivePlayer] = useState(0);
+  const [initial] = useState(loadGame);
+  const [players, setPlayers] = useState<PlayerScores[]>(initial.players);
+  const [activePlayer, setActivePlayer] = useState(initial.active);
   const [showSummary, setShowSummary] = useState(false);
+
+  useEffect(() => {
+    saveGame({ players, active: activePlayer });
+  }, [players, activePlayer]);
 
   if (!game) {
     return <NotFoundPage title="No score calculator" message="There's no score calculator for that game. Pick a game from the collection to see what it has." />;
@@ -65,7 +121,7 @@ export default function ScoreCalculatorPage() {
 
   const current = players[activePlayer];
 
-  function updateField(field: ScoreField, value: number) {
+  function updateField(field: ScoreField, value: string) {
     setPlayers(prev => prev.map((p, i) => i === activePlayer ? { ...p, [field]: value } : p));
   }
 
@@ -81,23 +137,32 @@ export default function ScoreCalculatorPage() {
 
   function removePlayer(idx: number) {
     if (players.length <= 2) return;
+    const p = players[idx];
+    if (hasScores(p) && !window.confirm(`Remove ${p.name} and their scores?`)) return;
     setPlayers(prev => prev.filter((_, i) => i !== idx));
     setActivePlayer(a => a >= idx && a > 0 ? a - 1 : a);
   }
 
-  function parseNum(val: string, allowNeg = false): number {
-    const n = parseInt(val, 10);
-    if (isNaN(n)) return 0;
-    return allowNeg ? n : Math.max(0, n);
+  function startNewGame() {
+    if (players.some(hasScores) && !window.confirm('Clear every score and start a new game?')) return;
+    const fresh = newGame();
+    setPlayers(fresh.players);
+    setActivePlayer(fresh.active);
+    setShowSummary(false);
   }
 
-  const scienceVP = calcScience(current.tablets, current.compasses, current.gears);
-  const treasuryVP = Math.floor(current.coins / 3);
+  // Phone number pads don't always have a minus key, so military gets a sign toggle.
+  function flipMilitarySign() {
+    updateField('military', String(-num(current.military)));
+  }
+
+  const scienceVP = calcScience(num(current.tablets), num(current.compasses), num(current.gears));
+  const treasuryVP = Math.floor(num(current.coins) / 3);
   const totalVP = calcTotal(current);
 
   const ranked = [...players]
     .map((p, i) => ({ ...p, total: calcTotal(p), idx: i }))
-    .sort((a, b) => b.total - a.total || b.coins - a.coins);
+    .sort((a, b) => b.total - a.total || num(b.coins) - num(a.coins));
 
   return (
     <div className="rules-page">
@@ -115,10 +180,10 @@ export default function ScoreCalculatorPage() {
 
       <div className="sc-player-tabs">
         {players.map((p, i) => (
-          <div key={p.id} className={`sc-player-tab-wrap${i === activePlayer ? ' active' : ''}`}>
+          <div key={p.id} className={`sc-player-tab-wrap${i === activePlayer && !showSummary ? ' active' : ''}`}>
             <button
               type="button"
-              className={`sc-player-tab${i === activePlayer ? ' active' : ''}`}
+              className={`sc-player-tab${i === activePlayer && !showSummary ? ' active' : ''}`}
               onClick={() => { setActivePlayer(i); setShowSummary(false); }}
             >
               {p.name}
@@ -160,7 +225,7 @@ export default function ScoreCalculatorPage() {
           </div>
         </div>
       ) : (
-        <div className="sc-panel">
+        <div className="sc-panel" key={current.id}>
           <div className="sc-form">
             <div className="sc-name-row">
               <label className="sc-label" htmlFor="sc-player-name">Player Name</label>
@@ -178,18 +243,33 @@ export default function ScoreCalculatorPage() {
                 <label className="sc-label" htmlFor={`sc-${key}`}>
                   <span className="sc-icon">{icon}</span>
                   <span>{label}</span>
-                  {key === 'coins' && current.coins > 0 && (
+                  {key === 'coins' && num(current.coins) > 0 && (
                     <span className="sc-vp-note">= {treasuryVP} VP</span>
                   )}
                 </label>
-                <input
-                  id={`sc-${key}`}
-                  className="sc-input"
-                  type="number"
-                  value={current[key as ScoreField]}
-                  onChange={(e) => updateField(key as ScoreField, parseNum(e.target.value, key === 'military'))}
-                  style={{ borderColor: color }}
-                />
+                <div className="sc-input-wrap">
+                  {key === 'military' && (
+                    <button
+                      type="button"
+                      className="sc-sign"
+                      aria-label="± Switch military sign"
+                      title={num(current.military) === 0 ? 'Type the number first' : undefined}
+                      disabled={num(current.military) === 0}
+                      onClick={flipMilitarySign}
+                    >
+                      &plusmn;
+                    </button>
+                  )}
+                  <input
+                    id={`sc-${key}`}
+                    className="sc-input"
+                    type="number"
+                    placeholder="0"
+                    value={current[key]}
+                    onChange={(e) => updateField(key, cleanInput(e.target.value, key === 'military'))}
+                    style={{ borderColor: color }}
+                  />
+                </div>
               </div>
             ))}
 
@@ -207,9 +287,10 @@ export default function ScoreCalculatorPage() {
                       className="sc-input"
                       type="number"
                       min="0"
+                      placeholder="0"
                       aria-label={field}
                       value={current[field]}
-                      onChange={(e) => updateField(field, parseNum(e.target.value))}
+                      onChange={(e) => updateField(field, cleanInput(e.target.value, false))}
                       style={{ borderColor: '#22c55e' }}
                     />
                   </label>
@@ -224,6 +305,10 @@ export default function ScoreCalculatorPage() {
           </div>
         </div>
       )}
+
+      <div className="sc-actions">
+        <button type="button" className="sc-new-game" onClick={startNewGame}>New game</button>
+      </div>
     </div>
   );
 }
