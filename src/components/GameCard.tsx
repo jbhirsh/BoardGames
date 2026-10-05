@@ -2,6 +2,7 @@ import { useId, useState } from 'react';
 import { Link } from 'react-router';
 import type { Game, KeywordId } from '../data/types';
 import { isKeywordLit } from '../utils/keywordLit';
+import { SCORE_CALCULATORS } from '../data/scoreCalculators';
 import { useFilter } from '../context/useFilter';
 import { ytURL, rulesURL } from '../utils/urls';
 import { sortedKw } from '../utils/filterGames';
@@ -95,7 +96,7 @@ export default function GameCard({ game }: Props) {
               <AiRulesIcon /> Rules
             </a>
           )}
-          {game.slug === '7-wonders' && (
+          {SCORE_CALCULATORS.has(game.slug) && (
             <Link className="rules-btn" to={`/score/${game.slug}`} title="Score Calculator">
               <CalculatorIcon /> Score
             </Link>

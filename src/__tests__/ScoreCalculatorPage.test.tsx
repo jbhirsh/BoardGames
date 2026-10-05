@@ -1,17 +1,36 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Routes, Route } from 'react-router';
 import ScoreCalculatorPage from '../components/ScoreCalculatorPage';
 
-function renderPage() {
+function renderPage(path = '/score/7-wonders') {
   return render(
-    <MemoryRouter>
-      <ScoreCalculatorPage />
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        <Route path="/score/:slug" element={<ScoreCalculatorPage />} />
+      </Routes>
     </MemoryRouter>
   );
 }
 
 describe('ScoreCalculatorPage', () => {
+  it('shows the not-found page for a game with no score calculator', () => {
+    // Catan is in the collection but has no calculator: the slug must decide
+    // the page, not fall back to 7 Wonders.
+    renderPage('/score/catan');
+    expect(screen.getByRole('heading', { level: 1, name: 'No score calculator' })).toBeInTheDocument();
+    expect(screen.getByText(/There's no score calculator for that game/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Browse the collection' })).toHaveAttribute('href', '/');
+    expect(screen.queryByText('Score Calculator')).not.toBeInTheDocument();
+    expect(screen.queryByText('7 Wonders')).not.toBeInTheDocument();
+  });
+
+  it('shows the not-found page for a slug that is no game at all', () => {
+    renderPage('/score/not-a-game');
+    expect(screen.getByRole('heading', { level: 1, name: 'No score calculator' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Player 1' })).not.toBeInTheDocument();
+  });
+
   it('renders the score calculator title and 7 Wonders name', () => {
     renderPage();
     expect(screen.getByText('Score Calculator')).toBeInTheDocument();
