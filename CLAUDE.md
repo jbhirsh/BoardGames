@@ -58,7 +58,9 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   - `/score/:slug` — score calculator for a game in
     `data/scoreCalculators.ts` (currently 7 Wonders); any other slug shows
     the not-found page
-  - `/word-checker` — dictionary lookup for word games
+  - `/word-checker` — word lookup for word games: the bundled ENABLE list
+    (`public/words/enable.txt`) first, the dictionary as fallback and for
+    meanings
   - `/sign-in` — the owner's magic-link sign-in (`SignInPage`); nothing on
     the home page links to it
 - **`App.tsx`** — layout shell: wraps the router `Outlet` in `FilterProvider`
@@ -208,7 +210,8 @@ read them at runtime.
 - **Sentry** — error monitoring (browser + serverless) and source-map upload at
   build time via `@sentry/vite-plugin` (org `solo-23`, project `game_room`).
 - **dictionaryapi.dev** — public dictionary API called directly from the Word
-  Checker component (no key required).
+  Checker component (no key required) for meanings and for words missing
+  from the bundled ENABLE list.
 - **BoardGameGeek** — the XML API 2 does the server-side lookup of an
   approved suggestion's details and box art by name (needs a registered
   token, `BGG_API_TOKEN`; answers 202 while queuing, retried once). Every
