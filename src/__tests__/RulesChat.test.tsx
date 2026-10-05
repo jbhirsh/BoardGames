@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import * as Sentry from '@sentry/react';
 import RulesChatProvider, { RulesChatToggle, RulesChatPanel } from '../components/RulesChat';
 
@@ -164,4 +164,150 @@ describe('RulesChat', () => {
       expect.objectContaining({ tags: { slug: 'cranium' } }),
     );
   });
+
+  it('puts a failed question back in the box and retries it without repeating it', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: false, status: 500 } as Response)
+      .mockResolvedValueOnce(streamResponse(['Four to eight.']));
+    vi.stubGlobal('fetch', fetchMock);
+    setup();
+    openPanel();
+    send('How many players?');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Sorry, something went wrong. Please try again.');
+    expect(screen.getByPlaceholderText('Ask a rules question...')).toHaveValue('How many players?');
+    // The question comes out of the transcript so a retry doesn't show it twice.
+    expect(screen.queryByText('How many players?', { selector: '.rules-chat-bubble' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(await screen.findByText('Four to eight.')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getAllByText('How many players?', { selector: '.rules-chat-bubble' })).toHaveLength(1);
+    // The failed attempt never reaches the history sent with the retry.
+    const retryBody = JSON.parse(fetchMock.mock.calls[1][1].body);
+    expect(retryBody.history).toEqual([]);
+    expect(retryBody.message).toBe('How many players?');
+  });
+
+  it('says to wait on a rate limit, without reporting it as a fault', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 429 }) as Response));
+    setup();
+    openPanel();
+    send('How many players?');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Too many questions just now. Wait a minute, then try again.');
+    expect(vi.mocked(Sentry.captureMessage)).not.toHaveBeenCalled();
+  });
+
+  it('removes a half-streamed answer when the stream fails', async () => {
+    const encoder = new TextEncoder();
+    let calls = 0;
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      body: {
+        getReader: () => ({
+          read: () => (calls++ === 0
+            ? Promise.resolve({ done: false, value: encoder.encode('Partial ans') })
+            : Promise.reject(new Error('connection reset'))),
+        }),
+      },
+    }) as unknown as Response));
+    setup();
+    openPanel();
+    send('How many players?');
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByText('Partial ans')).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Ask a rules question...')).toHaveValue('How many players?');
+  });
+
+  it('gives up on a request that never answers', async () => {
+    vi.useFakeTimers();
+    try {
+      // A fetch that only settles when aborted, as a real one does.
+      vi.stubGlobal('fetch', vi.fn((_url: string, init: RequestInit) => new Promise<Response>((_, reject) => {
+        init.signal!.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+      })));
+      setup();
+      openPanel();
+      send('How many players?');
+      expect(screen.getByText('Thinking...')).toBeInTheDocument();
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+
+      expect(screen.getByRole('alert')).toHaveTextContent('That took too long to answer. Please try again.');
+      expect(screen.queryByText('Thinking...')).not.toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Ask a rules question...')).toBeEnabled();
+      expect(vi.mocked(Sentry.captureMessage)).toHaveBeenCalledWith(
+        'rules chat request timed out',
+        expect.objectContaining({ level: 'warning', tags: { slug: 'cranium' } }),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('keeps waiting while the answer is still streaming in', async () => {
+    vi.useFakeTimers();
+    try {
+      const encoder = new TextEncoder();
+      const chunks = ['One, ', 'two, ', 'three.'];
+      let i = 0;
+      // Each chunk arrives 20s after the last: slow, but never 30s quiet.
+      vi.stubGlobal('fetch', vi.fn(async () => ({
+        ok: true,
+        body: {
+          getReader: () => ({
+            read: () => new Promise((resolve) => {
+              setTimeout(() => resolve(i < chunks.length
+                ? { done: false, value: encoder.encode(chunks[i++]) }
+                : { done: true, value: undefined }), 20_000);
+            }),
+          }),
+        },
+      }) as unknown as Response));
+      setup();
+      openPanel();
+      send('Count?');
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(80_000); });
+      expect(screen.getByText('One, two, three.')).toBeInTheDocument();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('hands focus back to the box after a failure', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 500 }) as Response));
+    setup();
+    openPanel();
+    send('How many players?');
+    await screen.findByRole('alert');
+    await waitFor(() => expect(screen.getByPlaceholderText('Ask a rules question...')).toHaveFocus());
+  });
+
+  it('cancels a request quietly when the page goes away', async () => {
+    let signal: AbortSignal | undefined;
+    vi.stubGlobal('fetch', vi.fn((_url: string, init: RequestInit) => {
+      signal = init.signal!;
+      return new Promise<Response>((_, reject) => {
+        signal!.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+      });
+    }));
+    const { unmount } = render(
+      <RulesChatProvider>
+        <RulesChatToggle />
+        <RulesChatPanel slug="cranium" gameName="Cranium" />
+      </RulesChatProvider>,
+    );
+    openPanel();
+    send('How many players?');
+    unmount();
+    expect(signal?.aborted).toBe(true);
+    await Promise.resolve();
+    expect(vi.mocked(Sentry.captureMessage)).not.toHaveBeenCalled();
+    expect(vi.mocked(Sentry.captureException)).not.toHaveBeenCalled();
+  });
 });
+

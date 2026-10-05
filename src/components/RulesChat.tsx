@@ -7,7 +7,16 @@ import { AiRulesIcon } from './Icons';
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  /** A failed request's notice; never sent back as history. */
+  error?: boolean;
 }
+
+// Give up when the reply hasn't started, or has stalled, for this long.
+const STALL_MS = 30_000;
+
+const FAILED = 'Sorry, something went wrong. Please try again.';
+const RATE_LIMITED = 'Too many questions just now. Wait a minute, then try again.';
+const TIMED_OUT = 'That took too long to answer. Please try again.';
 
 interface RulesChatContext {
   isOpen: boolean;
@@ -38,23 +47,31 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope }: { slug: st
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  // The request in flight, aborted if the page goes away under it.
+  const requestRef = useRef<AbortController | null>(null);
+  useEffect(() => () => requestRef.current?.abort(), []);
 
   useEffect(() => {
     const el = messagesContainerRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
-  async function handleSend(e: FormEvent) {
+  function handleSend(e: FormEvent) {
     e.preventDefault();
-    const userMsg = input.trim();
-    if (!userMsg) return;
+    void ask(input.trim());
+  }
 
-    const userMessage: Message = { role: 'user', content: userMsg };
-    setMessages((prev) => [...prev, userMessage]);
+  async function ask(userMsg: string) {
+    if (!userMsg || isLoading) return;
+
+    // A retry replaces the notice the last attempt left.
+    const prior = messages.filter((m) => !m.error);
+    setMessages([...prior, { role: 'user', content: userMsg }]);
     setInput('');
     setIsLoading(true);
 
-    const history = messages
+    const history = prior
       .slice(1)
       .map((msg) => ({
         role: msg.role === 'assistant' ? 'model' : 'user',
@@ -62,23 +79,45 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope }: { slug: st
       }))
       .slice(-6);
 
+    // Aborts when nothing arrives for STALL_MS: no headers, or a stream gone quiet.
+    const controller = new AbortController();
+    requestRef.current = controller;
+    let timedOut = false;
+    const giveUp = () => { timedOut = true; controller.abort(); };
+    let timer = setTimeout(giveUp, STALL_MS);
+    const stillAlive = () => {
+      clearTimeout(timer);
+      timer = setTimeout(giveUp, STALL_MS);
+    };
+
+    // On any failure the question goes back in the box and the half answer,
+    // if one started, comes out, so Retry or Send asks it again cleanly.
+    let failed = false;
+    const fail = (notice: string) => {
+      setMessages([...prior, { role: 'assistant', content: notice, error: true }]);
+      setInput((current) => current || userMsg);
+      failed = true;
+    };
+
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ slug, message: userMsg, history, ...(parts.length > 0 ? { parts } : {}) }),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
-        Sentry.captureMessage(`rules chat request failed: HTTP ${response.status}`, {
-          level: 'error',
-          tags: { slug },
-        });
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' },
-        ]);
-        setIsLoading(false);
+        // A 429 is the rate limiter doing its job, not a fault to report.
+        if (response.status === 429) {
+          fail(RATE_LIMITED);
+        } else {
+          Sentry.captureMessage(`rules chat request failed: HTTP ${response.status}`, {
+            level: 'error',
+            tags: { slug },
+          });
+          fail(FAILED);
+        }
         return;
       }
 
@@ -101,19 +140,30 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope }: { slug: st
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
+        stillAlive();
         append(decoder.decode(value, { stream: true }));
       }
       const tail = decoder.decode();
       if (tail) append(tail);
     } catch (err) {
-      Sentry.captureException(err, { tags: { slug } });
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' },
-      ]);
+      // Aborted by leaving the page: nobody is waiting for an answer.
+      if (controller.signal.aborted && !timedOut) return;
+      if (timedOut) {
+        Sentry.captureMessage('rules chat request timed out', { level: 'warning', tags: { slug } });
+        fail(TIMED_OUT);
+      } else {
+        Sentry.captureException(err, { tags: { slug } });
+        fail(FAILED);
+      }
+    } finally {
+      clearTimeout(timer);
+      if (requestRef.current === controller) requestRef.current = null;
+      if (!controller.signal.aborted || timedOut) {
+        setIsLoading(false);
+        // The input was disabled while waiting; put the person back in it.
+        if (failed) requestAnimationFrame(() => inputRef.current?.focus());
+      }
     }
-
-    setIsLoading(false);
   }
 
   if (!isOpen) return null;
@@ -123,10 +173,20 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope }: { slug: st
         {scope && <p className="rules-chat-scope" aria-live="polite">{scope}</p>}
         <div className="rules-chat-messages" ref={messagesContainerRef}>
         {messages.map((msg, i) => (
-          <div key={i} className={`rules-chat-msg rules-chat-msg-${msg.role}`}>
-            <div className="rules-chat-bubble">
-              {msg.role === 'assistant' ? <Markdown>{msg.content}</Markdown> : msg.content}
-            </div>
+          // A notice gets its own key so it mounts fresh and its alert is announced.
+          <div key={msg.error ? 'error' : i} className={`rules-chat-msg rules-chat-msg-${msg.role}`}>
+            {msg.error ? (
+              <div className="rules-chat-bubble rules-chat-error">
+                <p role="alert">{msg.content}</p>
+                <button type="button" className="rules-chat-retry" onClick={() => void ask(input.trim())} disabled={!input.trim()}>
+                  Retry
+                </button>
+              </div>
+            ) : (
+              <div className="rules-chat-bubble">
+                {msg.role === 'assistant' ? <Markdown>{msg.content}</Markdown> : msg.content}
+              </div>
+            )}
           </div>
         ))}
         {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
@@ -137,6 +197,7 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope }: { slug: st
       </div>
       <form className="rules-chat-input" onSubmit={handleSend}>
         <input
+          ref={inputRef}
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
