@@ -153,3 +153,12 @@ test('an empty result names the filters and offers to drop one', async ({ page }
   // The button that was clicked is gone; focus lands on the list's heading.
   await expect(page.getByRole('heading', { level: 2, name: 'Our Collection' })).toBeFocused();
 });
+
+test('the picker lands a deck on one of its games', async ({ page }) => {
+  // Euchre is one of the Card Deck's games, so the deck is the only match.
+  await page.goto('/?q=Euchre');
+  await page.getByRole('button', { name: 'Pick for us' }).click();
+  // The search named one of the deck's games, so that's the one it lands on.
+  const dialog = page.getByRole('dialog', { name: 'Tonight, play — Euchre' });
+  await expect(dialog.getByText('Played with the Card Deck')).toBeVisible();
+});
