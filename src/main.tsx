@@ -7,17 +7,20 @@ import RulesPage from './components/RulesPage'
 import ScoreCalculatorPage from './components/ScoreCalculatorPage'
 import WordCheckerPage from './components/WordCheckerPage'
 import SignInPage from './components/SignInPage'
+import NotFoundPage, { RouteError } from './components/NotFoundPage'
 import { AuthProvider } from './context/AuthContext'
 
 const router = createBrowserRouter([
   {
     element: <App />,
+    errorElement: <RouteError />,
     children: [
       { path: '/', element: <HomePage /> },
       { path: '/rules/:slug/:part?', element: <RulesPage /> },
       { path: '/score/:slug', element: <ScoreCalculatorPage /> },
       { path: '/word-checker', element: <WordCheckerPage /> },
       { path: '/sign-in', element: <AuthProvider><SignInPage /></AuthProvider> },
+      { path: '*', element: <NotFoundPage /> },
     ],
   },
 ])
