@@ -19,10 +19,6 @@ export default function PlayersDropdown({ isOpen, onToggle }: Props) {
       isActive={isActive}
       isOpen={isOpen}
       onToggle={onToggle}
-      onClear={(e) => {
-        e.stopPropagation();
-        dispatch({ type: 'SET_PLAYERS', payload: 0 });
-      }}
     >
       {PLAYER_OPTIONS.map((n) => (
         <button

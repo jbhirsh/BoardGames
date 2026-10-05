@@ -84,9 +84,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .dd-arrow{display:inline-flex;align-items:center;width:12px;height:12px;flex-shrink:0;opacity:.4;transition:transform .2s,opacity .18s;}
 .dd-arrow .row-chevron{width:12px;height:12px;}
 .dd-btn.open .dd-arrow{transform:rotate(180deg);opacity:.7;}
-.dd-clear-x{display:none;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--blue);color:#fff;font-size:9px;cursor:pointer;border:none;font-family:inherit;line-height:1;flex-shrink:0;transition:background .15s;}
-.dd-clear-x:hover{background:var(--dark);}
-.dd-btn.active .dd-clear-x{display:flex;}
 
 /* Dropdown panel */
 .dd-panel{

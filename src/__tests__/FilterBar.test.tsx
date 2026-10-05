@@ -65,19 +65,6 @@ describe('DurationDropdown', () => {
     expect(screen.getByRole('button', { name: /15 min/ })).toBeInTheDocument();
   });
 
-  it('shows clear button when active and clears on click', () => {
-    renderFilterBar();
-    fireEvent.click(getDDButton('Duration'));
-    fireEvent.click(screen.getByText('Quick \u2264 15 min'));
-
-    const clearBtn = screen.getAllByText('\u2715').find(
-      (el) => el.classList.contains('dd-clear-x')
-    );
-    expect(clearBtn).toBeTruthy();
-    fireEvent.click(clearBtn!);
-
-    expect(getDDButton('Duration')).toBeInTheDocument();
-  });
 });
 
 describe('PlayersDropdown', () => {
@@ -102,19 +89,6 @@ describe('PlayersDropdown', () => {
     fireEvent.click(opt);
   });
 
-  it('shows clear button when active', () => {
-    renderFilterBar();
-    fireEvent.click(getDDButton('Players'));
-    fireEvent.click(screen.getByText('4 players'));
-
-    const clearBtn = screen.getAllByText('\u2715').find(
-      (el) => el.classList.contains('dd-clear-x')
-    );
-    expect(clearBtn).toBeTruthy();
-    fireEvent.click(clearBtn!);
-
-    expect(getDDButton('Players')).toBeInTheDocument();
-  });
 });
 
 describe('KeywordsDropdown', () => {
@@ -141,22 +115,6 @@ describe('KeywordsDropdown', () => {
 
     fireEvent.click(screen.getByText('Any'));
     expect(screen.getByRole('button', { name: /1 keyword.*OR/i })).toBeInTheDocument();
-  });
-
-  it('shows clear button when keywords selected and clears on click', () => {
-    renderFilterBar();
-    fireEvent.click(getDDButton('Keywords'));
-
-    const ddOpt = screen.getByText('Bluffing').closest('.dd-opt');
-    fireEvent.click(ddOpt!);
-
-    const clearBtn = screen.getAllByText('\u2715').find(
-      (el) => el.classList.contains('dd-clear-x')
-    );
-    expect(clearBtn).toBeTruthy();
-    fireEvent.click(clearBtn!);
-
-    expect(getDDButton('Keywords')).toBeInTheDocument();
   });
 
   it('shows count for each keyword', () => {
