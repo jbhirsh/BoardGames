@@ -26,7 +26,9 @@ export default function GameCard({ game }: Props) {
   const subsLabel = game.subgames ? subgameLabel(game.subgames, state) : '';
 
   return (
-    <div className="game-card">
+    // An open add-ons list takes a grid row of its own, so the cards that
+    // share its subgrid rows aren't stretched to the list's height.
+    <div className={`game-card${subsOpen && hasFitting ? ' card-open' : ''}`}>
       <div className="card-head">
         <img src={game.img} alt={`${game.name} box art`} className="card-corner-img" loading="lazy" />
         <h3 className="card-name">{game.name}</h3>

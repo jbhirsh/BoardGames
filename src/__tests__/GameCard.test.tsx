@@ -217,3 +217,15 @@ describe('GameCard', () => {
     });
   });
 });
+
+describe('GameCard add-ons layout', () => {
+  it('takes a grid row of its own while its games are listed, so neighbours keep their height', () => {
+    const { container } = renderWithContext(<GameCard game={deckGame} />);
+    const card = container.querySelector('.game-card')!;
+    expect(card).not.toHaveClass('card-open');
+    fireEvent.click(screen.getByRole('button', { name: 'Deck: +2 games' }));
+    expect(card).toHaveClass('card-open');
+    fireEvent.click(screen.getByRole('button', { name: 'Deck: +2 games' }));
+    expect(card).not.toHaveClass('card-open');
+  });
+});

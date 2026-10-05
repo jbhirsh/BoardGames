@@ -237,6 +237,12 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .card-body{grid-row:2;padding:12px 18px 16px;}
 .card-foot{grid-row:3;align-self:end;}
 .game-card>.sub-panel{grid-row:4;align-self:start;margin-bottom:0;border-bottom:none;}
+/* An open card spans the row; dense lets the cards after it fill the gap it
+   leaves in the row above rather than leaving that row half empty. */
+.games-grid > .game-card.card-open{grid-column:1 / -1;}
+.games-grid:has(> .game-card.card-open){grid-auto-flow:row dense;}
+/* With the full row to fill, an open card lays its games out side by side. */
+.games-grid > .game-card.card-open > .sub-panel .sub-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));align-items:start;}
 .card-desc{font-size:13px;line-height:1.68;color:var(--text2);}
 
 /* ══ LIST / TABLE VIEW ════════════════════════════════════ */
