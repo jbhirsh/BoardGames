@@ -282,7 +282,7 @@ describe('Wishlist', () => {
     // must still reflect the search from the URL rather than the full total.
     vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise(() => {}));
     renderWishlist(`/?c=want&q=${encodeURIComponent(WISHLIST[0].name)}`);
-    expect(screen.getByText('1 games')).toBeInTheDocument();
+    expect(screen.getByText('1 game')).toBeInTheDocument();
     expect(screen.queryByText(`${WISHLIST.length} games`)).not.toBeInTheDocument();
     expect(screen.queryByText(WISHLIST[0].name)).not.toBeInTheDocument();
   });

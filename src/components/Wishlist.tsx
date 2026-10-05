@@ -35,7 +35,7 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
     <section className="wishlist" id={hidden ? undefined : 'collection'} ref={sectionRef} hidden={hidden}>
       <div className="sec-hd">
         <h2 className="sec-title">Wishlist</h2>
-        <span className="sec-count">{filtered.length} games</span>
+        <span className="sec-count">{filtered.length} {filtered.length === 1 ? 'game' : 'games'}</span>
         <div className="sec-right">
           <CollectionToggle />
           <ViewToggle />

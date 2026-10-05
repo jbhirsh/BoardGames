@@ -61,9 +61,9 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 /* ══ STICKY FILTERBAR ═════════════════════════════════════ */
 .filterbar{
-  background:rgba(251,251,253,0.92);
-  backdrop-filter:saturate(180%) blur(20px);
-  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  /* Solid: when it was see-through, rows scrolling under the bar showed
+     through wherever the blur didn't apply. */
+  background:var(--bg);
   border-bottom:1px solid var(--border);
   padding:10px var(--gutter);display:flex;align-items:center;gap:8px;flex-wrap:wrap;
 }
