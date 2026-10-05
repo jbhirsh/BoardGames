@@ -25,6 +25,7 @@ export function HomePage() {
   return (
     <AuthProvider>
       <WishlistProvider>
+        <title>The Game Room</title>
         <div className="clip-wrap">
           <Hero />
           <div className="sticky-header" ref={stickyRef}>

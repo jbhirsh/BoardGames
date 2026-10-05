@@ -101,6 +101,7 @@ export default function ScoreCalculatorPage() {
 
   return (
     <div className="rules-page">
+      <title>{`${game.name} score · The Game Room`}</title>
       <header className="rules-header">
         <Link to="/" className="back-link">&larr; Back to The Game Room</Link>
         <div className="rules-title-row">

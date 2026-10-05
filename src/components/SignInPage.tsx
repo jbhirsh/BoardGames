@@ -25,6 +25,7 @@ export default function SignInPage() {
 
   return (
     <div className="rules-page">
+      <title>Sign in · The Game Room</title>
       <header className="rules-header">
         <Link to="/" className="back-link">&larr; Back to The Game Room</Link>
         <h1 className="rules-game-name">Owner sign-in</h1>
