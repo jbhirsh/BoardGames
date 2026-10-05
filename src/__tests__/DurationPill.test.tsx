@@ -56,4 +56,15 @@ describe('DurationPill', () => {
     expect(pill).toHaveClass('custom-cls');
     expect(pill).toHaveClass('dur-quick');
   });
+
+  it('shows a given label in place of the bucket name', () => {
+    render(<DurationPill cat="medium" label="45 min" />);
+    expect(screen.getByText('45 min')).toHaveClass('dur-medium');
+    expect(screen.queryByText('Medium')).not.toBeInTheDocument();
+  });
+
+  it('labels an interactive pill with its time and the bucket it filters to', () => {
+    render(<DurationPill cat="quick" label="10 min" onClick={() => {}} />);
+    expect(screen.getByRole('button', { name: '10 min: show ≤ 15 min games' })).toBeInTheDocument();
+  });
 });

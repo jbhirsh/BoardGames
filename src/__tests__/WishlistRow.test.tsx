@@ -51,7 +51,7 @@ describe('WishlistRow', () => {
     expect(row.querySelector('.col-name-wrap .col-name')).toHaveTextContent('Row Game');
     expect(row.querySelector('.mobile-short')).toHaveTextContent('A row of a game.');
     expect(row.querySelector('td.col-players')).toHaveTextContent('3–8');
-    expect(row.querySelector('.row-dur')).toHaveTextContent('Medium');
+    expect(row.querySelector('.row-dur')).toHaveTextContent('20 min');
     expect(row.querySelector('td.col-short')).toHaveTextContent('A row of a game.');
     expect(Array.from(row.querySelectorAll('.col-kw .kw-pill')).map((p) => p.textContent)).toEqual(['Bluffing', 'Party']);
     expect(row.querySelector('.col-vote .vote-btn')).toHaveTextContent('4');
@@ -68,7 +68,7 @@ describe('WishlistRow', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Vote for Row Game/ }));
     expect(onVote).toHaveBeenCalledOnce();
-    fireEvent.click(screen.getByText('Medium'));
+    fireEvent.click(screen.getByText('20 min'));
     fireEvent.click(screen.getByText('Party'));
     expect(screen.getByRole('status')).toHaveTextContent('medium|party');
     expect(onToggle).toHaveBeenCalledTimes(1);

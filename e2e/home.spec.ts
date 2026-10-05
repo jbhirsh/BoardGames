@@ -84,16 +84,45 @@ test('the random picker picks a game from the filtered list', async ({ page }) =
   await expect(page.getByRole('heading', { level: 1, name: 'Azul' })).toBeVisible();
 });
 
-test("opening a card's games on the grid doesn't stretch the row it sat in", async ({ page }) => {
+test("opening a card's games on the grid gives it a row of its own and keeps the order", async ({ page }) => {
   await page.goto('/?v=grid');
-  // Caroling Charades starts the row after Card Deck's at desktop width. A
-  // row stretched to the opened list's height would push it far down.
-  const next = page.getByRole('heading', { level: 3, name: 'Caroling Charades' });
-  const before = await next.boundingBox();
+  // At desktop width Bananagrams, Card Deck and Cards Against Humanity share
+  // a row. Opening Card Deck's games moves it to a full-width row of its own
+  // (its row-mates aren't stretched to the list's height), and the cards
+  // after it stay after it, as they read and tab, rather than packing up
+  // into the gap it left.
+  const heading = (name: string) => page.getByRole('heading', { level: 3, name });
   await page.getByRole('button', { name: /^Card Deck: / }).click();
   await expect(page.getByText(/^Partnership trick-taking/)).toBeVisible();
-  const after = await next.boundingBox();
-  expect(after!.y).toBeLessThanOrEqual(before!.y);
+  // Read together, after the click's scroll, so the offsets compare.
+  const beside = (await heading('Bananagrams').boundingBox())!;
+  const deck = (await heading('Card Deck').boundingBox())!;
+  const next = (await heading('Cards Against Humanity').boundingBox())!;
+  expect(deck.y).toBeGreaterThan(beside.y);
+  expect(next.y).toBeGreaterThan(deck.y);
+});
+
+test('on a phone, the collection is cards only and More opens a game\'s write-up', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/?v=list');
+
+  await expect(page.getByRole('heading', { level: 3, name: 'Azul' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'List view' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: rowToggles })).toHaveCount(0);
+
+  const more = page.getByRole('button', { name: 'More about Azul' });
+  await more.click();
+  await expect(page.getByRole('button', { name: 'Less about Azul' })).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('heading', { name: 'Awards' })).toBeVisible();
+});
+
+test('on a desktop grid, More opens a game\'s write-up across the row', async ({ page }) => {
+  await page.goto('/?v=grid');
+  await page.getByRole('button', { name: 'More about Azul' }).click();
+  await expect(page.getByRole('button', { name: 'Less about Azul' })).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('heading', { name: 'Awards' })).toBeVisible();
+  await page.getByRole('button', { name: 'Less about Azul' }).click();
+  await expect(page.getByRole('heading', { name: 'Awards' })).toHaveCount(0);
 });
 
 test('pages carry their own titles and the site has a link preview', async ({ page, request }) => {

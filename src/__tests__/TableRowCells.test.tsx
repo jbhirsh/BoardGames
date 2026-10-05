@@ -44,6 +44,14 @@ function renderCells(overrides: Partial<Props> = {}, onRowClick = vi.fn()) {
 }
 
 describe('TableRowCells', () => {
+
+  it("shows the game's own time on the duration pill and names the bucket it filters to", () => {
+    renderCells();
+    const pill = screen.getByRole('button', { name: '90 min: show 60+ min games' });
+    expect(pill).toHaveTextContent('90 min');
+    expect(pill).toHaveClass('dur-long');
+  });
+
   it('renders the shared cells in header order with the table classes', () => {
     const { row } = renderCells({ awards: [{ name: 'Spiel des Jahres', year: 2020 }] });
     const cells = Array.from(row.children).map((td) => td.className);
@@ -64,7 +72,7 @@ describe('TableRowCells', () => {
     expect(row.querySelector('.col-name-wrap .mobile-short .row-badges .awards')).toBeInTheDocument();
     expect(row.querySelector('td.col-players')).toHaveTextContent('2–5');
     expect(row.querySelector('.row-dur')).toHaveClass('dur-long');
-    expect(row.querySelector('.row-dur')).toHaveTextContent('Long');
+    expect(row.querySelector('.row-dur')).toHaveTextContent('90 min');
     expect(row.querySelector('td.col-short')).toHaveTextContent('A game of cells.');
     expect(Array.from(row.querySelectorAll('.col-kw .kw-pill')).map((p) => p.textContent)).toEqual(['Abstract', 'Strategy']);
     expect(row.querySelector('.col-actions .row-toggle .row-chevron')).toBeInTheDocument();
@@ -119,7 +127,7 @@ describe('TableRowCells', () => {
   it('filters by duration and keyword from the pills without toggling the row', () => {
     const { onRowClick } = renderCells();
     expect(screen.getByRole('status')).toHaveTextContent('all|');
-    fireEvent.click(screen.getByText('Long'));
+    fireEvent.click(screen.getByText('90 min'));
     expect(screen.getByRole('status')).toHaveTextContent('long|');
     const strategy = screen.getByText('Strategy');
     expect(strategy).not.toHaveClass('lit');

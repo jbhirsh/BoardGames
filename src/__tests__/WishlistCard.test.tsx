@@ -130,3 +130,26 @@ describe('WishlistCard', () => {
     expect(openSpy).toHaveBeenLastCalledWith('https://camelcamelcamel.com/product/B0TESTASIN', '_blank', 'noopener');
   });
 });
+
+describe('WishlistCard More', () => {
+  const long = { ...testItem, desc: 'Draft tiles to build a palace. Score walls, gardens and towers. Ends after the fourth season.' };
+
+  it('opens on the first sentence and More shows the rest', () => {
+    renderCard({ item: long });
+    const more = screen.getByRole('button', { name: 'More about Test Wishlist Game' });
+    const desc = more.closest('.card-desc')!;
+    expect(desc).toHaveTextContent(/^Draft tiles to build a palace\. More$/);
+    expect(more).toHaveAttribute('aria-controls', desc.id);
+
+    fireEvent.click(more);
+    expect(desc).toHaveTextContent(/Ends after the fourth season\. Less$/);
+    expect(screen.getByRole('button', { name: 'Less about Test Wishlist Game' })).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('has no More when the blurb is one sentence', () => {
+    renderCard();
+    expect(screen.getByText('A great game to add.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^More about/ })).not.toBeInTheDocument();
+  });
+});
+

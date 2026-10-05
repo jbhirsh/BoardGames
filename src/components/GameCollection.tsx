@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { useFilter } from '../context/useFilter';
 import { useKeepSectionInView } from '../hooks/useKeepSectionInView';
+import { useIsPhone } from '../hooks/useIsPhone';
 import ViewToggle from './ViewToggle';
 import CollectionToggle from './CollectionToggle';
 import GridView from './GridView';
@@ -13,6 +14,9 @@ import ListView from './ListView';
  */
 export default function GameCollection({ hidden = false }: { hidden?: boolean }) {
   const { state, filteredGames } = useFilter();
+  // Phones get the cards only: the table has too few columns to be useful
+  // there, and a card's More holds what an expanded row would.
+  const isPhone = useIsPhone();
   const sectionRef = useRef<HTMLElement>(null);
   useKeepSectionInView(sectionRef, !hidden);
 
@@ -23,10 +27,10 @@ export default function GameCollection({ hidden = false }: { hidden?: boolean })
         <span className="sec-count">{filteredGames.length} {filteredGames.length === 1 ? 'game' : 'games'}</span>
         <div className="sec-right">
           <CollectionToggle />
-          <ViewToggle />
+          {!isPhone && <ViewToggle />}
         </div>
       </div>
-      {state.view === 'grid' ? <GridView /> : <ListView />}
+      {isPhone || state.view === 'grid' ? <GridView /> : <ListView />}
     </section>
   );
 }

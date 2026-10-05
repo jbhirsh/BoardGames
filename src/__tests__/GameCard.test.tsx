@@ -122,7 +122,8 @@ describe('GameCard', () => {
   describe('games inside a game', () => {
     it('has no games button when nothing is inside', () => {
       renderWithContext(<GameCard game={quickGame} />);
-      expect(screen.queryByRole('button', { expanded: false })).not.toBeInTheDocument();
+      // The games button is named "<game>: +N games"; More is the card's other toggle.
+      expect(screen.queryByRole('button', { name: /^Quick Game: /, expanded: false })).not.toBeInTheDocument();
     });
 
     it('sits bottom left with the award count, apart from the links, so the head holds the same things on every card', () => {
@@ -227,5 +228,35 @@ describe('GameCard add-ons layout', () => {
     expect(card).toHaveClass('card-open');
     fireEvent.click(screen.getByRole('button', { name: 'Deck: +2 games' }));
     expect(card).not.toHaveClass('card-open');
+  });
+});
+
+describe('GameCard More', () => {
+  it('sits at the end of the description and opens the long write-up and awards in place', () => {
+    const game: Game = { ...quickGame, detail: '<h3>How it plays</h3><p>Full rules story.</p>', awards: [{ name: 'Mensa Select', year: 2009 }] };
+    const { container } = renderWithContext(<GameCard game={game} />);
+    const more = screen.getByRole('button', { name: 'More about Quick Game' });
+    expect(more.closest('.card-desc')).toHaveTextContent(`${quickGame.short} More`);
+    expect(more).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('Full rules story.')).not.toBeInTheDocument();
+
+    fireEvent.click(more);
+    const less = screen.getByRole('button', { name: 'Less about Quick Game' });
+    expect(less).toHaveAttribute('aria-expanded', 'true');
+    const panel = document.getElementById(less.getAttribute('aria-controls')!)!;
+    expect(panel).toHaveTextContent('Full rules story.');
+    expect(panel.querySelector('.awards-list')).toHaveTextContent('Mensa Select');
+    // The open card takes a grid row of its own.
+    expect(container.querySelector('.game-card')).toHaveClass('card-open');
+
+    fireEvent.click(less);
+    expect(screen.queryByText('Full rules story.')).not.toBeInTheDocument();
+    expect(container.querySelector('.game-card')).not.toHaveClass('card-open');
+  });
+
+  it('leaves out the Awards section for a game with none', () => {
+    renderWithContext(<GameCard game={quickGame} />);
+    fireEvent.click(screen.getByRole('button', { name: 'More about Quick Game' }));
+    expect(screen.queryByRole('heading', { name: 'Awards' })).not.toBeInTheDocument();
   });
 });
