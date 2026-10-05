@@ -1,4 +1,4 @@
-import { useRef, useCallback, type ReactNode } from 'react';
+import { useRef, useCallback, useEffect, useId, type ReactNode } from 'react';
 import { useClickOutside } from '../../hooks/useClickOutside';
 
 interface Props {
@@ -19,9 +19,37 @@ export default function Dropdown({ id, label, isActive, isOpen, onToggle, childr
 
   useClickOutside(ref, close);
 
+  // Escape shuts an open panel and puts focus back on its pill.
+  const pillRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      onToggle();
+      pillRef.current?.focus();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [isOpen, onToggle]);
+  const panelId = useId();
+
   return (
-    <div className="dd-wrap" ref={ref} style={style}>
+    <div
+      className="dd-wrap"
+      ref={ref}
+      style={style}
+      // Tabbing out of an open dropdown shuts it, as a click elsewhere does,
+      // so it never sits open behind something else (the picker's dialog).
+      onBlur={(e) => {
+        const next = e.relatedTarget as Node | null;
+        if (isOpen && next && !e.currentTarget.contains(next)) onToggle();
+      }}
+    >
       <button
+        ref={pillRef}
+        type="button"
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? panelId : undefined}
         className={`dd-btn${isOpen ? ' open' : ''}${isActive ? ' active' : ''}`}
         onClick={onToggle}
       >
@@ -33,7 +61,7 @@ export default function Dropdown({ id, label, isActive, isOpen, onToggle, childr
         </span>
       </button>
       {isOpen && (
-        <div className="dd-panel open" data-dd={id}>
+        <div className="dd-panel open" id={panelId} data-dd={id}>
           {children}
         </div>
       )}

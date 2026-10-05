@@ -192,3 +192,44 @@ describe('Dropdown', () => {
     expect(screen.queryByText('Quick \u2264 15 min')).not.toBeInTheDocument();
   });
 });
+
+describe('Dropdown accessibility', () => {
+  it('says whether its panel is open and which element it is', () => {
+    renderFilterBar();
+    const pill = getDDButton('Players');
+    expect(pill).toHaveAttribute('aria-expanded', 'false');
+    expect(pill).not.toHaveAttribute('aria-controls');
+    fireEvent.click(pill);
+    expect(pill).toHaveAttribute('aria-expanded', 'true');
+    expect(document.getElementById(pill.getAttribute('aria-controls')!)).toHaveAttribute('data-dd', 'players');
+  });
+
+  it('closes on Escape and hands focus back to its pill', () => {
+    renderFilterBar();
+    const pill = getDDButton('Players');
+    fireEvent.click(pill);
+    expect(document.querySelector('[data-dd="players"]')).not.toBeNull();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(document.querySelector('[data-dd="players"]')).toBeNull();
+    expect(pill).toHaveFocus();
+  });
+
+  it('shuts when focus moves outside it, but not within it', () => {
+    renderFilterBar();
+    const pill = getDDButton('Players');
+    fireEvent.click(pill);
+    const option = screen.getByText('4 players');
+    fireEvent.blur(pill, { relatedTarget: option });
+    expect(document.querySelector('[data-dd="players"]')).not.toBeNull();
+    fireEvent.blur(pill, { relatedTarget: getDDButton('Keywords') });
+    expect(document.querySelector('[data-dd="players"]')).toBeNull();
+  });
+
+  it('ignores other keys while open', () => {
+    renderFilterBar();
+    fireEvent.click(getDDButton('Players'));
+    fireEvent.keyDown(document, { key: 'a' });
+    expect(document.querySelector('[data-dd="players"]')).not.toBeNull();
+  });
+});
+

@@ -40,4 +40,14 @@ describe('ViewToggle', () => {
     fireEvent.click(screen.getByLabelText('List view'));
     expect(screen.getByLabelText('List view')).toHaveClass('active');
   });
+
+  it('tells assistive tech which view is on', () => {
+    renderViewToggle();
+    expect(screen.getByLabelText('List view')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByLabelText('Grid view')).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(screen.getByLabelText('Grid view'));
+    expect(screen.getByLabelText('Grid view')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByLabelText('List view')).toHaveAttribute('aria-pressed', 'false');
+  });
 });
+
