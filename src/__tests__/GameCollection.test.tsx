@@ -122,3 +122,12 @@ describe('GameCollection view switch', () => {
     expect(document.querySelector('.games-grid')).not.toBeNull();
   });
 });
+
+describe('GameCollection count', () => {
+  it('says "game" for one and "games" for more', () => {
+    renderWithFilter();
+    expect(screen.getByText(/^\d+ games$/)).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText('Search games...'), { target: { value: 'Bananagrams' } });
+    expect(screen.getByText('1 game')).toBeInTheDocument();
+  });
+});
