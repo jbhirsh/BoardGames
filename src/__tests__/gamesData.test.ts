@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { GAMES } from '../data/games';
 import { KW } from '../data/keywords';
+import { SCORE_CALCULATORS } from '../data/scoreCalculators';
 import type { Award, DurationCategory } from '../data/types';
 import { durationCategory } from '../hooks/useSuggestions';
 
@@ -66,6 +67,9 @@ describe('games data', () => {
     expectRealAwards(g.awards, slug);
   });
 
+  it.each([...SCORE_CALCULATORS])('score calculator %s is a game in the collection', (slug) => {
+    expect(GAMES.map((g) => g.slug)).toContain(slug);
+  });
 
   const withHouseRules = GAMES.filter((g) => g.houseRules).map((g) => [g.slug, g.houseRules!] as const);
 

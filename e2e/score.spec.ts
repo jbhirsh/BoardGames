@@ -2,7 +2,7 @@ import { test, expect } from './fixtures';
 
 test('the 7 Wonders calculator totals a player and ranks the table', async ({ page }) => {
   await page.goto('/score/7-wonders');
-  await expect(page.getByRole('heading', { level: 1, name: 'Score Calculator' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Score Calculator', exact: true })).toBeVisible();
 
   const field = (name: string | RegExp) => page.getByRole('spinbutton', { name });
   await field(/Military/).fill('5');
@@ -25,4 +25,15 @@ test('the 7 Wonders calculator totals a player and ranks the table', async ({ pa
   await expect(page.getByText('👑')).toBeVisible();
   await expect(page.getByText('43 VP', { exact: true })).toBeVisible();
   await expect(page.getByText('0 VP', { exact: true })).toBeVisible();
+});
+
+test('a game with no score calculator shows the not-found page', async ({ page }) => {
+  await page.goto('/score/catan');
+  await expect(page.getByRole('heading', { level: 1, name: 'No score calculator', exact: true })).toBeVisible();
+  await expect(page.getByText("There's no score calculator for that game.")).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Score Calculator', exact: true })).toHaveCount(0);
+
+  await page.getByRole('link', { name: 'Browse the collection' }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('heading', { level: 2, name: 'Our Collection' })).toBeVisible();
 });

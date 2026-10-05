@@ -55,15 +55,18 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
     refetches, and only the visible one carries the `#collection` anchor)
   - `/rules/:slug/:part?` — bundled rule PDF viewer + AI rules assistant;
     a game with rulebooks for games inside it gets a tab per rulebook
-  - `/score/:slug` — score calculator (currently 7 Wonders)
+  - `/score/:slug` — score calculator for a game in
+    `data/scoreCalculators.ts` (currently 7 Wonders); any other slug shows
+    the not-found page
   - `/word-checker` — dictionary lookup for word games
   - `/sign-in` — the owner's magic-link sign-in (`SignInPage`); nothing on
     the home page links to it
 - **`App.tsx`** — layout shell: wraps the router `Outlet` in `FilterProvider`
   and mounts Vercel `Analytics`.
 - **`data/`** — the static data layer. `games.ts` is the source of truth for
-  the collection; `wishlist.ts`, `keywords.ts`, `initialFilterState.ts`, and
-  `types.ts` support it. No database on the read path — the collection is a
+  the collection; `wishlist.ts`, `keywords.ts`, `initialFilterState.ts`,
+  `scoreCalculators.ts` (the games with a score calculator, which the cards,
+  rows and score page all read) and `types.ts` support it. No database on the read path — the collection is a
   compiled-in constant. `Game` and `WishlistItem` both extend `Filterable`
   (name, desc, min/max players, mins, duration bucket, keywords). The filter
   pipeline (`utils/filterGames.ts`) is generic over it: `filterItems` with

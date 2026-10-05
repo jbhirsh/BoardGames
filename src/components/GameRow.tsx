@@ -7,6 +7,7 @@ import TableRowCells, { TableRowExpand } from './TableRowCells';
 import SubGameList from './SubGameList';
 import SubGamesTag from './SubGamesTag';
 import { fittingSubgames, subgameTitle } from '../utils/subgames';
+import { SCORE_CALCULATORS } from '../data/scoreCalculators';
 import { useFilter } from '../context/useFilter';
 import { YouTubeIcon, AiRulesIcon, CalculatorIcon, SearchIcon } from './Icons';
 
@@ -72,7 +73,7 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
               <AiRulesIcon /> Rules
             </a>
           )}
-          {game.slug === '7-wonders' && (
+          {SCORE_CALCULATORS.has(game.slug) && (
             <Link
               className="rules-link"
               to={`/score/${game.slug}`}

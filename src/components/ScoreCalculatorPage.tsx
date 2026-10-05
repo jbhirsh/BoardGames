@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useParams } from 'react-router';
 import { GAMES } from '../data/games';
+import { SCORE_CALCULATORS } from '../data/scoreCalculators';
+import NotFoundPage from './NotFoundPage';
 
 let nextPlayerId = 0;
 
@@ -48,7 +50,8 @@ const CATEGORIES = [
 type ScoreField = keyof Omit<PlayerScores, 'id' | 'name'>;
 
 export default function ScoreCalculatorPage() {
-  const game = GAMES.find(g => g.slug === '7-wonders');
+  const { slug } = useParams<{ slug: string }>();
+  const game = GAMES.find(g => g.slug === slug && SCORE_CALCULATORS.has(g.slug));
   const [players, setPlayers] = useState<PlayerScores[]>(() => [
     emptyScores('Player 1'),
     emptyScores('Player 2'),
@@ -56,7 +59,9 @@ export default function ScoreCalculatorPage() {
   const [activePlayer, setActivePlayer] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
 
-  if (!game) return null;
+  if (!game) {
+    return <NotFoundPage title="No score calculator" message="There's no score calculator for that game. Pick a game from the collection to see what it has." />;
+  }
 
   const current = players[activePlayer];
 
