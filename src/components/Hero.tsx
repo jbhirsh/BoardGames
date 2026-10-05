@@ -1,23 +1,15 @@
+import { Link } from 'react-router';
 import { GAMES } from '../data/games';
-import type { CollectionMode } from '../data/types';
 import { collectionSpan } from '../utils/collectionStats';
-import { useFilter } from '../context/useFilter';
-import { useWishlistItems } from '../context/useWishlistItems';
-import RandomPicker from './RandomPicker';
+import { rulebookPath } from '../utils/rulebooks';
+
+// A shelf of favourite boxes. Each opens its rulebook, so the row is a way
+// in rather than decoration.
+const SHELF = ['catan', 'azul', '7-wonders', 'codenames', 'pandemic', 'ticket-to-ride', 'dominion'];
 
 export default function Hero() {
   const { shortest, longest } = collectionSpan(GAMES);
-  const { dispatch } = useFilter();
-  // Same list the wishlist header counts: static entries plus approved suggestions.
-  const wanted = useWishlistItems().items.length;
-
-  function show(mode: CollectionMode) {
-    dispatch({ type: 'SET_COLLECTION', payload: mode });
-    // Not a plain fragment jump: that races the URL sync's navigation and
-    // lets ScrollRestoration put the page back where it was. Scroll once the
-    // chosen section carries the anchor id.
-    requestAnimationFrame(() => document.getElementById('collection')?.scrollIntoView());
-  }
+  const shelf = SHELF.flatMap((slug) => GAMES.filter((g) => g.slug === slug));
 
   return (
     <header className="hero">
@@ -25,15 +17,15 @@ export default function Hero() {
       <p className="hero-sub">
         {GAMES.length} games, {shortest} to {longest}. What fits tonight?
       </p>
-      <div className="hero-actions">
-        <RandomPicker />
-        <a className="hero-browse" href="#collection" onClick={(e) => { e.preventDefault(); show('own'); }}>
-          Browse all {GAMES.length}
-        </a>
-        <a className="hero-browse" href="#collection" onClick={(e) => { e.preventDefault(); show('want'); }}>
-          See the {wanted} we want
-        </a>
-      </div>
+      <ul className="hero-shelf" aria-label="Rulebooks">
+        {shelf.map((g) => (
+          <li key={g.slug}>
+            <Link to={rulebookPath(g.slug)} aria-label={`${g.name} rules`} title={g.name}>
+              <img src={g.img} alt="" width={120} height={120} />
+            </Link>
+          </li>
+        ))}
+      </ul>
     </header>
   );
 }

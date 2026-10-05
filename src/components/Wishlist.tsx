@@ -38,7 +38,7 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
       <div className="sec-hd">
         <h2 className="sec-title" tabIndex={-1}>Wishlist</h2>
         <span className="sec-count">{filtered.length} {filtered.length === 1 ? 'game' : 'games'}</span>
-        <div className="sec-right">
+        <div className="sec-switch">
           <CollectionToggle />
           {!isPhone && <ViewToggle />}
         </div>

@@ -146,3 +146,12 @@ describe('GameCollection on a phone', () => {
     expect(screen.queryByRole('button', { name: 'Grid view' })).not.toBeInTheDocument();
   });
 });
+
+describe('GameCollection header', () => {
+  it('offers the random picker beside the count it picks from', () => {
+    renderWithFilter();
+    const header = document.querySelector('.sec-hd') as HTMLElement;
+    expect(header).toHaveTextContent(/games/);
+    expect(screen.getByRole('button', { name: 'Pick for us' }).closest('.sec-hd')).toBe(header);
+  });
+});

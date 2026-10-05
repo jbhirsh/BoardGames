@@ -84,7 +84,7 @@ test('a rate-limited question comes back to the box and Retry asks it again', as
 test('under a players filter, Rules opens the add-on the game fits through', async ({ page }) => {
   // Catan seats 3–4; at five it is listed for its 5–6 Player Extension.
   await page.goto('/?q=catan&p=5&v=grid');
-  await page.getByRole('link', { name: 'Rules' }).click();
+  await page.getByRole('link', { name: 'Rules', exact: true }).click();
   await expect(page).toHaveURL(/\/rules\/catan\/5-6-player-extension$/);
 });
 

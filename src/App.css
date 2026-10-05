@@ -44,16 +44,14 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .hero h1{font-family:'Playfair Display',serif;font-size:clamp(34px,7vw,80px);font-weight:900;line-height:1.0;letter-spacing:-0.022em;color:var(--dark);margin-bottom:12px;}
 .hero h1 em{font-style:italic;color:var(--blue);}
 .hero-sub{font-size:17px;color:var(--text2);line-height:1.5;max-width:440px;margin:0 auto 24px;font-weight:400;}
+/* The not-found page's way home. */
 .hero-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;position:relative;}
 .hero-actions .pick-btn{height:48px;padding:0 24px;font-size:15px;border-radius:12px;}
-.hero-browse{
-  display:inline-flex;align-items:center;justify-content:center;
-  height:48px;padding:0 24px;border-radius:12px;
-  background:var(--surface);border:1px solid var(--border2);
-  color:var(--text);font-size:15px;font-weight:600;text-decoration:none;
-  box-shadow:var(--shadow-sm);transition:border-color .15s,color .15s;
-}
-.hero-browse:hover{border-color:var(--blue);color:var(--blue);}
+.hero-shelf{display:flex;gap:18px;justify-content:center;list-style:none;margin:0;padding:0;position:relative;}
+.hero-shelf li{flex:0 1 104px;min-width:0;}
+.hero-shelf a{display:block;border-radius:20px;transition:transform .15s;}
+.hero-shelf a:hover{transform:translateY(-3px);}
+.hero-shelf img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:cover;border-radius:20px;background:var(--surface);box-shadow:0 8px 24px rgba(0,0,0,.12);}
 
 /* ══ STICKY HEADER WRAPPER ════════════════════════════════ */
 .sticky-header{
@@ -151,7 +149,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 /* ══ MAIN ═════════════════════════════════════════════════ */
 .main{max-width:1360px;margin:0 auto;padding:52px var(--gutter) 48px;}
 .sec-hd{display:flex;align-items:center;gap:14px;margin-bottom:28px;flex-wrap:wrap;}
-/* The hero's "Browse all" jumps here; clear the sticky header on arrival.
+/* A #collection link lands here; clear the sticky header on arrival.
    The 91px fallback only applies before the ResizeObserver in
    useStickyOffset publishes the measured height, and matches the one on
    thead below. It is the phone bar height rather than the desktop one
@@ -159,9 +157,18 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
    low is recoverable, whereas landing too high hides the target under the
    sticky bar. */
 #collection{scroll-margin-top:var(--thead-top,91px);}
-.sec-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;letter-spacing:-.5px;color:var(--dark);}
+.sec-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;letter-spacing:-.5px;color:var(--dark);line-height:1.15;}
 .sec-count{font-size:11px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;}
-.sec-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+/* The count shares the title's baseline, then rises so its capitals sit in
+   the middle of the title's lowercase letters, which is where the eye puts a
+   heading's centre (centring the boxes left it reading high). */
+.sec-hd > .sec-title,.sec-hd > .sec-count{align-self:baseline;}
+.sec-hd > .sec-count{position:relative;top:-0.25em;}
+/* The switches get a line of their own under the heading, at the right:
+   Own/Want, then the view toggle (hidden on a phone). */
+.sec-switch{flex-basis:100%;display:flex;align-items:center;justify-content:flex-end;gap:10px;}
+/* The picker ends the heading's line, flush with the view toggle below it. */
+.sec-hd > .pick-btn{margin-left:auto;}
 
 /* Random picker */
 .pick-btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 14px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;white-space:nowrap;transition:background .15s,transform .15s,opacity .15s;}
@@ -779,15 +786,13 @@ a.rules-chat-toggle{text-decoration:none;}
   .dd-panel{ left:var(--gutter); right:var(--gutter); width:auto; min-width:0; transform-origin:top center; }
   .dd-opts{ max-height:min(250px, 40svh); }
 
-  /* One row on a phone: the count tucks under the title so the Own/Want
-     toggle fits beside them instead of wrapping onto a line of its own. */
-  .sec-hd{ padding:14px 0 10px; display:grid; grid-template-columns:1fr auto; grid-template-areas:"title right" "count right"; column-gap:12px; row-gap:2px; align-items:center; }
-  .sec-right{ margin-left:auto; flex-shrink:0; }
-  .sec-title{ grid-area:title; }
-  .sec-count{ grid-area:count; }
-  .sec-hd .sec-right{ grid-area:right; }
+  .sec-hd{ padding:14px 0 0; row-gap:10px; margin-bottom:16px; }
   .hero{ padding:32px var(--gutter) 24px; }
   .hero-sub{ font-size:15px; margin-bottom:20px; }
+  .hero-shelf{ gap:10px; }
+  .hero-shelf li:nth-child(n+6){ display:none; }
+  .hero-shelf li{ flex-basis:58px; }
+  .hero-shelf img{ border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,.12); }
   .main{ padding-top:24px; }
 
   /* score calculator: three icon+input pairs are 360px wide and overflow

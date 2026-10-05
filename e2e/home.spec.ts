@@ -162,3 +162,10 @@ test('the picker lands a deck on one of its games', async ({ page }) => {
   const dialog = page.getByRole('dialog', { name: 'Tonight, play — Euchre' });
   await expect(dialog.getByText('Played with the Card Deck')).toBeVisible();
 });
+
+test('a cover on the hero shelf opens that game\'s rulebook', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('list', { name: 'Rulebooks' }).getByRole('link', { name: 'Azul rules' }).click();
+  await expect(page).toHaveURL(/\/rules\/azul$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Azul' })).toBeVisible();
+});
