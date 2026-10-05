@@ -50,7 +50,8 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
 ### Client (`src/`)
 - **`main.tsx`** — entry point. Imports `./instrument` first (Sentry), then
   mounts a `createBrowserRouter` with four routes:
-  - `/` — `HomePage` (hero, filter bar, then the collection or the wishlist,
+  - `/` — `HomePage` (hero with a shelf of box covers that open their
+    rulebooks, filter bar, then the collection or the wishlist,
     switched by the Own/Want toggle; both stay mounted so a toggle never
     refetches, and only the visible one carries the `#collection` anchor)
   - `/rules/:slug/:part?` — bundled rule PDF viewer + AI rules assistant;
@@ -115,8 +116,8 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   keeps filter state mirrored to the URL query string so views are shareable.
   `WishlistContext` is the one definition of the wishlist for the page (static
   entries plus approved friend suggestions, loaded once and reloadable after
-  an owner edit) for the wishlist section, the keyword counts and the hero's
-  count; `AuthContext` holds the owner-session check that switches admin
+  an owner edit) for the wishlist section and the keyword counts;
+  `AuthContext` holds the owner-session check that switches admin
   mode on (`SignInPage`, `AdminPanel`, `AdminItemControls`). Its provider
   wraps only the home page and the `/sign-in` route, each with its own
   instance, so the rules, score and word-checker pages never call

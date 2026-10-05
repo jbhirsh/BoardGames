@@ -6,6 +6,7 @@ import ViewToggle from './ViewToggle';
 import CollectionToggle from './CollectionToggle';
 import GridView from './GridView';
 import ListView from './ListView';
+import RandomPicker from './RandomPicker';
 
 /**
  * The "We own" view. Stays mounted while the wishlist is showing (just
@@ -25,7 +26,9 @@ export default function GameCollection({ hidden = false }: { hidden?: boolean })
       <div className="sec-hd">
         <h2 className="sec-title" tabIndex={-1}>Our Collection</h2>
         <span className="sec-count">{filteredGames.length} {filteredGames.length === 1 ? 'game' : 'games'}</span>
-        <div className="sec-right">
+        {/* On the heading's line, beside the count it picks from. */}
+        <RandomPicker />
+        <div className="sec-switch">
           <CollectionToggle />
           {!isPhone && <ViewToggle />}
         </div>

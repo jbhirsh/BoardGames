@@ -27,8 +27,8 @@ describe('App', () => {
   it('shows the correct total game count in hero', () => {
     renderApp();
     const count = GAMES.length.toString();
-    // The count now reads inside the hero sentence and the "Browse all" link
-    // rather than as a standalone figure in the deleted stat strip.
+    // The count reads inside the hero sentence rather than as a standalone
+    // figure in the deleted stat strip.
     const elements = screen.getAllByText(new RegExp(`\\b${count}\\b`));
     expect(elements.length).toBeGreaterThanOrEqual(1);
   });
