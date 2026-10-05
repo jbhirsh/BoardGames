@@ -83,3 +83,15 @@ test('the random picker picks a game from the filtered list', async ({ page }) =
   await expect(page).toHaveURL(/\/rules\/azul$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Azul' })).toBeVisible();
 });
+
+test("opening a card's games on the grid doesn't stretch the row it sat in", async ({ page }) => {
+  await page.goto('/?v=grid');
+  // Caroling Charades starts the row after Card Deck's at desktop width. A
+  // row stretched to the opened list's height would push it far down.
+  const next = page.getByRole('heading', { level: 3, name: 'Caroling Charades' });
+  const before = await next.boundingBox();
+  await page.getByRole('button', { name: /^Card Deck: / }).click();
+  await expect(page.getByText(/^Partnership trick-taking/)).toBeVisible();
+  const after = await next.boundingBox();
+  expect(after!.y).toBeLessThanOrEqual(before!.y);
+});
