@@ -157,6 +157,51 @@ describe('RulesChat', () => {
     expect(linksFor).not.toHaveBeenCalledWith('Hi! Ask me anything about the rules for Catan.');
   });
 
+  it('offers starter questions until the first is asked, and asks the one tapped', async () => {
+    const fetchMock = vi.fn(async () => streamResponse(['Deal 7 each.']));
+    vi.stubGlobal('fetch', fetchMock);
+    render(
+      <RulesChatProvider>
+        <RulesChatToggle />
+        <RulesChatPanel slug="uno" gameName="UNO" starters={['How do we set up for 4 players?', 'How do you win?']} />
+      </RulesChatProvider>,
+    );
+    openPanel();
+    const panel = document.querySelector('.rules-chat-panel')!;
+    expect(panel).toHaveClass('rules-chat-panel-fresh');
+    expect(screen.getByRole('group', { name: 'Try asking' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'How do we set up for 4 players?' }));
+
+    expect(await screen.findByText('Deal 7 each.')).toBeInTheDocument();
+    const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
+    expect(body).toEqual({ slug: 'uno', message: 'How do we set up for 4 players?', history: [] });
+    expect(screen.queryByRole('group', { name: 'Try asking' })).toBeNull();
+    expect(panel).not.toHaveClass('rules-chat-panel-fresh');
+    // The tapped button is gone; focus comes back to the box.
+    await waitFor(() => expect(screen.getByPlaceholderText('Ask a rules question...')).toHaveFocus());
+  });
+
+  it('leaves a half-typed question in the box when a starter is tapped', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => streamResponse(['Sure.'])));
+    render(
+      <RulesChatProvider>
+        <RulesChatToggle />
+        <RulesChatPanel slug="uno" gameName="UNO" starters={['How do you win?']} />
+      </RulesChatProvider>,
+    );
+    openPanel();
+    fireEvent.change(screen.getByPlaceholderText('Ask a rules question...'), { target: { value: 'Can I stack' } });
+    fireEvent.click(screen.getByRole('button', { name: 'How do you win?' }));
+    await screen.findByText('Sure.');
+    expect(screen.getByPlaceholderText('Ask a rules question...')).toHaveValue('Can I stack');
+  });
+
+  it('shows no starters when given none', () => {
+    setup();
+    openPanel();
+    expect(screen.queryByRole('group', { name: 'Try asking' })).toBeNull();
+  });
+
   it('shows the error bubble and reports to Sentry on a non-OK response', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 500 }) as Response));
     setup();

@@ -100,7 +100,10 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   (and all of them on an add-on's tab, which is played on the finished game).
   `rulesLabel` names the tab for its own rulebook. A sub-game takes both too:
   the Monster Box has a tab per box. The rules page shows the tabs above the
-  chat, which says what it is reading for the tab on screen (`chatScope`).
+  chat, which says what it is reading for the tab on screen (`chatScope`)
+  and, until the first question, offers three starters shaped by that tab
+  (`starterQuestions`). A game with a score calculator links it beside the
+  chat's button.
   A game's `houseRules` (Hogwarts Battle's) are listed in a folded section
   above the rulebook on every one of its tabs; the assistant still answers
   from the printed rules only.

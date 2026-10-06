@@ -46,14 +46,16 @@ export interface RulebookLink {
  * `parts` names the extra rulebooks the assistant reads along with the game's
  * own, and `scope` says in words what it is reading. `linksFor` finds the
  * other tabs an answer names, so "that's in the 5–6 Player Extension" comes
- * with a way there.
+ * with a way there. `starters` are offered as one-tap questions until the
+ * first one is asked.
  */
-export function RulesChatPanel({ slug, gameName, parts = [], scope, linksFor }: {
+export function RulesChatPanel({ slug, gameName, parts = [], scope, linksFor, starters = [] }: {
   slug: string;
   gameName: string;
   parts?: string[];
   scope?: string;
   linksFor?: (answer: string) => RulebookLink[];
+  starters?: string[];
 }) {
   const { isOpen } = useContext(ChatContext);
   const [messages, setMessages] = useState<Message[]>([
@@ -77,13 +79,14 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, linksFor }: 
     void ask(input.trim());
   }
 
-  async function ask(userMsg: string) {
+  /** `fromBox` is false for a starter, which leaves whatever was typed alone. */
+  async function ask(userMsg: string, fromBox = true) {
     if (!userMsg || isLoading) return;
 
     // A retry replaces the notice the last attempt left.
     const prior = messages.filter((m) => !m.error);
     setMessages([...prior, { role: 'user', content: userMsg }]);
-    setInput('');
+    if (fromBox) setInput('');
     setIsLoading(true);
 
     const history = prior
@@ -175,16 +178,20 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, linksFor }: 
       if (requestRef.current === controller) requestRef.current = null;
       if (!controller.signal.aborted || timedOut) {
         setIsLoading(false);
-        // The input was disabled while waiting; put the person back in it.
-        if (failed) requestAnimationFrame(() => inputRef.current?.focus());
+        // The input was disabled while waiting; put the person back in it
+        // after a failure, or when the starter they tapped has gone with focus.
+        if (failed || !fromBox) requestAnimationFrame(() => inputRef.current?.focus());
       }
     }
   }
 
   if (!isOpen) return null;
 
+  // Before the first question the panel shrinks to the greeting and starters.
+  const fresh = messages.length === 1 && !isLoading;
+
   return (
-    <div className="rules-chat-panel">
+    <div className={`rules-chat-panel${fresh ? ' rules-chat-panel-fresh' : ''}`}>
         {scope && <p className="rules-chat-scope" aria-live="polite">{scope}</p>}
         <div className="rules-chat-messages" ref={messagesContainerRef}>
         {messages.map((msg, i) => (
@@ -208,6 +215,13 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, linksFor }: 
             )}
           </div>
         ))}
+        {fresh && starters.length > 0 && (
+          <div className="rules-chat-starters" role="group" aria-label="Try asking">
+            {starters.map((q) => (
+              <button key={q} type="button" className="rules-chat-starter" onClick={() => void ask(q, false)}>{q}</button>
+            ))}
+          </div>
+        )}
         {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
           <div className="rules-chat-msg rules-chat-msg-assistant">
             <div className="rules-chat-bubble rules-chat-thinking">Thinking...</div>

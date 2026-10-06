@@ -31,6 +31,20 @@ describe('RulesPage', () => {
     expect(screen.queryByRole('button', { name: 'Word Checker' })).not.toBeInTheDocument();
   });
 
+  it('links to the score calculator from a game that has one, and only there', () => {
+    const { unmount } = renderAt('/rules/7-wonders');
+    expect(screen.getByRole('link', { name: 'Score calculator' })).toHaveAttribute('href', '/score/7-wonders');
+    unmount();
+    renderAt('/rules/catan');
+    expect(screen.queryByRole('link', { name: 'Score calculator' })).toBeNull();
+  });
+
+  it('offers starter questions shaped by the tab on screen', () => {
+    renderAt('/rules/catan/5-6-player-extension');
+    fireEvent.click(screen.getByRole('button', { name: /AI Rules Assistant/i }));
+    expect(screen.getByRole('button', { name: 'What does 5–6 Player Extension change?' })).toBeInTheDocument();
+  });
+
   it('toggles the Word Checker panel on and off for bananagrams', () => {
     // Kills the bananagrams-only render of the toggle button, the toggle event
     // handler, and the `wordCheckerOpen && <WordChecker />` conditional render.

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useParams, Link, Navigate } from 'react-router';
 import { GAMES } from '../data/games';
-import { rulebooks, rulebookPath, chatParts, chatScope, mentionedRulebooks } from '../utils/rulebooks';
+import { rulebooks, rulebookPath, chatParts, chatScope, mentionedRulebooks, starterQuestions } from '../utils/rulebooks';
+import { SCORE_CALCULATORS } from '../data/scoreCalculators';
+import { CalculatorIcon } from './Icons';
 import { shownKind } from '../utils/subgames';
 import RulesChatProvider, { RulesChatToggle, RulesChatPanel } from './RulesChat';
 import WordChecker from './WordChecker';
@@ -46,6 +48,11 @@ export default function RulesPage() {
               <p className="rules-game-desc">{book.short}</p>
             </div>
             <RulesChatToggle />
+            {SCORE_CALCULATORS.has(game.slug) && (
+              <Link className="rules-chat-toggle" to={`/score/${game.slug}`}>
+                <CalculatorIcon /> Score calculator
+              </Link>
+            )}
             {game.slug === 'bananagrams' && (
               <button
                 className="rules-chat-toggle"
@@ -96,6 +103,7 @@ export default function RulesPage() {
           parts={chatParts(game, book)}
           scope={chatScope(game, book)}
           linksFor={(answer) => mentionedRulebooks(answer, game, book).map((b) => ({ label: b.label, to: rulebookPath(game.slug, b.part) }))}
+          starters={starterQuestions(game, book)}
         />
         {wordCheckerOpen && <WordChecker />}
         <div className="rules-viewer">
