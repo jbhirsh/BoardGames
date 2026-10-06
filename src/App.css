@@ -662,6 +662,13 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .sc-rank{font-size:18px;width:32px;text-align:center;}
 .sc-summary-name{flex:1;font-weight:600;color:var(--text);}
 .sc-summary-total{font-weight:700;font-size:16px;color:var(--blue);}
+.sc-input-wrap{display:flex;align-items:center;gap:6px;}
+.sc-sign{width:36px;height:36px;font-size:18px;font-weight:600;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;font-family:inherit;}
+.sc-sign:hover:not(:disabled){color:var(--text);background:var(--bg3);}
+.sc-sign:disabled{opacity:.45;cursor:default;}
+.sc-actions{display:flex;justify-content:flex-end;margin-top:12px;}
+.sc-new-game{padding:8px 16px;font-size:13px;font-weight:600;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;font-family:inherit;}
+.sc-new-game:hover{color:var(--text);background:var(--bg3);}
 
 @media(max-width:900px){
   .hero{ padding:48px var(--gutter) 40px; }

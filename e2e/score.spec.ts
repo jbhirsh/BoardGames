@@ -37,3 +37,20 @@ test('a game with no score calculator shows the not-found page', async ({ page }
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole('heading', { level: 2, name: 'Our Collection' })).toBeVisible();
 });
+
+test('a negative military score can be typed and the game survives a reload', async ({ page }) => {
+  await page.goto('/score/7-wonders');
+  const field = (name: string | RegExp) => page.getByRole('spinbutton', { name });
+
+  await field(/Military/).click();
+  await page.keyboard.type('-2');
+  await field(/Civilian/).click();
+  await page.keyboard.type('7');
+  await expect(field(/Military/)).toHaveValue('-2');
+  await expect(field(/Civilian/)).toHaveValue('7');
+  await expect(page.getByText('5 VP', { exact: true })).toBeVisible();
+
+  await page.reload();
+  await expect(field(/Military/)).toHaveValue('-2');
+  await expect(page.getByText('5 VP', { exact: true })).toBeVisible();
+});
