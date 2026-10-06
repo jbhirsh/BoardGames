@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router';
+import { MemoryRouter, Routes, Route, useParams } from 'react-router';
+import { GAMES } from '../data/games';
 import RandomPicker from '../components/RandomPicker';
 import { pickRandom } from '../utils/pickRandom';
 import FilterBar from '../components/FilterBar/FilterBar';
@@ -223,6 +224,8 @@ describe('RandomPicker', () => {
 
     expect(screen.queryByText('Spinning…')).toBeNull();
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+    // The reason reads from the list the pick came from, not the empty one.
+    expect(screen.getByText(`One of ${GAMES.length} games`)).toBeInTheDocument();
   });
 
   it('keeps focus inside the dialog on initial Shift+Tab from the card', () => {
@@ -299,3 +302,110 @@ describe('RandomPicker', () => {
     }
   });
 });
+
+describe('RandomPicker picks something playable', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  function RulesProbe() {
+    const { slug, part } = useParams();
+    return <div>{`rules page ${slug}/${part ?? ''}`}</div>;
+  }
+
+  function renderAt(url: string) {
+    return render(
+      <MemoryRouter initialEntries={[url]}>
+        <FilterProvider>
+          <RandomPicker />
+          <Routes>
+            <Route path="/rules/:slug/:part?" element={<RulesProbe />} />
+            <Route path="*" element={null} />
+          </Routes>
+        </FilterProvider>
+      </MemoryRouter>,
+    );
+  }
+
+  function spin() {
+    act(() => fireEvent.click(screen.getByRole('button', { name: /^Pick for us$/ })));
+    act(() => vi.advanceTimersByTime(2000));
+  }
+
+  it('lands the Card Deck on one of its games and says so', () => {
+    renderAt('/?q=Euchre');
+    spin();
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).not.toHaveAccessibleName(/Card Deck$/);
+    expect(screen.getByText('Played with the Card Deck')).toBeInTheDocument();
+    expect(screen.getByText('Tonight, play')).toBeInTheDocument();
+    expect(screen.getByText('The only match')).toBeInTheDocument();
+  });
+
+  it('says how the pick fits the filters', () => {
+    renderAt('/?p=4&d=quick');
+    spin();
+    expect(screen.getByText(/^Fits 4 players · ≤ 15 min · (one of \d+ games|the only match)$/)).toBeInTheDocument();
+  });
+
+  it('names a single match as the only one', () => {
+    renderAt('/?q=Azul');
+    spin();
+    expect(screen.getByRole('dialog')).toHaveAccessibleName('Tonight, play — Azul');
+    expect(screen.getByText('The only match')).toBeInTheDocument();
+  });
+
+  it("works through the list before offering a game again", () => {
+    renderAt('/?q=Ca');
+    const names = new Set<string>();
+    for (let i = 0; i < 3; i++) {
+      spin();
+      names.add(screen.getByRole('dialog').getAttribute('aria-label')!);
+      act(() => fireEvent.click(screen.getByRole('button', { name: 'Close' })));
+    }
+    // Math.random is pinned to 0, so only the "not offered yet" rule spreads the picks.
+    expect(names.size).toBe(3);
+  });
+
+  it('explains why the button is off', () => {
+    renderAt('/?q=__no_such_game__');
+    expect(screen.getByRole('button', { name: /^Pick for us$/ })).toHaveAttribute('title', 'No games match your filters');
+  });
+
+  it("lands on the game a search named, and opens that game's own rulebook tab", () => {
+    renderAt('/?q=Euchre');
+    spin();
+    expect(screen.getByRole('dialog')).toHaveAccessibleName('Tonight, play — Euchre');
+    act(() => fireEvent.click(screen.getByRole('button', { name: /View rules/ })));
+    expect(screen.getByText('rules page card-deck/euchre')).toBeInTheDocument();
+  });
+
+  it('names an add-on with its game, and says so on the card', () => {
+    const catan = GAMES.find((g) => g.slug === 'catan')!;
+    const addon = catan.subgames!.find((s) => s.kind !== 'card-game')!;
+    renderAt(`/?q=${encodeURIComponent(addon.name)}`);
+    spin();
+    expect(screen.getByRole('dialog')).toHaveAccessibleName(`Tonight, play — Catan with the ${addon.name}`);
+    expect(screen.getByText(`with the ${addon.name}`)).toBeInTheDocument();
+  });
+
+  it("starts the list over without repeating the game just shown", () => {
+    renderAt('/?q=Ca');
+    const shown: string[] = [];
+    const total = GAMES.filter((g) => g.name.toLowerCase().includes('ca') || g.desc.toLowerCase().includes('ca')
+      || (g.subgames ?? []).some((s) => s.name.toLowerCase().includes('ca'))).length;
+    for (let i = 0; i <= total; i++) {
+      spin();
+      shown.push(screen.getByRole('dialog').getAttribute('aria-label')!);
+      act(() => fireEvent.click(screen.getByRole('button', { name: 'Close' })));
+    }
+    // The pick after the list runs out isn't the last one shown.
+    expect(shown[total]).not.toBe(shown[total - 1]);
+  });
+});
+
