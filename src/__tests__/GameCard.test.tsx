@@ -57,6 +57,8 @@ describe('GameCard', () => {
     const rulesLink = screen.getByTitle('Rules');
     expect(rulesLink).toBeInTheDocument();
     expect(rulesLink.closest('a')).toHaveAttribute('href', '/rules/quick-game');
+    // Rules is the card's primary action.
+    expect(rulesLink.closest('a')).toHaveClass('rules-btn--primary');
   });
 
   it('points Rules at the add-on the players filter admits the game through', () => {
