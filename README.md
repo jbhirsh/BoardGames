@@ -1,5 +1,5 @@
 # PR screenshots
 
-Before/after images linked from pull request descriptions, one folder per
-issue number. This branch is never merged; it only hosts images so they stay
-out of `main`'s history.
+Images linked from pull requests. Not an app: `vercel.json` here turns off
+Vercel deployments for this branch, so screenshot pushes do not use the
+daily deployment allowance.
