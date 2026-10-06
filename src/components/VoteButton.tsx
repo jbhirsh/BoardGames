@@ -23,7 +23,8 @@ export default function VoteButton({ itemName, voteCount, voted, onClick, disabl
       disabled={disabled}
     >
       <span className="vote-heart" aria-hidden="true">{voted ? '♥' : '♡'}</span>
-      <span className="vote-count">{voteCount}</span>
+      {/* A row of "♡ 0" says nobody cares; "Vote" says what the button does. */}
+      <span className="vote-count">{voteCount > 0 ? voteCount : 'Vote'}</span>
     </button>
   );
 }

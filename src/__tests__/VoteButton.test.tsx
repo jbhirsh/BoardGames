@@ -7,7 +7,14 @@ describe('VoteButton', () => {
     render(<VoteButton itemName="Splendor" voteCount={0} voted={false} onClick={() => {}} />);
     const btn = screen.getByRole('button', { name: 'Vote for Splendor (0 votes)' });
     expect(btn).toHaveAttribute('aria-pressed', 'false');
-    expect(btn).toHaveTextContent('0');
+    // No votes yet reads as the action, not as a zero.
+    expect(btn).toHaveTextContent('Vote');
+    expect(btn).not.toHaveTextContent('0');
+  });
+
+  it('shows the count once there are votes', () => {
+    render(<VoteButton itemName="Splendor" voteCount={3} voted={false} onClick={() => {}} />);
+    expect(screen.getByRole('button', { name: 'Vote for Splendor (3 votes)' })).toHaveTextContent('3');
   });
 
   it('renders pressed state with remove-vote label when voted', () => {

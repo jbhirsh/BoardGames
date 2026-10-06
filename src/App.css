@@ -328,6 +328,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 }
 .rules-btn:hover{background:var(--blue-bg);border-color:rgba(0,113,227,0.3);color:var(--blue);box-shadow:var(--shadow-md);}
 .rules-btn svg{width:14px;height:14px;flex-shrink:0;display:block;}
+/* Rules is what the site is for, so on a card it is the one filled button. */
+.rules-btn--primary{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600;}
+.rules-btn--primary:hover{background:#0062c2;border-color:#0062c2;color:#fff;}
+.rules-btn--primary:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
 .row-chevron{width:16px;height:16px;color:var(--text3);transition:transform .22s cubic-bezier(.16,1,.3,1),color .15s;vertical-align:middle;}
 .game-row.open .row-chevron{transform:rotate(180deg);color:var(--blue);}
 
@@ -463,18 +467,21 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .row-credit{font-size:12.5px;color:var(--text3);margin-top:6px;}
 .row-art{float:right;width:64px;height:64px;margin:0 0 8px 14px;border-radius:12px;object-fit:cover;border:1px solid var(--border);}
 .col-vote{white-space:nowrap;text-align:right;width:1%;}
-.vote-btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;color:var(--text2);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s,color .15s;}
-.vote-btn:hover:not(:disabled){background:rgba(231,76,88,0.08);border-color:rgba(231,76,88,0.45);color:var(--text);}
+.vote-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:68px;height:32px;padding:0 12px;background:rgba(231,76,88,0.06);border:1px solid rgba(231,76,88,0.35);border-radius:8px;color:var(--text);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s,color .15s;}
+.vote-btn:hover:not(:disabled){background:rgba(231,76,88,0.14);border-color:rgba(231,76,88,0.6);}
 .vote-btn:disabled{opacity:.5;cursor:not-allowed;}
-.vote-btn--on{background:rgba(231,76,88,0.1);border-color:rgba(231,76,88,0.5);color:var(--text);}
+.vote-btn--on{background:#D63C48;border-color:#D63C48;color:#fff;}
+.vote-btn--on .vote-heart{color:#fff;}
+.vote-btn--on:hover:not(:disabled){background:#C02F3B;border-color:#C02F3B;}
 .vote-heart{font-size:14px;line-height:1;color:#E74C58;}
 .vote-count{font-variant-numeric:tabular-nums;min-width:1ch;text-align:right;}
-.wish-yt,.wish-amz,.wish-track{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;text-decoration:none;transition:background .15s,color .15s,transform .15s;}
+/* YouTube keeps its red; the cart is a quiet icon button. */
+.wish-yt,.wish-amz,.wish-track{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;text-decoration:none;transition:background .15s,color .15s,border-color .15s,transform .15s;}
 .wish-yt{background:#CC0000;color:#fff;}
 .wish-yt:hover{background:#A00;transform:scale(1.05);}
 .wish-yt svg{width:13px;height:13px;fill:#fff;}
-.wish-amz{background:#FF9900;color:#1D1D1F;}
-.wish-amz:hover{background:#E68A00;transform:scale(1.05);}
+.wish-amz{background:var(--surface);border:1px solid var(--border2);color:var(--text2);}
+.wish-amz:hover{background:rgba(255,153,0,0.1);border-color:rgba(230,138,0,0.5);color:var(--text);transform:scale(1.05);}
 .wish-track{background:var(--bg2);color:var(--text2);border:1px solid var(--border);}
 .wish-track:hover{background:var(--blue-bg);color:var(--blue);border-color:rgba(0,113,227,0.3);transform:scale(1.05);}
 .awards{font-size:11.5px;color:#8A6D12;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;font-weight:600;white-space:nowrap;display:inline-flex;}
@@ -521,7 +528,7 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
    killed every mobile override for the rules page, the chat panel
    and the score calculator. ══════════════════════════════════ */
 /* ══ CARD CORNER IMAGE ═══════════════════════════════════════ */
-.card-corner-img{position:absolute;top:12px;right:14px;width:76px;height:76px;border-radius:50%;object-fit:cover;border:2px solid var(--border);box-shadow:var(--shadow-sm);flex-shrink:0;}
+.card-corner-img{position:absolute;top:12px;right:14px;width:76px;height:76px;border-radius:14px;object-fit:contain;background:#fff;border:1px solid var(--border);box-shadow:var(--shadow-sm);flex-shrink:0;}
 .game-card:hover .card-corner-img{border-color:rgba(0,113,227,0.25);}
 
 
@@ -704,7 +711,7 @@ a.rules-chat-toggle{text-decoration:none;}
      column takes what players, duration and the chevron leave. */
   .games-list th.col-players-h{ width:72px; }
   .games-list th.col-dur-h{ width:104px; }
-  .games-list th.col-vote{ width:64px; }
+  .games-list th.col-vote{ width:90px; }
   .games-list th.col-actions-h{ width:52px; }
   .game-row td{ padding:10px 10px; }
   .game-row td:first-child{ padding-left:16px; }

@@ -112,12 +112,12 @@ export default function GameCard({ game }: Props) {
         </div>
         <div className="card-foot-end">
           {game.rules ? (
-            <Link className="rules-btn" to={rulesPathFor(game, state)} title="Rules">
+            <Link className="rules-btn rules-btn--primary" to={rulesPathFor(game, state)} title="Rules">
               <AiRulesIcon /> Rules
             </Link>
           ) : (
             <a
-              className="rules-btn"
+              className="rules-btn rules-btn--primary"
               href={rulesURL(game.name)}
               onClick={(e) => { e.preventDefault(); window.open(rulesURL(game.name), '_blank'); }}
               title="Rules"
