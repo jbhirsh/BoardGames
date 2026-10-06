@@ -36,7 +36,7 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
   return (
     <section className="wishlist" id={hidden ? undefined : 'collection'} ref={sectionRef} hidden={hidden}>
       <div className="sec-hd">
-        <h2 className="sec-title">Wishlist</h2>
+        <h2 className="sec-title" tabIndex={-1}>Wishlist</h2>
         <span className="sec-count">{filtered.length} {filtered.length === 1 ? 'game' : 'games'}</span>
         <div className="sec-right">
           <CollectionToggle />
@@ -92,7 +92,7 @@ function WishlistBody({ items, filtered, isPhone }: { items: WishlistItem[]; fil
     <>
       {admin && <AdminPanel />}
       {filtered.length === 0 ? (
-        <NoResults message="No wishlist games match your filters." />
+        <NoResults kind="wishlist" />
       ) : state.view === 'list' && !isPhone ? (
         <WishlistListView groups={groups} counts={counts} myVotes={myVotes} onVote={toggle} disabled={!loaded} />
       ) : (

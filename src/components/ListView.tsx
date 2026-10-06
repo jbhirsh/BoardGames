@@ -11,7 +11,7 @@ export default function ListView() {
   const { state, filteredGames } = useFilter();
   const [openRow, setOpenRow] = useState<string | null>(null);
 
-  if (filteredGames.length === 0) return <NoResults message="No games match your filters." />;
+  if (filteredGames.length === 0) return <NoResults kind="games" />;
 
   const grouped = isGrouped(state);
 
