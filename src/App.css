@@ -578,6 +578,9 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 
 .rules-chat-bubble{max-width:80%;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.5;word-wrap:break-word;}
 .rules-chat-msg-user .rules-chat-bubble{white-space:pre-wrap;}
+.rules-chat-tablink{display:inline-block;margin-top:8px;font-weight:600;color:var(--blue);text-decoration:none;}
+.rules-chat-tablink:hover{text-decoration:underline;}
+.rules-chat-tablink + .rules-chat-tablink{margin-left:12px;}
 .rules-chat-bubble p{margin:0 0 8px;}
 .rules-chat-bubble p:last-child{margin-bottom:0;}
 .rules-chat-bubble ol,.rules-chat-bubble ul{margin:4px 0 8px;padding-left:20px;}

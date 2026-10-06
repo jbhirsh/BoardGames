@@ -26,14 +26,18 @@ export interface ChatHistoryEntry {
   content: string;
 }
 
+/** A rulebook's name from its part: "Cities And Knights" from cities-and-knights. */
+function rulebookName(part: string): string {
+  return part.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 /**
  * Heads each rulebook after the game's own, named from its part ("Cities and
  * Knights" from cities-and-knights), so the model can tell whose rule is
  * whose: Catan wins at 10 points, Cities & Knights at 13.
  */
 export function rulebookHeader(part: string): string {
-  const name = part.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-  return `\n\n=== Next rulebook: ${name}. It goes with the game above; where it differs, say which rulebook a rule comes from. ===\n\n`;
+  return `\n\n=== Next rulebook: ${rulebookName(part)}. It goes with the game above; where it differs, say which rulebook a rule comes from. ===\n\n`;
 }
 
 /**
@@ -62,6 +66,36 @@ export function loadRulesText(slug: string, parts: string[] = []): string {
     if (file) text += rulebookHeader(part) + read(file);
   }
   return text;
+}
+
+/**
+ * The game's rulebooks the assistant was not sent: every <slug>.<part>.txt
+ * beside the game's own whose part is not among the ones read, in file
+ * order. Taken from the directory, not the request, so it adds no input.
+ */
+export function otherRulebooks(slug: string, parts: string[] = []): string[] {
+  const prefix = `${slug}.`;
+  return readdirSync(join(process.cwd(), 'rules-text'))
+    .filter((f) => f.startsWith(prefix) && f.endsWith('.txt'))
+    .map((f) => f.slice(prefix.length, -'.txt'.length))
+    .filter((part) => part !== '' && !parts.includes(part))
+    .sort();
+}
+
+/**
+ * Tells the assistant which of the game's rulebooks it was not given, by
+ * name only (their text would crowd out the answer), so a question that
+ * belongs to one gets pointed there ("that's in the 5 6 Player Extension")
+ * rather than "the rules don't cover it". The rules page links a tab the
+ * answer names. Empty when there are none.
+ */
+export function otherRulebooksNote(parts: string[]): string {
+  if (parts.length === 0) return '';
+  const names = parts.map(rulebookName);
+  const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
+  return `\n\n=== Not included above: this game's other ${names.length === 1 ? 'rulebook' : 'rulebooks'}, ${list}. ` +
+    'If a question is about one of them, or its answer is probably in one, say which rulebook covers it ' +
+    'so the player can open it, rather than saying the rules don\'t cover it. ===';
 }
 
 /** Builds the Gemini conversation: rules text first, then history, then the new question. */
@@ -139,7 +173,7 @@ export interface AskRulesAssistantOptions {
  * prompt, call Gemini, and collect the streamed reply into one string.
  */
 export async function askRulesAssistant(options: AskRulesAssistantOptions): Promise<string> {
-  const rulesText = loadRulesText(options.slug, options.parts);
+  const rulesText = loadRulesText(options.slug, options.parts) + otherRulebooksNote(otherRulebooks(options.slug, options.parts));
   const stream = await streamRulesAnswer({
     rulesText,
     message: options.message,

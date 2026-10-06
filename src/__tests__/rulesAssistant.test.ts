@@ -11,6 +11,8 @@ import {
   RULES_ASSISTANT_SYSTEM_INSTRUCTION,
   RULES_ASSISTANT_MAX_OUTPUT_TOKENS,
   rulebookHeader,
+  otherRulebooks,
+  otherRulebooksNote,
 } from '../../api/_lib/rulesAssistant';
 
 const mocks = vi.hoisted(() => ({
@@ -123,6 +125,42 @@ describe('loadRulesText', () => {
   });
 });
 
+describe('otherRulebooks', () => {
+  it('lists the game\'s rulebooks the assistant is not reading, from the directory', () => {
+    const root = mkdtempSync(join(tmpdir(), 'rules-'));
+    mkdirSync(join(root, 'rules-text'));
+    for (const name of ['deck.txt', 'deck.speed.txt', 'deck.euchre.txt', 'deck-builder.txt', 'deck-builder.x.txt', 'deck.notes.md']) {
+      writeFileSync(join(root, 'rules-text', name), 'x');
+    }
+    const cwd = vi.spyOn(process, 'cwd').mockReturnValue(root);
+    try {
+      expect(otherRulebooks('deck')).toEqual(['euchre', 'speed']);
+      expect(otherRulebooks('deck', ['speed'])).toEqual(['euchre']);
+      expect(otherRulebooks('deck', ['speed', 'euchre'])).toEqual([]);
+      expect(otherRulebooks('deck-builder')).toEqual(['x']);
+    } finally {
+      cwd.mockRestore();
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('finds Catan\'s add-ons beside its own rules', () => {
+    expect(otherRulebooks('catan')).toEqual(['5-6-player-extension', 'cities-and-knights']);
+    expect(otherRulebooks('catan', ['cities-and-knights'])).toEqual(['5-6-player-extension']);
+    expect(otherRulebooks('uno')).toEqual([]);
+  });
+});
+
+describe('otherRulebooksNote', () => {
+  it('names the rulebooks left out and asks the assistant to point to them', () => {
+    expect(otherRulebooksNote([])).toBe('');
+    const one = otherRulebooksNote(['5-6-player-extension']);
+    expect(one).toContain("this game's other rulebook, 5 6 Player Extension.");
+    expect(one).toContain('say which rulebook covers it');
+    expect(otherRulebooksNote(['a-b', 'c', 'd'])).toContain("other rulebooks, A B, C and D.");
+  });
+});
+
 describe('streamRulesAnswer', () => {
   it('sends the production payload: api key, model, system instruction, and contents', async () => {
     const stream = fakeStream('hi');
@@ -202,6 +240,15 @@ describe('askRulesAssistant', () => {
       'Here are the complete rules for the game:\n\n' + loadRulesText('ticket-to-ride', ['europe']),
     );
     expect(loadRulesText('ticket-to-ride', ['europe'])).toContain(rulebookHeader('europe'));
+  });
+
+  it('names the rulebooks it was not given after the ones it reads', async () => {
+    mocks.generateContentStream.mockResolvedValue(fakeStream('Use the extension.'));
+    await askRulesAssistant({ slug: 'catan', message: 'Five players?', apiKey: 'k', temperature: 0 });
+    expect(lastRequest().contents[0].parts[0].text).toBe(
+      'Here are the complete rules for the game:\n\n' + loadRulesText('catan') +
+        otherRulebooksNote(['5-6-player-extension', 'cities-and-knights']),
+    );
   });
 
   it('propagates a missing-rules error before any Gemini call', async () => {

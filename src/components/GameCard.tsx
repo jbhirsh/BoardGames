@@ -11,6 +11,7 @@ import AwardsBadge from './AwardsBadge';
 import SubGameList from './SubGameList';
 import Popover from './Popover';
 import { fittingSubgames, subgameLabel } from '../utils/subgames';
+import { rulesPathFor } from '../utils/rulebooks';
 import { YouTubeIcon, AiRulesIcon, UserIcon, ClockIcon, CalculatorIcon, SearchIcon } from './Icons';
 
 interface Props {
@@ -85,7 +86,7 @@ export default function GameCard({ game }: Props) {
         </div>
         <div className="card-foot-end">
           {game.rules ? (
-            <Link className="rules-btn" to={`/rules/${game.slug}`} title="Rules">
+            <Link className="rules-btn" to={rulesPathFor(game, state)} title="Rules">
               <AiRulesIcon /> Rules
             </Link>
           ) : (

@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import GameCard from '../components/GameCard';
+import { GAMES } from '../data/games';
 import { FilterProvider } from '../context/FilterContext';
 import { useFilter } from '../context/useFilter';
 import { quickGame, mediumGame, bananagramsGame, sevenWondersGame, deckGame, addonGame } from './testData';
@@ -56,6 +57,12 @@ describe('GameCard', () => {
     const rulesLink = screen.getByTitle('Rules');
     expect(rulesLink).toBeInTheDocument();
     expect(rulesLink.closest('a')).toHaveAttribute('href', '/rules/quick-game');
+  });
+
+  it('points Rules at the add-on the players filter admits the game through', () => {
+    const catan = GAMES.find((g) => g.slug === 'catan')!;
+    renderWithContext(<GameCard game={catan} />, '/?p=5');
+    expect(screen.getByTitle('Rules').closest('a')).toHaveAttribute('href', '/rules/catan/5-6-player-extension');
   });
 
   it('renders fallback rules link when game has no rules field', () => {

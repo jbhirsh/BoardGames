@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { rulebooks, rulebookPath, chatParts, chatScope } from '../utils/rulebooks';
+import { rulebooks, rulebookPath, chatParts, chatScope, rulesPathFor, mentionedRulebooks } from '../utils/rulebooks';
+import { initialFilterState } from '../data/initialFilterState';
+import { GAMES } from '../data/games';
 import { quickGame } from './testData';
 import type { Game, SubGame } from '../data/types';
 
@@ -148,5 +150,72 @@ describe('chatScope', () => {
       { slug: 'p4', label: 'Part 4', pdf: '/rules/quick-game.p4.pdf' },
     ] };
     expect(chatScope(game, rulebooks(game)[2])).toBe('Reading: Part 4, plus Part 1 and Part 3.');
+  });
+});
+
+describe('rulesPathFor', () => {
+  const catan = GAMES.find((g) => g.slug === 'catan')!;
+  const deck = GAMES.find((g) => g.slug === 'card-deck')!;
+  const at = (players: number) => ({ ...initialFilterState, players });
+
+  it('opens the add-on a game fits the filters through, not its base game', () => {
+    expect(rulesPathFor(catan, at(5))).toBe('/rules/catan/5-6-player-extension');
+    expect(rulesPathFor(catan, at(6))).toBe('/rules/catan/5-6-player-extension');
+  });
+
+  it('opens the game\'s own rulebook when it fits on its own or nothing is filtered', () => {
+    expect(rulesPathFor(catan, at(4))).toBe('/rules/catan');
+    expect(rulesPathFor(catan, initialFilterState)).toBe('/rules/catan');
+    expect(rulesPathFor(quickGame, at(2))).toBe('/rules/quick-game');
+  });
+
+  it('keeps a deck on its overview, which lists every game in it', () => {
+    expect(rulesPathFor(deck, at(4))).toBe('/rules/card-deck');
+  });
+
+  it('skips a fitting add-on with no rulebook of its own', () => {
+    const game: Game = { ...quickGame, min: 2, max: 4, subgames: [
+      sub({ name: 'Big Box', slug: 'big', kind: 'expansion', min: 5, max: 8 }),
+    ] };
+    expect(rulesPathFor(game, at(6))).toBe('/rules/quick-game');
+  });
+});
+
+describe('mentionedRulebooks', () => {
+  const catan = GAMES.find((g) => g.slug === 'catan')!;
+  const [base, ext, ck] = rulebooks(catan);
+
+  it('finds the tabs an answer names, however the name is written', () => {
+    expect(mentionedRulebooks("That's in the 5 6 Player Extension.", catan, base)).toEqual([ext]);
+    expect(mentionedRulebooks('See the 5–6 player extension rules.', catan, base)).toEqual([ext]);
+    expect(mentionedRulebooks('Cities and Knights changes that.', catan, base)).toEqual([ck]);
+    expect(mentionedRulebooks('Both the Cities & Knights and the 5-6 Player Extension do.', catan, base)).toEqual([ext, ck]);
+  });
+
+  it('leaves out the tab on screen and the base game, which it always reads', () => {
+    expect(mentionedRulebooks('Cities and Knights says so; the base game agrees.', catan, ck)).toEqual([]);
+    expect(mentionedRulebooks('Nothing about other boxes.', catan, base)).toEqual([]);
+  });
+
+  it('knows a tab by the name the server gives it as well as by its label', () => {
+    const game: Game = { ...quickGame, subgames: [
+      sub({ name: 'Monster Box of Monsters', slug: 'monster-box-of-monsters', kind: 'expansion', rulesLabel: 'Monster Box 1', rules: '/rules/q.m.pdf' }),
+    ] };
+    const [own, box] = rulebooks(game);
+    expect(mentionedRulebooks('That is in the Monster Box Of Monsters rulebook.', game, own)).toEqual([box]);
+    expect(mentionedRulebooks('Monster Box 1 adds it.', game, own)).toEqual([box]);
+  });
+
+  it('links only rulebooks the assistant was not already reading', () => {
+    const game: Game = { ...quickGame, moreRules: [
+      { slug: 'game-2', label: 'Game 2', pdf: '/rules/q.2.pdf' },
+      { slug: 'game-3', label: 'Game 3', pdf: '/rules/q.3.pdf' },
+    ] };
+    const [, two, three] = rulebooks(game);
+    // On Game 3's tab the assistant reads Game 2 too; Game 2 needs no link.
+    expect(mentionedRulebooks('As in Game 2, and unlike Game 3.', game, three)).toEqual([]);
+    expect(mentionedRulebooks('Game 3 adds that.', game, two)).toEqual([three]);
+    // Spaces bound the match: "Game 20" is not Game 2.
+    expect(mentionedRulebooks('Score 20 at game 20.', game, rulebooks(game)[0])).toEqual([]);
   });
 });

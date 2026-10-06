@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import * as Sentry from '@sentry/react';
+import { MemoryRouter } from 'react-router';
 import RulesChatProvider, { RulesChatToggle, RulesChatPanel } from '../components/RulesChat';
 
 vi.mock('@sentry/react', () => ({
@@ -132,6 +133,28 @@ describe('RulesChat', () => {
     await screen.findByText('ok');
     const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
     expect(body).toEqual({ slug: 'cranium', message: 'How do knights work?', history: [], parts: ['cities-and-knights'] });
+  });
+
+  it('links the tabs an answer names, once the answer is in', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => streamResponse(["That's in the 5 6 Player Extension."])));
+    const linksFor = vi.fn((answer: string) =>
+      answer.includes('Extension') ? [{ label: '5–6 Player Extension', to: '/rules/catan/5-6-player-extension' }] : [],
+    );
+    render(
+      <MemoryRouter>
+        <RulesChatProvider>
+          <RulesChatToggle />
+          <RulesChatPanel slug="catan" gameName="Catan" linksFor={linksFor} />
+        </RulesChatProvider>
+      </MemoryRouter>,
+    );
+    openPanel();
+    // The greeting names no tab and is never checked.
+    expect(screen.queryByRole('link')).toBeNull();
+    send('How do we play with 5?');
+    const link = await screen.findByRole('link', { name: 'Open 5–6 Player Extension' });
+    expect(link).toHaveAttribute('href', '/rules/catan/5-6-player-extension');
+    expect(linksFor).not.toHaveBeenCalledWith('Hi! Ask me anything about the rules for Catan.');
   });
 
   it('shows the error bubble and reports to Sentry on a non-OK response', async () => {

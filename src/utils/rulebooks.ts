@@ -1,5 +1,5 @@
-import type { Game, SubGameKind } from '../data/types';
-import { isDeck } from './filterGames';
+import type { FilterState, Game, SubGameKind } from '../data/types';
+import { fitsTable, isDeck, tableFiltered } from './filterGames';
 
 export interface Rulebook {
   /** The rulebook's slug, or undefined for the game's own rulebook. */
@@ -98,4 +98,39 @@ function numberRuns(labels: string[]): string[] {
 /** Where a game's rules page shows the given rulebook. */
 export function rulebookPath(slug: string, part?: string): string {
   return part ? `/rules/${slug}/${part}` : `/rules/${slug}`;
+}
+
+/**
+ * Where a game's Rules link goes under the players and time filters: its own
+ * rulebook, unless the filters admit the game only through a game inside it
+ * that has a rulebook of its own. Then that one, since it is the one to play:
+ * Catan at five players opens the 5–6 Player Extension. With more than one
+ * that fits, the first in the data's order. A deck keeps its overview, which
+ * lists every game in it.
+ */
+export function rulesPathFor(game: Game, state: FilterState): string {
+  const subs = game.subgames ?? [];
+  if (!tableFiltered(state) || isDeck(subs) || fitsTable(game, state)) return rulebookPath(game.slug);
+  return rulebookPath(game.slug, subs.find((s) => s.rules && fitsTable(s, state))?.slug);
+}
+
+/** Lowercase words only: "Cities & Knights" and "cities and knights" match, as do "5–6" and "5-6". */
+function words(text: string): string {
+  return ` ${text.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim()} `;
+}
+
+/**
+ * The tabs an assistant answer points to by name, in tab order: the
+ * rulebooks it was told about but not sent (the game's own and those
+ * chatParts sends are on its desk already). A tab counts as named by its
+ * label or by the name the server gives it, built from its part
+ * ("Monster Box Of Monsters" for the tab labelled "Monster Box 1").
+ */
+export function mentionedRulebooks(answer: string, game: Game, shown: Rulebook): Rulebook[] {
+  const text = words(answer);
+  const read = new Set(chatParts(game, shown));
+  return rulebooks(game).filter((b) =>
+    b.part !== undefined && b.part !== shown.part && !read.has(b.part) &&
+    (text.includes(words(b.label)) || text.includes(words(b.part))),
+  );
 }

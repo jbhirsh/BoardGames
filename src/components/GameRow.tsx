@@ -7,6 +7,7 @@ import TableRowCells, { TableRowExpand } from './TableRowCells';
 import SubGameList from './SubGameList';
 import SubGamesTag from './SubGamesTag';
 import { fittingSubgames, subgameTitle } from '../utils/subgames';
+import { rulesPathFor } from '../utils/rulebooks';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
 import { useFilter } from '../context/useFilter';
 import { YouTubeIcon, AiRulesIcon, CalculatorIcon, SearchIcon } from './Icons';
@@ -59,7 +60,7 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
           {game.rules ? (
             <Link
               className="rules-link"
-              to={`/rules/${game.slug}`}
+              to={rulesPathFor(game, state)}
               onClick={(e) => e.stopPropagation()}
             >
               <AiRulesIcon /> Rules
