@@ -30,7 +30,7 @@ describe('GameRow', () => {
   it('renders player count and duration pill', () => {
     renderRow(quickGame);
     expect(screen.getByText('2\u20134')).toBeInTheDocument();
-    expect(screen.getByText('Quick')).toBeInTheDocument();
+    expect(screen.getByText('10 min')).toBeInTheDocument();
   });
 
   it('calls onToggle when clicking the row', () => {
@@ -104,7 +104,7 @@ describe('GameRow', () => {
   it('clicking duration pill dispatches SET_DURATION', () => {
     const onToggle = vi.fn();
     renderRow(quickGame, false, onToggle);
-    const pill = screen.getByText('Quick');
+    const pill = screen.getByText('10 min');
     fireEvent.click(pill);
     // stopPropagation should prevent onToggle from firing
   });

@@ -232,6 +232,20 @@ describe('Wishlist', () => {
     expect(container.querySelector('.table-wrap')).toBeInTheDocument();
   });
 
+  it('shows cards on a phone even with the list view chosen, and no view toggle', async () => {
+    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener: () => {}, removeEventListener: () => {} })));
+    try {
+      mockVotes({});
+      renderWishlist('/?c=want');
+      await screen.findByText(WISHLIST[0].name);
+      expect(document.querySelector('.wish-grid .wish-card')).not.toBeNull();
+      expect(document.querySelector('table.games-list')).toBeNull();
+      expect(screen.queryByRole('button', { name: 'List view' })).not.toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('POSTs a vote when the vote button is clicked', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
       const url = String(input);

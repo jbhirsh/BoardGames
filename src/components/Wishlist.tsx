@@ -13,6 +13,7 @@ import { useAuth } from '../context/useAuth';
 import { useWishlistItems } from '../context/useWishlistItems';
 import { useWishlistVotes } from '../hooks/useWishlistVotes';
 import { useKeepSectionInView } from '../hooks/useKeepSectionInView';
+import { useIsPhone } from '../hooks/useIsPhone';
 import { filterWishlist, isGrouped } from '../utils/filterGames';
 
 /**
@@ -27,6 +28,7 @@ import { filterWishlist, isGrouped } from '../utils/filterGames';
 export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
   const { state } = useFilter();
   const { items, loaded } = useWishlistItems();
+  const isPhone = useIsPhone();
   const filtered = useMemo(() => filterWishlist(items, state), [items, state]);
   const sectionRef = useRef<HTMLElement>(null);
   useKeepSectionInView(sectionRef, !hidden);
@@ -38,15 +40,15 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
         <span className="sec-count">{filtered.length} {filtered.length === 1 ? 'game' : 'games'}</span>
         <div className="sec-right">
           <CollectionToggle />
-          <ViewToggle />
+          {!isPhone && <ViewToggle />}
         </div>
       </div>
-      {loaded && <WishlistBody items={items} filtered={filtered} />}
+      {loaded && <WishlistBody items={items} filtered={filtered} isPhone={isPhone} />}
     </section>
   );
 }
 
-function WishlistBody({ items, filtered }: { items: WishlistItem[]; filtered: WishlistItem[] }) {
+function WishlistBody({ items, filtered, isPhone }: { items: WishlistItem[]; filtered: WishlistItem[]; isPhone: boolean }) {
   const { state } = useFilter();
   const { admin } = useAuth();
   const ids = useMemo(() => items.map((w) => w.id), [items]);
@@ -91,7 +93,7 @@ function WishlistBody({ items, filtered }: { items: WishlistItem[]; filtered: Wi
       {admin && <AdminPanel />}
       {filtered.length === 0 ? (
         <NoResults message="No wishlist games match your filters." />
-      ) : state.view === 'list' ? (
+      ) : state.view === 'list' && !isPhone ? (
         <WishlistListView groups={groups} counts={counts} myVotes={myVotes} onVote={toggle} disabled={!loaded} />
       ) : (
         renderGrid()

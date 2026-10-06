@@ -1,4 +1,6 @@
+import { useId, useState } from 'react';
 import type { KeywordId, WishlistItem } from '../data/types';
+import { shortDesc } from '../utils/shortDesc';
 import { isKeywordLit } from '../utils/keywordLit';
 import { useFilter } from '../context/useFilter';
 import { sortedKw } from '../utils/filterGames';
@@ -24,6 +26,12 @@ export default function WishlistCard({ item, voteCount, voted, onVote, disabled,
   const { state, dispatch } = useFilter();
   const Heading = headingLevel === 3 ? 'h3' : 'h4';
   const lit = (kw: KeywordId) => isKeywordLit(state, kw);
+  // The card opens on the blurb's first sentence, as the list row does, and
+  // More shows the rest.
+  const [moreOpen, setMoreOpen] = useState(false);
+  const descId = useId();
+  const short = shortDesc(item.desc);
+  const hasMore = short !== item.desc.trim();
 
   return (
     <div className="game-card wish-card" data-testid="wishlist-item" data-item-id={item.id}>
@@ -48,7 +56,24 @@ export default function WishlistCard({ item, voteCount, voted, onVote, disabled,
         )}
       </div>
       <div className="card-body">
-        <p className="card-desc">{item.desc}</p>
+        <p className="card-desc" id={descId}>
+          {moreOpen || !hasMore ? item.desc : short}
+          {hasMore && (
+            <>
+              {' '}
+              <button
+                type="button"
+                className="card-more"
+                aria-expanded={moreOpen}
+                aria-controls={descId}
+                aria-label={`${moreOpen ? 'Less' : 'More'} about ${item.name}`}
+                onClick={() => setMoreOpen((o) => !o)}
+              >
+                {moreOpen ? 'Less' : 'More'}
+              </button>
+            </>
+          )}
+        </p>
         {item.suggestedBy && <p className="card-credit">Suggested by {item.suggestedBy}</p>}
         <AdminItemControls item={item} />
       </div>

@@ -7,7 +7,7 @@ import { useFilter } from '../context/useFilter';
 import { ytURL, rulesURL } from '../utils/urls';
 import { sortedKw } from '../utils/filterGames';
 import KeywordPill from './KeywordPill';
-import AwardsBadge from './AwardsBadge';
+import AwardsBadge, { AwardsList } from './AwardsBadge';
 import SubGameList from './SubGameList';
 import Popover from './Popover';
 import { fittingSubgames, subgameLabel } from '../utils/subgames';
@@ -22,15 +22,17 @@ export default function GameCard({ game }: Props) {
   const { state, dispatch } = useFilter();
   const [subsOpen, setSubsOpen] = useState(false);
   const subsId = useId();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreId = useId();
   // The button and its list go away while no game inside fits the filters.
   const fitting = game.subgames ? fittingSubgames(game.subgames, state) : [];
   const hasFitting = fitting.length > 0;
   const subsLabel = game.subgames ? subgameLabel(game.subgames, state) : '';
 
   return (
-    // An open add-ons list takes a grid row of its own, so the cards that
-    // share its subgrid rows aren't stretched to the list's height.
-    <div className={`game-card${subsOpen && hasFitting ? ' card-open' : ''}`}>
+    // An open card (its write-up or its add-ons list) takes a grid row of its
+    // own, so the cards that share its subgrid rows aren't stretched.
+    <div className={`game-card${moreOpen || (subsOpen && hasFitting) ? ' card-open' : ''}`}>
       <div className="card-head">
         <img src={game.img} alt={`${game.name} box art`} className="card-corner-img" loading="lazy" />
         <h3 className="card-name">{game.name}</h3>
@@ -54,7 +56,31 @@ export default function GameCard({ game }: Props) {
         </div>
       </div>
       <div className="card-body">
-        <p className="card-desc">{game.short}</p>
+        {/* More opens the long write-up a list row shows when expanded. */}
+        <p className="card-desc">
+          {game.short}{' '}
+          <button
+            type="button"
+            className="card-more"
+            aria-expanded={moreOpen}
+            aria-controls={moreId}
+            aria-label={`${moreOpen ? 'Less' : 'More'} about ${game.name}`}
+            onClick={() => setMoreOpen((o) => !o)}
+          >
+            {moreOpen ? 'Less' : 'More'}
+          </button>
+        </p>
+        {moreOpen && (
+          <div className="card-detail" id={moreId}>
+            <div className="detail-section" dangerouslySetInnerHTML={{ __html: game.detail }} />
+            {game.awards.length > 0 && (
+              <div className="detail-section row-awards">
+                <h3>Awards</h3>
+                <AwardsList awards={game.awards} />
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <div className="card-foot">
         {/* What the card holds besides its own game sits bottom left, so

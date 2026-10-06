@@ -64,6 +64,7 @@ export default function TableRowCells({
           <DurationPill
             cat={cat}
             className="row-dur"
+            label={dur}
             onClick={() => dispatch({ type: 'SET_DURATION', payload: cat })}
           />
         )}

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import GameCollection from '../components/GameCollection';
@@ -129,5 +129,20 @@ describe('GameCollection count', () => {
     expect(screen.getByText(/^\d+ games$/)).toBeInTheDocument();
     fireEvent.change(screen.getByPlaceholderText('Search games...'), { target: { value: 'Bananagrams' } });
     expect(screen.getByText('1 game')).toBeInTheDocument();
+  });
+});
+
+describe('GameCollection on a phone', () => {
+  beforeEach(() => {
+    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener: () => {}, removeEventListener: () => {} })));
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('shows cards whatever the saved view, with no view toggle', () => {
+    renderWithFilter();
+    expect(document.querySelector('.games-grid .game-card')).not.toBeNull();
+    expect(document.querySelector('table.games-list')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'List view' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Grid view' })).not.toBeInTheDocument();
   });
 });
