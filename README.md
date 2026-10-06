@@ -23,7 +23,8 @@ functions for the AI and voting features.
   and streams the reply token-by-token.
 - **7 Wonders score calculator** with the full scoring model, including the
   quadratic science formula.
-- **Bananagrams word checker** backed by a public dictionary API.
+- **Bananagrams word checker** backed by a bundled word-game list (ENABLE),
+  with a public dictionary API for meanings and newer words.
 - **Anonymous wishlist voting** stored in Upstash Redis.
 - **Friend suggestions with email approval**: anyone can suggest a game; the
   owner gets an email with Approve and Deny links, and approved games join

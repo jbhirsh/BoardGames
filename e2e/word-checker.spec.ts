@@ -46,12 +46,29 @@ test('a word the dictionary does not know (404) is not valid', async ({ page }) 
   expect(asked).toEqual(['qzxv']);
 });
 
-test('a dictionary outage (503) leaves the word unchecked', async ({ page }) => {
+test('a dictionary outage still answers from the word-game list', async ({ page }) => {
   await stubDictionary(page, 503, { message: 'Service Unavailable' });
 
+  // Both in ENABLE (public/words/enable.txt), so no dictionary is needed.
   await check(page, 'banana');
+  await expect(page.getByText('Valid word', { exact: true })).toBeVisible();
+  await expect(page.getByText("Couldn't check right now", { exact: true })).toHaveCount(0);
 
-  await expect(page.getByText("Couldn't check right now", { exact: true })).toBeVisible();
-  await expect(page.getByText('Not a valid word', { exact: true })).toHaveCount(0);
-  await expect(page.getByText('Valid word', { exact: true })).toHaveCount(0);
+  // Not in the list, and the dictionary can't double-check.
+  await page.getByPlaceholder('Enter a word...').fill('teh');
+  await page.getByRole('button', { name: 'Check' }).click();
+  await expect(page.getByText('Not a valid word', { exact: true })).toBeVisible();
+  await expect(page.getByText(/couldn't be reached to double-check/)).toBeVisible();
+});
+
+test('a word-game word missing from the list is valid when the dictionary has it', async ({ page }) => {
+  const asked = await stubDictionary(page, 200, [{
+    meanings: [{ partOfSpeech: 'noun', definitions: [{ definition: 'Vital energy in Chinese philosophy.' }] }],
+  }]);
+
+  await check(page, 'qi');
+
+  await expect(page.getByText('Valid word', { exact: true })).toBeVisible();
+  await expect(page.getByText('Not in the word-game list, but the dictionary has it.')).toBeVisible();
+  expect(asked).toEqual(['qi']);
 });
