@@ -9,6 +9,7 @@ export default function WordCheckerPage() {
 
   return (
     <div className="rules-page">
+      <title>Word Checker · The Game Room</title>
       <header className="rules-header">
         <Link to="/" className="back-link">&larr; Back to The Game Room</Link>
         <div className="rules-title-row">

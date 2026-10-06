@@ -95,3 +95,18 @@ test("opening a card's games on the grid doesn't stretch the row it sat in", asy
   const after = await next.boundingBox();
   expect(after!.y).toBeLessThanOrEqual(before!.y);
 });
+
+test('pages carry their own titles and the site has a link preview', async ({ page, request }) => {
+  // Link previews read the served HTML, not the rendered page.
+  const html = await (await request.get('/')).text();
+  expect(html).toContain('<meta property="og:image" content="https://board-games-silk.vercel.app/og-image.png" />');
+  expect(html).toContain('<meta name="twitter:card" content="summary_large_image" />');
+  const og = await request.get('/og-image.png');
+  expect(og.status()).toBe(200);
+  expect(og.headers()['content-type']).toBe('image/png');
+
+  await page.goto('/');
+  await expect(page).toHaveTitle('The Game Room');
+  await page.goto('/rules/catan');
+  await expect(page).toHaveTitle('Catan rules · The Game Room');
+});
