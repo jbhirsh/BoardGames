@@ -28,6 +28,14 @@ const MAX_PARTS = 16;
 // finished answer. The client renders the reply as Markdown.
 const CUT_OFF_NOTE = '\n\n_(Answer cut off — please try again.)_';
 
+// Gemini answers 503 UNAVAILABLE when it is overloaded, usually only for a
+// moment: one retry after a short wait turns most of those into an answer.
+const RETRY_DELAY_MS = 1000;
+
+function isOverloaded(err: unknown): boolean {
+  return (err as { status?: unknown } | null)?.status === 503;
+}
+
 // Expensive paid AI call, unauthenticated endpoint: bound requests per IP.
 const chatLimiter = getLimiter('chat', 10, 60);
 
@@ -104,33 +112,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Set once the first chunk is written: the 200 and its headers are then on
   // the wire, so a later failure can only end the response with a note.
   let streaming = false;
-  try {
-    const response = await streamRulesAnswer({
-      rulesText,
-      message,
-      history,
-      apiKey: process.env.GEMINI_API_KEY!,
-    });
+  let retried = false;
+  for (;;) {
+    try {
+      const response = await streamRulesAnswer({
+        rulesText,
+        message,
+        history,
+        apiKey: process.env.GEMINI_API_KEY!,
+      });
 
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
 
-    for await (const chunk of response) {
-      const text = chunk.text;
-      if (text) {
-        res.write(text);
-        streaming = true;
+      for await (const chunk of response) {
+        const text = chunk.text;
+        if (text) {
+          res.write(text);
+          streaming = true;
+        }
       }
-    }
 
-    res.end();
-  } catch (err) {
-    Sentry.captureException(err);
-    await Sentry.flush(2000);
-    console.error('Gemini API error:', err);
-    if (streaming) {
-      res.end(CUT_OFF_NOTE);
+      res.end();
       return;
+    } catch (err) {
+      // Nothing is on the wire yet, so a retry is invisible to the reader.
+      if (!retried && !streaming && isOverloaded(err)) {
+        retried = true;
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+        continue;
+      }
+      Sentry.captureException(err);
+      await Sentry.flush(2000);
+      console.error('Gemini API error:', err);
+      if (streaming) {
+        res.end(CUT_OFF_NOTE);
+        return;
+      }
+      return res.status(500).json({ error: 'Failed to generate response' });
     }
-    return res.status(500).json({ error: 'Failed to generate response' });
   }
 }
