@@ -21,10 +21,47 @@ test('the 7 Wonders calculator totals a player and ranks the table', async ({ pa
   // 5 + 2 + 3 + 10 + 4 + 6 + 13
   await expect(page.getByText('43 VP', { exact: true })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Results' }).click();
-  await expect(page.getByText('👑')).toBeVisible();
-  await expect(page.getByText('43 VP', { exact: true })).toBeVisible();
-  await expect(page.getByText('0 VP', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Results', exact: true }).click();
+  const sheet = page.getByRole('table', { name: 'Scores by category' });
+  const row = (name: string) => sheet.getByRole('row').filter({ has: page.getByRole('rowheader', { name, exact: true }) });
+  await expect(row('Science').getByRole('cell')).toHaveText(['13', '0']);
+  await expect(row('Total').getByRole('cell')).toHaveText(['43', '0']);
+  await expect(row('Place').getByRole('cell')).toHaveText(['1st', '2nd']);
+});
+
+test('on a phone the score sheet scrolls sideways with the categories pinned', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/score/7-wonders');
+  for (let i = 0; i < 5; i++) await page.getByRole('button', { name: 'Add player' }).click();
+  await page.getByRole('button', { name: 'Results', exact: true }).click();
+
+  const sheet = page.getByRole('table', { name: 'Scores by category' });
+  const military = sheet.getByRole('rowheader', { name: 'Military' });
+  const before = (await military.boundingBox())!;
+  // Seven players don't fit across a phone: the sheet scrolls, not the page.
+  const scrolled = await sheet.evaluate((table) => {
+    const wrap = table.parentElement!;
+    wrap.scrollLeft = wrap.scrollWidth;
+    return wrap.scrollLeft;
+  });
+  expect(scrolled).toBeGreaterThan(0);
+  await expect(sheet.getByRole('columnheader', { name: 'Player 7' })).toBeInViewport();
+  const after = (await military.boundingBox())!;
+  expect(after.x).toBe(before.x);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+});
+
+test('Next passes the phone round the table and ends on the results', async ({ page }) => {
+  await page.goto('/score/7-wonders');
+  await page.getByRole('spinbutton', { name: /Civilian/ }).fill('6');
+  await page.getByRole('button', { name: 'Next: Player 2' }).click();
+  await expect(page.getByLabel('Player Name')).toBeFocused();
+  await expect(page.getByLabel('Player Name')).toHaveValue('Player 2');
+  await page.getByRole('spinbutton', { name: /Civilian/ }).fill('9');
+  await page.getByRole('button', { name: 'See results' }).click();
+  const total = page.getByRole('table', { name: 'Scores by category' }).getByRole('row')
+    .filter({ has: page.getByRole('rowheader', { name: 'Total', exact: true }) });
+  await expect(total.getByRole('cell')).toHaveText(['6', '9']);
 });
 
 test('a game with no score calculator shows the not-found page', async ({ page }) => {

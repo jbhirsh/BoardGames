@@ -702,7 +702,10 @@ a.rules-chat-toggle{text-decoration:none;}
 .word-example{font-style:italic;color:var(--text3);font-size:13px;margin-top:2px;padding-left:16px;}
 
 /* Score Calculator */
-.sc-player-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;align-items:stretch;}
+.sc-player-tabs{display:flex;gap:4px;margin-bottom:12px;align-items:stretch;}
+.sc-player-strip{display:flex;gap:4px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none;}
+.sc-player-strip::-webkit-scrollbar{display:none;}
+.sc-player-strip > *{flex:none;}
 .sc-player-tab-wrap{display:inline-flex;align-items:stretch;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg2);overflow:hidden;transition:color .15s,background .15s,border-color .15s;}
 .sc-player-tab-wrap.active{background:var(--blue-bg);border-color:rgba(0,113,227,0.3);}
 .sc-player-tab{padding:8px 16px;font-size:13px;font-weight:600;color:var(--text3);background:transparent;border:none;cursor:pointer;font-family:inherit;transition:color .15s,background .15s;}
@@ -710,9 +713,9 @@ a.rules-chat-toggle{text-decoration:none;}
 .sc-player-tab.active{color:var(--blue);background:transparent;}
 .sc-player-tab-wrap:hover:not(.active){background:var(--bg3);}
 .sc-player-tab-wrap:hover:not(.active) .sc-player-tab{background:transparent;}
-.sc-add-player{padding:8px 16px;font-size:16px;font-weight:600;color:var(--text3);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;font-family:inherit;transition:color .15s,background .15s,border-color .15s;}
+.sc-add-player{flex:none;padding:8px 16px;font-size:16px;font-weight:600;color:var(--text3);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;font-family:inherit;transition:color .15s,background .15s,border-color .15s;}
 .sc-add-player:hover{color:var(--text);background:var(--bg3);}
-.sc-summary-tab{padding:8px 16px;font-size:13px;font-weight:600;color:var(--text3);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;font-family:inherit;transition:color .15s,background .15s,border-color .15s;margin-left:auto;}
+.sc-summary-tab{flex:none;padding:8px 16px;font-size:13px;font-weight:600;color:var(--text3);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;font-family:inherit;transition:color .15s,background .15s,border-color .15s;margin-left:auto;}
 .sc-summary-tab:hover{color:var(--text);background:var(--bg3);}
 .sc-summary-tab.active{color:var(--blue);background:var(--blue-bg);border-color:rgba(0,113,227,0.3);}
 .sc-player-remove{padding:0 10px;font-size:15px;color:inherit;background:transparent;border:none;cursor:pointer;font-family:inherit;opacity:0.5;transition:opacity .15s,background .15s;}
@@ -723,7 +726,8 @@ a.rules-chat-toggle{text-decoration:none;}
 .sc-name-input{flex:1;max-width:200px;}
 .sc-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
 .sc-label{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:var(--text);}
-.sc-icon{font-size:16px;}
+.sc-icon{width:20px;height:20px;flex:none;display:block;}
+.sc-label-icon{display:inline-flex;}
 .sc-vp-note{font-size:12px;color:var(--text3);font-weight:400;margin-left:4px;}
 /* 16px for the same iOS reason — this screen has ten of these in a column. */
 .sc-input{width:80px;padding:8px 10px;font-size:16px;border:2px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--text);text-align:center;font-family:inherit;outline:none;transition:border-color .15s;}
@@ -731,16 +735,8 @@ a.rules-chat-toggle{text-decoration:none;}
 .sc-science-section{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
 .sc-science-inputs{display:flex;gap:12px;margin-left:auto;}
 .sc-science-field{display:flex;align-items:center;gap:4px;}
-.sc-science-label{font-size:12px;color:var(--text3);font-weight:500;}
-.sc-science-icon{width:28px;height:28px;object-fit:contain;}
 .sc-total{display:flex;align-items:center;justify-content:space-between;padding:14px 0 0;border-top:2px solid var(--border);margin-top:4px;font-size:16px;font-weight:700;color:var(--text);}
 .sc-total-num{font-size:22px;color:var(--blue);}
-.sc-summary{display:flex;flex-direction:column;gap:8px;}
-.sc-summary-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:var(--r-sm);background:var(--bg2);font-size:14px;}
-.sc-winner{background:rgba(234,179,8,0.12);border:1px solid rgba(234,179,8,0.3);}
-.sc-rank{font-size:18px;width:32px;text-align:center;}
-.sc-summary-name{flex:1;font-weight:600;color:var(--text);}
-.sc-summary-total{font-weight:700;font-size:16px;color:var(--blue);}
 .sc-input-wrap{display:flex;align-items:center;gap:6px;}
 .sc-sign{width:36px;height:36px;font-size:18px;font-weight:600;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;font-family:inherit;}
 .sc-sign:hover:not(:disabled){color:var(--text);background:var(--bg3);}
@@ -748,6 +744,28 @@ a.rules-chat-toggle{text-decoration:none;}
 .sc-actions{display:flex;justify-content:flex-end;margin-top:12px;}
 .sc-new-game{padding:8px 16px;font-size:13px;font-weight:600;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;font-family:inherit;}
 .sc-new-game:hover{color:var(--text);background:var(--bg3);}
+.sc-science-field .sc-icon{width:30px;height:30px;}
+.sc-next{align-self:flex-end;padding:10px 18px;font:inherit;font-size:14px;font-weight:600;color:#fff;background:var(--blue);border:none;border-radius:var(--r-sm);cursor:pointer;}
+.sc-next:hover{filter:brightness(1.08);}
+.sc-next:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+/* Results: the printed pad's sheet. The category column stays put while
+   the players' columns scroll sideways on a narrow screen. */
+.sc-sheet-wrap{overflow-x:auto;}
+.sc-sheet{border-collapse:separate;border-spacing:0;width:100%;font-size:14px;font-variant-numeric:tabular-nums;}
+.sc-sheet th,.sc-sheet td{padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap;}
+.sc-sheet thead th{font-size:13px;font-weight:700;color:var(--text);text-align:center;vertical-align:bottom;}
+.sc-sheet thead th .sc-icon{width:28px;height:28px;margin:0 auto 2px;color:#ca8a04;}
+.sc-sheet tbody th,.sc-sheet tfoot th{text-align:left;font-weight:500;color:var(--text);}
+.sc-sheet th[scope="row"],.sc-sheet thead th:first-child{position:sticky;left:0;z-index:1;background:var(--surface);}
+.sc-sheet-label{display:inline-flex;vertical-align:-5px;margin-right:8px;}
+.sc-sheet td{text-align:center;color:var(--text);}
+.sc-sheet-sub{display:block;font-size:11px;color:var(--text3);}
+.sc-sheet .sc-win{background:rgba(234,179,8,0.10);}
+.sc-sheet-total th,.sc-sheet-total td{font-weight:700;font-size:16px;border-top:2px solid var(--border);}
+.sc-sheet-total td{color:var(--blue);}
+.sc-sheet-place th,.sc-sheet-place td{border-bottom:none;font-size:13px;color:var(--text2);}
+.sc-tie-note{margin-top:12px;font-size:13px;color:var(--text);}
+.sc-tie-rule{margin-top:8px;font-size:12px;color:var(--text3);}
 
 @media(max-width:900px){
   .hero{ padding:48px var(--gutter) 40px; }
@@ -843,6 +861,9 @@ a.rules-chat-toggle{text-decoration:none;}
 
   /* score calculator: three icon+input pairs are 360px wide and overflow
      the page, which has no clip wrapper, so the whole page pans sideways */
+  /* Room for more names: a player is removed from their own tab. */
+  .sc-player-tab-wrap:not(.active) .sc-player-remove{ display:none; }
+  .sc-player-tab{ padding:8px 12px; }
   .sc-science-section{ flex-direction:column; align-items:stretch; }
   .sc-science-inputs{ margin-left:0; width:100%; gap:8px; }
   .sc-science-field{ flex:1; min-width:0; }

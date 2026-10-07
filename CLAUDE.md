@@ -66,7 +66,9 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
     its WebAssembly image decoders and standard fonts to `/pdfjs/`
   - `/score/:slug` — score calculator for a game in
     `data/scoreCalculators.ts` (currently 7 Wonders); any other slug shows
-    the not-found page
+    the not-found page. Results is a score sheet like the printed pad (a
+    row per category, a column per player, the category column pinned
+    while it scrolls sideways on a phone)
   - `/word-checker` — word lookup for word games: the bundled ENABLE list
     (`public/words/enable.txt`) first, the dictionary as fallback and for
     meanings
@@ -142,7 +144,8 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   short line. Both sections share the light theme.
 - **`utils/`** — pure helpers (`filterGames.ts`, `pickRandom.ts`, `filterUrl.ts`,
   `urls.ts`, `shortDesc.ts`, `subgames.ts`, `rulebooks.ts`, `pdfSearch.ts`,
-  `fileSize.ts`). Keep these free of React and side effects.
+  `fileSize.ts`, `sevenWonders.ts`, the score pad's arithmetic: science,
+  standings with the coins tie-break). Keep these free of React and side effects.
 - **`instrument.ts`** — Sentry browser SDK init (`@sentry/react`), including
   browser tracing and session replay.
 

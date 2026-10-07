@@ -112,17 +112,96 @@ describe('ScoreCalculatorPage', () => {
     expect(military.value).toBe('-3');
   });
 
-  it('shows the results summary ranked by total VP', () => {
+  it('shows the results as a score sheet, a row per category and a column per player', () => {
     renderPage();
     fireEvent.change(screen.getByLabelText(/Civilian/), { target: { value: '10' } });
+    fireEvent.change(screen.getByLabelText(/Treasury/), { target: { value: '7' } });
     fireEvent.click(screen.getByRole('button', { name: 'Player 2' }));
     fireEvent.change(screen.getByLabelText(/Civilian/), { target: { value: '25' } });
+    fireEvent.change(screen.getByLabelText('tablets'), { target: { value: '2' } });
     fireEvent.click(screen.getByRole('button', { name: 'Results' }));
 
-    const winner = screen.getByText('👑').closest('.sc-summary-row');
-    expect(winner).not.toBeNull();
-    expect(within(winner as HTMLElement).getByText('Player 2')).toBeInTheDocument();
-    expect(within(winner as HTMLElement).getByText('25 VP')).toBeInTheDocument();
+    const sheet = screen.getByRole('table', { name: 'Scores by category' });
+    const columns = within(sheet).getAllByRole('columnheader').map((th) => th.textContent);
+    expect(columns).toEqual(['Category', 'Player 1', 'Player 2']);
+    const row = (name: string) => within(sheet).getByRole('rowheader', { name }).closest('tr')!;
+    const cells = (name: string) => within(row(name)).getAllByRole('cell').map((td) => td.textContent);
+    expect(cells('Civilian')).toEqual(['10', '25']);
+    // Treasury shows its points, and the coins they came from.
+    expect(cells('Treasury')).toEqual(['2, from 7 coins', '0']);
+    expect(cells('Science')).toEqual(['0', '4']);
+    expect(cells('Total')).toEqual(['12', '29']);
+    expect(cells('Place')).toEqual(['2nd', '1st']);
+    // The winner's column is marked, with the crown on their name.
+    expect(within(sheet).getByRole('columnheader', { name: 'Player 2' })).toHaveClass('sc-win');
+    expect(within(sheet).getByRole('columnheader', { name: 'Player 1' })).not.toHaveClass('sc-win');
+    expect(screen.queryByText(/tie on \d+ VP/)).not.toBeInTheDocument();
+    expect(screen.getByText('A tie on points goes to the player with more coins.')).toBeInTheDocument();
+  });
+
+  function playerScores(values: Record<string, string>) {
+    for (const [label, value] of Object.entries(values)) {
+      fireEvent.change(screen.getByLabelText(new RegExp(label)), { target: { value } });
+    }
+  }
+
+  it('breaks a tie on points with coins, and says so', () => {
+    renderPage();
+    playerScores({ Civilian: '8', Treasury: '5' }); // 8 + 1 = 9
+    fireEvent.click(screen.getByRole('button', { name: 'Player 2' }));
+    playerScores({ Civilian: '8', Treasury: '3' }); // 8 + 1 = 9
+    fireEvent.click(screen.getByRole('button', { name: 'Results' }));
+
+    const sheet = screen.getByRole('table', { name: 'Scores by category' });
+    const place = within(within(sheet).getByRole('rowheader', { name: 'Place' }).closest('tr')!).getAllByRole('cell');
+    expect(place.map((td) => td.textContent)).toEqual(['1st', '2nd']);
+    expect(screen.getByText('Player 1 and Player 2 tie on 9 VP; coins break the tie: Player 1 5, Player 2 3.')).toBeInTheDocument();
+  });
+
+  it('lets players level on points and coins share the place', () => {
+    renderPage();
+    playerScores({ Civilian: '8', Treasury: '4' });
+    fireEvent.click(screen.getByRole('button', { name: 'Player 2' }));
+    playerScores({ Civilian: '8', Treasury: '4' });
+    fireEvent.click(screen.getByRole('button', { name: 'Results' }));
+
+    const sheet = screen.getByRole('table', { name: 'Scores by category' });
+    const place = within(within(sheet).getByRole('rowheader', { name: 'Place' }).closest('tr')!).getAllByRole('cell');
+    expect(place.map((td) => td.textContent)).toEqual(['1st', '1st']);
+    expect(within(sheet).getAllByRole('columnheader').filter((th) => th.classList.contains('sc-win'))).toHaveLength(2);
+    expect(screen.getByText('Player 1 and Player 2 tie on 9 VP and 4 coins, so they share 1st place.')).toBeInTheDocument();
+  });
+
+  it('hands the phone to the next player, then shows the results', () => {
+    renderPage();
+    fireEvent.click(screen.getByRole('button', { name: 'Add player' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Player 1' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next: Player 2' }));
+    expect(screen.getByLabelText('Player Name')).toHaveValue('Player 2');
+    expect(screen.getByLabelText('Player Name')).toHaveFocus();
+    fireEvent.click(screen.getByRole('button', { name: 'Next: Player 3' }));
+    expect(screen.getByLabelText('Player Name')).toHaveValue('Player 3');
+    fireEvent.click(screen.getByRole('button', { name: 'See results' }));
+    expect(screen.getByRole('table', { name: 'Scores by category' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Results' })).toHaveFocus();
+  });
+
+  it('names an unnamed next player plainly', () => {
+    renderPage();
+    fireEvent.click(screen.getByRole('button', { name: 'Player 2' }));
+    fireEvent.change(screen.getByLabelText('Player Name'), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Player 1' }));
+    expect(screen.getByRole('button', { name: 'Next: next player' })).toBeInTheDocument();
+  });
+
+  it('crowns nobody before anyone has scored', () => {
+    renderPage();
+    fireEvent.click(screen.getByRole('button', { name: 'Results' }));
+    const sheet = screen.getByRole('table', { name: 'Scores by category' });
+    const place = within(within(sheet).getByRole('rowheader', { name: 'Place' }).closest('tr')!).getAllByRole('cell');
+    expect(place.map((td) => td.textContent)).toEqual(['–', '–']);
+    expect(within(sheet).getAllByRole('columnheader').filter((th) => th.classList.contains('sc-win'))).toHaveLength(0);
+    expect(screen.queryByText(/tie on \d+ VP/)).not.toBeInTheDocument();
   });
 
   it('returns to a player tab from the results view', () => {
