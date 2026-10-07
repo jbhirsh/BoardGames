@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Component, lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { useParams, Link, Navigate } from 'react-router';
 import { GAMES } from '../data/games';
 import { rulebooks, rulebookPath, chatParts, chatScope, mentionedRulebooks, starterQuestions } from '../utils/rulebooks';
@@ -8,6 +8,50 @@ import { shownKind } from '../utils/subgames';
 import RulesChatProvider, { RulesChatToggle, RulesChatPanel } from './RulesChat';
 import WordChecker from './WordChecker';
 import NotFoundPage from './NotFoundPage';
+import { useMediaQuery } from '../hooks/useMediaQuery';
+import { formatSize } from '../utils/fileSize';
+
+// pdf.js is large, so it loads only where the reader is used.
+const PdfReader = lazy(() => import('./PdfReader'));
+
+// Phones and touch tablets don't show an embedded PDF well: Android Chrome
+// shows nothing, iOS Safari only the first page. There the page draws the
+// rulebook itself, searchable, and links to the device's own viewer too.
+const READ_IN_PAGE = '(max-width: 720px), (pointer: coarse)';
+
+/**
+ * Falls back to a note if the reader fails to load or throws (its chunk is
+ * gone after a deploy, or the browser can't run it), so the rest of the
+ * rules page (the chat, the link to the PDF) keeps working.
+ */
+class ReaderBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  render() {
+    return this.state.failed
+      ? <p className="pdf-note">This rulebook couldn’t be shown here. Download the PDF above instead.</p>
+      : this.props.children;
+  }
+}
+
+/** The PDF's size from a HEAD request, or null until (or unless) it answers. */
+function usePdfSize(pdf: string, wanted: boolean): number | null {
+  const [size, setSize] = useState<{ pdf: string; bytes: number } | null>(null);
+  useEffect(() => {
+    if (!wanted) return;
+    const controller = new AbortController();
+    fetch(pdf, { method: 'HEAD', signal: controller.signal })
+      .then((res) => {
+        const bytes = Number(res.headers.get('content-length'));
+        if (res.ok && bytes > 0) setSize({ pdf, bytes });
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [pdf, wanted]);
+  return size?.pdf === pdf ? size.bytes : null;
+}
 
 // Scrolls the tab strip sideways to the chosen tab. scrollIntoView would also
 // scroll the page to bring the strip itself into view.
@@ -20,6 +64,10 @@ export default function RulesPage() {
   const { slug, part } = useParams<{ slug: string; part?: string }>();
   const game = GAMES.find(g => g.slug === slug);
   const [wordCheckerOpen, setWordCheckerOpen] = useState(false);
+  const inPage = useMediaQuery(READ_IN_PAGE);
+  const books = game ? rulebooks(game) : [];
+  const book = books.find(b => b.part === part);
+  const size = usePdfSize(book?.pdf ?? '', inPage && book !== undefined);
 
   if (!game) {
     return <NotFoundPage title="Game not found" message="We don't have a rulebook at this address. Pick a game from the collection to read its rules." />;
@@ -27,8 +75,6 @@ export default function RulesPage() {
 
   // An unknown tab goes to the game's own rulebook rather than a not-found
   // page: the game is real, only the tab is wrong.
-  const books = rulebooks(game);
-  const book = books.find(b => b.part === part);
   if (!book) return <Navigate replace to={rulebookPath(game.slug)} />;
 
   return (
@@ -106,12 +152,35 @@ export default function RulesPage() {
           starters={starterQuestions(game, book)}
         />
         {wordCheckerOpen && <WordChecker />}
-        <div className="rules-viewer">
-          <iframe src={book.pdf} title={`${book.name} rules`} />
-        </div>
-        <a href={book.pdf} download className="rules-download">
-          Download PDF
-        </a>
+        {inPage ? (
+          <>
+            {/* Above the reader on a phone, where a long rulebook would bury
+                it, with the size so nobody starts a big download unawares. */}
+            <a href={book.pdf} download className="rules-download" aria-label="Download PDF" aria-describedby="rules-download-size">
+              Download PDF
+              {size !== null && (
+                <>
+                  <span className="rules-download-size" aria-hidden="true">·</span>
+                  <span className="rules-download-size" id="rules-download-size">{formatSize(size)}</span>
+                </>
+              )}
+            </a>
+            <ReaderBoundary key={book.pdf}>
+              <Suspense fallback={<p className="pdf-note">Loading the rulebook…</p>}>
+                <PdfReader src={book.pdf} title={`${book.name} rules`} />
+              </Suspense>
+            </ReaderBoundary>
+          </>
+        ) : (
+          <>
+            <div className="rules-viewer">
+              <iframe src={book.pdf} title={`${book.name} rules`} />
+            </div>
+            <a href={book.pdf} download className="rules-download">
+              Download PDF
+            </a>
+          </>
+        )}
       </div>
     </RulesChatProvider>
   );

@@ -55,7 +55,15 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
     switched by the Own/Want toggle; both stay mounted so a toggle never
     refetches, and only the visible one carries the `#collection` anchor)
   - `/rules/:slug/:part?` — bundled rule PDF viewer + AI rules assistant;
-    a game with rulebooks for games inside it gets a tab per rulebook
+    a game with rulebooks for games inside it gets a tab per rulebook.
+    Desktops embed the PDF in an iframe. Phones and touch tablets can't
+    (Android draws nothing, iOS one page), so there `PdfReader` draws it with
+    pdf.js (lazy-loaded): each page a canvas under its text layer, with a
+    search that marks matches in place, with "Download PDF" (and the file's
+    size) above it. pdf.js's modern build is used with the few newer
+    JavaScript methods it calls polyfilled (`src/pdfjs/polyfills.ts`, also
+    loaded first in its worker, `src/pdfjs/worker.ts`); a Vite plugin copies
+    its WebAssembly image decoders and standard fonts to `/pdfjs/`
   - `/score/:slug` — score calculator for a game in
     `data/scoreCalculators.ts` (currently 7 Wonders); any other slug shows
     the not-found page
@@ -133,7 +141,8 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   (`utils/shortDesc.ts`) where a collection row shows its hand-written
   short line. Both sections share the light theme.
 - **`utils/`** — pure helpers (`filterGames.ts`, `pickRandom.ts`, `filterUrl.ts`,
-  `urls.ts`, `shortDesc.ts`, `subgames.ts`, `rulebooks.ts`). Keep these free of React and side effects.
+  `urls.ts`, `shortDesc.ts`, `subgames.ts`, `rulebooks.ts`, `pdfSearch.ts`,
+  `fileSize.ts`). Keep these free of React and side effects.
 - **`instrument.ts`** — Sentry browser SDK init (`@sentry/react`), including
   browser tracing and session replay.
 

@@ -1,7 +1,15 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router';
 import RulesPage from '../components/RulesPage';
+
+// pdf.js needs a real browser; PdfReader.test.tsx covers the reader itself.
+vi.mock('../components/PdfReader', () => ({
+  default: ({ src, title }: { src: string; title: string }) => {
+    if (src.includes('vampire')) throw new Error('reader broke');
+    return <section aria-label={title} data-src={src} />;
+  },
+}));
 
 function renderAt(path: string) {
   return render(
@@ -196,5 +204,87 @@ describe('RulesPage', () => {
       expect(viewer()).toHaveAttribute('src', '/rules/catan.cities-and-knights.pdf');
       expect(within(tabs()).getByRole('link', { current: 'page' })).toHaveTextContent('Cities & Knights');
     });
+  });
+});
+
+describe('RulesPage on a phone or touch device', () => {
+  const touch = (matches: boolean) =>
+    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches, addEventListener: () => {}, removeEventListener: () => {} })));
+  const headWith = (headers: Record<string, string>, ok = true) =>
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok, headers: new Headers(headers) } as Response);
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('draws the rulebook in the page, under a download link with its size', async () => {
+    touch(true);
+    const fetchSpy = headWith({ 'content-length': '16445120' });
+    renderAt('/rules/7-wonders');
+
+    const download = screen.getByRole('link', { name: 'Download PDF' });
+    expect(download).toHaveAttribute('href', '/rules/7-wonders.pdf');
+    expect(download).toHaveAttribute('download');
+    const reader = await screen.findByRole('region', { name: '7 Wonders rules' });
+    expect(reader).toHaveAttribute('data-src', '/rules/7-wonders.pdf');
+    // Above the reader, where a long rulebook won't bury it.
+    expect(download.compareDocumentPosition(reader) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByTitle('7 Wonders rules')).not.toBeInTheDocument();
+    await vi.waitFor(() => expect(download).toHaveAccessibleDescription('16.4 MB'));
+    expect(fetchSpy).toHaveBeenCalledWith('/rules/7-wonders.pdf', expect.objectContaining({ method: 'HEAD' }));
+  });
+
+  it('leaves the size out when the server does not give one', async () => {
+    touch(true);
+    const fetchSpy = headWith({ 'content-length': '5000000' }, false);
+    renderAt('/rules/7-wonders');
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+    await act(async () => {});
+    expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAccessibleDescription('');
+  });
+
+  it('cancels the size request when the page goes away', async () => {
+    touch(true);
+    const signals: AbortSignal[] = [];
+    vi.spyOn(globalThis, 'fetch').mockImplementation((_url, init) => {
+      signals.push(init!.signal!);
+      return new Promise(() => {});
+    });
+    const { unmount } = renderAt('/rules/catan');
+    await vi.waitFor(() => expect(signals).toHaveLength(1));
+    unmount();
+    expect(signals[0].aborted).toBe(true);
+  });
+
+  it('gives each tab its own reader', async () => {
+    touch(true);
+    headWith({});
+    renderAt('/rules/catan');
+    expect(await screen.findByRole('region', { name: 'Catan rules' })).toHaveAttribute('data-src', '/rules/catan.pdf');
+    fireEvent.click(within(screen.getByRole('navigation', { name: 'Rulebooks' })).getByRole('link', { name: /Cities & Knights/ }));
+    expect(await screen.findByRole('region', { name: /Cities & Knights rules/ })).toHaveAttribute('data-src', '/rules/catan.cities-and-knights.pdf');
+  });
+
+  it('keeps the page, with its link to the PDF, when the reader fails', async () => {
+    touch(true);
+    headWith({});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    renderAt('/rules/one-night-werewolf/vampire');
+    expect(await screen.findByText(/couldn’t be shown here/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Download PDF' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+  });
+
+  it('embeds the rulebook on a desktop and never asks its size', () => {
+    touch(false);
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    renderAt('/rules/7-wonders');
+    const frame = screen.getByTitle('7 Wonders rules');
+    const download = screen.getByRole('link', { name: 'Download PDF' });
+    expect(download).not.toHaveAccessibleDescription(/MB/);
+    // Under the embedded viewer, as before.
+    expect(frame.compareDocumentPosition(download) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
