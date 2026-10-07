@@ -282,12 +282,16 @@ secrets belong in tracked source.
   `npm install`, so type-check with `npm run typecheck`, which calls the TS 7
   compiler by path, never bare `npx tsc`. Drop the aliases once
   typescript-eslint supports TS 7.
-- **`patches/` holds `patch-package` fixes** applied on `postinstall`. The one
+- **`patches/` holds `patch-package` fixes** applied on `postinstall`. One
   patch makes Stryker's vitest runner name tests the way Vitest 5 matches them
   (stryker-js#6210); without it every mutant survives. The runner is pinned
   to the patched version (10.0.0) so a release can't break the patch under a
   routine bump. Once a Stryker release carries the fix, delete the patch and
   unpin the runner.
+  The other marks a pdf.js range request's rejection as handled: a reader
+  closed before its first read (leaving a rules page quickly) otherwise
+  throws an unhandled AbortError in the browser. Drop it once pdf.js
+  handles that itself.
 - **Tests live in `src/__tests__/`** (Vitest + React Testing Library, jsdom).
   Coverage thresholds are enforced **per file at 80% lines** (`vite.config.ts`),
   so new reducer actions, filter utilities, and API handlers need their own

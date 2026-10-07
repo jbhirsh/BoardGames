@@ -1,0 +1,14 @@
+diff --git a/node_modules/pdfjs-dist/build/pdf.mjs b/node_modules/pdfjs-dist/build/pdf.mjs
+--- a/node_modules/pdfjs-dist/build/pdf.mjs
++++ b/node_modules/pdfjs-dist/build/pdf.mjs
+@@ -13687,6 +13687,10 @@
+       this._reader = response.body.getReader();
+       this._readCapability.resolve();
+     }).catch(this._readCapability.reject);
++    // Cancelled before its first read (a reader closed while ranges are in
++    // flight), the request's rejection has no listener yet: mark it handled,
++    // read() still sees it.
++    this._readCapability.promise.catch(() => {});
+   }
+   async read() {
+     await this._readCapability.promise;
