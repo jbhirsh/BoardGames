@@ -115,3 +115,39 @@ test('a starter question asks itself, and a game with a calculator links to it',
   await page.getByRole('link', { name: 'Score calculator' }).click();
   await expect(page).toHaveURL(/\/score\/7-wonders$/);
 });
+
+test('on a phone the page draws the rulebook, searchable, under a download link', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  // Azul's pages carry JPEG 2000 images, which pdf.js decodes with the
+  // WebAssembly the build copies to /pdfjs/.
+  await page.goto('/rules/azul');
+
+  const download = page.getByRole('link', { name: 'Download PDF' });
+  await expect(download).toHaveAttribute('href', '/rules/azul.pdf');
+  await expect(download).toHaveAccessibleDescription(/^\d+(\.\d)? (MB|KB)$/);
+  await expect(page.getByTitle('Azul rules')).toHaveCount(0);
+
+  const reader = page.getByRole('region', { name: 'Azul rules' });
+  await expect(reader.getByText('Factory').first()).toBeAttached();
+  await reader.getByRole('searchbox', { name: 'Search the rulebook' }).fill('factory display');
+  await reader.getByRole('button', { name: 'Search' }).click();
+  await expect(reader.getByRole('status')).toHaveText(/^1 of \d+ · page \d+$/);
+  await reader.getByRole('button', { name: 'Next match' }).click();
+  await expect(reader.getByRole('status')).toHaveText(/^2 of \d+ · page \d+$/);
+});
+
+test('on a phone a rulebook tab opens its own book in the reader', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/rules/catan');
+  await expect(page.getByRole('region', { name: 'Catan rules' }).getByRole('button', { name: 'Search' })).toBeEnabled();
+
+  // The reader for the next tab opens on the worker the last one used, and
+  // reads its own book: the barbarians are only in Cities & Knights.
+  await page.getByRole('navigation', { name: 'Rulebooks' }).getByRole('link', { name: /Cities & Knights/ }).click();
+  const next = page.getByRole('region', { name: /Cities & Knights rules/ });
+  await next.getByRole('searchbox', { name: 'Search the rulebook' }).fill('barbarian');
+  await next.getByRole('button', { name: 'Search' }).click();
+  // A search reads every page, each its own byte-range download.
+  await expect(next.getByRole('status')).toHaveText(/^1 of \d+ · page \d+$/, { timeout: 15_000 });
+  await expect(page.getByRole('heading', { level: 1, name: 'Catan' })).toBeVisible();
+});
