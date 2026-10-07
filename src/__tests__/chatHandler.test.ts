@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 vi.mock('@sentry/node', () => ({
@@ -214,6 +214,73 @@ describe('chat handler', () => {
     expect(res.statusCode).toBe(500);
     expect(res.body).toEqual({ error: 'Failed to generate response' });
     expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(boom);
+  });
+
+  // Gemini's 503 means it is overloaded for a moment: one quiet retry, a
+  // second later, before anything is reported or shown.
+  describe('when Gemini is overloaded', () => {
+    const overloaded = Object.assign(new Error('UNAVAILABLE'), { status: 503 });
+
+    beforeEach(() => { vi.useFakeTimers(); });
+    afterEach(() => { vi.useRealTimers(); });
+
+    it('retries once after a second and streams the answer', async () => {
+      vi.mocked(streamRulesAnswer)
+        .mockRejectedValueOnce(overloaded)
+        .mockResolvedValueOnce(fakeStream('Hello') as unknown as Stream);
+      const pending = run({ slug: 'catan', message: 'hi' });
+      await vi.advanceTimersByTimeAsync(999);
+      expect(vi.mocked(streamRulesAnswer)).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(1);
+      const res = await pending;
+      expect(vi.mocked(streamRulesAnswer)).toHaveBeenCalledTimes(2);
+      expect(res.chunks).toEqual(['Hello']);
+      expect(res.statusCode).toBe(0);
+      expect(vi.mocked(Sentry.captureException)).not.toHaveBeenCalled();
+    });
+
+    it('returns 500 and reports once when the retry fails too', async () => {
+      vi.mocked(streamRulesAnswer).mockRejectedValue(overloaded);
+      const pending = run({ slug: 'catan', message: 'hi' });
+      await vi.runAllTimersAsync();
+      const res = await pending;
+      expect(vi.mocked(streamRulesAnswer)).toHaveBeenCalledTimes(2);
+      expect(res.statusCode).toBe(500);
+      expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(overloaded);
+    });
+
+    it('does not retry other errors', async () => {
+      vi.mocked(streamRulesAnswer).mockRejectedValue(Object.assign(new Error('bad request'), { status: 400 }));
+      const pending = run({ slug: 'catan', message: 'hi' });
+      await vi.runAllTimersAsync();
+      const res = await pending;
+      expect(vi.mocked(streamRulesAnswer)).toHaveBeenCalledTimes(1);
+      expect(res.statusCode).toBe(500);
+    });
+
+    it('does not retry a rejection that is not an error object', async () => {
+      vi.mocked(streamRulesAnswer).mockRejectedValue(undefined);
+      const pending = run({ slug: 'catan', message: 'hi' });
+      await vi.runAllTimersAsync();
+      const res = await pending;
+      expect(vi.mocked(streamRulesAnswer)).toHaveBeenCalledTimes(1);
+      expect(res.statusCode).toBe(500);
+      expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(undefined);
+    });
+
+    it('does not retry once the answer has started', async () => {
+      async function* failing() {
+        yield { text: 'Each player ' };
+        throw overloaded;
+      }
+      vi.mocked(streamRulesAnswer).mockResolvedValue(failing() as unknown as Stream);
+      const pending = run({ slug: 'catan', message: 'hi' });
+      await vi.runAllTimersAsync();
+      const res = await pending;
+      expect(vi.mocked(streamRulesAnswer)).toHaveBeenCalledTimes(1);
+      expect(res.chunks).toEqual(['Each player ', '\n\n_(Answer cut off — please try again.)_']);
+    });
   });
 
   // Once the first chunk is written the 200 and its headers are sent, so a
