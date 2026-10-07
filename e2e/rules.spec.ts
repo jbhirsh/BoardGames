@@ -136,6 +136,16 @@ test('on a phone the page draws the rulebook, searchable, under a download link'
   await expect(reader.getByRole('status')).toHaveText(/^2 of \d+ · page \d+$/);
 });
 
+test('a scanned rulebook can be searched on a phone too', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  // One Night's rulebook is a scan; its words are an OCR text layer.
+  await page.goto('/rules/one-night-werewolf');
+  const reader = page.getByRole('region', { name: 'One Night Werewolf rules' });
+  await reader.getByRole('searchbox', { name: 'Search the rulebook' }).fill('seer');
+  await reader.getByRole('button', { name: 'Search' }).click();
+  await expect(reader.getByRole('status')).toHaveText(/^1 of \d+ · page 1$/);
+});
+
 test('on a phone a rulebook tab opens its own book in the reader', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/rules/catan');

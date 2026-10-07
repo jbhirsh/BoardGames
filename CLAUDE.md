@@ -222,6 +222,11 @@ extracts text with `unpdf`, falling back to OCR (`tesseract.js`, via
 `scripts/ocr-pdfs.mjs`) for image-only PDFs, and writes `rules-text/*.txt`.
 `vercel.json` bundles `rules-text/**` into the `api/chat.ts` function so it can
 read them at runtime.
+`npm run rules-text-layer` (`scripts/add-text-layer.mjs`) gives a scanned
+rulebook (one with no text at all) an invisible OCR text layer over its page
+images, so it can be searched in the phone reader and in a device's own PDF
+viewer; it leaves any PDF that already has text alone. Run it on a newly added
+scan before extracting its text.
 
 ### External services
 - **Google Gemini** — AI rules answers (server-side, `GEMINI_API_KEY`).
