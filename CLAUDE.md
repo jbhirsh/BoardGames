@@ -284,14 +284,17 @@ secrets belong in tracked source.
   typescript-eslint supports TS 7.
 - **`patches/` holds `patch-package` fixes** applied on `postinstall`. One
   patch makes Stryker's vitest runner name tests the way Vitest 5 matches them
-  (stryker-js#6210); without it every mutant survives. The runner is pinned
-  to the patched version (10.0.0) so a release can't break the patch under a
-  routine bump. Once a Stryker release carries the fix, delete the patch and
-  unpin the runner.
+  (stryker-js#6210); without it every mutant survives. Once a Stryker
+  release carries the fix, delete the patch.
   The other marks a pdf.js range request's rejection as handled: a reader
   closed before its first read (leaving a rules page quickly) otherwise
   throws an unhandled AbortError in the browser. Drop it once pdf.js
   handles that itself.
+  Neither package is pinned for its patch: a release that changes the
+  patched code makes the patch fail to apply, which fails CI's install.
+- **No exact version pins.** Every dependency in `package.json` takes a
+  range (`^`, `~`); the lockfile fixes what gets installed.
+  `dependencyRanges.test.ts` fails on an exact version.
 - **Tests live in `src/__tests__/`** (Vitest + React Testing Library, jsdom).
   Coverage thresholds are enforced **per file at 80% lines** (`vite.config.ts`),
   so new reducer actions, filter utilities, and API handlers need their own
