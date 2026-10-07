@@ -1,16 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { GAMES } from '../data/games';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
+import { breakdown, ordinal, scienceScore, standings, tieBreaks, treasuryScore, type Breakdown, type Tally } from '../utils/sevenWonders';
 import NotFoundPage from './NotFoundPage';
+import { ScoreIcon, type ScoreIconKind } from './ScoreIcons';
 
 let nextPlayerId = 0;
 
-const SCIENCE_ICONS: Record<string, string> = {
-  tablets: '/images/science-tablet.png',
-  compasses: '/images/science-compass.png',
-  gears: '/images/science-gear.png',
-};
+// Scrolls the player strip sideways just far enough to show the chosen tab.
+// scrollIntoView would also scroll the page to bring the strip into view.
+function scrollIntoStrip(el: HTMLDivElement | null) {
+  const strip = el?.parentElement;
+  if (!el || !strip) return;
+  const left = el.offsetLeft - strip.offsetLeft;
+  const right = left + el.offsetWidth;
+  if (left < strip.scrollLeft) strip.scrollLeft = left;
+  else if (right > strip.scrollLeft + strip.clientWidth) strip.scrollLeft = right - strip.clientWidth;
+}
 
 const SCORE_FIELDS = ['military', 'coins', 'wonder', 'civilian', 'tablets', 'compasses', 'gears', 'commercial', 'guilds'] as const;
 type ScoreField = typeof SCORE_FIELDS[number];
@@ -41,6 +48,18 @@ function cleanInput(text: string, allowNeg: boolean): string {
 
 function hasScores(p: PlayerScores): boolean {
   return SCORE_FIELDS.some(f => num(p[f]) !== 0);
+}
+
+function tally(p: PlayerScores): Tally {
+  return {
+    military: num(p.military),
+    coins: num(p.coins),
+    wonder: num(p.wonder),
+    civilian: num(p.civilian),
+    commercial: num(p.commercial),
+    guilds: num(p.guilds),
+    symbols: { tablets: num(p.tablets), compasses: num(p.compasses), gears: num(p.gears) },
+  };
 }
 
 // The game in progress survives a reload, a back-swipe or a discarded tab.
@@ -85,23 +104,36 @@ function saveGame(game: SavedGame): void {
   }
 }
 
-function calcScience(t: number, c: number, g: number): number {
-  return t * t + c * c + g * g + 7 * Math.min(t, c, g);
-}
-
-function calcTotal(p: PlayerScores): number {
-  return num(p.military) + Math.floor(num(p.coins) / 3) + num(p.wonder) + num(p.civilian)
-    + calcScience(num(p.tablets), num(p.compasses), num(p.gears)) + num(p.commercial) + num(p.guilds);
-}
-
 const CATEGORIES = [
-  { key: 'military', label: 'Military', color: '#d44', icon: '🛡' },
-  { key: 'coins', label: 'Treasury (coins)', color: '#c90', icon: '🪙' },
-  { key: 'wonder', label: 'Wonder Stages', color: '#a87b4f', icon: '🏛' },
-  { key: 'civilian', label: 'Civilian (Blue)', color: '#3b82f6', icon: '🔵' },
-  { key: 'commercial', label: 'Commercial (Yellow)', color: '#ca8a04', icon: '🟡' },
-  { key: 'guilds', label: 'Guilds (Purple)', color: '#8b5cf6', icon: '🟣' },
+  { key: 'military', label: 'Military', color: '#d44' },
+  { key: 'coins', label: 'Treasury (coins)', color: '#c90' },
+  { key: 'wonder', label: 'Wonder Stages', color: '#a87b4f' },
+  { key: 'civilian', label: 'Civilian (Blue)', color: '#3b82f6' },
+  { key: 'commercial', label: 'Commercial (Yellow)', color: '#ca8a04' },
+  { key: 'guilds', label: 'Guilds (Purple)', color: '#8b5cf6' },
 ] as const;
+
+const SCIENCE_COLOR = '#22c55e';
+
+// The Results sheet's rows, in the printed pad's order.
+const SHEET_ROWS: { key: keyof Omit<Breakdown, 'total'>; label: string; icon: ScoreIconKind; color: string }[] = [
+  { key: 'military', label: 'Military', icon: 'military', color: '#d44' },
+  { key: 'treasury', label: 'Treasury', icon: 'treasury', color: '#c90' },
+  { key: 'wonder', label: 'Wonder', icon: 'wonder', color: '#a87b4f' },
+  { key: 'civilian', label: 'Civilian', icon: 'civilian', color: '#3b82f6' },
+  { key: 'science', label: 'Science', icon: 'science', color: SCIENCE_COLOR },
+  { key: 'commercial', label: 'Commercial', icon: 'commercial', color: '#ca8a04' },
+  { key: 'guilds', label: 'Guilds', icon: 'guilds', color: '#8b5cf6' },
+];
+
+const ICON_FOR: Record<typeof CATEGORIES[number]['key'], ScoreIconKind> = {
+  military: 'military',
+  coins: 'treasury',
+  wonder: 'wonder',
+  civilian: 'civilian',
+  commercial: 'commercial',
+  guilds: 'guilds',
+};
 
 export default function ScoreCalculatorPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -110,10 +142,22 @@ export default function ScoreCalculatorPage() {
   const [players, setPlayers] = useState<PlayerScores[]>(initial.players);
   const [activePlayer, setActivePlayer] = useState(initial.active);
   const [showSummary, setShowSummary] = useState(false);
+  // Set when Next hands the phone on, so the next player's form starts at
+  // their name rather than wherever the last player left off.
+  const handedOn = useRef(false);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     saveGame({ players, active: activePlayer });
   }, [players, activePlayer]);
+
+  useEffect(() => {
+    if (!handedOn.current) return;
+    handedOn.current = false;
+    panelRef.current?.scrollIntoView?.({ block: 'start' });
+    (nameRef.current ?? panelRef.current)?.focus({ preventScroll: true });
+  }, [activePlayer, showSummary]);
 
   if (!game) {
     return <NotFoundPage title="No score calculator" message="There's no score calculator for that game. Pick a game from the collection to see what it has." />;
@@ -151,18 +195,37 @@ export default function ScoreCalculatorPage() {
     setShowSummary(false);
   }
 
+  // Passing the phone round the table: on to the next player, and after the
+  // last one, the results.
+  function handOn() {
+    handedOn.current = true;
+    if (activePlayer < players.length - 1) setActivePlayer(activePlayer + 1);
+    else setShowSummary(true);
+  }
+
   // Phone number pads don't always have a minus key, so military gets a sign toggle.
   function flipMilitarySign() {
     updateField('military', String(-num(current.military)));
   }
 
-  const scienceVP = calcScience(num(current.tablets), num(current.compasses), num(current.gears));
-  const treasuryVP = Math.floor(num(current.coins) / 3);
-  const totalVP = calcTotal(current);
+  const currentTally = tally(current);
+  const scienceVP = scienceScore(currentTally.symbols);
+  const treasuryVP = treasuryScore(currentTally.coins);
+  const totalVP = breakdown(currentTally).total;
 
-  const ranked = [...players]
-    .map((p, i) => ({ ...p, total: calcTotal(p), idx: i }))
-    .sort((a, b) => b.total - a.total || num(b.coins) - num(a.coins));
+  const sheet = players.map(p => breakdown(tally(p)));
+  const places = standings(players.map((p, i) => ({ total: sheet[i].total, coins: num(p.coins) })));
+  const placeOf = new Map(places.map(s => [s.player, s.place]));
+  // Before anyone has scored, everyone ties on 0: crown nobody yet.
+  const scored = players.some(hasScores);
+  const won = (i: number) => scored && placeOf.get(i) === 1;
+  const notes = !scored ? [] : tieBreaks(places.map(s => ({
+    name: players[s.player].name,
+    total: sheet[s.player].total,
+    coins: num(players[s.player].coins),
+    place: s.place,
+  })));
+  const next = players[activePlayer + 1];
 
   return (
     <div className="rules-page">
@@ -178,28 +241,36 @@ export default function ScoreCalculatorPage() {
         </div>
       </header>
 
+      {/* One row, however many play: the players scroll sideways in their
+          own strip, with Add and Results always at its end. */}
       <div className="sc-player-tabs">
-        {players.map((p, i) => (
-          <div key={p.id} className={`sc-player-tab-wrap${i === activePlayer && !showSummary ? ' active' : ''}`}>
-            <button
-              type="button"
-              className={`sc-player-tab${i === activePlayer && !showSummary ? ' active' : ''}`}
-              onClick={() => { setActivePlayer(i); setShowSummary(false); }}
+        <div className="sc-player-strip">
+          {players.map((p, i) => (
+            <div
+              key={p.id}
+              className={`sc-player-tab-wrap${i === activePlayer && !showSummary ? ' active' : ''}`}
+              ref={i === activePlayer ? scrollIntoStrip : undefined}
             >
-              {p.name}
-            </button>
-            {players.length > 2 && (
               <button
                 type="button"
-                className="sc-player-remove"
-                aria-label={`Remove ${p.name}`}
-                onClick={() => removePlayer(i)}
+                className={`sc-player-tab${i === activePlayer && !showSummary ? ' active' : ''}`}
+                onClick={() => { setActivePlayer(i); setShowSummary(false); }}
               >
-                &times;
+                {p.name}
               </button>
-            )}
-          </div>
-        ))}
+              {players.length > 2 && (
+                <button
+                  type="button"
+                  className="sc-player-remove"
+                  aria-label={`Remove ${p.name}`}
+                  onClick={() => removePlayer(i)}
+                >
+                  &times;
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
         {players.length < 7 && (
           <button type="button" className="sc-add-player" aria-label="Add player" onClick={addPlayer}>+</button>
         )}
@@ -213,23 +284,68 @@ export default function ScoreCalculatorPage() {
       </div>
 
       {showSummary ? (
-        <div className="sc-panel">
-          <div className="sc-summary">
-            {ranked.map((p, rank) => (
-              <div key={p.id} className={`sc-summary-row${rank === 0 ? ' sc-winner' : ''}`}>
-                <span className="sc-rank">{rank === 0 ? '👑' : `#${rank + 1}`}</span>
-                <span className="sc-summary-name">{p.name}</span>
-                <span className="sc-summary-total">{p.total} VP</span>
-              </div>
-            ))}
+        <div className="sc-panel" ref={panelRef} tabIndex={-1} role="region" aria-label="Results">
+          {/* A score sheet like the printed pad: a row per category, a column
+              per player. The category column stays put while the players
+              scroll sideways on a phone. */}
+          <div className="sc-sheet-wrap">
+            <table className="sc-sheet">
+              <caption className="sr-only">Scores by category</caption>
+              <thead>
+                <tr>
+                  <th scope="col"><span className="sr-only">Category</span></th>
+                  {players.map((p, i) => (
+                    <th key={p.id} scope="col" className={won(i) ? 'sc-win' : undefined}>
+                      {won(i) && <ScoreIcon kind="winner" />}
+                      {p.name}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {SHEET_ROWS.map(row => (
+                  <tr key={row.key}>
+                    <th scope="row">
+                      <span className="sc-sheet-label" style={{ color: row.color }}><ScoreIcon kind={row.icon} /></span>
+                      {row.label}
+                    </th>
+                    {players.map((p, i) => (
+                      <td key={p.id} className={won(i) ? 'sc-win' : undefined}>
+                        {sheet[i][row.key]}
+                        {row.key === 'treasury' && num(p.coins) > 0 && (
+                          <span className="sc-sheet-sub"><span className="sr-only">, from </span>{num(p.coins)} coins</span>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="sc-sheet-total">
+                  <th scope="row">Total</th>
+                  {players.map((p, i) => (
+                    <td key={p.id} className={won(i) ? 'sc-win' : undefined}>{sheet[i].total}</td>
+                  ))}
+                </tr>
+                <tr className="sc-sheet-place">
+                  <th scope="row">Place</th>
+                  {players.map((p, i) => (
+                    <td key={p.id} className={won(i) ? 'sc-win' : undefined}>{scored ? ordinal(placeOf.get(i)!) : '–'}</td>
+                  ))}
+                </tr>
+              </tfoot>
+            </table>
           </div>
+          {notes.map(note => <p key={note} className="sc-tie-note">{note}</p>)}
+          <p className="sc-tie-rule">A tie on points goes to the player with more coins.</p>
         </div>
       ) : (
-        <div className="sc-panel" key={current.id}>
+        <div className="sc-panel" key={current.id} ref={panelRef}>
           <div className="sc-form">
             <div className="sc-name-row">
               <label className="sc-label" htmlFor="sc-player-name">Player Name</label>
               <input
+                ref={nameRef}
                 id="sc-player-name"
                 className="sc-input sc-name-input"
                 type="text"
@@ -238,10 +354,10 @@ export default function ScoreCalculatorPage() {
               />
             </div>
 
-            {CATEGORIES.map(({ key, label, color, icon }) => (
+            {CATEGORIES.map(({ key, label, color }) => (
               <div key={key} className="sc-row">
                 <label className="sc-label" htmlFor={`sc-${key}`}>
-                  <span className="sc-icon">{icon}</span>
+                  <span className="sc-label-icon" style={{ color }}><ScoreIcon kind={ICON_FOR[key]} /></span>
                   <span>{label}</span>
                   {key === 'coins' && num(current.coins) > 0 && (
                     <span className="sc-vp-note">= {treasuryVP} VP</span>
@@ -274,15 +390,15 @@ export default function ScoreCalculatorPage() {
             ))}
 
             <div className="sc-science-section">
-              <label className="sc-label">
-                <span className="sc-icon">🟢</span>
+              <div className="sc-label">
+                <span className="sc-label-icon" style={{ color: SCIENCE_COLOR }}><ScoreIcon kind="science" /></span>
                 <span>Science (Green)</span>
                 <span className="sc-vp-note">= {scienceVP} VP</span>
-              </label>
+              </div>
               <div className="sc-science-inputs">
                 {(['tablets', 'compasses', 'gears'] as const).map((field) => (
-                  <label key={field} className="sc-science-field">
-                    <span className="sc-science-label"><img src={SCIENCE_ICONS[field]} alt={field} className="sc-science-icon" /></span>
+                  <label key={field} className="sc-science-field" style={{ color: SCIENCE_COLOR }}>
+                    <ScoreIcon kind={field} />
                     <input
                       className="sc-input"
                       type="number"
@@ -291,7 +407,7 @@ export default function ScoreCalculatorPage() {
                       aria-label={field}
                       value={current[field]}
                       onChange={(e) => updateField(field, cleanInput(e.target.value, false))}
-                      style={{ borderColor: '#22c55e' }}
+                      style={{ borderColor: SCIENCE_COLOR }}
                     />
                   </label>
                 ))}
@@ -302,6 +418,10 @@ export default function ScoreCalculatorPage() {
               <span>Total</span>
               <span className="sc-total-num">{totalVP} VP</span>
             </div>
+
+            <button type="button" className="sc-next" onClick={handOn}>
+              {next ? `Next: ${next.name || 'next player'}` : 'See results'} <span aria-hidden="true">&rarr;</span>
+            </button>
           </div>
         </div>
       )}

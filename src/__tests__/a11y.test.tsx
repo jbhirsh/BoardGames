@@ -169,13 +169,15 @@ describe('accessibility', () => {
     expect(results).toHaveNoViolations();
   }, TIMEOUT_MS);
 
-  it('score calculator page has no axe violations', async () => {
-    const { container } = render(
-      <MemoryRouter>
-        <ScoreCalculatorPage />
-      </MemoryRouter>
-    );
-    const results = await axe(container, axeOptions);
-    expect(results).toHaveNoViolations();
+  it('score calculator page has no axe violations, form and results', async () => {
+    const router = createMemoryRouter([{ path: '/score/:slug', element: <ScoreCalculatorPage /> }], { initialEntries: ['/score/7-wonders'] });
+    const { container } = render(<RouterProvider router={router} />);
+    expect(screen.getByLabelText('Player Name')).toBeInTheDocument();
+    expect(await axe(container, axeOptions)).toHaveNoViolations();
+
+    fireEvent.change(screen.getByLabelText(/Civilian/), { target: { value: '5' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Results' }));
+    expect(screen.getByRole('table', { name: 'Scores by category' })).toBeInTheDocument();
+    expect(await axe(container, axeOptions)).toHaveNoViolations();
   }, TIMEOUT_MS);
 });
