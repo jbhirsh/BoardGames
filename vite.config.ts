@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { readdirSync, readFileSync } from 'node:fs'
 import { extname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -37,6 +38,64 @@ function pdfjsAssets(): Plugin {
   }
 }
 
+// public/ files saved at install, beside the build's own: the collection's
+// box art, the word checker's list, the favicons and the manifest (the
+// home-screen icons are copied on install). Rulebooks
+// are saved one by one as they're opened (src/sw/sw.ts), not here.
+const PRECACHE_PUBLIC: Record<string, (file: string) => boolean> = {
+  '': (file) => /^(favicon-|apple-touch-icon).*\.png$|\.webmanifest$/.test(file),
+  images: (file) => file.endsWith('.webp'),
+  words: (file) => file === 'enable.txt',
+}
+
+// The service worker (src/sw/sw.ts), bundled to /sw.js with the files it
+// saves at install, a version naming that saved copy (a hash of index.html
+// and every one of them, so a build that changes none keeps it) and a hash of
+// each rulebook, so a saved one is dropped once its file changes.
+function serviceWorker(): Plugin {
+  let publicDir = ''
+  const hashOf = (...parts: (string | Uint8Array)[]) => {
+    const hash = createHash('sha256')
+    for (const part of parts) hash.update(part)
+    return hash.digest('hex').slice(0, 12)
+  }
+  return {
+    name: 'service-worker',
+    apply: 'build',
+    // After vite emits index.html, which the version covers.
+    enforce: 'post',
+    configResolved(config) {
+      publicDir = config.publicDir
+    },
+    buildStart() {
+      this.emitFile({ type: 'chunk', id: fileURLToPath(new URL('./src/sw/sw.ts', import.meta.url)), fileName: 'sw.js' })
+    },
+    generateBundle(_, bundle) {
+      const sw = bundle['sw.js']
+      const html = bundle['index.html']
+      if (sw?.type !== 'chunk' || html?.type !== 'asset') throw new Error('service worker or index.html missing from the build')
+      // A classic worker can't import: code shared with the app would be split
+      // into a chunk sw.js imports, and registration would fail.
+      if (sw.imports.length || sw.dynamicImports.length) throw new Error('sw.js must not share code with the app')
+      const files = new Map<string, string | Uint8Array>()
+      for (const [name, file] of Object.entries(bundle)) {
+        if (name === 'sw.js' || name === 'index.html' || name.endsWith('.map')) continue
+        files.set(`/${name}`, file.type === 'chunk' ? file.code : file.source)
+      }
+      for (const [dir, keep] of Object.entries(PRECACHE_PUBLIC)) {
+        for (const file of readdirSync(join(publicDir, dir)).filter(keep)) {
+          files.set(`/${dir ? `${dir}/` : ''}${file}`, readFileSync(join(publicDir, dir, file)))
+        }
+      }
+      const paths = [...files.keys()].sort()
+      const version = hashOf(html.source, ...paths.flatMap((path) => [path, files.get(path)!]))
+      const rulebooks = Object.fromEntries(readdirSync(join(publicDir, 'rules')).filter((file) => file.endsWith('.pdf'))
+        .map((file) => [`/rules/${file}`, hashOf(readFileSync(join(publicDir, 'rules', file)))]))
+      sw.code = `const __PRECACHE__=${JSON.stringify(paths)},__SW_VERSION__=${JSON.stringify(version)},__RULEBOOKS__=${JSON.stringify(rulebooks)};${sw.code}`
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   build: {
@@ -55,6 +114,7 @@ export default defineConfig({
   plugins: [
     react(),
     pdfjsAssets(),
+    serviceWorker(),
     sentryVitePlugin({
       org: "solo-23",
       project: "game_room",

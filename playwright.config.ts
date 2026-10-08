@@ -27,6 +27,10 @@ export default defineConfig({
     baseURL: BASE_URL,
     // The trace of the attempt that failed, not of a retry that may pass.
     trace: 'retain-on-first-failure',
+    // The service worker answers requests itself, out of page.route's
+    // reach, so it would slip past the stubs. Only e2e/offline.spec.ts,
+    // which tests it, lets it run.
+    serviceWorkers: 'block',
   },
   projects: [
     {

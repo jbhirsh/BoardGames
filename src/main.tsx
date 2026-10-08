@@ -25,6 +25,14 @@ const router = createBrowserRouter([
   },
 ])
 
+// Offline support (src/sw/sw.ts), for game nights with no signal. Production
+// only: in dev it would serve yesterday's code over Vite's.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {})
+  })
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <RouterProvider router={router} />
