@@ -7,8 +7,9 @@ Guidance for Claude Code (claude.ai/code) when working in this repository.
 **The Game Room** — a single-page app for browsing a personal board game
 collection. Filter and sort 30 games, get a random pick, read bundled rule
 PDFs, ask an AI rules assistant, tally a 7 Wonders score, check whether a word
-is playable in Bananagrams, and vote on a wishlist. React 19 + TypeScript SPA
-built with Vite, deployed on Vercel with a small serverless API.
+is playable in Bananagrams, and vote on a wishlist. Installable, and usable
+offline once visited. React 19 + TypeScript SPA built with Vite, deployed on
+Vercel with a small serverless API.
 
 ## Commands
 
@@ -185,7 +186,26 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
 - **`utils/`** — pure helpers (`filterGames.ts`, `pickRandom.ts`, `filterUrl.ts`,
   `urls.ts`, `shortDesc.ts`, `subgames.ts`, `rulebooks.ts`, `pdfSearch.ts`,
   `fileSize.ts`, `sevenWonders.ts`, the score pad's arithmetic: science,
-  standings with the coins tie-break). Keep these free of React and side effects.
+  standings with the coins tie-break; `offline.ts`, the service worker's
+  routing and byte ranges). Keep these free of React and side effects.
+- **`sw/sw.ts`** — the service worker, for game nights with no signal.
+  `main.tsx` registers it in production builds only; the `serviceWorker()`
+  plugin in `vite.config.ts` bundles it to `/sw.js` (a classic worker: the
+  build fails if it would import a chunk shared with the app) and writes in
+  the precache list (the app's code, the collection's box art, pdf.js's fonts
+  and decoders, the word list), the saved shell's name (a hash of
+  `index.html` and all of those, so a build that changes none keeps it) and a
+  hash of each rulebook. Sentry stamps `sw.js` on every build, so every
+  deploy installs a new worker; without `skipWaiting` it waits until no tab
+  runs the old app, so a long-open tab keeps its own code offline. Pages
+  come from the network (4s at most), falling back to the app saved at
+  install, which nothing else replaces; `/api/*` and other sites are never
+  touched. A rulebook is saved whole the first time it's opened (the phone
+  reader asks for byte ranges, which the Cache API can't store, so ranges
+  are cut from the saved copy, held in memory while it's read), and dropped
+  by the first worker whose hash for it differs. `public/manifest.webmanifest`
+  and its 192/512 icons make the site installable. It has its own
+  `tsconfig.sw.json` (WebWorker library, not the DOM).
 - **`instrument.ts`** — Sentry browser SDK init (`@sentry/react`), including
   browser tracing and session replay.
 
@@ -310,7 +330,8 @@ secrets belong in tracked source.
 
 - **TypeScript strict everywhere.** Project configs under one solution:
   `tsconfig.app.json` (`src`, DOM libs), `tsconfig.api.json` (`api`, Node libs),
-  `tsconfig.node.json` (`vite.config.ts`), `tsconfig.eval.json` (`eval`) and
+  `tsconfig.node.json` (`vite.config.ts`), `tsconfig.eval.json` (`eval`),
+  `tsconfig.sw.json` (`src/sw`, WebWorker libs) and
   `tsconfig.e2e.json` (`e2e`, `playwright.config.ts`). `npm run build` runs
   `tsc -b` across all of them.
 - **TypeScript 7 runs side by side with the TypeScript 6 API.** TS 7 (the
@@ -353,7 +374,9 @@ secrets belong in tracked source.
   assertions, never on a timer. A spec may import `src/data` for expected
   values but nothing else from the app (dependency-cruiser). Vitest
   excludes `e2e/`, and it is outside coverage and the Stryker mutate scope.
-  Add a test here for a new user-facing flow.
+  Add a test here for a new user-facing flow. The service worker is blocked
+  (`serviceWorkers: 'block'` in `playwright.config.ts`), since requests it
+  answers never reach `page.route`; only `e2e/offline.spec.ts` lets it run.
 - **Pure utilities stay pure.** Filtering/sorting/URL logic in `src/utils/` and
   `src/context/filterReducer.ts` should have no side effects and be directly
   unit-testable. The import side of this (utils/data may not reach React or
