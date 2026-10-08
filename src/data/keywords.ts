@@ -77,4 +77,5 @@ export const SORT_OPTIONS: { value: SortMode; label: string }[] = [
   { value: 'az', label: 'A\u2192Z' },
   { value: 'quick', label: 'Quickest First' },
   { value: 'long', label: 'Longest First' },
+  { value: 'votes', label: 'Most votes' },
 ];

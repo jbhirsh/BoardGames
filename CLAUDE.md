@@ -155,7 +155,18 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   with a vote column and an expanded row for the full blurb, awards, owner
   controls and links; the collapsed row shows the blurb's first sentence
   (`utils/shortDesc.ts`) where a collection row shows its hand-written
-  short line. Both sections share the light theme.
+  short line. Both sections share the light theme. The wishlist alone has a
+  "Most votes" sort (`SortMode` `votes`: the filter orders it A→Z and the
+  wishlist then puts the most voted first; going back to the collection, or
+  a `s=votes` link without `c=want`, falls back to the default sort; the
+  order by votes, here and under Group, is taken when the counts load or
+  the sort or the list changes, not on each vote, so a voted entry doesn't
+  jump from under the pointer), and a
+  "Suggest a game" button on its heading's line that jumps to the form at
+  the bottom. An entry with `expands` (the base game's name) wears an
+  "Expansion for Catan (owned)" tag (`ExpansionTag`), "owned" when the base
+  is in the collection; the data test checks each names a game we have or
+  want.
 - **`utils/`** — pure helpers (`filterGames.ts`, `pickRandom.ts`, `filterUrl.ts`,
   `urls.ts`, `shortDesc.ts`, `subgames.ts`, `rulebooks.ts`, `pdfSearch.ts`,
   `fileSize.ts`, `sevenWonders.ts`, the score pad's arithmetic: science,

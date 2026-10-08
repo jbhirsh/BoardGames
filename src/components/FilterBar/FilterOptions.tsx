@@ -58,10 +58,12 @@ export function PlayersOptions({ onPicked }: PickProps) {
 
 export function SortOptions({ onPicked }: PickProps) {
   const { state, dispatch } = useFilter();
+  // Only the wishlist has votes to sort by.
+  const options = state.collection === 'want' ? SORT_OPTIONS : SORT_OPTIONS.filter((o) => o.value !== 'votes');
   return (
     <RadioOptions
       label="Sort"
-      options={SORT_OPTIONS}
+      options={options}
       selected={state.baseSort}
       onSelect={(value) => {
         dispatch({ type: 'SET_SORT', payload: value });

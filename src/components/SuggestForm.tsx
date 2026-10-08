@@ -51,7 +51,7 @@ export default function SuggestForm() {
   };
 
   return (
-    <form className="suggest" onSubmit={onSubmit} aria-labelledby={`${uid}-title`}>
+    <form id="suggest" className="suggest" onSubmit={onSubmit} aria-labelledby={`${uid}-title`}>
       <h3 id={`${uid}-title`} className="suggest-title">Suggest a game</h3>
       <p className="suggest-sub">Know something we'd love? Jess gets an email and can add it with one click.</p>
       <div className="suggest-fields">

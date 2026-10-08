@@ -19,7 +19,7 @@ const KEYWORD_MODES: Exclude<KeywordMode, 'or'>[] = ['and'];
 const VIEWS: Exclude<ViewMode, 'list'>[] = ['grid'];
 const COLLECTIONS: Exclude<CollectionMode, 'own'>[] = ['want'];
 const SORTS: Exclude<SortMode, `${string}-${'asc' | 'desc'}`>[] = [
-  'az', 'group', 'quick', 'long',
+  'az', 'group', 'quick', 'long', 'votes',
 ];
 
 // Compile-time completeness checks: if a new non-default value is added to
@@ -119,7 +119,7 @@ export function searchParamsToFilter(params: URLSearchParams): FilterState {
   const search = params.get('q') ?? initialFilterState.search;
 
   const s = params.get('s');
-  const sort: SortMode =
+  const parsedSort: SortMode =
     s && (SORTS as readonly string[]).includes(s) ? (s as SortMode) : initialFilterState.sort;
 
   const v = params.get('v');
@@ -129,6 +129,8 @@ export function searchParamsToFilter(params: URLSearchParams): FilterState {
   const c = params.get('c');
   const collection: CollectionMode =
     c && (COLLECTIONS as readonly string[]).includes(c) ? (c as CollectionMode) : initialFilterState.collection;
+  // Only the wishlist has votes to sort by.
+  const sort = parsedSort === 'votes' && collection !== 'want' ? initialFilterState.sort : parsedSort;
 
   return {
     duration,

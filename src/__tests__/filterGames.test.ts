@@ -333,6 +333,10 @@ describe('sortItems ordering', () => {
   const input = [bravo, alpha, charlie, delta];
   const names = (list: Game[]) => list.map(g => g.name);
 
+  it('starts the vote sort from A→Z, which the wishlist reorders by votes', () => {
+    expect(names(sortItems(input, 'votes', () => 0))).toEqual(['Alpha', 'Bravo', 'Charlie', 'Delta']);
+  });
+
   it.each(['az', 'name-asc'])('%s sorts A to Z', (sort) => {
     expect(names(sortGames(input, sort))).toEqual(['Alpha', 'Bravo', 'Charlie', 'Delta']);
   });

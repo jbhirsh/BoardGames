@@ -43,6 +43,13 @@ export function filterReducer(state: FilterState, action: FilterAction): FilterS
     case 'SET_VIEW':
       return { ...state, view: action.payload };
     case 'SET_COLLECTION':
+      // The collection has no votes: leaving the wishlist on its vote sort
+      // goes back to the default order.
+      if (action.payload === 'own' && state.baseSort === 'votes') {
+        // A column sort on top of it comes along, as it does for any sort.
+        const sort = state.sort === 'votes' ? initialFilterState.sort : state.sort;
+        return { ...state, collection: 'own', sort, baseSort: initialFilterState.sort };
+      }
       return { ...state, collection: action.payload };
     case 'HYDRATE':
       return action.payload;

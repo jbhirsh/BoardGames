@@ -363,3 +363,96 @@ describe('Wishlist', () => {
     expect(screen.getAllByText(compiled.name)).toHaveLength(2);
   });
 });
+
+describe('Wishlist engagement', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    localStorage.setItem('wishlist:anonId', 'anon-testtest');
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    cleanup();
+  });
+
+  it('sorts by most votes, ties in name order, as one flat list', async () => {
+    mockVotes({ splendor: 3, wingspan: 5, 'lost-cities': 3 });
+    renderWishlist('/?c=want&s=votes&v=grid');
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Vote for Wingspan (5 votes)' })).toBeInTheDocument();
+    });
+    const ids = Array.from(document.querySelectorAll('[data-item-id]')).map((el) => el.getAttribute('data-item-id'));
+    expect(ids.slice(0, 3)).toEqual(['wingspan', 'lost-cities', 'splendor']);
+    // The rest, unvoted, follow A→Z.
+    const rest = ids.slice(3).map((id) => WISHLIST.find((w) => w.id === id)!.name);
+    expect(rest).toEqual([...rest].sort((a, b) => a.localeCompare(b)));
+    expect(screen.queryByRole('heading', { level: 3, name: WISHLIST_TYPES.strategy })).not.toBeInTheDocument();
+  });
+
+  it('holds the vote order while votes are cast, picking it up again on a new sort', async () => {
+    const ids = () => Array.from(document.querySelectorAll('[data-item-id]')).map((el) => el.getAttribute('data-item-id'));
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url.startsWith('/api/suggestions')) return jsonResponse({ items: [] });
+      if (init?.method === 'POST') return jsonResponse({ itemId: 'zombie-burrito', count: 9, myVote: 1 });
+      return jsonResponse({ counts: { splendor: 3 }, myVotes: [] });
+    });
+    renderWishlist('/?c=want&s=votes&v=grid');
+    const vote = await screen.findByRole('button', { name: 'Vote for Zombie Burrito (0 votes)' });
+    await waitFor(() => expect(vote).toBeEnabled());
+    const before = ids();
+    expect(before[0]).toBe('splendor');
+
+    fireEvent.click(vote);
+    // The count moves; the entry stays where the voter's pointer is.
+    await screen.findByRole('button', { name: 'Remove your vote for Zombie Burrito (9 votes)' });
+    expect(ids()).toEqual(before);
+  });
+
+  it('marks an expansion with its base game, and says when we own it', async () => {
+    mockVotes({});
+    renderWishlist('/?c=want&v=grid');
+    const seafarers = await screen.findByRole('heading', { name: 'Catan: Seafarers' });
+    const card = seafarers.closest('[data-item-id]') as HTMLElement;
+    expect(within(card).getByText('Expansion for Catan', { exact: false })).toHaveTextContent('Expansion for Catan (owned)');
+    // Wyrmspan is itself on the wishlist, not in the collection.
+    const academy = screen.getByRole('heading', { name: 'Wyrmspan: Dragon Academy' }).closest('[data-item-id]') as HTMLElement;
+    expect(within(academy).getByText('Expansion for Wyrmspan', { exact: false })).toHaveTextContent(/^Expansion for Wyrmspan$/);
+    // A standalone game has no tag.
+    const splendor = screen.getByRole('heading', { name: 'Splendor' }).closest('[data-item-id]') as HTMLElement;
+    expect(within(splendor).queryByText(/Expansion for/)).not.toBeInTheDocument();
+  });
+
+  it('marks an expansion in the list view too', async () => {
+    mockVotes({});
+    renderWishlist('/?c=want&v=list');
+    await screen.findByText(WISHLIST[0].name);
+    const row = document.querySelector('tr[data-item-id="dominion-seaside"]') as HTMLElement;
+    expect(within(row).getAllByText('Expansion for Dominion', { exact: false })[0]).toHaveTextContent('Expansion for Dominion (owned)');
+  });
+
+  it('jumps from the header to the suggestion form, ready to type', async () => {
+    mockVotes({});
+    // jsdom has no scrollIntoView; stand one in for this test only.
+    const scrollIntoView = vi.fn();
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = scrollIntoView;
+    const focus = vi.spyOn(HTMLElement.prototype, 'focus');
+    try {
+      renderWishlist('/?c=want');
+      fireEvent.click(await screen.findByRole('button', { name: 'Suggest a game' }));
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
+      expect(scrollIntoView.mock.contexts[0]).toBe(screen.getByRole('form', { name: 'Suggest a game' }));
+      expect(screen.getByLabelText('Game')).toHaveFocus();
+      // The form scroll lands it under the bar; focusing mustn't scroll again.
+      expect(focus).toHaveBeenLastCalledWith({ preventScroll: true });
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
+  });
+
+  it('offers the Suggest button only once the form is there', () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise(() => {}));
+    renderWishlist('/?c=want');
+    expect(screen.queryByRole('button', { name: 'Suggest a game' })).not.toBeInTheDocument();
+  });
+});

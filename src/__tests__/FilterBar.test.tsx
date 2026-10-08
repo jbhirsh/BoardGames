@@ -233,6 +233,19 @@ describe('SortDropdown', () => {
     expect(screen.getByRole('button', { name: /Quickest First/ })).toBeInTheDocument();
   });
 
+  it('offers Most votes on the wishlist only, which has votes', () => {
+    renderFilterBar();
+    fireEvent.click(getDDButton('A\u2192Z'));
+    expect(screen.getAllByRole('radio').map((r) => r.textContent)).toEqual([
+      'Group by Type', 'A\u2192Z', 'Quickest First', 'Longest First',
+    ]);
+    cleanup();
+    renderFilterBar('/?c=want');
+    fireEvent.click(getDDButton('A\u2192Z'));
+    fireEvent.click(screen.getByRole('radio', { name: 'Most votes' }));
+    expect(getDDButton('Most votes')).toBeInTheDocument();
+  });
+
   it('shows Group by Type option', () => {
     renderFilterBar();
     fireEvent.click(getDDButton('A\u2192Z'));

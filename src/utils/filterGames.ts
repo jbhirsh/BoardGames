@@ -78,7 +78,9 @@ const CAT_ORDER = { quick: 0, medium: 1, long: 2 } as const;
 const mins = (g: Filterable) => g.mins || Number.MAX_SAFE_INTEGER;
 
 export function sortItems<T extends Filterable>(list: T[], sort: string, groupIndex: (item: T) => number): T[] {
-  if (sort === 'az' || sort === 'name-asc')  return [...list].sort((a, b) => a.name.localeCompare(b.name));
+  // 'votes' starts from A→Z: the wishlist puts the most voted first from
+  // there, since the counts live outside the filter.
+  if (sort === 'az' || sort === 'name-asc' || sort === 'votes')  return [...list].sort((a, b) => a.name.localeCompare(b.name));
   if (sort === 'name-desc') return [...list].sort((a, b) => b.name.localeCompare(a.name));
   if (sort === 'quick' || sort === 'dur-asc') return [...list].sort((a, b) => mins(a) - mins(b) || CAT_ORDER[a.cat] - CAT_ORDER[b.cat]);
   if (sort === 'long'  || sort === 'dur-desc') return [...list].sort((a, b) => b.mins - a.mins || CAT_ORDER[b.cat] - CAT_ORDER[a.cat]);
