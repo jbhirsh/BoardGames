@@ -8,7 +8,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>The Game Room</title>
     <meta name="description" content="Our board game collection: find what fits tonight by players and time, read the rules with an AI helper, keep score and vote on what to buy next." />
-    <meta name="theme-color" content="#FBFBFD" />
+    <meta name="theme-color" content="#FBFBFD" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#111113" media="(prefers-color-scheme: dark)" />
+    <!-- A theme picked with the toggle (useTheme), in force before the first
+         paint so a dark choice never flashes light. -->
+    <script>
+      try {
+        var t = localStorage.getItem('gameroom:theme');
+        if (t === 'light' || t === 'dark') {
+          document.documentElement.dataset.theme = t;
+          document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) {
+            m.content = t === 'dark' ? '#111113' : '#FBFBFD';
+          });
+        }
+      } catch (e) {}
+    </script>
     <!-- Link previews (group chats, social). Image and URL must be absolute. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="The Game Room" />

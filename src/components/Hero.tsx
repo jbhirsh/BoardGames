@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { GAMES } from '../data/games';
 import { collectionSpan } from '../utils/collectionStats';
 import { rulebookPath } from '../utils/rulebooks';
+import ThemeToggle from './ThemeToggle';
 
 // A shelf of favourite boxes. Each opens its rulebook, so the row is a way
 // in rather than decoration.
@@ -13,6 +14,7 @@ export default function Hero() {
 
   return (
     <header className="hero">
+      <ThemeToggle />
       <h1>Our <em>Game</em> Room</h1>
       <p className="hero-sub">
         {GAMES.length} games, {shortest} to {longest}. What fits tonight?
