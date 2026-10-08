@@ -1,14 +1,7 @@
 import { useFilter } from '../../context/useFilter';
-import { CheckIcon } from '../Icons';
 import Dropdown from './Dropdown';
-import type { SortMode } from '../../data/types';
-
-const SORT_OPTIONS: { value: SortMode; label: string }[] = [
-  { value: 'group', label: 'Group by Type' },
-  { value: 'az', label: 'A\u2192Z' },
-  { value: 'quick', label: 'Quickest First' },
-  { value: 'long', label: 'Longest First' },
-];
+import { SortOptions } from './FilterOptions';
+import { SORT_OPTIONS } from '../../data/keywords';
 
 interface Props {
   isOpen: boolean;
@@ -16,7 +9,7 @@ interface Props {
 }
 
 export default function SortDropdown({ isOpen, onToggle }: Props) {
-  const { state, dispatch } = useFilter();
+  const { state } = useFilter();
   const currentLabel = SORT_OPTIONS.find((o) => o.value === state.baseSort)?.label ?? 'Sort';
 
   return (
@@ -27,22 +20,7 @@ export default function SortDropdown({ isOpen, onToggle }: Props) {
       isOpen={isOpen}
       onToggle={onToggle}
     >
-      {SORT_OPTIONS.map((opt) => (
-        <button
-          key={opt.value}
-          type="button"
-          className={`dd-opt${state.baseSort === opt.value ? ' sel' : ''}`}
-          onClick={() => {
-            dispatch({ type: 'SET_SORT', payload: opt.value });
-            onToggle();
-          }}
-        >
-          <span className="dd-chk">
-            {state.baseSort === opt.value && <CheckIcon />}
-          </span>
-          {opt.label}
-        </button>
-      ))}
+      <SortOptions onPicked={onToggle} />
     </Dropdown>
   );
 }

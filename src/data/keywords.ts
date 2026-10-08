@@ -1,4 +1,4 @@
-import type { DurationFilter, GroupId, KeywordId, TimeBudget, WishlistType } from './types';
+import type { DurationFilter, GroupId, KeywordId, SortMode, TimeBudget, WishlistType } from './types';
 
 export const KW: Record<KeywordId, string> = {
   'social': 'Social',
@@ -70,3 +70,11 @@ export const PLAYER_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 export function playersLabel(n: number): string {
   return n === 1 ? '1 player' : `${n} players`;
 }
+
+/** The sorts the filter bar offers; the list view's column sorts are its own. */
+export const SORT_OPTIONS: { value: SortMode; label: string }[] = [
+  { value: 'group', label: 'Group by Type' },
+  { value: 'az', label: 'A\u2192Z' },
+  { value: 'quick', label: 'Quickest First' },
+  { value: 'long', label: 'Longest First' },
+];

@@ -1,10 +1,6 @@
 import { useFilter } from '../../context/useFilter';
-import { useWishlistItems } from '../../context/useWishlistItems';
-import { KW } from '../../data/keywords';
-import { GAMES } from '../../data/games';
-import { CheckIcon } from '../Icons';
 import Dropdown from './Dropdown';
-import type { Filterable, KeywordId } from '../../data/types';
+import { KeywordOptions } from './FilterOptions';
 
 interface Props {
   isOpen: boolean;
@@ -12,23 +8,10 @@ interface Props {
 }
 
 export default function KeywordsDropdown({ isOpen, onToggle }: Props) {
-  const { state, dispatch } = useFilter();
-  const { items: wishlist } = useWishlistItems();
+  const { state } = useFilter();
   const isActive = state.keywords.size > 0;
-
-  const allKw = Object.entries(KW) as [KeywordId, string][];
-
-  // Counts follow the Own/Want toggle: the list a keyword would filter is
-  // the one whose tally sits next to it.
-  const pool: readonly Filterable[] = state.collection === 'want' ? wishlist : GAMES;
-
-  function countForKw(kwId: KeywordId): number {
-    return pool.filter((g) => g.kw.includes(kwId)).length;
-  }
-
-  const modeLabel = state.keywordMode.toUpperCase();
   const label = isActive
-    ? `${state.keywords.size} keyword${state.keywords.size > 1 ? 's' : ''} (${modeLabel})`
+    ? `${state.keywords.size} keyword${state.keywords.size > 1 ? 's' : ''} (${state.keywordMode.toUpperCase()})`
     : 'Keywords';
 
   return (
@@ -39,40 +22,7 @@ export default function KeywordsDropdown({ isOpen, onToggle }: Props) {
       isOpen={isOpen}
       onToggle={onToggle}
     >
-      <div className="kw-mode-toggle">
-        <button
-          className={`kw-mode-btn${state.keywordMode === 'or' ? ' active' : ''}`}
-          onClick={() => dispatch({ type: 'SET_KEYWORD_MODE', payload: 'or' })}
-        >
-          Any
-        </button>
-        <button
-          className={`kw-mode-btn${state.keywordMode === 'and' ? ' active' : ''}`}
-          onClick={() => dispatch({ type: 'SET_KEYWORD_MODE', payload: 'and' })}
-        >
-          All
-        </button>
-      </div>
-      <div className="dd-opts">
-        {allKw.map(([id, name]) => {
-          const sel = state.keywords.has(id);
-          return (
-            <button
-              key={id}
-              type="button"
-              className={`dd-opt${sel ? ' sel' : ''}`}
-              aria-pressed={sel}
-              onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: id })}
-            >
-              <span className="dd-chk">
-                {sel && <CheckIcon />}
-              </span>
-              {name}
-              <span className="dd-opt-ct">{countForKw(id)}</span>
-            </button>
-          );
-        })}
-      </div>
+      <KeywordOptions />
     </Dropdown>
   );
 }

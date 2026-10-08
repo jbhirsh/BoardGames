@@ -1,6 +1,17 @@
 import { useEffect, useRef, type RefObject } from 'react';
 import { useFilter } from '../context/useFilter';
 
+/** Scrolls a section's top back under the sticky header if it has gone above it. */
+export function keepSectionInView(section: HTMLElement) {
+  const header = document.querySelector('.sticky-header') as HTMLElement | null;
+  const headerHeight = header?.offsetHeight ?? 0;
+  const sectionTop = section.getBoundingClientRect().top;
+  if (sectionTop < headerHeight) {
+    const targetY = window.scrollY + sectionTop - headerHeight;
+    window.scrollTo({ top: Math.max(0, targetY), behavior: 'instant' });
+  }
+}
+
 /**
  * When a filter change shrinks a section, the document can get short enough
  * that the section's header ends up above the viewport, under the sticky
@@ -19,13 +30,6 @@ export function useKeepSectionInView(sectionRef: RefObject<HTMLElement | null>, 
     }
     if (!active) return;
     const section = sectionRef.current;
-    if (!section) return;
-    const header = document.querySelector('.sticky-header') as HTMLElement | null;
-    const headerHeight = header?.offsetHeight ?? 0;
-    const sectionTop = section.getBoundingClientRect().top;
-    if (sectionTop < headerHeight) {
-      const targetY = window.scrollY + sectionTop - headerHeight;
-      window.scrollTo({ top: Math.max(0, targetY), behavior: 'instant' });
-    }
+    if (section) keepSectionInView(section);
   }, [active, sectionRef, state.duration, state.players, state.keywords, state.keywordMode, state.search, state.sort]);
 }

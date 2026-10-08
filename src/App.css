@@ -58,6 +58,33 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   position:sticky;top:0;z-index:200;
 }
 
+/* ══ PHONE FILTER SHEET ═══════════════════════════════════ */
+/* The phone's filter bar is the search and one Filters button; the button
+   opens this sheet from the bottom of the screen with every choice in it,
+   laid out as wrapping chips rather than long lists. */
+.fb-filters{flex-shrink:0;}
+.sheet-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:flex-end;}
+.filter-sheet{
+  position:relative;width:100%;max-height:85svh;display:flex;flex-direction:column;
+  background:var(--surface);border-radius:18px 18px 0 0;
+  box-shadow:0 -12px 40px rgba(0,0,0,.2);animation:sheet-up .22s ease-out;
+}
+.filter-sheet:focus{outline:none;}
+.sheet-hd{display:flex;align-items:center;justify-content:space-between;padding:14px var(--gutter) 10px;border-bottom:1px solid var(--border);}
+.sheet-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--dark);}
+.sheet-close{width:36px;height:36px;border:none;border-radius:50%;background:var(--bg2);color:var(--text2);font-size:15px;cursor:pointer;}
+.sheet-body{overflow-y:auto;overscroll-behavior:contain;padding:0 var(--gutter) 12px;}
+.sheet-sec-title{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin:16px 0 8px;}
+.filter-sheet [role="radiogroup"],.filter-sheet .dd-opts{display:flex;flex-wrap:wrap;gap:6px;max-height:none;padding:0;overflow:visible;}
+.filter-sheet .dd-opt{width:auto;padding:7px 12px;border:1px solid var(--border);border-radius:20px;}
+.filter-sheet .dd-opt.sel{border-color:rgba(0,113,227,0.35);}
+.filter-sheet .kw-mode-toggle{padding:0 0 8px;border-bottom:none;max-width:200px;}
+.sheet-ft{display:flex;gap:10px;padding:12px var(--gutter);border-top:1px solid var(--border);}
+.sheet-clear,.sheet-done{height:44px;border-radius:12px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;}
+.sheet-clear{padding:0 16px;background:var(--bg2);color:var(--text);border:1px solid var(--border);}
+.sheet-done{flex:1;background:var(--blue);color:#fff;border:none;}
+@keyframes sheet-up{from{transform:translateY(100%);}to{transform:none;}}
+
 /* ══ STICKY FILTERBAR ═════════════════════════════════════ */
 .filterbar{
   /* Solid: when it was see-through, rows scrolling under the bar showed
@@ -833,8 +860,9 @@ a.rules-chat-toggle{text-decoration:none;}
   .col-name{ font-size:13.5px; white-space:normal; }
   .mobile-short{ font-size:11.5px; }
 
-  /* filterbar: search on its own row, pills wrap beneath it */
-  .filterbar{ flex-wrap:wrap; gap:6px; padding:8px var(--gutter); }
+  /* filterbar: one row, the search and the Filters button */
+  .filterbar{ flex-wrap:nowrap; gap:8px; padding:8px var(--gutter); }
+  .filterbar .fb-search{ flex:1; min-width:0; }
   .dd-btn{ font-size:12px; height:32px; padding:0 11px; }
 
   .suggest-fields{ grid-template-columns:1fr; }
@@ -857,6 +885,9 @@ a.rules-chat-toggle{text-decoration:none;}
   .dd-opts{ max-height:min(250px, 40svh); }
 
   .sec-hd{ padding:14px 0 0; row-gap:10px; margin-bottom:16px; }
+  /* Own/Want spans the width under the title, two equal halves. */
+  .sec-switch .coll-toggle{ flex:1; }
+  .sec-switch .coll-btn{ flex:1; }
   .hero{ padding:32px var(--gutter) 24px; }
   .hero-sub{ font-size:15px; margin-bottom:20px; }
   .hero-shelf{ gap:10px; }

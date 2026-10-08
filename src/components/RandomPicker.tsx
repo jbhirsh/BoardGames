@@ -8,6 +8,8 @@ import { tableFiltered } from '../utils/filterGames';
 import { rulebookPath } from '../utils/rulebooks';
 import { DUR_LABELS, playersLabel } from '../data/keywords';
 import Backdrop from './Backdrop';
+import { useDialogFocus } from '../hooks/useDialogFocus';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 const SPIN_MS = 1400;
 const TICK_MS = 75;
@@ -112,70 +114,8 @@ export default function RandomPicker() {
 
   useEffect(() => { return stopTicking; }, [stopTicking]);
 
-  // iOS Safari ignores `body { overflow: hidden }` for touch scrolling, so the
-  // page still drags behind the modal. Pinning the body and restoring the
-  // offset on close is the approach that actually holds; the scrollTo is
-  // required because position:fixed drops the document scroll position.
-  useEffect(() => {
-    if (!open) return;
-    const scrollY = window.scrollY;
-    const { overflow, position, top, width } = document.body.style;
-    Object.assign(document.body.style, {
-      position: 'fixed',
-      top: `-${scrollY}px`,
-      width: '100%',
-      overflow: 'hidden',
-    });
-    return () => {
-      Object.assign(document.body.style, { overflow, position, top, width });
-      // Not when we are leaving the page: ScrollRestoration positions the new
-      // route in a layout effect, which runs before this passive cleanup, so
-      // restoring here would yank the rules page to the collection's offset.
-      if (navigatingRef.current) {
-        navigatingRef.current = false;
-        return;
-      }
-      // 'instant' is required: the legacy two-arg form resolves to 'auto',
-      // which inherits html{scroll-behavior:smooth} and glides on dismiss.
-      window.scrollTo({ top: scrollY, behavior: 'instant' });
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const card = cardRef.current;
-    card?.focus();
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        close();
-        return;
-      }
-      if (e.key !== 'Tab' || !card) return;
-      const focusables = card.querySelectorAll<HTMLElement>(
-        'a[href], area[href], input:not([disabled]), select:not([disabled]), ' +
-        'textarea:not([disabled]), button:not([disabled]), ' +
-        '[contenteditable]:not([contenteditable="false"]), ' +
-        '[tabindex]:not([tabindex="-1"])',
-      );
-      if (focusables.length === 0) return;
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      const active = document.activeElement as HTMLElement | null;
-      if (!card.contains(active) || active === card) {
-        // card has tabIndex=-1, not in focusables list — redirect Tab/Shift+Tab to first/last.
-        e.preventDefault();
-        (e.shiftKey ? last : first).focus();
-      } else if (e.shiftKey && active === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && active === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, close]);
+  useScrollLock(open, navigatingRef);
+  useDialogFocus(cardRef, open, close);
 
   const disabled = filteredGames.length === 0;
 
