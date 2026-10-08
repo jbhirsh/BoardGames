@@ -161,3 +161,22 @@ test('on a phone a rulebook tab opens its own book in the reader', async ({ page
   await expect(next.getByRole('status')).toHaveText(/^1 of \d+ · page \d+$/, { timeout: 15_000 });
   await expect(page.getByRole('heading', { level: 1, name: 'Catan' })).toBeVisible();
 });
+
+test('a long rulebook strip opens with the chosen tab in view', async ({ page }) => {
+  // Hogwarts Battle has eleven rulebook tabs, more than a desktop strip shows.
+  await page.goto('/rules/hogwarts-battle/monster-box-4');
+  const strip = page.getByRole('navigation', { name: 'Rulebooks' });
+  const chosen = strip.getByRole('link', { name: /^Monster Box 4/ });
+  await expect(chosen).toHaveAttribute('aria-current', 'page');
+  await expect(chosen).toBeInViewport({ ratio: 1 });
+  await expect(strip.getByRole('link', { name: 'Game 1', exact: true })).not.toBeInViewport();
+});
+
+test('a tab opened from a link sits clear of the strip\'s faded edge', async ({ page }) => {
+  await page.goto('/rules/hogwarts-battle/game-6');
+  const strip = page.getByRole('navigation', { name: 'Rulebooks' });
+  const chosen = strip.getByRole('link', { name: 'Game 6', exact: true });
+  await expect(chosen).toHaveAttribute('aria-current', 'page');
+  // The edge fades over 48px; snapping must not pull the tab back into it.
+  await expect.poll(async () => (await chosen.boundingBox())!.x - (await strip.boundingBox())!.x).toBeGreaterThanOrEqual(40);
+});

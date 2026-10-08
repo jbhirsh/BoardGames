@@ -157,9 +157,82 @@ describe('RulesPage', () => {
       });
       try {
         renderAt('/rules/card-deck/rummy');
-        expect(scrolled).toEqual([[tabs(), 284]]);
+        // 48px short of it, clear of the strip's faded edge.
+        expect(scrolled).toEqual([[tabs(), 252]]);
       } finally {
         offset.mockRestore();
+        if (original) Object.defineProperty(Element.prototype, 'scrollLeft', original);
+        else delete (Element.prototype as Partial<Element>).scrollLeft;
+      }
+    });
+
+    it('fades the strip at an end with tabs past it, and leaves a scroll by hand where it is', () => {
+      // jsdom has no layout: a 300px strip holding 900px of tabs.
+      let left = 0;
+      const sets: number[] = [];
+      const restore = [
+        vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(300),
+        vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockReturnValue(900),
+      ];
+      const original = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollLeft');
+      Object.defineProperty(Element.prototype, 'scrollLeft', {
+        configurable: true,
+        get: () => left,
+        set(v: number) { sets.push(v); left = v; },
+      });
+      try {
+        renderAt('/rules/card-deck');
+        expect(tabs()).toHaveClass('fade-end');
+        expect(tabs()).not.toHaveClass('fade-start');
+
+        left = 200;
+        fireEvent.scroll(tabs());
+        expect(tabs()).toHaveClass('fade-start', 'fade-end');
+        left = 600;
+        fireEvent.scroll(tabs());
+        expect(tabs()).toHaveClass('fade-start');
+        expect(tabs()).not.toHaveClass('fade-end');
+        // Only the opening scroll to the chosen tab; the strip re-rendered
+        // as its fades changed without being snapped back.
+        expect(sets).toEqual([0]);
+      } finally {
+        restore.forEach((r) => r.mockRestore());
+        if (original) Object.defineProperty(Element.prototype, 'scrollLeft', original);
+        else delete (Element.prototype as Partial<Element>).scrollLeft;
+      }
+    });
+
+    it('brings a tab reached by keyboard clear of the faded edges', () => {
+      // jsdom has no layout: a 300px strip; each tab 60px wide at a set offset.
+      const at: Record<string, number> = { Overview: 0, Euchre: 280, Spades: 220, Hearts: 260 };
+      let left = 0;
+      const restore = [
+        vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(300),
+        vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(60),
+        vi.spyOn(HTMLElement.prototype, 'offsetLeft', 'get')
+          .mockImplementation(function (this: HTMLElement) { return at[this.textContent ?? ''] ?? 0; }),
+      ];
+      const original = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollLeft');
+      Object.defineProperty(Element.prototype, 'scrollLeft', {
+        configurable: true,
+        get: () => left,
+        set(v: number) { left = v; },
+      });
+      try {
+        renderAt('/rules/card-deck');
+        const tab = (name: string) => within(tabs()).getByRole('link', { name });
+        // Past the right edge: scrolled until its end is 48px clear.
+        fireEvent.focus(tab('Euchre'));
+        expect(left).toBe(88);
+        // Inside the left fade: scrolled back until its start is 48px clear.
+        left = 200;
+        fireEvent.focus(tab('Spades'));
+        expect(left).toBe(172);
+        // Well inside: left alone.
+        fireEvent.focus(tab('Hearts'));
+        expect(left).toBe(172);
+      } finally {
+        restore.forEach((r) => r.mockRestore());
         if (original) Object.defineProperty(Element.prototype, 'scrollLeft', original);
         else delete (Element.prototype as Partial<Element>).scrollLeft;
       }

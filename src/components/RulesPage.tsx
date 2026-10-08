@@ -9,6 +9,7 @@ import RulesChatProvider, { RulesChatToggle, RulesChatPanel } from './RulesChat'
 import WordChecker from './WordChecker';
 import NotFoundPage from './NotFoundPage';
 import { useMediaQuery } from '../hooks/useMediaQuery';
+import { useScrollEdges } from '../hooks/useScrollEdges';
 import { formatSize } from '../utils/fileSize';
 
 // pdf.js is large, so it loads only where the reader is used.
@@ -53,11 +54,30 @@ function usePdfSize(pdf: string, wanted: boolean): number | null {
   return size?.pdf === pdf ? size.bytes : null;
 }
 
-// Scrolls the tab strip sideways to the chosen tab. scrollIntoView would also
-// scroll the page to bring the strip itself into view.
-function scrollIntoStrip(el: HTMLAnchorElement | null) {
-  const strip = el?.parentElement;
-  if (el && strip) strip.scrollLeft = Math.max(0, el.offsetLeft - strip.offsetLeft - 16);
+
+// How far the tab strip's edges fade (App.css .rules-books); a tab within
+// this of either side is partly hidden.
+const STRIP_FADE = 48;
+
+/** Scrolls the tab strip sideways to its chosen tab, clear of the faded edge. */
+function scrollToChosenTab(strip: HTMLElement) {
+  const tab = strip.querySelector<HTMLElement>('[aria-current="page"]');
+  if (tab) strip.scrollLeft = Math.max(0, tab.offsetLeft - strip.offsetLeft - STRIP_FADE);
+}
+
+/**
+ * Brings a tab reached by keyboard clear of the faded edges. The browser
+ * leaves a partly visible tab where it is, which can put its focus ring
+ * under the fade.
+ */
+function revealTab(strip: HTMLElement, tab: HTMLElement) {
+  const left = tab.offsetLeft - strip.offsetLeft;
+  const right = left + tab.offsetWidth;
+  if (left < strip.scrollLeft + STRIP_FADE) {
+    strip.scrollLeft = Math.max(0, left - STRIP_FADE);
+  } else if (right > strip.scrollLeft + strip.clientWidth - STRIP_FADE) {
+    strip.scrollLeft = right - strip.clientWidth + STRIP_FADE;
+  }
 }
 
 export default function RulesPage() {
@@ -68,6 +88,15 @@ export default function RulesPage() {
   const books = game ? rulebooks(game) : [];
   const book = books.find(b => b.part === part);
   const size = usePdfSize(book?.pdf ?? '', inPage && book !== undefined);
+  const [edges, stripRef, strip] = useScrollEdges();
+  // A deck has a dozen tabs; on a phone the chosen one can sit past the
+  // edge of the strip, so bring it into view, clear of the faded edge. Once
+  // per tab, not per render: the strip re-renders as it scrolls (its fades
+  // follow), and a ref callback would snap it back each time. scrollIntoView
+  // would also scroll the page to bring the strip itself into view.
+  useEffect(() => {
+    if (strip) scrollToChosenTab(strip);
+  }, [strip, book?.pdf]);
 
   if (!game) {
     return <NotFoundPage title="Game not found" message="We don't have a rulebook at this address. Pick a game from the collection to read its rules." />;
@@ -110,16 +139,20 @@ export default function RulesPage() {
           </div>
         </header>
         {books.length > 1 && (
-          <nav className="rules-books" aria-label="Rulebooks">
+          <nav
+            ref={stripRef}
+            // Faded at an end with more tabs past it, so a cut-off strip
+            // reads as one that scrolls.
+            className={`rules-books${edges.start ? ' fade-start' : ''}${edges.end ? ' fade-end' : ''}`}
+            aria-label="Rulebooks"
+            onFocus={(e) => revealTab(e.currentTarget, e.target as HTMLElement)}
+          >
             {books.map(b => (
               <Link
                 key={b.pdf}
                 to={rulebookPath(game.slug, b.part)}
                 className="rules-book"
                 aria-current={b === book ? 'page' : undefined}
-                // A deck has a dozen tabs; on a phone the chosen one can sit
-                // past the edge of the strip, so bring it into view.
-                ref={b === book ? scrollIntoStrip : undefined}
               >
                 {b.label}
                 {b.kind && shownKind(b.label, b.kind) && (

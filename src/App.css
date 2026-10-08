@@ -662,8 +662,14 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 /* Not found: the hero, filling the screen since it is the whole page. */
 .not-found{min-height:100svh;display:flex;flex-direction:column;justify-content:center;border-bottom:none;}
 .not-found .pick-btn{text-decoration:none;}
-.rules-books{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:thin;}
-.rules-book{display:inline-flex;align-items:center;gap:7px;flex-shrink:0;padding:8px 14px;font-size:13px;font-weight:500;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);text-decoration:none;white-space:nowrap;transition:background .15s,color .15s,border-color .15s;}
+.rules-books{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:thin;scroll-snap-type:x proximity;scroll-padding-inline:48px;}
+/* A fade at each end with more tabs past it: without one, a tab cut at the
+   edge ("Monster Box 2 EXPA") gave no sign the strip scrolls. A mask's
+   black is only opacity, not a colour, so it holds in both themes. */
+.rules-books.fade-end{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 48px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 48px),transparent);}
+.rules-books.fade-start{-webkit-mask-image:linear-gradient(to left,#000 calc(100% - 48px),transparent);mask-image:linear-gradient(to left,#000 calc(100% - 48px),transparent);}
+.rules-books.fade-start.fade-end{-webkit-mask-image:linear-gradient(to right,transparent,#000 48px,#000 calc(100% - 48px),transparent);mask-image:linear-gradient(to right,transparent,#000 48px,#000 calc(100% - 48px),transparent);}
+.rules-book{scroll-snap-align:start;display:inline-flex;align-items:center;gap:7px;flex-shrink:0;padding:8px 14px;font-size:13px;font-weight:500;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);text-decoration:none;white-space:nowrap;transition:background .15s,color .15s,border-color .15s;}
 .rules-book:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),0.3);background:var(--blue-bg);}
 .rules-book[aria-current="page"]{background:var(--dark);border-color:var(--dark);color:var(--surface);}
 .kind-chip{font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:5px;white-space:nowrap;line-height:1.3;}
