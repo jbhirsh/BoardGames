@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import * as Sentry from '@sentry/react';
 import NotFoundPage, { RouteError } from '../components/NotFoundPage';
@@ -49,6 +49,8 @@ describe('NotFoundPage', () => {
   it('shows a thrown 404 as not found without reporting it', async () => {
     renderAt('/gone');
     expect(await screen.findByRole('heading', { name: 'This box is empty' })).toBeInTheDocument();
+    // Let the effect that would report run first, or this passes either way.
+    await act(async () => {});
     expect(Sentry.captureException).not.toHaveBeenCalled();
   });
 
@@ -56,14 +58,15 @@ describe('NotFoundPage', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     renderAt('/boom');
     expect(await screen.findByRole('heading', { name: 'Something went wrong' })).toBeInTheDocument();
-    expect(Sentry.captureException).toHaveBeenCalledWith(expect.objectContaining({ message: 'render failed' }));
+    // Reported from an effect, which can run just after the heading shows.
+    await waitFor(() => expect(Sentry.captureException).toHaveBeenCalledWith(expect.objectContaining({ message: 'render failed' })));
     expect(screen.getByRole('link', { name: 'Browse the collection' })).toHaveAttribute('href', '/');
   });
 
   it('treats a thrown response other than 404 as an error and reports it', async () => {
     renderAt('/broken');
     expect(await screen.findByRole('heading', { name: 'Something went wrong' })).toBeInTheDocument();
-    expect(Sentry.captureException).toHaveBeenCalledWith(expect.objectContaining({ status: 500 }));
+    await waitFor(() => expect(Sentry.captureException).toHaveBeenCalledWith(expect.objectContaining({ status: 500 })));
   });
 
   it('keeps the page out of search results', () => {
