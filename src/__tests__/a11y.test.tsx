@@ -48,6 +48,21 @@ describe('accessibility', () => {
     expect(await axe(container, axeOptions)).toHaveNoViolations();
   }, TIMEOUT_MS);
 
+  it('phone filter sheet has no axe violations while open', async () => {
+    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener: () => {}, removeEventListener: () => {} })));
+    try {
+      const router = createMemoryRouter([
+        { element: <App />, children: [{ path: '/', element: <HomePage /> }] },
+      ], { initialEntries: ['/?d=30&k=party'] });
+      render(<RouterProvider router={router} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Filters 2' }));
+      expect(screen.getByRole('dialog', { name: 'Filters' })).toBeInTheDocument();
+      expect(await axe(document.body, bodyAxeOptions)).toHaveNoViolations();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  }, TIMEOUT_MS);
+
   it('home page with a card\'s games open has no axe violations', async () => {
     const router = createMemoryRouter([
       { element: <App />, children: [{ path: '/', element: <HomePage /> }] },

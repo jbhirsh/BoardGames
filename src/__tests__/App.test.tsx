@@ -101,3 +101,21 @@ describe('App', () => {
     expect(scrollTo).not.toHaveBeenCalled();
   });
 });
+
+describe('App on a phone', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('lets the active tags scroll away rather than holding a sticky row', () => {
+    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener: () => {}, removeEventListener: () => {} })));
+    const { container } = renderApp('/?p=4');
+    const tags = container.querySelector('.atags')!;
+    expect(tags).toHaveClass('show');
+    expect(container.querySelector('.sticky-header')).not.toContainElement(tags as HTMLElement);
+    expect(container.querySelector('.sticky-header .filterbar')).not.toBeNull();
+  });
+
+  it('keeps them in the sticky header on a wider screen', () => {
+    const { container } = renderApp('/?p=4');
+    expect(container.querySelector('.sticky-header .atags')).not.toBeNull();
+  });
+});

@@ -141,7 +141,14 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   `/api/auth`.
 - **`components/`** — presentational + interactive UI (grid/list views, filter
   bar, random picker, rules page, rules chat, word checker, score calculator,
-  wishlist + voting). `Icons.tsx` holds inline SVGs. The wishlist wears the
+  wishlist + voting). `Icons.tsx` holds inline SVGs. The filter bar's
+  choices are drawn once (`FilterBar/FilterOptions.tsx`) for two homes: the
+  dropdown pills on a wide screen, and at phone width (520px and under) a
+  "Filters · N" button beside the search that opens a bottom sheet
+  (`FilterSheet`), so the sticky bar is one row; there the active tags
+  scroll away with the page instead of sitting in the sticky header. The
+  sheet and the random picker share `hooks/useDialogFocus` (focus, Escape,
+  Tab kept inside) and `hooks/useScrollLock`. The wishlist wears the
   collection's clothes: `WishlistCard` reuses the `game-card` layout (vote
   heart and buy/video links in the footer) and `WishlistListView` renders
   the collection's table (`GamesTableHead` is the shared sortable header)

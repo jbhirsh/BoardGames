@@ -6,6 +6,7 @@ import { WishlistProvider } from './context/WishlistContext';
 import { AuthProvider } from './context/AuthContext';
 import { useStickyOffset } from './hooks/useStickyOffset';
 import { useFilter } from './context/useFilter';
+import { useIsPhone } from './hooks/useIsPhone';
 import Hero from './components/Hero';
 import FilterBar from './components/FilterBar/FilterBar';
 import ActiveTags from './components/ActiveTags';
@@ -18,6 +19,9 @@ export function HomePage() {
   const stickyRef = useRef<HTMLDivElement>(null);
   useStickyOffset(stickyRef);
   const { state } = useFilter();
+  // On a phone the active tags repeat what the Filters button counts, so
+  // they scroll away with the page rather than taking a sticky row.
+  const isPhone = useIsPhone();
 
   // Both sections stay mounted and the Own/Want toggle hides one, so a
   // toggle never refetches. The session check lives here rather than in
@@ -30,8 +34,9 @@ export function HomePage() {
           <Hero />
           <div className="sticky-header" ref={stickyRef}>
             <FilterBar />
-            <ActiveTags />
+            {!isPhone && <ActiveTags />}
           </div>
+          {isPhone && <ActiveTags />}
           <main className="main">
             <GameCollection hidden={state.collection !== 'own'} />
             <Wishlist hidden={state.collection !== 'want'} />

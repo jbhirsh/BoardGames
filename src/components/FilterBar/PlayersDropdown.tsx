@@ -1,12 +1,7 @@
 import { useFilter } from '../../context/useFilter';
-import { PLAYER_OPTIONS, playersLabel } from '../../data/keywords';
+import { playersLabel } from '../../data/keywords';
 import Dropdown from './Dropdown';
-import RadioOptions from './RadioOptions';
-
-const OPTIONS: { value: number; label: string }[] = [
-  { value: 0, label: 'Any number' },
-  ...PLAYER_OPTIONS.map((n) => ({ value: n, label: n === 10 ? '10+ players' : playersLabel(n) })),
-];
+import { PlayersOptions } from './FilterOptions';
 
 interface Props {
   isOpen: boolean;
@@ -14,7 +9,7 @@ interface Props {
 }
 
 export default function PlayersDropdown({ isOpen, onToggle }: Props) {
-  const { state, dispatch } = useFilter();
+  const { state } = useFilter();
   const isActive = state.players > 0;
 
   return (
@@ -25,15 +20,7 @@ export default function PlayersDropdown({ isOpen, onToggle }: Props) {
       isOpen={isOpen}
       onToggle={onToggle}
     >
-      <RadioOptions
-        label="Players"
-        options={OPTIONS}
-        selected={state.players}
-        onSelect={(value) => {
-          dispatch({ type: 'SET_PLAYERS', payload: value });
-          onToggle();
-        }}
-      />
+      <PlayersOptions onPicked={onToggle} />
     </Dropdown>
   );
 }

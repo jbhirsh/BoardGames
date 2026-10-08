@@ -127,6 +127,49 @@ test('on a phone, the collection is cards only and More opens a game\'s write-up
   await expect(page.getByRole('heading', { name: 'Awards' })).toBeVisible();
 });
 
+test('on a phone, filters live in a sheet behind one button and survive a reload', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  const filters = page.getByRole('button', { name: /^Filters/ });
+  await expect(filters).toHaveText('Filters');
+  await expect(page.getByRole('button', { name: 'Duration', exact: true })).toHaveCount(0);
+
+  await filters.click();
+  const sheet = page.getByRole('dialog', { name: 'Filters' });
+  await expect(sheet).toBeFocused();
+  await sheet.getByRole('radio', { name: 'Up to 15 min' }).click();
+  await sheet.getByRole('radio', { name: '2 players' }).click();
+  // Picks apply as they are made; the sheet stays open and says how many fit.
+  await expect(page).toHaveURL(/\/\?d=15&p=2$/);
+  await expect(sheet.getByRole('button', { name: /^Show \d+ games?$/ })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(sheet).toHaveCount(0);
+  await expect(filters).toBeFocused();
+  await expect(filters).toHaveText('Filters · 2');
+  // Bananagrams is 2–8 players in 15 minutes; Cranium needs four and an hour.
+  await expect(page.getByRole('heading', { level: 3, name: 'Bananagrams' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 3, name: 'Cranium' })).toHaveCount(0);
+
+  // The bar stays on screen down the list; the tags that repeat it don't.
+  await page.getByRole('heading', { level: 3, name: 'Poetry for Neanderthals' }).scrollIntoViewIfNeeded();
+  await expect(filters).toBeInViewport();
+  await expect(page.getByRole('button', { name: '2 players ✕' })).not.toBeInViewport();
+
+  // Narrowing from down the list brings the shorter list's top back up.
+  await filters.click();
+  await page.getByRole('dialog', { name: 'Filters' }).getByRole('button', { name: /^Party/ }).click();
+  await page.getByRole('dialog', { name: 'Filters' }).getByRole('button', { name: /^Show / }).click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Our Collection' })).toBeInViewport();
+  await page.getByRole('button', { name: 'Party ✕' }).click();
+
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Filters 2' })).toBeVisible();
+  await page.getByRole('button', { name: 'Filters 2' }).click();
+  await page.getByRole('dialog', { name: 'Filters' }).getByRole('button', { name: 'Clear all' }).click();
+  await page.getByRole('dialog', { name: 'Filters' }).getByRole('button', { name: `Show ${GAMES.length} games` }).click();
+  await expect(page).toHaveURL(/\/$/);
+});
+
 test('on a desktop grid, More opens a game\'s write-up across the row', async ({ page }) => {
   await page.goto('/?v=grid');
   await page.getByRole('button', { name: 'More about Azul' }).click();
