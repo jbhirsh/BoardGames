@@ -2,6 +2,7 @@ import type { WishlistItem } from '../data/types';
 import { AwardsList } from './AwardsBadge';
 import WishlistLinks from './WishlistLinks';
 import VoteButton from './VoteButton';
+import ExpansionTag from './ExpansionTag';
 import AdminItemControls from './AdminItemControls';
 import { TABLE_COLUMNS } from './GamesTableHead';
 import TableRowCells, { TableRowExpand } from './TableRowCells';
@@ -37,6 +38,7 @@ export default function WishlistRow({ item, voteCount, voted, onVote, disabled, 
           short={shortDesc(item.desc)}
           kw={item.kw}
           awards={item.awards}
+          subTag={item.expands && <ExpansionTag base={item.expands} />}
           isOpen={isOpen}
           onToggle={onToggle}
           extra={(

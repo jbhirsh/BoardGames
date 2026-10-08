@@ -86,6 +86,25 @@ describe('filterReducer', () => {
     expect(filterReducer(want, { type: 'SET_COLLECTION', payload: 'own' }).collection).toBe('own');
   });
 
+  it('leaving the wishlist on its vote sort goes back to the default order', () => {
+    const want = filterReducer(initialFilterState, { type: 'SET_COLLECTION', payload: 'want' });
+    const byVotes = filterReducer(want, { type: 'SET_SORT', payload: 'votes' });
+    const own = filterReducer(byVotes, { type: 'SET_COLLECTION', payload: 'own' });
+    expect(own.collection).toBe('own');
+    expect(own.sort).toBe(initialFilterState.sort);
+    expect(own.baseSort).toBe(initialFilterState.sort);
+    // Any other sort comes along.
+    const quick = filterReducer(want, { type: 'SET_SORT', payload: 'quick' });
+    expect(filterReducer(quick, { type: 'SET_COLLECTION', payload: 'own' }).baseSort).toBe('quick');
+    // A column sort on top of the vote sort comes along, as it does for any sort.
+    const byColumn = filterReducer(byVotes, { type: 'SET_COLUMN_SORT', payload: 'name' });
+    const ownByColumn = filterReducer(byColumn, { type: 'SET_COLLECTION', payload: 'own' });
+    expect(ownByColumn.sort).toBe('name-asc');
+    expect(ownByColumn.baseSort).toBe(initialFilterState.sort);
+    // Staying on the wishlist keeps it.
+    expect(filterReducer(byVotes, { type: 'SET_COLLECTION', payload: 'want' }).sort).toBe('votes');
+  });
+
   it('HYDRATE replaces the state with the payload verbatim', () => {
     const payload: FilterState = {
       duration: 60,

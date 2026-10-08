@@ -137,12 +137,19 @@ export interface WishlistItem extends Filterable {
   source?: 'friend' | 'owner';
   /** The stored description on its own, without the credit line, for the owner's edit form. */
   blurb?: string;
+  /**
+   * The game this one adds to, by name, when it is an expansion. A name in
+   * the collection is marked as owned, so nobody votes for it thinking it
+   * plays on its own.
+   */
+  expands?: string;
 }
 
 /** The most minutes a game may take to show under the duration filter. */
 export type TimeBudget = 15 | 30 | 60;
 export type DurationFilter = 'all' | TimeBudget;
-export type SortMode = 'az' | 'group' | 'quick' | 'long'
+/** `votes` (most voted first) is the wishlist's alone: the collection has no votes. */
+export type SortMode = 'az' | 'group' | 'quick' | 'long' | 'votes'
   | 'name-asc' | 'name-desc'
   | 'dur-asc' | 'dur-desc'
   | 'players-asc' | 'players-desc';

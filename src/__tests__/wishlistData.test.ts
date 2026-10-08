@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { WISHLIST } from '../data/wishlist';
+import { GAMES } from '../data/games';
 import { KW } from '../data/keywords';
 import { normalizeName } from '../utils/normalizeName';
 import { durationCategory } from '../hooks/useSuggestions';
@@ -22,6 +23,15 @@ describe('wishlist data', () => {
       expect(w.img, w.id).toMatch(new RegExp(`^/images/wishlist/${w.id}\\.(jpg|png|webp)$`));
       expect(existsSync(join('public', w.img!)), w.img).toBe(true);
     }
+  });
+
+  it('names, for every expansion, a base game in the collection or on the wishlist', () => {
+    const known = new Set([...GAMES, ...WISHLIST].map((g) => g.name));
+    const expansions = WISHLIST.filter((w) => w.expands);
+    expect(expansions.map((w) => w.id)).toEqual(
+      expect.arrayContaining(['catan-seafarers', 'dominion-seaside', 'dominion-prosperity', 'wyrmspan-dragon-academy']),
+    );
+    for (const w of expansions) expect(known.has(w.expands!), `${w.id}: ${w.expands}`).toBe(true);
   });
 
   it('gives every entry a name no other entry matches', () => {

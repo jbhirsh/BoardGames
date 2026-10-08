@@ -137,6 +137,16 @@ describe('searchParamsToFilter', () => {
     expect(searchParamsToFilter(new URLSearchParams('d=long')).duration).toBe('all');
   });
 
+  it('reads the vote sort for the wishlist only', () => {
+    const want = searchParamsToFilter(new URLSearchParams('c=want&s=votes'));
+    expect(want.sort).toBe('votes');
+    expect(want.baseSort).toBe('votes');
+    expect(filterToSearchParams(want).get('s')).toBe('votes');
+    const own = searchParamsToFilter(new URLSearchParams('s=votes'));
+    expect(own.sort).toBe(initialFilterState.sort);
+    expect(own.baseSort).toBe(initialFilterState.sort);
+  });
+
   it('takes only the budgets the filter offers', () => {
     for (const d of ['45', '0', '-15', '15abc', 'toString', '']) {
       expect(searchParamsToFilter(new URLSearchParams(`d=${d}`)).duration).toBe('all');

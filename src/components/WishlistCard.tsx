@@ -10,6 +10,7 @@ import WishlistLinks from './WishlistLinks';
 import AwardsBadge from './AwardsBadge';
 import VoteButton from './VoteButton';
 import AdminItemControls from './AdminItemControls';
+import ExpansionTag from './ExpansionTag';
 
 interface Props {
   item: WishlistItem;
@@ -42,6 +43,7 @@ export default function WishlistCard({ item, voteCount, voted, onVote, disabled,
           {item.players && <span className="cmeta"><UserIcon /> {item.players}</span>}
           {item.dur && <span className="cmeta"><ClockIcon /> {item.dur}</span>}
         </div>
+        {item.expands && <p className="card-expands"><ExpansionTag base={item.expands} /></p>}
         {item.kw.length > 0 && (
           <div className="card-kw">
             {sortedKw(item.kw).map((kw) => (
