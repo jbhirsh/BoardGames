@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Link, useParams } from 'react-router';
 import { GAMES } from '../data/games';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
+import { digitNudge } from '../utils/digitNudge';
 import { breakdown, ordinal, scienceScore, standings, tieBreaks, treasuryScore, type Breakdown, type Tally } from '../utils/sevenWonders';
 import NotFoundPage from './NotFoundPage';
 import { ScoreIcon, type ScoreIconKind } from './ScoreIcons';
@@ -135,6 +136,22 @@ const ICON_FOR: Record<typeof CATEGORIES[number]['key'], ScoreIconKind> = {
   guilds: 'guilds',
 };
 
+// The score boxes' digits, moved to the middle of the box for the font in
+// use. A hidden line in the boxes' font (16px) gives the layout's own
+// numbers: a zero-width block one cap high sits on the baseline.
+function measureDigitNudge(): number {
+  const line = document.createElement('div');
+  line.style.cssText = 'position:absolute;visibility:hidden;font-size:16px;line-height:normal';
+  const cap = document.createElement('span');
+  cap.style.cssText = 'display:inline-block;width:0;height:1cap';
+  line.append('0', cap);
+  document.body.append(line);
+  const box = line.getBoundingClientRect();
+  const mark = cap.getBoundingClientRect();
+  line.remove();
+  return digitNudge({ height: box.height, baseline: mark.bottom - box.top, capHeight: mark.height });
+}
+
 export default function ScoreCalculatorPage() {
   const { slug } = useParams<{ slug: string }>();
   const game = GAMES.find(g => g.slug === slug && SCORE_CALCULATORS.has(g.slug));
@@ -147,6 +164,7 @@ export default function ScoreCalculatorPage() {
   const handedOn = useRef(false);
   const nameRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const [nudge] = useState(measureDigitNudge);
 
   useEffect(() => {
     saveGame({ players, active: activePlayer });
@@ -228,7 +246,7 @@ export default function ScoreCalculatorPage() {
   const next = players[activePlayer + 1];
 
   return (
-    <div className="rules-page">
+    <div className="rules-page" style={{ '--digit-nudge': `${nudge}px` } as CSSProperties}>
       <title>{`${game.name} score · The Game Room`}</title>
       <header className="rules-header">
         <Link to="/" className="back-link">&larr; Back to The Game Room</Link>

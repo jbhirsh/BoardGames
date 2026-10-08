@@ -91,3 +91,39 @@ test('a negative military score can be typed and the game survives a reload', as
   await expect(field(/Military/)).toHaveValue('-2');
   await expect(page.getByText('5 VP', { exact: true })).toBeVisible();
 });
+
+test('a score sits dead centre in its box', async ({ page }) => {
+  await page.goto('/score/7-wonders');
+  const fields = [page.getByRole('spinbutton', { name: /Treasury/ }), page.getByRole('spinbutton', { name: 'gears' })];
+  for (const field of fields) {
+    // 7, 1 and 0 have no lopsided curve past the cap line or the baseline.
+    await field.fill('107');
+    await page.getByRole('heading', { level: 1, name: 'Score Calculator', exact: true }).click();
+    const shot = (await field.screenshot()).toString('base64');
+    // The ink's bounding box against the box's middle, inside the 2px border.
+    const off = await page.evaluate(async (png) => {
+      const img = new Image();
+      img.src = `data:image/png;base64,${png}`;
+      await img.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0);
+      const { data } = ctx.getImageData(0, 0, img.width, img.height);
+      const bg = data[(4 * img.width + 4) * 4];
+      let top = Infinity, bottom = -1, left = Infinity, right = -1;
+      for (let y = 4; y < img.height - 4; y++) {
+        for (let x = 4; x < img.width - 4; x++) {
+          if (Math.abs(data[(y * img.width + x) * 4] - bg) > 80) {
+            top = Math.min(top, y); bottom = Math.max(bottom, y + 1);
+            left = Math.min(left, x); right = Math.max(right, x + 1);
+          }
+        }
+      }
+      return { x: (left + right - img.width) / 2, y: (top + bottom - img.height) / 2 };
+    }, shot);
+    expect(Math.abs(off.x), 'across').toBeLessThanOrEqual(0.5);
+    expect(Math.abs(off.y), 'up and down').toBeLessThanOrEqual(0.5);
+  }
+});

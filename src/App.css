@@ -836,6 +836,13 @@ a.rules-chat-toggle{text-decoration:none;}
 /* 16px for the same iOS reason — this screen has ten of these in a column. */
 .sc-input{width:80px;padding:8px 10px;font-size:16px;border:2px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--text);text-align:center;font-family:inherit;outline:none;transition:border-color .15s;}
 .sc-input:focus{border-color:var(--blue);}
+/* No spin buttons: desktop browsers keep their width inside the box (Chrome
+   even while they're hidden), so centred numbers sat 7px left of centre. Typing, or a
+   phone's keypad, is how these get filled in anyway. */
+/* Digits stop at the baseline, so they ride high in a box centred on the
+   font's whole line; the page measures the font and sets the nudge. */
+.sc-input[type=number]{appearance:textfield;-moz-appearance:textfield;padding-top:calc(8px + var(--digit-nudge, 0px));padding-bottom:calc(8px - var(--digit-nudge, 0px));}
+.sc-input::-webkit-inner-spin-button,.sc-input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 .sc-science-section{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
 .sc-science-inputs{display:flex;gap:12px;margin-left:auto;}
 .sc-science-field{display:flex;align-items:center;gap:4px;}
