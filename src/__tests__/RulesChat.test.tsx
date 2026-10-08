@@ -157,6 +157,23 @@ describe('RulesChat', () => {
     expect(linksFor).not.toHaveBeenCalledWith('Hi! Ask me anything about the rules for Catan.');
   });
 
+  it('opens an answer\'s page citations in a tab of their own', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => streamResponse(['Roll two dice (p. 4).'])));
+    const citeLinks = (answer: string) => answer.replace('(p. 4)', '([p. 4](/rules/catan.pdf#page=4))');
+    render(
+      <RulesChatProvider>
+        <RulesChatToggle />
+        <RulesChatPanel slug="catan" gameName="Catan" citeLinks={citeLinks} />
+      </RulesChatProvider>,
+    );
+    openPanel();
+    send('How many dice?');
+    const link = await screen.findByRole('link', { name: 'p. 4' });
+    expect(link).toHaveAttribute('href', '/rules/catan.pdf#page=4');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
   it('offers starter questions until the first is asked, and asks the one tapped', async () => {
     const fetchMock = vi.fn(async () => streamResponse(['Deal 7 each.']));
     vi.stubGlobal('fetch', fetchMock);

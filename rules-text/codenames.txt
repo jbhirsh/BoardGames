@@ -1,5 +1,7 @@
+[Page 1]
 rules overview video
 
+[Page 2]
 2
 SETUP
 Players split up into two teams of similar
@@ -29,6 +31,7 @@ spymasters
 field
 operatives
 
+[Page 3]
 3
 Spymasters know the secret identities of 25 agents. Their teammates know the agents only by their
 codenames.
@@ -61,6 +64,7 @@ easily.
 7 innocent
 bystanders 1 assassin
 
+[Page 4]
 4
 Teams take turns. The starting team is indicated by the 4 lights on the edges of the key card.
 GIVING A CLUE
@@ -105,6 +109,7 @@ that card. The spymaster covers it with a red agent card, so she gets to go agai
 so she touches that codename. It's also red, so she can go again.
 GAME PLAY
 
+[Page 5]
 5
 She's not sure of the third
 river word. She picks
@@ -189,6 +194,7 @@ KEEPING A STRAIGHT FACE
 PENALTY FOR INVALID CLUES
 WHAT'S THE TIMER FOR?
 
+[Page 6]
 6
 We playtested various rules. Some groups like the rules one way. Some like the rules another way.
 You should experiment to find out what your group likes.
@@ -285,6 +291,7 @@ FIRM RULES
 DON'T BE TOO STRICT
 HOMONYMS & SPELLING
 
+[Page 7]
 7
 You are allowed to use
 0 as the number part
@@ -388,6 +395,7 @@ EXPERT CLUE: ZERO
 FLEXIBLE RULES
 EXPERT CLUE: UNLIMITED
 
+[Page 8]
 If there are only two of you, you can play on the same team. This two-player variant also works for
 larger groups of people who don't feel like competing against each other. You will try to get a high
 score against a simulated opponent.

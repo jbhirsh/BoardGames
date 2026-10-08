@@ -1,7 +1,9 @@
+[Page 1]
 Klaus Teuber
 G ame R ulesG ame R ules
 && almanacalmanac
 
+[Page 2]
 22
 Dear Settlers,
 To make it as easy as possible for you to start playing Catan®, we use an award-winning rules system, which consists
@@ -61,6 +63,7 @@ shown. Third, place the circular number tokens on top of
 the designated terrain hexes. Finally, place your settlements
 and roads.Africa is spring and we walk five paths toward the sun
 
+[Page 3]
 33
 Starting Set-up for Experienced Players
 It is more fun to play with a variable game board—with the
@@ -176,6 +179,7 @@ marked with
 white stars.
 See HH.
 
+[Page 4]
 44
 Example: See Illustration A. Blue receives 1 brick card,
 1 lumber card, and 1 ore card for his leftmost settlement
@@ -271,6 +275,7 @@ Illustration D
 © 2015 Catan GmbH© 2015 Catan GmbH
 =
 
+[Page 5]
 55
 b) Settlement Y Requires: Brick, Lumber, Wool, & Grain
 Take special note of the “Distance
@@ -396,6 +401,7 @@ the number of points
 required for victory.
 L IBRARY
 
+[Page 6]
 66
 almanac
 This “Catan Almanac” contains detailed, alphabetical entries
@@ -470,6 +476,7 @@ EE
 EE
 88••••••••••
 
+[Page 7]
 77
 DD
 desert
@@ -605,6 +612,7 @@ BB
 AA
 CC BB AA
 
+[Page 8]
 88
 GG
 G ame play
@@ -693,6 +701,7 @@ The first player to play 3 knight cards
 gets this card. Another player who plays
 more knight cards takes this card.
 
+[Page 9]
 99
 lonGest road
 If you are the first player to build a
@@ -785,6 +794,7 @@ longest road of at least 5 segments.
 Another player who builds a longer
 road takes this card.
 
+[Page 10]
 1010
 NN
 numBer toKens
@@ -892,6 +902,7 @@ of that type.
 AA BB
 Illustration J
 
+[Page 11]
 1111
 resourCe trade
 In the second phase of your turn, you may trade with
@@ -979,6 +990,7 @@ BB
 RobberRobber
 Illustration K
 
+[Page 12]
 1212
 Example: See Illustration M. Olivia, the blue player, wants
 to build a new settlement. She may only do so at one of the
@@ -1088,6 +1100,7 @@ CC BB BB
 BB
 AA
 
+[Page 13]
 1313
 2. Now take the
 9 harbor pieces (the
@@ -1203,6 +1216,7 @@ HH
 HH
 HH HH
 
+[Page 14]
 1414
 trade
 After you roll for resource production, you may trade with
@@ -1324,6 +1338,7 @@ Another player who builds a longer
 road takes this card.
 lonGest R oad
 
+[Page 15]
 1515
 almanaC index
 Entries Page
@@ -1409,6 +1424,7 @@ this CATAN expansion.
 Studio™
 catanstudio.com catan.com
 
+[Page 16]
 1616
 The island of Catan lies before you. The isle consists of
 19 terrain tiles surrounded by ocean. Your goal is to settle on

@@ -1,3 +1,4 @@
+[Page 1]
 2-5 30-60’8+
 From the craggy hillsides of Edinburgh to the sunlit docks of Constantinople, from the dusty
 alleys of Pamplona to a windswept station in Berlin, Ticket to Ride Europe takes you on a
@@ -7,6 +8,7 @@ Black Sea? Or erect lavish train stations in the great capitals of the old empir
 might just make you Europe’s greatest train magnate!
 Pack your luggage, hail the porter, and climb aboard!
 
+[Page 2]
 32
 Components
 u 1 map of Europe
@@ -97,6 +99,7 @@ Players familiar with the first game in this series,Ticket to Ride®,
 should focus their attention on the following new features:
 Ferries, Tunnels and Train Stations.
 
+[Page 3]
 54
 Locomotives
 Locomotives are multi-colored, and act as wild cards in the game.
@@ -206,6 +209,7 @@ Playing 2 locomotives, 1 locomotive
 revealed: 1 more locomotive needed.
 Cards drawn
 
+[Page 4]
 76
 Drawing Destination Tickets
 A player can use his turn to draw additional Destination Ticket cards. To do so, he draws three new cards from
@@ -289,6 +293,7 @@ bonus
 +4 Points
 /station keptCurrent Score
 
+[Page 5]
 8
 CREDITS
 Game design by Alan R. Moon

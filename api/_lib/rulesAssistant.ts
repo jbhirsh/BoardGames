@@ -19,7 +19,16 @@ export const RULES_ASSISTANT_MAX_OUTPUT_TOKENS = 1024;
 
 /** System instruction sent with every rules-assistant request. */
 export const RULES_ASSISTANT_SYSTEM_INSTRUCTION =
-  'You are a helpful board game rules assistant. Answer questions based only on the provided rules text. If the rules don\'t cover the question, say so. Keep answers concise and friendly.';
+  'You are a helpful board game rules assistant. Answer questions based only on the provided rules text. If the rules don\'t cover the question, say so. Keep answers concise and friendly. ' +
+  // The rules text marks each page with [Page N] (scripts/extract-rules-text.mjs),
+  // so a player can show the doubter at the table; the chat links "(p. N)" to
+  // that page of the PDF. A number printed on the page itself can differ from
+  // the PDF's, so only the marker's will do.
+  'Each page of a rulebook begins with a [Page N] marker. After each rule you give, cite the page it is on as (p. N), ' +
+  'taking N from the nearest [Page N] marker above it, never from a page number printed in the text. ' +
+  'When the rules text holds more than one rulebook, each opens with a === line naming it; then put the rulebook\'s name before the page ' +
+  'in every citation, as that line names it: (Catan p. N), (Cities And Knights p. N). ' +
+  'Cite nothing for something the rules don\'t say.';
 
 export interface ChatHistoryEntry {
   role: 'user' | 'model';
@@ -29,6 +38,15 @@ export interface ChatHistoryEntry {
 /** A rulebook's name from its part: "Cities And Knights" from cities-and-knights. */
 function rulebookName(part: string): string {
   return part.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * Heads the game's own rulebook when others follow it, named from the slug,
+ * so every rulebook the model cites by name has one: a citation must say
+ * which PDF to open (a deck's games are all on their page 1).
+ */
+export function firstRulebookHeader(slug: string): string {
+  return `=== First rulebook: ${rulebookName(slug)}. ===\n\n`;
 }
 
 /**
@@ -60,12 +78,12 @@ export function loadRulesText(slug: string, parts: string[] = []): string {
   const own = files.find((f) => f === slug + '.txt');
   if (!own) throw new Error(`ENOENT: no rules text for ${slug}`);
   const read = (f: string) => readFileSync(join(dir, f), 'utf-8');
-  let text = read(own);
+  let more = '';
   for (const part of parts) {
     const file = files.find((f) => f === `${slug}.${part}.txt`);
-    if (file) text += rulebookHeader(part) + read(file);
+    if (file) more += rulebookHeader(part) + read(file);
   }
-  return text;
+  return more === '' ? read(own) : firstRulebookHeader(slug) + read(own) + more;
 }
 
 /**

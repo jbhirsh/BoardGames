@@ -1,3 +1,4 @@
+[Page 1]
 As in previous games, defeat all the
 Villains before they gain control of
 the Locations. The last Villain you
@@ -259,6 +260,7 @@ PROFICIENCY
 BOX
 6
 
+[Page 2]
 end of game
 ALL the Villains are defeated–Heroes win!
 You have managed to hold LORD VOLDEMORT

@@ -1,3 +1,4 @@
+[Page 1]
 1
 by Matt Leacock
 Do you have what it takes to save humanity? As skilled members of a disease-fighting team, you must keep
@@ -134,6 +135,7 @@ HO CHI MINH CITY
 To see a Pandemic teaching video, go to:
 www.zmangames.com/pandemic-online-rules.html
 
+[Page 2]
 2
 San FranciSco
 chicago MontrÉal new York
@@ -224,6 +226,7 @@ ATLANTA
 UNITED STATES
 ATLANTA
 
+[Page 3]
 3
 ohanneSBurg
 khartouM
@@ -388,6 +391,7 @@ INFECTION DECK.
 Shuffle
 Stack
 
+[Page 4]
 4
 San FranciSco
 chicago MontrÉal new York
@@ -542,6 +546,7 @@ epidemics or infections (see Epidemics and
 Infections on page 6). However, treating this disease
 is now easier and you are closer to winning.
 
+[Page 5]
 5
 Play Example: On the first turn, Ben does 4 actions:
 (1) Drive to Chicago (from Atlanta), (2) Drive to San Francisco,
@@ -787,6 +792,7 @@ CHENNAI
 4
 2
 
+[Page 6]
 6
 INFECTIONS
 Flip over as many Infection cards from the top of the Infection Deck as the
@@ -945,6 +951,7 @@ iStanBul
 Ba
 MiaMi
 
+[Page 7]
 7
 OUTBREAKS
 When a disease outbreak occurs, move the outbreaks marker forward
@@ -1100,6 +1107,7 @@ Move Any 1 pAwn to Any city.
 G et perMission before MovinG
 Another plAyer’s pAwn.
 
+[Page 8]
 COMMONLY OVERLOOKED
 RULES
 • You do not draw a replacement card after drawing an Epidemic card.

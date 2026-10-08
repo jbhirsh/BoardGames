@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { rulebooks, rulebookPath, chatParts, chatScope, rulesPathFor, mentionedRulebooks, starterQuestions } from '../utils/rulebooks';
+import { rulebooks, rulebookPath, chatParts, chatScope, rulesPathFor, mentionedRulebooks, linkCitations, starterQuestions } from '../utils/rulebooks';
 import { initialFilterState } from '../data/initialFilterState';
 import { GAMES } from '../data/games';
 import { quickGame } from './testData';
@@ -217,6 +217,68 @@ describe('mentionedRulebooks', () => {
     expect(mentionedRulebooks('Game 3 adds that.', game, two)).toEqual([three]);
     // Spaces bound the match: "Game 20" is not Game 2.
     expect(mentionedRulebooks('Score 20 at game 20.', game, rulebooks(game)[0])).toEqual([]);
+  });
+});
+
+describe('linkCitations', () => {
+  const catan = GAMES.find((g) => g.slug === 'catan')!;
+  const [base, ext, ck] = rulebooks(catan);
+
+  it('links a bare page to the game\'s own rulebook when that was all it read', () => {
+    expect(linkCitations('Roll two dice (p. 4).', catan, base)).toBe('Roll two dice ([p. 4](/rules/catan.pdf#page=4)).');
+    expect(linkCitations('Trade first (p.12), then build (see p. 3).', catan, base))
+      .toBe('Trade first ([p.12](/rules/catan.pdf#page=12)), then build ([see p. 3](/rules/catan.pdf#page=3)).');
+    expect(linkCitations('Up (Rulebook p. 2).', catan, base)).toBe('Up ([Rulebook p. 2](/rules/catan.pdf#page=2)).');
+  });
+
+  it('leaves a bare page as text when it read more than one rulebook, since it can\'t say which', () => {
+    expect(linkCitations('Knights (p. 7).', catan, ck)).toBe('Knights (p. 7).');
+    const deck = GAMES.find((g) => g.slug === 'card-deck')!;
+    // Every game in the deck is on its own page 1.
+    expect(linkCitations('Deal five (p. 1).', deck, rulebooks(deck)[0])).toBe('Deal five (p. 1).');
+  });
+
+  it('links a named page to the rulebook sent under that name, however it is written', () => {
+    const link = `(/rules/catan.cities-and-knights.pdf#page=7)`;
+    expect(linkCitations('Knights (Cities And Knights p. 7).', catan, ck)).toBe(`Knights ([Cities And Knights p. 7]${link}).`);
+    expect(linkCitations('Knights (Cities & Knights, p. 7).', catan, ck)).toBe(`Knights ([Cities & Knights, p. 7]${link}).`);
+    expect(linkCitations('Knights (cities-and-knights p. 7).', catan, ck)).toBe(`Knights ([cities-and-knights p. 7]${link}).`);
+    expect(linkCitations('Knights (Catan: Cities & Knights rulebook p. 7).', catan, ck))
+      .toBe(`Knights ([Catan: Cities & Knights rulebook p. 7]${link}).`);
+    // The game's own rulebook by name, label or the server's name for it.
+    for (const name of ['Catan', 'Base game', 'see Catan']) {
+      expect(linkCitations(`Robber (${name} p. 9).`, catan, ck)).toBe(`Robber ([${name} p. 9](/rules/catan.pdf#page=9)).`);
+    }
+    const ttr = GAMES.find((g) => g.slug === 'ticket-to-ride')!;
+    const europe = rulebooks(ttr).find((b) => b.part === 'europe')!;
+    expect(linkCitations('(Ticket to Ride Europe p. 4) and (Ticket To Ride p. 3)', ttr, europe))
+      .toBe('([Ticket to Ride Europe p. 4](/rules/ticket-to-ride.europe.pdf#page=4)) and ([Ticket To Ride p. 3](/rules/ticket-to-ride.pdf#page=3))');
+  });
+
+  it('leaves a rulebook the assistant was not sent as text, and anything else in brackets', () => {
+    // On the base game tab the extension isn't sent, so it can't be cited.
+    expect(linkCitations('Six seats (5–6 Player Extension p. 2).', catan, base)).toBe('Six seats (5–6 Player Extension p. 2).');
+    expect(linkCitations('Six seats (5–6 Player Extension p. 2).', catan, ext))
+      .toBe('Six seats ([5–6 Player Extension p. 2](/rules/catan.5-6-player-extension.pdf#page=2)).');
+    expect(linkCitations('Up (Seafarers p. 2).', catan, ck)).toBe('Up (Seafarers p. 2).');
+    expect(linkCitations('Two dice (see the setup), page 4 (pp. 4).', catan, base)).toBe('Two dice (see the setup), page 4 (pp. 4).');
+    expect(linkCitations('(p. 4', catan, base)).toBe('(p. 4');
+  });
+
+  it('cites a deck\'s games by name from any tab', () => {
+    const deck = GAMES.find((g) => g.slug === 'card-deck')!;
+    const [overview] = rulebooks(deck);
+    expect(linkCitations('Deal five (Euchre p. 1).', deck, overview)).toBe('Deal five ([Euchre p. 1](/rules/card-deck.euchre.pdf#page=1)).');
+    expect(linkCitations('Shuffle (Card Deck p. 1).', deck, overview)).toBe('Shuffle ([Card Deck p. 1](/rules/card-deck.pdf#page=1)).');
+  });
+
+  it('tells numbered rulebooks apart', () => {
+    const hogwarts = GAMES.find((g) => g.slug === 'hogwarts-battle')!;
+    const books = rulebooks(hogwarts);
+    const game3 = books.find((b) => b.label === 'Game 3')!;
+    expect(linkCitations('(Game 2 p. 4), (Hogwarts Battle Game 3 p. 2), (Game 1 p. 9)', hogwarts, game3)).toBe(
+      `([Game 2 p. 4](${books.find((b) => b.label === 'Game 2')!.pdf}#page=4)), ([Hogwarts Battle Game 3 p. 2](${game3.pdf}#page=2)), ([Game 1 p. 9](${books[0].pdf}#page=9))`,
+    );
   });
 });
 

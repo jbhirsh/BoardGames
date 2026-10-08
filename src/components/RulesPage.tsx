@@ -1,7 +1,7 @@
 import { Component, lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { useParams, Link, Navigate } from 'react-router';
 import { GAMES } from '../data/games';
-import { rulebooks, rulebookPath, chatParts, chatScope, mentionedRulebooks, starterQuestions } from '../utils/rulebooks';
+import { rulebooks, rulebookPath, chatParts, chatScope, linkCitations, mentionedRulebooks, starterQuestions } from '../utils/rulebooks';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
 import { CalculatorIcon } from './Icons';
 import { shownKind } from '../utils/subgames';
@@ -182,6 +182,7 @@ export default function RulesPage() {
           parts={chatParts(game, book)}
           scope={chatScope(game, book)}
           linksFor={(answer) => mentionedRulebooks(answer, game, book).map((b) => ({ label: b.label, to: rulebookPath(game.slug, b.part) }))}
+          citeLinks={(answer) => linkCitations(answer, game, book)}
           starters={starterQuestions(game, book)}
         />
         {wordCheckerOpen && <WordChecker />}

@@ -1,3 +1,4 @@
+[Page 1]
 On a blustery autumn evening five old friends met in the backroom of one of the city’s oldest and most private clubs. Each had
 traveled a long distance — from all corners of the world — to meet on this very specific day… October 2, 1900 — 28 years to the
 day that the London eccentric, Phileas Fogg accepted and then won a £20,000 bet that he could travel Around the World in 80 Days.
@@ -14,6 +15,7 @@ For 2 - 5 players
 ages 8 and above
 30 - 60 minutes
 
+[Page 2]
 Components
 u 1 Board map of North American train routes
 u 240 Colored Train Cars (45 each in Blue, Red, Green, Yellow and Black, plus some extra replacement cars in each color)
@@ -61,6 +63,7 @@ card
 1 Longest Continuous Path
 Bonus card
 
+[Page 3]
 Draw Train Car Cards – The player may draw 2 Train Car cards. He may take any one of the face-up cards or he may draw the top card from the
 deck (this is a blind draw). If he draws a face up card, he immediately turns a replacement card face-up from the deck. He then draws his second
 card, either from the face up cards or from the top of the deck. (See Train Car Cards for special rules for Locomotive cards).
@@ -119,6 +122,7 @@ a set of three Blue Passenger
 Car cards.
 Example 1
 
+[Page 4]
 Route Scoring Table
 When a player claims a route, he records the points he receives by
 moving his Scoring Marker on the Scoring Track:

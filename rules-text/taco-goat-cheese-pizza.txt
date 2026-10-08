@@ -1,3 +1,4 @@
+[Page 1]
 Pace:
 You have to keep a steady, fast
 rhythm to the game. If you break it
@@ -46,6 +47,7 @@ Need some help?
 Scan the QR code above to
 view a video on how to play.
 
+[Page 2]
 Terminology:
 Draw Pile: the pile of face down cards each
 player has.

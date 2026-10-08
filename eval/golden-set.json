@@ -10,6 +10,15 @@
       "sourceQuote": "In a 2-player game, place 5 Factory displays."
     },
     {
+      "id": "azul-factory-count-2p-cites-page",
+      "game": "azul",
+      "question": "How many Factory displays do we set out in a 2-player game of Azul?",
+      "expected": "^\\((Azul,?\\s+)?(rulebook,?\\s+)?p\\.\\s?2\\)$",
+      "matchType": "citation",
+      "sourceQuote": "In a 2-player game, place 5 Factory displays.",
+      "notes": "Page citation (#141): the rule is under the [Page 2] marker of rules-text/azul.txt, so the answer cites (p. 2)."
+    },
+    {
       "id": "azul-vertical-line-bonus",
       "game": "azul",
       "question": "In Azul, how many bonus points do I score at the end of the game for a complete vertical line of 5 tiles?",
@@ -59,6 +68,16 @@
       "expected": "\\b(3|three)\\b",
       "matchType": "regex",
       "sourceQuote": "Each player may build a maximum of one Station per turn, and three\nStations throughout the course of the game."
+    },
+    {
+      "id": "ttr-europe-max-stations-cites-rulebook-page",
+      "game": "ticket-to-ride",
+      "parts": ["europe"],
+      "question": "How many train stations can a single player build over the course of a game of Ticket to Ride Europe?",
+      "expected": "^\\((Ticket to Ride:?\\s+)?Europe(\\s+rulebook)?,?\\s+p\\.\\s?4\\)$",
+      "matchType": "citation",
+      "sourceQuote": "Each player may build a maximum of one Station per turn, and three\nStations throughout the course of the game.",
+      "notes": "Page citation from a second rulebook (#141): the rule is under [Page 4] of rules-text/ticket-to-ride.europe.txt, sent after the base game's, so the answer names it: (Europe p. 4). A bare (p. 4) fails: with two rulebooks sent the chat could not tell which to open."
     },
     {
       "id": "uno-deal-count",

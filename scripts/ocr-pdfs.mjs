@@ -32,7 +32,8 @@ for (const file of files) {
       pages.push(data.text);
     }
 
-    const finalText = pages.join("\n\n");
+    // "[Page N]" before each page, as extract-rules-text.mjs writes them.
+    const finalText = pages.map((t, i) => `[Page ${i + 1}]\n${t}`).join("\n\n");
     await writeFile(join(OUTPUT_DIR, outName), finalText);
     console.log(`${file} -> ${outName} (${Buffer.byteLength(finalText)} bytes)`);
   } catch (err) {

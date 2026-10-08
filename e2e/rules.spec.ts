@@ -180,3 +180,23 @@ test('a tab opened from a link sits clear of the strip\'s faded edge', async ({ 
   // The edge fades over 48px; snapping must not pull the tab back into it.
   await expect.poll(async () => (await chosen.boundingBox())!.x - (await strip.boundingBox())!.x).toBeGreaterThanOrEqual(40);
 });
+
+test('an answer\'s page citations open their rulebook at that page', async ({ page, request }) => {
+  await page.route('**/api/chat', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/plain; charset=utf-8', body: 'Three stations at most (Europe p. 4), built instead of claiming a route (Ticket To Ride p. 3), as before (p. 5).' }),
+  );
+  await page.goto('/rules/ticket-to-ride/europe');
+  await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
+  await page.getByPlaceholder('Ask a rules question...').fill('How many stations can I build?');
+  await page.getByRole('button', { name: 'Send' }).click();
+
+  // Each named page opens its own rulebook there.
+  const europe = page.getByRole('link', { name: 'Europe p. 4' });
+  await expect(europe).toHaveAttribute('href', '/rules/ticket-to-ride.europe.pdf#page=4');
+  await expect(europe).toHaveAttribute('target', '_blank');
+  await expect(page.getByRole('link', { name: 'Ticket To Ride p. 3' })).toHaveAttribute('href', '/rules/ticket-to-ride.pdf#page=3');
+  // With two rulebooks read, a bare page could be either: it stays text.
+  await expect(page.getByText('as before (p. 5).', { exact: false })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'p. 5' })).toHaveCount(0);
+  expect((await request.get('/rules/ticket-to-ride.europe.pdf')).status()).toBe(200);
+});

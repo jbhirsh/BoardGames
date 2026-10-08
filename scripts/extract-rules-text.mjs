@@ -10,6 +10,12 @@ const OUTPUT_DIR = join(import.meta.dirname, "..", "rules-text");
 // hundred characters isn't mistaken for a scan and sent to OCR.
 const MIN_CHARS_PER_PAGE = 200;
 
+// Each page opens with "[Page N]" (its page in the PDF, as #page=N opens it),
+// so the rules assistant can cite where a rule is: api/_lib/rulesAssistant.ts
+// asks for "(p. N)" and the chat links it to that page.
+const pageMarker = (n) => `[Page ${n}]\n`;
+const withPageMarkers = (pages) => pages.map((t, i) => pageMarker(i + 1) + t).join("\n\n");
+
 await mkdir(OUTPUT_DIR, { recursive: true });
 
 const files = (await readdir(RULES_DIR)).filter((f) => f.endsWith(".pdf"));
@@ -25,11 +31,10 @@ for (const file of files) {
   try {
     const buffer = await readFile(pdfPath);
     const result = await extractText(new Uint8Array(buffer));
-    const text = Array.isArray(result.text)
-      ? result.text.join("\n\n")
-      : result.text;
+    const pages = Array.isArray(result.text) ? result.text : [result.text];
+    const text = withPageMarkers(pages);
 
-    if (text.trim().length >= MIN_CHARS_PER_PAGE * result.totalPages) {
+    if (pages.join("\n\n").trim().length >= MIN_CHARS_PER_PAGE * result.totalPages) {
       await writeFile(join(OUTPUT_DIR, outName), text);
       console.log(`${file} -> ${outName} (${Buffer.byteLength(text)} bytes)`);
     } else {

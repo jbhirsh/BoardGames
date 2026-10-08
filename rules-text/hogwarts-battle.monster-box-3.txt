@@ -1,7 +1,10 @@
+[Page 1]
 
 
+[Page 2]
 
 
+[Page 3]
 Text version
 Harry Potter: Hogwarts Battle
 The Monster Box of Monsters Expansion
@@ -41,6 +44,7 @@ GAMEPLAY
 Gameplay proceeds with the same four steps from previous games.
 STEP 1. Reveal and resolve Dark Arts events and the Encounter.
 
+[Page 4]
 The first Encounter requires dice rolls to complete. Both Ron's and Luna's Patronus cards allow them to roll dice
 without the use of a HOGWARTS card. However, if Luna is forced to discard a card to another card effect, and
 she chooses a Spell, it does not allow her to roll the Ravenclaw (blue) die.

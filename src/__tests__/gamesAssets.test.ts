@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { existsSync, readdirSync, statSync } from 'fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 import { GAMES } from '../data/games';
 import { SLUG_RE } from '../../api/_lib/slug';
+import { parseGoldenSet } from '../../eval/grading';
 
 /**
  * Data-integrity guard for the games ↔ assets linkage.
@@ -109,4 +110,33 @@ describe('games ↔ assets integrity', () => {
       .filter((f) => !slugs.has(f.replace(/\.txt$/, '')));
     expect(orphanText, 'rules-text files with no matching game').toEqual([]);
   });
+
+  // Each page of a rules-text file opens with "[Page N]", its page in the
+  // PDF: the assistant cites rules by it and the chat links "(p. N)" to
+  // #page=N, so a missing or misnumbered marker sends a player to the wrong
+  // page (scripts/extract-rules-text.mjs writes them).
+  it.each(readdirSync(RULES_TEXT_DIR).filter((f) => f.endsWith('.txt')))(
+    'rules-text/%s marks its pages in order from the first',
+    (file) => {
+      const text = readFileSync(join(RULES_TEXT_DIR, file), 'utf8');
+      expect(text.startsWith('[Page 1]\n'), 'starts with [Page 1]').toBe(true);
+      const pages = [...text.matchAll(/^\[Page (\d+)\]$/gm)].map((m) => Number(m[1]));
+      expect(pages).toEqual(pages.map((_, i) => i + 1));
+    },
+  );
+});
+
+describe('the eval\'s golden set', () => {
+  // A quote is where a person checks an expected answer, and the citation
+  // entries' expected pages were read off the markers above it.
+  const { entries } = parseGoldenSet(JSON.parse(readFileSync(join(process.cwd(), 'eval', 'golden-set.json'), 'utf8')));
+  it.each(entries.filter((e) => e.sourceQuote !== '').map((e) => [e.id, e] as const))(
+    '%s quotes its rules text word for word',
+    (_, entry) => {
+      const text = [entry.game, ...(entry.parts ?? []).map((p) => `${entry.game}.${p}`)]
+        .map((key) => readFileSync(join(RULES_TEXT_DIR, `${key}.txt`), 'utf8'))
+        .join('\n');
+      expect(text).toContain(entry.sourceQuote);
+    },
+  );
 });

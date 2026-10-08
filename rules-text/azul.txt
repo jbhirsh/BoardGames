@@ -1,5 +1,7 @@
+[Page 1]
 Rulebook
 
+[Page 2]
 Center of
 the tableF
 Game Setup
@@ -38,6 +40,7 @@ Floor line
 E
 2
 
+[Page 3]
 Object of the game
 To be the player with the most points at the end of the game.
 The game ends after the round in which at least one player has
@@ -98,6 +101,7 @@ their corresponding lines on your wall to score points.
 Place tiles from right to left.
 3
 
+[Page 4]
 Incomplete
 Incomplete
 Complete
@@ -158,6 +162,7 @@ B
 C
 A
 
+[Page 5]
 Finally, at the end of the Wall-tiling phase, check if you have any
 tiles in your floor line. For each tile in your floor line, you lose
 the number of points indicated directly above it. Adjust your
@@ -214,6 +219,7 @@ In this example, placing the blue
 tile gives you 3 points for the
 vertically linked tiles.
 
+[Page 6]
 CREDITS
 Game Design: Michael Kiesling
 Producer: Sophie Gravel

@@ -1,6 +1,8 @@
+[Page 1]
 RULES
 Antoine Bauza
 
+[Page 2]
 Lead one of the seven great cities of the Ancient world. Exploit the
 natural resources of your lands, take part in the eternal march of
 progress, develop your commercial relationships and assert your
@@ -30,6 +32,7 @@ At the end of the third Age, the players count their victory points ; the
 player with the most points wins the game.
 · 2 ·
 
+[Page 3]
 Game Elements
 Wonder Boards
 Each board represents the Wonder the player can build and the resource
@@ -127,6 +130,7 @@ The Conflict tokens form a reserve, next to the coins.
 7 Players : 9 Guilds
 · 3 ·
 
+[Page 4]
 Construction in 7 Wonders
 Throughout all 3 ages in a game, the players will get to build structures
 (cards) and Wonders (board).
@@ -217,6 +221,7 @@ Statue for free during Age II and this, in turn, allows a player to build the
 Gardens for free during Age III.
 · 4 ·
 
+[Page 5]
 Game Overview
 A game begins with Age I, continues with Age II and ends with Age III. Vic-
 tory points are counted only at the end of Age III.
@@ -337,6 +342,7 @@ of each structure visible.
 CARD PLACEMENT
 · 5 ·
 
+[Page 6]
 STRATEGIC ADVICES
 End of the Game
 The game ends at the end of the third Age, after the Conflict tokens have
@@ -428,6 +434,7 @@ rely on commerce...
 groups of different symbols, as they tend to earn more points.
 · 6 ·
 
+[Page 7]
 Free city
 Free city card
 Free City’s deck
@@ -521,6 +528,7 @@ In case of a tie, the player with the most coins in his or her treasury wins
 the game.
 · 7 ·
 
+[Page 8]
 A
 The Colossus of Rhodes
 the player adds 2 Shields to their total in each conflict resolution.
@@ -562,6 +570,7 @@ Clarification: the resources produced by the boards are not consi-
 dered to be cards.
 · 8 ·
 
+[Page 9]
 B Face [B]
 The B sides of the Wonders are slightly more complex. Nevertheless, both sides remain balanced and can be used in the same game.
 The Pyramids of Giza
@@ -627,6 +636,7 @@ stage is built. If players discard cards on that turn (for example, during the
 6th turn of an age), the player can also choose from among those cards.
 · 9 ·
 
+[Page 10]
 Credits
 AUTHOR :
 Antoine Bauza
@@ -734,6 +744,7 @@ Construction’s cost
 1
 · 10 ·
 
+[Page 11]
 APOTHECARY
 3+ 5+
 WORKSHOP
@@ -848,6 +859,7 @@ AGE I AGE IAGE II AGE IIAGE III AGE III
 1
 · 11 ·
 
+[Page 12]
 1
 2
 3 1
