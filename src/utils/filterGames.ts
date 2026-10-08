@@ -1,5 +1,5 @@
-import type { Game, FilterState, Filterable, SubGame, WishlistItem } from '../data/types';
-import { GROUP_ORDER, KW, WISHLIST_TYPE_ORDER } from '../data/keywords';
+import type { Game, FilterState, Filterable, SubGame, TimeBudget, WishlistItem } from '../data/types';
+import { GROUP_ORDER, KW, TIME_BUDGETS, WISHLIST_TYPE_ORDER } from '../data/keywords';
 
 /**
  * Apply the filter bar to any Filterable list. `groupIndex` orders items for
@@ -31,7 +31,7 @@ export function filterItems<T extends Filterable>(
   return sortItems(list, state.sort, groupIndex);
 }
 
-type Table = Pick<Filterable, 'min' | 'max' | 'mins' | 'cat'>;
+type Table = Pick<Filterable, 'min' | 'max' | 'mins'>;
 
 /** True when every game inside is played with the parent's deck. */
 export function isDeck(subs: SubGame[] = []): boolean {
@@ -45,16 +45,23 @@ export function tableFiltered(state: FilterState): boolean {
 
 /**
  * Whether a game (or a game inside one) fits the players and time filters.
- * Filter on the curated `cat` field, not a re-derivation from `mins`: the
- * clickable DurationPill and SET_DURATION both use `cat`, so filtering by
- * anything else lets the two disagree (a 90-minute game tagged "medium" would
- * vanish when you click its own "medium" pill). An item with no known play
- * time (mins 0, e.g. a suggestion BGG didn't resolve) can't be excluded by
- * duration, so it stays under every bucket.
+ * The duration filter is a time budget: "we have an hour" keeps every game
+ * that takes an hour or less, quick ones included, judged by its own minutes
+ * (the long end of its range). An item with no known play time (mins 0, e.g.
+ * a suggestion BGG didn't resolve) can't be excluded by duration, so it stays
+ * under every budget.
  */
 export function fitsTable(g: Table, state: FilterState): boolean {
-  if (state.duration !== 'all' && g.mins !== 0 && g.cat !== state.duration) return false;
+  if (state.duration !== 'all' && g.mins > state.duration) return false;
   return state.players === 0 || (g.min <= state.players && g.max >= state.players);
+}
+
+/**
+ * The smallest budget a play time fits, which a game's time pill filters to;
+ * none for a game longer than every budget or with no known time.
+ */
+export function budgetFor(mins: number): TimeBudget | undefined {
+  return mins > 0 ? TIME_BUDGETS.find((b) => mins <= b) : undefined;
 }
 
 export function filterGames(games: Game[], state: FilterState): Game[] {

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Award, DurationCategory, KeywordId } from '../data/types';
 import { useFilter } from '../context/useFilter';
-import { sortedKw } from '../utils/filterGames';
+import { budgetFor, sortedKw } from '../utils/filterGames';
 import { isKeywordLit } from '../utils/keywordLit';
 import DurationPill from './DurationPill';
 import KeywordPill from './KeywordPill';
@@ -14,6 +14,8 @@ interface CellsProps {
   cat: DurationCategory;
   /** The play time; the duration pill is left out when it is unknown (empty). */
   dur?: string;
+  /** The play time in minutes, which the pill's time filter is chosen by. */
+  mins: number;
   /** One-line description, shown in the description column and under the name on phones. */
   short: string;
   kw: KeywordId[];
@@ -34,9 +36,10 @@ interface CellsProps {
  * the row click and any data attributes.
  */
 export default function TableRowCells({
-  name, players, cat, dur, short, kw, awards, groupBadge, subTag, extra, isOpen, onToggle,
+  name, players, cat, dur, mins, short, kw, awards, groupBadge, subTag, extra, isOpen, onToggle,
 }: CellsProps) {
   const { state, dispatch } = useFilter();
+  const budget = budgetFor(mins);
   // The add-ons tag and the award count close the description, on its last
   // line when there is room, so the name column holds only names. They go
   // in the description column and again in the copy folded under the name
@@ -65,7 +68,9 @@ export default function TableRowCells({
             cat={cat}
             className="row-dur"
             label={dur}
-            onClick={() => dispatch({ type: 'SET_DURATION', payload: cat })}
+            budget={budget}
+            // A game longer than every budget has none to filter to.
+            onClick={budget ? () => dispatch({ type: 'SET_DURATION', payload: budget }) : undefined}
           />
         )}
       </td>

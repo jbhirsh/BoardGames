@@ -1,7 +1,12 @@
 import { useFilter } from '../../context/useFilter';
-import { PLAYER_OPTIONS } from '../../data/keywords';
-import { CheckIcon } from '../Icons';
+import { PLAYER_OPTIONS, playersLabel } from '../../data/keywords';
 import Dropdown from './Dropdown';
+import RadioOptions from './RadioOptions';
+
+const OPTIONS: { value: number; label: string }[] = [
+  { value: 0, label: 'Any number' },
+  ...PLAYER_OPTIONS.map((n) => ({ value: n, label: n === 10 ? '10+ players' : playersLabel(n) })),
+];
 
 interface Props {
   isOpen: boolean;
@@ -15,27 +20,20 @@ export default function PlayersDropdown({ isOpen, onToggle }: Props) {
   return (
     <Dropdown
       id="players"
-      label={isActive ? `${state.players} players` : 'Players'}
+      label={isActive ? playersLabel(state.players) : 'Players'}
       isActive={isActive}
       isOpen={isOpen}
       onToggle={onToggle}
     >
-      {PLAYER_OPTIONS.map((n) => (
-        <button
-          key={n}
-          type="button"
-          className={`dd-opt${state.players === n ? ' sel' : ''}`}
-          onClick={() => {
-            dispatch({ type: 'SET_PLAYERS', payload: state.players === n ? 0 : n });
-            onToggle();
-          }}
-        >
-          <span className="dd-chk">
-            {state.players === n && <CheckIcon />}
-          </span>
-          {n}{n === 10 ? '+' : ''} players
-        </button>
-      ))}
+      <RadioOptions
+        label="Players"
+        options={OPTIONS}
+        selected={state.players}
+        onSelect={(value) => {
+          dispatch({ type: 'SET_PLAYERS', payload: value });
+          onToggle();
+        }}
+      />
     </Dropdown>
   );
 }

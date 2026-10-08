@@ -2,7 +2,7 @@ import { filterWishlist } from '../utils/filterGames';
 import { WISHLIST } from '../data/wishlist';
 import { WISHLIST_TYPE_ORDER } from '../data/keywords';
 import { describe, it, expect } from 'vitest';
-import { filterGames, sortGames, sortItems, sortedKw, isGrouped, fitsTable, tableFiltered } from '../utils/filterGames';
+import { filterGames, sortGames, sortItems, sortedKw, isGrouped, fitsTable, tableFiltered, budgetFor } from '../utils/filterGames';
 import { initialFilterState } from '../data/initialFilterState';
 import { testGames, quickGame, mediumGame, longGame } from './testData';
 import type { FilterState, Game, SubGame } from '../data/types';
@@ -18,30 +18,25 @@ describe('filterGames', () => {
   });
 
   describe('duration filter', () => {
-    it('filters quick games by cat', () => {
-      const result = filterGames(testGames, makeState({ duration: 'quick' }));
-      expect(result).toEqual([quickGame]);
+    // The fixtures take 10, 45 and 120 minutes.
+    it('keeps every game that fits the time budget, quick ones included', () => {
+      expect(filterGames(testGames, makeState({ duration: 15 }))).toEqual([quickGame]);
+      expect(filterGames(testGames, makeState({ duration: 30 }))).toEqual([quickGame]);
+      expect(filterGames(testGames, makeState({ duration: 60 })).map((g) => g.name).sort()).toEqual(['Medium Game', 'Quick Game']);
     });
 
-    it('filters medium games by cat', () => {
-      const result = filterGames(testGames, makeState({ duration: 'medium' }));
-      expect(result).toEqual([mediumGame]);
+    it('shows a game longer than every budget only with no time chosen', () => {
+      expect(filterGames(testGames, makeState({ duration: 60 }))).not.toContain(longGame);
+      expect(filterGames(testGames, makeState())).toContain(longGame);
     });
 
-    it('filters long games by cat', () => {
-      const result = filterGames(testGames, makeState({ duration: 'long' }));
-      expect(result).toEqual([longGame]);
-    });
-
-    // Regression: filtering must follow the curated `cat`, not a re-derivation
-    // from `mins`. Cards Against Humanity once shipped as mins:90,
-    // cat:"medium"; under mins-bucketing it vanished from its own "medium"
-    // filter and wrongly appeared under "long".
-    it('follows cat even when mins would fall in a different bucket', () => {
-      const mismatched = { ...mediumGame, name: 'Party 90', slug: 'party-90', mins: 90, cat: 'medium' as const };
-      const games = [mismatched, longGame];
-      expect(filterGames(games, makeState({ duration: 'medium' }))).toEqual([mismatched]);
-      expect(filterGames(games, makeState({ duration: 'long' }))).toEqual([longGame]);
+    // A game's own minutes decide, not its Quick/Medium/Long bucket: Love
+    // Letter (20 min) is "medium" but fits half an hour.
+    it('judges a game by its minutes, the budget itself included', () => {
+      const twenty = { ...mediumGame, name: 'Twenty', slug: 'twenty', mins: 20, cat: 'medium' as const };
+      const thirty = { ...twenty, name: 'Thirty', slug: 'thirty', mins: 30 };
+      const thirtyOne = { ...twenty, name: 'Thirty-one', slug: 'thirty-one', mins: 31 };
+      expect(filterGames([twenty, thirty, thirtyOne], makeState({ duration: 30 }))).toEqual([thirty, twenty]);
     });
   });
 
@@ -132,15 +127,15 @@ describe('filterGames', () => {
 
   describe('combined filters', () => {
     it('applies duration + players together', () => {
-      // Quick games playable by 3 people: quickGame (2-4) matches
-      const result = filterGames(testGames, makeState({ duration: 'quick', players: 3 }));
+      // 15 minutes for 3 people: quickGame (2-4) matches
+      const result = filterGames(testGames, makeState({ duration: 15, players: 3 }));
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe('Quick Game');
     });
 
     it('returns empty when filters conflict', () => {
       // Quick games with strategy keyword: none match
-      const result = filterGames(testGames, makeState({ duration: 'quick', keywords: new Set(['strategy']) }));
+      const result = filterGames(testGames, makeState({ duration: 15, keywords: new Set(['strategy']) }));
       expect(result).toHaveLength(0);
     });
   });
@@ -160,13 +155,13 @@ describe('filterGames', () => {
     const island: Game = { ...longGame, name: 'Island', slug: 'island', subgames: [{ ...president, kind: 'expansion' }] };
 
     it('keeps the parent when one of its games fits the players and time', () => {
-      expect(filterGames([deck], makeState({ players: 2, duration: 'quick' }))).toEqual([deck]);
+      expect(filterGames([deck], makeState({ players: 2, duration: 15 }))).toEqual([deck]);
       expect(filterGames([deck], makeState({ players: 6 }))).toEqual([deck]);
     });
 
     it('needs one game to fit both, not one each', () => {
-      // Speed fits 2 players and President fits medium, but neither fits both.
-      expect(filterGames([deck], makeState({ players: 2, duration: 'medium' }))).toEqual([]);
+      // President fits 6 players and Speed fits 15 minutes, but neither fits both.
+      expect(filterGames([deck], makeState({ players: 6, duration: 15 }))).toEqual([]);
     });
 
     it('still drops a parent when nothing in it fits', () => {
@@ -175,11 +170,12 @@ describe('filterGames', () => {
 
     it('drops a deck whose own summary fits when none of its games do', () => {
       expect(filterGames([deck], makeState({ players: 1 }))).toEqual([]);
-      expect(filterGames([deck], makeState({ duration: 'long' }))).toEqual([]);
+      expect(filterGames([{ ...deck, mins: 10, subgames: [president] }], makeState({ duration: 15 }))).toEqual([]);
     });
 
     it('keeps a base game that fits on its own when none of its add-ons do', () => {
-      expect(filterGames([island], makeState({ players: 2, duration: 'long' }))).toEqual([island]);
+      const quickIsland = { ...island, mins: 10 };
+      expect(filterGames([quickIsland], makeState({ players: 2, duration: 15 }))).toEqual([quickIsland]);
       expect(filterGames([island], makeState({ players: 7 }))).toEqual([island]);
       expect(filterGames([island], makeState({ players: 9 }))).toEqual([]);
     });
@@ -204,10 +200,27 @@ describe('fitsTable', () => {
     expect(fitsTable(g, makeState({ players: 5 }))).toBe(false);
   });
 
-  it('checks the time bucket, letting an unknown time through', () => {
-    expect(fitsTable(g, makeState({ duration: 'medium' }))).toBe(true);
-    expect(fitsTable(g, makeState({ duration: 'quick' }))).toBe(false);
-    expect(fitsTable({ ...g, mins: 0 }, makeState({ duration: 'quick' }))).toBe(true);
+  it('checks the time budget, letting an unknown time through', () => {
+    expect(fitsTable(g, makeState({ duration: 30 }))).toBe(true);
+    expect(fitsTable(g, makeState({ duration: 60 }))).toBe(true);
+    expect(fitsTable(g, makeState({ duration: 15 }))).toBe(false);
+    expect(fitsTable({ ...g, mins: 0 }, makeState({ duration: 15 }))).toBe(true);
+  });
+});
+
+describe('budgetFor', () => {
+  it('is the smallest budget a play time fits', () => {
+    expect(budgetFor(5)).toBe(15);
+    expect(budgetFor(15)).toBe(15);
+    expect(budgetFor(16)).toBe(30);
+    expect(budgetFor(30)).toBe(30);
+    expect(budgetFor(45)).toBe(60);
+    expect(budgetFor(60)).toBe(60);
+  });
+
+  it('is none for a game longer than every budget or with no known time', () => {
+    expect(budgetFor(61)).toBeUndefined();
+    expect(budgetFor(0)).toBeUndefined();
   });
 });
 
@@ -215,7 +228,7 @@ describe('tableFiltered', () => {
   it('is on when players or time narrows the list', () => {
     expect(tableFiltered(makeState())).toBe(false);
     expect(tableFiltered(makeState({ players: 3 }))).toBe(true);
-    expect(tableFiltered(makeState({ duration: 'long' }))).toBe(true);
+    expect(tableFiltered(makeState({ duration: 60 }))).toBe(true);
     // Keywords and search don't change which games inside a card fit.
     expect(tableFiltered(makeState({ search: 'x', keywords: new Set(['party']) }))).toBe(false);
   });
@@ -285,17 +298,18 @@ describe('filterWishlist', () => {
     expect(two.every((w) => w.min <= 2 && w.max >= 2)).toBe(true);
     expect(two.length).toBeLessThan(WISHLIST.length);
 
-    const quick = filterWishlist(WISHLIST, { ...initialFilterState, keywords: new Set(), duration: 'quick' });
-    expect(quick.every((w) => w.cat === 'quick')).toBe(true);
+    const quick = filterWishlist(WISHLIST, { ...initialFilterState, keywords: new Set(), duration: 15 });
+    expect(quick.length).toBeGreaterThan(0);
+    expect(quick.every((w) => w.mins <= 15)).toBe(true);
 
     const coop = filterWishlist(WISHLIST, { ...initialFilterState, keywords: new Set(['cooperative']) });
     expect(coop.every((w) => w.kw.includes('cooperative'))).toBe(true);
     expect(coop.map((w) => w.id)).toContain('the-crew');
   });
 
-  it('keeps items with an unknown play time under every duration bucket', () => {
+  it('keeps items with an unknown play time under every time budget', () => {
     const unknown = { ...WISHLIST[0], id: 'sug-x', name: 'Mystery', mins: 0 };
-    const quick = filterWishlist([...WISHLIST, unknown], { ...initialFilterState, keywords: new Set(), duration: 'long' });
+    const quick = filterWishlist([...WISHLIST, unknown], { ...initialFilterState, keywords: new Set(), duration: 15 });
     expect(quick.map((w) => w.id)).toContain('sug-x');
   });
 

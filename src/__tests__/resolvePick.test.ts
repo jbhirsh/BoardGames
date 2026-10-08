@@ -24,9 +24,11 @@ describe('resolvePick', () => {
   });
 
   it('names the add-on when the game fits only through it', () => {
-    // Island alone seats 3-6; its Big Box goes to 6 as well but runs 90 minutes.
+    // A base game for three or four whose Big Box seats up to six, the way
+    // Catan's 5-6 player extension does.
+    const smallBase = { ...addonGame, max: 4 };
     const sub = addonGame.subgames![0];
-    expect(resolvePick(addonGame, at({ duration: 'long' }), first)).toEqual({ game: addonGame, sub });
+    expect(resolvePick(smallBase, at({ players: 6 }), first)).toEqual({ game: smallBase, sub });
   });
 
   it('leaves a game that fits on its own without an add-on', () => {
@@ -41,7 +43,7 @@ describe('resolvePick', () => {
   });
 
   it('falls back to the game when none of its games fit', () => {
-    expect(resolvePick(deckGame, at({ players: 3, duration: 'quick' }), first)).toEqual({ game: deckGame });
+    expect(resolvePick(deckGame, at({ players: 3, duration: 15 }), first)).toEqual({ game: deckGame });
   });
 });
 

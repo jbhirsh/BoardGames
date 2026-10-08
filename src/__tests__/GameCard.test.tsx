@@ -219,9 +219,9 @@ describe('GameCard', () => {
     });
 
     it('has no expansions button when the base game fits but none of its add-ons do', () => {
-      // Island fits a medium game on its own; its long expansion doesn't, and
+      // Island fits an hour on its own; its 90-minute expansion doesn't, and
       // the button would open an empty list.
-      renderWithContext(<GameCard game={addonGame} />, '/?d=medium');
+      renderWithContext(<GameCard game={addonGame} />, '/?d=60');
       expect(screen.getByRole('heading', { name: 'Island' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /expansion/ })).not.toBeInTheDocument();
     });

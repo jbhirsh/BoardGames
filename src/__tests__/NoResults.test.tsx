@@ -24,25 +24,25 @@ function renderAt(url: string, kind: 'games' | 'wishlist' = 'games') {
 
 describe('NoResults', () => {
   it('names the filters in play', () => {
-    renderAt('/?p=10&d=quick');
+    renderAt('/?p=10&d=15');
     expect(screen.getByText('No games match your filters.')).toBeInTheDocument();
-    expect(screen.getByText('Filtering for ≤ 15 min and 10 players.')).toBeInTheDocument();
+    expect(screen.getByText('Filtering for up to 15 min and 10 players.')).toBeInTheDocument();
   });
 
   it('offers to drop a filter that would bring games back, and drops it', () => {
-    renderAt('/?p=10&d=quick');
+    renderAt('/?p=10&d=15');
     const options = screen.getAllByRole('button', { name: /^Drop / });
     expect(options.length).toBeGreaterThan(0);
-    const drop = screen.getByRole('button', { name: /^Drop ≤ 15 min, \d+ games?$/ });
-    // The arrow is decoration; the name reads "Drop ≤ 15 min, 3 games".
-    expect(drop).toHaveTextContent(/^Drop ≤ 15 min → \d+ games?$/);
+    const drop = screen.getByRole('button', { name: /^Drop up to 15 min, \d+ games?$/ });
+    // The arrow is decoration; the name reads "Drop up to 15 min, 3 games".
+    expect(drop).toHaveTextContent(/^Drop up to 15 min → \d+ games?$/);
     fireEvent.click(drop);
     expect(screen.getByRole('status')).toHaveTextContent(/^own\|10\|all\|$/);
   });
 
   it('hands focus to the section heading once the list comes back', async () => {
-    renderAt('/?p=10&d=quick');
-    fireEvent.click(screen.getByRole('button', { name: /^Drop ≤ 15 min, / }));
+    renderAt('/?p=10&d=15');
+    fireEvent.click(screen.getByRole('button', { name: /^Drop up to 15 min, / }));
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Our Collection' })).toHaveFocus());
   });
 
@@ -66,7 +66,7 @@ describe('NoResults', () => {
   });
 
   it('still clears everything', () => {
-    renderAt('/?p=10&d=quick');
+    renderAt('/?p=10&d=15');
     fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
     expect(screen.getByRole('status')).toHaveTextContent(/^own\|0\|all\|$/);
   });

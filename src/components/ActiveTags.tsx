@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useFilter } from '../context/useFilter';
-import { DUR_LABELS, KW } from '../data/keywords';
+import { DUR_LABELS, KW, playersLabel } from '../data/keywords';
 import type { KeywordId } from '../data/types';
 import { buildShareUrl } from '../utils/filterUrl';
 
@@ -48,7 +48,7 @@ export default function ActiveTags() {
           className="atag"
           onClick={() => dispatch({ type: 'SET_PLAYERS', payload: 0 })}
         >
-          {state.players} players {'\u2715'}
+          {playersLabel(state.players)} {'\u2715'}
         </button>
       )}
       {[...state.keywords].map((kw: KeywordId) => (

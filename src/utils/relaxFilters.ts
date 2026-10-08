@@ -1,5 +1,5 @@
 import type { FilterState, KeywordId, KeywordMode } from '../data/types';
-import { DUR_LABELS, KW } from '../data/keywords';
+import { DUR_LABELS, KW, playersLabel } from '../data/keywords';
 
 /** One filter that's narrowing the list, and the state without it. */
 export interface ActiveFilter {
@@ -12,10 +12,11 @@ export interface ActiveFilter {
 export function activeFilters(state: FilterState): ActiveFilter[] {
   const out: ActiveFilter[] = [];
   if (state.duration !== 'all') {
-    out.push({ id: 'duration', label: DUR_LABELS[state.duration], without: { ...state, duration: 'all' } });
+    // Lower case: it reads inside a sentence ("Filtering for up to 30 min").
+    out.push({ id: 'duration', label: DUR_LABELS[state.duration].toLowerCase(), without: { ...state, duration: 'all' } });
   }
   if (state.players > 0) {
-    out.push({ id: 'players', label: `${state.players} players`, without: { ...state, players: 0 } });
+    out.push({ id: 'players', label: playersLabel(state.players), without: { ...state, players: 0 } });
   }
   for (const k of state.keywords) {
     const keywords = new Set(state.keywords);
@@ -42,7 +43,7 @@ export function relaxations(state: FilterState, countWith: (s: FilterState) => n
 }
 
 /**
- * "4 players, ≤ 15 min and Strategy". In "any keyword" mode the keywords are
+ * "4 players, up to 15 min and Strategy". In "any keyword" mode the keywords are
  * one alternative, not several requirements: "4 players and Strategy or Party".
  */
 export function listFilters(filters: ActiveFilter[], keywordMode: KeywordMode = 'and'): string {

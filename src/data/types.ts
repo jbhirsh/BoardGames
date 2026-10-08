@@ -139,7 +139,9 @@ export interface WishlistItem extends Filterable {
   blurb?: string;
 }
 
-export type DurationFilter = 'all' | DurationCategory;
+/** The most minutes a game may take to show under the duration filter. */
+export type TimeBudget = 15 | 30 | 60;
+export type DurationFilter = 'all' | TimeBudget;
 export type SortMode = 'az' | 'group' | 'quick' | 'long'
   | 'name-asc' | 'name-desc'
   | 'dur-asc' | 'dur-desc'

@@ -63,8 +63,8 @@ describe('DurationPill', () => {
     expect(screen.queryByText('Medium')).not.toBeInTheDocument();
   });
 
-  it('labels an interactive pill with its time and the bucket it filters to', () => {
-    render(<DurationPill cat="quick" label="10 min" onClick={() => {}} />);
-    expect(screen.getByRole('button', { name: '10 min: show ≤ 15 min games' })).toBeInTheDocument();
+  it('labels an interactive pill with its time and the budget it filters to', () => {
+    render(<DurationPill cat="medium" label="20 min" budget={30} onClick={() => {}} />);
+    expect(screen.getByRole('button', { name: '20 min: show games up to 30 min' })).toBeInTheDocument();
   });
 });

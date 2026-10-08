@@ -84,6 +84,13 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   (name, desc, min/max players, mins, duration bucket, keywords). The filter
   pipeline (`utils/filterGames.ts`) is generic over it: `filterItems` with
   `filterGames` and `filterWishlist` wrappers that decide their own grouping.
+  The time filter is a budget (`FilterState.duration`: up to 15, 30 or 60
+  minutes, `d=15|30|60` in the URL; an old `d=quick|medium|long` link opens
+  at the budget that keeps its games): a game fits by its own `mins`, quick
+  ones included. `cat` (Quick, Medium, Long) no longer filters; it names a
+  time pill without a label and breaks ties in the time sorts. The players
+  dropdown offers 1 to 10+. Both dropdowns are radio groups
+  (`FilterBar/RadioOptions.tsx`): one Tab stop, arrows to move, Enter to pick.
   A game can hold `subgames` (`SubGame`, kind `expansion`, `extension`,
   `version` or `card-game`): Catan's, Dominion's and One Night's add-ons,
   Ticket to Ride - Europe as a version, the games the Card Deck plays. Each has its
