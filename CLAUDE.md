@@ -299,6 +299,9 @@ secrets belong in tracked source.
   Coverage thresholds are enforced **per file at 80% lines** (`vite.config.ts`),
   so new reducer actions, filter utilities, and API handlers need their own
   tests. Tests must be pure logic or RTL — no real network, no real browser.
+  The one exception to the location is a CI helper's test, which sits beside
+  it (`.github/scripts/*.test.mjs`) and runs in the same suite and coverage
+  gate.
 - **End-to-end tests live in `e2e/`** (Playwright, Chromium only), run
   against the production build. They are the one place with a real browser,
   and still no real network: `e2e/fixtures.ts` stubs every `/api/*` call
@@ -332,6 +335,19 @@ secrets belong in tracked source.
 - **Issues are the source of truth.** Check `gh issue list` (and
   `gh issue view <n>`) before designing or implementing a feature — issues
   carry rationale the code doesn't.
+- **Show UI changes in the PR.** A PR that changes a component or stylesheet
+  puts before/after visuals in its description (`.github/pull_request_template.md`):
+  screenshots for how things look, GIFs for how things move or respond (a
+  dropdown or dialog opening, an animation, scrolling, a multi-step flow).
+  Host the images on the `pr-screenshots` branch (its `vercel.json` turns
+  deploys off, so they cost none) and link them as
+  `https://raw.githubusercontent.com/jbhirsh/BoardGames/pr-screenshots/<dir>/<file>.png`.
+  The `PR visuals` check (`.github/scripts/pr-visuals.mjs`) fails a change
+  to a `.tsx` or `.css` file under `src/` (tests, `context/` and `main.tsx`
+  aside) with no picture unless "No visible UI change" is ticked; it skips
+  Dependabot's PRs. It can't see a visible change made through `src/data`,
+  `public/` or `index.html`, so show those too. Claude Review asks for a GIF
+  when motion changes.
 - **Review before raising a PR.** Review the full diff (e.g. a review subagent
   reading it) before opening the PR — review gates PR creation, rather than
   opening first and reviewing after.
@@ -358,16 +374,19 @@ the Playwright suite on every PR, installing its own Chromium, and uploads
 the HTML report and the failing attempt's trace when it fails or times
 out; in CI a failed test is retried once, and a test that passes only on
 that retry still fails the run (`failOnFlakyTests`). All CI runs
-on GitHub-hosted `ubuntu-latest` runners.
+on GitHub-hosted `ubuntu-latest` runners. `pr-visuals.yml` (`PR visuals`)
+runs on every push and description edit; autofix skips it, since what it
+wants is pictures in the description, not a code change.
 
 Every PR check is a required status check on `main` (`ci`, Claude Review,
 Secret scan, StrykerJS, Answer-Quality Eval, E2E Tests (Playwright),
-Semgrep, Vercel, API smoke test), so nothing merges until all of them
-report. (E2E Tests (Playwright) is new: the owner adds it to the `main`
-rule's required checks; until then bot PRs can merge past it.) A required
-check that never reports blocks the PR forever, so PR workflows must not use
-a workflow-level `paths:` filter; decide inside the job instead and skip the
-expensive step (a skipped step still reports success). Because every check
+Semgrep, Vercel, API smoke test, PR visuals), so nothing merges until all
+of them report. (E2E Tests (Playwright) and PR visuals are new: the owner
+adds them to the `main` rule's required checks; until then bot PRs can merge
+past them.) A required check that never reports blocks the PR forever, so
+PR workflows must not use a workflow-level `paths:` filter; decide inside
+the job instead and skip the expensive step (a skipped step still reports
+success). Because every check
 is required, arming auto-merge early is safe: GitHub waits for all of them.
 
 Dependabot's npm PRs merge themselves: `dependabot-merge.yml` turns on

@@ -66,6 +66,12 @@ export default defineConfig([
     },
   },
   {
+    // Plain Node CI helpers (.github/scripts). Untyped JS.
+    files: ['.github/scripts/**/*.mjs'],
+    extends: [js.configs.recommended],
+    languageOptions: { globals: globals.node },
+  },
+  {
     // backdrop <div> uses onClick for mouse dismiss; Escape + close button cover keyboard
     files: ['src/components/Backdrop.tsx'],
     rules: {
