@@ -155,7 +155,7 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   with a vote column and an expanded row for the full blurb, awards, owner
   controls and links; the collapsed row shows the blurb's first sentence
   (`utils/shortDesc.ts`) where a collection row shows its hand-written
-  short line. Both sections share the light theme. The wishlist alone has a
+  short line. Both sections share one theme. The wishlist alone has a
   "Most votes" sort (`SortMode` `votes`: the filter orders it A→Z and the
   wishlist then puts the most voted first; going back to the collection, or
   a `s=votes` link without `c=want`, falls back to the default sort; the
@@ -167,6 +167,19 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   "Expansion for Catan (owned)" tag (`ExpansionTag`), "owned" when the base
   is in the collection; the data test checks each names a game we have or
   want.
+- **Theme** — light and dark. `App.css` keeps every colour in `:root`
+  tokens; the dark palette redefines them under
+  `prefers-color-scheme: dark` (unless `data-theme="light"`) and under
+  `[data-theme="dark"]`, so use a token, never a literal, and
+  `rgba(var(--blue-rgb), a)` for a blue tint. `--blue` is for text and
+  rings on the page; a filled button uses `--blue-fill` with
+  `--on-fill` text, which keeps white text readable in both themes. Box
+  art and PDF pages stay on white. The hero's `ThemeToggle` (Match
+  system / Light / Dark) goes through `hooks/useTheme.ts`, which sets
+  `data-theme` on `<html>` and stores the pick under `gameroom:theme`;
+  an inline script in `index.html` applies it before first paint.
+  `e2e/theme.spec.ts` runs axe's colour-contrast rule over the main
+  pages in both themes, so a new colour has to pass AA in each.
 - **`utils/`** — pure helpers (`filterGames.ts`, `pickRandom.ts`, `filterUrl.ts`,
   `urls.ts`, `shortDesc.ts`, `subgames.ts`, `rulebooks.ts`, `pdfSearch.ts`,
   `fileSize.ts`, `sevenWonders.ts`, the score pad's arithmetic: science,
