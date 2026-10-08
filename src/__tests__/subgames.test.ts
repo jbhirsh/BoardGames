@@ -64,7 +64,9 @@ describe('fittingSubgames', () => {
 
   it('keeps only the games that fit the players and time', () => {
     expect(fittingSubgames(deck, state({ players: 5 }))).toEqual([presidentSub]);
-    expect(fittingSubgames(deck, state({ duration: 'quick' }))).toEqual([speedSub]);
+    expect(fittingSubgames(deck, state({ duration: 15 }))).toEqual([speedSub]);
+    // A budget keeps the quicker games too.
+    expect(fittingSubgames(deck, state({ duration: 30 }))).toEqual([speedSub, presidentSub]);
     expect(fittingSubgames(deck, state({ players: 9 }))).toEqual([]);
   });
 });
@@ -75,6 +77,7 @@ describe('subgameLabel', () => {
     expect(subgameLabel(addons, state())).toBe('+1 expansion');
     expect(subgameLabel(deck, state({ players: 2 }))).toBe('1 of 2 games fit');
     expect(subgameLabel(deck, state({ players: 9 }))).toBe('0 of 2 games fit');
-    expect(subgameLabel(addons, state({ duration: 'long' }))).toBe('1 of 1 expansion fit');
+    expect(subgameLabel(addons, state({ players: 6 }))).toBe('1 of 1 expansion fit');
+    expect(subgameLabel(addons, state({ duration: 60 }))).toBe('0 of 1 expansion fit');
   });
 });

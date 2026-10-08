@@ -5,12 +5,16 @@ import type {
   KeywordId,
   KeywordMode,
   SortMode,
+  TimeBudget,
   ViewMode,
 } from '../data/types';
-import { KW } from '../data/keywords';
+import { KW, TIME_BUDGETS } from '../data/keywords';
 import { initialFilterState } from '../data/initialFilterState';
 
-const DURATIONS: Exclude<DurationFilter, 'all'>[] = ['quick', 'medium', 'long'];
+// Links from before the duration filter became a time budget name a bucket
+// (d=quick|medium|long). Each opens the budget that still shows its games;
+// "long" (60+ min) had no upper end, so it opens with no time filter.
+const LEGACY_DURATIONS: Record<string, DurationFilter> = { quick: 15, medium: 60, long: 'all' };
 const KEYWORD_MODES: Exclude<KeywordMode, 'or'>[] = ['and'];
 const VIEWS: Exclude<ViewMode, 'list'>[] = ['grid'];
 const COLLECTIONS: Exclude<CollectionMode, 'own'>[] = ['want'];
@@ -21,15 +25,6 @@ const SORTS: Exclude<SortMode, `${string}-${'asc' | 'desc'}`>[] = [
 // Compile-time completeness checks: if a new non-default value is added to
 // the underlying type and forgotten in one of the whitelists above, the
 // matching assertion fails to typecheck.
-type _DurationsExhaustive = Exclude<
-  Exclude<DurationFilter, 'all'>,
-  (typeof DURATIONS)[number]
-> extends never
-  ? true
-  : 'DURATIONS is missing a DurationFilter value';
-const _durationsExhaustive: _DurationsExhaustive = true;
-void _durationsExhaustive;
-
 type _KeywordModesExhaustive = Exclude<
   Exclude<KeywordMode, 'or'>,
   (typeof KEYWORD_MODES)[number]
@@ -71,7 +66,7 @@ const MAX_PLAYERS = 99;
 
 export function filterToSearchParams(state: FilterState): URLSearchParams {
   const params = new URLSearchParams();
-  if (state.duration !== 'all') params.set('d', state.duration);
+  if (state.duration !== 'all') params.set('d', String(state.duration));
   if (state.players > 0) params.set('p', String(state.players));
   if (state.keywords.size > 0) {
     params.set('k', [...state.keywords].sort().join(','));
@@ -89,12 +84,15 @@ export function filterToSearchParams(state: FilterState): URLSearchParams {
   return params;
 }
 
+function parseDuration(d: string | null): DurationFilter {
+  if (!d) return initialFilterState.duration;
+  if (Object.hasOwn(LEGACY_DURATIONS, d)) return LEGACY_DURATIONS[d];
+  const mins = Number(d);
+  return TIME_BUDGETS.includes(mins as TimeBudget) ? (mins as TimeBudget) : initialFilterState.duration;
+}
+
 export function searchParamsToFilter(params: URLSearchParams): FilterState {
-  const d = params.get('d');
-  const duration: DurationFilter =
-    d && (DURATIONS as readonly string[]).includes(d)
-      ? (d as DurationFilter)
-      : initialFilterState.duration;
+  const duration = parseDuration(params.get('d'));
 
   const p = params.get('p');
   const players = (() => {

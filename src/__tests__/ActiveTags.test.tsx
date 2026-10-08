@@ -35,10 +35,10 @@ describe('ActiveTags', () => {
     // Open the duration dropdown
     const durationBtn = screen.getByRole('button', { name: /Duration/ });
     fireEvent.click(durationBtn);
-    fireEvent.click(screen.getByText('Quick \u2264 15 min'));
+    fireEvent.click(screen.getByRole('radio', { name: 'Up to 15 min' }));
 
     // The active tag should appear
-    const tag = screen.getByText(/\u2264 15 min.*\u2715/);
+    const tag = screen.getByText(/Up to 15 min.*\u2715/);
     expect(tag).toHaveClass('atag');
 
     // Click to clear
@@ -91,7 +91,7 @@ describe('ActiveTags', () => {
 
     const durationBtn = screen.getByRole('button', { name: /Duration/ });
     fireEvent.click(durationBtn);
-    fireEvent.click(screen.getByText('Quick \u2264 15 min'));
+    fireEvent.click(screen.getByRole('radio', { name: 'Up to 15 min' }));
 
     const clearAll = screen.getByText('Clear all');
     expect(clearAll).toBeInTheDocument();

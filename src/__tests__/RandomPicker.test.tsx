@@ -337,6 +337,13 @@ describe('RandomPicker picks something playable', () => {
     act(() => vi.advanceTimersByTime(2000));
   }
 
+  it('seats a solo game as "1 player"', () => {
+    renderAt('/?p=1&q=Klondike');
+    spin();
+    expect(screen.getByRole('dialog')).toHaveAccessibleName(/Klondike Solitaire$/);
+    expect(screen.getByText('1 player')).toBeInTheDocument();
+  });
+
   it('lands the Card Deck on one of its games and says so', () => {
     renderAt('/?q=Euchre');
     spin();
@@ -348,9 +355,9 @@ describe('RandomPicker picks something playable', () => {
   });
 
   it('says how the pick fits the filters', () => {
-    renderAt('/?p=4&d=quick');
+    renderAt('/?p=4&d=15');
     spin();
-    expect(screen.getByText(/^Fits 4 players · ≤ 15 min · (one of \d+ games|the only match)$/)).toBeInTheDocument();
+    expect(screen.getByText(/^Fits 4 players · up to 15 min · (one of \d+ games|the only match)$/)).toBeInTheDocument();
   });
 
   it('names a single match as the only one', () => {

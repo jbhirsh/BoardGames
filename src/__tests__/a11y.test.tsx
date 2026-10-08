@@ -34,6 +34,20 @@ describe('accessibility', () => {
     expect(results).toHaveNoViolations();
   }, TIMEOUT_MS);
 
+  it('time and players dropdowns have no axe violations while open', async () => {
+    const router = createMemoryRouter([
+      { element: <App />, children: [{ path: '/', element: <HomePage /> }] },
+    ], { initialEntries: ['/?d=30'] });
+    const { container } = render(<RouterProvider router={router} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Up to 30 min' }));
+    expect(screen.getByRole('radiogroup', { name: 'Time available' })).toBeInTheDocument();
+    expect(await axe(container, axeOptions)).toHaveNoViolations();
+    // No count chosen, so no radio is checked.
+    fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+    expect(screen.getByRole('radiogroup', { name: 'Players' })).toBeInTheDocument();
+    expect(await axe(container, axeOptions)).toHaveNoViolations();
+  }, TIMEOUT_MS);
+
   it('home page with a card\'s games open has no axe violations', async () => {
     const router = createMemoryRouter([
       { element: <App />, children: [{ path: '/', element: <HomePage /> }] },

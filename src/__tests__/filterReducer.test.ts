@@ -14,8 +14,8 @@ describe('filterReducer', () => {
   });
 
   it('SET_DURATION updates duration', () => {
-    const state = filterReducer(initialFilterState, { type: 'SET_DURATION', payload: 'quick' });
-    expect(state.duration).toBe('quick');
+    const state = filterReducer(initialFilterState, { type: 'SET_DURATION', payload: 30 });
+    expect(state.duration).toBe(30);
   });
 
   it('SET_PLAYERS updates players', () => {
@@ -88,7 +88,7 @@ describe('filterReducer', () => {
 
   it('HYDRATE replaces the state with the payload verbatim', () => {
     const payload: FilterState = {
-      duration: 'long',
+      duration: 60,
       players: 6,
       keywords: new Set(['strategy', 'thematic'] as const),
       keywordMode: 'and',
@@ -100,7 +100,7 @@ describe('filterReducer', () => {
     };
     const next = filterReducer(initialFilterState, { type: 'HYDRATE', payload });
     expect(next).toBe(payload);
-    expect(next.duration).toBe('long');
+    expect(next.duration).toBe(60);
     expect(next.players).toBe(6);
     expect(next.keywords.has('strategy')).toBe(true);
     expect(next.search).toBe('epic');
@@ -109,7 +109,7 @@ describe('filterReducer', () => {
 
   it('CLEAR_ALL resets to initial but preserves view and baseSort', () => {
     const modified: FilterState = {
-      duration: 'quick',
+      duration: 15,
       players: 4,
       keywords: new Set(['strategy'] as const),
       keywordMode: 'and',

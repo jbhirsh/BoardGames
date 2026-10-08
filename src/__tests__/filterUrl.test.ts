@@ -22,13 +22,13 @@ describe('filterToSearchParams', () => {
 
   it('encodes duration, players, and keyword mode', () => {
     const state = makeState({
-      duration: 'quick',
+      duration: 15,
       players: 5,
       keywordMode: 'and',
       keywords: new Set(['strategy', 'family']),
     });
     const params = filterToSearchParams(state);
-    expect(params.get('d')).toBe('quick');
+    expect(params.get('d')).toBe('15');
     expect(params.get('p')).toBe('5');
     expect(params.get('m')).toBe('and');
     expect(params.get('k')).toBe('family,strategy');
@@ -106,9 +106,9 @@ describe('searchParamsToFilter', () => {
 
   it('parses valid params', () => {
     const state = searchParamsToFilter(
-      new URLSearchParams('d=medium&p=4&k=strategy,family&m=and&q=epic&s=group&v=grid'),
+      new URLSearchParams('d=30&p=4&k=strategy,family&m=and&q=epic&s=group&v=grid'),
     );
-    expect(state.duration).toBe('medium');
+    expect(state.duration).toBe(30);
     expect(state.players).toBe(4);
     expect(state.keywords.has('strategy')).toBe(true);
     expect(state.keywords.has('family')).toBe(true);
@@ -128,6 +128,20 @@ describe('searchParamsToFilter', () => {
       expect(state.baseSort).toBe('az');
       expect(state.sort).toBe('az');
     }
+  });
+
+  it('opens a link from before time budgets at the budget that keeps its games', () => {
+    expect(searchParamsToFilter(new URLSearchParams('d=quick')).duration).toBe(15);
+    expect(searchParamsToFilter(new URLSearchParams('d=medium')).duration).toBe(60);
+    // "Long" (60+ min) had no upper end to keep.
+    expect(searchParamsToFilter(new URLSearchParams('d=long')).duration).toBe('all');
+  });
+
+  it('takes only the budgets the filter offers', () => {
+    for (const d of ['45', '0', '-15', '15abc', 'toString', '']) {
+      expect(searchParamsToFilter(new URLSearchParams(`d=${d}`)).duration).toBe('all');
+    }
+    expect(searchParamsToFilter(new URLSearchParams('d=60')).duration).toBe(60);
   });
 
   it('ignores invalid duration, keywords, sort, view, and mode', () => {
@@ -158,7 +172,7 @@ describe('searchParamsToFilter', () => {
 describe('roundtrip', () => {
   it('preserves a representative filter state', () => {
     const original = makeState({
-      duration: 'medium',
+      duration: 60,
       players: 5,
       keywords: new Set(['strategy', 'team']),
       keywordMode: 'and',
@@ -187,9 +201,9 @@ describe('buildShareUrl', () => {
   });
 
   it('appends a query string when filters are set', () => {
-    const url = buildShareUrl(makeState({ duration: 'quick', players: 4 }));
+    const url = buildShareUrl(makeState({ duration: 15, players: 4 }));
     expect(url.startsWith(`${window.location.origin}/?`)).toBe(true);
-    expect(url).toContain('d=quick');
+    expect(url).toContain('d=15');
     expect(url).toContain('p=4');
   });
 });

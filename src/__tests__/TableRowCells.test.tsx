@@ -13,6 +13,7 @@ const base: Props = {
   players: '2–5',
   cat: 'long',
   dur: '90 min',
+  mins: 90,
   short: 'A game of cells.',
   kw: ['strategy', 'abstract'],
   awards: [],
@@ -45,11 +46,17 @@ function renderCells(overrides: Partial<Props> = {}, onRowClick = vi.fn()) {
 
 describe('TableRowCells', () => {
 
-  it("shows the game's own time on the duration pill and names the bucket it filters to", () => {
+  it("shows the game's own time on the duration pill and names the budget it filters to", () => {
+    renderCells({ cat: 'medium', dur: '20 min', mins: 20 });
+    const pill = screen.getByRole('button', { name: '20 min: show games up to 30 min' });
+    expect(pill).toHaveTextContent('20 min');
+    expect(pill).toHaveClass('dur-medium');
+  });
+
+  it('leaves the pill as plain text for a game longer than every budget', () => {
     renderCells();
-    const pill = screen.getByRole('button', { name: '90 min: show 60+ min games' });
-    expect(pill).toHaveTextContent('90 min');
-    expect(pill).toHaveClass('dur-long');
+    expect(screen.getByText('90 min')).not.toHaveAttribute('role');
+    expect(screen.queryByRole('button', { name: /90 min/ })).not.toBeInTheDocument();
   });
 
   it('renders the shared cells in header order with the table classes', () => {
@@ -125,14 +132,14 @@ describe('TableRowCells', () => {
   });
 
   it('filters by duration and keyword from the pills without toggling the row', () => {
-    const { onRowClick } = renderCells();
+    const { onRowClick } = renderCells({ cat: 'medium', dur: '45 min', mins: 45 });
     expect(screen.getByRole('status')).toHaveTextContent('all|');
-    fireEvent.click(screen.getByText('90 min'));
-    expect(screen.getByRole('status')).toHaveTextContent('long|');
+    fireEvent.click(screen.getByText('45 min'));
+    expect(screen.getByRole('status')).toHaveTextContent('60|');
     const strategy = screen.getByText('Strategy');
     expect(strategy).not.toHaveClass('lit');
     fireEvent.click(strategy);
-    expect(screen.getByRole('status')).toHaveTextContent('long|strategy');
+    expect(screen.getByRole('status')).toHaveTextContent('60|strategy');
     expect(screen.getByText('Strategy')).toHaveClass('lit');
     expect(screen.getByText('Abstract')).not.toHaveClass('lit');
     expect(onRowClick).not.toHaveBeenCalled();

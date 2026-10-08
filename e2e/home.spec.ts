@@ -22,13 +22,13 @@ test('players and time filters narrow the list and survive a reload', async ({ p
   await expect(page.getByRole('button', { name: rowToggles })).toHaveCount(GAMES.length);
 
   await page.getByRole('button', { name: 'Duration', exact: true }).click();
-  await page.getByRole('button', { name: 'Quick ≤ 15 min' }).click();
+  await page.getByRole('radio', { name: 'Up to 15 min' }).click();
   await page.getByRole('button', { name: 'Players', exact: true }).click();
-  await page.getByRole('button', { name: '2 players', exact: true }).click();
+  await page.getByRole('radio', { name: '2 players' }).click();
 
-  await expect(page).toHaveURL(/\/\?d=quick&p=2$/);
+  await expect(page).toHaveURL(/\/\?d=15&p=2$/);
   const assertFiltered = async () => {
-    await expect(page.getByRole('button', { name: '≤ 15 min', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Up to 15 min', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: '2 players', exact: true })).toBeVisible();
     // Bananagrams is 2–8 players in 15 minutes; Cranium needs four and an hour.
     await expect(page.getByRole('button', { name: 'Show details for Bananagrams' })).toBeVisible();
@@ -42,7 +42,18 @@ test('players and time filters narrow the list and survive a reload', async ({ p
   await page.reload();
   await assertFiltered();
   await expect(page.getByRole('button', { name: rowToggles })).toHaveCount(narrowed);
-  await expect(page).toHaveURL(/\/\?d=quick&p=2$/);
+  await expect(page).toHaveURL(/\/\?d=15&p=2$/);
+});
+
+test('a time budget keeps the quick games, and an old bucket link opens one', async ({ page }) => {
+  // "Medium" from before budgets opens as up to an hour.
+  await page.goto('/?d=medium');
+  await expect(page.getByRole('button', { name: 'Up to 60 min', exact: true })).toBeVisible();
+  // Bananagrams takes 15 minutes, Cranium an hour; Cards Against Humanity
+  // runs to 90.
+  await expect(page.getByRole('button', { name: 'Show details for Bananagrams' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Show details for Cranium' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Show details for Cards Against Humanity' })).toHaveCount(0);
 });
 
 test('the Own/Want toggle switches to the wishlist', async ({ page }) => {
@@ -141,14 +152,14 @@ test('pages carry their own titles and the site has a link preview', async ({ pa
 });
 
 test('an empty result names the filters and offers to drop one', async ({ page }) => {
-  // Nothing long seats ten and is a word game.
-  await page.goto('/?d=long&p=10&k=word');
+  // No word game is played alone.
+  await page.goto('/?d=15&p=1&k=word');
   await expect(page.getByText('No games match your filters.')).toBeVisible();
   // The hidden wishlist section has its own empty state; act on the one showing.
-  await expect(page.getByText('Filtering for 60+ min, 10 players and Word.').filter({ visible: true })).toBeVisible();
+  await expect(page.getByText('Filtering for up to 15 min, 1 player and Word.').filter({ visible: true })).toBeVisible();
 
   await page.getByRole('button', { name: /^Drop Word, \d+ games?$/ }).filter({ visible: true }).click();
-  await expect(page).toHaveURL(/\/\?d=long&p=10$/);
+  await expect(page).toHaveURL(/\/\?d=15&p=1$/);
   await expect(page.getByRole('button', { name: rowToggles }).first()).toBeVisible();
   // The button that was clicked is gone; focus lands on the list's heading.
   await expect(page.getByRole('heading', { level: 2, name: 'Our Collection' })).toBeFocused();

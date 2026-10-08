@@ -30,6 +30,7 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
           players={game.players}
           cat={game.cat}
           dur={game.dur}
+          mins={game.mins}
           short={game.short}
           kw={game.kw}
           awards={game.awards}

@@ -11,10 +11,10 @@ describe('activeFilters', () => {
   });
 
   it('names each filter and what the state is without it', () => {
-    const state = at({ duration: 'quick', players: 4, keywords: new Set<KeywordId>(['strategy', 'party']), search: ' azul ' });
+    const state = at({ duration: 15, players: 4, keywords: new Set<KeywordId>(['strategy', 'party']), search: ' azul ' });
     const filters = activeFilters(state);
     expect(filters.map((f) => [f.id, f.label])).toEqual([
-      ['duration', '≤ 15 min'],
+      ['duration', 'up to 15 min'],
       ['players', '4 players'],
       ['kw:strategy', 'Strategy'],
       ['kw:party', 'Party'],
@@ -27,17 +27,21 @@ describe('activeFilters', () => {
     // The original is left alone.
     expect(state.keywords.size).toBe(2);
   });
+
+  it('says "1 player", not "1 players"', () => {
+    expect(activeFilters(at({ players: 1 }))[0].label).toBe('1 player');
+  });
 });
 
 describe('relaxations', () => {
   it('keeps the filters whose removal brings results back, most first', () => {
-    const state = at({ duration: 'quick', players: 4 });
+    const state = at({ duration: 15, players: 4 });
     const counts = (s: FilterState) => (s.duration === 'all' ? 3 : s.players === 0 ? 7 : 0);
     expect(relaxations(state, counts).map((r) => [r.id, r.count])).toEqual([['players', 7], ['duration', 3]]);
   });
 
   it('is empty when no single filter is to blame', () => {
-    expect(relaxations(at({ duration: 'quick', players: 4 }), () => 0)).toEqual([]);
+    expect(relaxations(at({ duration: 15, players: 4 }), () => 0)).toEqual([]);
   });
 });
 
@@ -46,7 +50,7 @@ describe('listFilters', () => {
     const f = (label: string) => ({ id: 'search' as const, label, without: initialFilterState });
     expect(listFilters([])).toBe('');
     expect(listFilters([f('4 players')])).toBe('4 players');
-    expect(listFilters([f('4 players'), f('≤ 15 min')])).toBe('4 players and ≤ 15 min');
+    expect(listFilters([f('4 players'), f('up to 15 min')])).toBe('4 players and up to 15 min');
     expect(listFilters([f('a'), f('b'), f('c')])).toBe('a, b and c');
   });
 

@@ -1,4 +1,4 @@
-import type { GroupId, KeywordId, WishlistType } from './types';
+import type { DurationFilter, GroupId, KeywordId, TimeBudget, WishlistType } from './types';
 
 export const KW: Record<KeywordId, string> = {
   'social': 'Social',
@@ -47,11 +47,15 @@ export const WISHLIST_SECTIONS: Exclude<WishlistType, 'suggested'>[] = ['party',
 
 export const WISHLIST_TYPE_ORDER: WishlistType[] = ['party', 'strategy', 'coop', 'two-player', 'heavy', 'suggested'];
 
-export const DUR_LABELS: Record<string, string> = {
+/** The time budgets the duration filter offers, in minutes. */
+export const TIME_BUDGETS: readonly TimeBudget[] = [15, 30, 60];
+
+/** The duration filter's pill: "Duration" until a budget is picked. */
+export const DUR_LABELS: Record<DurationFilter, string> = {
   all: 'Duration',
-  quick: '≤ 15 min',
-  medium: '30–60 min',
-  long: '60+ min',
+  15: 'Up to 15 min',
+  30: 'Up to 30 min',
+  60: 'Up to 60 min',
 };
 
 export const DUR_PILL_LABELS: Record<string, string> = {
@@ -60,4 +64,9 @@ export const DUR_PILL_LABELS: Record<string, string> = {
   long: 'Long',
 };
 
-export const PLAYER_OPTIONS = [2, 3, 4, 5, 6, 7, 8, 10] as const;
+export const PLAYER_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
+
+/** "1 player", "4 players". */
+export function playersLabel(n: number): string {
+  return n === 1 ? '1 player' : `${n} players`;
+}

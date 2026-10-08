@@ -70,7 +70,7 @@ describe('WishlistRow', () => {
     expect(onVote).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByText('20 min'));
     fireEvent.click(screen.getByText('Party'));
-    expect(screen.getByRole('status')).toHaveTextContent('medium|party');
+    expect(screen.getByRole('status')).toHaveTextContent('30|party');
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 

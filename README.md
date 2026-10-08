@@ -13,7 +13,7 @@ functions for the AI and voting features.
 
 ## Highlights
 
-- **Fast, shareable filtering.** Duration, player count, and keyword filters plus
+- **Fast, shareable filtering.** Time budget, player count, and keyword filters plus
   full-text search and multiple sort modes, driven by a `useReducer` store that
   mirrors its state into the URL — so any filtered view can be copied and shared.
 - **Grid and list views** over the same 26-game collection, with a one-click

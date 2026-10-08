@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import FilterBar from '../components/FilterBar/FilterBar';
 import { FilterProvider } from '../context/FilterContext';
@@ -41,17 +41,17 @@ describe('FilterBar', () => {
   it('opens and closes duration dropdown', () => {
     renderFilterBar();
     fireEvent.click(getDDButton('Duration'));
-    expect(screen.getByText('Quick \u2264 15 min')).toBeInTheDocument();
+    expect(screen.getByText('Up to 15 min')).toBeInTheDocument();
     fireEvent.click(getDDButton('Duration'));
   });
 
   it('opening one dropdown closes another', () => {
     renderFilterBar();
     fireEvent.click(getDDButton('Duration'));
-    expect(screen.getByText('Quick \u2264 15 min')).toBeInTheDocument();
+    expect(screen.getByText('Up to 15 min')).toBeInTheDocument();
 
     fireEvent.click(getDDButton('Players'));
-    expect(screen.queryByText('Quick \u2264 15 min')).not.toBeInTheDocument();
+    expect(screen.queryByText('Up to 15 min')).not.toBeInTheDocument();
   });
 });
 
@@ -59,12 +59,30 @@ describe('DurationDropdown', () => {
   it('selects a duration option and closes dropdown', () => {
     renderFilterBar();
     fireEvent.click(getDDButton('Duration'));
-    fireEvent.click(screen.getByText('Quick \u2264 15 min'));
+    fireEvent.click(screen.getByText('Up to 15 min'));
 
     // Label should update
     expect(screen.getByRole('button', { name: /15 min/ })).toBeInTheDocument();
   });
 
+  it('offers time budgets as one choice out of several', () => {
+    renderFilterBar();
+    fireEvent.click(getDDButton('Duration'));
+    const group = screen.getByRole('radiogroup', { name: 'Time available' });
+    expect(within(group).getAllByRole('radio').map((r) => r.textContent)).toEqual([
+      'Any length', 'Up to 15 min', 'Up to 30 min', 'Up to 60 min',
+    ]);
+    expect(within(group).getByRole('radio', { name: 'Any length' })).toHaveAttribute('aria-checked', 'true');
+
+    fireEvent.click(within(group).getByRole('radio', { name: 'Up to 60 min' }));
+    fireEvent.click(getDDButton('Up to 60 min'));
+    expect(screen.getByRole('radio', { name: 'Up to 60 min' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('radio', { name: 'Any length' })).toHaveAttribute('aria-checked', 'false');
+
+    // Any length takes the budget off again.
+    fireEvent.click(screen.getByRole('radio', { name: 'Any length' }));
+    expect(getDDButton('Duration')).toBeInTheDocument();
+  });
 });
 
 describe('PlayersDropdown', () => {
@@ -76,19 +94,70 @@ describe('PlayersDropdown', () => {
     expect(screen.getByRole('button', { name: /4 players/ })).toBeInTheDocument();
   });
 
-  it('deselects when clicking same player count', () => {
+  it('offers one to ten players as radios, solo play included', () => {
     renderFilterBar();
     fireEvent.click(getDDButton('Players'));
-    fireEvent.click(screen.getByText('4 players'));
+    const group = screen.getByRole('radiogroup', { name: 'Players' });
+    expect(within(group).getAllByRole('radio').map((r) => r.textContent)).toEqual([
+      'Any number', '1 player', '2 players', '3 players', '4 players', '5 players',
+      '6 players', '7 players', '8 players', '9 players', '10+ players',
+    ]);
 
-    // Reopen dropdown
-    fireEvent.click(getDDButton('4 players'));
-    // Find the option inside the dropdown panel (not the button)
-    const panel = document.querySelector('[data-dd="players"]')!;
-    const opt = panel.querySelector('.dd-opt.sel')!;
-    fireEvent.click(opt);
+    fireEvent.click(within(group).getByRole('radio', { name: '1 player' }));
+    expect(getDDButton('1 player')).toBeInTheDocument();
   });
 
+  it('is one Tab stop, on the chosen count, and the arrow keys move between counts', () => {
+    renderFilterBar();
+    fireEvent.click(getDDButton('Players'));
+    const radios = within(screen.getByRole('radiogroup', { name: 'Players' })).getAllByRole('radio');
+    // Nothing chosen: the first option takes the Tab stop.
+    expect(radios.map((r) => r.tabIndex)).toEqual([0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]);
+
+    radios[0].focus();
+    fireEvent.keyDown(radios[0], { key: 'ArrowDown' });
+    expect(radios[1]).toHaveFocus();
+    fireEvent.keyDown(radios[1], { key: 'ArrowRight' });
+    expect(radios[2]).toHaveFocus();
+    fireEvent.keyDown(radios[2], { key: 'ArrowUp' });
+    expect(radios[1]).toHaveFocus();
+    fireEvent.keyDown(radios[1], { key: 'ArrowLeft' });
+    expect(radios[0]).toHaveFocus();
+    // Past either end wraps around.
+    fireEvent.keyDown(radios[0], { key: 'ArrowUp' });
+    expect(radios[10]).toHaveFocus();
+    fireEvent.keyDown(radios[10], { key: 'ArrowDown' });
+    expect(radios[0]).toHaveFocus();
+    fireEvent.keyDown(radios[0], { key: 'End' });
+    expect(radios[10]).toHaveFocus();
+    fireEvent.keyDown(radios[10], { key: 'Home' });
+    expect(radios[0]).toHaveFocus();
+    // Moving doesn't pick; other keys do nothing here.
+    fireEvent.keyDown(radios[0], { key: 'a' });
+    expect(radios[0]).toHaveFocus();
+    expect(getDDButton('Players')).toBeInTheDocument();
+  });
+
+  it('puts the Tab stop on the chosen count', () => {
+    renderFilterBar();
+    fireEvent.click(getDDButton('Players'));
+    fireEvent.click(screen.getByText('3 players'));
+    fireEvent.click(getDDButton('3 players'));
+    const radios = screen.getAllByRole('radio');
+    expect(radios.filter((r) => r.tabIndex === 0).map((r) => r.textContent)).toEqual(['3 players']);
+  });
+
+  it('marks the chosen count and clears it with Any number', () => {
+    renderFilterBar();
+    fireEvent.click(getDDButton('Players'));
+    fireEvent.click(screen.getByText('9 players'));
+
+    fireEvent.click(getDDButton('9 players'));
+    expect(screen.getByRole('radio', { name: '9 players' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('radio', { name: '4 players' })).toHaveAttribute('aria-checked', 'false');
+    fireEvent.click(screen.getByRole('radio', { name: 'Any number' }));
+    expect(getDDButton('Players')).toBeInTheDocument();
+  });
 });
 
 describe('KeywordsDropdown', () => {
@@ -185,11 +254,11 @@ describe('Dropdown', () => {
   it('closes when clicking outside', () => {
     renderFilterBar();
     fireEvent.click(getDDButton('Duration'));
-    expect(screen.getByText('Quick \u2264 15 min')).toBeInTheDocument();
+    expect(screen.getByText('Up to 15 min')).toBeInTheDocument();
 
     fireEvent.mouseDown(document.body);
 
-    expect(screen.queryByText('Quick \u2264 15 min')).not.toBeInTheDocument();
+    expect(screen.queryByText('Up to 15 min')).not.toBeInTheDocument();
   });
 });
 

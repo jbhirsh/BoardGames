@@ -6,7 +6,7 @@ import { pickRandom } from '../utils/pickRandom';
 import { pickFresh, resolvePick, type Pick } from '../utils/resolvePick';
 import { tableFiltered } from '../utils/filterGames';
 import { rulebookPath } from '../utils/rulebooks';
-import { DUR_LABELS } from '../data/keywords';
+import { DUR_LABELS, playersLabel } from '../data/keywords';
 import Backdrop from './Backdrop';
 
 const SPIN_MS = 1400;
@@ -17,8 +17,8 @@ function whyLine(state: FilterState, poolSize: number): string {
   const ofPool = poolSize === 1 ? 'the only match' : `one of ${poolSize} games`;
   if (!tableFiltered(state)) return ofPool[0].toUpperCase() + ofPool.slice(1);
   const fits = [
-    state.players > 0 ? `${state.players} players` : null,
-    state.duration !== 'all' ? DUR_LABELS[state.duration] : null,
+    state.players > 0 ? playersLabel(state.players) : null,
+    state.duration !== 'all' ? DUR_LABELS[state.duration].toLowerCase() : null,
   ].filter(Boolean).join(' · ');
   return `Fits ${fits} · ${ofPool}`;
 }
@@ -230,7 +230,7 @@ export default function RandomPicker() {
               </div>
             )}
             <div className="pick-meta">
-              <span>{shown!.players} players</span>
+              <span>{shown!.players === '1' ? '1 player' : `${shown!.players} players`}</span>
               <span aria-hidden="true">•</span>
               <span>{shown!.dur}</span>
             </div>
