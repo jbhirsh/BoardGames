@@ -282,7 +282,16 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
 ### Rules text pipeline (`scripts/`)
 Rule PDFs live in `public/rules/*.pdf`. `scripts/extract-rules-text.mjs`
 extracts text with `unpdf`, falling back to OCR (`tesseract.js`, via
-`scripts/ocr-pdfs.mjs`) for image-only PDFs, and writes `rules-text/*.txt`.
+`scripts/ocr-pdfs.mjs`) for image-only PDFs, and writes `rules-text/*.txt`,
+each page opening with a `[Page N]` marker (its page in the PDF; a test
+checks they run 1, 2, 3 from the top of every file). The assistant cites a
+rule as `(p. N)` from the nearest marker. When it reads more than one
+rulebook, each is headed with its name (the game's own too) and every
+citation names one (`(Europe p. 4)`). The chat (`linkCitations` in
+`utils/rulebooks.ts`) turns each into a link opening that PDF at `#page=N`
+in a new tab. A bare page with several rulebooks read, or a name it wasn't
+sent, stays plain text. The eval grades facts with citations stripped, and
+its `citation` entries check the citations alone.
 `vercel.json` bundles `rules-text/**` into the `api/chat.ts` function so it can
 read them at runtime.
 `npm run rules-text-layer` (`scripts/add-text-layer.mjs`) gives a scanned

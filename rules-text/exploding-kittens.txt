@@ -1,3 +1,4 @@
+[Page 1]
 the rules
 exploding kittens
 players: 2-5
@@ -136,6 +137,7 @@ what it does.
 Play-or-Pass, then Draw.
 Play-or-Pass, then Draw.
 
+[Page 2]
 (Read this after you've
 played your first game)
 combos

@@ -1,3 +1,4 @@
+[Page 1]
 Each time a Hero
 acquires a card with a
 value of 4 or more ,
@@ -283,6 +284,7 @@ VOLDEMORT, before they gain
 control of all the Locations.
 Object
 
+[Page 2]
 HORCRUX
 If you play two or more Allies,
 any one Hero gains 2 ..

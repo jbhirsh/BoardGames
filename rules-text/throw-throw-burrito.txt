@@ -1,3 +1,4 @@
+[Page 1]
 When you play 3 matching War Cards,
 all players at the table (except for you)
 are immediately in a War and should try
@@ -179,6 +180,7 @@ Collect sets and avoid
 the Airborne Burritos to
 achieve squishy dominance!
 
+[Page 2]
 Original game design by Brian Spence
 Designed by Matthew Inman and Elan Lee
 Developed by Exploding Kittens

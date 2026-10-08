@@ -11,6 +11,7 @@ import {
   RULES_ASSISTANT_SYSTEM_INSTRUCTION,
   RULES_ASSISTANT_MAX_OUTPUT_TOKENS,
   rulebookHeader,
+  firstRulebookHeader,
   otherRulebooks,
   otherRulebooksNote,
 } from '../../api/_lib/rulesAssistant';
@@ -97,9 +98,11 @@ describe('loadRulesText', () => {
     const cwd = vi.spyOn(process, 'cwd').mockReturnValue(root);
     try {
       expect(loadRulesText('deck')).toBe('DECK');
-      expect(loadRulesText('deck', ['speed', 'euchre'])).toBe(`DECK${rulebookHeader('speed')}SPEED${rulebookHeader('euchre')}EUCHRE`);
+      // The game's own rulebook is named only when another follows it.
+      expect(loadRulesText('deck', ['speed', 'euchre'])).toBe(`${firstRulebookHeader('deck')}DECK${rulebookHeader('speed')}SPEED${rulebookHeader('euchre')}EUCHRE`);
       // A part with no file (a stale page) is skipped, not an error.
-      expect(loadRulesText('deck', ['euchre', 'mahjong'])).toBe(`DECK${rulebookHeader('euchre')}EUCHRE`);
+      expect(loadRulesText('deck', ['euchre', 'mahjong'])).toBe(`${firstRulebookHeader('deck')}DECK${rulebookHeader('euchre')}EUCHRE`);
+      expect(loadRulesText('deck', ['mahjong'])).toBe('DECK');
       expect(loadRulesText('deck-builder')).toBe('OTHER GAME');
       expect(() => loadRulesText('deck', ['../deck-builder'])).not.toThrow();
       expect(loadRulesText('deck', ['../deck-builder'])).toBe('DECK');
@@ -112,7 +115,7 @@ describe('loadRulesText', () => {
   it('reads the real Card Deck\'s game rulebooks when asked', () => {
     const parts = ['euchre', 'spades', 'hearts', 'crazy-eights', 'rummy', 'president', 'spoons', 'egyptian-ratscrew', 'speed', 'golf', 'go-fish', 'klondike'];
     const text = loadRulesText('card-deck', parts);
-    expect(text.startsWith(readFileSync(join(process.cwd(), 'rules-text', 'card-deck.txt'), 'utf-8'))).toBe(true);
+    expect(text.startsWith(firstRulebookHeader('card-deck') + readFileSync(join(process.cwd(), 'rules-text', 'card-deck.txt'), 'utf-8'))).toBe(true);
     expect(text).toContain(readFileSync(join(process.cwd(), 'rules-text', 'card-deck.euchre.txt'), 'utf-8'));
     expect(text.split('=== Next rulebook:')).toHaveLength(13);
   });
@@ -122,6 +125,8 @@ describe('loadRulesText', () => {
       '\n\n=== Next rulebook: Cities And Knights. It goes with the game above; where it differs, say which rulebook a rule comes from. ===\n\n',
     );
     expect(rulebookHeader('5-6-player-extension')).toContain('Next rulebook: 5 6 Player Extension.');
+    // The game's own, by the name a citation of it uses.
+    expect(firstRulebookHeader('ticket-to-ride')).toBe('=== First rulebook: Ticket To Ride. ===\n\n');
   });
 });
 

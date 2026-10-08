@@ -1,3 +1,4 @@
+[Page 1]
 1
 You have dared to cross the threshold of the haunted
 Mysterium Manor… How very brave! Settle in around
@@ -8,6 +9,7 @@ Background
 5
 2
 
+[Page 2]
 2
 Duchy of Warwick, Scotland
 September 19th, 1922
@@ -28,6 +30,7 @@ this mystery.
 I look forward to receiving your reply.
 Ever yours,
 
+[Page 3]
 3
 TRAGEDY AT THE COUNT
 OF WARWICK’S MANOR!
@@ -101,6 +104,7 @@ COUNT AND COUNTESS OF
 WARWICK TO LEAVE THE
 REGION
 
+[Page 4]
 4
 Conrad Mac Dowell
 Speciality: Crystal gazing
@@ -204,6 +208,7 @@ helping local people along the way. It was during this
 journey that her colleague, Sir Conrad MacDowell, requested
 her assistance in solving an old mystery.
 
+[Page 5]
 5
 Aim of the Game
 Mysterium is a cooperative mystery solving game, in which everyone wins or loses
@@ -274,6 +279,7 @@ from www.libellud.com (via the Mysterium product
 sheet) or by scanning the code shown opposite with
 your smartphone.
 
+[Page 6]
 6
 Game Components & SetupSet up the game as shown in the diagram.
 1
@@ -351,6 +357,7 @@ P.10Use
 P.10Use
 P.12Use
 
+[Page 7]
 7
 1 game screen
 Each column corresponds to a different psychic.
@@ -431,6 +438,7 @@ P.9Use
 P.9Use
 P.9Use
 
+[Page 8]
 8
 Game Difficulty & Card Setup
 Choose the difficulty level for the game. This determines the number of character/
@@ -556,6 +564,7 @@ The reconstruction of events phase takes place in two steps:
 Step 1 - Vision interpretation
 Step 2 - Spectral manifestation
 
+[Page 9]
 9
 Step 1 - Vision interpretation
 During the first turn, each psychic’s intuition token is placed on the character
@@ -622,6 +631,7 @@ At the HARD difficulty level: the ghost may discard his cards once during the
 game, placing a crow on the game screen.
 2
 
+[Page 10]
 10
 Using clairvoyancy tokens
 Players may add clairvoyancy tokens to the intuition tokens played by the other
@@ -700,6 +710,7 @@ Phase 2 - Revealing the culprit
 This phase only takes place if all the psychics have successfully identified their
 character, location and object combinations before the clock strikes 8.
 
+[Page 11]
 11
 The culprit’s identity is revealed in three steps:
 Step 1 - Suspect line-up
@@ -777,6 +788,7 @@ changes (see page 7).
 Culprit token
 Shared vision
 
+[Page 12]
 12
 Put differently, the further a psychic has progressed along the clairvoyancy track, the more
 clues he will see when the psychics have to identify the group that contains the true culprit.

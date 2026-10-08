@@ -1,3 +1,4 @@
+[Page 1]
 As in previous games, defeat
 all the Villains before they gain
 control of all of the Locations.
@@ -36,6 +37,7 @@ BOX
 4 CONTENTS
 & SET UP
 
+[Page 2]
 Gryffi ndor™
 Hufflepuff ™
 TM & © Warner Bros. Entertainment Inc.

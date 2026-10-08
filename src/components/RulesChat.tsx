@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, createContext, useContext } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import * as Sentry from '@sentry/react';
 import { Link } from 'react-router';
-import Markdown from 'react-markdown';
+import Markdown, { type Components } from 'react-markdown';
 import { AiRulesIcon } from './Icons';
 
 interface Message {
@@ -42,19 +42,27 @@ export interface RulebookLink {
   to: string;
 }
 
+// An answer's links are its page citations, each opening a rulebook PDF at
+// the page: in a tab of its own, so the chat stays where it was.
+const ANSWER_COMPONENTS: Components = {
+  a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>,
+};
+
 /**
  * `parts` names the extra rulebooks the assistant reads along with the game's
  * own, and `scope` says in words what it is reading. `linksFor` finds the
  * other tabs an answer names, so "that's in the 5–6 Player Extension" comes
- * with a way there. `starters` are offered as one-tap questions until the
- * first one is asked.
+ * with a way there. `citeLinks` turns the answer's page citations ("p. 5")
+ * into links to that page. `starters` are offered as one-tap questions until
+ * the first one is asked.
  */
-export function RulesChatPanel({ slug, gameName, parts = [], scope, linksFor, starters = [] }: {
+export function RulesChatPanel({ slug, gameName, parts = [], scope, linksFor, citeLinks, starters = [] }: {
   slug: string;
   gameName: string;
   parts?: string[];
   scope?: string;
   linksFor?: (answer: string) => RulebookLink[];
+  citeLinks?: (answer: string) => string;
   starters?: string[];
 }) {
   const { isOpen } = useContext(ChatContext);
@@ -206,7 +214,9 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, linksFor, st
               </div>
             ) : (
               <div className="rules-chat-bubble">
-                {msg.role === 'assistant' ? <Markdown>{msg.content}</Markdown> : msg.content}
+                {msg.role === 'assistant'
+                  ? <Markdown components={ANSWER_COMPONENTS}>{citeLinks?.(msg.content) ?? msg.content}</Markdown>
+                  : msg.content}
                 {/* Once the answer is whole, so links don't come and go mid-stream. */}
                 {msg.role === 'assistant' && i > 0 && !(isLoading && i === messages.length - 1) && linksFor?.(msg.content).map((l) => (
                   <Link key={l.to} className="rules-chat-tablink" to={l.to}>Open {l.label} <span aria-hidden="true">→</span></Link>

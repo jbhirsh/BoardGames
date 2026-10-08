@@ -1,7 +1,10 @@
+[Page 1]
 
 
+[Page 2]
 
 
+[Page 3]
 Text version
 Harry Potter: Hogwarts Battle
 The Monster Box of Monsters Expansion
@@ -39,6 +42,7 @@ STEP 3. Play HOGWARTS cards and take Hero actions.
 STEP 4. End your turn.
 END OF GAME
 
+[Page 4]
 - ALL the Villains and Creatures are defeated: Heroes win! Congratulations! Flip the page over for tips on how to
 set up future games.
 - Villains and Creatures control ALL the Locations: Heroes lose! LORD VOLDEMORT gained control of the

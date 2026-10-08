@@ -1,3 +1,4 @@
+[Page 1]
 Advanced Wizards:
 After reading these rules, if you feel comfortable and
 are familiar with deck-building games, we recommend
@@ -26,6 +27,7 @@ Additional Rules – p. 12
 2-4 Players
 AGES 11+
 
+[Page 2]
 8 Villain Control tokens
 2DrawDiscardDraw
 Sort and Distribute
@@ -40,6 +42,7 @@ on the 10 space on your
 Player Board.
 Player Board (with Health Tracker)SET UP
 
+[Page 3]
 25 Influence tokens35 Attack tokens
 3DrawDiscardDiscard
 4 Player Boards
@@ -51,6 +54,7 @@ For your first game, you will not need
 the boxes for Games 2–7.
 Give one to each player.
 
+[Page 4]
 Hero deckH
 A
 R
@@ -268,6 +272,7 @@ If you defeat a Villain,
 also gain 1 .
 GAME 1
 
+[Page 5]
 5TM & © Warner Bros. Entertainment Inc.
 (s16)HOGWARTS ™
 GAME 1ALBUS DUMBLEDOREALL Heroes
@@ -416,6 +421,7 @@ Control
 Attack
 Health
 
+[Page 6]
 6TM & © Warner Bros. Entertainment Inc.
 (s16)TM & © Warner Bros. Entertainment Inc.
 (s16)
@@ -489,6 +495,7 @@ token on the Location card.
 (See Location Control on
 page 12 for details.)
 
+[Page 7]
 7DrawDiscard
 1. Reveal and resolve Dark Arts event cards
 2. Resolve Villain abilities
@@ -535,6 +542,7 @@ Proceed to the next page for
 the active Hero’s chance to
 play cards and take actions.
 
+[Page 8]
 8TM & © Warner Bros. Entertainment Inc.
 (s16)TM & © Warner Bros. Entertainment Inc.
 (s16)
@@ -601,6 +609,7 @@ more to defeat him.
 HOGWARTS cards. Immediately place the card in your
 discard pile.GAMEPLAY
 
+[Page 9]
 9DrawDiscardTM & © Warner Bros. Entertainment Inc.
 (s16)
 1. Reveal and resolve Dark Arts event cards
@@ -682,6 +691,7 @@ GAME 1LUMOS!ALL Heroes draw a card.
 ❷
 End your turn.
 
+[Page 10]
 DrawDiscard1. Reveal and resolve Dark Arts event cards
 2. Resolve Villain abilities
 3. Play HOGWARTS™ cards and take Hero actions
@@ -820,6 +830,7 @@ Location Control–page 12
 Hero Health–page 13GAMEPLAY
 10
 
+[Page 11]
 TM & © Warner Bros. Entertainment Inc.
 (s16)TM & © Warner Bros. Entertainment Inc.
 (s16)TM & © Warner Bros. Entertainment Inc.
@@ -864,6 +875,7 @@ wizarding skills. Reset the game to its starting configuration, and try
 again! (see Set Up on pages 2-5.)
 11
 
+[Page 12]
 Active Hero loses 1 .
 ALL Heroes
 gain 1 and 1 .
@@ -919,6 +931,7 @@ Villain with the next Villain card from the top of the stack.
 Additional RulesADDITIONAL RULES
 12
 
+[Page 13]
 H
 A
 R
@@ -1002,6 +1015,7 @@ Active Hero loses 2 .
 EXPULSO!
 GAME 1
 
+[Page 14]
 Each time a Dark Arts
 event or Villain causes a
 Hero to discard a card,
@@ -1089,6 +1103,7 @@ EREMEMBRALLGain 1 .
 If you discard this, gain 2 .™
 GAME 1
 
+[Page 15]
 DESIGNED & DEVELOPED BY: INVENTED BY:
 USAopoly is a trademark of Usaopoly, Inc. Invented and licensed by Forrest-Pruzan Creative.
 HARRY POTTER, characters, names and related indicia are trademarks of © and ™ Warner Bros. Entertainment Inc.

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   buildJudgePrompt,
+  citations,
   formatScorecard,
   gradeAnswer,
   gradeContains,
@@ -11,6 +12,7 @@ import {
   parseJudgeVerdict,
   summarize,
   truncate,
+  withoutCitations,
   type EntryResult,
   type GoldenEntry,
 } from '../../eval/grading';
@@ -201,6 +203,26 @@ describe('gradeAnswer', () => {
     const entry = makeEntry({ matchType: 'regex', expected: '\\b7 cards\\b' });
     expect(gradeAnswer(entry, 'deal 7 cards each').passed).toBe(true);
     expect(gradeAnswer(entry, 'deal 17 cardstock sheets').passed).toBe(false);
+  });
+
+  it('grades what an answer says without its page citations', () => {
+    const four = makeEntry({ matchType: 'regex', expected: '\\b(4|four)\\b' });
+    expect(gradeAnswer(four, 'Unused stations score 2 points (Europe p. 4).').passed).toBe(false);
+    expect(gradeAnswer(four, 'Unused stations score 4 points (Europe p. 4).').passed).toBe(true);
+    expect(gradeAnswer(makeEntry({ matchType: 'exact', expected: '7 cards' }), '7 cards (p. 2)').passed).toBe(true);
+    expect(gradeAnswer(makeEntry({ matchType: 'contains', expected: 'p. 2' }), 'Deal 7 (p. 2).')).toEqual({
+      passed: false, reason: 'answer does not contain expected text',
+    });
+  });
+
+  it('grades citation entries against each citation on its own', () => {
+    const entry = makeEntry({ matchType: 'citation', expected: '^\\((Europe,?\\s+)p\\.\\s?4\\)$' });
+    const passed = gradeAnswer(entry, 'Three (p. 3), then (Europe p. 4).');
+    expect(passed).toEqual({ passed: true, reason: 'a citation matches the expected pattern' });
+    expect(gradeAnswer(entry, 'Three stations (p. 4). Europe adds them.')).toEqual({
+      passed: false, reason: 'no citation matches the expected pattern',
+    });
+    expect(gradeAnswer(entry, 'Europe, page 4.').passed).toBe(false);
   });
 
   it('grades judge entries from the judge reply', () => {
@@ -399,5 +421,15 @@ describe('formatScorecard', () => {
     const card = formatScorecard(summarize(results, 0.9), results);
     expect(card).not.toContain('Failures:');
     expect(card).toContain('1/1 passed (100.0%)');
+  });
+});
+
+describe('citations', () => {
+  it('finds each page citation, named or bare, and nothing else in brackets', () => {
+    const answer = 'Deal 7 (p. 2) and draw (Europe, p. 14); see the setup (page 3) (pp. 4).';
+    expect(citations(answer)).toEqual(['(p. 2)', '(Europe, p. 14)']);
+    expect(withoutCitations(answer)).toBe('Deal 7  and draw ; see the setup (page 3) (pp. 4).');
+    expect(citations('No pages here.')).toEqual([]);
+    expect(citations('Draw two (p.4).')).toEqual(['(p.4)']);
   });
 });

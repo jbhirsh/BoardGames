@@ -1,3 +1,4 @@
+[Page 1]
 Contents
 108 Cards as follows:
 19 Blue Cards – 0 to 9
@@ -37,6 +38,7 @@ other card from your hand after the draw.
 Card Game
 7+ 2-10
 
+[Page 2]
 Functions of Action Cards
 Draw Two Card – When you play this card, the next player must draw 2 cards
 and miss their turn. This card may only be played on a matching colour or on
@@ -79,6 +81,7 @@ If the last card played in a round is a Draw Two or Wild Draw Four card, the nex
 If no player is out of cards by the time the DRAW pile is depleted, the DISCARD pile is reshuffled and
 play continues.
 
+[Page 3]
 Scoring
 The first player to get rid of their cards in a round receives points for all of the cards left in their
 opponents’ hands as follows:

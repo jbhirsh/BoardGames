@@ -1,5 +1,7 @@
+[Page 1]
 Rules of PlayRules of Play
 
+[Page 2]
 221 Character Cards 6 Reference Cards
 13 Favor Tokens
 Overview
@@ -30,6 +32,7 @@ until your next turn.
 plays/discards a Spy.
 1 Cloth Bag
 
+[Page 3]
 3Setup
 1. Give each player a reference card and
 return any remaining reference cards to
@@ -49,6 +52,7 @@ their starting hand.
 5. The player who most recently hand-wrote a
 letter takes the first turn.
 
+[Page 4]
 4Playing the Game
 Love Letter is played over several game rounds
 in which you enlist the allies, friends, and
@@ -69,6 +73,7 @@ The played card stays in your play area
 faceup, and you keep the other card in
 your hand.
 
+[Page 5]
 5Out of theRound
 Some card effects knock you out of the current
 round; a competing suitor has ensured that
@@ -85,6 +90,7 @@ have already been played and which cards are
 left in the deck, so any played or discarded
 cards must always be visible to everyone.
 
+[Page 6]
 6End of aRound
 The round ends in one of two ways: when the
 deck runs out or when only one player is left
@@ -105,6 +111,7 @@ other players are out of the round due to
 card effects), the round immediately
 ends and you gain one favor token.
 
+[Page 7]
 7Starting theNextRound
 To start a new round, repeat steps 2–4 of setup
 (shuffle the character cards, set some aside, and
@@ -129,6 +136,7 @@ simultaneously win the game.
 6
 3
 
+[Page 8]
 8Card Effects
 Each card features a key person in the
 Princess’s life. A set of dots on the left
@@ -144,6 +152,7 @@ If you either play or discard the
 Princess for any reason, you are
 immediately out of the round.
 
+[Page 9]
 98. Countess
 The Countess has no effect when
 played or discarded.
@@ -162,6 +171,7 @@ draw cards for other effects (Chancellor).
 Choose another player and
 trade hands with that player.
 
+[Page 10]
 106. Chancellor
 Draw two cards from the deck
 into your hand. Choose and keep
@@ -183,6 +193,7 @@ If you force a player to discard the
 Princess, they are immediately out of
 the round and do not draw a new hand.
 
+[Page 11]
 114. Handmaid
 Until the start of your next turn,
 other players cannot choose you
@@ -197,6 +208,7 @@ card is played with no effect.
 player (Prince), then you must choose
 yourself for the effect.
 
+[Page 12]
 123. Baron
 Choose another player. You and
 that player secretly compare your
@@ -215,6 +227,7 @@ chosen player announces if they
 have that card in their hand. If they
 do, they are out of the round.
 
+[Page 13]
 130. Spy
 A Spy has no effect when played or
 discarded.
@@ -235,6 +248,7 @@ game rules and always double-check
 their cards; mistakes like these can
 strongly disrupt the play experience.
 
+[Page 14]
 14.Classic Version
 Included in this edition of Love Letter are the
 rules to play the classic version of the game,
@@ -246,6 +260,7 @@ these cards to the bag:
 ❧ 2 Spies
 All other rules for the game are unchanged.
 
+[Page 15]
 15Credits
 Game Design: Seiji Kanai
 Game Development: Justin Kemppainen & Alexandar Ortloff
@@ -266,6 +281,7 @@ Roseville, MN 55113 USA
 info@ZManGames.com
 ®
 
+[Page 16]
 QuickReference
 Setup & Start ofRound
 Shuffle the 21 cards. Set one aside facedown

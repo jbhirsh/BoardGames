@@ -1,3 +1,4 @@
+[Page 1]
 PLAYERS 2 to 4 5 to 6 7 to 8
 STARTING TILES 21 15 11
 LETTER BREAKDOWN
@@ -58,6 +59,7 @@ you may DUMP.
 Ages 7-107
 1 to 8 Players
 
+[Page 2]
 Appetite for more?
 Other ways of playing!
 “Best of...”

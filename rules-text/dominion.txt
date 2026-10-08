@@ -1,3 +1,4 @@
+[Page 1]
 Introduction ◄
 Page 1► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Complete Rules for Dominion
@@ -101,6 +102,7 @@ Thanks to Polk5440 and others on f.ds, and Stig, for sug-
 gestions, m_knox on BGG for most expansion icons, and
 special thanks to Erika. Introduction
 
+[Page 2]
 Reading a card ◄
 Page 7► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Types
@@ -188,6 +190,7 @@ artist who created the card illustration. (The standard
 frame artwork on every card and the Treasure and Victory
 point icons were made by Matthias Catrein.) 
 
+[Page 3]
 Reading a card ◄
 Page 8► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Changing card properties
@@ -273,6 +276,7 @@ an extra Kingdom card pile costing or and
 add it to the Supply. Cards from that pile are Bane
 cards (referred to by Young Witch).
 
+[Page 4]
 Your turn ◄
 Page 12► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 II. GAME RULES: ESSENTIAL RULES
@@ -320,6 +324,7 @@ to your money pool.
 Individual playmat showing your play area and what you do on your turn. (Your draw pile is called your deck.)
 Published by Spielbox magazine on behalf of Hans im Glück (issues 1 and 2 in 2010).
 
+[Page 5]
 Your turn ◄
 Page 13► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 In the second part of your Buy phase, you may
@@ -414,6 +419,7 @@ add to your money
 pool, and then has an
 additional instruction.
 
+[Page 6]
 Locations in the game ◄
 Page 14► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Locations in the game
@@ -505,6 +511,7 @@ may look through it if an ability lets you count it, or lets
 you choose or take a card that isn’t on top. When looking
 through your discard pile, you may reorder it. Locat ionsint hegame 
 
+[Page 7]
 Game end ◄
 Page 15► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Game end
@@ -594,6 +601,7 @@ See Favors § IV.
 + —Take x tokens. Also take/add/pay off
 —See DEBT § IV.
 
+[Page 8]
 Terms used on cards ◄
 Page 16► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 + —Remove a Sun token from the Prophecy
@@ -631,6 +639,7 @@ concerns specific mechanics that are presented in
 expansions.
 * * *
 
+[Page 9]
 Card abilities ◄
 Page 17► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 III. GAME RULES: BASIC RULES
@@ -700,6 +709,7 @@ Also see COMMON EFFECTS: PLAY A CARD MULTIPLE TIMES § VI.
 Border Village, a card with a dividing line.
 See BASIC TIMING RULES for more about abilities.
 
+[Page 10]
 Card abilities ◄
 Page 18► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Setting up a later ability
@@ -770,6 +780,7 @@ ability. (This is the 2016 version, see NEW EDITIONS AND
 ERRATA § IV.)
 See BASIC TIMING RULES for more about abilities.
 
+[Page 11]
 Resolving effects ◄
 Page 19► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Effects contingent on other effects
@@ -837,6 +848,7 @@ See BASIC TIMING RULES: WHEN ABILITIES ARE TRIGGERED AND
 RESOLVED below. See BASIC TIMING RULES for more about
 abilities. Also see DURATION CARDS § IV.
 
+[Page 12]
 Gaining a card ◄
 Page 20► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Gaining a card
@@ -923,6 +935,7 @@ chooses whether to use a Way.
 You may resolve Reactions even if the Attack doesn’t
 affect you (such as when you have a Lighthouse in play).
 
+[Page 13]
 Reaction cards ◄
 Page 21► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Several Reactions, like Sheepdog, let you play the
@@ -999,6 +1012,7 @@ The Reaction card Market Square has a when-trash
 ability. See CARD ABILITIES and BASIC TIMING RULES for
 more about abilities.
 
+[Page 14]
 Basic timing rules ◄
 Page 22► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Before-play abilities trigger when another card
@@ -1084,6 +1098,7 @@ Horse Traders has a play ability and a before-play
 ability. The before-play ability sets up a later abil-
 ity (at start-of-turn).
 
+[Page 15]
 Basic timing rules ◄
 Page 23► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 When-would abilities trigger when you are
@@ -1170,6 +1185,7 @@ Merchant Guild (prior to 2nd Edition) has an ongoing
 ability that lasts as long as it’s in play and which
 consists of enabling its when-buy ability.
 
+[Page 16]
 Advanced timing rules ◄
 Page 24► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Advanced timing rules
@@ -1265,6 +1281,7 @@ Secret Chamber 4, Sheepdog 2+5, Sleigh 5–6, Stowaway
 5–6, Trader (2020 version) 8–9, Watchtower 5–6 and Way
 of the Mouse 12 in the CARD REFERENCE § VI.
 
+[Page 17]
 Advanced timing rules ◄
 Page 25► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 If a card with a while-in-play ability enters play while
@@ -1375,6 +1392,7 @@ back to the Supply, so both Innovation and Watchtower
 lose track of it. (Whichever you choose, that ability will
 move the card so that the others lose track of it.)
 
+[Page 18]
 Advanced timing rules ◄
 Page 26► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Example 4: You have a Watchtower in hand, and gain a
@@ -1404,6 +1422,7 @@ card if you resolve another when-gain ability first
 (see example 3 above). This means Innovation can’t
 move or play that card. (This is the 2022 version.)
 
+[Page 19]
 New editions and errata ◄
 Page 27► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 IV. GAME RULES: ADDITIONAL RULES
@@ -1501,6 +1520,7 @@ your turn; see COFFERS AND VILLAGERS. The rule for dis-
 carding down to x cards in hand was changed; see
 BASIC TIMING RULES: WHEN-DISCARD ABILITIES.
 
+[Page 20]
 New editions and errata ◄
 Page 28► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 2023 errata: 6 cards were changed to prevent
@@ -1570,6 +1590,7 @@ The Duration card Fishing Village sets up a start-of-
 turn ability. See CARD ABILITIES § III and BASIC TIMING
 RULES § III for more about abilities.
 
+[Page 21]
 Summary of your turn ◄
 Page 43► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Summary of your turn
@@ -1672,6 +1693,7 @@ hand.
 You may order them first.
  When-discard abilities
 
+[Page 22]
 Summary of player activities ◄
 Page 44► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Trash card(s)
@@ -1788,6 +1810,7 @@ ability twice. Having a “+” Adventures token on such a
 pile only gives you the bonus when you play the card.
  Commonmistakes
 
+[Page 23]
 Card Reference ◄
 Page 59► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 the next Aristocrat you play will give you that
@@ -1877,6 +1900,7 @@ OF SOME CARDS for the pre-2019 version.
  Note: All the following also applies to Over-
 lord.
 
+[Page 24]
 Card Reference ◄
 Page 60► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 This version does not change itself to another
@@ -1966,6 +1990,7 @@ choose “next turn” at least once, both cards
 stay in play, and you’ll have to remember how
 many times you chose “next turn”.
 
+[Page 25]
 Card Reference ◄
 Page 65► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Bureaucrat p. 22
@@ -2056,6 +2081,7 @@ cards). At the end of that turn (after drawing
 your next hand if it’s your turn) you put the
 set-aside cards into your hand.
 
+[Page 26]
 Card Reference ◄
 Page 69► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 deck) are resolved after drawing 2 cards
@@ -2161,6 +2187,7 @@ can’t gain a card with in its cost, like Vine-
 yard or Daimyo; and you can’t Change an Es-
 tate into a Pawn or a Scrying Pool).
 
+[Page 27]
 Card Reference ◄
 Page 70► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Similarly, the you get is based on the cost
@@ -2255,6 +2282,7 @@ OF SOME CARDS for the pre-2022 version.
 SEVERAL OPTIONS (two): +Buy and + ; or SET
 UP A LATER ABILITY for this turn.
 
+[Page 28]
 Card Reference ◄
 Page 75► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 it produces even though it’s REMOVED FROM
@@ -2347,6 +2375,7 @@ Coven
 You get the initial +1 Action and + even if
 there are no Curses left in the Supply.
 
+[Page 29]
 Card Reference ◄
 Page 90► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 If you reveal Patron (to get +1 Coffers), you have to
@@ -2442,6 +2471,7 @@ This SETS UP A LATER ABILITY for next turn.
 Figurine p. 45
 See “DO X FOR”.
 
+[Page 30]
 Card Reference ◄
 Page 91► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 If you play this in the second part of your Buy
@@ -2537,6 +2567,7 @@ replay that card multiple times. (Throne Room
 + Flagship means you will play the next card
 three times total.)
 
+[Page 31]
 Card Reference ◄
 Page 95► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Clarification: If all your opponents block it
@@ -2631,6 +2662,7 @@ Clarification: See TRIGGERED ABILITY (playing Garri-
 son on when-gain, you add a token). Also see Gondola
 9 and Innovation 9.
 
+[Page 32]
 Card Reference ◄
 Page 100► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 If you react with Guard Dog (or for instance
@@ -2720,6 +2752,7 @@ Hammer (see Loot)
 Gain a card; see CARD COSTS.
 Harbinger
 
+[Page 33]
 Card Reference ◄
 Page 101► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Harbor Village p. 38, 170, 178, 181
@@ -2825,6 +2858,7 @@ and therefore can’t play it next turn. (With the
 expanded “lose track” rule from 2021, cards
 that are lost track of can’t be played.)
 
+[Page 34]
 Card Reference ◄
 Page 113► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 From rulebook: Only the player who removes
@@ -2920,6 +2954,7 @@ Clarification: If you play Landing Party with-
 out moving it into play (see PLAY A CARD
 WHILE LEAVING IT), you get +2 Cards and
 
+[Page 35]
 Card Reference ◄
 Page 114► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 +2 Actions, but Landing Party’s ability loses
@@ -3025,6 +3060,7 @@ Each time you play a Leprechaun, check how
 many CARDS YOU HAVE IN PLAY (including the
 Leprechaun). (EFFECTS ARE IMMEDIATE.)
 
+[Page 36]
 Card Reference ◄
 Page 115► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 If there are no Golds left in the Supply, you
@@ -3124,6 +3160,7 @@ plays an Attack, if you play Lighthouse on before-
 play, you’re protected. See Way of the Mouse 11.
 Litter
 
+[Page 37]
 Card Reference ◄
 Page 118► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
  Also see Berserker 7, Cauldron 3, Fool’s Gold 7, Haunted
@@ -3216,6 +3253,7 @@ no other players can see it. This is not gaining
 a card, so no when-gain abilities will trig-
 ger.
 
+[Page 38]
 Card Reference ◄
 Page 119► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 All players pass cards simultaneously. You
@@ -3311,6 +3349,7 @@ lative if played with a throne-room. Also, it
 counts all gained (not just bought) cards, but
 only in your Buy phase.
 
+[Page 39]
 Card Reference ◄
 Page 120► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Merchant Guild was changed because of the new 2022
@@ -3412,6 +3451,7 @@ Action phase. See ACTIONS IN YOUR BUY
 PHASE (second part of Buy phase). Also see
 Crown 6 and Highwayman 6.
 
+[Page 40]
 Card Reference ◄
 Page 122► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Moat p. 21, 21, 23, 35, 38
@@ -3504,6 +3544,7 @@ or all of it this turn.
 ability (instead of after-turn). This version is not dis-
 cussed here, since it was never printed.
 
+[Page 41]
 Card Reference ◄
 Page 129► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Pirate Ship p. 20, 30
@@ -3595,6 +3636,7 @@ Keep track of which piles you have gained
 from already in case when-gain abilities
 trigger. (See TRIGGERED ABILITY.)
 
+[Page 42]
 Card Reference ◄
 Page 135► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
  Also see Divine Wind 15 and Possession 5.
@@ -3694,6 +3736,7 @@ Remodel p. 19, 46
 “REMODEL” a card into a card that costs up to
 more.
 
+[Page 43]
 Card Reference ◄
 Page 136► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Renown p. 23, 42, 179, see Reward: p. 7, 9
@@ -3788,6 +3831,7 @@ Trail, Tunnel, Village Green or Weaver via gaining a
 card with River Shrine, the when-discard ability
 doesn’t trigger, since it’s your Clean-up phase.
 
+[Page 44]
 Card Reference ◄
 Page 143► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 If you react with for instance Caravan Guard
@@ -3880,6 +3924,7 @@ You can first trash Cabin Boy, then gain it
 back with Shaman.
  Also see Divine Wind 12+14.
 
+[Page 45]
 Card Reference ◄
 Page 146► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 See MOVE GAINED CARD and TRIGGERED ABIL-
@@ -3979,6 +4024,7 @@ Each time you play a Soldier, check the
 CARDS YOU HAVE IN PLAY. (EFFECTS ARE IM-
 MEDIATE.)
 
+[Page 46]
 Card Reference ◄
 Page 153► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Also see SPLIT PILES: PILE TYPE AND COST § IV.
@@ -4074,6 +4120,7 @@ chant Camp, Page, Panic, Peasant, Scheme,
 Tent, Trickster, Way of the Frog, or the pre-
 2022 versions of Alchemist, Hermit, Treasury
 
+[Page 47]
 Card Reference ◄
 Page 159► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 If you play the gained Mercenary via Innovation (or
@@ -4169,6 +4216,7 @@ choose to use Village Green’s Reaction ability
 to play it, you cannot also play it with Vassal.
 This is due to the expanded “lose track” rule from 2021.
 
+[Page 48]
 Card Reference ◄
 Page 167► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
 Clarification: After the 2022 rules change, you may

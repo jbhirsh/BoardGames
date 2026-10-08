@@ -1,7 +1,9 @@
+[Page 1]
 Klaus Teuber
 Game RulesGame Rules
 && almanacalmanac
 
+[Page 2]
 22
 Game Rules
 Except where noted below, Catan: Cities & Knights (aka “Cities
@@ -75,6 +77,7 @@ Catan pieces before
 you start—you don’t
 need them in C&K.
 
+[Page 3]
 33
 You use the development flip-charts to track the city
 improvements that you purchase. Each page of the flip-chart
@@ -163,6 +166,7 @@ Illustration C
 KniGhts
 Inactive Active
 
+[Page 4]
 44
 settinG up the Game
 Sort the resource cards into 5 stacks, 1 for each resource. Place
@@ -248,6 +252,7 @@ beside the board.
 Place the barbarian
 ship here.
 
+[Page 5]
 55
 turn overvieW
 The player who placed the last city takes the first turn;
@@ -365,6 +370,7 @@ Cities Produce
 Resource &
 Commodity Cards
 
+[Page 6]
 66
 Trading and Building
 In Cities & Knights, you are allowed to build and trade any
@@ -466,6 +472,7 @@ Value = 2
 miGhtY KniGht
 Value = 3
 
+[Page 7]
 77
 Commodities
 In Cities & Knights, we’ve added 3 new, “refined” materials to
@@ -544,6 +551,7 @@ Illustration I
 3 Commodity Card Types
 Illustration J
 
+[Page 8]
 88
 Each die shows a number. If the event die roll shows a city gate,
 you may draw a progress card of like color—but only if the
@@ -629,6 +637,7 @@ at least one more city.
 Illustration K
 Illustration L 3 City Improvements
 
+[Page 9]
 99
 proGress Cards
 In Cities & Knights,
@@ -751,6 +760,7 @@ Trade Politics Science
 Illustration N
 BB AA
 
+[Page 10]
 1010
 an action and then be activated again later on the same turn
 (although this knight cannot perform another action on the
@@ -857,6 +867,7 @@ AA
 CC
 BB
 
+[Page 11]
 1111
 When the ship reaches the red-circled space that depicts
 barbarians landing on the shore,
@@ -944,6 +955,7 @@ DEFENDER OF CATAN
 Victory Point Card
 (Back & Front)
 
+[Page 12]
 1212
 Losing Your Last City
 If you are unfortunate enough to have your last city
@@ -1164,6 +1176,7 @@ Merchant Card
 (Front & Back)
 Merchant Piece
 
+[Page 13]
 1313
 variants and optional rules
 These rules are strictly optional and should only be used if
@@ -1254,6 +1267,7 @@ hex to the
 “4” hex.
 Illustration R
 
+[Page 14]
 1414
 Inventor (2)
 Switch two number tokens of
@@ -1377,6 +1391,7 @@ you may upgrade one of your
 settlements into a city.
 MEDICINE
 
+[Page 15]
 1515
 Mining (2)
 Collect 2 ore cards for each
@@ -1457,6 +1472,7 @@ cannot be stolen by a spy.
 City Development Generates
 Progress Card Production
 
+[Page 16]
 1616
 Bishop (2)
 Move the robber, following the
@@ -1593,6 +1609,7 @@ connected to one of your
 roads or lines of ships.
 INTRIGUE
 
+[Page 17]
 1717
 Saboteur (2)
 When you play this card, each
@@ -1738,6 +1755,7 @@ MERCHANT
 tRade
 caRds
 
+[Page 18]
 1818
 hex with the supply at a 2:1 rate (as is the case with a special
 harbor). As usual, you may also exchange these resources for
@@ -1843,6 +1861,7 @@ you 1.
 Studio™
 catanstudio.com catan.com
 
+[Page 19]
 1919
 almanaC index
 Entries Page
@@ -1897,6 +1916,7 @@ The badge below indicates what style of sleeves and the
 number of packs required to sleeve all of the cards in this CATAN
 expansion.
 
+[Page 20]
 2020
 settinG up the Game
 • Construct the frame around the board.

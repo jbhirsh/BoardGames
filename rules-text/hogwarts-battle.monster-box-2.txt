@@ -1,7 +1,10 @@
+[Page 1]
 
 
+[Page 2]
 
 
+[Page 3]
 Text version
 Harry Potter: Hogwarts Battle
 The Monster Box of Monsters Expansion
@@ -39,6 +42,7 @@ Gameplay proceeds with the same four steps from Box 1.
 STEP 1. Reveal and resolve Dark Arts events and the Encounter.
 Careful, the second Encounter effect will trigger every time a Villain control token is added.
 
+[Page 4]
 STEP 2. Resolve Creature and Villain abilities.
 Note: If you roll a one-heart or two-heart result, the Boggart will remove [Attack] and/or [Influence] from ALL
 Creatures, including itself.

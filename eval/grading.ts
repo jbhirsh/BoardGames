@@ -1,7 +1,7 @@
 // Pure grading and scorecard logic for the rules-assistant eval harness.
 // No I/O in this module — everything here is unit-tested from src/__tests__.
 
-export const MATCH_TYPES = ['exact', 'contains', 'regex', 'judge'] as const;
+export const MATCH_TYPES = ['exact', 'contains', 'regex', 'judge', 'citation'] as const;
 
 export type MatchType = (typeof MATCH_TYPES)[number];
 
@@ -115,6 +115,23 @@ export function gradeRegex(pattern: string, answer: string): boolean {
   return new RegExp(pattern, 'i').test(answer);
 }
 
+// A page citation, "(p. 4)" or "(Europe p. 4)", as the assistant is asked to
+// write them and the chat links them (src/utils/rulebooks.ts).
+const CITATION = /\([^()\n]{0,80}?\bp\.\s?\d{1,4}\)/g;
+
+/** The answer's page citations, brackets and all. */
+export function citations(answer: string): string[] {
+  return answer.match(CITATION) ?? [];
+}
+
+/**
+ * The answer without its page citations, for grading what it says: "unused
+ * stations score 2 points (Europe p. 4)" must not pass a check for 4.
+ */
+export function withoutCitations(answer: string): string {
+  return answer.replace(CITATION, '');
+}
+
 export interface JudgeVerdict {
   verdict: 'PASS' | 'FAIL';
   reason: string;
@@ -208,7 +225,7 @@ export function gradeAnswer(
 ): { passed: boolean; reason: string } {
   switch (entry.matchType) {
     case 'exact': {
-      const passed = gradeExact(entry.expected, answer);
+      const passed = gradeExact(entry.expected, withoutCitations(answer));
       return {
         passed,
         reason: passed
@@ -217,19 +234,28 @@ export function gradeAnswer(
       };
     }
     case 'contains': {
-      const passed = gradeContains(entry.expected, answer);
+      const passed = gradeContains(entry.expected, withoutCitations(answer));
       return {
         passed,
         reason: passed ? 'answer contains expected text' : 'answer does not contain expected text',
       };
     }
     case 'regex': {
-      const passed = gradeRegex(entry.expected, answer);
+      const passed = gradeRegex(entry.expected, withoutCitations(answer));
       return {
         passed,
         reason: passed
           ? 'answer matches expected pattern'
           : 'answer does not match expected pattern',
+      };
+    }
+    case 'citation': {
+      // The pattern is matched against each citation on its own, so an
+      // anchored pattern can pin the whole of one.
+      const passed = citations(answer).some((c) => gradeRegex(entry.expected, c));
+      return {
+        passed,
+        reason: passed ? 'a citation matches the expected pattern' : 'no citation matches the expected pattern',
       };
     }
     case 'judge': {

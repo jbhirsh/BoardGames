@@ -767,6 +767,8 @@ a.rules-chat-toggle{text-decoration:none;}
 .rules-chat-bubble li{margin-bottom:2px;}
 .rules-chat-bubble strong{font-weight:600;}
 .rules-chat-bubble code{background:var(--code-bg);padding:1px 4px;border-radius:3px;font-size:13px;}
+/* Page citations: the site's link blue, underlined in running text. */
+.rules-chat-bubble a{color:var(--blue);text-underline-offset:2px;}
 .rules-chat-msg-user .rules-chat-bubble{background:var(--blue-fill);color:var(--on-fill);border-bottom-right-radius:4px;}
 .rules-chat-msg-assistant .rules-chat-bubble{background:var(--bg2);color:var(--text);border-bottom-left-radius:4px;}
 

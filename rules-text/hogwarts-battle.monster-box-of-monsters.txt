@@ -1,17 +1,25 @@
+[Page 1]
 
 
+[Page 2]
 
 
+[Page 3]
 
 
+[Page 4]
 
 
+[Page 5]
 
 
+[Page 6]
 
 
+[Page 7]
 
 
+[Page 8]
 Text version
 Harry Potter: Hogwarts Battle
 The Monster Box of Monsters Expansion
@@ -49,6 +57,7 @@ INFORMATION ON CREATURE CARDS
 Example: FLUFFY, Creature, Box 1. Ability: "For each Item in hand active Hero chooses one: Lose 1 [Health]; or
 discard a card." Reward: "All Heroes gain 1 [Health] and draw a card." Health 8.
 
+[Page 9]
 1. Creature Name.
 2. Box Identifier.
 3. Creature Ability.
@@ -89,6 +98,7 @@ only one [Influence] can be placed on a Creature each turn. For example, Norbert
 - Use [Influence] to acquire new cards.
 You may not use the [Influence] assigned to Creatures to also acquire HOGWARTS cards.
 
+[Page 10]
 STEP 4. End your turn.
 The first Encounter, Peskipiksi Pesternomi, limits the number of cards a Hero can draw at the end of their turn, if
 they have 4 [Health] or less. However, if the active Hero was stunned, their Health would first reset to 10 and then
@@ -130,6 +140,7 @@ NEW HERO CARDS
 Included in Box 1 are new Hero cards, which you may choose to use instead of the HOGWARTS BATTLE Game
 7 Hero cards.
 
+[Page 11]
 LUNA LOVEGOOD CARDS
 Luna's Items play a little differently. The Spectrespecs allows you to peek at the top Dark Arts event card and
 choose whether or not to discard it, so that it won't be resolved on the next Hero's turn. The Lion Hat works in

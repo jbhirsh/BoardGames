@@ -135,6 +135,39 @@ export function mentionedRulebooks(answer: string, game: Game, shown: Rulebook):
   );
 }
 
+// "(p. 5)" or "(Cities And Knights p. 5)": the assistant's page citations
+// (api/_lib/rulesAssistant.ts asks for them), the page being the [Page N]
+// marker in the rules text, which is the PDF's own page.
+const CITATION = /\(([^()\n]{0,80}?)\bp\.\s?(\d{1,4})\)/g;
+
+/** A citation's rulebook name as said, without "see" before it or "rulebook" after. */
+function citedName(text: string): string {
+  return words(text).replace(/^ see /, ' ').replace(/ (rulebook|rules) $/, ' ');
+}
+
+/**
+ * An answer's page citations as links to that page of the rulebook they
+ * cite. The assistant names the rulebook whenever it was sent more than one
+ * (a deck's games are all on their page 1, so "p. 1" alone says nothing);
+ * a bare "(p. 5)" is the game's own rulebook only when it was the one sent.
+ * A name is a sent rulebook's tab label, game name or the server's name for
+ * it (its part, or the game's slug for the game's own), and may carry the
+ * game's name before it: "Ticket to Ride Europe" is Europe. A name it
+ * wasn't sent stays plain text, as does anything else in parentheses.
+ */
+export function linkCitations(answer: string, game: Game, shown: Rulebook): string {
+  const read = new Set(chatParts(game, shown));
+  const sent = rulebooks(game).filter((b) => b.part === undefined || read.has(b.part));
+  const names = (b: Rulebook) => [b.label, b.name, b.part ?? game.slug].map(words);
+  return answer.replace(CITATION, (whole, name: string, page: string) => {
+    const said = citedName(name);
+    const book = said.trim() === ''
+      ? (sent.length === 1 ? sent[0] : undefined)
+      : sent.find((b) => names(b).some((n) => said.endsWith(n)));
+    return book ? `([${whole.slice(1, -1)}](${book.pdf}#page=${page}))` : whole;
+  });
+}
+
 /** A table size to ask about: four where the game seats four, else the nearest it does. */
 function seats(t: { min: number; max: number }): string {
   const n = Math.min(Math.max(4, t.min), t.max);

@@ -1,3 +1,4 @@
+[Page 1]
 A game created by Thierry Denoual. © 2007
 Game created by Thierry Denoual. © 2011.
 All rights reserved for all countries.
@@ -7,6 +8,7 @@ Contents:
 24 Answer Cards
 Illustrated Rules
 
+[Page 2]
 IntRoDUCtIon:
 Welcome to the hilarious and surprising world
 of Analyze Me!
@@ -31,6 +33,7 @@ The player who has the nicest smile kicks off
 the game as the “Shrink Apprentice” for the first
 round.
 
+[Page 3]
 The Shrink Apprentice chooses a Question Card
 from 1 of the following 4 categories:
 The Shrink Apprentice reads the question and
@@ -59,6 +62,7 @@ their actual answers.
 • Work Life • Social Life
 • Private Life
 
+[Page 4]
 Winning a Card:
 In order to win a question card, the Shrink
 Apprentice must answer some or all correctly,
