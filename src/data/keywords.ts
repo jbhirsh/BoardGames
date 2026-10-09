@@ -12,7 +12,7 @@ export const KW: Record<KeywordId, string> = {
   'team': 'Team',
   'party': 'Party',
   'adult': 'Adult',
-  'active': 'Active / Physical',
+  'active': 'Physical',
   'creative': 'Creative',
   'card-game': 'Card Game',
   'word': 'Word',
