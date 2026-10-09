@@ -421,3 +421,25 @@ describe('sortedKw', () => {
     expect(kw).toEqual(['word', 'family']);
   });
 });
+
+describe('weight sort', () => {
+  const a = { ...quickGame, name: 'A', weight: 2.4 };
+  const b = { ...mediumGame, name: 'B', weight: 1.2 };
+  const c = { ...longGame, name: 'C', weight: 1.2 };
+  const unknown = { ...longGame, name: 'Unknown' };
+  const card = { slug: 'x', kind: 'card-game' as const, players: '2', min: 2, max: 2, dur: '5 min', mins: 5, cat: 'quick' as const, short: '', yt: '' };
+  // A deck spanning 1.1 to 3.0: lightest first it is a 1.1, heaviest first a 3.0.
+  const deck: Game = {
+    ...mediumGame, name: 'Deck',
+    subgames: [{ ...card, name: 'Snap', weight: 1.1 }, { ...card, name: 'Bridge', weight: 3 }],
+  };
+  const names = (list: Game[]) => list.map((g) => g.name);
+
+  it('puts the lightest first, ties by name, a deck by its lightest game and unknowns last', () => {
+    expect(names(sortGames([unknown, a, deck, c, b], 'weight-asc'))).toEqual(['Deck', 'B', 'C', 'A', 'Unknown']);
+  });
+
+  it('puts the heaviest first, a deck by its heaviest game, unknowns still last', () => {
+    expect(names(sortGames([unknown, b, a, deck, c], 'weight-desc'))).toEqual(['Deck', 'A', 'B', 'C', 'Unknown']);
+  });
+});

@@ -26,6 +26,16 @@ function renderList(game: Game, url = '/') {
 
 const rows = () => screen.getAllByRole('listitem');
 
+// A deck's games carry their own difficulty; an add-on doesn't.
+describe('difficulty in the list', () => {
+  it('shows each game\'s own and nothing for an add-on', () => {
+    const deck = { ...deckGame, subgames: [{ ...deckGame.subgames![0], weight: 1.1 }, deckGame.subgames![1]] };
+    renderList(deck);
+    expect(within(rows()[0]).getByText(/Light · 1\.1/)).toHaveTextContent('Difficulty: Light · 1.1');
+    expect(within(rows()[1]).queryByText(/Difficulty/)).not.toBeInTheDocument();
+  });
+});
+
 const listeners: EventListener[] = [];
 afterEach(() => {
   for (const l of listeners.splice(0)) document.removeEventListener('click', l);

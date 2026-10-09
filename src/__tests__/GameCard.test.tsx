@@ -22,6 +22,25 @@ describe('GameCard', () => {
     expect(screen.getByText('Quick Game')).toBeInTheDocument();
   });
 
+  it('shows how hard it is to learn beside the players and time', () => {
+    renderWithContext(<GameCard game={{ ...quickGame, weight: 2.31 }} />);
+    expect(screen.getByText(/Medium · 2\.3/)).toHaveTextContent('Difficulty: Medium · 2.3');
+  });
+
+  it('shows a deck\'s difficulty as the span of its games', () => {
+    const deck = { ...deckGame, subgames: [
+      { ...deckGame.subgames![0], weight: 1.1 },
+      { ...deckGame.subgames![1], weight: 1.2 },
+    ] };
+    renderWithContext(<GameCard game={deck} />);
+    expect(screen.getByText(/Light · 1\.1–1\.2/)).toBeInTheDocument();
+  });
+
+  it('shows no difficulty when none is known', () => {
+    renderWithContext(<GameCard game={quickGame} />);
+    expect(screen.queryByText(/Difficulty/)).not.toBeInTheDocument();
+  });
+
   it('renders the player count and duration', () => {
     renderWithContext(<GameCard game={quickGame} />);
     expect(screen.getByText('2–4')).toBeInTheDocument();

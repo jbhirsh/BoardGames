@@ -7,6 +7,7 @@ import { rulebookPath } from '../utils/rulebooks';
 import { fittingSubgames, shownKind, subgameNoun } from '../utils/subgames';
 import { YouTubeIcon, AiRulesIcon, UserIcon, ClockIcon } from './Icons';
 import AwardsBadge from './AwardsBadge';
+import DifficultyMeta from './DifficultyMeta';
 
 interface Props {
   game: Game & { subgames: NonNullable<Game['subgames']> };
@@ -47,6 +48,7 @@ function SubGameRow({ parent, sub }: { parent: string; sub: SubGame }) {
         <span className="sub-meta">
           <span className="cmeta"><UserIcon /> {sub.players}</span>
           <span className="cmeta"><ClockIcon /> {sub.dur}</span>
+          <DifficultyMeta item={sub} />
           <AwardsBadge itemName={sub.name} awards={sub.awards ?? []} />
         </span>
         <p className="sub-short">{sub.short}</p>

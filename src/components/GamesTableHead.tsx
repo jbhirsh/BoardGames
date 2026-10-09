@@ -3,12 +3,16 @@ import { useFilter } from '../context/useFilter';
 
 /** Columns the shared header renders on its own; a list's `extra` adds to it. */
 export const TABLE_COLUMNS = 6;
+/** The collection's columns: the shared ones and its difficulty column. */
+export const COLLECTION_COLUMNS = TABLE_COLUMNS + 1;
 
 /**
  * The column headers both list views share. Name, players and duration sort
- * on click; `extra` slots any list-specific column in before the actions.
+ * on click; `difficulty` adds the collection's sortable difficulty column
+ * after duration, and `extra` slots any list-specific column in before the
+ * actions.
  */
-export default function GamesTableHead({ extra }: { extra?: ReactNode }) {
+export default function GamesTableHead({ extra, difficulty = false }: { extra?: ReactNode; difficulty?: boolean }) {
   const { state, dispatch } = useFilter();
 
   function thClass(col: string, base = '') {
@@ -35,6 +39,7 @@ export default function GamesTableHead({ extra }: { extra?: ReactNode }) {
         {sortable('name', 'Name')}
         {sortable('players', 'Players', 'col-hide col-players-h')}
         {sortable('dur', 'Duration', 'col-dur-h')}
+        {difficulty && sortable('weight', 'Difficulty', 'col-hide col-diff-h')}
         <th className="col-hide col-desc">Description</th>
         <th className="col-hide col-tags">Tags</th>
         {extra}

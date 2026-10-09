@@ -105,6 +105,19 @@ describe('filterReducer', () => {
     expect(filterReducer(byVotes, { type: 'SET_COLLECTION', payload: 'want' }).sort).toBe('votes');
   });
 
+  it('drops a difficulty sort on the way to the wishlist, which has no difficulty', () => {
+    const byWeight = filterReducer({ ...initialFilterState, baseSort: 'group', sort: 'group' }, { type: 'SET_COLUMN_SORT', payload: 'weight' });
+    expect(byWeight.sort).toBe('weight-asc');
+    const want = filterReducer(byWeight, { type: 'SET_COLLECTION', payload: 'want' });
+    expect(want.collection).toBe('want');
+    expect(want.sort).toBe('group');
+    // Staying with the collection keeps it.
+    expect(filterReducer(byWeight, { type: 'SET_COLLECTION', payload: 'own' }).sort).toBe('weight-asc');
+    // Any other column sort comes along.
+    const byName = filterReducer(initialFilterState, { type: 'SET_COLUMN_SORT', payload: 'name' });
+    expect(filterReducer(byName, { type: 'SET_COLLECTION', payload: 'want' }).sort).toBe('name-asc');
+  });
+
   it('HYDRATE replaces the state with the payload verbatim', () => {
     const payload: FilterState = {
       duration: 60,

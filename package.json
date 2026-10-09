@@ -13,6 +13,7 @@
     "depcruise": "depcruise src api e2e",
     "preview": "vite preview",
     "eval": "node eval/run-eval.ts",
+    "game-weights": "node scripts/fetch-game-weights.ts",
     "wishlist-art": "node scripts/fetch-wishlist-art.ts",
     "rules-text-layer": "node scripts/add-text-layer.mjs",
     "test:mutation": "stryker run",
