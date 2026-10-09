@@ -50,6 +50,11 @@ export function filterReducer(state: FilterState, action: FilterAction): FilterS
         const sort = state.sort === 'votes' ? initialFilterState.sort : state.sort;
         return { ...state, collection: 'own', sort, baseSort: initialFilterState.sort };
       }
+      // The wishlist has no difficulty to sort by (nor the column to show
+      // it): a difficulty sort goes back to the order it was on.
+      if (action.payload === 'want' && state.sort.startsWith('weight-')) {
+        return { ...state, collection: 'want', sort: state.baseSort };
+      }
       return { ...state, collection: action.payload };
     case 'HYDRATE':
       return action.payload;

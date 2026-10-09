@@ -48,6 +48,10 @@ export interface SubGame {
   cat: DurationCategory;
   short: string;
   yt: string;
+  /** As a game's (see Filterable). */
+  bgg?: number;
+  /** As a game's (see Filterable); a deck's games and versions have one, add-ons don't. */
+  weight?: number;
   /** Absent when no rulebook is bundled (the rules came in the box). */
   rules?: string;
   /** The tab for `rules`; the sub-game's name when absent. */
@@ -79,6 +83,19 @@ export interface Filterable {
   mins: number;
   cat: DurationCategory;
   kw: KeywordId[];
+  /**
+   * BoardGameGeek id. A game's difficulty is BGG's weight for it
+   * (`npm run game-weights`); a compiled-in wishlist entry's box art is
+   * fetched by it (`npm run wishlist-art`).
+   */
+  bgg?: number;
+  /**
+   * How heavy it is to learn: BoardGameGeek's community weight, 1 (light)
+   * to 5 (heavy), set from `bgg` (src/data/gameWeights.ts, never typed in);
+   * shown as Light, Medium or Heavy with the number. Absent where BGG has
+   * no rating, and on a deck, whose games each carry their own.
+   */
+  weight?: number;
   /** Games inside this one; the filters match the item when it or any of these fits. */
   subgames?: SubGame[];
 }
@@ -121,8 +138,6 @@ export interface Award {
 
 export interface WishlistItem extends Filterable {
   id: string;
-  /** BoardGameGeek id of a compiled-in entry; `npm run wishlist-art` fetches its box art by this. */
-  bgg?: number;
   yt: string;
   players: string;
   type: WishlistType;
@@ -152,7 +167,8 @@ export type DurationFilter = 'all' | TimeBudget;
 export type SortMode = 'az' | 'group' | 'quick' | 'long' | 'votes'
   | 'name-asc' | 'name-desc'
   | 'dur-asc' | 'dur-desc'
-  | 'players-asc' | 'players-desc';
+  | 'players-asc' | 'players-desc'
+  | 'weight-asc' | 'weight-desc';
 export type ViewMode = 'grid' | 'list';
 /** Which list the filter bar drives: the games we own or the ones we want. */
 export type CollectionMode = 'own' | 'want';

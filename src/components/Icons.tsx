@@ -51,6 +51,19 @@ export function UserIcon() {
   );
 }
 
+/**
+ * A dial: how heavy a game is to learn. Three quarters of the clock's circle,
+ * so it fills its box as the icons beside it do.
+ */
+export function GaugeIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+      <path d="M4.1 11.9a5.5 5.5 0 1 1 7.8 0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M8 8l2.5-2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function ClockIcon() {
   return (
     <svg width="12" height="12" viewBox="0 0 16 16" fill="none">

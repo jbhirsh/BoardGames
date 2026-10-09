@@ -131,6 +131,20 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   Both views share the filter bar: `FilterState.collection` (`'own' | 'want'`,
   mirrored to the URL as `c=want`) picks which list the section renders and
   which one the keyword counts tally; `CLEAR_ALL` keeps the mode.
+  A game's difficulty is BoardGameGeek's community weight (1 light to 5
+  heavy), never typed in: each game, and each card game or version inside
+  one, carries its BGG id (`bgg`), `npm run game-weights`
+  (`scripts/fetch-game-weights.ts`) fetches the weights by id from BGG's
+  public item endpoint (no token) into the generated
+  `src/data/gameWeights.ts`, and `games.ts` sets `weight` from it. Something
+  BGG doesn't rate (no id, or `null` in the map) shows no difficulty; a deck
+  has none of its own, and an add-on, learned on top of its game, has no id.
+  The data test holds all of this: it fails on an id the script hasn't
+  fetched and on a weight with no id behind it, and `games.ts` replaces any
+  other typed weight with BGG's.
+  Cards, sub-game lists and the collection table's Difficulty column (it
+  sorts, and hides under 1080px where the table has no room) read
+  "Medium · 2.3", a deck as the span of its games (`utils/difficulty.ts`).
 - **`context/`** — filtering state. `FilterContext` holds a `useReducer` store
   (`filterReducer.ts`); `useFilter.ts` is the consumer hook; `useFilterUrlSync.ts`
   keeps filter state mirrored to the URL query string so views are shareable.
@@ -186,7 +200,8 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
 - **`utils/`** — pure helpers (`filterGames.ts`, `pickRandom.ts`, `filterUrl.ts`,
   `urls.ts`, `shortDesc.ts`, `subgames.ts`, `rulebooks.ts`, `pdfSearch.ts`,
   `fileSize.ts`, `sevenWonders.ts`, the score pad's arithmetic: science,
-  standings with the coins tie-break; `offline.ts`, the service worker's
+  standings with the coins tie-break; `difficulty.ts`, the Light/Medium/
+  Heavy words for a weight; `offline.ts`, the service worker's
   routing and byte ranges). Keep these free of React and side effects.
 - **`sw/sw.ts`** — the service worker, for game nights with no signal.
   `main.tsx` registers it in production builds only; the `serviceWorker()`
@@ -315,6 +330,10 @@ scan before extracting its text.
   `npm run wishlist-art` fetches each one's 200x200 box art by that id from
   the site's own item endpoint, which needs no token, into
   `public/images/wishlist/` and the generated `src/data/wishlistArt.ts`.
+  The collection's games carry their ids too, and `npm run game-weights`
+  reads each one's community weight from the site's no-token stats endpoint
+  (`api.geekdo.com/api/dynamicinfo`) into the generated
+  `src/data/gameWeights.ts` (the cards' difficulty).
 
 ## Environment variables
 

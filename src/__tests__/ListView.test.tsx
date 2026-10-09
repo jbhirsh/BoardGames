@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import ListView from '../components/ListView';
+import { sortGames } from '../utils/filterGames';
 import { FilterProvider } from '../context/FilterContext';
 import { useFilter } from '../context/useFilter';
 import { GAMES } from '../data/games';
@@ -22,6 +23,23 @@ describe('ListView', () => {
     for (const game of GAMES) {
       expect(screen.getByText(game.name)).toBeInTheDocument();
     }
+  });
+
+  it('has a difficulty column that sorts lightest first, then heaviest', () => {
+    renderListView();
+    const header = screen.getByRole('columnheader', { name: /Difficulty/ });
+    const firstRowName = () => screen.getAllByRole('row')[1].querySelector('span.col-name')!.textContent;
+    fireEvent.click(header);
+    // The order is sortGames' (tested on its own), a deck placed by its games.
+    expect(firstRowName()).toBe(sortGames(GAMES, 'weight-asc')[0].name);
+    expect(header).toHaveClass('sort-asc');
+    fireEvent.click(header);
+    expect(firstRowName()).toBe(sortGames(GAMES, 'weight-desc')[0].name);
+    expect(header).toHaveClass('sort-desc');
+    // Each game's row reads its weight.
+    const catan = GAMES.find((g) => g.slug === 'catan')!;
+    const row = screen.getAllByRole('row').find((r) => r.querySelector('span.col-name')?.textContent === 'Catan')!;
+    expect(within(row).getByText(`Medium · ${catan.weight!.toFixed(1)}`)).toBeInTheDocument();
   });
 
   it('renders sortable column headers', () => {

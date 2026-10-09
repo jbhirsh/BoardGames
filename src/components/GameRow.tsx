@@ -2,7 +2,7 @@ import { Link } from 'react-router';
 import type { Game } from '../data/types';
 import { ytURL, rulesURL } from '../utils/urls';
 import { AwardsList } from './AwardsBadge';
-import { TABLE_COLUMNS } from './GamesTableHead';
+import { COLLECTION_COLUMNS } from './GamesTableHead';
 import TableRowCells, { TableRowExpand } from './TableRowCells';
 import SubGameList from './SubGameList';
 import SubGamesTag from './SubGamesTag';
@@ -36,11 +36,12 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
           awards={game.awards}
           groupBadge={showGroupBadge ? game.group : undefined}
           subTag={game.subgames && <SubGamesTag game={{ ...game, subgames: game.subgames }} />}
+          difficulty={game}
           isOpen={isOpen}
           onToggle={onToggle}
         />
       </tr>
-      <TableRowExpand colSpan={TABLE_COLUMNS} isOpen={isOpen}>
+      <TableRowExpand colSpan={COLLECTION_COLUMNS} isOpen={isOpen}>
         <div
           className="detail-section"
           dangerouslySetInnerHTML={{ __html: game.detail }}

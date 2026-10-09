@@ -9,6 +9,7 @@ import { sortedKw } from '../utils/filterGames';
 import KeywordPill from './KeywordPill';
 import AwardsBadge, { AwardsList } from './AwardsBadge';
 import SubGameList from './SubGameList';
+import DifficultyMeta from './DifficultyMeta';
 import Popover from './Popover';
 import { fittingSubgames, subgameLabel } from '../utils/subgames';
 import { rulesPathFor } from '../utils/rulebooks';
@@ -43,6 +44,7 @@ export default function GameCard({ game }: Props) {
           <span className="cmeta">
             <ClockIcon /> {game.dur}
           </span>
+          <DifficultyMeta item={game} />
         </div>
         <div className="card-kw">
           {sortedKw(game.kw).map((kw) => (

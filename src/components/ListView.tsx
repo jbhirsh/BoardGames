@@ -2,7 +2,7 @@ import { useState, Fragment } from 'react';
 import { useFilter } from '../context/useFilter';
 import { isGrouped } from '../utils/filterGames';
 import NoResults from './NoResults';
-import GamesTableHead, { TABLE_COLUMNS } from './GamesTableHead';
+import GamesTableHead, { COLLECTION_COLUMNS } from './GamesTableHead';
 import { GROUPS, GROUP_ORDER } from '../data/keywords';
 import GameRow from './GameRow';
 import type { GroupId } from '../data/types';
@@ -18,7 +18,7 @@ export default function ListView() {
   return (
     <div className="table-wrap">
       <table className="games-list">
-        <GamesTableHead />
+        <GamesTableHead difficulty />
         <tbody>
           {grouped
             ? GROUP_ORDER.map((groupId: GroupId) => {
@@ -27,7 +27,7 @@ export default function ListView() {
                 return (
                   <Fragment key={groupId}>
                     <tr className="list-group-row">
-                      <td colSpan={TABLE_COLUMNS}>{GROUPS[groupId]}</td>
+                      <td colSpan={COLLECTION_COLUMNS}>{GROUPS[groupId]}</td>
                     </tr>
                     {games.map((g) => (
                       <GameRow

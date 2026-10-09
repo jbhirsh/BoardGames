@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
-import type { Award, DurationCategory, KeywordId } from '../data/types';
+import type { Award, DurationCategory, Filterable, KeywordId } from '../data/types';
 import { useFilter } from '../context/useFilter';
 import { budgetFor, sortedKw } from '../utils/filterGames';
 import { isKeywordLit } from '../utils/keywordLit';
+import { difficultyOf } from '../utils/difficulty';
 import DurationPill from './DurationPill';
 import KeywordPill from './KeywordPill';
 import AwardsBadge from './AwardsBadge';
@@ -24,6 +25,11 @@ interface CellsProps {
   groupBadge?: string;
   /** A tag for the games this one holds (`SubGamesTag`), after the description. */
   subTag?: ReactNode;
+  /**
+   * The collection's difficulty column, after duration (`GamesTableHead`'s
+   * `difficulty`); left out entirely when absent, as in the wishlist.
+   */
+  difficulty?: Pick<Filterable, 'weight' | 'subgames'>;
   /** Any list-specific cell, slotted in before the actions cell to match `GamesTableHead`. */
   extra?: ReactNode;
   isOpen: boolean;
@@ -36,10 +42,11 @@ interface CellsProps {
  * the row click and any data attributes.
  */
 export default function TableRowCells({
-  name, players, cat, dur, mins, short, kw, awards, groupBadge, subTag, extra, isOpen, onToggle,
+  name, players, cat, dur, mins, short, kw, awards, groupBadge, subTag, difficulty, extra, isOpen, onToggle,
 }: CellsProps) {
   const { state, dispatch } = useFilter();
   const budget = budgetFor(mins);
+  const label = difficulty && difficultyOf(difficulty);
   // The add-ons tag and the award count close the description, on its last
   // line when there is room, so the name column holds only names. They go
   // in the description column and again in the copy folded under the name
@@ -74,6 +81,11 @@ export default function TableRowCells({
           />
         )}
       </td>
+      {difficulty && (
+        <td className="col-hide col-diff">
+          {label && <><span className="sr-only">Difficulty: </span>{label}</>}
+        </td>
+      )}
       <td className="col-hide col-short">{short} {badges}</td>
       <td className="col-hide col-tags col-kw">
         {sortedKw(kw).map((k) => (

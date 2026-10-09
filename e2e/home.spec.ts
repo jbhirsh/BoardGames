@@ -223,3 +223,50 @@ test('a cover on the hero shelf opens that game\'s rulebook', async ({ page }) =
   await expect(page).toHaveURL(/\/rules\/azul$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Azul' })).toBeVisible();
 });
+
+/** "Medium · 2.3", as utils/difficulty labels a BoardGameGeek weight: the word for the number shown. */
+function weightLabel(weight: number): string {
+  const shown = Math.round(weight * 10) / 10;
+  return `${weightWord(shown)} · ${shown.toFixed(1)}`;
+}
+
+function weightWord(weight: number): string {
+  if (weight < 2) return 'Light';
+  return weight < 3 ? 'Medium' : 'Heavy';
+}
+
+/** A deck's label: the span of its rated games' weights, "Light–Medium · 1.0–2.0". */
+function deckSpan(slug: string): string {
+  const weights = GAMES.find((g) => g.slug === slug)!.subgames!.flatMap((s) => (s.weight === undefined ? [] : [s.weight]));
+  const [lo, hi] = [weightLabel(Math.min(...weights)).split(' · '), weightLabel(Math.max(...weights)).split(' · ')];
+  const span = (a: string, b: string) => (a === b ? a : `${a}–${b}`);
+  return `${span(lo[0], hi[0])} · ${span(lo[1], hi[1])}`;
+}
+
+/** A game whose card label no other card shares, so the page shows it once. */
+function uniquelyLabelled() {
+  const labels = GAMES.flatMap((g) => (g.weight === undefined ? [] : [weightLabel(g.weight)]));
+  return GAMES.find((g) => g.weight !== undefined && labels.filter((l) => l === weightLabel(g.weight!)).length === 1)!;
+}
+
+/** Where the Difficulty sort puts a game: a deck by its lightest game going up, its heaviest going down. */
+function sortWeight(g: (typeof GAMES)[number], dir: 1 | -1): number {
+  const known = [g.weight, ...(g.subgames ?? []).map((s) => s.weight)].flatMap((w) => (w === undefined ? [] : [w]));
+  if (known.length === 0) return Infinity;
+  return dir === 1 ? Math.min(...known) : Math.max(...known);
+}
+
+test('each card shows BoardGameGeek\'s difficulty, and a deck the span of its games\'', async ({ page }) => {
+  await page.goto('/?v=grid');
+  const game = uniquelyLabelled();
+  await expect(page.getByText(`Difficulty: ${weightLabel(game.weight!)}`, { exact: true })).toBeVisible();
+  await expect(page.getByText(`Difficulty: ${deckSpan('card-deck')}`, { exact: true })).toBeVisible();
+});
+
+test('the list sorts by difficulty from its column header', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/?v=list');
+  await page.getByRole('columnheader', { name: /Difficulty/ }).click();
+  const lightest = [...GAMES].sort((a, b) => sortWeight(a, 1) - sortWeight(b, 1) || a.name.localeCompare(b.name))[0];
+  await expect(page.getByRole('row').nth(1)).toContainText(lightest.name);
+});
