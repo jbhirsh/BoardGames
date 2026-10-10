@@ -48,6 +48,13 @@ const PRECACHE_PUBLIC: Record<string, (file: string) => boolean> = {
   words: (file) => file.endsWith('.txt'),
 }
 
+// Session replay's chunk (src/instrument.ts fetches it after an error), left
+// out of the precache so an install doesn't fetch what most visits never run.
+// Once fetched, the service worker keeps it like any later chunk; offline it
+// fails to load, and replay could not upload then anyway.
+const NOT_PRECACHED = [fileURLToPath(new URL('./src/sentryReplay.ts', import.meta.url))]
+const REPLAY_CODE = /[\\/]node_modules[\\/](@sentry[\\/]replay|@sentry-internal[\\/]replay|@sentry-internal[\\/]rrweb|rrweb)[\\/-]/
+
 // The service worker (src/sw/sw.ts), bundled to /sw.js with the files it
 // saves at install, a version naming that saved copy (a hash of index.html
 // and every one of them, so a build that changes none keeps it) and a hash of
@@ -77,9 +84,24 @@ function serviceWorker(): Plugin {
       // A classic worker can't import: code shared with the app would be split
       // into a chunk sw.js imports, and registration would fail.
       if (sw.imports.length || sw.dynamicImports.length) throw new Error('sw.js must not share code with the app')
+      // Each must build to a chunk of its own: one folded into the main
+      // bundle (a static import of it, say) would be downloaded on every visit.
+      const lazy = Object.values(bundle).map((file) => file.type === 'chunk' && file.facadeModuleId)
+      const inlined = NOT_PRECACHED.filter((id) => !lazy.includes(id))
+      if (inlined.length) throw new Error(`not split into a chunk of its own: ${inlined.join(', ')}`)
+      // And replay's code (rrweb with it) must be in that chunk alone, not in
+      // the entry or a chunk shared with it: something else reaching for it
+      // statically (Sentry.getReplay, say) would pull all of it back in.
+      for (const [name, file] of Object.entries(bundle)) {
+        if (file.type !== 'chunk' || (file.facadeModuleId && NOT_PRECACHED.includes(file.facadeModuleId))) continue
+        const leaked = Object.entries(file.modules)
+          .filter(([id, module]) => REPLAY_CODE.test(id) && module.renderedLength > 0).map(([id]) => id)
+        if (leaked.length) throw new Error(`session replay's code is in ${name}: ${leaked.join(', ')}`)
+      }
       const files = new Map<string, string | Uint8Array>()
       for (const [name, file] of Object.entries(bundle)) {
         if (name === 'sw.js' || name === 'index.html' || name.endsWith('.map')) continue
+        if (file.type === 'chunk' && file.facadeModuleId && NOT_PRECACHED.includes(file.facadeModuleId)) continue
         files.set(`/${name}`, file.type === 'chunk' ? file.code : file.source)
       }
       for (const [dir, keep] of Object.entries(PRECACHE_PUBLIC)) {
@@ -99,7 +121,10 @@ function serviceWorker(): Plugin {
 // https://vite.dev/config/
 export default defineConfig({
   build: {
-    sourcemap: true,
+    // Maps for Sentry's upload, without a sourceMappingURL comment pointing a
+    // browser at them; the Sentry plugin deletes them after the upload (below)
+    // so none are served.
+    sourcemap: 'hidden',
   },
   // pdf.js's worker (src/pdfjs/worker.ts) is an ES module.
   worker: {
@@ -118,6 +143,11 @@ export default defineConfig({
     sentryVitePlugin({
       org: "solo-23",
       project: "game_room",
+      // Runs whether or not there was an upload (no SENTRY_AUTH_TOKEN), so a
+      // build never ships its maps.
+      sourcemaps: {
+        filesToDeleteAfterUpload: ['./dist/**/*.map'],
+      },
     }),
   ],
   test: {

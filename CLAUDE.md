@@ -230,7 +230,8 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   `main.tsx` registers it in production builds only; the `serviceWorker()`
   plugin in `vite.config.ts` bundles it to `/sw.js` (a classic worker: the
   build fails if it would import a chunk shared with the app) and writes in
-  the precache list (the app's code, the collection's box art, pdf.js's fonts
+  the precache list (the app's code bar the Sentry replay chunk, which
+  only an error loads; the collection's box art, pdf.js's fonts
   and decoders, the word list), the saved shell's name (a hash of
   `index.html` and all of those, so a build that changes none keeps it) and a
   hash of each rulebook. Sentry stamps `sw.js` on every build, so every
@@ -244,8 +245,13 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   by the first worker whose hash for it differs. `public/manifest.webmanifest`
   and its 192/512 icons make the site installable. It has its own
   `tsconfig.sw.json` (WebWorker library, not the DOM).
-- **`instrument.ts`** — Sentry browser SDK init (`@sentry/react`), including
-  browser tracing and session replay.
+- **`instrument.ts`** — Sentry browser SDK init (`@sentry/react`): browser
+  tracing at a 0.1 sample rate (the API functions trace at 0.1 too). Session
+  replay is not in the main bundle: on the first event at error level or
+  above (never a warning), `beforeSend` imports `sentryReplay.ts` (its own
+  chunk), adds the integration, flushes it and tags that error with the
+  replay's id, so only visits that hit an error are recorded, from that
+  error on; a reload resumes a recording already under way.
 
 ### Serverless API (`api/`) — Vercel Functions (`@vercel/node`)
 - **`chat.ts`** — the AI rules assistant. Reads `rules-text/<slug>.txt` plus the
@@ -365,6 +371,8 @@ reason for each file.
 - **Upstash Redis / Vercel KV** — wishlist vote storage.
 - **Sentry** — error monitoring (browser + serverless) and source-map upload at
   build time via `@sentry/vite-plugin` (org `solo-23`, project `game_room`).
+  Maps are built `hidden` and the plugin deletes them after the upload (even
+  with no token), so none are served.
 - **dictionaryapi.dev** — public dictionary API called directly from the Word
   Checker component (no key required) for meanings and for words missing
   from the bundled ENABLE list.
@@ -492,7 +500,8 @@ secrets belong in tracked source.
 
 Vercel (`vercel.json`): `framework: vite`, output `dist/`, SPA rewrites send
 non-API, non-file routes to `index.html`, and `api/*` maps to the serverless
-functions. CI (`.github/workflows/ci.yml`) runs lint, type-check, a11y tests,
+functions. The content-hashed build output under `/assets/` is served
+`public, max-age=31536000, immutable`; `index.html` and `sw.js` revalidate. CI (`.github/workflows/ci.yml`) runs lint, type-check, a11y tests,
 unit tests with coverage, a build and a production dependency audit
 (`npm audit --omit=dev`, high and above) on `ubuntu-latest` for every PR to
 `main`.

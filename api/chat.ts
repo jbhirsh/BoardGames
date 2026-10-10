@@ -6,7 +6,7 @@ import { SLUG_RE } from './_lib/slug.js';
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
-  tracesSampleRate: 1.0,
+  tracesSampleRate: 0.1,
 });
 
 // SLUG_RE constrains the slug before it reaches a filesystem path in

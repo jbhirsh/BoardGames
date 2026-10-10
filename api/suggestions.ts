@@ -12,7 +12,7 @@ export type { Mail, Mailer } from './_lib/mail.js';
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
-  tracesSampleRate: 1.0,
+  tracesSampleRate: 0.1,
 });
 
 // Same display-name shape as the client's utils/displayName.ts.
