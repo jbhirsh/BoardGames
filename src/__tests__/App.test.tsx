@@ -99,7 +99,9 @@ describe('App', () => {
     // The URL update that mirrors the mode is not a page change:
     // ScrollRestoration must not reset the window to the top.
     expect(scrollTo).not.toHaveBeenCalled();
-  });
+    // It renders the whole app, collection and wishlist both, which under
+    // coverage instrumentation on a slow machine runs past the 5s default.
+  }, 15_000);
 });
 
 describe('App on a phone', () => {
