@@ -336,6 +336,17 @@ rulebook (one with no text at all) an invisible OCR text layer over its page
 images, so it can be searched in the phone reader and in a device's own PDF
 viewer; it leaves any PDF that already has text alone. Run it on a newly added
 scan before extracting its text.
+A scan whose OCR is too noisy to answer from (the Monster Box sheets,
+Cranium) carries a hand transcription as text pages after its scanned ones,
+so extraction reads the transcription and never OCRs over it (Cranium's
+scanned pages also had their garbled text layer removed). The Dominion books
+end with typed pages of what they print only as pictures: card costs and
+coin amounts. The extractor drops the print-file slugs and art credits on
+Rio Grande's card pictures. `rulesTextQuality.test.ts` fails a rules-text
+file below a words-per-page or dictionary-word floor, above a stray-letter
+ceiling, or sharing most of its text with another; its fixtures are the
+pre-#188 texts it must keep catching. Keep its allowlist short, with a
+reason for each file.
 
 ### External services
 - **Google Gemini** — AI rules answers (server-side, `GEMINI_API_KEY`).

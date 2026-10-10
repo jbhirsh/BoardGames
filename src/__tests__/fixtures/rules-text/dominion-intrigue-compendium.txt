@@ -1,0 +1,224 @@
+[Page 3]
+Reading a card ◄
+Page 8► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Changing card properties
+Some abilities (such as Bridge, Highway and
+your − Cost token) can cause cards to have an-
+other cost than the printed cost at periods during
+the game. Costs can’t go below . (The costs of
+Events and Projects cannot be changed.)
+Your Estate token can change the abilities and types of
+your Estates. Capitalism and Enlightenment can change
+the types of certain cards. Coppersmith and Envious can
+change the play ability of certain Treasures. Charlatan
+changes the play ability and type of Curse.
+The pre-2019 version of Band of Misfits (and Overlord)
+could change its own abilities, name, cost and types.
+The pre-2019 version of Lantern could change the play
+ability of Border Guard.  Readingacard
+Basic setup
+BasicsetupEach player takes 7 Coppers and 3 Estates to form
+their starting deck.
+The cards in the Supply are the cards that are
+available to be bought. Place the following piles
+of cards face up on the table to form the Supply:
+Basic Treasure card piles: Copper (60 cards
+minus the cards players start with), Silver (40
+cards), and Gold (30 cards).
+Basic Victory card piles: 12 Estates, 12 Duch-
+ies, and 12 Provinces.
+Curses: 10 cards in a 2-player game. Add an-
+other 10 to the pile for each additional player.
+10 Kingdom card piles: You can select which
+Kingdom card piles to include in any way you
+choose, but here’s how to select them ran-
+domly: Shuffle the Randomizer cards of the
+Kingdom cards you have (or want to include),
+and draw 10. Each pile of Victory cards should
+include 12 cards; all other Kingdom card piles
+should include 10 cards.
+Also place the Trash card or Trash mat to indicate
+the trash pile (or “the trash”).
+If playing with 2 players: Use 8 cards instead of
+12 in all Victory piles—both basic and Kingdom
+card piles.
+If playing with 5 or 6 players: Use 3 more Prov-
+inces per player (so either 15 or 18). It’s recom-
+mended to use more Coppers, Silvers and Golds;
+with the Treasures from Intrigue (1st ed.), Base
+Cards or another copy of the Base game, you have
+twice as many.
+You may also use more basic Treasures when playing with
+less than 5 players. This should be decided during setup;
+don’t add more Treasure cards during the game.
+Randomly choose the starting player. When play-
+ing several games, the starting player is the player
+to the left of the winner of the last game. If there
+was a tie in the previous game, randomly choose
+the starting player from the players that didn’t win.
+Players take turns in clockwise order.
+Each player shuffles their deck and draws 5
+cards to form their starting hand. Basicsetup
+Special setup
+Alchemy
+Special setupIf any Kingdom card has in its cost, include the
+16 Potion cards in the Supply. 
+Prosperity
+Determine randomly whether to play with Colo-
+nies, based on the proportion of cards from Pros-
+perity among the 10 random Kingdom cards. This
+can be done by checking whether one of the Ran-
+domizer cards is from Prosperity, e.g. the first card
+drawn. (It should not be the same card you check
+for Shelters.) If Colonies are used, include piles
+of 12 Colonies and 12 Platinums in the Supply. (In
+a 2-player game, use 8 Colonies.)
+If Trade Route (not included in 2nd Edition) is in
+the game: Put a Coin token on each Victory Sup-
+ply pile, and put the Trade Route mat on the table.
+Regarding identifying Victory piles, see SPLIT PILES: PILE
+TYPE AND COST § IV. 
+Cornucopia
+If Young Witch is in the game: Choose (randomly)
+an extra Kingdom card pile costing or and
+add it to the Supply. Cards from that pile are Bane
+cards (referred to by Young Witch).
+
+[Page 4]
+Your turn ◄
+Page 12► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+II. GAME RULES: ESSENTIAL RULES
+Your turn
+Yourt urnYour turn consists of the Action phase, followed
+by the Buy phase, followed by the Clean-up phase.
+You start your turn with 1 Action and 1 Buy. This
+means you can play one Action card in your Ac-
+tion phase, and buy one card in your Buy phase.
+A clearer way to view this might be that you have
+three pools in the game: your Action pool, your
+Buy pool and your money pool. Each turn
+always starts like this: Your Action pool has 1
+Action, your Buy pool has 1 Buy, and your
+money pool is empty. In this document we will
+use this terminology. 
+A—Action phase
+You may play an Action card from your hand.
+Follow the instructions on the card. See PLAYING A
+CARD. This uses up one Action from your Action
+pool.
+Certain cards add one or more Actions to your
+Action pool. These cards say +1 Action,
++2 Actions, etc. If you have an Action left in your
+Action pool after you have fully resolved the
+last Action card you played from your hand, you
+may play another Action card. You may keep
+playing Actions as long as your Action pool is
+not empty. 
+B—Buy phase
+Your Buy phase consists of two parts.
+In the first part of your Buy phase, you may
+play as many Treasure cards as you like from
+your hand, in any order. For each card, follow the
+instructions on the card. Treasures produce
+(Coins), which are added to your money pool,
+but may also do other things. See PLAYING A
+CARD.
+The Action card Market tells
+you to draw one card,
+then add 1 to your Action
+pool, then add 1 to your
+Buy pool, and then add
+to your money pool.
+Individual playmat showing your play area and what you do on your turn. (Your draw pile is called your deck.)
+Published by Spielbox magazine on behalf of Hans im Glück (issues 1 and 2 in 2010).
+
+[Page 23]
+Card Reference ◄
+Page 61► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Baron
+New version: See “DO X FOR”.
+Barracks p. 40
+You start each turn with 1 extra Action in your
+Action pool, so normally 2.
+Basilica p. 9, 25, 39, 42
+ 2022 (current) version. See PREVIOUS VERSIONS
+OF SOME CARDS for the pre-2022 version.
+New version 2022: Basilica now has a when-
+gain instead of when-buy ability, but only
+when you gain a card in your Buy phase.
+Basilica can trigger several times on your
+turn. If you buy several cards, then for each of
+them, check if you have at least left in your
+money pool at that time. If so, take 2 to-
+kens from Basilica.
+Clarification: If you gain a card that gives or
++Coffers, you may resolve that (spending the Cof-
+fers) before Basilica checks your money pool. This
+could be Blessed Village (with certain Boons), March-
+land, Nomads, Silk Merchant, Spices, a Treasure via
+Guildhall or Mining Road, or an Action card via Abun-
+dance. Also see TRIGGERED ABILITY (you could also use
+a Way that gives ).
+Likewise, you can get from trashing Nomads or
+trashing via Priest; see GAIN ON WHEN-TRASH: Trash on
+when-gain.
+ Also see Possession 7.
+Bat p. 10
+You may choose to not trash any cards.
+If you trashed any cards, you must ex-
+change this for a Vampire. (See EXCHANGING
+§ IV.)
+You can trash cards even if it’s impossible to
+exchange the Bat for a Vampire.
+The cost of Bat is for any ability that refers to its
+cost.
+ See TRIGGERED ABILITY (first trash, then exchange).
+You trash several cards at once. Also see Divine Wind 9.
+Baths p. 9, 40
+ See Possession 5.
+Battle Plan
+Battle Plan lets you rotate any Supply pile,
+but it only makes a difference to rotate a split
+pile.
+Clarification: If you rotate the Ruins or
+Knight pile, you get to look at the necessary
+cards on top of the pile, one at a time, to see
+how many identical ones there are.
+See “DO X FOR”.
+Battlefield p. 9, 39, 171
+This might trigger on an opponent’s turn.
+Bauble p. 23, 39, 42, 179
+SEVERAL OPTIONS (four): +Buy; + , +Favor;
+or the ongoing ability mentioned below.
+(Pick two.)
+You may SET UP A LATER ABILITY (ongoing
+ability) for the rest of this turn: When you
+gain a card, you may put it onto your deck.
+Clarification: You have to choose the options
+first, then do them, in the order given.
+See MOVE GAINED CARD and TRIGGERED ABIL-
+ITY (when-gain).
+Clarification: See TRIGGERED ABILITY (playing Bauble
+on when-gain, you can put the gained card on your
+deck). Also see Gondola 9.
+ Also see Kiln 5.
+Bazaar
+Beggar p. 24, 38
+The Coppers are GAINED TO YOUR HAND.
+See REACTION TO ATTACK. New version: See
+“DO X TO”.
+You may react with several Beggars to the
+same played Attack.
+From rulebook: Beggar may only be dis-
+carded from your hand.
+If you react with for instance Caravan Guard or
+Diplomat and draw a Beggar, you may still
+react with it. (See REACTION CARDS: RESOLVING
+REACTIONS AND TIMING § III.)
+From rulebook: When you discard this as a
+Reaction, the first Silver is GAINED TO YOUR
+DECK. The second one is gained to your dis-
+card pile.
+ You gain each card in turn, see TRIGGERED ABILITY.
+Berserker p. 13, 25, 39
+You gain a card, see CARD COSTS.

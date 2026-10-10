@@ -248,6 +248,53 @@
       "matchType": "regex",
       "sourceQuote": "",
       "notes": "Asked on Catan's base tab, which sends only the base rulebook: it covers 3-4 players and says nothing about five. The assistant is told the game's other rulebooks by name (otherRulebooksNote), so it should point to the 5-6 Player Extension instead of saying the rules don't cover it (#140)."
+    },
+    {
+      "id": "dominion-intrigue-diplomat-reaction",
+      "game": "dominion",
+      "parts": ["intrigue"],
+      "question": "In Dominion Intrigue, what can I do with a Diplomat in my hand when another player plays an Attack?",
+      "expected": "If you have at least 5 cards in hand, you can reveal Diplomat before the Attack does anything: you draw 2 cards, then discard 3 cards (the Diplomat can be one of them). If you still have at least 5 cards in hand afterwards, you can reveal it and do it again.",
+      "matchType": "judge",
+      "sourceQuote": "Diplomat can also be used when another player plays an\nAttack card, if you have at least 5 cards in hand. Before the Attack card does\nanything, you can reveal a Diplomat from your hand; if you do, you draw 2 cards,\nthen discard 3 cards (which can include the Diplomat).",
+      "notes": "Asked on the Intrigue tab, which sends the base rulebook and Intrigue's (#188). The rule is on [Page 4] of rules-text/dominion.intrigue.txt, the official Second Edition rulebook. Mentioning that Diplomat also gives +2 Cards, and +2 Actions with 5 or fewer cards in hand, when played is fine; the answer must describe the reaction to an Attack."
+    },
+    {
+      "id": "dominion-intrigue-needs-base-cards",
+      "game": "dominion",
+      "parts": ["intrigue"],
+      "question": "Can we play the Second Edition of Dominion Intrigue on its own, without the base game?",
+      "expected": "No. This edition of Intrigue has no basic cards: you need the Treasure cards, Victory cards, Curse cards and the Trash mat from Dominion or the Base Cards set. The first edition of Intrigue included base cards, but this edition does not.",
+      "matchType": "judge",
+      "sourceQuote": "Players will need the Treasure\ncards, Victory cards, Curse cards, and Trash mat/card from either Dominion or Base Cards; the first\nedition of Intrigue included base cards but this edition does not.",
+      "notes": "Asked on the Intrigue tab (#188). Saying it can be played with all ten Kingdom cards from Intrigue, as long as the basic cards come from Dominion or Base Cards, is a pass; saying it plays on its own as it comes is a fail."
+    },
+    {
+      "id": "cranium-card-categories",
+      "game": "cranium",
+      "question": "What are the four kinds of cards in Cranium?",
+      "expected": "^(?=[\\s\\S]*creative cat)(?=[\\s\\S]*word worm)(?=[\\s\\S]*star performer)(?=[\\s\\S]*data head)",
+      "matchType": "regex",
+      "sourceQuote": "3. Set out the four card boxes: Creative Cat, Word Worm, Star Performer, and Data Head.",
+      "notes": "All four card boxes must be named, in any order (#188). They are only in the hand transcription on [Page 5] of rules-text/cranium.txt: the scan's own text layer is unreadable."
+    },
+    {
+      "id": "cranium-all-play-card",
+      "game": "cranium",
+      "question": "What happens when someone draws an all-play card in Cranium?",
+      "expected": "The game pauses and every team competes at the same time. The first team to shout out the correct answer before time runs out wins an instant bonus roll and moves. Then the team whose turn it was when the all-play card was drawn takes its regular turn.",
+      "matchType": "judge",
+      "sourceQuote": "An all-play card pauses the game and gives all the teams a chance to compete at the same time. The first team to\nshout out the correct answer before time runs out wins an instant bonus roll.",
+      "notes": "From the hand transcription on [Page 7] of rules-text/cranium.txt (#188). Mentioning the Planet Cranium and fast-track cases is fine but not required; the answer must say the winner gets a bonus roll and the drawing team then takes its regular turn."
+    },
+    {
+      "id": "dominion-festival-coins",
+      "game": "dominion",
+      "question": "What does Festival give me in Dominion?",
+      "expected": "^(?=[\\s\\S]*\\b(2|two)\\s+actions\\b)(?=[\\s\\S]*\\b(1|one|an extra|a)\\s+buy\\b)(?=[\\s\\S]*(\\$\\s?2\\b|\\b(2|two)\\s+coins?\\b))",
+      "matchType": "regex",
+      "sourceQuote": "Festival ($5) - Action\n+2 Actions\n+1 Buy\n+$2",
+      "notes": "+2 Actions, +1 Buy and +$2, all three required (#188). The printed book draws the $2 as a coin picture, so its own text reads \"+2 Actions, +1 Buy, and + .\"; the amount is only in the typed card text on [Page 18] of rules-text/dominion.txt and the restated card note on [Page 20]. A wrong coin amount fails."
     }
   ]
 }

@@ -1,0 +1,223 @@
+[Page 3]
+Reading a card ◄
+Page 8► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+Changing card properties
+Some abilities (such as Bridge, Highway and
+your − Cost token) can cause cards to have an-
+other cost than the printed cost at periods during
+the game. Costs can’t go below . (The costs of
+Events and Projects cannot be changed.)
+Your Estate token can change the abilities and types of
+your Estates. Capitalism and Enlightenment can change
+the types of certain cards. Coppersmith and Envious can
+change the play ability of certain Treasures. Charlatan
+changes the play ability and type of Curse.
+The pre-2019 version of Band of Misfits (and Overlord)
+could change its own abilities, name, cost and types.
+The pre-2019 version of Lantern could change the play
+ability of Border Guard.  Readingacard
+Basic setup
+BasicsetupEach player takes 7 Coppers and 3 Estates to form
+their starting deck.
+The cards in the Supply are the cards that are
+available to be bought. Place the following piles
+of cards face up on the table to form the Supply:
+Basic Treasure card piles: Copper (60 cards
+minus the cards players start with), Silver (40
+cards), and Gold (30 cards).
+Basic Victory card piles: 12 Estates, 12 Duch-
+ies, and 12 Provinces.
+Curses: 10 cards in a 2-player game. Add an-
+other 10 to the pile for each additional player.
+10 Kingdom card piles: You can select which
+Kingdom card piles to include in any way you
+choose, but here’s how to select them ran-
+domly: Shuffle the Randomizer cards of the
+Kingdom cards you have (or want to include),
+and draw 10. Each pile of Victory cards should
+include 12 cards; all other Kingdom card piles
+should include 10 cards.
+Also place the Trash card or Trash mat to indicate
+the trash pile (or “the trash”).
+If playing with 2 players: Use 8 cards instead of
+12 in all Victory piles—both basic and Kingdom
+card piles.
+If playing with 5 or 6 players: Use 3 more Prov-
+inces per player (so either 15 or 18). It’s recom-
+mended to use more Coppers, Silvers and Golds;
+with the Treasures from Intrigue (1st ed.), Base
+Cards or another copy of the Base game, you have
+twice as many.
+You may also use more basic Treasures when playing with
+less than 5 players. This should be decided during setup;
+don’t add more Treasure cards during the game.
+Randomly choose the starting player. When play-
+ing several games, the starting player is the player
+to the left of the winner of the last game. If there
+was a tie in the previous game, randomly choose
+the starting player from the players that didn’t win.
+Players take turns in clockwise order.
+Each player shuffles their deck and draws 5
+cards to form their starting hand. Basicsetup
+Special setup
+Alchemy
+Special setupIf any Kingdom card has in its cost, include the
+16 Potion cards in the Supply. 
+Prosperity
+Determine randomly whether to play with Colo-
+nies, based on the proportion of cards from Pros-
+perity among the 10 random Kingdom cards. This
+can be done by checking whether one of the Ran-
+domizer cards is from Prosperity, e.g. the first card
+drawn. (It should not be the same card you check
+for Shelters.) If Colonies are used, include piles
+of 12 Colonies and 12 Platinums in the Supply. (In
+a 2-player game, use 8 Colonies.)
+If Trade Route (not included in 2nd Edition) is in
+the game: Put a Coin token on each Victory Sup-
+ply pile, and put the Trade Route mat on the table.
+Regarding identifying Victory piles, see SPLIT PILES: PILE
+TYPE AND COST § IV. 
+Cornucopia
+If Young Witch is in the game: Choose (randomly)
+an extra Kingdom card pile costing or and
+add it to the Supply. Cards from that pile are Bane
+cards (referred to by Young Witch).
+
+[Page 4]
+Your turn ◄
+Page 12► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+II. GAME RULES: ESSENTIAL RULES
+Your turn
+Yourt urnYour turn consists of the Action phase, followed
+by the Buy phase, followed by the Clean-up phase.
+You start your turn with 1 Action and 1 Buy. This
+means you can play one Action card in your Ac-
+tion phase, and buy one card in your Buy phase.
+A clearer way to view this might be that you have
+three pools in the game: your Action pool, your
+Buy pool and your money pool. Each turn
+always starts like this: Your Action pool has 1
+Action, your Buy pool has 1 Buy, and your
+money pool is empty. In this document we will
+use this terminology. 
+A—Action phase
+You may play an Action card from your hand.
+Follow the instructions on the card. See PLAYING A
+CARD. This uses up one Action from your Action
+pool.
+Certain cards add one or more Actions to your
+Action pool. These cards say +1 Action,
++2 Actions, etc. If you have an Action left in your
+Action pool after you have fully resolved the
+last Action card you played from your hand, you
+may play another Action card. You may keep
+playing Actions as long as your Action pool is
+not empty. 
+B—Buy phase
+Your Buy phase consists of two parts.
+In the first part of your Buy phase, you may
+play as many Treasure cards as you like from
+your hand, in any order. For each card, follow the
+instructions on the card. Treasures produce
+(Coins), which are added to your money pool,
+but may also do other things. See PLAYING A
+CARD.
+The Action card Market tells
+you to draw one card,
+then add 1 to your Action
+pool, then add 1 to your
+Buy pool, and then add
+to your money pool.
+Individual playmat showing your play area and what you do on your turn. (Your draw pile is called your deck.)
+Published by Spielbox magazine on behalf of Hans im Glück (issues 1 and 2 in 2010).
+
+[Page 23]
+Card Reference ◄
+Page 59► Complete Rules for Dominion and All Its Expansions v.11.0 ©2024 N. Knutsen
+the next Aristocrat you play will give you that
+effect again. (EFFECTS ARE IMMEDIATE.)
+If you play Aristocrat without putting it in
+play (see PLAY A CARD WHILE LEAVING IT), it
+does nothing (unless you already have another
+one in play).
+If your first Aristocrat is “Enchanted” (by Enchantress)
+or used to play a Way, your second Aristocrat still
+draws 3 cards.
+ Also see Kiln 8.
+Armory p. 49
+The card is GAINED TO YOUR DECK. Also see
+CARD COSTS.
+Artificer p. 25, 26, 49
+You don’t have to discard any cards. You
+don’t have to gain a card, even if you dis-
+carded cards. If you discarded no cards, you
+may gain a card costing .
+The card is GAINED TO YOUR DECK. Also see
+CARD COSTS.
+See TRIGGERED ABILITY (first discard, then gain).
+Artisan p. 49
+The card is GAINED TO YOUR HAND. Also see
+CARD COSTS.
+See TRIGGERED ABILITY (first gain, then put onto
+deck). When-gain abilities might make you draw or
+discard before you put a card onto your deck.
+Artist
+Each time you play an Artist, check the
+CARDS YOU HAVE IN PLAY. (EFFECTS ARE IM-
+MEDIATE.) Count how many of them (including
+the Artist) that are unique—i.e. DIFFERENTLY
+NAMED from all of the others—and draw that
+many cards.
+Asceticism
+You pay from your money pool.
+ You trash several cards at once, see TRIGGERED ABILITY.
+Astrolabe p. 40
+This SETS UP A LATER ABILITY for next turn.
+Avanto (promo) p. 11, 37
+You may play a Sauna (see PLAY AN ACTION
+CARD). See Sauna.
+Avoid p. 41
+After resolving this Event, you still have the
+same number of Buys as you had before.
+If you shuffle the turn you buy this, you may
+look through the cards you will shuffle and
+keep up to 3 of them aside. After shuffling,
+you put the chosen cards in your discard pile.
+If you buy Avoid multiple times, you can pick
+more cards to not shuffle in.
+This doesn’t trigger cards that say “WHEN
+YOU DISCARD THIS”.
+This also works when you shuffle your existing deck
+with Annex, Donate, Famine or Inn.
+Clarification: You may look at the remaining cards in
+your deck when you shuffle your discard pile.
+Clarification: This works like in Order of Masons 4.
+ Also see Emissary 3 and Swashbuckler 2.
+Bad Omens
+This doesn’t trigger cards that say “WHEN
+YOU DISCARD THIS”.
+If you only have one Copper, put that onto your
+deck. If you don’t have two, reveal all the
+cards in your discard pile.
+Bag of Gold see Prize: p. 7, 9
+ Not included in the 2024 Second Edition.
+The Gold is GAINED TO YOUR DECK.
+The cost of Bag of Gold is for any ability that refers
+to its cost.
+Baker p. 9
+ See Divine Wind 5.
+Ball p. 24
+ See Your − token.
+You gain 2 cards even if you can’t take your
+− token. Also see CARD COSTS.
+You choose and gain each card in turn, see TRIGGERED
+ABILITY . Any cost reduction or when-gain ability
+(like Cargo Ship or Abundance) applied after the first
+card will be in effect when you gain the next.
+ Also see Destrier 4, Fisherman 4 and Wayfarer 9.
+Band of Misfits p. 177
+ 2019 (current) version. See PREVIOUS VERSIONS
+OF SOME CARDS for the pre-2019 version.
+ Note: All the following also applies to Over-
+lord.
