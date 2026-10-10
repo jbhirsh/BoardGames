@@ -313,6 +313,26 @@ describe('RulesPage', () => {
       }
     });
 
+    it('links an answer\'s citations to their rulebooks, each named with what it shows', async () => {
+      const answer = new TextEncoder().encode('Robber (Catan p. 11, 12), knights (Cities And Knights p. 4).');
+      let read = false;
+      vi.stubGlobal('fetch', vi.fn(async () => ({
+        ok: true,
+        body: { getReader: () => ({ read: async () => (read ? { done: true } : (read = true, { done: false, value: answer })) }) },
+      }) as unknown as Response));
+      try {
+        renderAt('/rules/catan/cities-and-knights');
+        fireEvent.click(screen.getByRole('button', { name: /ai rules assistant/i }));
+        fireEvent.change(screen.getByPlaceholderText('Ask a rules question...'), { target: { value: 'Robber?' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+        expect(await screen.findByRole('link', { name: 'Base game p. 11' })).toHaveAttribute('href', '/rules/catan.pdf#page=11');
+        expect(screen.getByRole('link', { name: 'p. 12, Base game' })).toHaveAttribute('href', '/rules/catan.pdf#page=12');
+        expect(screen.getByRole('link', { name: 'Cities & Knights p. 4' })).toHaveAttribute('href', '/rules/catan.cities-and-knights.pdf#page=4');
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+
     it('moves between tabs', () => {
       renderAt('/rules/catan');
       fireEvent.click(within(tabs()).getByRole('link', { name: /Cities & Knights/ }));
