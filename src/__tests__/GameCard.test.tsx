@@ -74,17 +74,24 @@ describe('GameCard', () => {
 
   it('renders Rules link pointing to /rules/slug when game has rules', () => {
     renderWithContext(<GameCard game={quickGame} />);
-    const rulesLink = screen.getByTitle('Rules');
+    const rulesLink = screen.getByTitle('Rules for Quick Game');
     expect(rulesLink).toBeInTheDocument();
     expect(rulesLink.closest('a')).toHaveAttribute('href', '/rules/quick-game');
     // Rules is the card's primary action.
     expect(rulesLink.closest('a')).toHaveClass('rules-btn--primary');
   });
 
+  it('names Rules for its game, as a list row does, starting with the word it shows', () => {
+    renderWithContext(<GameCard game={quickGame} />);
+    const link = screen.getByRole('link', { name: 'Rules for Quick Game' });
+    expect(link).toHaveTextContent(/^Rules$/);
+    expect(screen.queryByRole('link', { name: 'Rules' })).not.toBeInTheDocument();
+  });
+
   it('points Rules at the add-on the players filter admits the game through', () => {
     const catan = GAMES.find((g) => g.slug === 'catan')!;
     renderWithContext(<GameCard game={catan} />, '/?p=5');
-    expect(screen.getByTitle('Rules').closest('a')).toHaveAttribute('href', '/rules/catan/5-6-player-extension');
+    expect(screen.getByTitle('Rules for Catan').closest('a')).toHaveAttribute('href', '/rules/catan/5-6-player-extension');
   });
 
   it('renders fallback rules link when game has no rules field', () => {
@@ -92,7 +99,7 @@ describe('GameCard', () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
 
     renderWithContext(<GameCard game={noRulesGame} />);
-    const rulesLink = screen.getByTitle('Rules');
+    const rulesLink = screen.getByTitle('Rules for Quick Game');
     fireEvent.click(rulesLink);
 
     expect(openSpy).toHaveBeenCalledWith(
@@ -136,7 +143,7 @@ describe('GameCard', () => {
   });
 
   it.each([
-    ['Rules', sevenWondersGame, '/rules/7-wonders'],
+    ['Rules for 7 Wonders', sevenWondersGame, '/rules/7-wonders'],
     ['Score Calculator', sevenWondersGame, '/score/7-wonders'],
     ['Word Checker', bananagramsGame, '/word-checker'],
   ])('marks its %s link as leaving the list, so the page\'s Back returns to it', (title, game, pathname) => {

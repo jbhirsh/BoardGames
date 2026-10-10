@@ -8,8 +8,9 @@ const SLUG = 'far-out-questions';
 test('a rules page shows the rulebook and the assistant answers a question', async ({ page, request }) => {
   await page.goto('/');
   await page.getByPlaceholder('Search games...').fill(GAME);
-  await page.getByRole('button', { name: `Show details for ${GAME}` }).click();
-  await page.getByRole('link', { name: 'Rules', exact: true }).click();
+  // The row's own Rules link, beside its chevron (its shut panel holds another).
+  const row = page.getByRole('row').filter({ has: page.getByRole('button', { name: `Show details for ${GAME}` }) });
+  await row.getByRole('link', { name: `Rules for ${GAME}` }).click();
 
   await expect(page).toHaveURL(new RegExp(`/rules/${SLUG}$`));
   await expect(page.getByRole('heading', { level: 1, name: GAME })).toBeVisible();
@@ -102,7 +103,7 @@ test('the daily cap says the assistant is done for today, not to wait a minute',
 test('under a players filter, Rules opens the add-on the game fits through', async ({ page }) => {
   // Catan seats 3–4; at five it is listed for its 5–6 Player Extension.
   await page.goto('/?q=catan&p=5&v=grid');
-  await page.getByRole('link', { name: 'Rules', exact: true }).click();
+  await page.getByRole('link', { name: 'Rules for Catan' }).click();
   await expect(page).toHaveURL(/\/rules\/catan\/5-6-player-extension$/);
 });
 

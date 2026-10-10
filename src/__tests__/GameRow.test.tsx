@@ -125,7 +125,68 @@ describe('GameRow', () => {
         </FilterProvider>
       </MemoryRouter>
     );
-    expect(screen.getByRole('link', { name: /Rules/ })).toHaveAttribute('href', '/rules/catan/5-6-player-extension');
+    // The row's link and the open panel's both.
+    const links = screen.getAllByRole('link', { name: 'Rules for Catan' });
+    expect(links).toHaveLength(2);
+    for (const link of links) expect(link).toHaveAttribute('href', '/rules/catan/5-6-player-extension');
+  });
+
+  it('gives the collapsed row a Rules link named for its game, beside the chevron', () => {
+    const onToggle = vi.fn();
+    const router = renderRouted(
+      <FilterProvider>
+        <table><tbody><GameRow game={sevenWondersGame} isOpen={false} onToggle={onToggle} showGroupBadge={false} /></tbody></table>
+      </FilterProvider>,
+    );
+    const row = document.querySelector('tr.game-row') as HTMLElement;
+    // The name starts with the word on the button (label in name).
+    const link = within(row).getByRole('link', { name: 'Rules for 7 Wonders' });
+    expect(link).toHaveTextContent(/^Rules$/);
+    expect(link).toHaveAttribute('href', '/rules/7-wonders');
+    expect(link).toHaveAttribute('title', 'Rules for 7 Wonders');
+    expect(link).toHaveClass('rules-btn', 'row-rules');
+    expect(link).not.toHaveClass('rules-btn--primary');
+    expect(link.closest('td')).toHaveClass('col-actions');
+    expect(link.nextElementSibling).toBe(within(row).getByRole('button', { name: 'Show details for 7 Wonders' }));
+    fireEvent.click(link);
+    expect(onToggle).not.toHaveBeenCalled();
+    expect(router.state.location).toMatchObject({ pathname: '/rules/7-wonders', state: { fromList: true } });
+  });
+
+  it('searches for the rules from the collapsed row of a game without a rulebook, without toggling it', () => {
+    const onToggle = vi.fn();
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    renderRow({ ...quickGame, rules: '' }, false, onToggle);
+    const row = document.querySelector('tr.game-row') as HTMLElement;
+    const link = within(row).getByRole('link', { name: 'Rules for Quick Game' });
+    expect(link).toHaveAttribute('href', expect.stringContaining('google.com/search'));
+    expect(link).toHaveAttribute('title', 'Rules for Quick Game');
+    expect(fireEvent.click(link)).toBe(false);
+    expect(openSpy).toHaveBeenCalledWith(expect.stringContaining('google.com/search'), '_blank');
+    expect(onToggle).not.toHaveBeenCalled();
+    openSpy.mockRestore();
+  });
+
+  it('leads the open row with its actions, Rules filled first and the video last', () => {
+    renderRow(sevenWondersGame, true);
+    const content = document.querySelector('.row-expand-content') as HTMLElement;
+    const bar = content.firstElementChild as HTMLElement;
+    expect(bar).toHaveClass('row-expand-actions');
+    const links = within(bar).getAllByRole('link');
+    expect(links.map((a) => a.getAttribute('aria-label') ?? a.textContent!.trim())).toEqual([
+      'Rules for 7 Wonders', 'Score', 'Watch 7 Wonders tutorial on YouTube',
+    ]);
+    expect(links[0]).toHaveClass('rules-btn', 'rules-btn--primary');
+    expect(links[1]).toHaveClass('rules-btn');
+    expect(links[1]).not.toHaveClass('rules-btn--primary');
+    // The write-up follows the bar.
+    expect(bar.nextElementSibling).toHaveClass('detail-section');
+    cleanup();
+    renderRow(bananagramsGame, true);
+    const bananaBar = document.querySelector('.row-expand-content > .row-expand-actions') as HTMLElement;
+    expect(within(bananaBar).getAllByRole('link').map((a) => a.getAttribute('aria-label') ?? a.textContent!.trim())).toEqual([
+      'Rules for Bananagrams', 'Word Checker', 'Watch Bananagrams tutorial on YouTube',
+    ]);
   });
 
   it('renders Rules link to /rules/slug when game has rules', () => {
@@ -155,16 +216,17 @@ describe('GameRow', () => {
   });
 
   it.each([
-    ['Rules', sevenWondersGame, '/rules/7-wonders'],
+    ['Rules for 7 Wonders', sevenWondersGame, '/rules/7-wonders'],
     ['Score', sevenWondersGame, '/score/7-wonders'],
     ['Word Checker', bananagramsGame, '/word-checker'],
-  ])('marks its %s link as leaving the list, so the page\'s Back returns to it', (name, game, pathname) => {
+  ])('marks the open row\'s %s link as leaving the list, so the page\'s Back returns to it', (name, game, pathname) => {
     const router = renderRouted(
       <FilterProvider>
         <table><tbody><GameRow game={game} isOpen onToggle={vi.fn()} showGroupBadge={false} /></tbody></table>
       </FilterProvider>,
     );
-    fireEvent.click(screen.getByRole('link', { name }));
+    const panel = document.querySelector('tr.row-expand') as HTMLElement;
+    fireEvent.click(within(panel).getByRole('link', { name }));
     expect(router.state.location).toMatchObject({ pathname, state: { fromList: true } });
   });
 

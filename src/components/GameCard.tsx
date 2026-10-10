@@ -4,17 +4,17 @@ import type { Game, KeywordId } from '../data/types';
 import { isKeywordLit } from '../utils/keywordLit';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
 import { useFilter } from '../context/useFilter';
-import { ytURL, rulesURL } from '../utils/urls';
+import { ytURL } from '../utils/urls';
 import { sortedKw } from '../utils/filterGames';
 import KeywordPill from './KeywordPill';
 import AwardsBadge, { AwardsList } from './AwardsBadge';
 import SubGameList from './SubGameList';
 import DifficultyMeta from './DifficultyMeta';
+import RulesLink from './RulesLink';
 import Popover from './Popover';
 import { FROM_LIST } from '../utils/fromList';
 import { fittingSubgames, subgameLabel } from '../utils/subgames';
-import { rulesPathFor } from '../utils/rulebooks';
-import { YouTubeIcon, AiRulesIcon, UserIcon, ClockIcon, CalculatorIcon, SearchIcon } from './Icons';
+import { YouTubeIcon, UserIcon, ClockIcon, CalculatorIcon, SearchIcon } from './Icons';
 
 interface Props {
   game: Game;
@@ -114,20 +114,7 @@ export default function GameCard({ game }: Props) {
           )}
         </div>
         <div className="card-foot-end">
-          {game.rules ? (
-            <Link className="rules-btn rules-btn--primary" to={rulesPathFor(game, state)} state={FROM_LIST} title="Rules">
-              <AiRulesIcon /> Rules
-            </Link>
-          ) : (
-            <a
-              className="rules-btn rules-btn--primary"
-              href={rulesURL(game.name)}
-              onClick={(e) => { e.preventDefault(); window.open(rulesURL(game.name), '_blank'); }}
-              title="Rules"
-            >
-              <AiRulesIcon /> Rules
-            </a>
-          )}
+          <RulesLink game={game} className="rules-btn rules-btn--primary" />
           {SCORE_CALCULATORS.has(game.slug) && (
             <Link className="rules-btn" to={`/score/${game.slug}`} state={FROM_LIST} title="Score Calculator">
               <CalculatorIcon /> Score

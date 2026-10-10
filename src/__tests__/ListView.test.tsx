@@ -42,6 +42,34 @@ describe('ListView', () => {
     expect(within(row).getByText(`Medium · ${catan.weight!.toFixed(1)}`)).toBeInTheDocument();
   });
 
+  it('gives every collapsed row its own Rules link, named for its game', () => {
+    renderListView();
+    const rows = Array.from(document.querySelectorAll<HTMLElement>('tr.game-row'));
+    expect(rows).toHaveLength(GAMES.length);
+    const names = rows.map((row) => {
+      const name = row.querySelector('span.col-name')!.textContent!;
+      const link = within(row).getByRole('link', { name: `Rules for ${name}` });
+      expect(link).toHaveTextContent(/^Rules$/);
+      return link.getAttribute('aria-label');
+    });
+    // Thirty links, no two read out alike.
+    expect(new Set(names).size).toBe(GAMES.length);
+  });
+
+  it('shows a dash in the difficulty cell of each game BoardGameGeek has not rated', () => {
+    renderListView();
+    const unrated = GAMES.filter((g) => g.weight === undefined && !g.subgames?.some((s) => s.weight !== undefined));
+    expect(unrated.length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Not rated on BoardGameGeek')).toHaveLength(unrated.length);
+    const rows = Array.from(document.querySelectorAll<HTMLElement>('tr.game-row'));
+    for (const game of unrated) {
+      const row = rows.find((r) => r.querySelector('span.col-name')!.textContent === game.name)!;
+      const cell = row.querySelector('td.col-diff')!;
+      expect(cell.querySelector('.diff-none')).toHaveTextContent(/^–$/);
+      expect(cell).toHaveTextContent(/^–Not rated on BoardGameGeek$/);
+    }
+  });
+
   it('renders sortable column headers', () => {
     renderListView();
     expect(screen.getByText('Name')).toBeInTheDocument();

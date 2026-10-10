@@ -422,6 +422,11 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 /* col: name */
 .col-name{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;line-height:1.2;white-space:nowrap;color:var(--dark);}
+/* A long name wraps to a second line rather than take the width the
+   description needs: the longest held the column at 268px, so the
+   description wrapped to three lines beside it. The header sets the width. */
+table.games-list th.col-name-h{width:150px;}
+.game-row .col-name{white-space:normal;}
 .col-name-wrap{display:flex;flex-direction:column;gap:3px;}
 .group-badge{
   font-family:inherit;font-size:9px;font-weight:400;
@@ -450,6 +455,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 /* col: difficulty (the collection's): BoardGameGeek's weight */
 .col-diff{white-space:nowrap;font-size:12.5px;color:var(--text2);}
+/* BoardGameGeek doesn't rate it: a dash, not an empty cell. */
+.diff-none{color:var(--text3);}
 /* Under 1080px the table has no room for it (it would run past the page);
    the cards still show it. */
 @media(max-width:1080px){
@@ -474,8 +481,11 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 /* col: keywords */
 .col-kw .kw-pill{font-size:11px;padding:2px 8px;margin:2px 2px 2px 0;display:inline-block;}
 
-/* col: icon actions (chevron only in row) */
-.col-actions{white-space:nowrap;text-align:center;width:28px;}
+/* col: actions, the chevron and, in the collection, Rules before it */
+.col-actions{white-space:nowrap;text-align:right;width:1%;}
+/* Rules as a card's footer has it, outlined here: thirty filled buttons
+   down the column would shout over the names. */
+.row-rules{vertical-align:middle;margin-right:10px;}
 .col-actions span,.row-toggle{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;}
 .row-toggle{background:none;border:0;padding:8px;margin:-8px;color:inherit;font:inherit;cursor:pointer;border-radius:6px;}
 .row-toggle:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
@@ -488,11 +498,11 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   transition:background .15s,color .15s,border-color .15s,transform .12s;
 }
 .rules-btn:hover{background:var(--blue-bg);border-color:rgba(var(--blue-rgb),0.3);color:var(--blue);box-shadow:var(--shadow-md);}
+.rules-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
 .rules-btn svg{width:14px;height:14px;flex-shrink:0;display:block;}
 /* Rules is what the site is for, so on a card it is the one filled button. */
 .rules-btn--primary{background:var(--blue-fill);border-color:var(--blue-fill);color:var(--on-fill);font-weight:600;}
 .rules-btn--primary:hover{background:var(--blue-fill-hover);border-color:var(--blue-fill-hover);color:var(--on-fill);}
-.rules-btn--primary:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
 .row-chevron{width:16px;height:16px;color:var(--text3);transition:transform .22s cubic-bezier(.16,1,.3,1),color .15s;vertical-align:middle;}
 .game-row.open .row-chevron{transform:rotate(180deg);color:var(--blue);}
 
@@ -551,24 +561,23 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
   color:var(--dark);margin-bottom:6px;letter-spacing:-.2px;
 }
 .detail-section p{font-size:13px;line-height:1.75;color:var(--text2);}
+/* The expanded row's actions lead it, Rules first, as on a card. */
+.row-expand-actions{
+  display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+  padding:0 0 16px;margin-bottom:18px;border-bottom:1px solid var(--border);
+}
 .row-expand-foot{
   display:flex;justify-content:flex-end;align-items:center;
   gap:8px;padding:12px 4px 4px;margin-top:4px;border-top:1px solid var(--border);
   position:relative;z-index:1;
 }
-.rules-link,.row-yt{
+.row-yt{
   display:flex;align-items:center;justify-content:center;
-  height:32px;border-radius:8px;text-decoration:none;
-  font-family:inherit;font-size:12px;font-weight:500;line-height:1;
-  transition:background .15s,border-color .15s,color .15s,transform .15s;
+  width:32px;height:32px;border-radius:8px;text-decoration:none;
+  background:#CC0000;color:#fff;
+  transition:background .15s,transform .15s;
 }
-.rules-link{
-  gap:6px;padding:0 14px;
-  background:var(--surface);border:1px solid var(--border2);color:var(--text2);
-}
-@media (hover:hover) and (pointer:fine){ .rules-link:hover{background:var(--blue-bg);border-color:rgba(var(--blue-rgb),0.3);color:var(--blue);transform:scale(1.05);} }
-.rules-link svg,.row-yt svg{width:13px;height:13px;flex-shrink:0;display:block;}
-.row-yt{width:32px;background:#CC0000;color:#fff;}
+.row-yt svg{width:13px;height:13px;flex-shrink:0;display:block;}
 @media (hover:hover) and (pointer:fine){ .row-yt:hover{background:#A00;transform:scale(1.05);} }
 .row-yt svg{fill:#fff;}
 
@@ -990,6 +999,9 @@ a.rules-chat-toggle{text-decoration:none;}
   .games-list th.col-dur-h{ width:104px; }
   .games-list th.col-vote{ width:90px; }
   .games-list th.col-actions-h{ width:52px; }
+  /* the collection's Rules link, word and all, and the chevron */
+  .games-list.row-actions th.col-actions-h{ width:136px; }
+  table.games-list th.col-name-h{ width:auto; }
   .game-row td{ padding:10px 10px; }
   .game-row td:first-child{ padding-left:16px; }
 }
