@@ -70,9 +70,14 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
     the not-found page. Results is a score sheet like the printed pad (a
     row per category, a column per player, the category column pinned
     while it scrolls sideways on a phone)
-  - `/word-checker` — word lookup for word games: the bundled ENABLE list
-    (`public/words/enable.txt`) first, the dictionary as fallback and for
-    meanings
+  - `/word-checker` — word lookup for word games: the bundled lists
+    (`public/words/`: ENABLE, plus `additions.txt`, the hand-picked words it
+    predates) answer at once; a word they lack reads "Not in our word list"
+    while the dictionary is asked, which can make it valid, or invalid only
+    when it answers that it doesn't know it. A dictionary that can't be
+    reached leaves a warning, never a red ✗, and anything but one word of
+    letters gets a note, not a verdict (a phone's trailing full stop is
+    dropped). The dictionary also gives meanings
   - `/sign-in` — the owner's magic-link sign-in (`SignInPage`); nothing on
     the home page links to it
 - **`App.tsx`** — layout shell: wraps the router `Outlet` in `FilterProvider`
@@ -158,7 +163,10 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   `/api/auth`.
 - **`components/`** — presentational + interactive UI (grid/list views, filter
   bar, random picker, rules page, rules chat, word checker, score calculator,
-  wishlist + voting). `Icons.tsx` holds inline SVGs. The filter bar's
+  wishlist + voting). `Icons.tsx` holds inline SVGs. `Notice` is the one
+  info / warning / error message (icon, one line, optional action), coloured
+  by the `--info-`, `--warn-` and `--danger-` tokens, which a test holds to
+  4.5:1 in both themes; use it rather than a one-off coloured box. The filter bar's
   choices are drawn once (`FilterBar/FilterOptions.tsx`) for two homes: the
   dropdown pills on a wide screen, and at phone width (520px and under) a
   "Filters · N" button beside the search that opens a bottom sheet

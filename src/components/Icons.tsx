@@ -165,3 +165,33 @@ export function AutoThemeIcon() {
     </svg>
   );
 }
+
+/** The Notice component's tones: an i, an exclamation in a triangle, an x. */
+export function InfoIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M8 7.2v3.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="8" cy="4.9" r=".9" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function WarningIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M7.1 2.4a1 1 0 0 1 1.8 0l5.6 10.2a1 1 0 0 1-.9 1.4H2.4a1 1 0 0 1-.9-1.4z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+      <path d="M8 6.2v3.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="8" cy="11.6" r=".9" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function ErrorIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M5.8 5.8l4.4 4.4M10.2 5.8l-4.4 4.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}

@@ -34,6 +34,12 @@ test('the installed site lists the collection and checks words with no network',
   await page.getByRole('button', { name: 'Check' }).click();
   // The dictionary is out of reach; the saved word list answers.
   await expect(page.getByText('Valid word', { exact: true })).toBeVisible();
+
+  // So does the saved list of newer words ENABLE predates.
+  await page.getByPlaceholder('Enter a word...').fill('qi');
+  await page.getByRole('button', { name: 'Check' }).click();
+  await expect(page.getByText('qi', { exact: true })).toBeVisible();
+  await expect(page.getByText('Valid word', { exact: true })).toBeVisible();
 });
 
 test('a rulebook opened once reads on a phone with no network', async ({ page, context }) => {
