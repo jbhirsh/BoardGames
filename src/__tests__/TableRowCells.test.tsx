@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import type { ComponentProps } from 'react';
 import TableRowCells, { TableRowExpand } from '../components/TableRowCells';
@@ -111,6 +111,31 @@ describe('TableRowCells', () => {
     expect(classes.slice(-2)).toEqual(['col-vote', 'col-actions']);
     expect(row.children).toHaveLength(7);
     expect(row.querySelector('.col-vote')).toHaveTextContent('7');
+  });
+
+  it('puts the row action in the actions cell, before the chevron', () => {
+    const { row } = renderCells({ action: <a href="/rules/cell-game">Rules</a> });
+    const cell = row.querySelector('td.col-actions')!;
+    expect(Array.from(cell.children).map((el) => el.tagName)).toEqual(['A', 'BUTTON']);
+    expect(cell.firstElementChild).toHaveTextContent('Rules');
+  });
+
+  it('reads out a rated difficulty and shows no dash', () => {
+    const { row } = renderCells({ difficulty: { weight: 2.3 } });
+    const cell = row.querySelector('td.col-diff')!;
+    expect(cell).toHaveTextContent(/^Medium · 2\.3$/);
+    expect(cell.querySelector('.diff-none')).toBeNull();
+    expect(screen.queryByText('Not rated on BoardGameGeek')).not.toBeInTheDocument();
+  });
+
+  it('shows a dash for a game BoardGameGeek has not rated, and says so to a screen reader', () => {
+    const { row } = renderCells({ difficulty: {} });
+    const cell = row.querySelector<HTMLElement>('td.col-diff')!;
+    const dash = cell.querySelector('.diff-none')!;
+    expect(dash).toHaveTextContent(/^–$/);
+    expect(dash).toHaveAttribute('aria-hidden', 'true');
+    expect(within(cell).getByText('Not rated on BoardGameGeek')).toHaveClass('sr-only');
+    expect(cell).toHaveTextContent(/^–Not rated on BoardGameGeek$/);
   });
 
   it('labels the chevron for the open state and toggles once without bubbling to the row', () => {

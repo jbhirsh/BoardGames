@@ -36,7 +36,7 @@ export default function GamesTableHead({ extra, difficulty = false }: { extra?: 
   return (
     <thead>
       <tr>
-        {sortable('name', 'Name')}
+        {sortable('name', 'Name', 'col-name-h')}
         {sortable('players', 'Players', 'col-hide col-players-h')}
         {sortable('dur', 'Duration', 'col-dur-h')}
         {difficulty && sortable('weight', 'Difficulty', 'col-hide col-diff-h')}
