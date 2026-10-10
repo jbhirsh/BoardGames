@@ -101,7 +101,7 @@ let open: { path: string; body: Blob; type: string } | null = null;
 
 /**
  * A rulebook from its saved copy, or from the network while the whole file is
- * saved in the background. The phone reader asks for byte ranges, which the
+ * saved in the background. The rulebook reader asks for byte ranges, which the
  * Cache API can't store, so the whole file is kept and ranges cut from it.
  */
 async function rulebook(event: FetchEvent): Promise<Response> {

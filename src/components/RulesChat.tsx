@@ -4,6 +4,7 @@ import * as Sentry from '@sentry/react';
 import { Link } from 'react-router';
 import Markdown, { type Components } from 'react-markdown';
 import { AiRulesIcon } from './Icons';
+import { citingClause } from '../utils/citeMatch';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -66,15 +67,24 @@ export interface RulebookLink {
 // The panel's link handlers, for its answers' links. A context rather than
 // a components map built per render: a new component each render would
 // mount every link afresh, losing focus on one mid-answer.
-const CitationContext = createContext<{ isCitation: (href: string) => boolean; onCite?: (href: string) => boolean }>({
+const CitationContext = createContext<{ isCitation: (href: string) => boolean; onCite?: (href: string, quote: string) => boolean }>({
   isCitation: () => false,
 });
 const NO_CITATIONS = () => false;
 
+/** The answer's text before a link, in the paragraph or list item that holds it. */
+function textBefore(link: HTMLElement): string {
+  const range = document.createRange();
+  range.setStart(link.closest('p, li') ?? link.parentElement!, 0);
+  range.setEndBefore(link);
+  return range.toString();
+}
+
 /**
  * An answer's link, which opens in a tab of its own, so the chat stays
  * where it was. Most are page citations, opening a rulebook PDF at the page,
- * unless the page takes one (onCite returns true). A link opened in a new
+ * unless the page takes one (onCite returns true), given the words of the
+ * answer the citation closes, so it can mark them on the page. A link opened in a new
  * tab on purpose (a modifier key, a middle click) is left to the browser.
  * A citation's title, if it has one, is its accessible name: "p. 11, Base
  * game" says which rulebook where "p. 11" alone doesn't. Any other link the
@@ -85,7 +95,7 @@ function AnswerLink({ href, title, children }: ComponentProps<'a'>) {
   const cite = href !== undefined && isCitation(href);
   function click(e: MouseEvent<HTMLAnchorElement>) {
     if (!cite || !onCite || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    if (onCite(href)) e.preventDefault();
+    if (onCite(href, citingClause(textBefore(e.currentTarget)))) e.preventDefault();
   }
   return (
     <a href={href} title={cite ? undefined : title} aria-label={cite ? title : undefined} target="_blank" rel="noopener noreferrer" onClick={click}>
@@ -102,8 +112,9 @@ const ANSWER_COMPONENTS: Components = { a: AnswerLink };
  * other tabs an answer names, so "that's in the 5–6 Player Extension" comes
  * with a way there. `citeLinks` turns the answer's page citations ("p. 5")
  * into links to that page, which `isCitation` tells from any other link the
- * answer holds, and `onCite`, given one of those, shows the page in place
- * and returns true, or returns false to let it open the PDF. `starters` are
+ * answer holds, and `onCite`, given one of those and the words of the
+ * answer it closes, shows the page in place and returns true, or returns
+ * false to let it open the PDF. `starters` are
  * offered as one-tap questions until the first one is asked. `tab` names
  * the tab on screen; each answer keeps the one it was asked on and hands it
  * to `linksFor` and `citeLinks`, since the panel stays as tabs change.
@@ -117,7 +128,7 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
   linksFor?: (answer: string, tab?: string) => RulebookLink[];
   citeLinks?: (answer: string, tab?: string) => string;
   isCitation?: (href: string) => boolean;
-  onCite?: (href: string) => boolean;
+  onCite?: (href: string, quote: string) => boolean;
   starters?: string[];
 }) {
   const { isOpen } = useContext(ChatContext);

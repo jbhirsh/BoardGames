@@ -14,10 +14,11 @@ test('a rules page shows the rulebook and the assistant answers a question', asy
   await expect(page).toHaveURL(new RegExp(`/rules/${SLUG}$`));
   await expect(page.getByRole('heading', { level: 1, name: GAME })).toBeVisible();
 
-  const viewer = page.getByTitle(`${GAME} rules`);
-  await expect(viewer).toBeVisible();
-  await expect(viewer).toHaveAttribute('src', `/rules/${SLUG}.pdf`);
-  // The file the viewer frames is really served by the build.
+  // A desktop gets the page's own reader too, not the browser's PDF viewer.
+  const reader = page.getByRole('region', { name: `${GAME} rules` });
+  await expect(reader.getByRole('group', { name: /^Page 1 of \d+$/ })).toBeVisible();
+  await expect(reader.getByRole('button', { name: 'Search' })).toBeEnabled();
+  // The file the reader draws is really served by the build.
   const pdf = await request.get(`/rules/${SLUG}.pdf`);
   expect(pdf.status()).toBe(200);
   expect(pdf.headers()['content-type']).toBe('application/pdf');
@@ -142,7 +143,6 @@ test('on a phone the page draws the rulebook, searchable, under a download link'
   const download = page.getByRole('link', { name: 'Download PDF' });
   await expect(download).toHaveAttribute('href', '/rules/azul.pdf');
   await expect(download).toHaveAccessibleDescription(/^\d+(\.\d)? (MB|KB)$/);
-  await expect(page.getByTitle('Azul rules')).toHaveCount(0);
 
   const reader = page.getByRole('region', { name: 'Azul rules' });
   await expect(reader.getByText('Factory').first()).toBeAttached();
@@ -270,4 +270,96 @@ test('on a phone a jump lands on its page in a rulebook of mixed page sizes', as
   const cited = page.getByRole('group', { name: /^Page 7 of \d+$/ });
   await expect(cited).toBeFocused();
   await expect.poll(() => offTarget(cited)).toBe(0);
+});
+
+/** The text of the marks on a page: the passage a citation points to, and any search matches. */
+const marked = (box: Locator) => box.evaluate((el) => [...el.querySelectorAll('mark')].map((m) => m.textContent).join(' '));
+
+/** Whether a page's first mark is on screen, clear of the reader's search bar. */
+const markOnScreen = (box: Locator) => box.evaluate((el) => {
+  const mark = el.querySelector('mark');
+  if (!mark) return false;
+  const { top, bottom } = mark.getBoundingClientRect();
+  return top >= parseFloat(getComputedStyle(el).scrollMarginTop) && bottom <= window.innerHeight;
+});
+
+const ROBBER_ANSWER = 'If you roll a 7, nobody gets resources and anyone holding more than 7 cards returns half of them (p. 5).';
+
+test('on a desktop a citation opens its page in place and marks the passage it points to', async ({ page }) => {
+  await page.route('**/api/chat', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/plain; charset=utf-8', body: ROBBER_ANSWER }),
+  );
+  await page.goto('/rules/catan');
+  await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
+  await page.getByPlaceholder('Ask a rules question...').fill('What happens on a 7?');
+  await page.getByRole('button', { name: 'Send' }).click();
+  await page.getByRole('link', { name: 'p. 5, Base game', exact: true }).click();
+
+  // In place, not a new tab: the reader scrolls to the page and focuses it.
+  await expect(page).toHaveURL(/\/rules\/catan\?page=5$/);
+  expect(page.context().pages()).toHaveLength(1);
+  const reader = page.getByRole('region', { name: 'Catan rules' });
+  const cited = reader.getByRole('group', { name: /^Page 5 of \d+$/ });
+  await expect(cited).toBeFocused();
+  // The answer's words are found on the page and marked, said for a screen
+  // reader, and brought on screen though the page is taller than the window.
+  await expect(reader.getByText(/^Base game, page 5\. Highlighted: If you roll a .7,. no…$/)).toBeAttached();
+  // Whole sentences, from the one the answer's words start in.
+  await expect.poll(() => marked(cited)).toMatch(/^If you roll a .7,. no one receives any resources\. Instead, every player who has more than 7 resource cards .* return them to the bank\.$/);
+  await expect.poll(() => markOnScreen(cited)).toBe(true);
+
+  // A search of the reader's own takes the mark's place.
+  await reader.getByRole('searchbox', { name: 'Search the rulebook' }).fill('largest army');
+  await reader.getByRole('button', { name: 'Search' }).click();
+  await expect(reader.getByRole('status')).toHaveText(/^1 of \d+ · page \d+$/);
+  await expect.poll(() => marked(cited)).not.toContain('resource cards');
+});
+
+test('on a phone a citation marks the passage it points to, on another tab\'s rulebook', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route('**/api/chat', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/plain; charset=utf-8', body: ROBBER_ANSWER.replace('(p. 5)', '(Catan p. 5)') }),
+  );
+  await page.goto('/rules/catan/cities-and-knights');
+  await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
+  await page.getByPlaceholder('Ask a rules question...').fill('What happens on a 7?');
+  await page.getByRole('button', { name: 'Send' }).click();
+  await page.getByRole('link', { name: 'Base game p. 5', exact: true }).click();
+
+  await expect(page).toHaveURL(/\/rules\/catan\?page=5$/);
+  const reader = page.getByRole('region', { name: 'Catan rules' });
+  const cited = reader.getByRole('group', { name: /^Page 5 of \d+$/ });
+  await expect(cited).toBeFocused();
+  await expect.poll(() => marked(cited)).toContain('more than 7 resource cards');
+  await expect.poll(() => markOnScreen(cited)).toBe(true);
+  await expect(reader.getByText(/^Base game, page 5\. Highlighted: /)).toBeAttached();
+});
+
+test('the cited mark covers the words it marks on the page image', async ({ page }) => {
+  await page.route('**/api/chat', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/plain; charset=utf-8', body: ROBBER_ANSWER }),
+  );
+  await page.goto('/rules/catan');
+  await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
+  await page.getByPlaceholder('Ask a rules question...').fill('What happens on a 7?');
+  await page.getByRole('button', { name: 'Send' }).click();
+  await page.getByRole('link', { name: 'p. 5, Base game', exact: true }).click();
+  const cited = page.getByRole('region', { name: 'Catan rules' }).getByRole('group', { name: /^Page 5 of \d+$/ });
+  await expect.poll(() => marked(cited)).toContain('return them to the bank.');
+  // Where the PDF draws the first and last words, from `pdftotext -bbox` on
+  // public/rules/catan.pdf p. 5 (594pt wide): "If" from 44.44pt, "bank."
+  // to 132.48pt. pdf.js lays its text out in a stand-in font, so a mark
+  // starting mid-line could miss its word by pixels; a sentence's marks
+  // start and end where the page's text items do.
+  const edges = await cited.evaluate((el) => {
+    const page = el.getBoundingClientRect();
+    const k = page.width / 594;
+    const marks = [...el.querySelectorAll('mark')];
+    return {
+      start: marks[0].getBoundingClientRect().left - (page.left + 44.44 * k),
+      end: marks.at(-1)!.getBoundingClientRect().right - (page.left + 132.48 * k),
+    };
+  });
+  expect(Math.abs(edges.start)).toBeLessThanOrEqual(0.5);
+  expect(Math.abs(edges.end)).toBeLessThanOrEqual(0.5);
 });

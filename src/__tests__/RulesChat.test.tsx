@@ -232,9 +232,10 @@ describe('RulesChat', () => {
     const nine = screen.getByRole('link', { name: 'p. 9' });
     // fireEvent returns false when the click's default was prevented.
     expect(fireEvent.click(four)).toBe(false);
-    expect(onCite).toHaveBeenLastCalledWith('/rules/catan.pdf#page=4');
+    // With the words of the answer each citation closes.
+    expect(onCite).toHaveBeenLastCalledWith('/rules/catan.pdf#page=4', 'Roll');
     expect(fireEvent.click(nine)).toBe(true);
-    expect(onCite).toHaveBeenLastCalledWith('/rules/catan.pdf#page=9');
+    expect(onCite).toHaveBeenLastCalledWith('/rules/catan.pdf#page=9', 'trade');
     // Opening it in a new tab on purpose is left to the browser, as is any
     // link that isn't a citation.
     onCite.mockClear();
@@ -243,6 +244,24 @@ describe('RulesChat', () => {
     }
     expect(fireEvent.click(screen.getByRole('link', { name: 'the FAQ' }))).toBe(true);
     expect(onCite).not.toHaveBeenCalled();
+  });
+
+  it('hands over the words a citation closes from its own list item, formatting and all', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => streamResponse(['Two things:\n\n- Roll **two** dice (p. 3).\n- On a 7, move the robber (p. 4).'])));
+    const citeLinks = (answer: string) => answer.replace(/\(p\. (\d)\)/g, '([p. $1](/rules/catan.pdf#page=$1))');
+    const onCite = vi.fn(() => true);
+    render(
+      <RulesChatProvider>
+        <RulesChatToggle />
+        <RulesChatPanel slug="catan" gameName="Catan" citeLinks={citeLinks} isCitation={(href) => href.includes('#page=')} onCite={onCite} />
+      </RulesChatProvider>,
+    );
+    openPanel();
+    send('How do turns go?');
+    fireEvent.click(await screen.findByRole('link', { name: 'p. 4' }));
+    expect(onCite).toHaveBeenLastCalledWith('/rules/catan.pdf#page=4', 'On a 7, move the robber');
+    fireEvent.click(screen.getByRole('link', { name: 'p. 3' }));
+    expect(onCite).toHaveBeenLastCalledWith('/rules/catan.pdf#page=3', 'Roll two dice');
   });
 
   it('reads each answer\'s links against the tab it was asked on, even one still streaming', async () => {

@@ -97,7 +97,7 @@ function numberRuns(labels: string[]): string[] {
 
 /**
  * Where a game's rules page shows the given rulebook, and with a page, where
- * the phone reader opens it at that page (?page=N, read by citedPageParam).
+ * the reader opens it at that page (?page=N, read by citedPageParam).
  */
 export function rulebookPath(slug: string, part?: string, page?: number): string {
   const path = part ? `/rules/${slug}/${part}` : `/rules/${slug}`;
