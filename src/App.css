@@ -879,7 +879,8 @@ a.rules-chat-toggle{text-decoration:none;}
 .notice-warning{color:var(--warn-fg);background:var(--warn-bg);border-color:var(--warn-border);}
 .notice-error{color:var(--danger-fg);background:var(--danger-bg);border-color:var(--danger-border);}
 .word-meanings{display:flex;flex-direction:column;gap:12px;}
-.word-phonetic{color:var(--text3);font-size:13px;font-style:italic;}
+.word-source{margin:0;font-size:12.5px;line-height:1.5;color:var(--text2);}
+.word-source a{color:inherit;text-underline-offset:2px;}
 .word-meaning{display:flex;flex-direction:column;gap:4px;}
 .word-pos{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--blue);}
 .word-def{font-size:14px;line-height:1.5;color:var(--text);padding-left:4px;}
