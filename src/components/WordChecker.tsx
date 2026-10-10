@@ -1,43 +1,41 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import * as Sentry from '@sentry/react';
 import { normalizeWord } from '../utils/wordList';
+import { wiktionaryPage } from '../utils/wiktionary';
+import type { Meaning } from '../utils/wiktionary';
 import { loadWordList } from '../hooks/wordList';
+import { lookUp } from '../hooks/dictionary';
 import Notice from './Notice';
-
-interface Definition {
-  definition: string;
-  example?: string;
-}
-
-interface Meaning {
-  partOfSpeech: string;
-  definitions: Definition[];
-}
-
-interface DictEntry {
-  phonetic?: string;
-  meanings: Meaning[];
-}
 
 /**
  * The verdict comes from the word-game list (public/words/: ENABLE and the
  * newer words it lacks) at once, with no network wait. A word the list lacks
- * is `unlisted` while the dictionary is asked, and stays so if it can't be
- * reached: that says nothing against the word, so it is never a red ✗. The
- * dictionary turns it `valid` when it knows the word and `invalid` only when
- * it answers that it doesn't. `entries` are the dictionary's definitions:
- * undefined while they load, null when it couldn't give any. `unchecked`
- * means neither the list nor the dictionary could be had.
+ * is `unlisted` while the dictionary (Wiktionary) is asked, and stays so if
+ * it can't be reached: that says nothing against the word, so it is never a
+ * red ✗. The dictionary turns it `valid` when it has a playable sense and
+ * `invalid` only when it answers that it has none. `meanings` are the
+ * dictionary's definitions: undefined while they load, null when it couldn't
+ * give any. `unchecked` means neither the list nor the dictionary could be had.
  */
 type Verdict =
-  | { status: 'valid'; word: string; source: 'list' | 'dictionary'; entries?: DictEntry[] | null }
+  | { status: 'valid'; word: string; source: 'list' | 'dictionary'; meanings?: Meaning[] | null }
   | { status: 'unlisted'; word: string; dictionary: 'asking' | 'unreachable' }
   | { status: 'invalid'; word: string }
   | { status: 'unchecked'; word: string };
 
-/** A verdict on a word, or `letters`: what was typed isn't one word of letters. */
-type Result = Verdict | { status: 'letters' };
+/**
+ * A verdict on a word, or a note instead of one: `letters`, what was typed
+ * isn't one word of letters; `short`, it's a lone letter, which no word game
+ * here plays (Wiktionary would call "a" and "x" words).
+ */
+type Result = Verdict | { status: 'letters' } | { status: 'short' };
+
+/** Bananagrams' shortest word, and ENABLE's. */
+const MIN_LETTERS = 2;
+
+// Wiktionary's text is CC BY-SA 4.0: credit, the source, the licence, and
+// that it was shortened (only playable senses, two definitions each, plain text).
+const LICENCE_URL = 'https://creativecommons.org/licenses/by-sa/4.0/';
 
 const STATUS_TEXT: Record<Verdict['status'], string> = {
   valid: 'Valid word',
@@ -47,70 +45,6 @@ const STATUS_TEXT: Record<Verdict['status'], string> = {
 };
 
 const STATUS_ICON: Record<Verdict['status'], string> = { valid: '✓', unlisted: '?', invalid: '✗', unchecked: '?' };
-
-// The dictionary only adds definitions or a second opinion; never wait long on it.
-const DICTIONARY_TIMEOUT_MS = 5000;
-
-type Lookup = { found: true; entries: DictEntry[] } | { found: false } | null;
-
-/**
- * Asks the dictionary about a word: found with its entries, not found (404),
- * or null when it couldn't answer, including a 200 whose body isn't usable.
- */
-async function lookUp(word: string): Promise<Lookup> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), DICTIONARY_TIMEOUT_MS);
-  try {
-    const res = await fetch(
-      `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`,
-      { signal: controller.signal },
-    );
-    if (res.status === 404) return { found: false };
-    if (!res.ok) return null;
-    const entries = parseEntries(await res.json());
-    if (entries) return { found: true, entries };
-    Sentry.captureMessage('word checker: unexpected dictionary response', { level: 'warning' });
-    return null;
-  } catch {
-    // Offline, timed out, or a body that isn't JSON.
-    return null;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
-const optionalText = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
-
-function parseDefinition(v: unknown): Definition | null {
-  if (!isObject(v) || typeof v.definition !== 'string') return null;
-  return { definition: v.definition, example: optionalText(v.example) };
-}
-
-function parseMeaning(v: unknown): Meaning | null {
-  if (!isObject(v) || typeof v.partOfSpeech !== 'string' || !Array.isArray(v.definitions)) return null;
-  const definitions = v.definitions.map(parseDefinition);
-  if (definitions.some((d) => d === null)) return null;
-  return { partOfSpeech: v.partOfSpeech, definitions: definitions as Definition[] };
-}
-
-function parseEntry(v: unknown): DictEntry | null {
-  if (!isObject(v) || !Array.isArray(v.meanings)) return null;
-  const meanings = v.meanings.map(parseMeaning);
-  if (meanings.some((m) => m === null)) return null;
-  return { phonetic: optionalText(v.phonetic), meanings: meanings as Meaning[] };
-}
-
-/**
- * The dictionary's answer for a word it knows, or null when the body isn't
- * the non-empty list of entries the renderer needs. Only the fields shown are
- * checked; an optional one of the wrong type is dropped.
- */
-function parseEntries(data: unknown): DictEntry[] | null {
-  if (!Array.isArray(data) || data.length === 0) return null;
-  const entries = data.map(parseEntry);
-  return entries.some((e) => e === null) ? null : (entries as DictEntry[]);
-}
 
 export default function WordChecker() {
   const [input, setInput] = useState('');
@@ -132,7 +66,7 @@ export default function WordChecker() {
     setResult({ status: 'unlisted', word, dictionary: 'asking' });
     const lookup = await lookUp(word);
     if (request !== latest.current) return;
-    if (lookup?.found) setResult({ status: 'valid', word, source: 'dictionary', entries: lookup.entries });
+    if (lookup?.found) setResult({ status: 'valid', word, source: 'dictionary', meanings: lookup.meanings });
     else if (lookup) setResult({ status: 'invalid', word });
     else setResult({ status: 'unlisted', word, dictionary: 'unreachable' });
   }
@@ -150,7 +84,7 @@ export default function WordChecker() {
       setResult({ status: 'valid', word, source: 'list' });
       const lookup = await lookUp(word);
       if (request !== latest.current) return;
-      setResult({ status: 'valid', word, source: 'list', entries: lookup?.found ? lookup.entries : null });
+      setResult({ status: 'valid', word, source: 'list', meanings: lookup?.found ? lookup.meanings : null });
       return;
     }
     if (words) {
@@ -166,7 +100,7 @@ export default function WordChecker() {
     setIsChecking(false);
     setIsLocked(false);
     if (request !== latest.current) return;
-    if (lookup?.found) setResult({ status: 'valid', word, source: 'dictionary', entries: lookup.entries });
+    if (lookup?.found) setResult({ status: 'valid', word, source: 'dictionary', meanings: lookup.meanings });
     else if (lookup) setResult({ status: 'invalid', word });
     else setResult({ status: 'unchecked', word });
   }
@@ -181,11 +115,11 @@ export default function WordChecker() {
     e.preventDefault();
     if (!input.trim()) return;
     const word = normalizeWord(input);
-    if (!word) {
+    if (!word || word.length < MIN_LETTERS) {
       // Supersedes a check still waiting on the list, which won't clear this.
       latest.current++;
       setIsChecking(false);
-      setResult({ status: 'letters' });
+      setResult({ status: word ? 'short' : 'letters' });
       return;
     }
     void check(word);
@@ -218,7 +152,10 @@ export default function WordChecker() {
         {result?.status === 'letters' && (
           <Notice tone="info">Use one word of letters only, without spaces, hyphens or apostrophes.</Notice>
         )}
-        {result && result.status !== 'letters' && (
+        {result?.status === 'short' && (
+          <Notice tone="info">Words need at least two letters.</Notice>
+        )}
+        {result && result.status !== 'letters' && result.status !== 'short' && (
           <div className="word-result">
             <div className={`word-badge word-${result.status}`}>
               <span className="word-badge-icon" aria-hidden="true">{STATUS_ICON[result.status]}</span>
@@ -241,15 +178,12 @@ export default function WordChecker() {
                 Neither the word list nor the dictionary could be reached.
               </Notice>
             )}
-            {result.status === 'valid' && result.entries === undefined && (
+            {result.status === 'valid' && result.meanings === undefined && (
               <p className="word-note">Looking up the meaning…</p>
             )}
-            {result.status === 'valid' && result.entries?.map((entry, i) => (
-              <div key={i} className="word-meanings">
-                {entry.phonetic && (
-                  <div className="word-phonetic">{entry.phonetic}</div>
-                )}
-                {entry.meanings.map((meaning, j) => (
+            {result.status === 'valid' && result.meanings && (
+              <div className="word-meanings">
+                {result.meanings.map((meaning, j) => (
                   <div key={j} className="word-meaning">
                     <div className="word-pos">{meaning.partOfSpeech}</div>
                     {meaning.definitions.slice(0, 2).map((def, k) => (
@@ -262,8 +196,13 @@ export default function WordChecker() {
                     ))}
                   </div>
                 ))}
+                <p className="word-source">
+                  Definitions from{' '}
+                  <a href={wiktionaryPage(result.word)} target="_blank" rel="noopener noreferrer">Wiktionary</a>
+                  {' '}(<a href={LICENCE_URL} target="_blank" rel="noopener noreferrer">CC BY-SA 4.0</a>), shortened
+                </p>
               </div>
-            ))}
+            )}
           </div>
         )}
         {!result && !isChecking && (

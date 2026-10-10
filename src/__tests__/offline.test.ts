@@ -14,7 +14,7 @@ describe('routeFor', () => {
   });
 
   it('leaves other sites alone', () => {
-    expect(route('/api/entries/en/cat', 'GET', 'cors', 'https://api.dictionaryapi.dev')).toBe('skip');
+    expect(route('/api/rest_v1/page/definition/cat', 'GET', 'cors', 'https://en.wiktionary.org')).toBe('skip');
     expect(route('/rules/catan.pdf', 'GET', 'no-cors', 'https://elsewhere.example')).toBe('skip');
   });
 

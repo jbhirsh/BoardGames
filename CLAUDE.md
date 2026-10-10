@@ -74,11 +74,13 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   - `/word-checker` — word lookup for word games: the bundled lists
     (`public/words/`: ENABLE, plus `additions.txt`, the hand-picked words it
     predates) answer at once; a word they lack reads "Not in our word list"
-    while the dictionary is asked, which can make it valid, or invalid only
-    when it answers that it doesn't know it. A dictionary that can't be
-    reached leaves a warning, never a red ✗, and anything but one word of
-    letters gets a note, not a verdict (a phone's trailing full stop is
-    dropped). The dictionary also gives meanings
+    while the dictionary (Wiktionary) is asked, which can make it valid, or
+    invalid only when it answers that it has no playable sense. A dictionary
+    that can't be reached leaves a warning, never a red ✗, and anything but
+    one word of two or more letters gets a note, not a verdict or a lookup
+    (a phone's trailing full stop is dropped). The dictionary also gives
+    meanings, credited as CC BY-SA 4.0 requires: Wiktionary, the word's
+    page, the licence, and that they're shortened
   - `/sign-in` — the owner's magic-link sign-in (`SignInPage`); nothing on
     the home page links to it
 
@@ -224,8 +226,10 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   standings with the coins tie-break; `difficulty.ts`, the Light/Medium/
   Heavy words for a weight; `offline.ts`, the service worker's
   routing and byte ranges; `fromList.ts`, the router state that marks a
-  sub-page as opened from the list). Keep these free of React and side
-  effects.
+  sub-page as opened from the list; `wordList.ts`, the word checker's
+  normalising of a typed word and parsing of its list; `wiktionary.ts`, the
+  reading of a Wiktionary answer and which words in it are playable). Keep
+  these free of React and side effects.
 - **`sw/sw.ts`** — the service worker, for game nights with no signal.
   `main.tsx` registers it in production builds only; the `serviceWorker()`
   plugin in `vite.config.ts` bundles it to `/sw.js` (a classic worker: the
@@ -373,9 +377,24 @@ reason for each file.
   build time via `@sentry/vite-plugin` (org `solo-23`, project `game_room`).
   Maps are built `hidden` and the plugin deletes them after the upload (even
   with no token), so none are served.
-- **dictionaryapi.dev** — public dictionary API called directly from the Word
-  Checker component (no key required) for meanings and for words missing
-  from the bundled ENABLE list.
+- **Wiktionary** — the REST definition API
+  (`en.wiktionary.org/api/rest_v1/page/definition/<word>`, keyless, open to
+  any origin), called from the browser by `hooks/dictionary.ts` for a word's
+  meanings and for words missing from the bundled lists. It lists far more
+  than a word-game list, so `utils/wiktionary.ts` counts a word only for an
+  English sense that isn't a proper noun, abbreviation, initialism, acronym,
+  symbol, letter, contraction, affix or phrase, a misspelling, an
+  "Abbreviation of" and the like, or a case variant of a capitalised word
+  (asap, tv); inflections and alternative, archaic and obsolete forms count.
+  It also files lone letters ("a", "x") as nouns or articles, so the checker
+  never asks about a word under two letters. The API's own 404 for a
+  missing page (`{ status: 404 }`) or no such sense is "not a word"; a
+  timeout (5 s), network error, any other 404 (a retired route answers
+  `{ httpCode: 404 }`) or any status but ok and 429 is "couldn't be
+  reached", and Sentry gets a warning for it (not a 429 or an offline
+  device) once per page load, as it does for a body it can't read. It replaced
+  dictionaryapi.dev, whose origin has been down since September 2026
+  (#186).
 - **BoardGameGeek** — the XML API 2 does the server-side lookup of an
   approved suggestion's details and box art by name (needs a registered
   token, `BGG_API_TOKEN`; answers 202 while queuing, retried once). Every
