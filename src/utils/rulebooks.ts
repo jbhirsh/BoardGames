@@ -95,9 +95,19 @@ function numberRuns(labels: string[]): string[] {
   return out;
 }
 
-/** Where a game's rules page shows the given rulebook. */
-export function rulebookPath(slug: string, part?: string): string {
-  return part ? `/rules/${slug}/${part}` : `/rules/${slug}`;
+/**
+ * Where a game's rules page shows the given rulebook, and with a page, where
+ * the phone reader opens it at that page (?page=N, read by citedPageParam).
+ */
+export function rulebookPath(slug: string, part?: string, page?: number): string {
+  const path = part ? `/rules/${slug}/${part}` : `/rules/${slug}`;
+  return page === undefined ? path : `${path}?page=${page}`;
+}
+
+/** The page a rules page's query asks the reader to open at, or null. */
+export function citedPageParam(search: string): number | null {
+  const page = new URLSearchParams(search).get('page');
+  return page !== null && /^[1-9]\d{0,3}$/.test(page) ? Number(page) : null;
 }
 
 /**

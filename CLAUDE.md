@@ -57,6 +57,7 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
     refetches, and only the visible one carries the `#collection` anchor)
   - `/rules/:slug/:part?` — bundled rule PDF viewer + AI rules assistant;
     a game with rulebooks for games inside it gets a tab per rulebook.
+    `?page=N` (`citedPageParam`) has the phone reader scroll to page N.
     Desktops embed the PDF in an iframe. Phones and touch tablets can't
     (Android draws nothing, iOS one page), so there `PdfReader` draws it with
     pdf.js (lazy-loaded): each page a canvas under its text layer, with a
@@ -332,9 +333,11 @@ checks they run 1, 2, 3 from the top of every file). The assistant cites a
 rule as `(p. N)` from the nearest marker. When it reads more than one
 rulebook, each is headed with its name (the game's own too) and every
 citation names one (`(Europe p. 4)`). The chat (`linkCitations` in
-`utils/rulebooks.ts`) turns each into a link opening that PDF at `#page=N`
-in a new tab. A bare page with several rulebooks read, or a name it wasn't
-sent, stays plain text. The eval grades facts with citations stripped, and
+`utils/rulebooks.ts`) turns each into a link to that PDF at `#page=N`: a
+desktop opens it in a new tab; on a phone the rules page instead shows that
+rulebook's tab in place at `?page=N` and the reader scrolls to the page. A
+bare page with several rulebooks read, or a name it wasn't sent, stays plain
+text. The eval grades facts with citations stripped, and
 its `citation` entries check the citations alone.
 `vercel.json` bundles `rules-text/**` into the `api/chat.ts` function so it can
 read them at runtime.

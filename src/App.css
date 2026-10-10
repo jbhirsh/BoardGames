@@ -16,6 +16,11 @@
   --blue-rgb:   0,113,227;
   --blue-fill:  #0071E3;
   --blue-fill-hover: #0062C2;
+  /* The ring on a rulebook page a citation jumped to (.pdf-page--cited). It
+     sits between the white page and --bg, so it keeps 3:1 against both:
+     here 5.6:1 and 5.4:1. The dark theme's --blue is 3.0:1 on the white
+     page, so it takes a deeper blue, 4.0:1 on the page, 4.7:1 on --bg. */
+  --cite-ring:  #0066CC;
   --on-fill:    #FFFFFF;
   --blue-bg:    rgba(var(--blue-rgb),0.08);
   --blue-bg2:   rgba(var(--blue-rgb),0.15);
@@ -63,6 +68,7 @@
     --bg:#111113; --bg2:#1C1C1E; --bg3:#2C2C2E; --surface:#1C1C1E; --surface2:#2C2C2E;
     --dark:#F5F5F7; --dark2:#E5E5EA; --text:#F5F5F7; --text2:#A1A1A6; --text3:#A1A1A6;
     --blue:#2997FF; --blue2:#47A6FF; --blue-rgb:41,151,255;
+    --cite-ring:#1A7FE6;
     --border:rgba(255,255,255,0.10); --border2:rgba(255,255,255,0.16); --border-hover:rgba(255,255,255,0.28);
     --row-hover:#232326; --code-bg:rgba(255,255,255,0.10); --hero-top:#1C1C1E;
     --award-fg:#E3C35A; --expansion-fg:#F0B35A; --extension-fg:#5FD39A; --version-fg:#6CB4FF;
@@ -78,6 +84,7 @@
   --bg:#111113; --bg2:#1C1C1E; --bg3:#2C2C2E; --surface:#1C1C1E; --surface2:#2C2C2E;
   --dark:#F5F5F7; --dark2:#E5E5EA; --text:#F5F5F7; --text2:#A1A1A6; --text3:#A1A1A6;
   --blue:#2997FF; --blue2:#47A6FF; --blue-rgb:41,151,255;
+  --cite-ring:#1A7FE6;
   --border:rgba(255,255,255,0.10); --border2:rgba(255,255,255,0.16); --border-hover:rgba(255,255,255,0.28);
   --row-hover:#232326; --code-bg:rgba(255,255,255,0.10); --hero-top:#1C1C1E;
   --award-fg:#E3C35A; --expansion-fg:#F0B35A; --extension-fg:#5FD39A; --version-fg:#6CB4FF;
@@ -738,7 +745,11 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .pdf-search-nav button{width:44px;padding:0;font-size:18px;}
 .pdf-pages{display:flex;flex-direction:column;gap:10px;}
 /* A rulebook page is paper: white in both themes. */
-.pdf-page{position:relative;width:100%;background:#fff;border-radius:4px;overflow:hidden;box-shadow:0 0 0 1px var(--border),var(--shadow-sm);scroll-margin-top:130px;--scale-round-x:1px;--scale-round-y:1px;}
+.pdf-page{position:relative;width:100%;background:#fff;border-radius:4px;overflow:hidden;box-shadow:0 0 0 1px var(--border),var(--shadow-sm);scroll-margin-top:130px;--scale-round-x:1px;--scale-round-y:1px;outline:3px solid transparent;outline-offset:2px;transition:outline-color .8s ease;}
+/* A page a citation jumped to is ringed at once, and the ring fades when the
+   class comes off (PdfReader); with reduced motion, the block at the end of
+   this file makes that instant. Focus from the keyboard keeps the ring. */
+.pdf-page.pdf-page--cited,.pdf-page:focus-visible{outline-color:var(--cite-ring);transition:none;}
 /* The edge is a shadow, not a border, so the page image and its text layer
    are exactly the width the reader drew them at. */
 .pdf-page canvas{display:block;width:100%;height:100%;}

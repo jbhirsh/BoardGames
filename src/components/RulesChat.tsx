@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, createContext, useContext } from 'react';
-import type { ComponentProps, FormEvent, ReactNode } from 'react';
+import type { ComponentProps, FormEvent, MouseEvent, ReactNode } from 'react';
 import * as Sentry from '@sentry/react';
 import { Link } from 'react-router';
 import Markdown, { type Components } from 'react-markdown';
@@ -10,6 +10,11 @@ interface Message {
   content: string;
   /** A failed request's notice; never sent back as history. */
   error?: boolean;
+  /**
+   * For an answer, the tab it was asked on: its links are read against
+   * what was sent then, not the tab on screen now.
+   */
+  tab?: string;
 }
 
 // Give up when the reply hasn't started, or has stalled, for this long.
@@ -58,24 +63,32 @@ export interface RulebookLink {
   state?: unknown;
 }
 
-// The panel's isCitation, for its answers' links. A context rather than a
-// components map built per render: a new component each render would mount
-// every link afresh, losing focus on one mid-answer.
-const CitationContext = createContext<(href: string) => boolean>(() => false);
+// The panel's link handlers, for its answers' links. A context rather than
+// a components map built per render: a new component each render would
+// mount every link afresh, losing focus on one mid-answer.
+const CitationContext = createContext<{ isCitation: (href: string) => boolean; onCite?: (href: string) => boolean }>({
+  isCitation: () => false,
+});
 const NO_CITATIONS = () => false;
 
 /**
  * An answer's link, which opens in a tab of its own, so the chat stays
- * where it was. Most are page citations, opening a rulebook PDF at the page.
+ * where it was. Most are page citations, opening a rulebook PDF at the page,
+ * unless the page takes one (onCite returns true). A link opened in a new
+ * tab on purpose (a modifier key, a middle click) is left to the browser.
  * A citation's title, if it has one, is its accessible name: "p. 11, Base
  * game" says which rulebook where "p. 11" alone doesn't. Any other link the
- * answer holds keeps its title as a title.
+ * answer holds keeps its title as a title, and is never taken.
  */
 function AnswerLink({ href, title, children }: ComponentProps<'a'>) {
-  const isCitation = useContext(CitationContext);
+  const { isCitation, onCite } = useContext(CitationContext);
   const cite = href !== undefined && isCitation(href);
+  function click(e: MouseEvent<HTMLAnchorElement>) {
+    if (!cite || !onCite || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (onCite(href)) e.preventDefault();
+  }
   return (
-    <a href={href} title={cite ? undefined : title} aria-label={cite ? title : undefined} target="_blank" rel="noopener noreferrer">
+    <a href={href} title={cite ? undefined : title} aria-label={cite ? title : undefined} target="_blank" rel="noopener noreferrer" onClick={click}>
       {children}
     </a>
   );
@@ -89,17 +102,22 @@ const ANSWER_COMPONENTS: Components = { a: AnswerLink };
  * other tabs an answer names, so "that's in the 5–6 Player Extension" comes
  * with a way there. `citeLinks` turns the answer's page citations ("p. 5")
  * into links to that page, which `isCitation` tells from any other link the
- * answer holds. `starters` are offered as one-tap questions until
- * the first one is asked.
+ * answer holds, and `onCite`, given one of those, shows the page in place
+ * and returns true, or returns false to let it open the PDF. `starters` are
+ * offered as one-tap questions until the first one is asked. `tab` names
+ * the tab on screen; each answer keeps the one it was asked on and hands it
+ * to `linksFor` and `citeLinks`, since the panel stays as tabs change.
  */
-export function RulesChatPanel({ slug, gameName, parts = [], scope, linksFor, citeLinks, isCitation = NO_CITATIONS, starters = [] }: {
+export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFor, citeLinks, isCitation = NO_CITATIONS, onCite, starters = [] }: {
   slug: string;
   gameName: string;
   parts?: string[];
   scope?: string;
-  linksFor?: (answer: string) => RulebookLink[];
-  citeLinks?: (answer: string) => string;
+  tab?: string;
+  linksFor?: (answer: string, tab?: string) => RulebookLink[];
+  citeLinks?: (answer: string, tab?: string) => string;
   isCitation?: (href: string) => boolean;
+  onCite?: (href: string) => boolean;
   starters?: string[];
 }) {
   const { isOpen } = useContext(ChatContext);
@@ -108,6 +126,7 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, linksFor, ci
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   // The request in flight, aborted if the page goes away under it.
@@ -187,7 +206,7 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, linksFor, ci
       const reader = response.body!.getReader();
       const decoder = new TextDecoder();
 
-      setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
+      setMessages((prev) => [...prev, { role: 'assistant', content: '', tab }]);
 
       const append = (text: string) =>
         setMessages((prev) => {
@@ -224,8 +243,16 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, linksFor, ci
       if (!controller.signal.aborted || timedOut) {
         setIsLoading(false);
         // The input was disabled while waiting; put the person back in it
-        // after a failure, or when the starter they tapped has gone with focus.
-        if (failed || !fromBox) requestAnimationFrame(() => inputRef.current?.focus());
+        // after a failure, or when the starter they tapped has gone with focus,
+        // unless they have moved on meanwhile (a citation tapped mid-answer
+        // put focus on its page). Without scrolling, which would take them
+        // back up from wherever they are reading.
+        if (failed || !fromBox) {
+          requestAnimationFrame(() => {
+            const at = document.activeElement;
+            if (at === document.body || panelRef.current?.contains(at)) inputRef.current?.focus({ preventScroll: true });
+          });
+        }
       }
     }
   }
@@ -236,7 +263,7 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, linksFor, ci
   const fresh = messages.length === 1 && !isLoading;
 
   return (
-    <div className={`rules-chat-panel${fresh ? ' rules-chat-panel-fresh' : ''}`}>
+    <div ref={panelRef} className={`rules-chat-panel${fresh ? ' rules-chat-panel-fresh' : ''}`}>
         {scope && <p className="rules-chat-scope" aria-live="polite">{scope}</p>}
         <div className="rules-chat-messages" ref={messagesContainerRef}>
         {messages.map((msg, i) => (
@@ -252,10 +279,10 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, linksFor, ci
             ) : (
               <div className="rules-chat-bubble">
                 {msg.role === 'assistant'
-                  ? <CitationContext.Provider value={isCitation}><Markdown components={ANSWER_COMPONENTS}>{citeLinks?.(msg.content) ?? msg.content}</Markdown></CitationContext.Provider>
+                  ? <CitationContext.Provider value={{ isCitation, onCite }}><Markdown components={ANSWER_COMPONENTS}>{citeLinks?.(msg.content, msg.tab ?? tab) ?? msg.content}</Markdown></CitationContext.Provider>
                   : msg.content}
                 {/* Once the answer is whole, so links don't come and go mid-stream. */}
-                {msg.role === 'assistant' && i > 0 && !(isLoading && i === messages.length - 1) && linksFor?.(msg.content).map((l) => (
+                {msg.role === 'assistant' && i > 0 && !(isLoading && i === messages.length - 1) && linksFor?.(msg.content, msg.tab ?? tab).map((l) => (
                   <Link key={l.to} className="rules-chat-tablink" to={l.to} replace state={l.state}>Open {l.label} <span aria-hidden="true">→</span></Link>
                 ))}
               </div>

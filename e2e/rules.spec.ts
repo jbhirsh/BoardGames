@@ -1,4 +1,5 @@
 import { GAMES } from '../src/data/games';
+import type { Locator } from '@playwright/test';
 import { test, expect, nextPost, CHAT_ANSWER } from './fixtures';
 
 const GAME = 'Far-Out Questions';
@@ -215,4 +216,58 @@ test('an answer\'s page citations open their rulebook at that page', async ({ pa
   await expect(page.getByText('as before (p. 5).', { exact: false })).toBeVisible();
   await expect(page.getByRole('link', { name: /p\. 5/ })).toHaveCount(0);
   expect((await request.get('/rules/ticket-to-ride.europe.pdf')).status()).toBe(200);
+});
+
+/** How far, in whole pixels, a page's top is from where a jump puts it: under the reader's search bar. */
+const offTarget = (box: Locator) =>
+  box.evaluate((el) => Math.round(Math.abs(el.getBoundingClientRect().top - parseFloat(getComputedStyle(el).scrollMarginTop))));
+
+test('on a phone a citation of another tab\'s rulebook opens that tab at the page, under the answer', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const answer = 'Knights hold off the barbarians (Cities And Knights p. 4), and a 7 still moves the robber (Catan p. 5).';
+  await page.route('**/api/chat', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/plain; charset=utf-8', body: answer }),
+  );
+  await page.goto('/rules/catan/cities-and-knights');
+  await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
+  await page.getByPlaceholder('Ask a rules question...').fill('What happens on a 7?');
+  await page.getByRole('button', { name: 'Send' }).click();
+
+  // On Cities & Knights the assistant reads Catan too, so it cites it.
+  await page.getByRole('link', { name: 'Base game p. 5', exact: true }).click();
+
+  await expect(page).toHaveURL(/\/rules\/catan\?page=5$/);
+  const strip = page.getByRole('navigation', { name: 'Rulebooks' });
+  await expect(strip.getByRole('link', { name: 'Base game' })).toHaveAttribute('aria-current', 'page');
+  // The reader scrolls the cited page to the top, under its search bar, and
+  // puts focus on it, so a screen reader says where it went.
+  const cited = page.getByRole('region', { name: 'Catan rules' }).getByRole('group', { name: /^Page 5 of \d+$/ });
+  await expect(cited).toBeFocused();
+  await expect(cited).toBeInViewport();
+  await expect.poll(() => offTarget(cited)).toBe(0);
+  // The conversation stays, its links as they were on the tab it was asked
+  // on, and the chat now says what it reads for this tab.
+  await expect(page.getByText('a 7 still moves the robber', { exact: false })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Cities & Knights p. 4', exact: true })).toHaveAttribute('href', '/rules/catan.cities-and-knights.pdf#page=4');
+  await expect(page.getByText('Reading: Base game.')).toBeAttached();
+});
+
+test('on a phone a jump lands on its page in a rulebook of mixed page sizes', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  // Cranium's pages run tall, short and wide: sized like the first until
+  // drawn, the pages above would move page 7 as the scroll passed them.
+  await page.route('**/api/chat', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/plain; charset=utf-8', body: 'Roll the die to move (p. 7).' }),
+  );
+  await page.goto('/rules/cranium');
+  await expect(page.getByRole('region', { name: 'Cranium rules' }).getByRole('button', { name: 'Search' })).toBeEnabled();
+  await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
+  await page.getByPlaceholder('Ask a rules question...').fill('How do we move?');
+  await page.getByRole('button', { name: 'Send' }).click();
+  await page.getByRole('link', { name: 'p. 7, Cranium rulebook', exact: true }).click();
+
+  await expect(page).toHaveURL(/\/rules\/cranium\?page=7$/);
+  const cited = page.getByRole('group', { name: /^Page 7 of \d+$/ });
+  await expect(cited).toBeFocused();
+  await expect.poll(() => offTarget(cited)).toBe(0);
 });

@@ -6,12 +6,20 @@ import { FROM_LIST } from '../utils/fromList';
 import { renderRouted } from './routed';
 
 // pdf.js needs a real browser; PdfReader.test.tsx covers the reader itself.
-vi.mock('../components/PdfReader', () => ({
-  default: ({ src, title }: { src: string; title: string }) => {
-    if (src.includes('vampire')) throw new Error('reader broke');
-    return <section aria-label={title} data-src={src} />;
-  },
-}));
+// This one says it has failed when a test sets `reader.fails`.
+const reader = vi.hoisted(() => ({ fails: false }));
+vi.mock('../components/PdfReader', async () => {
+  const { useEffect } = await import('react');
+  return {
+    default: function PdfReader({ src, title, jump, onFail }: { src: string; title: string; jump?: { page: number; key: string; place?: string }; onFail?: () => void }) {
+      if (src.includes('vampire')) throw new Error('reader broke');
+      useEffect(() => {
+        if (reader.fails) onFail?.();
+      }, [onFail]);
+      return <section aria-label={title} data-src={src} data-jump={jump && `${jump.page}:${jump.key}`} data-place={jump?.place} />;
+    },
+  };
+});
 
 function renderAt(path: string) {
   return render(
@@ -409,6 +417,137 @@ describe('RulesPage on a phone or touch device', () => {
     expect(await screen.findByText(/couldn’t be shown here/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Download PDF' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+  });
+
+  /** A HEAD for the PDF's size gets no answer; a question gets `answer`. */
+  const answering = (answer: string) => vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
+    if (init?.method === 'HEAD') return { ok: false, headers: new Headers() } as Response;
+    let read = false;
+    const value = new TextEncoder().encode(answer);
+    return {
+      ok: true,
+      body: { getReader: () => ({ read: async () => (read ? { done: true } : (read = true, { done: false, value })) }) },
+    } as unknown as Response;
+  });
+  const ask = () => {
+    fireEvent.click(screen.getByRole('button', { name: /ai rules assistant/i }));
+    fireEvent.change(screen.getByPlaceholderText('Ask a rules question...'), { target: { value: 'Robber?' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+  };
+
+  it('opens a citation of another tab at its page in the reader, in place, under the answer', async () => {
+    touch(true);
+    answering('A 7 moves the robber (Catan p. 5), knights (Cities And Knights p. 4), as before (p. 3).');
+    const router = renderRouted(<RulesPage />, ['/?p=3', { pathname: '/rules/catan/cities-and-knights', state: FROM_LIST }], '/rules/:slug/:part?');
+    ask();
+    const link = await screen.findByRole('link', { name: 'Base game p. 5' });
+    // Taken by the page, not opened as a PDF.
+    expect(fireEvent.click(link)).toBe(false);
+    expect(router.state.historyAction).toBe('REPLACE');
+    expect(router.state.location).toMatchObject({ pathname: '/rules/catan', search: '?page=5', state: { fromList: true } });
+    // The window stays put for the reader to move, not sent to the top first.
+    expect(router.state.preventScrollReset).toBe(true);
+    const reader = await screen.findByRole('region', { name: 'Catan rules' });
+    expect(reader).toHaveAttribute('data-jump', `5:${router.state.location.key}`);
+    expect(reader).toHaveAttribute('data-place', 'Base game');
+    expect(screen.getByText(/A 7 moves the robber/)).toBeInTheDocument();
+    expect(screen.getByText('Reading: Base game.')).toBeInTheDocument();
+    // The answer still reads as it was asked, on Cities & Knights: its own
+    // page stays a link, and a bare page, which could have been either
+    // rulebook there, stays text rather than turning into Catan's.
+    expect(screen.getByRole('link', { name: 'Cities & Knights p. 4' })).toHaveAttribute('href', '/rules/catan.cities-and-knights.pdf#page=4');
+    expect(screen.queryByRole('link', { name: /p\. 3/ })).not.toBeInTheDocument();
+    expect(screen.getByText(/as before \(p\. 3\)/)).toBeInTheDocument();
+  });
+
+  it('jumps the reader on screen to a page of its own rulebook, again on each tap', async () => {
+    touch(true);
+    answering('Roll two dice (p. 3).');
+    const router = renderRouted(<RulesPage />, ['/rules/catan'], '/rules/:slug/:part?');
+    const reader = await screen.findByRole('region', { name: 'Catan rules' });
+    expect(reader).not.toHaveAttribute('data-jump');
+    ask();
+    const link = await screen.findByRole('link', { name: 'p. 3, Base game' });
+    fireEvent.click(link);
+    expect(router.state.location).toMatchObject({ pathname: '/rules/catan', search: '?page=3' });
+    const first = router.state.location.key;
+    // The same reader, told to jump.
+    expect(screen.getByRole('region', { name: 'Catan rules' })).toBe(reader);
+    expect(reader).toHaveAttribute('data-jump', `3:${first}`);
+    fireEvent.click(link);
+    expect(router.state.location.key).not.toBe(first);
+    expect(reader).toHaveAttribute('data-jump', `3:${router.state.location.key}`);
+  });
+
+  it('leaves a link that is not a citation to the browser', async () => {
+    touch(true);
+    answering('See [the FAQ](https://example.com/faq).');
+    const router = renderRouted(<RulesPage />, ['/rules/catan'], '/rules/:slug/:part?');
+    ask();
+    const link = await screen.findByRole('link', { name: 'the FAQ' });
+    expect(fireEvent.click(link)).toBe(true);
+    expect(router.state.location.search).toBe('');
+  });
+
+  it('opens the reader at the page a link asks for', async () => {
+    touch(true);
+    headWith({});
+    renderAt('/rules/catan?page=4');
+    expect(await screen.findByRole('region', { name: 'Catan rules' })).toHaveAttribute('data-jump', '4:default');
+  });
+
+  it('ignores a page that is no page', async () => {
+    touch(true);
+    headWith({});
+    renderAt('/rules/catan?page=0');
+    expect(await screen.findByRole('region', { name: 'Catan rules' })).not.toHaveAttribute('data-jump');
+  });
+
+  it('names no rulebook for a game with only its own', async () => {
+    touch(true);
+    answering('Draw two (p. 4).');
+    renderRouted(<RulesPage />, ['/rules/azul'], '/rules/:slug/:part?');
+    ask();
+    await screen.findByRole('link', { name: 'p. 4, Azul rulebook' });
+    fireEvent.click(screen.getByRole('link', { name: 'p. 4, Azul rulebook' }));
+    expect(await screen.findByRole('region', { name: 'Azul rules' })).not.toHaveAttribute('data-place');
+  });
+
+  it('leaves citations to open the PDF once the reader has failed', async () => {
+    touch(true);
+    reader.fails = true;
+    try {
+      answering('A 7 moves the robber (Catan p. 5).');
+      const router = renderRouted(<RulesPage />, ['/rules/catan/cities-and-knights'], '/rules/:slug/:part?');
+      ask();
+      expect(fireEvent.click(await screen.findByRole('link', { name: 'Base game p. 5' }))).toBe(true);
+      expect(router.state.location.pathname).toBe('/rules/catan/cities-and-knights');
+    } finally {
+      reader.fails = false;
+    }
+  });
+
+  it('leaves citations to open the PDF when the reader itself won\'t load', async () => {
+    touch(true);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    answering('A vampire wakes (Vampire p. 2).');
+    const router = renderRouted(<RulesPage />, ['/rules/one-night-werewolf/vampire'], '/rules/:slug/:part?');
+    await screen.findByText(/couldn’t be shown here/);
+    ask();
+    const link = await screen.findByRole('link', { name: 'Vampire p. 2' });
+    expect(fireEvent.click(link)).toBe(true);
+    expect(router.state.location.search).toBe('');
+  });
+
+  it('leaves citations to open the PDF in a new tab on a desktop', async () => {
+    touch(false);
+    answering('A 7 moves the robber (Catan p. 5).');
+    const router = renderRouted(<RulesPage />, ['/rules/catan/cities-and-knights'], '/rules/:slug/:part?');
+    ask();
+    const link = await screen.findByRole('link', { name: 'Base game p. 5' });
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(fireEvent.click(link)).toBe(true);
+    expect(router.state.location.pathname).toBe('/rules/catan/cities-and-knights');
   });
 
   it('embeds the rulebook on a desktop and never asks its size', () => {
