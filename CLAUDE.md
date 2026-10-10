@@ -98,8 +98,8 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   `ScrollRestoration` in `App`, turns smooth scrolling off while the router
   moves the page, so a new page doesn't glide to its top either). The picker closes before it navigates, so the saved offset is
   the list's, not the pinned page's 0. Rulebook tabs and the chat's Open
-  links `replace` and pass that state on (and the PDF frame is keyed per
-  tab), so a rules page is one history entry however many tabs are read. A deep link, or
+  links `replace` and pass that state on, so a rules page is one history
+  entry however many tabs are read. A deep link, or
   the score page reached from a rules page, goes to `/`.
 - **`App.tsx`** — layout shell: wraps the router `Outlet` in `FilterProvider`
   and mounts Vercel `Analytics`.
