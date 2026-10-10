@@ -259,7 +259,14 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   format and each of `parts` (must match the same slug regex as `votes.ts`,
   since they pick a file), message length (<=500), history length (<=10) and total
   history content size, and caps Gemini output tokens. Per-IP rate limited via
-  `_lib/rateLimit.ts`. Errors reported to Sentry (`@sentry/node`).
+  `_lib/rateLimit.ts`, and capped at 500 questions a day across every caller
+  (a fixed-key limiter checked last, so per-IP refusals and bad requests
+  don't spend it; its 429 carries `code: 'daily-limit'`, which `RulesChat`
+  words as done for today). It is the only paid API, so the daily limiter
+  fails closed (503) when Redis errors or times out, with a 2 s Upstash
+  timeout so an outage refuses quickly; the per-IP limiter, like every other
+  endpoint's, fails open. Production reports a missing KV config, which
+  turns the cap off, to Sentry. Errors reported to Sentry (`@sentry/node`).
 - **`votes.ts`** — anonymous wishlist voting backed by Upstash Redis
   (`@upstash/redis`). `handleVotes()` is written against small interfaces
   (`VotesRedis`, `VotesRequest`, `VotesResponse`) so it can be unit-tested with
@@ -349,7 +356,9 @@ pre-#188 texts it must keep catching. Keep its allowlist short, with a
 reason for each file.
 
 ### External services
-- **Google Gemini** — AI rules answers (server-side, `GEMINI_API_KEY`).
+- **Google Gemini** — AI rules answers (server-side, `GEMINI_API_KEY`). The
+  daily cap bounds requests, not cost; a budget alert on the Gemini project
+  (an owner action in Google Cloud billing, outside the code) is the backstop.
 - **Upstash Redis / Vercel KV** — wishlist vote storage.
 - **Sentry** — error monitoring (browser + serverless) and source-map upload at
   build time via `@sentry/vite-plugin` (org `solo-23`, project `game_room`).

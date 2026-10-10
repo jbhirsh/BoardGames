@@ -17,7 +17,18 @@ const STALL_MS = 30_000;
 
 const FAILED = 'Sorry, something went wrong. Please try again.';
 const RATE_LIMITED = 'Too many questions just now. Wait a minute, then try again.';
+const DAILY_LIMITED = 'The rules assistant has reached its limit for today. The rulebook still works.';
 const TIMED_OUT = 'That took too long to answer. Please try again.';
+
+/** Whether a 429 is the site-wide daily cap rather than the per-minute limit. */
+async function isDailyLimit(response: Response): Promise<boolean> {
+  try {
+    const body = (await response.json()) as { code?: unknown } | null;
+    return body?.code === 'daily-limit';
+  } catch {
+    return false;
+  }
+}
 
 interface RulesChatContext {
   isOpen: boolean;
@@ -141,7 +152,7 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, linksFor, ci
       if (!response.ok) {
         // A 429 is the rate limiter doing its job, not a fault to report.
         if (response.status === 429) {
-          fail(RATE_LIMITED);
+          fail((await isDailyLimit(response)) ? DAILY_LIMITED : RATE_LIMITED);
         } else {
           Sentry.captureMessage(`rules chat request failed: HTTP ${response.status}`, {
             level: 'error',

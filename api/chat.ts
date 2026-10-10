@@ -39,11 +39,41 @@ function isOverloaded(err: unknown): boolean {
 // Expensive paid AI call, unauthenticated endpoint: bound requests per IP.
 const chatLimiter = getLimiter('chat', 10, 60);
 
+// Per-IP limits alone don't cap a day's spend (many IPs, or a Redis outage),
+// so every caller also shares one daily budget, set well above a busy game
+// night. Hard-coded: changing an env var on Vercel needs a redeploy anyway.
+// It alone fails closed, so it alone carries the spend guarantee; its short
+// Upstash timeout makes an outage refuse in about 2 s rather than 5.
+// getLimiter's sliding window counts fixed UTC-day buckets and weights the
+// previous day's by how much of it still falls within the last 24 hours, so
+// Redis sees roughly "the last 24 hours" and frees questions gradually. But
+// Upstash's in-memory cache remembers a refusal until the bucket ends, so a
+// warm instance that has refused once keeps refusing until 00:00 UTC without
+// asking Redis; only a cold one gets the gradual release. The cache is kept:
+// it only ever refuses sooner, never lets an extra question through.
+const CHAT_DAILY_LIMIT = 500;
+const chatDailyLimiter = getLimiter('chat-global', CHAT_DAILY_LIMIT, 86400, { timeoutMs: 2000 });
+
+// Without the KV env vars the cap is silently off (fine for local dev and
+// tests); in production that is a misconfiguration worth hearing about.
+if (!chatDailyLimiter && process.env.VERCEL_ENV === 'production') {
+  Sentry.captureMessage('chat daily cap disabled: KV env missing', 'warning');
+}
+
+// The client keys its notice on `code`; `error` reads sensibly on its own.
+const DAILY_LIMIT_REFUSAL = {
+  error: 'The rules assistant has reached its limit for today. The rulebook still works.',
+  code: 'daily-limit',
+};
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // The per-IP limit fails open like every other endpoint's: in an outage the
+  // daily check below refuses anyway, and while Redis is merely slow, failing
+  // closed here too would only double the chance of a 503.
   if (!(await enforceRateLimit(chatLimiter, req, res))) return;
 
   // Vercel leaves body undefined with no payload (and null for a JSON null),
@@ -105,6 +135,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } catch {
     return res.status(404).json({ error: 'Rules not found for this game' });
   }
+
+  // The daily budget is checked last, after the per-IP limit and every 400 or
+  // 404, so it counts only questions that will reach Gemini: one abuser's
+  // per-IP refusals, or malformed requests, can't burn everyone's budget.
+  if (!(await enforceRateLimit(chatDailyLimiter, req, res, {
+    key: 'global',
+    refusal: DAILY_LIMIT_REFUSAL,
+    // If Redis can't answer, nothing would cap spend.
+    failClosed: true,
+  }))) return;
 
   Sentry.setTag("game_slug", slug);
   Sentry.setContext("chat", { slug, messageLength: message.length, historyLength: history?.length ?? 0 });
