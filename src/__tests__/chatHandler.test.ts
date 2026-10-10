@@ -6,6 +6,7 @@ vi.mock('@sentry/node', () => ({
   setTag: vi.fn(),
   setContext: vi.fn(),
   captureException: vi.fn(),
+  captureMessage: vi.fn(),
   flush: vi.fn(async () => true),
 }));
 
@@ -313,5 +314,30 @@ describe('chat handler', () => {
     expect(res.body).toEqual({ error: 'Failed to generate response' });
     expect(res.chunks).toEqual([]);
     expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(boom);
+  });
+});
+
+describe('chat handler with no KV config (no daily cap)', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  async function loadFresh(env: string) {
+    vi.stubEnv('VERCEL_ENV', env);
+    vi.resetModules();
+    const sentry = await import('@sentry/node');
+    vi.mocked(sentry.captureMessage).mockClear();
+    await import('../../api/chat');
+    return sentry;
+  }
+
+  it('warns Sentry in production that the cap is off', async () => {
+    const sentry = await loadFresh('production');
+    expect(sentry.captureMessage).toHaveBeenCalledWith('chat daily cap disabled: KV env missing', 'warning');
+  });
+
+  it('stays quiet outside production', async () => {
+    const sentry = await loadFresh('preview');
+    expect(sentry.captureMessage).not.toHaveBeenCalled();
   });
 });

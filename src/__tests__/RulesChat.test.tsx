@@ -307,6 +307,33 @@ describe('RulesChat', () => {
     expect(vi.mocked(Sentry.captureMessage)).not.toHaveBeenCalled();
   });
 
+  it('says the assistant is done for the day when the daily cap answers', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: false,
+      status: 429,
+      json: async () => ({ error: 'Daily cap.', code: 'daily-limit' }),
+    }) as Response));
+    setup();
+    openPanel();
+    send('How many players?');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('The rules assistant has reached its limit for today. The rulebook still works.');
+    expect(vi.mocked(Sentry.captureMessage)).not.toHaveBeenCalled();
+  });
+
+  it('keeps the per-minute notice for a 429 whose body has no daily code', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: false,
+      status: 429,
+      json: async () => ({ error: 'Too many requests. Please slow down.' }),
+    }) as Response));
+    setup();
+    openPanel();
+    send('How many players?');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Too many questions just now. Wait a minute, then try again.');
+  });
+
   it('removes a half-streamed answer when the stream fails', async () => {
     const encoder = new TextEncoder();
     let calls = 0;

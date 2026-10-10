@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 
 vi.mock('@sentry/node', () => ({ captureException: vi.fn() }));
 
@@ -38,6 +38,8 @@ describe('clientIp', () => {
 });
 
 describe('enforceRateLimit', () => {
+  beforeEach(() => vi.mocked(Sentry.captureException).mockClear());
+
   it('allows and writes nothing when the limiter is null (fail open)', async () => {
     const res = makeRes();
     const ok = await enforceRateLimit(null, reqWith({}), res);
@@ -69,6 +71,59 @@ describe('enforceRateLimit', () => {
     expect(res.status).not.toHaveBeenCalled();
     expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(boom);
   });
+
+  it('counts against a fixed key when given one, instead of the client IP', async () => {
+    const limiter: RateLimiter = { limit: vi.fn(async () => ({ success: true })) };
+    await enforceRateLimit(limiter, reqWith({ 'x-real-ip': '1.1.1.1' }), makeRes(), { key: 'global' });
+    expect(limiter.limit).toHaveBeenCalledWith('global');
+  });
+
+  it('answers a 429 with the caller\'s own refusal when given one', async () => {
+    const res = makeRes();
+    const limiter: RateLimiter = { limit: vi.fn(async () => ({ success: false })) };
+    const refusal = { error: 'Done for today.', code: 'daily-limit' };
+    expect(await enforceRateLimit(limiter, reqWith({}), res, { refusal })).toBe(false);
+    expect(res.statusCode).toBe(429);
+    expect(res.body).toEqual(refusal);
+  });
+
+  it('fails closed with a 503 when asked to and the limiter throws, still reporting it', async () => {
+    const res = makeRes();
+    const boom = new Error('redis down');
+    const limiter: RateLimiter = { limit: vi.fn(async () => { throw boom; }) };
+    expect(await enforceRateLimit(limiter, reqWith({}), res, { failClosed: true })).toBe(false);
+    expect(res.statusCode).toBe(503);
+    expect(res.body).toEqual({ error: 'Temporarily unavailable. Please try again later.' });
+    expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(boom);
+  });
+
+  it('treats an Upstash timeout as a failure when failing closed', async () => {
+    const res = makeRes();
+    const limiter: RateLimiter = { limit: vi.fn(async () => ({ success: true, reason: 'timeout' })) };
+    expect(await enforceRateLimit(limiter, reqWith({}), res, { failClosed: true })).toBe(false);
+    expect(res.statusCode).toBe(503);
+    expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(new Error('rate limiter timed out'));
+  });
+
+  it('lets an Upstash timeout through when failing open', async () => {
+    const res = makeRes();
+    const limiter: RateLimiter = { limit: vi.fn(async () => ({ success: true, reason: 'timeout' })) };
+    expect(await enforceRateLimit(limiter, reqWith({}), res)).toBe(true);
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it('allows a fail-closed request when no limiter is configured (no Redis env)', async () => {
+    const res = makeRes();
+    expect(await enforceRateLimit(null, reqWith({}), res, { failClosed: true })).toBe(true);
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it('allows a fail-closed request the limiter passes', async () => {
+    const res = makeRes();
+    const limiter: RateLimiter = { limit: vi.fn(async () => ({ success: true })) };
+    expect(await enforceRateLimit(limiter, reqWith({}), res, { failClosed: true })).toBe(true);
+    expect(res.status).not.toHaveBeenCalled();
+  });
 });
 
 describe('getLimiter', () => {
@@ -98,5 +153,16 @@ describe('getLimiter', () => {
     const a = getLimiter('test-memo', 10, 60);
     expect(getLimiter('test-memo', 10, 60)).toBe(a);
     expect(getLimiter('test-memo', 99, 1)).not.toBe(a);
+  });
+
+  it('keeps Upstash\'s 5 s timeout unless given a shorter one, which keys the memo too', () => {
+    process.env.KV_REST_API_URL = 'https://example.upstash.io';
+    process.env.KV_REST_API_TOKEN = 'test-token';
+    const timeoutOf = (l: RateLimiter | null) => (l as unknown as { timeout: number }).timeout;
+    const plain = getLimiter('test-timeout', 10, 60);
+    const quick = getLimiter('test-timeout', 10, 60, { timeoutMs: 2000 });
+    expect(timeoutOf(plain)).toBe(5000);
+    expect(timeoutOf(quick)).toBe(2000);
+    expect(quick).not.toBe(plain);
   });
 });

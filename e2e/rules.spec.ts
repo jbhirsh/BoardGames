@@ -81,6 +81,22 @@ test('a rate-limited question comes back to the box and Retry asks it again', as
   await expect(page.getByText(question)).toHaveCount(1);
 });
 
+test('the daily cap says the assistant is done for today, not to wait a minute', async ({ page }) => {
+  await page.route('**/api/chat', (route) =>
+    route.fulfill({
+      status: 429,
+      contentType: 'application/json',
+      body: '{"error":"The rules assistant has reached its limit for today.","code":"daily-limit"}',
+    }),
+  );
+  await page.goto(`/rules/${SLUG}`);
+  await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
+  await page.getByPlaceholder('Ask a rules question...').fill('Does everyone answer each question?');
+  await page.getByRole('button', { name: 'Send' }).click();
+
+  await expect(page.getByRole('alert')).toHaveText(/reached its limit for today\. The rulebook still works\./);
+});
+
 test('under a players filter, Rules opens the add-on the game fits through', async ({ page }) => {
   // Catan seats 3–4; at five it is listed for its 5–6 Player Extension.
   await page.goto('/?q=catan&p=5&v=grid');
