@@ -16,6 +16,25 @@ const MIN_CHARS_PER_PAGE = 200;
 const pageMarker = (n) => `[Page ${n}]\n`;
 const withPageMarkers = (pages) => pages.map((t, i) => pageMarker(i + 1) + t).join("\n\n");
 
+// Rio Grande's Dominion books picture whole cards, and each picture carries
+// its print-file slug ("treasure_2nd02.indd 68 7/12/21 12:43 AM") and art
+// credit ("Illustration: Ryan Laukat © 2021 Rio Grande Games"): a fifth of
+// the base book's words, and nothing a rules question needs. A slug can run
+// into the next line's text ("...12:43 AMHand"), so it is cut from the start
+// of a line and the rest kept, unless the rest is a scrap of another date.
+const PRINT_SLUG = /^[\w ]+\.indd \d+[a-z]* \d{1,2}\/\d{1,2}\/\d{2} \d{1,2}:\d{2} [AP]M/;
+const ART_CREDIT = /^Illustration: [\p{L} .'-]+ © ?\d{4} Rio Grande Games$/u;
+const withoutCardPrint = (text) =>
+  text
+    .split("\n")
+    .flatMap((line) => {
+      if (ART_CREDIT.test(line)) return [];
+      if (!PRINT_SLUG.test(line)) return [line];
+      const rest = line.replace(PRINT_SLUG, "").trim();
+      return /^[\d/: ]*$/.test(rest) ? [] : [rest];
+    })
+    .join("\n");
+
 await mkdir(OUTPUT_DIR, { recursive: true });
 
 const files = (await readdir(RULES_DIR)).filter((f) => f.endsWith(".pdf"));
@@ -31,7 +50,7 @@ for (const file of files) {
   try {
     const buffer = await readFile(pdfPath);
     const result = await extractText(new Uint8Array(buffer));
-    const pages = Array.isArray(result.text) ? result.text : [result.text];
+    const pages = (Array.isArray(result.text) ? result.text : [result.text]).map(withoutCardPrint);
     const text = withPageMarkers(pages);
 
     if (pages.join("\n\n").trim().length >= MIN_CHARS_PER_PAGE * result.totalPages) {
