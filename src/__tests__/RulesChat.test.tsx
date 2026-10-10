@@ -197,6 +197,25 @@ describe('RulesChat', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
+  it('names a citation by its text and its rulebook, and leaves any other link\'s title alone', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => streamResponse(['Roll two dice (p. 4). See [the FAQ](https://example.com/faq "Our FAQ").'])));
+    const citeLinks = (answer: string) => answer.replace('(p. 4)', '([p. 4](/rules/catan.pdf#page=4 "p. 4, Base game"))');
+    render(
+      <RulesChatProvider>
+        <RulesChatToggle />
+        <RulesChatPanel slug="catan" gameName="Catan" citeLinks={citeLinks} isCitation={(href) => href.includes('#page=')} />
+      </RulesChatProvider>,
+    );
+    openPanel();
+    send('How many dice?');
+    const link = await screen.findByRole('link', { name: 'p. 4, Base game' });
+    expect(link).toHaveTextContent('p. 4');
+    expect(link).not.toHaveAttribute('title');
+    const faq = screen.getByRole('link', { name: 'the FAQ' });
+    expect(faq).toHaveAttribute('title', 'Our FAQ');
+    expect(faq).not.toHaveAttribute('aria-label');
+  });
+
   it('offers starter questions until the first is asked, and asks the one tapped', async () => {
     const fetchMock = vi.fn(async () => streamResponse(['Deal 7 each.']));
     vi.stubGlobal('fetch', fetchMock);

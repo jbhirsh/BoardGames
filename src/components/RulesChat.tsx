@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, createContext, useContext } from 'react';
-import type { FormEvent, ReactNode } from 'react';
+import type { ComponentProps, FormEvent, ReactNode } from 'react';
 import * as Sentry from '@sentry/react';
 import { Link } from 'react-router';
 import Markdown, { type Components } from 'react-markdown';
@@ -58,27 +58,48 @@ export interface RulebookLink {
   state?: unknown;
 }
 
-// An answer's links are its page citations, each opening a rulebook PDF at
-// the page: in a tab of its own, so the chat stays where it was.
-const ANSWER_COMPONENTS: Components = {
-  a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>,
-};
+// The panel's isCitation, for its answers' links. A context rather than a
+// components map built per render: a new component each render would mount
+// every link afresh, losing focus on one mid-answer.
+const CitationContext = createContext<(href: string) => boolean>(() => false);
+const NO_CITATIONS = () => false;
+
+/**
+ * An answer's link, which opens in a tab of its own, so the chat stays
+ * where it was. Most are page citations, opening a rulebook PDF at the page.
+ * A citation's title, if it has one, is its accessible name: "p. 11, Base
+ * game" says which rulebook where "p. 11" alone doesn't. Any other link the
+ * answer holds keeps its title as a title.
+ */
+function AnswerLink({ href, title, children }: ComponentProps<'a'>) {
+  const isCitation = useContext(CitationContext);
+  const cite = href !== undefined && isCitation(href);
+  return (
+    <a href={href} title={cite ? undefined : title} aria-label={cite ? title : undefined} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  );
+}
+
+const ANSWER_COMPONENTS: Components = { a: AnswerLink };
 
 /**
  * `parts` names the extra rulebooks the assistant reads along with the game's
  * own, and `scope` says in words what it is reading. `linksFor` finds the
  * other tabs an answer names, so "that's in the 5–6 Player Extension" comes
  * with a way there. `citeLinks` turns the answer's page citations ("p. 5")
- * into links to that page. `starters` are offered as one-tap questions until
+ * into links to that page, which `isCitation` tells from any other link the
+ * answer holds. `starters` are offered as one-tap questions until
  * the first one is asked.
  */
-export function RulesChatPanel({ slug, gameName, parts = [], scope, linksFor, citeLinks, starters = [] }: {
+export function RulesChatPanel({ slug, gameName, parts = [], scope, linksFor, citeLinks, isCitation = NO_CITATIONS, starters = [] }: {
   slug: string;
   gameName: string;
   parts?: string[];
   scope?: string;
   linksFor?: (answer: string) => RulebookLink[];
   citeLinks?: (answer: string) => string;
+  isCitation?: (href: string) => boolean;
   starters?: string[];
 }) {
   const { isOpen } = useContext(ChatContext);
@@ -231,7 +252,7 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, linksFor, ci
             ) : (
               <div className="rules-chat-bubble">
                 {msg.role === 'assistant'
-                  ? <Markdown components={ANSWER_COMPONENTS}>{citeLinks?.(msg.content) ?? msg.content}</Markdown>
+                  ? <CitationContext.Provider value={isCitation}><Markdown components={ANSWER_COMPONENTS}>{citeLinks?.(msg.content) ?? msg.content}</Markdown></CitationContext.Provider>
                   : msg.content}
                 {/* Once the answer is whole, so links don't come and go mid-stream. */}
                 {msg.role === 'assistant' && i > 0 && !(isLoading && i === messages.length - 1) && linksFor?.(msg.content).map((l) => (

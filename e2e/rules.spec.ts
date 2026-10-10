@@ -206,13 +206,13 @@ test('an answer\'s page citations open their rulebook at that page', async ({ pa
   await page.getByPlaceholder('Ask a rules question...').fill('How many stations can I build?');
   await page.getByRole('button', { name: 'Send' }).click();
 
-  // Each named page opens its own rulebook there.
-  const europe = page.getByRole('link', { name: 'Europe p. 4' });
+  // Each named page opens its own rulebook there, shown by its tab label.
+  const europe = page.getByRole('link', { name: 'Europe p. 4', exact: true });
   await expect(europe).toHaveAttribute('href', '/rules/ticket-to-ride.europe.pdf#page=4');
   await expect(europe).toHaveAttribute('target', '_blank');
-  await expect(page.getByRole('link', { name: 'Ticket To Ride p. 3' })).toHaveAttribute('href', '/rules/ticket-to-ride.pdf#page=3');
+  await expect(page.getByRole('link', { name: 'Base game p. 3', exact: true })).toHaveAttribute('href', '/rules/ticket-to-ride.pdf#page=3');
   // With two rulebooks read, a bare page could be either: it stays text.
   await expect(page.getByText('as before (p. 5).', { exact: false })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'p. 5' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: /p\. 5/ })).toHaveCount(0);
   expect((await request.get('/rules/ticket-to-ride.europe.pdf')).status()).toBe(200);
 });
