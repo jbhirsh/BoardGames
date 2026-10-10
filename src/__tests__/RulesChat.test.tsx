@@ -216,6 +216,79 @@ describe('RulesChat', () => {
     expect(faq).not.toHaveAttribute('aria-label');
   });
 
+  it('lets the page take a citation it can show in place, and leaves the rest to open the PDF', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => streamResponse(['Roll (p. 4), trade (p. 9), see [the FAQ](https://example.com/faq).'])));
+    const citeLinks = (answer: string) => answer.replace(/\(p\. (\d)\)/g, '([p. $1](/rules/catan.pdf#page=$1))');
+    const onCite = vi.fn((href: string) => href.endsWith('=4'));
+    render(
+      <RulesChatProvider>
+        <RulesChatToggle />
+        <RulesChatPanel slug="catan" gameName="Catan" citeLinks={citeLinks} isCitation={(href) => href.includes('#page=')} onCite={onCite} />
+      </RulesChatProvider>,
+    );
+    openPanel();
+    send('How do turns go?');
+    const four = await screen.findByRole('link', { name: 'p. 4' });
+    const nine = screen.getByRole('link', { name: 'p. 9' });
+    // fireEvent returns false when the click's default was prevented.
+    expect(fireEvent.click(four)).toBe(false);
+    expect(onCite).toHaveBeenLastCalledWith('/rules/catan.pdf#page=4');
+    expect(fireEvent.click(nine)).toBe(true);
+    expect(onCite).toHaveBeenLastCalledWith('/rules/catan.pdf#page=9');
+    // Opening it in a new tab on purpose is left to the browser, as is any
+    // link that isn't a citation.
+    onCite.mockClear();
+    for (const how of [{ ctrlKey: true }, { metaKey: true }, { shiftKey: true }, { altKey: true }, { button: 1 }]) {
+      expect(fireEvent.click(four, how)).toBe(true);
+    }
+    expect(fireEvent.click(screen.getByRole('link', { name: 'the FAQ' }))).toBe(true);
+    expect(onCite).not.toHaveBeenCalled();
+  });
+
+  it('reads each answer\'s links against the tab it was asked on, even one still streaming', async () => {
+    const encoder = new TextEncoder();
+    let release = () => {};
+    const replies = [['First (p. 1).'], ['Second ', '(p. 2).']];
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      const chunks = replies.shift()!;
+      let i = 0;
+      return {
+        ok: true,
+        body: {
+          getReader: () => ({
+            read: async () => {
+              // The second reply waits halfway until the test lets it go on.
+              if (chunks.length === 2 && i === 1) await new Promise<void>((resolve) => { release = resolve; });
+              return i < chunks.length ? { done: false, value: encoder.encode(chunks[i++]) } : { done: true, value: undefined };
+            },
+          }),
+        },
+      } as unknown as Response;
+    }));
+    const citeLinks = vi.fn((answer: string, tab?: string) => answer.replace(/\((p\. \d)\)/, `([$1 on ${tab}](/x))`));
+    const linksFor = vi.fn<(answer: string, tab?: string) => { label: string; to: string }[]>(() => []);
+    const panel = (tab: string) => (
+      <RulesChatProvider>
+        <RulesChatToggle />
+        <RulesChatPanel slug="catan" gameName="Catan" tab={tab} citeLinks={citeLinks} linksFor={linksFor} />
+      </RulesChatProvider>
+    );
+    const { rerender } = render(panel('base'));
+    openPanel();
+    send('One?');
+    expect(await screen.findByRole('link', { name: 'p. 1 on base' })).toBeInTheDocument();
+    send('Two?');
+    await screen.findByText(/Second/);
+    // The tab changes while the second answer is still coming in.
+    rerender(panel('knights'));
+    await act(async () => release());
+    expect(await screen.findByRole('link', { name: 'p. 2 on base' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'p. 1 on base' })).toBeInTheDocument();
+    expect(linksFor).toHaveBeenLastCalledWith('Second (p. 2).', 'base');
+    // The greeting, asked on no tab, goes by the one on screen.
+    expect(citeLinks).toHaveBeenCalledWith('Hi! Ask me anything about the rules for Catan.', 'knights');
+  });
+
   it('offers starter questions until the first is asked, and asks the one tapped', async () => {
     const fetchMock = vi.fn(async () => streamResponse(['Deal 7 each.']));
     vi.stubGlobal('fetch', fetchMock);
@@ -439,6 +512,48 @@ describe('RulesChat', () => {
     send('How many players?');
     await screen.findByRole('alert');
     await waitFor(() => expect(screen.getByPlaceholderText('Ask a rules question...')).toHaveFocus());
+  });
+
+  it('hands focus back without scrolling, and not when it has gone elsewhere meanwhile', async () => {
+    const focus = vi.spyOn(HTMLElement.prototype, 'focus');
+    let fail = () => {};
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>((resolve) => {
+      fail = () => resolve({ ok: false, status: 500 } as Response);
+    })));
+    render(
+      <>
+        <RulesChatProvider>
+          <RulesChatToggle />
+          <RulesChatPanel slug="cranium" gameName="Cranium" />
+        </RulesChatProvider>
+        <button type="button">Elsewhere</button>
+      </>,
+    );
+    openPanel();
+    send('How many players?');
+    // Someone moves on (a citation they tapped puts focus on its page).
+    screen.getByRole('button', { name: 'Elsewhere' }).focus();
+    await act(async () => fail());
+    await screen.findByRole('alert');
+    await act(async () => { await new Promise((resolve) => requestAnimationFrame(resolve)); });
+    expect(screen.getByRole('button', { name: 'Elsewhere' })).toHaveFocus();
+
+    // Asked from the box, which a browser blurs while it is disabled (focus
+    // on the page itself), a failure puts them back in it, where they are.
+    send('How many players?');
+    screen.getByRole('button', { name: 'Elsewhere' }).blur();
+    expect(document.activeElement).toBe(document.body);
+    await act(async () => fail());
+    await waitFor(() => expect(screen.getByPlaceholderText('Ask a rules question...')).toHaveFocus());
+    expect(focus).toHaveBeenLastCalledWith({ preventScroll: true });
+
+    // Focus still in the panel counts as not having moved on.
+    screen.getByPlaceholderText('Ask a rules question...').focus();
+    focus.mockClear();
+    send('How many players?');
+    await act(async () => fail());
+    await waitFor(() => expect(focus).toHaveBeenCalledWith({ preventScroll: true }));
+    focus.mockRestore();
   });
 
   it('cancels a request quietly when the page goes away', async () => {

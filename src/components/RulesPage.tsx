@@ -1,7 +1,7 @@
-import { Component, lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
-import { useParams, useLocation, Link, Navigate } from 'react-router';
+import { Component, lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useParams, useLocation, useNavigate, Link, Navigate } from 'react-router';
 import { GAMES } from '../data/games';
-import { rulebooks, rulebookPath, chatParts, chatScope, citedPage, linkCitations, mentionedRulebooks, starterQuestions } from '../utils/rulebooks';
+import { rulebooks, rulebookPath, chatParts, chatScope, citedPage, citedPageParam, linkCitations, mentionedRulebooks, starterQuestions } from '../utils/rulebooks';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
 import { CalculatorIcon } from './Icons';
 import { shownKind } from '../utils/subgames';
@@ -26,10 +26,13 @@ const READ_IN_PAGE = '(max-width: 720px), (pointer: coarse)';
  * gone after a deploy, or the browser can't run it), so the rest of the
  * rules page (the chat, the link to the PDF) keeps working.
  */
-class ReaderBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+class ReaderBoundary extends Component<{ children: ReactNode; onFail: () => void }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() {
     return { failed: true };
+  }
+  componentDidCatch() {
+    this.props.onFail();
   }
   render() {
     return this.state.failed
@@ -87,9 +90,18 @@ export default function RulesPage() {
   // than push: a game's rules page is one step in history however many tabs
   // are read, so Back (ours, or the browser's) lands where the visitor came
   // from.
-  const { state: arrival } = useLocation();
+  const { state: arrival, search, key } = useLocation();
+  const navigate = useNavigate();
+  // The page a citation asked the reader to show (see showCited). The
+  // location's key tells one tap from the next, so a second tap on the same
+  // citation, after scrolling away, still jumps.
+  const citedAt = citedPageParam(search);
   const game = GAMES.find(g => g.slug === slug);
   const [wordCheckerOpen, setWordCheckerOpen] = useState(false);
+  // Once a reader has failed, citations open the PDF again: a jump would
+  // land on the note that the rulebook can't be shown.
+  const [readerFailed, setReaderFailed] = useState(false);
+  const readerFails = useCallback(() => setReaderFailed(true), []);
   const inPage = useMediaQuery(READ_IN_PAGE);
   const books = game ? rulebooks(game) : [];
   const book = books.find(b => b.part === part);
@@ -111,6 +123,29 @@ export default function RulesPage() {
   // An unknown tab goes to the game's own rulebook rather than a not-found
   // page: the game is real, only the tab is wrong.
   if (!book) return <Navigate replace to={rulebookPath(game.slug)} />;
+
+  /**
+   * The rulebook an answer was asked on, by the tab the chat recorded with
+   * it (its part, '' for the game's own), which its links are read against.
+   */
+  const askedOn = (tab: string | undefined) => books.find((b) => (b.part ?? '') === tab)!;
+
+  /**
+   * On a phone, a citation of one of the game's rulebooks opens it in the
+   * reader rather than as a raw PDF, which a phone downloads (Android) or
+   * shows only the first page of (iOS): its tab, in place in history as the
+   * tab strip goes, at ?page=N, where the reader scrolls to the page. The
+   * chat isn't keyed by tab, so the answer stays. The window stays put
+   * (preventScrollReset) until the reader moves it: scrolled to the top
+   * first, it would only have to come back down. A desktop keeps the PDF in
+   * a new tab, since moving a framed PDF to a page by its hash is unreliable.
+   * The chat hands over citations only (isCitation).
+   */
+  const showCited = (href: string) => {
+    const cited = citedPage(href, game)!;
+    navigate(rulebookPath(game.slug, cited.book.part, cited.page), { replace: true, state: arrival, preventScrollReset: true });
+    return true;
+  };
 
   return (
     <RulesChatProvider>
@@ -189,9 +224,11 @@ export default function RulesPage() {
           gameName={game.name}
           parts={chatParts(game, book)}
           scope={chatScope(game, book)}
-          linksFor={(answer) => mentionedRulebooks(answer, game, book).map((b) => ({ label: b.label, to: rulebookPath(game.slug, b.part), state: arrival }))}
-          citeLinks={(answer) => linkCitations(answer, game, book)}
+          tab={book.part ?? ''}
+          linksFor={(answer, tab) => mentionedRulebooks(answer, game, askedOn(tab)).map((b) => ({ label: b.label, to: rulebookPath(game.slug, b.part), state: arrival }))}
+          citeLinks={(answer, tab) => linkCitations(answer, game, askedOn(tab))}
           isCitation={(href) => citedPage(href, game) !== null}
+          onCite={inPage && !readerFailed ? showCited : undefined}
           starters={starterQuestions(game, book)}
         />
         {wordCheckerOpen && <WordChecker />}
@@ -208,9 +245,14 @@ export default function RulesPage() {
                 </>
               )}
             </a>
-            <ReaderBoundary key={book.pdf}>
+            <ReaderBoundary key={book.pdf} onFail={readerFails}>
               <Suspense fallback={<p className="pdf-note">Loading the rulebook…</p>}>
-                <PdfReader src={book.pdf} title={`${book.name} rules`} />
+                <PdfReader
+                  src={book.pdf}
+                  title={`${book.name} rules`}
+                  jump={citedAt === null ? undefined : { page: citedAt, key, place: books.length > 1 ? book.label : undefined }}
+                  onFail={readerFails}
+                />
               </Suspense>
             </ReaderBoundary>
           </>

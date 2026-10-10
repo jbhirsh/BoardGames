@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { rulebooks, rulebookPath, citedPage, chatParts, chatScope, rulesPathFor, mentionedRulebooks, linkCitations, starterQuestions } from '../utils/rulebooks';
+import { rulebooks, rulebookPath, citedPage, citedPageParam, chatParts, chatScope, rulesPathFor, mentionedRulebooks, linkCitations, starterQuestions } from '../utils/rulebooks';
 import { initialFilterState } from '../data/initialFilterState';
 import { GAMES } from '../data/games';
 import { quickGame } from './testData';
@@ -41,6 +41,21 @@ describe('rulebookPath', () => {
   it('points at the game, or at one of its rulebooks', () => {
     expect(rulebookPath('catan')).toBe('/rules/catan');
     expect(rulebookPath('catan', 'cities-and-knights')).toBe('/rules/catan/cities-and-knights');
+  });
+
+  it('asks the reader for a page in the query', () => {
+    expect(rulebookPath('catan', undefined, 5)).toBe('/rules/catan?page=5');
+    expect(rulebookPath('catan', 'cities-and-knights', 12)).toBe('/rules/catan/cities-and-knights?page=12');
+  });
+});
+
+describe('citedPageParam', () => {
+  it.each([
+    ['?page=5', 5], ['?page=1234', 1234], ['?x=1&page=7', 7],
+    ['', null], ['?page=', null], ['?page=0', null], ['?page=05', null], ['?page=-2', null],
+    ['?page=2.5', null], ['?page=five', null], ['?page=12345', null],
+  ] as const)('reads %j as %j', (search, page) => {
+    expect(citedPageParam(search)).toBe(page);
   });
 });
 
