@@ -1,9 +1,14 @@
+// Punctuation a phone adds around a word: a smart full stop after a double
+// space, quotes, a comma. Inside a word it stays, and the word isn't one.
+const WRAPPING = /^[.,!?;:'"“”‘’()]+|[.,!?;:'"“”‘’()]+$/g;
+
 /**
- * The form a word is looked up in: trimmed and lowercased. Null when what's
- * left isn't letters only, which no word list or dictionary would hold.
+ * The form a word is looked up in: trimmed, lowercased and unwrapped from
+ * punctuation ("OK." is ok). Null when what's left isn't letters only, which
+ * no word list or dictionary would hold.
  */
 export function normalizeWord(input: string): string | null {
-  const word = input.trim().toLowerCase();
+  const word = input.trim().toLowerCase().replace(WRAPPING, '');
   return /^[a-z]+$/.test(word) ? word : null;
 }
 

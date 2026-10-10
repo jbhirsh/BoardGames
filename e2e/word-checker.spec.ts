@@ -54,21 +54,30 @@ test('a dictionary outage still answers from the word-game list', async ({ page 
   await expect(page.getByText('Valid word', { exact: true })).toBeVisible();
   await expect(page.getByText("Couldn't check right now", { exact: true })).toHaveCount(0);
 
-  // Not in the list, and the dictionary can't double-check.
+  // Newer word-game words come from the bundled additions, not the dictionary.
+  for (const word of ['qi', 'za', 'ok']) {
+    await page.getByPlaceholder('Enter a word...').fill(word);
+    await page.getByRole('button', { name: 'Check' }).click();
+    await expect(page.getByText(word, { exact: true })).toBeVisible();
+    await expect(page.getByText('Valid word', { exact: true })).toBeVisible();
+  }
+
+  // Not in the list, and the dictionary can't double-check: a warning, never a red ✗.
   await page.getByPlaceholder('Enter a word...').fill('teh');
   await page.getByRole('button', { name: 'Check' }).click();
-  await expect(page.getByText('Not a valid word', { exact: true })).toBeVisible();
-  await expect(page.getByText(/couldn't be reached to double-check/)).toBeVisible();
+  await expect(page.getByText('Not in our word list', { exact: true })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: "couldn't be reached to double-check" })).toBeVisible();
+  await expect(page.getByText('Not a valid word', { exact: true })).toHaveCount(0);
 });
 
-test('a word-game word missing from the list is valid when the dictionary has it', async ({ page }) => {
+test('a word missing from both lists is valid when the dictionary has it', async ({ page }) => {
   const asked = await stubDictionary(page, 200, [{
-    meanings: [{ partOfSpeech: 'noun', definitions: [{ definition: 'Vital energy in Chinese philosophy.' }] }],
+    meanings: [{ partOfSpeech: 'verb', definitions: [{ definition: 'To keep scrolling through bad news.' }] }],
   }]);
 
-  await check(page, 'qi');
+  await check(page, 'doomscroll');
 
   await expect(page.getByText('Valid word', { exact: true })).toBeVisible();
-  await expect(page.getByText('Not in the word-game list, but the dictionary has it.')).toBeVisible();
-  expect(asked).toEqual(['qi']);
+  await expect(page.getByText('Not in our word list, but the dictionary has it.')).toBeVisible();
+  expect(asked).toEqual(['doomscroll']);
 });

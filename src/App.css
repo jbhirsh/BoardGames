@@ -33,6 +33,12 @@
   --ok-fg:      #2D8A4E;
   --bad-fg:     #D42020;
   --error-fg:   #C0392B;
+  /* The Notice component's tones (src/components/Notice.tsx): text, fill
+     and border. Each text colour is 4.5:1 or better on its fill, in both
+     themes (src/__tests__/noticeTokens.test.ts). */
+  --info-fg:    #0058B0; --info-bg:   #EEF5FD; --info-border:   #C4DCF6;
+  --warn-fg:    #8A4B00; --warn-bg:   #FFF4E0; --warn-border:   #F2D49B;
+  --danger-fg:  #B42318; --danger-bg: #FDECEC; --danger-border: #F4C1BD;
   --text:       #1D1D1F;
   --text2:      #6E6E73;
   /* 4.5:1 or better on --bg and --bg2 (WCAG AA); #86868B was 3.5:1. */
@@ -61,6 +67,9 @@
     --row-hover:#232326; --code-bg:rgba(255,255,255,0.10); --hero-top:#1C1C1E;
     --award-fg:#E3C35A; --expansion-fg:#F0B35A; --extension-fg:#5FD39A; --version-fg:#6CB4FF;
     --ok-fg:#4ADE80; --bad-fg:#FF6B6B; --error-fg:#FF6B6B;
+    --info-fg:#7DBDFF; --info-bg:#16263A; --info-border:#24476E;
+    --warn-fg:#FFC266; --warn-bg:#2E2414; --warn-border:#5C4520;
+    --danger-fg:#FF8F8A; --danger-bg:#3A1D1D; --danger-border:#6A2E2C;
     --shadow-sm:0 1px 3px rgba(0,0,0,0.4); --shadow-md:0 4px 16px rgba(0,0,0,0.5); --shadow-lg:0 12px 40px rgba(0,0,0,0.6);
     color-scheme: dark;
   }
@@ -73,6 +82,9 @@
   --row-hover:#232326; --code-bg:rgba(255,255,255,0.10); --hero-top:#1C1C1E;
   --award-fg:#E3C35A; --expansion-fg:#F0B35A; --extension-fg:#5FD39A; --version-fg:#6CB4FF;
   --ok-fg:#4ADE80; --bad-fg:#FF6B6B; --error-fg:#FF6B6B;
+  --info-fg:#7DBDFF; --info-bg:#16263A; --info-border:#24476E;
+  --warn-fg:#FFC266; --warn-bg:#2E2414; --warn-border:#5C4520;
+  --danger-fg:#FF8F8A; --danger-bg:#3A1D1D; --danger-border:#6A2E2C;
   --shadow-sm:0 1px 3px rgba(0,0,0,0.4); --shadow-md:0 4px 16px rgba(0,0,0,0.5); --shadow-lg:0 12px 40px rgba(0,0,0,0.6);
   color-scheme: dark;
 }
@@ -798,6 +810,10 @@ a.rules-chat-toggle{text-decoration:none;}
 .rules-chat-input button:disabled{opacity:.5;cursor:not-allowed;}
 
 /* Word checker */
+/* The word checker sizes to its answer, with the box on top where the
+   thumb and the keyboard are. */
+.rules-chat-panel.word-checker-panel{height:auto;}
+.word-checker-panel .rules-chat-input{border-top:none;border-bottom:1px solid var(--border);}
 .word-checker-body{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;}
 .word-checker-empty{color:var(--text3);font-size:14px;text-align:center;padding:40px 20px;}
 .word-badge{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:var(--r-sm);font-size:14px;}
@@ -807,7 +823,20 @@ a.rules-chat-toggle{text-decoration:none;}
 .word-note{margin:8px 2px 0;font-size:12.5px;line-height:1.5;color:var(--text2);}
 .word-valid{background:rgba(52,199,89,0.12);color:var(--ok-fg);border:1px solid rgba(52,199,89,0.25);}
 .word-invalid{background:rgba(255,59,48,0.1);color:var(--bad-fg);border:1px solid rgba(255,59,48,0.2);}
+.word-unlisted{background:var(--info-bg);color:var(--info-fg);border:1px solid var(--info-border);}
 .word-unchecked{background:rgba(142,142,147,0.12);color:var(--text2);border:1px solid rgba(142,142,147,0.25);}
+.word-result .notice{margin-top:8px;}
+
+/* ── NOTICE: a one-line info, warning or error message with an icon and an
+   optional action (src/components/Notice.tsx) ── */
+.notice{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r-sm);border:1px solid;font-size:13px;line-height:1.45;}
+.notice-icon{flex:none;display:flex;}
+.notice-text{flex:1;min-width:0;}
+.notice-action{flex:none;padding:6px 12px;font:inherit;font-weight:600;color:inherit;background:transparent;border:1px solid currentColor;border-radius:999px;cursor:pointer;}
+.notice-action:hover{background:color-mix(in srgb, currentColor 10%, transparent);}
+.notice-info{color:var(--info-fg);background:var(--info-bg);border-color:var(--info-border);}
+.notice-warning{color:var(--warn-fg);background:var(--warn-bg);border-color:var(--warn-border);}
+.notice-error{color:var(--danger-fg);background:var(--danger-bg);border-color:var(--danger-border);}
 .word-meanings{display:flex;flex-direction:column;gap:12px;}
 .word-phonetic{color:var(--text3);font-size:13px;font-style:italic;}
 .word-meaning{display:flex;flex-direction:column;gap:4px;}
@@ -1015,9 +1044,12 @@ a.rules-chat-toggle{text-decoration:none;}
      browser toolbars showing, so the panel fits without resizing as they
      collapse. The cap keeps it from growing on larger phones. */
   .rules-chat-panel{ height:min(420px, 60svh); }
+  .rules-chat-panel.word-checker-panel{ height:auto; }
   .rules-chat-panel-fresh{ height:auto; }
   .rules-chat-messages{ padding:14px; }
   .rules-chat-input{ padding:10px 12px; padding-bottom:max(10px, env(safe-area-inset-bottom)); }
+  /* On top of the word checker, nowhere near the home indicator. */
+  .word-checker-panel .rules-chat-input{ padding-bottom:10px; }
 }
 
 /* ---- Admin mode (owner tools in the wishlist) ---- */

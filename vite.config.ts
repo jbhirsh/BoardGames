@@ -39,13 +39,13 @@ function pdfjsAssets(): Plugin {
 }
 
 // public/ files saved at install, beside the build's own: the collection's
-// box art, the word checker's list, the favicons and the manifest (the
+// box art, the word checker's lists, the favicons and the manifest (the
 // home-screen icons are copied on install). Rulebooks
 // are saved one by one as they're opened (src/sw/sw.ts), not here.
 const PRECACHE_PUBLIC: Record<string, (file: string) => boolean> = {
   '': (file) => /^(favicon-|apple-touch-icon).*\.png$|\.webmanifest$/.test(file),
   images: (file) => file.endsWith('.webp'),
-  words: (file) => file === 'enable.txt',
+  words: (file) => file.endsWith('.txt'),
 }
 
 // The service worker (src/sw/sw.ts), bundled to /sw.js with the files it
