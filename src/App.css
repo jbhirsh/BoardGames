@@ -747,16 +747,19 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .house-rules dl{display:flex;flex-direction:column;gap:12px;padding:4px 16px 16px;margin:0;}
 .house-rule dt{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;}
 .house-rule dd{margin:0;font-size:13px;line-height:1.6;color:var(--text2);}
-.rules-viewer{border-radius:var(--r);overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow-md);margin-bottom:16px;}
-/* svh, not vh: on iOS `vh` resolves to the large viewport, so 80vh renders
-   a frame taller than the space actually visible with the toolbars up. */
-.rules-viewer iframe{width:100%;height:80svh;border:none;display:block;}
-.rules-download{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--blue);text-decoration:none;transition:opacity .15s;margin-bottom:24px;}
+.rules-pdf-links{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;margin-bottom:24px;}
+.rules-download{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--blue);text-decoration:none;transition:opacity .15s;}
 .rules-download:hover{opacity:.7;}
 
-/* Phones and touch tablets: the page draws the rulebook (PdfReader), with
-   the download link and the file's size above it. */
+/* The page draws the rulebook (PdfReader), with the download link and the
+   file's size above it. */
 .rules-download-size{font-weight:400;color:var(--text2);}
+/* Printed instead of the reader, whose pages draw only near the screen. */
+.rules-print-note{display:none;}
+@media print{
+  .pdf-reader{display:none;}
+  .rules-print-note{display:block;font-size:13px;color:var(--text2);}
+}
 .pdf-reader{margin-bottom:16px;}
 .pdf-note{font-size:14px;color:var(--text2);padding:24px 0;text-align:center;}
 /* The search stays in reach while the pages scroll under it. */
@@ -785,7 +788,7 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .pdf-page canvas{display:block;width:100%;height:100%;}
 /* pdf.js's text layer (from its pdf_viewer.css): transparent text placed
    over the page image, so it can be selected and searched. */
-.pdf-page .textLayer{position:absolute;inset:0;overflow:clip;line-height:1;text-align:initial;-webkit-text-size-adjust:none;text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;z-index:0;--min-font-size:1;--text-scale-factor:calc(var(--total-scale-factor) * var(--min-font-size));--min-font-size-inv:calc(1 / var(--min-font-size));}
+.pdf-page .textLayer{position:absolute;inset:0;overflow:clip;line-height:1;text-align:initial;-webkit-text-size-adjust:none;text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;z-index:0;mix-blend-mode:multiply;--min-font-size:1;--text-scale-factor:calc(var(--total-scale-factor) * var(--min-font-size));--min-font-size-inv:calc(1 / var(--min-font-size));}
 .pdf-page .textLayer :is(span,br){color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0% 0%;}
 .pdf-page .textLayer > :not(.markedContent),.pdf-page .textLayer .markedContent span:not(.markedContent){z-index:1;--font-height:0;font-size:calc(var(--text-scale-factor) * var(--font-height));--scale-x:1;--rotate:0deg;transform:rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));}
 .pdf-page .textLayer .markedContent{display:contents;}
@@ -795,8 +798,12 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .pdf-page .textLayer[data-main-rotation="180"]{transform:rotate(180deg) translate(-100%,-100%);}
 .pdf-page .textLayer[data-main-rotation="270"]{transform:rotate(270deg) translateX(-100%);}
 .pdf-page .textLayer ::selection{background:rgba(var(--blue-rgb),0.25);color:transparent;}
-.pdf-page .textLayer mark.pdf-hit{color:transparent;background:rgba(255,196,0,0.45);border-radius:2px;}
+.pdf-page .textLayer mark.pdf-hit{color:transparent;background:rgba(255,196,0,0.45);box-shadow:0 0 0 2px rgba(255,196,0,0.45);border-radius:2px;}
 .pdf-page .textLayer mark.pdf-hit--current{background:rgba(255,120,0,0.6);box-shadow:0 0 0 2px rgba(255,120,0,0.6);}
+/* The passage a citation points to: opaque orange, multiplied into the
+   page (the text layer's blend), so it shows on a yellow page as on white
+   and the print stays dark; underlined for those who can't tell the hue. */
+.pdf-page .textLayer mark.pdf-hit--cited{background:#FFA033;box-shadow:0 0 0 2px #FFA033,0 3px 0 0 #B3470B;}
 
 /* ══ RULES CHAT ══════════════════════════════════════════════ */
 .rules-chat-toggle{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-size:14px;font-weight:600;color:var(--blue);background:var(--blue-bg);border:1px solid rgba(var(--blue-rgb),0.2);border-radius:var(--r-sm);cursor:pointer;transition:background .15s,border-color .15s;}

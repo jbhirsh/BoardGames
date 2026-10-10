@@ -11,12 +11,12 @@ const reader = vi.hoisted(() => ({ fails: false }));
 vi.mock('../components/PdfReader', async () => {
   const { useEffect } = await import('react');
   return {
-    default: function PdfReader({ src, title, jump, onFail }: { src: string; title: string; jump?: { page: number; key: string; place?: string }; onFail?: () => void }) {
+    default: function PdfReader({ src, title, jump, onFail }: { src: string; title: string; jump?: { page: number; key: string; place?: string; quote?: string }; onFail?: () => void }) {
       if (src.includes('vampire')) throw new Error('reader broke');
       useEffect(() => {
         if (reader.fails) onFail?.();
       }, [onFail]);
-      return <section aria-label={title} data-src={src} data-jump={jump && `${jump.page}:${jump.key}`} data-place={jump?.place} />;
+      return <section aria-label={title} data-src={src} data-jump={jump && `${jump.page}:${jump.key}`} data-place={jump?.place} data-quote={jump?.quote} />;
     },
   };
 });
@@ -29,6 +29,12 @@ function renderAt(path: string) {
       </Routes>
     </MemoryRouter>,
   );
+}
+
+/** The question a fetch mock was sent: the POST, since the PDF's size is asked (HEAD) first. */
+function body(fetchMock: { mock: { calls: unknown[][] } }) {
+  const post = (fetchMock.mock.calls as [string, RequestInit][]).find(([, init]) => init?.method === 'POST')!;
+  return JSON.parse(post[1].body as string);
 }
 
 describe('RulesPage', () => {
@@ -104,14 +110,15 @@ describe('RulesPage', () => {
 
   describe('rulebook tabs', () => {
     const tabs = () => screen.getByRole('navigation', { name: 'Rulebooks' });
-    const viewer = () => document.querySelector('iframe')!;
+    // The reader loads lazily, so it is waited for.
+    const viewer = () => screen.findByRole('region', { name: / rules$/ });
 
     it('shows no tabs for a game with one rulebook', () => {
       renderAt('/rules/7-wonders');
       expect(screen.queryByRole('navigation', { name: 'Rulebooks' })).not.toBeInTheDocument();
     });
 
-    it('gives a game\'s own further rulebooks a tab each, then its add-ons', () => {
+    it('gives a game\'s own further rulebooks a tab each, then its add-ons', async () => {
       renderAt('/rules/hogwarts-battle/game-4');
       const links = within(tabs()).getAllByRole('link');
       expect(links.map(l => l.textContent)).toEqual([
@@ -119,11 +126,11 @@ describe('RulesPage', () => {
         'Monster Box 1expansion', 'Monster Box 2expansion', 'Monster Box 3expansion', 'Monster Box 4expansion',
       ]);
       expect(within(tabs()).getByRole('link', { current: 'page' })).toHaveTextContent('Game 4');
-      expect(viewer()).toHaveAttribute('src', '/rules/hogwarts-battle.game-4.pdf');
-      expect(viewer()).toHaveAttribute('title', 'Hogwarts Battle: Game 4 rules');
+      expect(await viewer()).toHaveAttribute('data-src', '/rules/hogwarts-battle.game-4.pdf');
+      expect(await viewer()).toHaveAccessibleName('Hogwarts Battle: Game 4 rules');
     });
 
-    it('opens on the base game, with a tab per add-on marked by its kind', () => {
+    it('opens on the base game, with a tab per add-on marked by its kind', async () => {
       renderAt('/rules/catan');
       const links = within(tabs()).getAllByRole('link');
       // The extension's name already says what it is, so only the expansion is tagged.
@@ -131,16 +138,16 @@ describe('RulesPage', () => {
       expect(links[0]).toHaveAttribute('aria-current', 'page');
       expect(links[1]).not.toHaveAttribute('aria-current');
       expect(links[1]).toHaveAttribute('href', '/rules/catan/5-6-player-extension');
-      expect(viewer()).toHaveAttribute('src', '/rules/catan.pdf');
+      expect(await viewer()).toHaveAttribute('data-src', '/rules/catan.pdf');
     });
 
-    it('shows the chosen rulebook, its line and its download', () => {
+    it('shows the chosen rulebook, its line and its download', async () => {
       renderAt('/rules/card-deck/euchre');
       const current = within(tabs()).getByRole('link', { current: 'page' });
       expect(current).toHaveTextContent('Euchre');
       expect(within(tabs()).getByRole('link', { name: 'Overview' })).toHaveAttribute('href', '/rules/card-deck');
-      expect(viewer()).toHaveAttribute('src', '/rules/card-deck.euchre.pdf');
-      expect(viewer()).toHaveAttribute('title', 'Euchre rules');
+      expect(await viewer()).toHaveAttribute('data-src', '/rules/card-deck.euchre.pdf');
+      expect(await viewer()).toHaveAccessibleName('Euchre rules');
       expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAttribute('href', '/rules/card-deck.euchre.pdf');
       expect(screen.getByText(/two jacks that outrank everything/)).toBeInTheDocument();
       // The heading stays the deck: the page is the family's, the tab is the game.
@@ -157,20 +164,10 @@ describe('RulesPage', () => {
       expect(router.state.location).toMatchObject({ pathname: '/', search: '?p=5' });
     });
 
-    it('frames each tab\'s PDF afresh, so the frame adds no step to history', () => {
-      // Changing a frame's src is a navigation in the tab's history; a new
-      // frame's first load is not.
-      renderAt('/rules/catan');
-      const before = viewer();
-      fireEvent.click(within(tabs()).getByRole('link', { name: /Cities & Knights/ }));
-      expect(viewer()).not.toBe(before);
-      expect(viewer()).toHaveAttribute('src', '/rules/catan.cities-and-knights.pdf');
-    });
-
-    it('falls back to the game\'s own rulebook for an unknown tab', () => {
+    it('falls back to the game\'s own rulebook for an unknown tab', async () => {
       renderAt('/rules/card-deck/mahjong');
       expect(within(tabs()).getByRole('link', { current: 'page' })).toHaveTextContent('Overview');
-      expect(viewer()).toHaveAttribute('src', '/rules/card-deck.pdf');
+      expect(await viewer()).toHaveAttribute('data-src', '/rules/card-deck.pdf');
     });
 
     it('scrolls the tab strip sideways to the chosen tab, and only the strip', () => {
@@ -277,8 +274,7 @@ describe('RulesPage', () => {
         fireEvent.change(screen.getByPlaceholderText('Ask a rules question...'), { target: { value: 'Barbarians?' } });
         fireEvent.click(screen.getByRole('button', { name: 'Send' }));
         await screen.findByText(/something went wrong/);
-        const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
-        expect(body).toMatchObject({ slug: 'catan', parts: ['cities-and-knights'] });
+        expect(body(fetchMock)).toMatchObject({ slug: 'catan', parts: ['cities-and-knights'] });
       } finally {
         vi.unstubAllGlobals();
       }
@@ -294,8 +290,7 @@ describe('RulesPage', () => {
         fireEvent.change(screen.getByPlaceholderText('Ask a rules question...'), { target: { value: 'Patronus?' } });
         fireEvent.click(screen.getByRole('button', { name: 'Send' }));
         await screen.findByText(/something went wrong/);
-        const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
-        expect(body.parts).toEqual(['game-2', 'game-3', 'game-4', 'game-5', 'game-6', 'game-7', 'monster-box-of-monsters', 'monster-box-2', 'monster-box-3']);
+        expect(body(fetchMock).parts).toEqual(['game-2', 'game-3', 'game-4', 'game-5', 'game-6', 'game-7', 'monster-box-of-monsters', 'monster-box-2', 'monster-box-3']);
       } finally {
         vi.unstubAllGlobals();
       }
@@ -341,18 +336,20 @@ describe('RulesPage', () => {
       }
     });
 
-    it('moves between tabs', () => {
+    it('moves between tabs', async () => {
       renderAt('/rules/catan');
       fireEvent.click(within(tabs()).getByRole('link', { name: /Cities & Knights/ }));
-      expect(viewer()).toHaveAttribute('src', '/rules/catan.cities-and-knights.pdf');
+      expect(await viewer()).toHaveAttribute('data-src', '/rules/catan.cities-and-knights.pdf');
       expect(within(tabs()).getByRole('link', { current: 'page' })).toHaveTextContent('Cities & Knights');
     });
   });
 });
 
-describe('RulesPage on a phone or touch device', () => {
-  const touch = (matches: boolean) =>
-    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches, addEventListener: () => {}, removeEventListener: () => {} })));
+describe('RulesPage\'s reader', () => {
+  // The page reads no media query: a desktop, a phone and a touch tablet
+  // all get the reader. `desktop` makes every query answer as a desktop would.
+  const desktop = () =>
+    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} })));
   const headWith = (headers: Record<string, string>, ok = true) =>
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok, headers: new Headers(headers) } as Response);
 
@@ -362,7 +359,6 @@ describe('RulesPage on a phone or touch device', () => {
   });
 
   it('draws the rulebook in the page, under a download link with its size', async () => {
-    touch(true);
     const fetchSpy = headWith({ 'content-length': '16445120' });
     renderAt('/rules/7-wonders');
 
@@ -379,7 +375,6 @@ describe('RulesPage on a phone or touch device', () => {
   });
 
   it('leaves the size out when the server does not give one', async () => {
-    touch(true);
     const fetchSpy = headWith({ 'content-length': '5000000' }, false);
     renderAt('/rules/7-wonders');
     await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalled());
@@ -388,7 +383,6 @@ describe('RulesPage on a phone or touch device', () => {
   });
 
   it('cancels the size request when the page goes away', async () => {
-    touch(true);
     const signals: AbortSignal[] = [];
     vi.spyOn(globalThis, 'fetch').mockImplementation((_url, init) => {
       signals.push(init!.signal!);
@@ -401,7 +395,6 @@ describe('RulesPage on a phone or touch device', () => {
   });
 
   it('gives each tab its own reader', async () => {
-    touch(true);
     headWith({});
     renderAt('/rules/catan');
     expect(await screen.findByRole('region', { name: 'Catan rules' })).toHaveAttribute('data-src', '/rules/catan.pdf');
@@ -410,7 +403,6 @@ describe('RulesPage on a phone or touch device', () => {
   });
 
   it('keeps the page, with its link to the PDF, when the reader fails', async () => {
-    touch(true);
     headWith({});
     vi.spyOn(console, 'error').mockImplementation(() => {});
     renderAt('/rules/one-night-werewolf/vampire');
@@ -436,7 +428,6 @@ describe('RulesPage on a phone or touch device', () => {
   };
 
   it('opens a citation of another tab at its page in the reader, in place, under the answer', async () => {
-    touch(true);
     answering('A 7 moves the robber (Catan p. 5), knights (Cities And Knights p. 4), as before (p. 3).');
     const router = renderRouted(<RulesPage />, ['/?p=3', { pathname: '/rules/catan/cities-and-knights', state: FROM_LIST }], '/rules/:slug/:part?');
     ask();
@@ -450,6 +441,10 @@ describe('RulesPage on a phone or touch device', () => {
     const reader = await screen.findByRole('region', { name: 'Catan rules' });
     expect(reader).toHaveAttribute('data-jump', `5:${router.state.location.key}`);
     expect(reader).toHaveAttribute('data-place', 'Base game');
+    // With the words of the answer the citation closes, to mark on the page;
+    // in the router state, not the URL.
+    expect(reader).toHaveAttribute('data-quote', 'A 7 moves the robber');
+    expect(router.state.location.state).toEqual({ fromList: true, quote: 'A 7 moves the robber' });
     expect(screen.getByText(/A 7 moves the robber/)).toBeInTheDocument();
     expect(screen.getByText('Reading: Base game.')).toBeInTheDocument();
     // The answer still reads as it was asked, on Cities & Knights: its own
@@ -458,10 +453,22 @@ describe('RulesPage on a phone or touch device', () => {
     expect(screen.getByRole('link', { name: 'Cities & Knights p. 4' })).toHaveAttribute('href', '/rules/catan.cities-and-knights.pdf#page=4');
     expect(screen.queryByRole('link', { name: /p\. 3/ })).not.toBeInTheDocument();
     expect(screen.getByText(/as before \(p\. 3\)/)).toBeInTheDocument();
+    // A tab opened afterwards carries the way back, not the citation's words.
+    fireEvent.click(within(screen.getByRole('navigation', { name: 'Rulebooks' })).getByRole('link', { name: /Cities & Knights/ }));
+    expect(router.state.location.state).toEqual({ fromList: true });
+  });
+
+  it('marks nothing for a citation with no words of its own before it', async () => {
+    answering('Robber (p. 3), (p. 4).');
+    renderRouted(<RulesPage />, ['/rules/azul'], '/rules/:slug/:part?');
+    ask();
+    fireEvent.click(await screen.findByRole('link', { name: 'p. 4, Azul rulebook' }));
+    const reader = await screen.findByRole('region', { name: 'Azul rules' });
+    expect(reader).toHaveAttribute('data-jump', expect.stringMatching(/^4:/));
+    expect(reader).not.toHaveAttribute('data-quote');
   });
 
   it('jumps the reader on screen to a page of its own rulebook, again on each tap', async () => {
-    touch(true);
     answering('Roll two dice (p. 3).');
     const router = renderRouted(<RulesPage />, ['/rules/catan'], '/rules/:slug/:part?');
     const reader = await screen.findByRole('region', { name: 'Catan rules' });
@@ -480,7 +487,6 @@ describe('RulesPage on a phone or touch device', () => {
   });
 
   it('leaves a link that is not a citation to the browser', async () => {
-    touch(true);
     answering('See [the FAQ](https://example.com/faq).');
     const router = renderRouted(<RulesPage />, ['/rules/catan'], '/rules/:slug/:part?');
     ask();
@@ -490,21 +496,21 @@ describe('RulesPage on a phone or touch device', () => {
   });
 
   it('opens the reader at the page a link asks for', async () => {
-    touch(true);
     headWith({});
     renderAt('/rules/catan?page=4');
-    expect(await screen.findByRole('region', { name: 'Catan rules' })).toHaveAttribute('data-jump', '4:default');
+    const reader = await screen.findByRole('region', { name: 'Catan rules' });
+    expect(reader).toHaveAttribute('data-jump', '4:default');
+    // A shared link has no answer behind it: nothing to mark.
+    expect(reader).not.toHaveAttribute('data-quote');
   });
 
   it('ignores a page that is no page', async () => {
-    touch(true);
     headWith({});
     renderAt('/rules/catan?page=0');
     expect(await screen.findByRole('region', { name: 'Catan rules' })).not.toHaveAttribute('data-jump');
   });
 
   it('names no rulebook for a game with only its own', async () => {
-    touch(true);
     answering('Draw two (p. 4).');
     renderRouted(<RulesPage />, ['/rules/azul'], '/rules/:slug/:part?');
     ask();
@@ -514,7 +520,6 @@ describe('RulesPage on a phone or touch device', () => {
   });
 
   it('leaves citations to open the PDF once the reader has failed', async () => {
-    touch(true);
     reader.fails = true;
     try {
       answering('A 7 moves the robber (Catan p. 5).');
@@ -528,7 +533,6 @@ describe('RulesPage on a phone or touch device', () => {
   });
 
   it('leaves citations to open the PDF when the reader itself won\'t load', async () => {
-    touch(true);
     vi.spyOn(console, 'error').mockImplementation(() => {});
     answering('A vampire wakes (Vampire p. 2).');
     const router = renderRouted(<RulesPage />, ['/rules/one-night-werewolf/vampire'], '/rules/:slug/:part?');
@@ -539,26 +543,31 @@ describe('RulesPage on a phone or touch device', () => {
     expect(router.state.location.search).toBe('');
   });
 
-  it('leaves citations to open the PDF in a new tab on a desktop', async () => {
-    touch(false);
+  it('opens a citation in place on a desktop too, leaving a new tab to a modified click', async () => {
+    desktop();
     answering('A 7 moves the robber (Catan p. 5).');
     const router = renderRouted(<RulesPage />, ['/rules/catan/cities-and-knights'], '/rules/:slug/:part?');
     ask();
     const link = await screen.findByRole('link', { name: 'Base game p. 5' });
     expect(link).toHaveAttribute('target', '_blank');
-    expect(fireEvent.click(link)).toBe(true);
+    expect(fireEvent.click(link, { ctrlKey: true })).toBe(true);
     expect(router.state.location.pathname).toBe('/rules/catan/cities-and-knights');
+    expect(fireEvent.click(link)).toBe(false);
+    expect(router.state.location).toMatchObject({ pathname: '/rules/catan', search: '?page=5' });
   });
 
-  it('embeds the rulebook on a desktop and never asks its size', () => {
-    touch(false);
-    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+  it('draws the rulebook in the page on a desktop too, under a download link with its size', async () => {
+    desktop();
+    headWith({ 'content-length': '2048' });
     renderAt('/rules/7-wonders');
-    const frame = screen.getByTitle('7 Wonders rules');
-    const download = screen.getByRole('link', { name: 'Download PDF' });
-    expect(download).not.toHaveAccessibleDescription(/MB/);
-    // Under the embedded viewer, as before.
-    expect(frame.compareDocumentPosition(download) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(await screen.findByRole('region', { name: '7 Wonders rules' })).toHaveAttribute('data-src', '/rules/7-wonders.pdf');
+    expect(screen.queryByTitle('7 Wonders rules')).not.toBeInTheDocument();
+    await vi.waitFor(() => expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAccessibleDescription('2 KB'));
+    // The browser's own viewer a click away, for its zoom, thumbnails and printing.
+    const open = screen.getByRole('link', { name: 'Open PDF' });
+    expect(open).toHaveAttribute('href', '/rules/7-wonders.pdf');
+    expect(open).toHaveAttribute('target', '_blank');
+    expect(open).not.toHaveAttribute('download');
+    expect(screen.getByText(/To print this rulebook, use Open PDF/)).toBeInTheDocument();
   });
 });

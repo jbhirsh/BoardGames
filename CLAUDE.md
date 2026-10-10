@@ -57,15 +57,21 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
     refetches, and only the visible one carries the `#collection` anchor)
   - `/rules/:slug/:part?` — bundled rule PDF viewer + AI rules assistant;
     a game with rulebooks for games inside it gets a tab per rulebook.
-    `?page=N` (`citedPageParam`) has the phone reader scroll to page N.
-    Desktops embed the PDF in an iframe. Phones and touch tablets can't
-    (Android draws nothing, iOS one page), so there `PdfReader` draws it with
-    pdf.js (lazy-loaded): each page a canvas under its text layer, with a
-    search that marks matches in place, with "Download PDF" (and the file's
-    size) above it. pdf.js's modern build is used with the few newer
-    JavaScript methods it calls polyfilled (`src/pdfjs/polyfills.ts`, also
-    loaded first in its worker, `src/pdfjs/worker.ts`); a Vite plugin copies
-    its WebAssembly image decoders and standard fonts to `/pdfjs/`
+    `?page=N` (`citedPageParam`) has the reader scroll to page N.
+    On every screen `PdfReader` draws the rulebook with pdf.js (lazy-loaded),
+    in place of the browser's own PDF viewer: phones can't embed one
+    (Android draws nothing, iOS one page), and a desktop's can't be moved to
+    a cited page reliably or have a passage marked. Each page is a canvas
+    under its text layer, drawn at the column's width (912px at most) and
+    the screen's pixel ratio (followed, so browser zoom redraws it sharp),
+    only near the screen, with a search that marks matches in place. Above
+    it, "Download PDF" (and the file's size) and "Open PDF", the browser's
+    own viewer in a new tab for its zoom, thumbnails and printing; a printed
+    rules page shows a note saying so in place of the reader. pdf.js's
+    modern build is used with the few newer JavaScript methods it calls
+    polyfilled (`src/pdfjs/polyfills.ts`, also loaded first in its worker,
+    `src/pdfjs/worker.ts`); a Vite plugin copies its WebAssembly image
+    decoders and standard fonts to `/pdfjs/`
   - `/score/:slug` — score calculator for a game in
     `data/scoreCalculators.ts` (currently 7 Wonders); any other slug shows
     the not-found page. Results is a score sheet like the printed pad (a
@@ -222,14 +228,15 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   pages in both themes, so a new colour has to pass AA in each.
 - **`utils/`** — pure helpers (`filterGames.ts`, `pickRandom.ts`, `filterUrl.ts`,
   `urls.ts`, `shortDesc.ts`, `subgames.ts`, `rulebooks.ts`, `pdfSearch.ts`,
-  `fileSize.ts`, `sevenWonders.ts`, the score pad's arithmetic: science,
-  standings with the coins tie-break; `difficulty.ts`, the Light/Medium/
-  Heavy words for a weight; `offline.ts`, the service worker's
-  routing and byte ranges; `fromList.ts`, the router state that marks a
-  sub-page as opened from the list; `wordList.ts`, the word checker's
-  normalising of a typed word and parsing of its list; `wiktionary.ts`, the
-  reading of a Wiktionary answer and which words in it are playable). Keep
-  these free of React and side effects.
+  `citeMatch.ts`, the passage of a page a citation points to; `fileSize.ts`,
+  `sevenWonders.ts`, the score pad's arithmetic: science, standings with
+  the coins tie-break; `difficulty.ts`, the Light/Medium/Heavy words for a
+  weight; `offline.ts`, the service worker's routing and byte ranges;
+  `fromList.ts`, the router state that marks a sub-page as opened from the
+  list; `wordList.ts`, the word checker's normalising of a typed word and
+  parsing of its list; `wiktionary.ts`, the reading of a Wiktionary answer
+  and which words in it are playable). Keep these free of React and side
+  effects.
 - **`sw/sw.ts`** — the service worker, for game nights with no signal.
   `main.tsx` registers it in production builds only; the `serviceWorker()`
   plugin in `vite.config.ts` bundles it to `/sw.js` (a classic worker: the
@@ -243,7 +250,7 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   runs the old app, so a long-open tab keeps its own code offline. Pages
   come from the network (4s at most), falling back to the app saved at
   install, which nothing else replaces; `/api/*` and other sites are never
-  touched. A rulebook is saved whole the first time it's opened (the phone
+  touched. A rulebook is saved whole the first time it's opened (the
   reader asks for byte ranges, which the Cache API can't store, so ranges
   are cut from the saved copy, held in memory while it's read), and dropped
   by the first worker whose hash for it differs. `public/manifest.webmanifest`
@@ -343,17 +350,24 @@ checks they run 1, 2, 3 from the top of every file). The assistant cites a
 rule as `(p. N)` from the nearest marker. When it reads more than one
 rulebook, each is headed with its name (the game's own too) and every
 citation names one (`(Europe p. 4)`). The chat (`linkCitations` in
-`utils/rulebooks.ts`) turns each into a link to that PDF at `#page=N`: a
-desktop opens it in a new tab; on a phone the rules page instead shows that
-rulebook's tab in place at `?page=N` and the reader scrolls to the page. A
-bare page with several rulebooks read, or a name it wasn't sent, stays plain
-text. The eval grades facts with citations stripped, and
-its `citation` entries check the citations alone.
+`utils/rulebooks.ts`) turns each into a link to that PDF at `#page=N`, which
+the rules page takes instead: it shows that rulebook's tab in place at
+`?page=N`, the reader scrolls to the page, and the answer's words the
+citation closes (passed in router state, not the URL) mark the passage they
+point to (`utils/citeMatch.ts`: the stretch of the page's text sharing the
+most of their meaningful words, marked only with at least three of them,
+two beyond words every rulebook uses, and half; widened to whole sentences,
+never across a heading's change of type; otherwise the page is only
+ringed). A click meant for a new tab, or a
+reader that failed, opens the PDF itself. A bare page with several
+rulebooks read, or a name it wasn't sent, stays plain text. The eval grades
+facts with citations stripped, and its `citation` entries check the
+citations alone.
 `vercel.json` bundles `rules-text/**` into the `api/chat.ts` function so it can
 read them at runtime.
 `npm run rules-text-layer` (`scripts/add-text-layer.mjs`) gives a scanned
 rulebook (one with no text at all) an invisible OCR text layer over its page
-images, so it can be searched in the phone reader and in a device's own PDF
+images, so it can be searched in the reader and in a device's own PDF
 viewer; it leaves any PDF that already has text alone. Run it on a newly added
 scan before extracting its text.
 A scan whose OCR is too noisy to answer from (the Monster Box sheets,

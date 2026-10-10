@@ -1,5 +1,5 @@
 // What the service worker (src/sw/sw.ts) does with each request, and the
-// byte-range arithmetic it needs to answer the phone reader from a saved
+// byte-range arithmetic it needs to answer the rulebook reader from a saved
 // rulebook. Kept here, free of service-worker globals, so it can be tested.
 
 /** How the service worker answers a request. */
@@ -32,8 +32,8 @@ const ASSET = /^\/(assets|images|pdfjs)\//;
 export function routeFor({ url, method, mode }: RouteRequest, origin: string, shell: ReadonlySet<string>): Route {
   const { origin: from, pathname } = new URL(url);
   if (from !== origin || pathname.startsWith('/api/')) return 'skip';
-  // A rulebook comes before pages: on a desktop it opens in an iframe, which
-  // is a navigation too.
+  // A rulebook comes before pages: opened in a tab of its own (a citation
+  // clicked for a new tab), it is a navigation too.
   if (RULEBOOK.test(pathname) && (method === 'GET' || method === 'HEAD')) return 'rulebook';
   if (method !== 'GET') return 'skip';
   if (mode === 'navigate') return 'page';

@@ -130,7 +130,7 @@ export default defineConfig({
   worker: {
     format: 'es',
   },
-  // Vercel advertises byte ranges on static files, and the phone reader
+  // Vercel advertises byte ranges on static files, and the rulebook reader
   // relies on them to fetch only the pages it shows. The preview server
   // serves ranges but doesn't say so; say it, so e2e runs match production.
   preview: {
