@@ -7,7 +7,7 @@ import { getRedis } from './_lib/redis.js';
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
-  tracesSampleRate: 1.0,
+  tracesSampleRate: 0.1,
 });
 
 const voteKey = (id: string) => `wishlist:votes:${id}`;
