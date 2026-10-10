@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import Hero from '../components/Hero';
 import { GAMES } from '../data/games';
 import { collectionSpan } from '../utils/collectionStats';
+import { renderRouted } from './routed';
 
 function renderHero() {
   return render(
@@ -40,6 +41,12 @@ describe('Hero', () => {
       expect(link).toHaveAttribute('href', `/rules/${game.slug}`);
       expect(link.querySelector('img')).toHaveAttribute('src', game.img);
     }
+  });
+
+  it('marks a cover\'s link as leaving the list, so the rules page\'s Back returns to it', () => {
+    const router = renderRouted(<Hero />);
+    fireEvent.click(screen.getByRole('link', { name: 'Catan rules' }));
+    expect(router.state.location).toMatchObject({ pathname: '/rules/catan', state: { fromList: true } });
   });
 
   it('leaves picking and the list switch to the collection header', () => {

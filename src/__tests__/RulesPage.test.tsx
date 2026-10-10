@@ -2,6 +2,8 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router';
 import RulesPage from '../components/RulesPage';
+import { FROM_LIST } from '../utils/fromList';
+import { renderRouted } from './routed';
 
 // pdf.js needs a real browser; PdfReader.test.tsx covers the reader itself.
 vi.mock('../components/PdfReader', () => ({
@@ -137,6 +139,26 @@ describe('RulesPage', () => {
       expect(screen.getByRole('heading', { name: 'Card Deck' })).toBeInTheDocument();
     });
 
+    it('switches tabs in place, so Back still returns to the list it came from', () => {
+      const router = renderRouted(<RulesPage />, ['/?p=5', { pathname: '/rules/catan', state: FROM_LIST }], '/rules/:slug/:part?');
+      fireEvent.click(within(tabs()).getByRole('link', { name: '5–6 Player Extension' }));
+      expect(router.state.historyAction).toBe('REPLACE');
+      expect(router.state.location).toMatchObject({ pathname: '/rules/catan/5-6-player-extension', state: { fromList: true } });
+
+      fireEvent.click(screen.getByRole('link', { name: /Back to The Game Room/ }));
+      expect(router.state.location).toMatchObject({ pathname: '/', search: '?p=5' });
+    });
+
+    it('frames each tab\'s PDF afresh, so the frame adds no step to history', () => {
+      // Changing a frame's src is a navigation in the tab's history; a new
+      // frame's first load is not.
+      renderAt('/rules/catan');
+      const before = viewer();
+      fireEvent.click(within(tabs()).getByRole('link', { name: /Cities & Knights/ }));
+      expect(viewer()).not.toBe(before);
+      expect(viewer()).toHaveAttribute('src', '/rules/catan.cities-and-knights.pdf');
+    });
+
     it('falls back to the game\'s own rulebook for an unknown tab', () => {
       renderAt('/rules/card-deck/mahjong');
       expect(within(tabs()).getByRole('link', { current: 'page' })).toHaveTextContent('Overview');
@@ -266,6 +288,26 @@ describe('RulesPage', () => {
         await screen.findByText(/something went wrong/);
         const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
         expect(body.parts).toEqual(['game-2', 'game-3', 'game-4', 'game-5', 'game-6', 'game-7', 'monster-box-of-monsters', 'monster-box-2', 'monster-box-3']);
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+
+    it('opens a tab the assistant names in place too, keeping the way back to the list', async () => {
+      const answer = new TextEncoder().encode("That's in the Cities & Knights rules.");
+      let read = false;
+      vi.stubGlobal('fetch', vi.fn(async () => ({
+        ok: true,
+        body: { getReader: () => ({ read: async () => (read ? { done: true } : (read = true, { done: false, value: answer })) }) },
+      }) as unknown as Response));
+      try {
+        const router = renderRouted(<RulesPage />, ['/?p=3', { pathname: '/rules/catan', state: FROM_LIST }], '/rules/:slug/:part?');
+        fireEvent.click(screen.getByRole('button', { name: /ai rules assistant/i }));
+        fireEvent.change(screen.getByPlaceholderText('Ask a rules question...'), { target: { value: 'Knights?' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+        fireEvent.click(await screen.findByRole('link', { name: /Open Cities & Knights/ }));
+        expect(router.state.historyAction).toBe('REPLACE');
+        expect(router.state.location).toMatchObject({ pathname: '/rules/catan/cities-and-knights', state: { fromList: true } });
       } finally {
         vi.unstubAllGlobals();
       }

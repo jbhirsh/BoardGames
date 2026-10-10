@@ -1,6 +1,7 @@
 import { useId, useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { useAuth } from '../context/useAuth';
+import BackLink from './BackLink';
 
 type Status = { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent' } | { kind: 'error'; message: string };
 
@@ -27,7 +28,7 @@ export default function SignInPage() {
     <div className="rules-page">
       <title>Sign in · The Game Room</title>
       <header className="rules-header">
-        <Link to="/" className="back-link">&larr; Back to The Game Room</Link>
+        <BackLink />
         <h1 className="rules-game-name">Owner sign-in</h1>
         <p className="rules-game-desc">Signed in, the wishlist shows the suggestions waiting for a decision, a form to add games directly, and edit and remove controls on every stored entry.</p>
       </header>

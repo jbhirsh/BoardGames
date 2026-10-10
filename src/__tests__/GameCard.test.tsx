@@ -7,6 +7,7 @@ import { FilterProvider } from '../context/FilterContext';
 import { useFilter } from '../context/useFilter';
 import { quickGame, mediumGame, bananagramsGame, sevenWondersGame, deckGame, addonGame } from './testData';
 import type { Game } from '../data/types';
+import { renderRouted } from './routed';
 
 function renderWithContext(ui: React.ReactElement, url = '/') {
   return render(
@@ -132,6 +133,16 @@ describe('GameCard', () => {
     const link = screen.getByTitle('Score Calculator');
     expect(link).toBeInTheDocument();
     expect(link.closest('a')).toHaveAttribute('href', '/score/7-wonders');
+  });
+
+  it.each([
+    ['Rules', sevenWondersGame, '/rules/7-wonders'],
+    ['Score Calculator', sevenWondersGame, '/score/7-wonders'],
+    ['Word Checker', bananagramsGame, '/word-checker'],
+  ])('marks its %s link as leaving the list, so the page\'s Back returns to it', (title, game, pathname) => {
+    const router = renderRouted(<FilterProvider><GameCard game={game} /></FilterProvider>);
+    fireEvent.click(screen.getByTitle(title));
+    expect(router.state.location).toMatchObject({ pathname, state: { fromList: true } });
   });
 
   it('does not render Score Calculator link for non-7-wonders games', () => {

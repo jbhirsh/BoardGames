@@ -11,6 +11,7 @@ import AwardsBadge, { AwardsList } from './AwardsBadge';
 import SubGameList from './SubGameList';
 import DifficultyMeta from './DifficultyMeta';
 import Popover from './Popover';
+import { FROM_LIST } from '../utils/fromList';
 import { fittingSubgames, subgameLabel } from '../utils/subgames';
 import { rulesPathFor } from '../utils/rulebooks';
 import { YouTubeIcon, AiRulesIcon, UserIcon, ClockIcon, CalculatorIcon, SearchIcon } from './Icons';
@@ -114,7 +115,7 @@ export default function GameCard({ game }: Props) {
         </div>
         <div className="card-foot-end">
           {game.rules ? (
-            <Link className="rules-btn rules-btn--primary" to={rulesPathFor(game, state)} title="Rules">
+            <Link className="rules-btn rules-btn--primary" to={rulesPathFor(game, state)} state={FROM_LIST} title="Rules">
               <AiRulesIcon /> Rules
             </Link>
           ) : (
@@ -128,12 +129,12 @@ export default function GameCard({ game }: Props) {
             </a>
           )}
           {SCORE_CALCULATORS.has(game.slug) && (
-            <Link className="rules-btn" to={`/score/${game.slug}`} title="Score Calculator">
+            <Link className="rules-btn" to={`/score/${game.slug}`} state={FROM_LIST} title="Score Calculator">
               <CalculatorIcon /> Score
             </Link>
           )}
           {game.slug === 'bananagrams' && (
-            <Link className="rules-btn" to="/word-checker" title="Word Checker">
+            <Link className="rules-btn" to="/word-checker" state={FROM_LIST} title="Word Checker">
               <SearchIcon /> Word Checker
             </Link>
           )}

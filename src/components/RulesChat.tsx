@@ -36,10 +36,15 @@ export function RulesChatToggle() {
   );
 }
 
-/** A tab an answer points to: what it is called and where it opens. */
+/**
+ * A tab an answer points to: what it is called and where it opens. It opens
+ * the way the tab strip does, in place in history, with the router `state`
+ * the page was reached with (see BackLink).
+ */
 export interface RulebookLink {
   label: string;
   to: string;
+  state?: unknown;
 }
 
 // An answer's links are its page citations, each opening a rulebook PDF at
@@ -219,7 +224,7 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, linksFor, ci
                   : msg.content}
                 {/* Once the answer is whole, so links don't come and go mid-stream. */}
                 {msg.role === 'assistant' && i > 0 && !(isLoading && i === messages.length - 1) && linksFor?.(msg.content).map((l) => (
-                  <Link key={l.to} className="rules-chat-tablink" to={l.to}>Open {l.label} <span aria-hidden="true">→</span></Link>
+                  <Link key={l.to} className="rules-chat-tablink" to={l.to} replace state={l.state}>Open {l.label} <span aria-hidden="true">→</span></Link>
                 ))}
               </div>
             )}

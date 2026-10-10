@@ -12,6 +12,7 @@ import FilterBar from './components/FilterBar/FilterBar';
 import ActiveTags from './components/ActiveTags';
 import GameCollection from './components/GameCollection';
 import Wishlist from './components/Wishlist';
+import InstantRouteScroll from './components/InstantRouteScroll';
 import { Analytics } from '@vercel/analytics/react';
 
 export function HomePage() {
@@ -50,6 +51,7 @@ export function HomePage() {
 export default function App() {
   return (
     <FilterProvider>
+      <InstantRouteScroll />
       <ScrollRestoration />
       <Outlet />
       <Analytics />

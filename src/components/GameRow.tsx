@@ -6,6 +6,7 @@ import { COLLECTION_COLUMNS } from './GamesTableHead';
 import TableRowCells, { TableRowExpand } from './TableRowCells';
 import SubGameList from './SubGameList';
 import SubGamesTag from './SubGamesTag';
+import { FROM_LIST } from '../utils/fromList';
 import { fittingSubgames, subgameTitle } from '../utils/subgames';
 import { rulesPathFor } from '../utils/rulebooks';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
@@ -63,6 +64,7 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
             <Link
               className="rules-link"
               to={rulesPathFor(game, state)}
+              state={FROM_LIST}
               onClick={(e) => e.stopPropagation()}
             >
               <AiRulesIcon /> Rules
@@ -80,6 +82,7 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
             <Link
               className="rules-link"
               to={`/score/${game.slug}`}
+              state={FROM_LIST}
               onClick={(e) => e.stopPropagation()}
             >
               <CalculatorIcon /> Score
@@ -89,6 +92,7 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
             <Link
               className="rules-link"
               to="/word-checker"
+              state={FROM_LIST}
               onClick={(e) => e.stopPropagation()}
             >
               <SearchIcon /> Word Checker

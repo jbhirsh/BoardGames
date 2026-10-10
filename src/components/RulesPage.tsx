@@ -1,5 +1,5 @@
 import { Component, lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
-import { useParams, Link, Navigate } from 'react-router';
+import { useParams, useLocation, Link, Navigate } from 'react-router';
 import { GAMES } from '../data/games';
 import { rulebooks, rulebookPath, chatParts, chatScope, linkCitations, mentionedRulebooks, starterQuestions } from '../utils/rulebooks';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
@@ -8,6 +8,7 @@ import { shownKind } from '../utils/subgames';
 import RulesChatProvider, { RulesChatToggle, RulesChatPanel } from './RulesChat';
 import WordChecker from './WordChecker';
 import NotFoundPage from './NotFoundPage';
+import BackLink from './BackLink';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useScrollEdges } from '../hooks/useScrollEdges';
 import { formatSize } from '../utils/fileSize';
@@ -82,6 +83,11 @@ function revealTab(strip: HTMLElement, tab: HTMLElement) {
 
 export default function RulesPage() {
   const { slug, part } = useParams<{ slug: string; part?: string }>();
+  // Passed on by the tabs and the chat's links to them, which replace rather
+  // than push: a game's rules page is one step in history however many tabs
+  // are read, so Back (ours, or the browser's) lands where the visitor came
+  // from.
+  const { state: arrival } = useLocation();
   const game = GAMES.find(g => g.slug === slug);
   const [wordCheckerOpen, setWordCheckerOpen] = useState(false);
   const inPage = useMediaQuery(READ_IN_PAGE);
@@ -111,7 +117,7 @@ export default function RulesPage() {
       <div className="rules-page">
         <title>{`${book.name} rules · The Game Room`}</title>
         <header className="rules-header">
-          <Link to="/" className="back-link">&larr; Back to The Game Room</Link>
+          <BackLink />
           <div className="rules-title-row">
             <img
               src={game.img}
@@ -151,6 +157,8 @@ export default function RulesPage() {
               <Link
                 key={b.pdf}
                 to={rulebookPath(game.slug, b.part)}
+                replace
+                state={arrival}
                 className="rules-book"
                 aria-current={b === book ? 'page' : undefined}
               >
@@ -181,7 +189,7 @@ export default function RulesPage() {
           gameName={game.name}
           parts={chatParts(game, book)}
           scope={chatScope(game, book)}
-          linksFor={(answer) => mentionedRulebooks(answer, game, book).map((b) => ({ label: b.label, to: rulebookPath(game.slug, b.part) }))}
+          linksFor={(answer) => mentionedRulebooks(answer, game, book).map((b) => ({ label: b.label, to: rulebookPath(game.slug, b.part), state: arrival }))}
           citeLinks={(answer) => linkCitations(answer, game, book)}
           starters={starterQuestions(game, book)}
         />
@@ -208,7 +216,9 @@ export default function RulesPage() {
         ) : (
           <>
             <div className="rules-viewer">
-              <iframe src={book.pdf} title={`${book.name} rules`} />
+              {/* A fresh frame per tab: changing a frame's src adds a step to
+                  the tab's history, so Back would page through the PDFs. */}
+              <iframe key={book.pdf} src={book.pdf} title={`${book.name} rules`} />
             </div>
             <a href={book.pdf} download className="rules-download">
               Download PDF

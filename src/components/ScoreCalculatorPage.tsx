@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { Link, useParams } from 'react-router';
+import { useParams } from 'react-router';
 import { GAMES } from '../data/games';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
 import { digitNudge } from '../utils/digitNudge';
 import { breakdown, ordinal, scienceScore, standings, tieBreaks, treasuryScore, type Breakdown, type Tally } from '../utils/sevenWonders';
 import NotFoundPage from './NotFoundPage';
+import BackLink from './BackLink';
 import { ScoreIcon, type ScoreIconKind } from './ScoreIcons';
 
 let nextPlayerId = 0;
@@ -249,7 +250,7 @@ export default function ScoreCalculatorPage() {
     <div className="rules-page" style={{ '--digit-nudge': `${nudge}px` } as CSSProperties}>
       <title>{`${game.name} score · The Game Room`}</title>
       <header className="rules-header">
-        <Link to="/" className="back-link">&larr; Back to The Game Room</Link>
+        <BackLink />
         <div className="rules-title-row">
           <img src={game.img} alt={`${game.name} box art`} className="rules-box-art" />
           <div className="rules-title-info">

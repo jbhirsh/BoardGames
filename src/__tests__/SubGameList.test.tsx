@@ -5,6 +5,7 @@ import SubGameList from '../components/SubGameList';
 import { FilterProvider } from '../context/FilterContext';
 import { deckGame, addonGame } from './testData';
 import type { Game } from '../data/types';
+import { renderRouted } from './routed';
 
 type WithSubs = Game & { subgames: NonNullable<Game['subgames']> };
 
@@ -56,6 +57,12 @@ describe('SubGameList', () => {
     renderList(deckGame);
     expect(screen.getByRole('link', { name: 'Speed rules' })).toHaveAttribute('href', '/rules/deck/speed');
     expect(screen.getByRole('link', { name: 'President rules' })).toHaveAttribute('href', '/rules/deck/president');
+  });
+
+  it('marks a game\'s rules link as leaving the list, so the page\'s Back returns to it', () => {
+    const router = renderRouted(<FilterProvider><SubGameList game={deckGame as WithSubs} /></FilterProvider>);
+    fireEvent.click(screen.getByRole('link', { name: 'Speed rules' }));
+    expect(router.state.location).toMatchObject({ pathname: '/rules/deck/speed', state: { fromList: true } });
   });
 
   it('has no rules link for an add-on whose rules came in the box, and marks its kind', () => {
