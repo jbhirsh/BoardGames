@@ -1,4 +1,4 @@
-// Find-in-rulebook for the phone reader. A PDF page's text arrives as a list
+// Find-in-rulebook for the rulebook reader. A PDF page's text arrives as a list
 // of items (runs of text in one font), and the reader draws one transparent
 // span per item over the page image. Search runs over the page's items joined
 // into one string, so a phrase split across items still matches, and each

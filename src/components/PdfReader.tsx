@@ -3,12 +3,15 @@ import '../pdfjs/polyfills';
 import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { getDocument, PDFWorker, TextLayer, type PDFDocumentProxy, type PDFPageProxy, type RenderTask } from 'pdfjs-dist';
 import { findMatches, pageText, piecesOf, type Match, type PageText, type TextRun } from '../utils/pdfSearch';
+import { findCited, lineBreaks, passageStart } from '../utils/citeMatch';
 import { startWorker } from '../pdfjs/startWorker';
 
-// Phones can't show a PDF in an iframe (Android draws nothing, iOS only the
-// first page), so the rules page draws the rulebook itself there with pdf.js:
-// each page as an image with its text laid over it, which makes it
-// selectable and searchable. This module is loaded only when it is needed.
+// The rules page draws the rulebook itself with pdf.js rather than leaving
+// it to the browser's viewer (which a phone hasn't got: Android draws
+// nothing, iOS only the first page): each page as an image with its text
+// laid over it, which makes it selectable and searchable, and lets a
+// citation open it at its page with the passage it cites marked. This
+// module is loaded only when it is needed.
 
 // The decoders for JPEG 2000 and JBIG2 images, and the fonts PDFs name but
 // don't embed. vite.config.ts copies them from pdfjs-dist into the build.
@@ -60,9 +63,27 @@ function scrollBehavior(): ScrollBehavior {
   return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth';
 }
 
-/** How far a page's top is from where a jump puts it: its scroll margin below the top of the screen. */
+/** How far below the top of the screen a jump puts a page: its scroll margin, clear of the search bar. */
+function scrollMargin(box: HTMLElement): number {
+  return parseFloat(getComputedStyle(box).scrollMarginTop) || 0;
+}
+
+/** How far a page's top is from where a jump puts it. */
 function offTarget(box: HTMLElement): number {
-  return box.getBoundingClientRect().top - (parseFloat(getComputedStyle(box).scrollMarginTop) || 0);
+  return box.getBoundingClientRect().top - scrollMargin(box);
+}
+
+/**
+ * Brings a page's cited passage on screen if the jump to the page left it
+ * below the fold (a tall page on a desktop) or under the search bar.
+ * False if the passage isn't marked yet.
+ */
+function revealPassage(box: HTMLElement): boolean {
+  const mark = box.querySelector<HTMLElement>('mark.pdf-hit--cited');
+  if (!mark) return false;
+  const { top, bottom } = mark.getBoundingClientRect();
+  if (top < scrollMargin(box) || bottom > window.innerHeight) mark.scrollIntoView({ block: 'center', behavior: scrollBehavior() });
+  return true;
 }
 
 /**
@@ -109,6 +130,26 @@ function deferred(): Deferred {
     };
   });
   return d;
+}
+
+/**
+ * The screen's device pixel ratio, followed as it changes: browser zoom
+ * (ctrl-plus) changes it, often without changing the column's width in CSS
+ * pixels, and pages drawn for the old ratio would be blurred.
+ */
+function usePixelRatio(): number {
+  const [ratio, setRatio] = useState(() => window.devicePixelRatio || 1);
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    // Matches only the ratio it was made for, so it changes when that does.
+    const query = window.matchMedia(`(resolution: ${ratio}dppx)`);
+    const changed = () => setRatio(window.devicePixelRatio || 1);
+    // Safari before 14 has only the older addListener; there a zoom keeps
+    // the pages drawn as they were.
+    query.addEventListener?.('change', changed);
+    return () => query.removeEventListener?.('change', changed);
+  }, [ratio]);
+  return ratio;
 }
 
 /**
@@ -168,10 +209,14 @@ interface PageProps {
   doc: PDFDocumentProxy;
   n: number;
   width: number;
+  /** The screen's device pixel ratio, which the page image is drawn for. */
+  pixels: number;
   ratio: number;
   textOf: (n: number) => Promise<PageTextData>;
   matches: readonly Match[];
   current: Match | null;
+  /** The passage a citation points to, when it is on this page. */
+  quoted: Match | null;
   /** How many pages the rulebook has, for the page's name. */
   total: number;
   /** The page's height to width, when the reader has read it ahead of drawing. */
@@ -195,7 +240,7 @@ interface PageProps {
   leads: boolean;
 }
 
-function PdfPage({ doc, n, width, ratio, textOf, matches, current, total, known, cited, onJump, onLanded, held, leads }: PageProps) {
+function PdfPage({ doc, n, width, pixels, ratio, textOf, matches, current, quoted, total, known, cited, onJump, onLanded, held, leads }: PageProps) {
   const boxRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
@@ -216,6 +261,9 @@ function PdfPage({ doc, n, width, ratio, textOf, matches, current, total, known,
   const [firstPaint] = useState(deferred);
   const painted = useRef(firstPaint);
   const [layer, setLayer] = useState<{ divs: HTMLElement[]; data: PageTextData } | null>(null);
+  // Set once a jump here is over, until the cited passage has been brought
+  // on screen (it may be marked only after: its text layer waits for the jump).
+  const reveal = useRef(false);
 
   // Whether the page is near the screen, followed as the reader scrolls.
   useEffect(() => {
@@ -251,7 +299,7 @@ function PdfPage({ doc, n, width, ratio, textOf, matches, current, total, known,
       const base = page.getViewport({ scale: 1 });
       const viewport = page.getViewport({ scale: width / base.width });
       setHeight(base.height / base.width);
-      const dpr = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(MAX_PIXELS / (viewport.width * viewport.height)));
+      const dpr = Math.min(pixels, 2, Math.sqrt(MAX_PIXELS / (viewport.width * viewport.height)));
       canvas.width = Math.floor(viewport.width * dpr);
       canvas.height = Math.floor(viewport.height * dpr);
       task = page.render({ canvas, viewport, transform: dpr === 1 ? undefined : [dpr, 0, 0, dpr, 0, 0] });
@@ -263,7 +311,7 @@ function PdfPage({ doc, n, width, ratio, textOf, matches, current, total, known,
       cancelled = true;
       task?.cancel();
     };
-  }, [doc, n, width, drawn]);
+  }, [doc, n, width, pixels, drawn]);
 
   // The text layer, laid once the page has come near (it is light, so it
   // stays) and again when the width changes.
@@ -290,7 +338,8 @@ function PdfPage({ doc, n, width, ratio, textOf, matches, current, total, known,
     };
   }, [doc, n, width, wanted, textOf]);
 
-  // Mark this page's matches in its text layer, the current one stronger.
+  // Mark this page's matches in its text layer, the current one stronger,
+  // and the passage a citation points to like a match.
   useEffect(() => {
     if (!layer) {
       if (current) boxRef.current?.scrollIntoView?.({ block: 'start' });
@@ -300,13 +349,26 @@ function PdfPage({ doc, n, width, ratio, textOf, matches, current, total, known,
     divs.forEach((div, i) => {
       if (div.childElementCount > 0) div.textContent = data.runs[i].str;
     });
-    const byItem = new Map<number, { from: number; to: number; isCurrent: boolean }[]>();
+    type Marked = { from: number; to: number; className: string; isCurrent: boolean };
+    const byItem = new Map<number, Marked[]>();
     for (const match of matches) {
-      for (const piece of piecesOf(data.text, data.runs, match)) {
-        const list = byItem.get(piece.item) ?? [];
-        list.push({ ...piece, isCurrent: match === current });
-        byItem.set(piece.item, list);
+      const className = match === current ? 'pdf-hit pdf-hit--current' : 'pdf-hit';
+      for (const { item, from, to } of piecesOf(data.text, data.runs, match)) {
+        byItem.set(item, [...(byItem.get(item) ?? []), { from, to, className, isCurrent: match === current }]);
       }
+    }
+    // The cited passage around them: a search's matches inside it stay
+    // marked as matches, the current one too.
+    for (const piece of quoted ? piecesOf(data.text, data.runs, quoted) : []) {
+      const hits = byItem.get(piece.item) ?? [];
+      const cited: Marked[] = [];
+      let from = piece.from;
+      for (const hit of [...hits, { from: piece.to, to: piece.to }].sort((a, b) => a.from - b.from)) {
+        const to = Math.min(hit.from, piece.to);
+        if (to > from) cited.push({ from, to, className: 'pdf-hit pdf-hit--cited', isCurrent: false });
+        from = Math.max(from, hit.to);
+      }
+      byItem.set(piece.item, [...hits, ...cited]);
     }
     let currentMark: HTMLElement | null = null;
     for (const [item, pieces] of byItem) {
@@ -315,18 +377,19 @@ function PdfPage({ doc, n, width, ratio, textOf, matches, current, total, known,
       let at = 0;
       for (const p of pieces.sort((a, b) => a.from - b.from)) {
         parts.push(str.slice(at, p.from));
-        const mark = document.createElement('mark');
-        mark.className = p.isCurrent ? 'pdf-hit pdf-hit--current' : 'pdf-hit';
-        mark.textContent = str.slice(p.from, p.to);
-        parts.push(mark);
-        if (p.isCurrent) currentMark ??= mark;
+        const el = document.createElement('mark');
+        el.className = p.className;
+        el.textContent = str.slice(p.from, p.to);
+        parts.push(el);
+        if (p.isCurrent) currentMark ??= el;
         at = p.to;
       }
       parts.push(str.slice(at));
       divs[item].replaceChildren(...parts);
     }
     currentMark?.scrollIntoView?.({ block: 'center' });
-  }, [layer, matches, current]);
+    if (reveal.current && revealPassage(boxRef.current!)) reveal.current = false;
+  }, [layer, matches, current, quoted]);
 
   // A citation's jump. The reader asks for it once every page above this
   // one has its own height, so none moves the page as the scroll passes:
@@ -337,7 +400,9 @@ function PdfPage({ doc, n, width, ratio, textOf, matches, current, total, known,
   // and the page's image is drawn, it is ringed for a moment. Until then
   // the other pages draw nothing new (this one was started first, as soon
   // as the jump was asked for), unless someone takes the scroll over: they
-  // are going somewhere else.
+  // are going somewhere else. Then the passage the citation points to, if
+  // one was found and the page is tall enough to hide it, is brought on
+  // screen, unless someone took the scroll over.
   const jumped = useEffectEvent(onJump);
   const landed = useEffectEvent(onLanded);
   useEffect(() => {
@@ -356,6 +421,7 @@ function PdfPage({ doc, n, width, ratio, textOf, matches, current, total, known,
       const drew = await painted.current.promise;
       if (cancelled) return;
       landed();
+      if (ranItsCourse) reveal.current = !revealPassage(box);
       if (!drew) return;
       box.classList.add('pdf-page--cited');
       fade = setTimeout(() => box.classList.remove('pdf-page--cited'), RING_MS);
@@ -364,6 +430,7 @@ function PdfPage({ doc, n, width, ratio, textOf, matches, current, total, known,
       cancelled = true;
       scroll.cancel();
       clearTimeout(fade);
+      reveal.current = false;
       box.classList.remove('pdf-page--cited');
     };
   }, [cited]);
@@ -395,11 +462,22 @@ function readingPlace(pages: HTMLElement): { page: number; into: number } | null
   return null;
 }
 
-/** A citation's request for a page: `key` is new for each tap, `place` names the rulebook. */
+/**
+ * A citation's request for a page: `key` is new for each tap, `place` names
+ * the rulebook, and `quote` is the answer's words the citation closes, whose
+ * passage on the page is marked when it can be found.
+ */
 export interface Jump {
   page: number;
   key: string;
   place?: string;
+  quote?: string;
+}
+
+/** A cited passage: where it is in its page's text, and its first words. */
+interface Passage {
+  match: Match;
+  start: string;
 }
 
 /**
@@ -414,6 +492,7 @@ export default function PdfReader({ src, title, jump, onFail }: { src: string; t
   const failedNow = useEffectEvent(() => onFail?.());
   const [ratio, setRatio] = useState(1.3);
   const [width, setWidth] = useState(0);
+  const pixels = usePixelRatio();
   const pagesRef = useRef<HTMLDivElement>(null);
   const texts = useRef(new Map<number, Promise<PageTextData>>());
   const place = useRef<{ page: number; into: number } | null>(null);
@@ -426,6 +505,8 @@ export default function PdfReader({ src, title, jump, onFail }: { src: string; t
   const [searching, setSearching] = useState(false);
   const [scanned, setScanned] = useState(false);
   const searchId = useRef(0);
+  // The jump whose marked passage a search has since cleared.
+  const [unmarked, setUnmarked] = useState<string | null>(null);
 
   // The rules page keys this component by the PDF, so a new rulebook gets a
   // fresh reader rather than resetting this one.
@@ -513,6 +594,7 @@ export default function PdfReader({ src, title, jump, onFail }: { src: string; t
     if (!doc || !q) return;
     const id = ++searchId.current;
     setSearching(true);
+    setUnmarked(jumpId);
     // Every page's text at once: each may be its own download.
     const pages = await Promise.all(Array.from({ length: doc.numPages }, (_, i) =>
       // A page that won't load is left out; the rest are still searched.
@@ -548,26 +630,39 @@ export default function PdfReader({ src, title, jump, onFail }: { src: string; t
   // The heights of the pages up to the one jumped to, read before the jump
   // (a page is otherwise sized like the first until it is drawn), so a
   // rulebook of mixed page sizes doesn't move the page as the scroll passes.
-  const [known, setKnown] = useState<{ id: string | null; ratios: (number | undefined)[] }>({ id: null, ratios: [] });
+  // Meanwhile the cited page's text is searched for the passage the
+  // citation points to, so the jump can say what it marked.
+  const [known, setKnown] = useState<{ id: string | null; ratios: (number | undefined)[]; passage: Passage | null }>({ id: null, ratios: [], passage: null });
   const upTo = target?.page;
+  const quote = target?.quote;
   useEffect(() => {
     if (!doc || upTo === undefined || jumpId === null) return;
     let cancelled = false;
-    void Promise.all(Array.from({ length: upTo }, (_, i) => doc.getPage(i + 1).then((page) => {
+    const heights = Promise.all(Array.from({ length: upTo }, (_, i) => doc.getPage(i + 1).then((page) => {
       const base = page.getViewport({ scale: 1 });
       return base.height / base.width;
-    }, () => undefined))).then((ratios) => {
+    }, () => undefined)));
+    const passage = quote
+      ? textOf(upTo).then(({ runs, text }): Passage | null => {
+        const match = findCited(text.text, quote, lineBreaks(runs, text.starts));
+        return match && { match, start: passageStart(text.text.slice(...match)) };
+      }, () => null)
+      : null;
+    void Promise.all([heights, passage]).then(([ratios, found]) => {
       if (cancelled) return;
       setKnown((prev) => ({
         id: jumpId,
         ratios: Array.from({ length: Math.max(prev.ratios.length, ratios.length) }, (_, i) => ratios[i] ?? prev.ratios[i]),
+        passage: found,
       }));
     });
     return () => {
       cancelled = true;
     };
-  }, [doc, upTo, jumpId]);
+  }, [doc, upTo, jumpId, quote, textOf]);
   const cited = target && known.id === jumpId ? target : null;
+  // Marked from the jump until the next jump or search.
+  const passage = cited && unmarked !== jumpId ? known.passage : null;
   // From the moment a jump is asked for until it is over, the page it goes
   // to is drawn first and alone: the pages on screen as a tab opens, and
   // those the scroll passes, would otherwise be drawn ahead of it (and
@@ -576,14 +671,17 @@ export default function PdfReader({ src, title, jump, onFail }: { src: string; t
   const onLanded = useCallback(() => setLandedId(jumpId), [jumpId]);
   const going = target && landedId !== jumpId ? target.page : null;
 
-  // Where a jump went, said politely ("Base game, page 5") as it starts.
+  // Where a jump went, said politely as it starts, with the first words of
+  // the passage it marked: "Base game, page 5. Highlighted: roll a 7…".
   const [said, say] = useAnnouncement();
   const book = target?.place;
+  const marked = passage?.start;
   // Only the cited page calls it, so there is a jump.
   const onJump = useCallback(() => {
     rememberJump(jumpId!);
-    say(book ? `${book}, page ${upTo}` : `Page ${upTo}`);
-  }, [jumpId, upTo, book, say]);
+    const where = book ? `${book}, page ${upTo}` : `Page ${upTo}`;
+    say(marked ? `${where}. Highlighted: ${marked}` : where);
+  }, [jumpId, upTo, book, marked, say]);
 
   // A citation past the end: the model got the page wrong, so say so rather
   // than guess which page it meant, again for each tap.
@@ -638,10 +736,12 @@ export default function PdfReader({ src, title, jump, onFail }: { src: string; t
             doc={doc}
             n={i + 1}
             width={width}
+            pixels={pixels}
             ratio={ratio}
             textOf={textOf}
             matches={byPage.get(i + 1) ?? NO_MATCHES}
             current={active?.page === i + 1 ? active.match : null}
+            quoted={cited?.page === i + 1 ? passage?.match ?? null : null}
             total={doc.numPages}
             known={known.ratios[i]}
             cited={cited?.page === i + 1 ? cited.key : null}

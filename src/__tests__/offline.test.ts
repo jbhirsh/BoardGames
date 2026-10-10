@@ -24,7 +24,7 @@ describe('routeFor', () => {
     expect(route('/word-checker?w=qi', 'GET', 'navigate')).toBe('page');
   });
 
-  it('takes a rulebook as a rulebook, even opened in an iframe, and its HEAD too', () => {
+  it('takes a rulebook as a rulebook, even opened as a page of its own, and its HEAD too', () => {
     expect(route('/rules/catan.pdf')).toBe('rulebook');
     expect(route('/rules/catan.seafarers.pdf', 'GET', 'navigate')).toBe('rulebook');
     expect(route('/rules/catan.pdf', 'HEAD', 'cors')).toBe('rulebook');

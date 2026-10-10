@@ -106,8 +106,7 @@ describe('accessibility', () => {
     ], { initialEntries: ['/rules/catan/cities-and-knights'] });
     const { container } = render(<RouterProvider router={router} />);
     expect(screen.getByRole('navigation', { name: 'Rulebooks' })).toBeInTheDocument();
-    // jsdom can't host the PDF iframe's document, so axe skips into frames.
-    const results = await axe(container, { ...axeOptions, iframes: false });
+    const results = await axe(container, axeOptions);
     expect(results).toHaveNoViolations();
   }, TIMEOUT_MS);
 
@@ -117,7 +116,7 @@ describe('accessibility', () => {
     ], { initialEntries: ['/rules/hogwarts-battle'] });
     const { container } = render(<RouterProvider router={router} />);
     screen.getByText('House rules').closest('details')!.open = true;
-    const results = await axe(container, { ...axeOptions, iframes: false });
+    const results = await axe(container, axeOptions);
     expect(results).toHaveNoViolations();
   }, TIMEOUT_MS);
 

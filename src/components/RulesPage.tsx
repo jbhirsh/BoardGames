@@ -9,17 +9,16 @@ import RulesChatProvider, { RulesChatToggle, RulesChatPanel } from './RulesChat'
 import WordChecker from './WordChecker';
 import NotFoundPage from './NotFoundPage';
 import BackLink from './BackLink';
-import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useScrollEdges } from '../hooks/useScrollEdges';
 import { formatSize } from '../utils/fileSize';
+import { cameFromList, FROM_LIST } from '../utils/fromList';
 
-// pdf.js is large, so it loads only where the reader is used.
+// The page draws the rulebook itself, searchable, on every screen: phones
+// can't show an embedded PDF (Android Chrome shows nothing, iOS Safari only
+// the first page), and a desktop's viewer can't be moved to a cited page
+// reliably or have a passage marked. pdf.js is large, so it loads with the
+// rules page rather than with the app.
 const PdfReader = lazy(() => import('./PdfReader'));
-
-// Phones and touch tablets don't show an embedded PDF well: Android Chrome
-// shows nothing, iOS Safari only the first page. There the page draws the
-// rulebook itself, searchable, and links to the device's own viewer too.
-const READ_IN_PAGE = '(max-width: 720px), (pointer: coarse)';
 
 /**
  * Falls back to a note if the reader fails to load or throws (its chunk is
@@ -89,8 +88,10 @@ export default function RulesPage() {
   // Passed on by the tabs and the chat's links to them, which replace rather
   // than push: a game's rules page is one step in history however many tabs
   // are read, so Back (ours, or the browser's) lands where the visitor came
-  // from.
-  const { state: arrival, search, key } = useLocation();
+  // from. A citation's state also carries the words it closes (showCited).
+  const { state, search, key } = useLocation();
+  const arrival = cameFromList(state) ? FROM_LIST : undefined;
+  const quote = (state as { quote?: unknown } | null)?.quote;
   const navigate = useNavigate();
   // The page a citation asked the reader to show (see showCited). The
   // location's key tells one tap from the next, so a second tap on the same
@@ -102,10 +103,9 @@ export default function RulesPage() {
   // land on the note that the rulebook can't be shown.
   const [readerFailed, setReaderFailed] = useState(false);
   const readerFails = useCallback(() => setReaderFailed(true), []);
-  const inPage = useMediaQuery(READ_IN_PAGE);
   const books = game ? rulebooks(game) : [];
   const book = books.find(b => b.part === part);
-  const size = usePdfSize(book?.pdf ?? '', inPage && book !== undefined);
+  const size = usePdfSize(book?.pdf ?? '', book !== undefined);
   const [edges, stripRef, strip] = useScrollEdges();
   // A deck has a dozen tabs; on a phone the chosen one can sit past the
   // edge of the strip, so bring it into view, clear of the faded edge. Once
@@ -131,19 +131,21 @@ export default function RulesPage() {
   const askedOn = (tab: string | undefined) => books.find((b) => (b.part ?? '') === tab)!;
 
   /**
-   * On a phone, a citation of one of the game's rulebooks opens it in the
-   * reader rather than as a raw PDF, which a phone downloads (Android) or
-   * shows only the first page of (iOS): its tab, in place in history as the
-   * tab strip goes, at ?page=N, where the reader scrolls to the page. The
-   * chat isn't keyed by tab, so the answer stays. The window stays put
-   * (preventScrollReset) until the reader moves it: scrolled to the top
-   * first, it would only have to come back down. A desktop keeps the PDF in
-   * a new tab, since moving a framed PDF to a page by its hash is unreliable.
-   * The chat hands over citations only (isCitation).
+   * A citation of one of the game's rulebooks opens it in the reader rather
+   * than as a raw PDF in a new tab (which a phone downloads, on Android, or
+   * shows only the first page of, on iOS): its tab, in place in history as
+   * the tab strip goes, at ?page=N, where the reader scrolls to the page and
+   * marks the passage that the answer's words (`quote`) point to. They ride
+   * in the router state, not the URL, so a shared ?page=N link opens at the
+   * page with nothing marked. The chat isn't keyed by tab, so the answer
+   * stays. The window stays put (preventScrollReset) until the reader moves
+   * it: scrolled to the top first, it would only have to come back down.
+   * The chat hands over citations only (isCitation), and leaves a click
+   * meant for a new tab to the browser.
    */
-  const showCited = (href: string) => {
+  const showCited = (href: string, quote: string) => {
     const cited = citedPage(href, game)!;
-    navigate(rulebookPath(game.slug, cited.book.part, cited.page), { replace: true, state: arrival, preventScrollReset: true });
+    navigate(rulebookPath(game.slug, cited.book.part, cited.page), { replace: true, state: { ...arrival, quote }, preventScrollReset: true });
     return true;
   };
 
@@ -228,46 +230,43 @@ export default function RulesPage() {
           linksFor={(answer, tab) => mentionedRulebooks(answer, game, askedOn(tab)).map((b) => ({ label: b.label, to: rulebookPath(game.slug, b.part), state: arrival }))}
           citeLinks={(answer, tab) => linkCitations(answer, game, askedOn(tab))}
           isCitation={(href) => citedPage(href, game) !== null}
-          onCite={inPage && !readerFailed ? showCited : undefined}
+          onCite={readerFailed ? undefined : showCited}
           starters={starterQuestions(game, book)}
         />
         {wordCheckerOpen && <WordChecker />}
-        {inPage ? (
-          <>
-            {/* Above the reader on a phone, where a long rulebook would bury
-                it, with the size so nobody starts a big download unawares. */}
-            <a href={book.pdf} download className="rules-download" aria-label="Download PDF" aria-describedby="rules-download-size">
-              Download PDF
-              {size !== null && (
-                <>
-                  <span className="rules-download-size" aria-hidden="true">·</span>
-                  <span className="rules-download-size" id="rules-download-size">{formatSize(size)}</span>
-                </>
-              )}
-            </a>
-            <ReaderBoundary key={book.pdf} onFail={readerFails}>
-              <Suspense fallback={<p className="pdf-note">Loading the rulebook…</p>}>
-                <PdfReader
-                  src={book.pdf}
-                  title={`${book.name} rules`}
-                  jump={citedAt === null ? undefined : { page: citedAt, key, place: books.length > 1 ? book.label : undefined }}
-                  onFail={readerFails}
-                />
-              </Suspense>
-            </ReaderBoundary>
-          </>
-        ) : (
-          <>
-            <div className="rules-viewer">
-              {/* A fresh frame per tab: changing a frame's src adds a step to
-                  the tab's history, so Back would page through the PDFs. */}
-              <iframe key={book.pdf} src={book.pdf} title={`${book.name} rules`} />
-            </div>
-            <a href={book.pdf} download className="rules-download">
-              Download PDF
-            </a>
-          </>
-        )}
+        {/* Above the reader, where a long rulebook would bury it: the file,
+            with its size so nobody starts a big download unawares, and the
+            browser's own viewer, for its zoom, thumbnails and printing. */}
+        <div className="rules-pdf-links">
+          <a href={book.pdf} download className="rules-download" aria-label="Download PDF" aria-describedby="rules-download-size">
+            Download PDF
+            {size !== null && (
+              <>
+                <span className="rules-download-size" aria-hidden="true">·</span>
+                <span className="rules-download-size" id="rules-download-size">{formatSize(size)}</span>
+              </>
+            )}
+          </a>
+          <a href={book.pdf} target="_blank" rel="noopener noreferrer" className="rules-download">Open PDF</a>
+        </div>
+        {/* The reader's pages draw only near the screen, so a printout of
+            this page would be empty boxes: it prints this instead. */}
+        <p className="rules-print-note">To print this rulebook, use Open PDF and print it from the browser’s PDF viewer.</p>
+        <ReaderBoundary key={book.pdf} onFail={readerFails}>
+          <Suspense fallback={<p className="pdf-note">Loading the rulebook…</p>}>
+            <PdfReader
+              src={book.pdf}
+              title={`${book.name} rules`}
+              jump={citedAt === null ? undefined : {
+                page: citedAt,
+                key,
+                place: books.length > 1 ? book.label : undefined,
+                quote: typeof quote === 'string' && quote !== '' ? quote : undefined,
+              }}
+              onFail={readerFails}
+            />
+          </Suspense>
+        </ReaderBoundary>
       </div>
     </RulesChatProvider>
   );

@@ -263,6 +263,25 @@ describe('PdfReader', () => {
     expect(pdf.renders).toBe(2);
   });
 
+  it('draws the pages again for a new pixel ratio, as when the browser is zoomed', async () => {
+    const listeners: (() => void)[] = [];
+    const queries: string[] = [];
+    vi.stubGlobal('matchMedia', (query: string) => {
+      queries.push(query);
+      return { matches: false, addEventListener: (_: string, f: () => void) => listeners.push(f), removeEventListener: () => {} };
+    });
+    vi.stubGlobal('devicePixelRatio', 1);
+    await open([['Only page']]);
+    const canvas = document.querySelector('canvas')!;
+    expect(canvas.width).toBe(300);
+    expect(queries).toContain('(resolution: 1dppx)');
+    vi.stubGlobal('devicePixelRatio', 1.5);
+    await act(async () => listeners.at(-1)!());
+    expect(canvas.width).toBe(450);
+    // And it listens for the next change from there.
+    expect(queries).toContain('(resolution: 1.5dppx)');
+  });
+
   it('searches past a page that will not load', async () => {
     pdf.failPage = 1;
     await open([['Broken page'], ['Draw a card']]);
@@ -297,14 +316,14 @@ describe('PdfReader', () => {
       vi.useRealTimers();
     });
 
-    async function openAt(pages: string[][], jump: { page: number; key: string; place?: string }) {
+    async function openAt(pages: string[][], jump: { page: number; key: string; place?: string; quote?: string }) {
       pdf.pages = pages;
       const view = render(<PdfReader src="/rules/x.pdf" title="X rules" jump={jump} />);
       await screen.findAllByRole('group');
       await act(async () => {});
       return view;
     }
-    const jumpTo = (view: { rerender: (ui: React.ReactElement) => void }, jump: { page: number; key: string }) =>
+    const jumpTo = (view: { rerender: (ui: React.ReactElement) => void }, jump: { page: number; key: string; quote?: string }) =>
       act(async () => view.rerender(<PdfReader src="/rules/x.pdf" title="X rules" jump={jump} />));
 
     it('names each page with the count, so focus on one says where it is', async () => {
@@ -613,6 +632,115 @@ describe('PdfReader', () => {
       // A search says its own piece.
       await search('two');
       expect(status).toHaveTextContent('1 of 1 · page 2');
+    });
+
+    describe('marking the passage a citation points to', () => {
+      const ROBBER = [['Setup is quick.'], ['If you roll a 7, nobody collects resources.', 'Then you must move the robber to another hex.']];
+      const QUOTE = 'On a 7 nobody collects resources, and you move the robber';
+      const PASSAGE = ['If you roll a 7, nobody collects resources.', 'Then you must move the robber to another hex.'];
+      const cites = () => [...document.querySelectorAll('mark.pdf-hit--cited')].map((m) => m.textContent);
+      const said = () => document.querySelector('[aria-live="polite"]')!;
+      /** Puts the marks `at` pixels down the screen, 20px tall; pages stay where `top` puts them. */
+      const marksAt = (at: number) => vi.mocked(Element.prototype.getBoundingClientRect).mockImplementation(function (this: Element) {
+        const y = this.tagName === 'MARK' ? at : top((this as HTMLElement).dataset.page);
+        return { top: y, bottom: y + 20, height: 20 } as DOMRect;
+      });
+
+      it('marks the passage the answer\'s words point to, like a match, and says where it starts', async () => {
+        await openAt(ROBBER, { page: 2, key: key(), quote: QUOTE });
+        // Whole sentences, so each mark is a whole item of the text layer.
+        expect(cites()).toEqual(PASSAGE);
+        expect(marks()).toEqual(cites());
+        expect(ringed()).toEqual(['2']);
+        await vi.waitFor(() => expect(said()).toHaveTextContent('Page 2. Highlighted: If you roll a 7, nobody…'));
+      });
+
+      it('marks nothing, and only rings the page, when too few of the words are there', async () => {
+        await openAt(ROBBER, { page: 2, key: key(), quote: 'Trade with the bank at four to one' });
+        expect(cites()).toEqual([]);
+        expect(ringed()).toEqual(['2']);
+        await vi.waitFor(() => expect(said()).toHaveTextContent(/^Page 2$/));
+      });
+
+      it('still jumps when the page\'s text won\'t load', async () => {
+        pdf.failPage = 2;
+        await openAt(ROBBER, { page: 2, key: key(), quote: QUOTE });
+        expect(scrolled).toMatchObject([{ page: '2' }]);
+        expect(ringed()).toEqual(['2']);
+        expect(cites()).toEqual([]);
+      });
+
+      it('keeps the mark until a search, which marks only its own matches', async () => {
+        await openAt(ROBBER, { page: 2, key: key(), quote: QUOTE });
+        expect(cites()).toHaveLength(2);
+        await search('setup');
+        expect(cites()).toEqual([]);
+        expect(marks()).toEqual(['Setup']);
+        expect(screen.getByRole('status')).toHaveTextContent('1 of 1 · page 1');
+      });
+
+      it('moves to the next jump, and goes with one that has no words', async () => {
+        const view = await openAt([...ROBBER, ['Roll a 7 and move the robber at once.']], { page: 2, key: key(), quote: QUOTE });
+        expect(cites()).toHaveLength(2);
+        await jumpTo(view, { page: 3, key: key(), quote: QUOTE });
+        expect(cites()).toEqual(['Roll a 7 and move the robber at once.']);
+        await jumpTo(view, { page: 3, key: key() });
+        expect(cites()).toEqual([]);
+      });
+
+      it('still shows the current search match when it falls inside the passage', async () => {
+        const view = await openAt(ROBBER, { page: 1, key: key() });
+        await search('robber');
+        await jumpTo(view, { page: 2, key: key(), quote: QUOTE });
+        expect(cites()).toEqual([PASSAGE[0], 'Then you must move the ', ' to another hex.']);
+        expect(marks()).toEqual([PASSAGE[0], 'Then you must move the ', 'robber', ' to another hex.']);
+        expect(currentMark()).toBe('robber');
+        expect(document.querySelector('mark.pdf-hit--current')!.parentElement).toHaveTextContent(PASSAGE[1]);
+      });
+
+      it('marks the passage around a search match that starts inside it and runs past it', async () => {
+        const view = await openAt([['x'], ['Move the robber now.', 'Robber steals.']], { page: 1, key: key() });
+        await search('now. Robber');
+        await jumpTo(view, { page: 2, key: key(), quote: 'Moving the robber now' });
+        expect(marks()).toEqual(['Move the robber ', 'now.', 'Robber']);
+        expect(cites()).toEqual(['Move the robber ']);
+      });
+
+      it('brings a passage below the fold on screen once the jump is over', async () => {
+        marksAt(2000);
+        await openAt(ROBBER, { page: 2, key: key(), quote: QUOTE });
+        expect(scrolled).toMatchObject([
+          { page: '2', options: { block: 'start' } },
+          { page: undefined, options: { block: 'center', behavior: 'smooth' } },
+        ]);
+      });
+
+      it('brings up a passage under the search bar, on a page already laid out', async () => {
+        vi.spyOn(window, 'getComputedStyle').mockReturnValue({ scrollMarginTop: '130px' } as CSSStyleDeclaration);
+        top = () => 130;
+        const view = await openAt(ROBBER, { page: 1, key: key() });
+        marksAt(100);
+        scrolled.length = 0;
+        await jumpTo(view, { page: 2, key: key(), quote: QUOTE });
+        expect(scrolled).toMatchObject([{ page: '2' }, { page: undefined, options: { block: 'center' } }]);
+      });
+
+      it('leaves a passage already on screen where it is', async () => {
+        marksAt(300);
+        await openAt(ROBBER, { page: 2, key: key(), quote: QUOTE });
+        expect(scrolled).toMatchObject([{ page: '2' }]);
+        expect(scrolled).toHaveLength(1);
+      });
+
+      it('leaves the scroll to someone who took it over', async () => {
+        top = (p) => (p === '2' ? 400 : 0);
+        marksAt(2000);
+        await openAt(ROBBER, { page: 2, key: key(), quote: QUOTE });
+        await act(async () => { window.dispatchEvent(new Event('touchstart')); });
+        await act(async () => {});
+        expect(cites()).toHaveLength(2);
+        expect(scrolled).toHaveLength(1);
+      });
     });
 
     it('tells the page when the rulebook can\'t be shown', async () => {
