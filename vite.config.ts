@@ -154,6 +154,10 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/setupTests.ts',
+    // The default 5 s is tight for the tests that render the whole app or a
+    // full list under coverage: on a busy machine they take 6 to 14 s and
+    // fail the pre-push hook while passing in CI. A hang still fails.
+    testTimeout: 15_000,
     // e2e/ holds the Playwright suite (`npm run test:e2e`), which drives a
     // real browser; its *.spec.ts files are not Vitest tests.
     exclude: [...configDefaults.exclude, 'e2e/**'],
