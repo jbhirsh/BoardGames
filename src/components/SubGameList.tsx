@@ -8,6 +8,7 @@ import { fittingSubgames, shownKind, subgameNoun } from '../utils/subgames';
 import { YouTubeIcon, AiRulesIcon, UserIcon, ClockIcon } from './Icons';
 import AwardsBadge from './AwardsBadge';
 import DifficultyMeta from './DifficultyMeta';
+import { FROM_LIST } from '../utils/fromList';
 
 interface Props {
   game: Game & { subgames: NonNullable<Game['subgames']> };
@@ -78,6 +79,7 @@ function SubGameRow({ parent, sub }: { parent: string; sub: SubGame }) {
           <Link
             className="sub-link"
             to={rulebookPath(parent, sub.slug)}
+            state={FROM_LIST}
             aria-label={`${sub.name} rules`}
             title="Rules"
             onClick={(e) => e.stopPropagation()}

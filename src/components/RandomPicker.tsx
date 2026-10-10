@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router';
 import { useFilter } from '../context/useFilter';
 import type { FilterState, Game } from '../data/types';
@@ -8,6 +9,7 @@ import { tableFiltered } from '../utils/filterGames';
 import { rulebookPath } from '../utils/rulebooks';
 import { DUR_LABELS, playersLabel } from '../data/keywords';
 import Backdrop from './Backdrop';
+import { FROM_LIST } from '../utils/fromList';
 import { useDialogFocus } from '../hooks/useDialogFocus';
 import { useScrollLock } from '../hooks/useScrollLock';
 
@@ -43,9 +45,6 @@ export default function RandomPicker() {
   const tickRef = useRef<number | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  // Set when the modal closes because we are navigating away, so the
-  // scroll-lock cleanup knows not to restore the old page's offset.
-  const navigatingRef = useRef(false);
   // Written during render so the tick always reads the current filtered list without a stale-ref window.
   const filteredGamesRef = useRef(filteredGames);
   filteredGamesRef.current = filteredGames;
@@ -114,7 +113,7 @@ export default function RandomPicker() {
 
   useEffect(() => { return stopTicking; }, [stopTicking]);
 
-  useScrollLock(open, navigatingRef);
+  useScrollLock(open);
   useDialogFocus(cardRef, open, close);
 
   const disabled = filteredGames.length === 0;
@@ -194,9 +193,12 @@ export default function RandomPicker() {
                   className="pick-primary"
                   onClick={() => {
                     const to = rulebookPath(current.slug, sub?.rules ? sub.slug : undefined);
-                    navigatingRef.current = true;
-                    close();
-                    navigate(to);
+                    // Closed at once, before leaving: the scroll lock's
+                    // cleanup puts the list back at its offset, and the
+                    // router saves that offset for Back as the navigation
+                    // starts. Still pinned, the page would read as 0.
+                    flushSync(close);
+                    navigate(to, { state: FROM_LIST });
                   }}
                 >
                   View rules

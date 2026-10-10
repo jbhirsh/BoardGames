@@ -3,6 +3,7 @@ import { GAMES } from '../data/games';
 import { collectionSpan } from '../utils/collectionStats';
 import { rulebookPath } from '../utils/rulebooks';
 import ThemeToggle from './ThemeToggle';
+import { FROM_LIST } from '../utils/fromList';
 
 // A shelf of favourite boxes. Each opens its rulebook, so the row is a way
 // in rather than decoration.
@@ -22,7 +23,7 @@ export default function Hero() {
       <ul className="hero-shelf" aria-label="Rulebooks">
         {shelf.map((g) => (
           <li key={g.slug}>
-            <Link to={rulebookPath(g.slug)} aria-label={`${g.name} rules`} title={g.name}>
+            <Link to={rulebookPath(g.slug)} state={FROM_LIST} aria-label={`${g.name} rules`} title={g.name}>
               <img src={g.img} alt="" width={120} height={120} />
             </Link>
           </li>

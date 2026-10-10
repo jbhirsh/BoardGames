@@ -80,6 +80,18 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
     dropped). The dictionary also gives meanings
   - `/sign-in` — the owner's magic-link sign-in (`SignInPage`); nothing on
     the home page links to it
+
+  Each sub-page's "Back to The Game Room" is `BackLink`, a real link to
+  `/`. The home page's links into a sub-page carry router state
+  `FROM_LIST` (`utils/fromList.ts`); with it, a plain click goes back in
+  history instead, so the URL's filters and `ScrollRestoration` return the
+  list as it was left, in one jump (`InstantRouteScroll`, just before
+  `ScrollRestoration` in `App`, turns smooth scrolling off while the router
+  moves the page, so a new page doesn't glide to its top either). The picker closes before it navigates, so the saved offset is
+  the list's, not the pinned page's 0. Rulebook tabs and the chat's Open
+  links `replace` and pass that state on (and the PDF frame is keyed per
+  tab), so a rules page is one history entry however many tabs are read. A deep link, or
+  the score page reached from a rules page, goes to `/`.
 - **`App.tsx`** — layout shell: wraps the router `Outlet` in `FilterProvider`
   and mounts Vercel `Analytics`.
 - **`data/`** — the static data layer. `games.ts` is the source of truth for
@@ -210,7 +222,9 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   `fileSize.ts`, `sevenWonders.ts`, the score pad's arithmetic: science,
   standings with the coins tie-break; `difficulty.ts`, the Light/Medium/
   Heavy words for a weight; `offline.ts`, the service worker's
-  routing and byte ranges). Keep these free of React and side effects.
+  routing and byte ranges; `fromList.ts`, the router state that marks a
+  sub-page as opened from the list). Keep these free of React and side
+  effects.
 - **`sw/sw.ts`** — the service worker, for game nights with no signal.
   `main.tsx` registers it in production builds only; the `serviceWorker()`
   plugin in `vite.config.ts` bundles it to `/sw.js` (a classic worker: the

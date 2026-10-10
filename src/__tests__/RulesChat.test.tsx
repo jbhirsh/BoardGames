@@ -3,6 +3,8 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import * as Sentry from '@sentry/react';
 import { MemoryRouter } from 'react-router';
 import RulesChatProvider, { RulesChatToggle, RulesChatPanel } from '../components/RulesChat';
+import { FROM_LIST } from '../utils/fromList';
+import { renderRouted } from './routed';
 
 vi.mock('@sentry/react', () => ({
   captureMessage: vi.fn(),
@@ -155,6 +157,27 @@ describe('RulesChat', () => {
     const link = await screen.findByRole('link', { name: 'Open 5–6 Player Extension' });
     expect(link).toHaveAttribute('href', '/rules/catan/5-6-player-extension');
     expect(linksFor).not.toHaveBeenCalledWith('Hi! Ask me anything about the rules for Catan.');
+  });
+
+  it('opens a tab an answer names in place, with the state it is given', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => streamResponse(["That's in the 5 6 Player Extension."])));
+    const router = renderRouted(
+      <RulesChatProvider>
+        <RulesChatToggle />
+        <RulesChatPanel
+          slug="catan"
+          gameName="Catan"
+          linksFor={() => [{ label: '5–6 Player Extension', to: '/rules/catan/5-6-player-extension', state: FROM_LIST }]}
+        />
+      </RulesChatProvider>,
+      ['/', { pathname: '/rules/catan', state: FROM_LIST }],
+      '/rules/catan',
+    );
+    openPanel();
+    send('How do we play with 5?');
+    fireEvent.click(await screen.findByRole('link', { name: 'Open 5–6 Player Extension' }));
+    expect(router.state.historyAction).toBe('REPLACE');
+    expect(router.state.location).toMatchObject({ pathname: '/rules/catan/5-6-player-extension', state: { fromList: true } });
   });
 
   it('opens an answer\'s page citations in a tab of their own', async () => {

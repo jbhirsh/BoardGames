@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import { MemoryRouter, Routes, Route, useParams } from 'react-router';
+import { MemoryRouter, Routes, Route, useParams, useLocation } from 'react-router';
 import { GAMES } from '../data/games';
 import RandomPicker from '../components/RandomPicker';
 import { pickRandom } from '../utils/pickRandom';
+import { cameFromList } from '../utils/fromList';
 import FilterBar from '../components/FilterBar/FilterBar';
 import { FilterProvider } from '../context/FilterContext';
 
@@ -47,6 +48,11 @@ describe('pickRandom', () => {
   });
 });
 
+/** Stands in for the rules page, showing the state it was reached with. */
+function RulesStub() {
+  return <div data-from-list={String(cameFromList(useLocation().state))}>rules page</div>;
+}
+
 function renderPicker() {
   return render(
     <MemoryRouter>
@@ -54,7 +60,7 @@ function renderPicker() {
         <FilterBar />
         <RandomPicker />
         <Routes>
-          <Route path="/rules/:slug" element={<div>rules page</div>} />
+          <Route path="/rules/:slug" element={<RulesStub />} />
           <Route path="*" element={null} />
         </Routes>
       </FilterProvider>
@@ -156,6 +162,8 @@ describe('RandomPicker', () => {
     act(() => fireEvent.click(screen.getByRole('button', { name: /View rules/ })));
 
     expect(screen.getByText('rules page')).toBeInTheDocument();
+    // Marked as leaving the list, so the rules page's Back returns to it.
+    expect(screen.getByText('rules page')).toHaveAttribute('data-from-list', 'true');
   });
 
   it('respawns a new spin when Pick again is clicked', () => {
@@ -281,8 +289,12 @@ describe('RandomPicker', () => {
     }
   });
 
-  it('does not restore the old scroll position when navigating to the rules', () => {
-    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+  it('puts the list back at its offset before leaving for the rules', () => {
+    // Where the page is when each scroll happens: the list, or the rules.
+    const scrolledOn: string[] = [];
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {
+      scrolledOn.push(screen.queryByText('rules page') ? 'rules' : 'list');
+    });
     Object.defineProperty(window, 'scrollY', { value: 900, configurable: true });
 
     try {
@@ -292,10 +304,12 @@ describe('RandomPicker', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /View rules/i }));
 
-      // ScrollRestoration positions the new route in a layout effect, which
-      // runs before this passive cleanup — restoring here would yank the
-      // rules page back to the collection's offset.
-      expect(scrollTo).not.toHaveBeenCalledWith({ top: 900, behavior: 'instant' });
+      // The router saves the list's offset for Back as the navigation
+      // starts, so it must be restored (and the body unpinned) before then,
+      // not after the rules page is up, where it would yank that page down.
+      expect(scrollTo).toHaveBeenCalledExactlyOnceWith({ top: 900, behavior: 'instant' });
+      expect(scrolledOn).toEqual(['list']);
+      expect(screen.getByText('rules page')).toBeInTheDocument();
       expect(document.body.style.position).toBe('');
     } finally {
       scrollTo.mockRestore();

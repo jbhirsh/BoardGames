@@ -6,6 +6,7 @@ import { FilterProvider } from '../context/FilterContext';
 import { quickGame, bananagramsGame, sevenWondersGame, deckGame, addonGame } from './testData';
 import type { Game } from '../data/types';
 import { GAMES } from '../data/games';
+import { renderRouted } from './routed';
 
 function renderRow(game: Game, isOpen = false, onToggle = vi.fn(), showGroupBadge = false) {
   return render(
@@ -151,6 +152,20 @@ describe('GameRow', () => {
     renderRow(bananagramsGame, true, onToggle);
     fireEvent.click(screen.getByText('Word Checker'));
     expect(onToggle).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['Rules', sevenWondersGame, '/rules/7-wonders'],
+    ['Score', sevenWondersGame, '/score/7-wonders'],
+    ['Word Checker', bananagramsGame, '/word-checker'],
+  ])('marks its %s link as leaving the list, so the page\'s Back returns to it', (name, game, pathname) => {
+    const router = renderRouted(
+      <FilterProvider>
+        <table><tbody><GameRow game={game} isOpen onToggle={vi.fn()} showGroupBadge={false} /></tbody></table>
+      </FilterProvider>,
+    );
+    fireEvent.click(screen.getByRole('link', { name }));
+    expect(router.state.location).toMatchObject({ pathname, state: { fromList: true } });
   });
 
   it('renders fallback rules link when game has no rules', () => {

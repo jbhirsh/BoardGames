@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import BackLink from './BackLink';
 import { GAMES } from '../data/games';
 import WordChecker from './WordChecker';
 
@@ -11,7 +11,7 @@ export default function WordCheckerPage() {
     <div className="rules-page">
       <title>Word Checker · The Game Room</title>
       <header className="rules-header">
-        <Link to="/" className="back-link">&larr; Back to The Game Room</Link>
+        <BackLink />
         <div className="rules-title-row">
           <img src={game.img} alt={`${game.name} box art`} className="rules-box-art" />
           <div className="rules-title-info">
