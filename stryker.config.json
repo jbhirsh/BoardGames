@@ -9,6 +9,8 @@
     "src/context/filterReducer.ts",
     "src/components/**/*.tsx",
     "src/App.tsx",
+    "src/sw/shell.ts",
+    "src/pdfjs/saved.ts",
     "api/**/*.ts",
     "!**/*.d.ts"
   ],

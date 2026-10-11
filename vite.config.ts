@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { readdirSync, readFileSync } from 'node:fs'
+import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { extname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig, type Plugin } from 'vite'
@@ -45,7 +45,8 @@ function pdfjsAssets(): Plugin {
 // public/ files saved at install, beside the build's own: the collection's
 // box art, the word checker's lists, the headings' font, the favicons and
 // the manifest (the home-screen icons are copied on install). Rulebooks
-// are saved one by one as they're opened (src/sw/sw.ts), not here.
+// are saved one by one (src/sw/sw.ts), not here: a small one when it is
+// first opened, any from the rules page's Save for offline button.
 const PRECACHE_PUBLIC: Record<string, (file: string) => boolean> = {
   '': (file) => /^(favicon-|apple-touch-icon).*\.png$|\.webmanifest$/.test(file),
   images: (file) => file.endsWith('.webp'),
@@ -136,8 +137,18 @@ function serviceWorker(): Plugin {
   }
 }
 
+// Each rulebook's size in bytes, by its path, for the rules page to tell
+// offline whether opening one would have saved it (src/pdfjs/saved.ts):
+// the HEAD that asks its size online has no answer then.
+const RULES = fileURLToPath(new URL('./public/rules/', import.meta.url))
+const RULEBOOK_SIZES = Object.fromEntries(readdirSync(RULES).filter((file) => file.endsWith('.pdf'))
+  .map((file) => [`/rules/${file}`, statSync(join(RULES, file)).size]))
+
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    __RULEBOOK_SIZES__: JSON.stringify(RULEBOOK_SIZES),
+  },
   build: {
     // Maps for Sentry's upload, without a sourceMappingURL comment pointing a
     // browser at them; the Sentry plugin deletes them after the upload (below)

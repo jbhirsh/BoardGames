@@ -84,3 +84,76 @@ export async function outOfReach(
   if (!nav.onLine) return true;
   return !(await reached());
 }
+
+/**
+ * Rulebooks below this many bytes save themselves the first time they are
+ * opened; larger ones wait for Save for offline. The service worker decides
+ * (SAVE_ON_OPEN_BELOW in utils/offline.ts, written out here likewise); the
+ * page needs it only to say so when one can't be had.
+ */
+export const SAVE_ON_OPEN_BELOW = 3_000_000;
+
+/** Each rulebook's size in bytes, by its path, written in at build time (vite.config.ts). */
+declare const __RULEBOOK_SIZES__: Readonly<Record<string, number>>;
+const SIZES = __RULEBOOK_SIZES__;
+
+/**
+ * A rulebook's size in bytes, from the build, so the rules page shows it
+ * from its first paint, online or not; null for a path the build has no
+ * file at.
+ */
+export function rulebookBytes(src: string, sizes: Readonly<Record<string, number>> = SIZES): number | null {
+  return Object.hasOwn(sizes, src) ? sizes[src] : null;
+}
+
+/**
+ * Whether opening a rulebook leaves it unsaved until Save for offline is
+ * tapped: it is too large to save itself on opening, or the browser is
+ * asked to save data (savingData in utils/offline.ts), when none does.
+ */
+export function waitsForSave(
+  src: string,
+  sizes: Readonly<Record<string, number>> = SIZES,
+  nav: object = navigator,
+): boolean {
+  return (sizes[src] ?? 0) >= SAVE_ON_OPEN_BELOW || (nav as { connection?: { saveData?: unknown } }).connection?.saveData === true;
+}
+
+// The message the service worker answers about a rulebook (SAVE_MESSAGE in
+// src/sw/shell.ts), written out here likewise.
+const SAVE_MESSAGE = 'gameroom-rulebook';
+
+/**
+ * Where a rulebook stands, as the service worker says (SaveState in
+ * src/sw/shell.ts): 'saved' or 'unsaved', or 'saving' and then how the save
+ * ended: 'saved', 'full' (no room left on the device) or 'failed'.
+ */
+export type SaveState = 'saved' | 'unsaved' | 'saving' | 'failed' | 'full';
+
+/** The service worker in charge of the page, as far as telling it goes. */
+export interface Controller {
+  postMessage(message: unknown, transfer: Transferable[]): void;
+}
+
+/**
+ * Asks the service worker in charge where a rulebook stands, and with
+ * `save` to save it, the reader's files with it. `heard` hears each answer,
+ * up to the last ('saving' is the only one that has another after it).
+ * Returns a function that stops listening sooner (a save goes on).
+ */
+export function askWorker(worker: Controller, src: string, save: boolean, heard: (state: SaveState) => void): () => void {
+  const { port1, port2 } = new MessageChannel();
+  // Closed, a port may still hand over what was already on its way.
+  let open = true;
+  const stop = () => {
+    open = false;
+    port1.close();
+  };
+  port1.onmessage = (event: MessageEvent<{ path: string; state: SaveState }>) => {
+    if (!open || event.data.path !== src) return;
+    if (event.data.state !== 'saving') stop();
+    heard(event.data.state);
+  };
+  worker.postMessage({ type: SAVE_MESSAGE, path: src, save }, [port2]);
+  return stop;
+}

@@ -195,3 +195,30 @@ export function ErrorIcon() {
     </svg>
   );
 }
+
+/** Save for offline (SaveOffline): an arrow down into a tray; a tick once saved; a ring turning while it saves. */
+export function SaveOfflineIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M8 1.75v8M4.75 6.75L8 10l3.25-3.25" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M2 10.5v2.25c0 .83.67 1.5 1.5 1.5h9c.83 0 1.5-.67 1.5-1.5V10.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function SavedIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M3 8.5l3.25 3.25L13 4.75" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function SavingIcon() {
+  return (
+    <svg className="spin" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.4" opacity=".25" />
+      <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}

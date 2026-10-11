@@ -4,7 +4,7 @@ import { MemoryRouter, Routes, Route } from 'react-router';
 import RulesPage from '../components/RulesPage';
 import { FROM_LIST } from '../utils/fromList';
 import { renderRouted } from './routed';
-import { PROBE_MS } from '../pdfjs/saved';
+import { PROBE_MS, type SaveState } from '../pdfjs/saved';
 
 // pdf.js needs a real browser; PdfReader.test.tsx covers the reader itself.
 // This one says it has failed when a test sets `reader.fails`, and throws
@@ -31,6 +31,16 @@ function renderAt(path: string) {
       </Routes>
     </MemoryRouter>,
   );
+}
+
+/**
+ * A service worker in charge of the page, as the browser gives it: a
+ * container that tells of a new one taking charge, and the one in charge,
+ * which takes messages (`postMessage`).
+ */
+function controlledBy(postMessage: (message: never, transfer: Transferable[]) => void = () => {}) {
+  const container = Object.assign(new EventTarget(), { controller: { postMessage } });
+  Object.defineProperty(navigator, 'serviceWorker', { value: container, configurable: true });
 }
 
 /** The question a fetch mock was sent: the POST, since the PDF's size is asked (HEAD) first. */
@@ -360,11 +370,13 @@ describe('RulesPage\'s reader', () => {
     vi.restoreAllMocks();
   });
 
-  it('draws the rulebook in the page, under a download link with its size', async () => {
+  it('draws the rulebook in the page, under a download link with its size from the build', async () => {
     const fetchSpy = headWith({ 'content-length': '16445120' });
     renderAt('/rules/7-wonders');
 
     const download = screen.getByRole('link', { name: 'Download PDF' });
+    // There from the first paint, whatever the HEAD later says.
+    expect(download).toHaveAccessibleDescription('4.6 MB');
     expect(download).toHaveAttribute('href', '/rules/7-wonders.pdf');
     expect(download).toHaveAttribute('download');
     const reader = await screen.findByRole('region', { name: '7 Wonders rules' });
@@ -372,23 +384,10 @@ describe('RulesPage\'s reader', () => {
     // Above the reader, where a long rulebook won't bury it.
     expect(download.compareDocumentPosition(reader) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.queryByTitle('7 Wonders rules')).not.toBeInTheDocument();
-    await vi.waitFor(() => expect(download).toHaveAccessibleDescription('16.4 MB'));
+    // The HEAD is still sent, for whether the network answers (outOfReach).
     expect(fetchSpy).toHaveBeenCalledWith('/rules/7-wonders.pdf', expect.objectContaining({ method: 'HEAD' }));
-  });
-
-  it('leaves the size out when the server does not give one', async () => {
-    const fetchSpy = headWith({ 'content-length': '5000000' }, false);
-    const { unmount } = renderAt('/rules/7-wonders');
-    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalled());
     await act(async () => {});
-    expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAccessibleDescription('');
-    unmount();
-    // Nor a size of nothing.
-    fetchSpy.mockResolvedValue({ ok: true, headers: new Headers({ 'content-length': '0' }) } as Response);
-    renderAt('/rules/7-wonders');
-    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2));
-    await act(async () => {});
-    expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAccessibleDescription('');
+    expect(download).toHaveAccessibleDescription('4.6 MB');
   });
 
   it('cancels the size request when the page goes away', async () => {
@@ -427,7 +426,7 @@ describe('RulesPage\'s reader', () => {
     const VAMPIRE = '/rules/one-night-werewolf.vampire.pdf';
     /** The service worker in charge, with these rulebooks saved. */
     const savedHere = (...saved: string[]) => {
-      Object.defineProperty(navigator, 'serviceWorker', { value: { controller: {} }, configurable: true });
+      controlledBy();
       const match = vi.fn(async (src: string) => (saved.includes(src) ? new Response('%PDF') : undefined));
       vi.stubGlobal('caches', { match });
       return match;
@@ -559,9 +558,7 @@ describe('RulesPage\'s reader', () => {
       goOnline(true);
       expect(await screen.findByRole('region', { name: /Vampire rules/ })).toHaveAttribute('data-src', VAMPIRE);
       expect(screen.queryByText(NOT_SAVED)).not.toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Download PDF' })).toBeInTheDocument();
-      // Its size asked afresh, now that it can be.
-      await vi.waitFor(() => expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAccessibleDescription('2 KB'));
+      expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAccessibleDescription('2.1 MB');
     });
 
     it('judges a failure on the network\'s return by that attempt\'s own HEAD, not the last one\'s', async () => {
@@ -583,7 +580,7 @@ describe('RulesPage\'s reader', () => {
     it('pays no heed to the saved check of a tab left before it answered', async () => {
       vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
       headWith({});
-      Object.defineProperty(navigator, 'serviceWorker', { value: { controller: {} }, configurable: true });
+      controlledBy();
       let late: (saved: boolean) => void = () => {};
       vi.stubGlobal('caches', {
         match: (src: string) => (src === '/rules/catan.pdf'
@@ -899,12 +896,221 @@ describe('RulesPage\'s reader', () => {
     renderAt('/rules/7-wonders');
     expect(await screen.findByRole('region', { name: '7 Wonders rules' })).toHaveAttribute('data-src', '/rules/7-wonders.pdf');
     expect(screen.queryByTitle('7 Wonders rules')).not.toBeInTheDocument();
-    await vi.waitFor(() => expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAccessibleDescription('2 KB'));
+    expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAccessibleDescription('4.6 MB');
     // The browser's own viewer a click away, for its zoom, thumbnails and printing.
     const open = screen.getByRole('link', { name: 'Open PDF' });
     expect(open).toHaveAttribute('href', '/rules/7-wonders.pdf');
     expect(open).toHaveAttribute('target', '_blank');
     expect(open).not.toHaveAttribute('download');
     expect(screen.getByText(/To print this rulebook, use Open PDF/)).toBeInTheDocument();
+  });
+  describe('Save for offline', () => {
+    const SEVEN = '/rules/7-wonders.pdf';
+    /**
+     * A service worker in charge of the page, answering a page's question
+     * about a rulebook with `asked(path)` and a request to save one with
+     * `saving(path)`, each a list of answers sent at once, or a function
+     * that gets the port to answer on later.
+     */
+    function worker({ asked = () => ['unsaved'], saving = () => ['saving', 'saved'] }: {
+      asked?: (path: string) => SaveState[] | ((say: (state: SaveState) => void) => void);
+      saving?: (path: string) => SaveState[] | ((say: (state: SaveState) => void) => void);
+    } = {}) {
+      const postMessage = vi.fn((message: { path: string; save: boolean }, [port]: Transferable[]) => {
+        const say = (state: SaveState) => (port as MessagePort).postMessage({ path: message.path, state });
+        const answers = (message.save ? saving : asked)(message.path);
+        if (typeof answers === 'function') answers(say);
+        else answers.forEach(say);
+      });
+      controlledBy(postMessage);
+      return postMessage;
+    }
+    /** The service worker's saved rulebooks, as the page's saved check reads them. */
+    const savedHere = (...saved: string[]) =>
+      vi.stubGlobal('caches', { match: vi.fn(async (src: string) => (saved.includes(src) ? new Response('%PDF') : undefined)) });
+    const asks = (post: ReturnType<typeof worker>) => post.mock.calls.map(([m]) => `${m.path} ${m.save ? 'save' : 'ask'}`);
+    /** The Save for offline button, once the page has asked the worker after its rulebook. */
+    const saveButton = async () => {
+      const button = await screen.findByRole('button', { name: 'Save for offline' });
+      await act(async () => {});
+      return button;
+    };
+    const links = () => screen.getByRole('link', { name: 'Open PDF' }).parentElement!;
+
+    afterEach(() => {
+      delete (navigator as { serviceWorker?: unknown }).serviceWorker;
+      delete (navigator as { connection?: unknown }).connection;
+      reader.broken = 'vampire';
+    });
+
+    it('offers nothing without a service worker in charge, which would save nothing', async () => {
+      const fetchSpy = headWith({});
+      renderAt('/rules/7-wonders');
+      await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+      await act(async () => {});
+      expect(screen.queryByRole('button', { name: /^Save/ })).not.toBeInTheDocument();
+      expect(screen.queryByText(/Sav(ed|ing)/)).not.toBeInTheDocument();
+    });
+
+    it('offers to save a large rulebook in the links row, described by its size, without waiting for the HEAD', async () => {
+      vi.spyOn(globalThis, 'fetch').mockReturnValue(new Promise(() => {}));
+      savedHere();
+      const post = worker();
+      renderAt('/rules/7-wonders');
+      const button = await saveButton();
+      expect(button).toHaveAccessibleDescription('4.6 MB');
+      expect(asks(post)).toEqual([`${SEVEN} ask`]);
+      // The third in the row above the reader, after Download PDF and Open
+      // PDF; nothing in the header.
+      expect(links()).toHaveClass('rules-pdf-links');
+      expect(links()).toContainElement(button);
+      expect(screen.getByRole('banner')).not.toContainElement(button);
+      const items = [...links().children];
+      expect(items.map((el) => el.textContent)).toEqual(['Download PDF·4.6 MB', 'Open PDF', 'Save for offline']);
+    });
+
+    it('saves it on a tap, saying it is saving and then that it is saved', async () => {
+      headWith({});
+      savedHere();
+      let finish: (state: SaveState) => void = () => {};
+      const post = worker({ saving: () => (say) => { say('saving'); finish = say; } });
+      renderAt('/rules/7-wonders');
+      fireEvent.click(await saveButton());
+      expect(screen.getByText('Saving…')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Sav/ })).not.toBeInTheDocument();
+      expect(asks(post)).toEqual([`${SEVEN} ask`, `${SEVEN} save`]);
+      await act(async () => finish('saved'));
+      expect(await screen.findByText('Saved on this device')).toBeInTheDocument();
+      expect(screen.getByText('Saved on this device.')).toHaveAttribute('aria-live', 'polite');
+    });
+
+    it('says when a save fails, and tries again on another tap', async () => {
+      headWith({});
+      savedHere();
+      const post = worker({ saving: () => ['saving', 'failed'] });
+      renderAt('/rules/7-wonders');
+      fireEvent.click(await saveButton());
+      const retry = await screen.findByRole('button', { name: 'Couldn’t save. Try again' });
+      fireEvent.click(retry);
+      expect(asks(post)).toEqual([`${SEVEN} ask`, `${SEVEN} save`, `${SEVEN} save`]);
+    });
+
+    it('says when the device has no room for it, with nothing to try again', async () => {
+      headWith({});
+      savedHere();
+      worker({ saving: () => ['saving', 'full'] });
+      renderAt('/rules/7-wonders');
+      fireEvent.click(await saveButton());
+      expect(await screen.findByText('Not enough space on this device')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Try again/ })).not.toBeInTheDocument();
+    });
+
+    it('says Saving… of a small rulebook from the first, then Saved, having the worker save it', async () => {
+      headWith({});
+      savedHere();
+      let finish: (state: SaveState) => void = () => {};
+      const post = worker({ saving: () => (say) => { say('saving'); finish = say; } });
+      renderAt('/rules/azul');
+      await vi.waitFor(() => expect(screen.getByText('Saving…')).toBeVisible());
+      expect(screen.queryByRole('button', { name: 'Save for offline' })).not.toBeInTheDocument();
+      expect(asks(post)).toEqual(['/rules/azul.pdf save']);
+      await act(async () => finish('saved'));
+      expect(await screen.findByText('Saved on this device')).toBeInTheDocument();
+    });
+
+    it('says Saved of a rulebook already saved, without asking the service worker', async () => {
+      headWith({});
+      savedHere('/rules/azul.pdf');
+      const post = worker();
+      renderAt('/rules/azul');
+      expect(await screen.findByText('Saved on this device')).toBeInTheDocument();
+      await act(async () => {});
+      expect(post).not.toHaveBeenCalled();
+      // Saved already: nothing announced.
+      expect(screen.queryByText('Saved on this device.')).not.toBeInTheDocument();
+    });
+
+    it('acts on the tab on screen, an add-on\'s rulebook included, announcing only a save that ends', async () => {
+      headWith({});
+      savedHere();
+      const post = worker({ asked: (path) => [path === '/rules/catan.pdf' ? 'saved' : 'unsaved'] });
+      renderAt('/rules/catan');
+      expect(await screen.findByText('Saved on this device')).toBeInTheDocument();
+      fireEvent.click(within(screen.getByRole('navigation', { name: 'Rulebooks' })).getByRole('link', { name: /Cities & Knights/ }));
+      fireEvent.click(await saveButton());
+      expect(asks(post)).toEqual(['/rules/catan.pdf ask', '/rules/catan.cities-and-knights.pdf ask', '/rules/catan.cities-and-knights.pdf save']);
+      expect(await screen.findByText('Saved on this device')).toBeInTheDocument();
+      expect(screen.getByText('Saved on this device.')).toBeInTheDocument();
+      // Back on the base game, what was said of it stands, and isn't news.
+      fireEvent.click(within(screen.getByRole('navigation', { name: 'Rulebooks' })).getByRole('link', { name: 'Base game' }));
+      expect(await screen.findByText('Saved on this device')).toBeInTheDocument();
+      expect(screen.queryByText('Saved on this device.')).not.toBeInTheDocument();
+    });
+
+    it('keeps Saved offline, and offers nothing for a rulebook offline and unsaved', async () => {
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+      savedHere('/rules/azul.pdf');
+      const post = worker();
+      const { unmount } = renderAt('/rules/azul');
+      expect(await screen.findByText('Saved on this device')).toBeInTheDocument();
+      unmount();
+      renderAt('/rules/catan');
+      await screen.findByRole('region', { name: 'Catan rules' });
+      await act(async () => {});
+      expect(screen.queryByRole('button', { name: /^Save/ })).not.toBeInTheDocument();
+      expect(post).not.toHaveBeenCalled();
+    });
+
+    it('offers nothing for a rulebook out of reach, whose notice says to tap it next time there is signal', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      reader.broken = '7-wonders';
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+      savedHere();
+      worker();
+      renderAt('/rules/7-wonders');
+      expect(await screen.findByRole('status')).toHaveTextContent('Not saved on this device yet. Tap Save for offline next time you have signal.');
+      expect(screen.queryByRole('button', { name: /^Save/ })).not.toBeInTheDocument();
+    });
+
+    it('says the same of a small rulebook while the browser saves data, when none saves itself', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      Object.defineProperty(navigator, 'connection', { value: { saveData: true }, configurable: true });
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+      renderAt('/rules/one-night-werewolf/vampire');
+      expect(await screen.findByRole('status')).toHaveTextContent('Not saved on this device yet. Tap Save for offline next time you have signal.');
+    });
+
+    it('asks again when the network comes back', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+      savedHere();
+      const post = worker({ saving: () => ['saving', 'saved'] });
+      renderAt('/rules/one-night-werewolf/vampire');
+      expect(await screen.findByText(/Not saved on this device yet/)).toBeInTheDocument();
+      expect(post).not.toHaveBeenCalled();
+
+      reader.broken = null;
+      fetchSpy.mockReturnValue(new Promise(() => {}));
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
+      act(() => { window.dispatchEvent(new Event('online')); });
+      await screen.findByRole('region', { name: /Vampire rules/ });
+      expect(await screen.findByText('Saved on this device')).toBeInTheDocument();
+      expect(asks(post)).toEqual(['/rules/one-night-werewolf.vampire.pdf save']);
+    });
+
+    it('hides the item when the network the browser claims finds no rulebook', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      reader.broken = '7-wonders';
+      vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+      savedHere();
+      worker();
+      renderAt('/rules/7-wonders');
+      expect(await screen.findByText(/Tap Save for offline next time/)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^Save/ })).not.toBeInTheDocument();
+    });
   });
 });

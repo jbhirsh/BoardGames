@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { activate, ASSETS, healReader, install, pruneShells, readerSaved, RULEBOOK_VERSION, RULEBOOKS, saveReader, type Build } from '../sw/shell';
+import { describe, it, expect, vi } from 'vitest';
+import { activate, ASSETS, healReader, install, pruneShells, readerSaved, RULEBOOK_VERSION, RULEBOOKS, SAVE_MESSAGE, saveReader, saveRulebook, saver, type Build, type SaveReply } from '../sw/shell';
 
 const ORIGIN = 'https://game-room.example';
 const pathOf = (request: RequestInfo | URL) => new URL(typeof request === 'object' && 'url' in request ? request.url : String(request), ORIGIN).pathname;
@@ -203,5 +203,203 @@ describe('an update', () => {
     await activate(B, storage(fake));
     expect(fake.paths(RULEBOOKS)).toEqual([]);
     expect(await fake.keys()).not.toContain(A.shell);
+  });
+});
+
+describe('saveRulebook', () => {
+  /** A network serving A's reader and `files`, counting each fetch of a rulebook. */
+  function serving(fake: FakeCaches, files: Record<string, Response | (() => Response)>) {
+    online(fake, A);
+    const fetched: string[] = [];
+    const fetcher = async (path: string) => {
+      fetched.push(path);
+      const file = files[path];
+      if (!file) throw new TypeError('Failed to fetch');
+      return typeof file === 'function' ? file() : file.clone();
+    };
+    return { fetched, fetcher };
+  }
+
+  it('saves the whole file, marked with the build\'s hash of it, then the reader', async () => {
+    const fake = new FakeCaches();
+    const { fetcher } = serving(fake, { '/rules/catan.pdf': new Response('%PDF-catan', { headers: { 'Content-Type': 'application/pdf' } }) });
+    await saveRulebook('/rules/catan.pdf', A, storage(fake), fetcher);
+    const copy = (await (await fake.open(RULEBOOKS)).match('/rules/catan.pdf'))!;
+    expect(await copy.text()).toBe('%PDF-catan');
+    expect(copy.status).toBe(200);
+    expect(copy.headers.get(RULEBOOK_VERSION)).toBe('catan1');
+    expect(copy.headers.get('Content-Type')).toBe('application/pdf');
+    expect(await readerSaved(A, storage(fake))).toBe(true);
+  });
+
+  it('fetches a rulebook already saved no more, only completes its reader', async () => {
+    const fake = new FakeCaches();
+    const { fetched, fetcher } = serving(fake, {});
+    await fake.saveRulebook(A, '/rules/azul.pdf');
+    await saveRulebook('/rules/azul.pdf', A, storage(fake), fetcher);
+    expect(fetched).toEqual([]);
+    expect(await readerSaved(A, storage(fake))).toBe(true);
+  });
+
+  it('fails, saving nothing, for an answer that isn\'t the whole file', async () => {
+    const fake = new FakeCaches();
+    const { fetcher } = serving(fake, {
+      '/rules/catan.pdf': new Response('gone', { status: 404 }),
+      '/rules/azul.pdf': new Response('%PDF', { status: 206 }),
+    });
+    await expect(saveRulebook('/rules/catan.pdf', A, storage(fake), fetcher)).rejects.toThrow('/rules/catan.pdf: 404');
+    await expect(saveRulebook('/rules/azul.pdf', A, storage(fake), fetcher)).rejects.toThrow('/rules/azul.pdf: 206');
+    expect(fake.paths(RULEBOOKS)).toEqual([]);
+    expect(await readerSaved(A, storage(fake))).toBe(false);
+  });
+
+  it('fails when the reader can\'t be had', async () => {
+    const fake = new FakeCaches();
+    const { fetcher } = serving(fake, { '/rules/catan.pdf': new Response('%PDF') });
+    offline(fake);
+    await expect(saveRulebook('/rules/catan.pdf', A, storage(fake), fetcher)).rejects.toThrow();
+  });
+
+  it('marks a rulebook the build has no hash for with an empty one, which the next activation drops', async () => {
+    const fake = new FakeCaches();
+    const { fetcher } = serving(fake, { '/rules/new.pdf': new Response('%PDF') });
+    await saveRulebook('/rules/new.pdf', A, storage(fake), fetcher);
+    expect((await (await fake.open(RULEBOOKS)).match('/rules/new.pdf'))!.headers.get(RULEBOOK_VERSION)).toBe('');
+    await activate(A, storage(fake));
+    expect(fake.paths(RULEBOOKS)).toEqual([]);
+  });
+});
+
+describe('saver', () => {
+  /** A saver over a network whose rulebook fetches wait until `release`d. */
+  function setUp(answer: () => Response = () => new Response('%PDF')) {
+    const fake = new FakeCaches();
+    online(fake, A);
+    const fetched: string[] = [];
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const fetcher = async (path: string) => {
+      fetched.push(path);
+      await gate;
+      return answer();
+    };
+    const replies: SaveReply[] = [];
+    const reply = (r: SaveReply) => { replies.push(r); };
+    return { fake, fetched, release, replies, reply, saving: saver(A, storage(fake), fetcher) };
+  }
+  const ask = (path: string, save: boolean) => ({ type: SAVE_MESSAGE, path, save });
+  const states = (replies: SaveReply[]) => replies.map((r) => `${r.path} ${r.state}`);
+
+  it('fetches a rulebook once however often it is asked to save it, then saves again when asked after', async () => {
+    const { fetched, release, saving, fake } = setUp();
+    const first = saving.save('/rules/catan.pdf');
+    const second = saving.save('/rules/catan.pdf');
+    expect(second).toBe(first);
+    release();
+    expect(await first).toBe('saved');
+    expect(fetched).toEqual(['/rules/catan.pdf']);
+    await (await fake.open(RULEBOOKS)).delete('/rules/catan.pdf');
+    expect(await saving.save('/rules/catan.pdf')).toBe('saved');
+    expect(fetched).toEqual(['/rules/catan.pdf', '/rules/catan.pdf']);
+  });
+
+  it('saves the reader\'s files once for rulebooks saved at once, and again for a save after', async () => {
+    const { fake, release, saving } = setUp();
+    const shell = await fake.open(A.shell);
+    const addAll = vi.spyOn(shell, 'addAll');
+    const both = Promise.all([saving.save('/rules/catan.pdf'), saving.save('/rules/azul.pdf')]);
+    release();
+    expect(await both).toEqual(['saved', 'saved']);
+    expect(addAll.mock.calls).toEqual([[A.reader]]);
+    expect(fake.paths(RULEBOOKS)).toEqual(['/rules/azul.pdf', '/rules/catan.pdf']);
+    // Lost since (cleared storage), a file is fetched again by the next save.
+    await shell.delete(A.reader[0]);
+    await (await fake.open(RULEBOOKS)).delete('/rules/azul.pdf');
+    expect(await saving.save('/rules/azul.pdf')).toBe('saved');
+    expect(addAll.mock.calls).toEqual([[A.reader], [[A.reader[0]]]]);
+  });
+
+  it('fails each save sharing a reader that can\'t be had', async () => {
+    const { fake, release, saving } = setUp();
+    vi.spyOn(await fake.open(A.shell), 'addAll').mockRejectedValue(new TypeError('Failed to fetch'));
+    const both = Promise.all([saving.save('/rules/catan.pdf'), saving.save('/rules/azul.pdf')]);
+    release();
+    expect(await both).toEqual(['failed', 'failed']);
+  });
+
+  it('says the device is full when the browser has no room for the rulebook, or for the reader', async () => {
+    const quota = () => new DOMException('The quota has been exceeded.', 'QuotaExceededError');
+    const { fake, release, replies, reply, saving } = setUp();
+    release();
+    const rulebooks = await fake.open(RULEBOOKS);
+    const put = vi.spyOn(rulebooks, 'put').mockRejectedValueOnce(quota());
+    await saving.answer(ask('/rules/catan.pdf', true), reply);
+    expect(states(replies)).toEqual(['/rules/catan.pdf saving', '/rules/catan.pdf full']);
+    expect(fake.paths(RULEBOOKS)).toEqual([]);
+    put.mockRestore();
+    vi.spyOn(await fake.open(A.shell), 'addAll').mockRejectedValueOnce(quota());
+    expect(await saving.save('/rules/azul.pdf')).toBe('full');
+  });
+
+  it('says a rulebook not saved is unsaved, and saves nothing unasked', async () => {
+    const { fetched, replies, reply, saving } = setUp();
+    await saving.answer(ask('/rules/catan.pdf', false), reply);
+    expect(states(replies)).toEqual(['/rules/catan.pdf unsaved']);
+    expect(fetched).toEqual([]);
+  });
+
+  it('says a saved rulebook is saved', async () => {
+    const { fake, fetched, replies, reply, saving } = setUp();
+    await fake.saveRulebook(A, '/rules/azul.pdf');
+    await saving.answer(ask('/rules/azul.pdf', true), reply);
+    expect(states(replies)).toEqual(['/rules/azul.pdf saved']);
+    expect(fetched).toEqual([]);
+  });
+
+  it('saves the rulebook when asked, the reader with it, saying it is saving and then saved', async () => {
+    const { fake, release, replies, reply, saving } = setUp();
+    const answered = saving.answer(ask('/rules/catan.pdf', true), reply);
+    await vi.waitFor(() => expect(states(replies)).toEqual(['/rules/catan.pdf saving']));
+    release();
+    await answered;
+    expect(states(replies)).toEqual(['/rules/catan.pdf saving', '/rules/catan.pdf saved']);
+    expect(fake.paths(RULEBOOKS)).toEqual(['/rules/catan.pdf']);
+    expect(await readerSaved(A, storage(fake))).toBe(true);
+  });
+
+  it('says a save that fails has failed, and keeps nothing of it', async () => {
+    const { fake, release, replies, reply, saving } = setUp(() => new Response('', { status: 500 }));
+    release();
+    await saving.answer(ask('/rules/catan.pdf', true), reply);
+    expect(states(replies)).toEqual(['/rules/catan.pdf saving', '/rules/catan.pdf failed']);
+    expect(fake.paths(RULEBOOKS)).toEqual([]);
+  });
+
+  it('tells a page that only asks of a save under way, one begun on opening the rulebook, and how it ends', async () => {
+    const { fetched, release, replies, reply, saving } = setUp();
+    const opened = saving.save('/rules/azul.pdf');
+    const answered = saving.answer(ask('/rules/azul.pdf', false), reply);
+    const tapped = saving.answer(ask('/rules/azul.pdf', true), reply);
+    release();
+    await Promise.all([opened, answered, tapped]);
+    expect(states(replies)).toEqual(['/rules/azul.pdf saving', '/rules/azul.pdf saving', '/rules/azul.pdf saved', '/rules/azul.pdf saved']);
+    expect(fetched).toEqual(['/rules/azul.pdf']);
+  });
+
+  it('answers nothing but its own message, for one of the build\'s rulebooks', async () => {
+    const { fetched, release, replies, reply, saving } = setUp();
+    release();
+    for (const message of [
+      null, 'save', 42,
+      { type: 'other', path: '/rules/catan.pdf', save: true },
+      { type: SAVE_MESSAGE, path: '/rules/elsewhere.pdf', save: true },
+      { type: SAVE_MESSAGE, path: '/api/votes', save: true },
+      { type: SAVE_MESSAGE, path: 'toString', save: true },
+      { type: SAVE_MESSAGE, path: 7, save: true },
+      { type: SAVE_MESSAGE, path: '/rules/catan.pdf', save: 'yes' },
+      { type: SAVE_MESSAGE, path: '/rules/catan.pdf' },
+    ]) await saving.answer(message, reply);
+    expect(replies).toEqual([]);
+    expect(fetched).toEqual([]);
   });
 });

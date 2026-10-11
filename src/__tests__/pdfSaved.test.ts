@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { head, outOfReach, PROBE_MS, savedCopy, type Online } from '../pdfjs/saved';
+import { askWorker, head, outOfReach, PROBE_MS, rulebookBytes, SAVE_ON_OPEN_BELOW, savedCopy, waitsForSave, type Online, type SaveState } from '../pdfjs/saved';
+import { SAVE_ON_OPEN_BELOW as WORKER_SAVES_BELOW, savesOnOpen } from '../utils/offline';
+import { SAVE_MESSAGE } from '../sw/shell';
 
 const nav = (onLine: boolean, controller: unknown = {}): Online => ({ onLine, serviceWorker: { controller } });
 /** A service worker's cache store holding `saved`, in its rulebooks cache. */
@@ -130,5 +132,99 @@ describe('outOfReach', () => {
   it('counts any answer from the network, by default, as within reach', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 503 }));
     expect(await outOfReach('/a.pdf')).toBe(false);
+  });
+});
+
+describe('waitsForSave', () => {
+  const sizes = { '/small.pdf': SAVE_ON_OPEN_BELOW - 1, '/large.pdf': SAVE_ON_OPEN_BELOW };
+
+  it('holds the service worker\'s limit, so the page says what opening a rulebook did', () => {
+    expect(SAVE_ON_OPEN_BELOW).toBe(WORKER_SAVES_BELOW);
+    const opened = (bytes: number) => savesOnOpen(new Headers(), { status: 200, headers: new Headers({ 'Content-Length': String(bytes) }) }, false);
+    expect(opened(sizes['/small.pdf'])).toBe(true);
+    expect(opened(sizes['/large.pdf'])).toBe(false);
+  });
+
+  it('is true of a rulebook too large to save itself on opening, and only that', () => {
+    expect(waitsForSave('/large.pdf', sizes, {})).toBe(true);
+    expect(waitsForSave('/small.pdf', sizes, {})).toBe(false);
+    expect(waitsForSave('/unknown.pdf', sizes, {})).toBe(false);
+  });
+
+  it('is true of any while the browser saves data, when none saves itself', () => {
+    expect(waitsForSave('/small.pdf', sizes, { connection: { saveData: true } })).toBe(true);
+    expect(waitsForSave('/small.pdf', sizes, { connection: { saveData: false } })).toBe(false);
+  });
+
+  it('knows each rulebook\'s size from the build, and asks the browser', () => {
+    // Pandemic's 16 MB, Azul's 1.5 MB (public/rules).
+    expect(waitsForSave('/rules/pandemic.pdf')).toBe(true);
+    expect(waitsForSave('/rules/azul.pdf')).toBe(false);
+  });
+});
+
+describe('rulebookBytes', () => {
+  it('gives a rulebook\'s size from the build', () => {
+    // 7 Wonders' 4.6 MB (public/rules).
+    expect(rulebookBytes('/rules/7-wonders.pdf')).toBe(4_616_897);
+  });
+
+  it('gives none for a path the build has no file at', () => {
+    const sizes = { '/rules/a.pdf': 10 };
+    expect(rulebookBytes('/rules/a.pdf', sizes)).toBe(10);
+    expect(rulebookBytes('/rules/b.pdf', sizes)).toBeNull();
+    expect(rulebookBytes('toString', sizes)).toBeNull();
+  });
+});
+
+describe('askWorker', () => {
+  /** A service worker in charge that answers each message with `states` on its port. */
+  const worker = (...states: SaveState[]) => ({
+    postMessage: vi.fn((message: { path: string }, [port]: Transferable[]) => {
+      for (const state of states) (port as MessagePort).postMessage({ path: message.path, state });
+    }),
+  });
+
+  it('asks after a rulebook in the service worker\'s own message, sending the port it answers on', () => {
+    const w = worker();
+    askWorker(w, '/rules/catan.pdf', true, () => {});
+    expect(w.postMessage).toHaveBeenCalledWith({ type: SAVE_MESSAGE, path: '/rules/catan.pdf', save: true }, [expect.any(MessagePort)]);
+  });
+
+  it('hears each answer up to the last', async () => {
+    const heard = vi.fn();
+    askWorker(worker('saving', 'saved'), '/rules/catan.pdf', true, heard);
+    await vi.waitFor(() => expect(heard.mock.calls).toEqual([['saving'], ['saved']]));
+  });
+
+  it('stops listening after an answer that ends it', async () => {
+    const heard = vi.fn();
+    askWorker(worker('unsaved', 'saving'), '/rules/catan.pdf', false, heard);
+    await vi.waitFor(() => expect(heard).toHaveBeenCalledWith('unsaved'));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(heard.mock.calls).toEqual([['unsaved']]);
+  });
+
+  it('pays no heed to an answer about another rulebook', async () => {
+    const heard = vi.fn();
+    const w = { postMessage: (_m: unknown, [port]: Transferable[]) => {
+      (port as MessagePort).postMessage({ path: '/rules/azul.pdf', state: 'saved' });
+      (port as MessagePort).postMessage({ path: '/rules/catan.pdf', state: 'failed' });
+    } };
+    askWorker(w, '/rules/catan.pdf', true, heard);
+    await vi.waitFor(() => expect(heard).toHaveBeenCalled());
+    expect(heard.mock.calls).toEqual([['failed']]);
+  });
+
+  it('hears nothing once told to stop', async () => {
+    const heard = vi.fn();
+    let send: (state: SaveState) => void = () => {};
+    const stop = askWorker({ postMessage: (_m: unknown, [port]: Transferable[]) => {
+      send = (state) => (port as MessagePort).postMessage({ path: '/rules/catan.pdf', state });
+    } }, '/rules/catan.pdf', false, heard);
+    stop();
+    send('saved');
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(heard).not.toHaveBeenCalled();
   });
 });

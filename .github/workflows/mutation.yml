@@ -71,7 +71,8 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
         run: |
           CHANGED=$(git diff --name-only --diff-filter=d "origin/${BASE_REF}"...HEAD -- \
-              src/utils src/context/filterReducer.ts src/components src/App.tsx api \
+              src/utils src/context/filterReducer.ts src/components src/App.tsx \
+              src/sw/shell.ts src/pdfjs/saved.ts api \
             | grep -E '\.(ts|tsx)$' \
             | grep -v '\.d\.ts$' \
             || true)

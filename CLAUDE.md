@@ -76,21 +76,54 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
     under its text layer, drawn at the column's width (912px at most) and
     the screen's pixel ratio (followed, so browser zoom redraws it sharp),
     only near the screen, with a search that marks matches in place. Above
-    it, "Download PDF" (and the file's size) and "Open PDF", the browser's
-    own viewer in a new tab for its zoom, thumbnails and printing; a printed
+    it, one row: "Download PDF" and the file's size (`rulebookBytes`, from
+    each rulebook's size, which `vite.config.ts` writes in as
+    `__RULEBOOK_SIZES__`, so it is there from the first paint), "Open PDF",
+    the browser's own viewer in a new tab for its zoom, thumbnails and
+    printing, and the rulebook's Save for offline item (below); a printed
     rules page shows a note saying so in place of the reader. A rulebook
     that fails to load is checked (`outOfReach`, `src/pdfjs/saved.ts`, the
     same saved check the warming uses, without loading pdf.js): not saved
-    by the service worker, and offline or the PDF's HEAD (the one that
-    asked its size, given up after 5 s) finding no network, it says "Not
+    by the service worker, and offline or the PDF's HEAD (sent as each
+    reader opens, given up after 5 s) finding no network, it says "Not
     saved on this device yet. Open it once with signal." in an info
-    `Notice` and the two links, dead then, go; otherwise it says to
-    download the PDF instead. Either way the reader's search goes too. The
-    failure is the open tab's alone: another tab, or the same one opened
-    again, gets a fresh reader, and when the browser comes back online a
-    failed one is remounted (on a new pdf.js worker if the shared one
-    failed to start, its file not saved yet), so a rulebook that failed
-    offline loads by itself. pdf.js's
+    `Notice` (for a rulebook of 3 MB or more, or while the browser saves
+    data, when opening one saves nothing: "Tap Save for offline next time
+    you have signal.", `waitsForSave`, from the build's sizes) and the
+    row, dead then, goes; otherwise it says to download the PDF instead.
+    Either way the reader's search goes too. The failure is the open tab's
+    alone: another tab, or the same one opened again, gets a fresh reader,
+    and when the browser comes back online a failed one is remounted (on a
+    new pdf.js worker if the shared one failed to start, its file not saved
+    yet), so a rulebook that failed offline loads by itself. The Save for
+    offline item (`SaveOffline`, state from `hooks/useOfflineSave`), the
+    row's third, under the tab strip so it is plainly the tab's, is styled
+    as the links: a "Save for offline" button described by the Download
+    link's size, "Saving…" with a spinner, then plain status text, "Saved
+    on this device" with a green tick (`--ok-fg`) in `--text2`, or "Not
+    enough space on this device" (a quota error, nothing to retry), or a
+    "Couldn't save. Try again" button. On a phone (600px and narrower) it
+    takes a line of its own from the first paint, as the three don't fit
+    one. It shows from the first paint whenever a service worker is in
+    charge and the browser is online (or the rulebook is saved), starting
+    from what the build's size predicts (Save for offline for a large one,
+    Saving… for a small one, which saves itself), held unseen until the
+    page's saved check (`savedCopy`) answers so a saved one never says
+    Save first, then put right by it or the service worker's answer
+    (`askWorker`, a message with a `MessagePort` it answers on: the page
+    asks it to save a small one, joining the save opening it began, and
+    only asks after a large one). A worker that doesn't answer within 1.5 s
+    (an older one) leaves no item. While saving, the page asks again every
+    10 s and as it comes back into view, since a worker stopped mid-save
+    (iOS suspends them) never says how it ended. It follows
+    `controllerchange`, so a first visit's worker that takes charge with
+    `clients.claim()` brings it in (its place held meanwhile in the
+    production build). The first save by hand calls
+    `navigator.storage.persist()` (ignoring the answer), so Safari is less
+    likely to clear the saved rulebooks. The live region says how a save
+    ended only as it ends, not for a tab whose rulebook was saved already.
+    No item without a service worker, nor offline for a rulebook not saved
+    (the notice speaks for it). pdf.js's
     modern build is used with the few newer JavaScript methods it calls
     polyfilled (`src/pdfjs/polyfills.ts`, also loaded first in its worker,
     `src/pdfjs/worker.ts`); a Vite plugin copies its WebAssembly image
@@ -376,13 +409,26 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   touched. A saved file the network can't give is looked for in every
   cache, so a page reloaded online after a deploy (the new build's code
   under the old worker) still opens its pages offline from the new build's
-  waiting shell. A rulebook is saved whole the first time it's opened, never
-  by a warm (a request carrying `X-Warm`; `savesRulebook()` in
-  `utils/offline.ts` decides) (the
-  reader asks for byte ranges, which the Cache API can't store, so ranges
-  are cut from the saved copy, held in memory while it's read), and dropped
-  by the first worker whose hash for it differs. `public/manifest.webmanifest`
-  and its 192/512 icons make the site installable. It has its own
+  waiting shell. A rulebook is saved whole (the reader asks for byte
+  ranges, which the Cache API can't store, so ranges are cut from the
+  saved copy, held in memory while it's read), with the reader's files
+  (`saveRulebook` and the `saver` in `sw/shell.ts`, one save per rulebook
+  however many ask): on its first open only when its response's
+  Content-Length, or a range's Content-Range total, puts it under 3 MB
+  (`SAVE_ON_OPEN_BELOW`, decimal megabytes as the page shows sizes; 31 of
+  the 58 rulebooks are under 2 MB, 38 under 3 MB) and the browser isn't
+  saving data (`navigator.connection.saveData`, which only Chromium gives
+  a worker; elsewhere counted off), never by a warm (a request carrying
+  `X-Warm`); `savesOnOpen()` in `utils/offline.ts` decides. Any is saved
+  when the rules page asks: its `message` handler answers a `{ type:
+  'gameroom-rulebook', path, save }` message, for one of the build's
+  rulebooks only, on the port sent with it ('saved' or 'unsaved', or
+  'saving' then 'saved', 'full' for a quota error, or 'failed'), and keeps
+  the worker alive until the save ends. Rulebooks saved at once share one
+  saving of the reader's files. Bulk saving and precaching the rules text
+  are left out. A saved rulebook is dropped by the first worker whose hash
+  for it differs. `public/manifest.webmanifest` and its 192/512 icons make
+  the site installable. It has its own
   `tsconfig.sw.json` (WebWorker library, not the DOM).
 - **`instrument.ts`** — Sentry browser SDK init (`@sentry/react`): browser
   tracing at a 0.1 sample rate (the API functions trace at 0.1 too). Session

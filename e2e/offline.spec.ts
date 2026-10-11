@@ -28,9 +28,24 @@ async function goOnline(context: BrowserContext) {
   await context.setOffline(false);
 }
 
+/** The rules page's status for a rulebook saved on this device (not the live region's "…device."). */
+const savedStatus = (page: Page) => page.getByText('Saved on this device', { exact: true });
+
+/** Whether the service worker has a rulebook saved. */
+const inCache = (page: Page, pdf: string) => page.evaluate(async (path) => (await caches.match(path)) !== undefined, pdf);
+
 /** Waits until a rulebook opened while online is saved for offline. */
 async function saved(page: Page, pdf: string) {
-  await expect.poll(() => page.evaluate(async (path) => (await caches.match(path)) !== undefined, pdf), { timeout: 15_000 }).toBe(true);
+  await expect.poll(() => inCache(page, pdf), { timeout: 15_000 }).toBe(true);
+}
+
+/**
+ * Saves the rulebook on screen with its Save for offline button, as a
+ * large one (3 MB or more) needs: opening it saves only a small one.
+ */
+async function saveForOffline(page: Page) {
+  await page.getByRole('button', { name: 'Save for offline' }).click();
+  await expect(savedStatus(page)).toBeVisible({ timeout: 15_000 });
 }
 
 /**
@@ -54,17 +69,19 @@ async function drawing(group: Locator): Promise<string> {
 }
 
 /**
- * Opens a rulebook while online after a first visit (at p. 1), then scrolls
- * to page `n` with no network, then online again: the page's drawing both
- * ways. A page whose images need a decoder the reader never fetched online
- * would be missing them offline.
+ * Opens a rulebook while online after a first visit (at p. 1), saving it
+ * with Save for offline if `tap` (a large one), then scrolls to page `n`
+ * with no network, then online again: the page's drawing both ways. A page
+ * whose images need a decoder the reader never fetched online would be
+ * missing them offline.
  */
-async function offlineAndOnline(page: Page, context: BrowserContext, slug: string, name: string, n: number) {
+async function offlineAndOnline(page: Page, context: BrowserContext, slug: string, name: string, n: number, tap = false) {
   await page.goto('/');
   await controlled(page);
   await page.goto(`/rules/${slug}`);
   const reader = page.getByRole('region', { name: `${name} rules` });
   await expect(reader.getByRole('button', { name: 'Search' })).toBeEnabled();
+  if (tap) await saveForOffline(page);
   await saved(page, `/rules/${slug}.pdf`);
   await readerSaved(page);
 
@@ -114,9 +131,10 @@ test('after a first visit, the installed site lists the collection, checks words
   await expect(page.getByText('15 VP', { exact: true })).toBeVisible();
 });
 
-test('a rulebook opened online draws offline, its JPEG 2000 pages included', async ({ page, context }) => {
-  // Catan's p. 5 is drawn over a JPEG 2000 image.
-  const { offline, online } = await offlineAndOnline(page, context, 'catan', 'Catan', 5);
+test('a large rulebook saved with Save for offline draws offline, its JPEG 2000 pages included', async ({ page, context }) => {
+  // Catan's p. 5 is drawn over a JPEG 2000 image; at 3.7 MB, opening it
+  // doesn't save it.
+  const { offline, online } = await offlineAndOnline(page, context, 'catan', 'Catan', 5, true);
   expect(offline).toBe(online);
 });
 
@@ -125,6 +143,92 @@ test('a saved rulebook draws offline a page with images never opened online', as
   // p. 1 never draws: its decoder comes with the saved rulebook.
   const { offline, online } = await offlineAndOnline(page, context, 'azul', 'Azul', 6);
   expect(offline).toBe(online);
+});
+
+test('a small rulebook saves itself on its first open, says so, and reads offline', async ({ page, context }) => {
+  await page.goto('/');
+  await controlled(page);
+  // Azul's rulebook is 1.5 MB, under the 3 MB a first open saves.
+  await page.goto('/rules/azul');
+  const reader = page.getByRole('region', { name: 'Azul rules' });
+  await expect(reader.getByRole('button', { name: 'Search' })).toBeEnabled();
+  const savedHere = savedStatus(page);
+  await expect(savedHere).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Save for offline' })).toHaveCount(0);
+  await readerSaved(page);
+
+  await goOffline(context);
+  await page.reload();
+  await expect(reader.getByRole('button', { name: 'Search' })).toBeEnabled();
+  await expect(savedHere).toBeVisible();
+  await expect(page.getByText(/Not saved on this device/)).toHaveCount(0);
+});
+
+test('a large rulebook isn\'t saved by opening it, and offline says to tap Save for offline next time', async ({ page, context }) => {
+  await page.goto('/');
+  await controlled(page);
+  // Ticket to Ride's rulebook is 3.6 MB.
+  await page.goto('/rules/ticket-to-ride');
+  await expect(page.getByRole('region', { name: 'Ticket to Ride rules' }).getByRole('button', { name: 'Search' })).toBeEnabled();
+  // Described by the Download link's size, the third item in its row:
+  // level with it on a desktop.
+  const save = page.getByRole('button', { name: 'Save for offline' });
+  await expect(save).toHaveAccessibleDescription('3.6 MB');
+  expect(await inCache(page, '/rules/ticket-to-ride.pdf')).toBe(false);
+  const download = page.getByRole('link', { name: 'Download PDF' });
+  const open = page.getByRole('link', { name: 'Open PDF' });
+  const [d, o, s] = await Promise.all([download.boundingBox(), open.boundingBox(), save.boundingBox()]);
+  expect(s!.y).toBe(d!.y);
+  expect(s!.height).toBe(d!.height);
+  expect(s!.x).toBeGreaterThan(o!.x + o!.width);
+  // On a phone, on a line of its own under Download PDF.
+  await page.setViewportSize({ width: 375, height: 812 });
+  const [phoneDownload, phoneSave] = await Promise.all([download.boundingBox(), save.boundingBox()]);
+  expect(phoneSave!.x).toBe(phoneDownload!.x);
+  expect(phoneSave!.y).toBeGreaterThan(phoneDownload!.y + phoneDownload!.height);
+
+  await goOffline(context);
+  await page.reload();
+  await expect(page.getByText('Not saved on this device yet. Tap Save for offline next time you have signal.')).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Save/ })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Download PDF' })).toHaveCount(0);
+});
+
+test('a large rulebook saved with Save for offline reads offline, and says it is saved', async ({ page, context }) => {
+  await page.goto('/');
+  await controlled(page);
+  await page.goto('/rules/ticket-to-ride');
+  const reader = page.getByRole('region', { name: 'Ticket to Ride rules' });
+  await expect(reader.getByRole('button', { name: 'Search' })).toBeEnabled();
+  await saveForOffline(page);
+  await readerSaved(page);
+
+  await goOffline(context);
+  await page.reload();
+  await expect(savedStatus(page)).toBeVisible();
+  await reader.getByRole('searchbox', { name: 'Search the rulebook' }).fill('destination tickets');
+  await reader.getByRole('button', { name: 'Search' }).click();
+  await expect(reader.getByRole('status')).toHaveText(/^1 of \d+ · page \d+$/);
+});
+
+test('a rulebook the device has no room for says so, with nothing to try again', async ({ page, context, baseURL }) => {
+  await page.goto('/');
+  await controlled(page);
+  // Room for a little more than the site holds already: not for 3.6 MB.
+  const cdp = await context.newCDPSession(page);
+  const origin = new URL(baseURL!).origin;
+  const { usage } = await page.evaluate(() => navigator.storage.estimate());
+  await cdp.send('Storage.overrideQuotaForOrigin', { origin, quotaSize: usage! + 1_000_000 });
+  try {
+    await page.goto('/rules/ticket-to-ride');
+    await expect(page.getByRole('region', { name: 'Ticket to Ride rules' }).getByRole('button', { name: 'Search' })).toBeEnabled();
+    await page.getByRole('button', { name: 'Save for offline' }).click();
+    await expect(page.getByText('Not enough space on this device', { exact: true })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: /Try again/ })).toHaveCount(0);
+    expect(await inCache(page, '/rules/ticket-to-ride.pdf')).toBe(false);
+  } finally {
+    await cdp.send('Storage.overrideQuotaForOrigin', { origin });
+  }
 });
 
 test('a rulebook opened once reads on a phone with no network', async ({ page, context }) => {
@@ -152,6 +256,7 @@ test('offline on a rules page, the chat says the assistant needs a connection an
   // The rulebook drawn and saved first, so it still works offline, as the
   // chat says (one not saved couldn't draw the pages it hasn't fetched).
   await expect(page.getByRole('region', { name: 'Catan rules' }).getByRole('button', { name: 'Search' })).toBeEnabled();
+  await saveForOffline(page);
   await saved(page, '/rules/catan.pdf');
   await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
   const send = page.getByRole('button', { name: 'Send' });

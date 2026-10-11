@@ -4,8 +4,8 @@
 // vite.config.ts, which writes the four constants below. Routing and the
 // byte ranges live in utils/offline.ts; what each cache keeps, and when, in
 // ./shell.ts.
-import { parseRange, rangeHeaders, routeFor, savesRulebook } from '../utils/offline';
-import { activate, ASSETS, healReader, install, MATCH, pruneShells, RULEBOOK_VERSION, RULEBOOKS, saveReader, SHELL_PREFIX, type Build } from './shell';
+import { parseRange, rangeHeaders, routeFor, savesOnOpen, savingData } from '../utils/offline';
+import { activate, ASSETS, healReader, install, MATCH, pruneShells, RULEBOOKS, saver, SHELL_PREFIX, type Build, type SaveReply } from './shell';
 
 declare const self: ServiceWorkerGlobalScope;
 /** Paths saved at install: the app's code (every page's), box art, the font, the word lists. */
@@ -25,6 +25,9 @@ const SHELL = `${SHELL_PREFIX}${__SW_VERSION__}`;
 const BUILD: Build = { shell: SHELL, precache: __PRECACHE__, reader: __READER__, rulebooks: __RULEBOOKS__ };
 // The reader's files too: saved or not yet, they are this build's, kept in its shell.
 const SHELL_PATHS = new Set([...__PRECACHE__, ...__READER__]);
+// Rulebooks saved whole, once each however many range requests and pages
+// ask for one.
+const saving = saver(BUILD, caches, (path) => fetch(path));
 // Give a slow network this long before a page comes from the saved app.
 const PAGE_TIMEOUT_MS = 4000;
 
@@ -41,6 +44,14 @@ self.addEventListener('activate', (event) => {
   // After, not during: requests wait while a worker activates. If the
   // worker stops first, the next saved rulebook opened finishes it.
   void activated.then(() => heal());
+});
+
+// The rules page asking after the rulebook on screen, or to save it (its
+// Save for offline button): answered on the port it sends, the worker kept
+// alive until the save ends.
+self.addEventListener('message', (event) => {
+  const [port] = event.ports;
+  if (port) event.waitUntil(saving.answer(event.data, (reply: SaveReply) => port.postMessage(reply)));
 });
 
 self.addEventListener('fetch', (event) => {
@@ -94,8 +105,6 @@ async function saved(event: FetchEvent, cacheName: string): Promise<Response> {
   return response;
 }
 
-// Rulebooks being saved, so a reader's many range requests fetch the file once.
-const saving = new Set<string>();
 // The reader being completed (healReader), started once however often asked.
 // The older shells go after, unless a newer build is on its way in: a
 // shell that isn't this build's may be the newer one's.
@@ -113,11 +122,14 @@ function heal(): Promise<void> {
 let open: { path: string; body: Blob; type: string } | null = null;
 
 /**
- * A rulebook from its saved copy, or from the network while the whole file is
- * saved in the background. The rulebook reader asks for byte ranges, which the
- * Cache API can't store, so the whole file is kept and ranges cut from it. A
- * warm request (the reader opening a rulebook ahead of a tap) starts no save:
- * its ranges come from the network alone.
+ * A rulebook from its saved copy, or from the network. The rulebook reader
+ * asks for byte ranges, which the Cache API can't store, so a rulebook is
+ * kept whole and ranges cut from it. A small one is saved in the background
+ * the first time it is opened (savesOnOpen), unless the browser is asked to
+ * save data; a large one only when the rules page asks (its Save for
+ * offline button), since saving it costs megabytes the reader's ranges
+ * would never fetch. A warm request (the reader opening a rulebook ahead of
+ * a tap) starts no save: its ranges come from the network alone.
  */
 async function rulebook(event: FetchEvent): Promise<Response> {
   const { request } = event;
@@ -129,21 +141,11 @@ async function rulebook(event: FetchEvent): Promise<Response> {
     if (open) event.waitUntil(heal());
   }
   if (open) return fromCopy(request, open.body, open.type);
-  if (savesRulebook(request.headers) && !saving.has(path)) {
-    saving.add(path);
-    event.waitUntil(save(path).catch(() => {}).finally(() => saving.delete(path)));
-  }
-  return fetch(request);
-}
-
-async function save(path: string): Promise<void> {
-  const response = await fetch(path);
-  if (response.status !== 200) return;
-  const headers = new Headers(response.headers);
-  headers.set(RULEBOOK_VERSION, __RULEBOOKS__[path] ?? '');
-  const copy = new Response(await response.blob(), { status: 200, headers });
-  await (await caches.open(RULEBOOKS)).put(path, copy);
-  await saveReader(BUILD, caches);
+  const response = await fetch(request);
+  // Decided before the page has the answer, so a page that asks after its
+  // HEAD (useOfflineSave) hears of the save.
+  if (savesOnOpen(request.headers, response, savingData(self.navigator))) event.waitUntil(saving.save(path));
+  return response;
 }
 
 function fromCopy(request: Request, body: Blob, type: string): Response {

@@ -30,9 +30,64 @@ export interface RouteRequest {
  */
 export const WARM_HEADER = 'X-Warm';
 
-/** Whether a rulebook request should have the service worker save the whole file: any but a warm one. */
+/** Whether a rulebook request may have the service worker save the whole file: any but a warm one. */
 export function savesRulebook(headers: Pick<Headers, 'has'>): boolean {
   return !headers.has(WARM_HEADER);
+}
+
+/**
+ * A rulebook is saved on its first open only below this size: 3 MB, in the
+ * decimal megabytes the rules page shows sizes in (formatSize), so a book
+ * shown as "2.9 MB" saves itself and one shown as "3.6 MB" waits for Save
+ * for offline. 31 of the 58 rulebooks are under 2 MB and 38 under 3 MB;
+ * none lies between 3 MB and 3 MiB (3,145,728 bytes), so either unit splits
+ * them the same. The rest (up to Pandemic's 16 MB) would cost a phone
+ * on mobile data several megabytes it never asked for, which the reader's
+ * byte ranges (#136) exist to spare it.
+ */
+export const SAVE_ON_OPEN_BELOW = 3_000_000;
+
+/** The parts of a Response the save on open depends on. */
+export interface SizedResponse {
+  status: number;
+  headers: Pick<Headers, 'get'>;
+}
+
+/**
+ * The whole rulebook's size in bytes, as a response to a request for it
+ * says: a 206's Content-Range total (the reader asks for ranges) or a 200's
+ * Content-Length (a HEAD, or the whole file). Null when it doesn't say
+ * (`bytes 0-99/*`, a compressed body sent without a length) or answers with
+ * anything else.
+ */
+export function rulebookSize({ status, headers }: SizedResponse): number | null {
+  let size: string | undefined;
+  if (status === 206) size = /^bytes \d+-\d+\/(\d+)$/.exec(headers.get('Content-Range') ?? '')?.[1];
+  else if (status === 200) size = /^\d+$/.exec(headers.get('Content-Length') ?? '')?.[0];
+  return size === undefined ? null : Number(size);
+}
+
+/**
+ * Whether opening a rulebook saves it whole, unasked: a request that may
+ * (savesRulebook), for a rulebook its response says is under
+ * SAVE_ON_OPEN_BELOW, while the browser isn't asked to save data. One of
+ * unknown size waits to be asked, as a large one does.
+ */
+export function savesOnOpen(request: Pick<Headers, 'has'>, response: SizedResponse, saveData: boolean): boolean {
+  if (saveData || !savesRulebook(request)) return false;
+  const size = rulebookSize(response);
+  return size !== null && size < SAVE_ON_OPEN_BELOW;
+}
+
+/**
+ * Whether the browser has been asked to save data (Chrome's Lite mode, a
+ * data saver), from the Network Information API. Chromium gives it to
+ * workers too; Safari and Firefox have none, and no other sign of it
+ * reaches a service worker, so there it counts as not asked: the size limit
+ * alone keeps a save on open to a few megabytes.
+ */
+export function savingData(navigator: object): boolean {
+  return (navigator as { connection?: { saveData?: unknown } }).connection?.saveData === true;
 }
 
 const RULEBOOK = /^\/rules\/[^/]+\.pdf$/;
