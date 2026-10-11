@@ -62,7 +62,8 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   (`utils/chunkReload.ts`, a sessionStorage flag cleared when a page's
   code loads) before saying something went wrong:
   - `/` — `HomePage` (hero with a shelf of box covers that open their
-    rulebooks, filter bar, then the collection or the wishlist,
+    rulebooks, its subtitle speaking to a friend when `c=want`, filter
+    bar, then the collection or the wishlist,
     switched by the Own/Want toggle; both stay mounted so a toggle never
     refetches, and only the visible one carries the `#collection` anchor)
   - `/rules/:slug/:part?` — bundled rule PDF viewer + AI rules assistant;
@@ -221,7 +222,9 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   keeps filter state mirrored to the URL query string so views are shareable.
   `WishlistContext` is the one definition of the wishlist for the page (static
   entries plus approved friend suggestions, loaded once and reloadable after
-  an owner edit) for the wishlist section and the keyword counts;
+  an owner edit) for the wishlist section, the keyword counts, the filter
+  sheet's result count, the empty state's counts and the owner tools
+  (`AdminPanel`, `AdminItemControls`);
   `AuthContext` holds the owner-session check that switches admin
   mode on (`SignInPage`, `AdminPanel`, `AdminItemControls`). Its provider
   wraps only the home page and the `/sign-in` route, each with its own
@@ -241,7 +244,7 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   sheet and the random picker share `hooks/useDialogFocus` (focus, Escape,
   Tab kept inside) and `hooks/useScrollLock`. The wishlist wears the
   collection's clothes: `WishlistCard` reuses the `game-card` layout (vote
-  heart and buy/video links in the footer) and `WishlistListView` renders
+  and buy/video links in the footer) and `WishlistListView` renders
   the collection's table (`GamesTableHead` is the shared sortable header)
   with a vote column and an expanded row for the full blurb, awards, owner
   controls and links; the collapsed row shows the blurb's first sentence
@@ -252,12 +255,21 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   a `s=votes` link without `c=want`, falls back to the default sort; the
   order by votes, here and under Group, is taken when the counts load or
   the sort or the list changes, not on each vote, so a voted entry doesn't
-  jump from under the pointer), and a
-  "Suggest a game" button on its heading's line that jumps to the form at
-  the bottom. An entry with `expands` (the base game's name) wears an
-  "Expansion for Catan (owned)" tag (`ExpansionTag`), "owned" when the base
-  is in the collection; the data test checks each names a game we have or
-  want.
+  jump from under the pointer), a line under its heading saying what a
+  vote does, and on the heading's line "Share wishlist" (copies `/?c=want`
+  through `hooks/useCopyLink`, the active filters' Share link's copy) and
+  "Suggest a game", which jumps to the form at the bottom (on a phone the
+  two split a line of their own, like Own/Want under them). `VoteButton`
+  always shows its verb ("♡ Vote", "♡ Vote · 2", filled "♥ Voted · 3")
+  and its accessible name starts with the same word; it and Share
+  wishlist keep their width as a vote lands or "Copied!" shows. Footer
+  buttons share one size and radius (44px on a phone); Rules is the one
+  filled button on a collection card and Vote the strongest on a wishlist
+  card, while Score, Word Checker, video, cart and price history are one
+  quiet outline (the video's play glyph in `--yt-red`). An entry with
+  `expands` (the base game's name) wears an "Expansion for Catan (owned)"
+  tag (`ExpansionTag`), "owned" when the base is in the collection; the
+  data test checks each names a game we have or want.
 - **Theme** — light and dark. `App.css` keeps every colour in `:root`
   tokens; the dark palette redefines them under
   `prefers-color-scheme: dark` (unless `data-theme="light"`) and under

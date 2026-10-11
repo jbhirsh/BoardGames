@@ -99,7 +99,7 @@ describe('WishlistRow', () => {
 
   it('reflects a cast vote and a disabled vote', () => {
     const { unmount } = renderRow({ voted: true, voteCount: 2 });
-    expect(screen.getByRole('button', { name: /Remove your vote for Row Game/ })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: /^Voted for Row Game/ })).toHaveAttribute('aria-pressed', 'true');
     unmount();
     renderRow({ disabled: true });
     expect(screen.getByRole('button', { name: /Vote for/ })).toBeDisabled();

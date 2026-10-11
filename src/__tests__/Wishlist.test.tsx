@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, fireEvent, within, cleanup } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within, cleanup, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import Wishlist from '../components/Wishlist';
 import { FilterProvider } from '../context/FilterContext';
@@ -404,7 +404,7 @@ describe('Wishlist engagement', () => {
 
     fireEvent.click(vote);
     // The count moves; the entry stays where the voter's pointer is.
-    await screen.findByRole('button', { name: 'Remove your vote for Zombie Burrito (9 votes)' });
+    await screen.findByRole('button', { name: 'Voted for Zombie Burrito (9 votes)' });
     expect(ids()).toEqual(before);
   });
 
@@ -454,5 +454,81 @@ describe('Wishlist engagement', () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise(() => {}));
     renderWishlist('/?c=want');
     expect(screen.queryByRole('button', { name: 'Suggest a game' })).not.toBeInTheDocument();
+  });
+
+  it('says what a vote does, above the entries', async () => {
+    mockVotes({});
+    renderWishlist();
+    const purpose = screen.getByText("Heart the games you'd play. The top pick is what we buy next.");
+    const first = await screen.findByText(WISHLIST[0].name);
+    expect(purpose.compareDocumentPosition(first)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  describe('Share wishlist', () => {
+    let writeText: ReturnType<typeof vi.fn>;
+    let originalClipboard: PropertyDescriptor | undefined;
+
+    beforeEach(() => {
+      writeText = vi.fn().mockResolvedValue(undefined);
+      originalClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+      Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    });
+
+    afterEach(() => {
+      if (originalClipboard) {
+        Object.defineProperty(navigator, 'clipboard', originalClipboard);
+      } else {
+        Reflect.deleteProperty(navigator as object, 'clipboard');
+      }
+    });
+
+    it('copies the plain wishlist link, without the filters on screen, and says so', async () => {
+      mockVotes({});
+      renderWishlist('/?c=want&p=4&q=cat');
+      const share = await screen.findByRole('button', { name: 'Share wishlist' });
+      // Beside Suggest a game, before it.
+      expect(share.nextElementSibling).toBe(screen.getByRole('button', { name: 'Suggest a game' }));
+      fireEvent.click(share);
+      await waitFor(() => expect(share).toHaveTextContent('Copied!'));
+      expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/?c=want`);
+      expect(screen.getByText('Link copied to clipboard')).toBeInTheDocument();
+    });
+
+    it('stays quiet when the clipboard refuses', async () => {
+      writeText.mockRejectedValueOnce(new Error('denied'));
+      mockVotes({});
+      renderWishlist();
+      const share = await screen.findByRole('button', { name: 'Share wishlist' });
+      await act(async () => { fireEvent.click(share); });
+      expect(writeText).toHaveBeenCalledOnce();
+      expect(share).toHaveTextContent('Share wishlist');
+      expect(screen.queryByText('Link copied to clipboard')).not.toBeInTheDocument();
+    });
+
+    it('goes back to "Share wishlist" after a moment, and forgets its timer on unmount', async () => {
+      mockVotes({});
+      const { unmount } = renderWishlist();
+      const share = await screen.findByRole('button', { name: 'Share wishlist' });
+      vi.useFakeTimers();
+      try {
+        const clear = vi.spyOn(globalThis, 'clearTimeout');
+        await act(async () => { fireEvent.click(share); });
+        expect(share).toHaveTextContent('Copied!');
+        // A second copy restarts the moment rather than stacking a timer.
+        clear.mockClear();
+        await act(async () => { fireEvent.click(share); });
+        expect(clear).toHaveBeenCalled();
+        await act(() => vi.advanceTimersByTimeAsync(1799));
+        expect(share).toHaveTextContent('Copied!');
+        await act(() => vi.advanceTimersByTimeAsync(1));
+        expect(share).toHaveTextContent('Share wishlist');
+        await act(async () => { fireEvent.click(share); });
+        clear.mockClear();
+        unmount();
+        expect(clear).toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 });

@@ -56,11 +56,11 @@ export default function SuggestForm() {
       <p className="suggest-sub">Know something we'd love? Jess gets an email and can add it with one click.</p>
       <div className="suggest-fields">
         <label className="suggest-label" htmlFor={`${uid}-game`}>Game</label>
-        <input id={`${uid}-game`} className="suggest-input" value={game} onChange={(e) => setGame(e.target.value)} required minLength={2} maxLength={80} placeholder="Wingspan" />
+        <input id={`${uid}-game`} className="suggest-input" value={game} onChange={(e) => setGame(e.target.value)} required minLength={2} maxLength={80} placeholder="e.g. Kingdomino" />
         <label className="suggest-label" htmlFor={`${uid}-name`}>Your name</label>
-        <input id={`${uid}-name`} className="suggest-input" value={name} onChange={(e) => setName(e.target.value)} required maxLength={30} autoComplete="given-name" placeholder="Alex" />
+        <input id={`${uid}-name`} className="suggest-input" value={name} onChange={(e) => setName(e.target.value)} required maxLength={30} autoComplete="given-name" placeholder="e.g. Alex" />
         <label className="suggest-label" htmlFor={`${uid}-note`}>Why? <span className="suggest-opt">(optional)</span></label>
-        <input id={`${uid}-note`} className="suggest-input" value={note} onChange={(e) => setNote(e.target.value)} maxLength={200} placeholder="Great with six people" />
+        <input id={`${uid}-note`} className="suggest-input" value={note} onChange={(e) => setNote(e.target.value)} maxLength={200} placeholder="e.g. Great with six people" />
       </div>
       <div className="suggest-actions">
         <button type="submit" className="suggest-btn" disabled={status.kind === 'sending'}>

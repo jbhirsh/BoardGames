@@ -111,7 +111,7 @@ describe('WishlistCard', () => {
     expect(onVote).toHaveBeenCalledOnce();
     unmount();
     renderCard({ voted: true, voteCount: 1 });
-    expect(screen.getByRole('button', { name: 'Remove your vote for Test Wishlist Game (1 vote)' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Voted for Test Wishlist Game (1 vote)' })).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('disables the vote button when asked', () => {
