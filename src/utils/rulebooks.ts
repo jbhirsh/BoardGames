@@ -309,6 +309,19 @@ export function citedPage(href: string, game: Game): { book: Rulebook; page: num
   return book ? { book, page: Number(m[2]) } : null;
 }
 
+/**
+ * The rulebooks and pages an answer's citations open, each once, in the
+ * order the answer cites them: the links linkCitations makes of them.
+ */
+export function citationsIn(answer: string, game: Game, shown: Rulebook): { book: Rulebook; page: number }[] {
+  const found = new Map<string, { book: Rulebook; page: number }>();
+  for (const [, href] of linkCitations(answer, game, shown).matchAll(/\]\(([^\s)]+)/g)) {
+    const cited = citedPage(href, game);
+    if (cited) found.set(href, cited);
+  }
+  return [...found.values()];
+}
+
 /** A table size to ask about: four where the game seats four, else the nearest it does. */
 function seats(t: { min: number; max: number }): string {
   const n = Math.min(Math.max(4, t.min), t.max);

@@ -22,6 +22,19 @@ export interface RouteRequest {
   mode: string;
 }
 
+/**
+ * Marks the range requests of a rulebook opened ahead of a tap (the reader
+ * warming the page an answer cites), which the service worker answers
+ * without saving the whole file: only the cited page's parts are fetched,
+ * not a rulebook of several megabytes nobody may open.
+ */
+export const WARM_HEADER = 'X-Warm';
+
+/** Whether a rulebook request should have the service worker save the whole file: any but a warm one. */
+export function savesRulebook(headers: Pick<Headers, 'has'>): boolean {
+  return !headers.has(WARM_HEADER);
+}
+
 const RULEBOOK = /^\/rules\/[^/]+\.pdf$/;
 const ASSET = /^\/(assets|images|pdfjs)\//;
 

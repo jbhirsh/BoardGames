@@ -71,7 +71,24 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
     modern build is used with the few newer JavaScript methods it calls
     polyfilled (`src/pdfjs/polyfills.ts`, also loaded first in its worker,
     `src/pdfjs/worker.ts`); a Vite plugin copies its WebAssembly image
-    decoders and standard fonts to `/pdfjs/`
+    decoders, standard fonts and ICC profile to `/pdfjs/`. Documents open
+    with `useWorkerFetch: true`: otherwise pdf.js fetches its decoders
+    through the last document opened, and closing that one left JPEG 2000
+    pages of another undrawn forever (it also turns on CMYK colour
+    handling, hence the ICC profile). Pages draw through a queue
+    (`src/pdfjs/renderQueue.ts`), one at a time, the most visible first and
+    then the nearest, each page's text read before the next starts; the
+    page a citation or search asks for has a place of its own.
+    `src/pdfjs/documents.ts` holds the shared worker and up to two kept
+    rulebooks (least recently used goes first, never one on screen). When
+    an answer cites another tab's rulebook, its page is opened and drawn
+    out of sight so the tap lands fast, but only if the service worker has
+    saved that rulebook, or on a 4G connection that isn't cellular with
+    Save-Data off; Safari and Firefox, which don't report their
+    connection, warm only saved ones. Such a warm fetches just that page's
+    ranges (`X-Warm`). The next tab's reader adopts the kept document; a
+    kept rulebook is tidied once its last reader closes, and all of them
+    close when the rules page does
   - `/score/:slug` — score calculator for a game in
     `data/scoreCalculators.ts` (currently 7 Wonders); any other slug shows
     the not-found page. Results is a score sheet like the printed pad (a
@@ -250,7 +267,9 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   runs the old app, so a long-open tab keeps its own code offline. Pages
   come from the network (4s at most), falling back to the app saved at
   install, which nothing else replaces; `/api/*` and other sites are never
-  touched. A rulebook is saved whole the first time it's opened (the
+  touched. A rulebook is saved whole the first time it's opened, never
+  by a warm (a request carrying `X-Warm`; `savesRulebook()` in
+  `utils/offline.ts` decides) (the
   reader asks for byte ranges, which the Cache API can't store, so ranges
   are cut from the saved copy, held in memory while it's read), and dropped
   by the first worker whose hash for it differs. `public/manifest.webmanifest`

@@ -3,7 +3,7 @@
 // in basements and cabins. Built to /sw.js by the serviceWorker() plugin in
 // vite.config.ts, which writes the three constants below. Routing and the
 // byte ranges live in utils/offline.ts.
-import { parseRange, rangeHeaders, routeFor } from '../utils/offline';
+import { parseRange, rangeHeaders, routeFor, savesRulebook } from '../utils/offline';
 
 declare const self: ServiceWorkerGlobalScope;
 /** Paths saved at install: the app's code, box art, pdf.js's files, the word list. */
@@ -102,7 +102,9 @@ let open: { path: string; body: Blob; type: string } | null = null;
 /**
  * A rulebook from its saved copy, or from the network while the whole file is
  * saved in the background. The rulebook reader asks for byte ranges, which the
- * Cache API can't store, so the whole file is kept and ranges cut from it.
+ * Cache API can't store, so the whole file is kept and ranges cut from it. A
+ * warm request (the reader opening a rulebook ahead of a tap) starts no save:
+ * its ranges come from the network alone.
  */
 async function rulebook(event: FetchEvent): Promise<Response> {
   const { request } = event;
@@ -112,7 +114,7 @@ async function rulebook(event: FetchEvent): Promise<Response> {
     open = copy ? { path, body: await copy.blob(), type: copy.headers.get('Content-Type') ?? 'application/pdf' } : null;
   }
   if (open) return fromCopy(request, open.body, open.type);
-  if (!saving.has(path)) {
+  if (savesRulebook(request.headers) && !saving.has(path)) {
     saving.add(path);
     event.waitUntil(save(path).catch(() => {}).finally(() => saving.delete(path)));
   }

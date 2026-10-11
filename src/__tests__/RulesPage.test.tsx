@@ -11,12 +11,12 @@ const reader = vi.hoisted(() => ({ fails: false }));
 vi.mock('../components/PdfReader', async () => {
   const { useEffect } = await import('react');
   return {
-    default: function PdfReader({ src, title, jump, onFail }: { src: string; title: string; jump?: { page: number; key: string; place?: string; quote?: string }; onFail?: () => void }) {
+    default: function PdfReader({ src, title, jump, warm, onFail }: { src: string; title: string; jump?: { page: number; key: string; place?: string; quote?: string }; warm?: readonly { src: string; page: number }[]; onFail?: () => void }) {
       if (src.includes('vampire')) throw new Error('reader broke');
       useEffect(() => {
         if (reader.fails) onFail?.();
       }, [onFail]);
-      return <section aria-label={title} data-src={src} data-jump={jump && `${jump.page}:${jump.key}`} data-place={jump?.place} data-quote={jump?.quote} />;
+      return <section aria-label={title} data-src={src} data-jump={jump && `${jump.page}:${jump.key}`} data-place={jump?.place} data-quote={jump?.quote} data-warm={warm?.map((w) => `${w.src}:${w.page}`).join(' ')} />;
     },
   };
 });
@@ -456,6 +456,38 @@ describe('RulesPage\'s reader', () => {
     // A tab opened afterwards carries the way back, not the citation's words.
     fireEvent.click(within(screen.getByRole('navigation', { name: 'Rulebooks' })).getByRole('link', { name: /Cities & Knights/ }));
     expect(router.state.location.state).toEqual({ fromList: true });
+  });
+
+  it('has the reader get the first page an answer cites in another tab ready as the answer lands', async () => {
+    answering('Knights first (Cities And Knights p. 4). A 7 moves the robber (Catan p. 5, 6).');
+    renderRouted(<RulesPage />, ['/rules/catan/cities-and-knights'], '/rules/:slug/:part?');
+    const reader = await screen.findByRole('region', { name: 'Cities & Knights rules' });
+    expect(reader).toHaveAttribute('data-warm', '');
+    ask();
+    await screen.findByRole('link', { name: 'Base game p. 5' });
+    // Its own rulebook is open already; the base game's first cited page is wanted.
+    await vi.waitFor(() => expect(reader).toHaveAttribute('data-warm', '/rules/catan.pdf:5'));
+  });
+
+  it('gets nothing ready for an answer that cites only the rulebook on screen', async () => {
+    answering('Knights first (Cities And Knights p. 4).');
+    renderRouted(<RulesPage />, ['/rules/catan/cities-and-knights'], '/rules/:slug/:part?');
+    ask();
+    await screen.findByRole('link', { name: 'Cities & Knights p. 4' });
+    expect(screen.getByRole('region', { name: 'Cities & Knights rules' })).toHaveAttribute('data-warm', '');
+  });
+
+  it('gets nothing ready once the reader has failed, when a citation opens the PDF', async () => {
+    reader.fails = true;
+    try {
+      answering('A 7 moves the robber (Catan p. 5).');
+      renderRouted(<RulesPage />, ['/rules/catan/cities-and-knights'], '/rules/:slug/:part?');
+      ask();
+      await screen.findByRole('link', { name: 'Base game p. 5' });
+      expect(screen.getByRole('region', { name: 'Cities & Knights rules' })).toHaveAttribute('data-warm', '');
+    } finally {
+      reader.fails = false;
+    }
   });
 
   it('marks nothing for a citation with no words of its own before it', async () => {

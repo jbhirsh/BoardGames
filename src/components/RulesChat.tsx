@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, createContext, useContext } from 'react';
+import { useState, useEffect, useEffectEvent, useRef, createContext, useContext } from 'react';
 import type { ComponentProps, FormEvent, MouseEvent, ReactNode } from 'react';
 import * as Sentry from '@sentry/react';
 import { Link } from 'react-router';
@@ -118,8 +118,9 @@ const ANSWER_COMPONENTS: Components = { a: AnswerLink };
  * offered as one-tap questions until the first one is asked. `tab` names
  * the tab on screen; each answer keeps the one it was asked on and hands it
  * to `linksFor` and `citeLinks`, since the panel stays as tabs change.
+ * `onAnswer` hears each answer once it has come in whole, with its tab.
  */
-export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFor, citeLinks, isCitation = NO_CITATIONS, onCite, starters = [] }: {
+export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFor, citeLinks, isCitation = NO_CITATIONS, onCite, onAnswer, starters = [] }: {
   slug: string;
   gameName: string;
   parts?: string[];
@@ -129,6 +130,7 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
   citeLinks?: (answer: string, tab?: string) => string;
   isCitation?: (href: string) => boolean;
   onCite?: (href: string, quote: string) => boolean;
+  onAnswer?: (answer: string, tab?: string) => void;
   starters?: string[];
 }) {
   const { isOpen } = useContext(ChatContext);
@@ -148,6 +150,15 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
     const el = messagesContainerRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
+
+  // The last answer, once it is whole: not the greeting, a notice, or one
+  // still coming in.
+  const last = messages[messages.length - 1];
+  const answer = !isLoading && messages.length > 1 && last.role === 'assistant' && !last.error ? last : null;
+  const answered = useEffectEvent((a: Message) => onAnswer?.(a.content, a.tab ?? tab));
+  useEffect(() => {
+    if (answer) answered(answer);
+  }, [answer]);
 
   function handleSend(e: FormEvent) {
     e.preventDefault();

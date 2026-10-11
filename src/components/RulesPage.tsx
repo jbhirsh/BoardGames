@@ -1,7 +1,7 @@
 import { Component, lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useParams, useLocation, useNavigate, Link, Navigate } from 'react-router';
 import { GAMES } from '../data/games';
-import { rulebooks, rulebookPath, chatParts, chatScope, citedPage, citedPageParam, linkCitations, mentionedRulebooks, starterQuestions } from '../utils/rulebooks';
+import { rulebooks, rulebookPath, chatParts, chatScope, citationsIn, citedPage, citedPageParam, linkCitations, mentionedRulebooks, starterQuestions } from '../utils/rulebooks';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
 import { CalculatorIcon } from './Icons';
 import { shownKind } from '../utils/subgames';
@@ -103,6 +103,9 @@ export default function RulesPage() {
   // land on the note that the rulebook can't be shown.
   const [readerFailed, setReaderFailed] = useState(false);
   const readerFails = useCallback(() => setReaderFailed(true), []);
+  // The page an answer cites in another tab's rulebook, which the reader
+  // opens and draws out of sight while the answer is read (see warmCited).
+  const [warm, setWarm] = useState<readonly { src: string; page: number }[]>([]);
   const books = game ? rulebooks(game) : [];
   const book = books.find(b => b.part === part);
   const size = usePdfSize(book?.pdf ?? '', book !== undefined);
@@ -147,6 +150,19 @@ export default function RulesPage() {
     const cited = citedPage(href, game)!;
     navigate(rulebookPath(game.slug, cited.book.part, cited.page), { replace: true, state: { ...arrival, quote }, preventScrollReset: true });
     return true;
+  };
+
+  /**
+   * Once an answer has come in, the first page it cites in another tab's
+   * rulebook is got ready, so a tap on it jumps there sooner: on a phone the
+   * worker takes seconds over a page full of pictures. One, so a rulebook
+   * the reader already shows isn't let go for it (two are kept open). Not
+   * once the reader has failed, when a citation opens the PDF itself.
+   */
+  const warmCited = (answer: string, tab?: string) => {
+    if (readerFailed) return;
+    const other = citationsIn(answer, game, askedOn(tab)).find((c) => c.book.pdf !== book.pdf);
+    setWarm(other ? [{ src: other.book.pdf, page: other.page }] : []);
   };
 
   return (
@@ -231,6 +247,7 @@ export default function RulesPage() {
           citeLinks={(answer, tab) => linkCitations(answer, game, askedOn(tab))}
           isCitation={(href) => citedPage(href, game) !== null}
           onCite={readerFailed ? undefined : showCited}
+          onAnswer={warmCited}
           starters={starterQuestions(game, book)}
         />
         {wordCheckerOpen && <WordChecker />}
@@ -263,6 +280,7 @@ export default function RulesPage() {
                 place: books.length > 1 ? book.label : undefined,
                 quote: typeof quote === 'string' && quote !== '' ? quote : undefined,
               }}
+              warm={warm}
               onFail={readerFails}
             />
           </Suspense>
