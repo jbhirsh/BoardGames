@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from 'react';
+import { Component, lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useParams, useLocation, useNavigate, Link, Navigate } from 'react-router';
 import { GAMES } from '../data/games';
 import { rulebooks, rulebookPath, chatParts, chatScope, citationsIn, citedPage, citedPageParam, linkCitations, mentionedRulebooks, starterQuestions } from '../utils/rulebooks';
@@ -7,11 +7,15 @@ import { CalculatorIcon } from './Icons';
 import { shownKind } from '../utils/subgames';
 import RulesChatProvider, { RulesChatToggle, RulesChatPanel } from './RulesChat';
 import WordChecker from './WordChecker';
+import Notice from './Notice';
 import NotFoundPage from './NotFoundPage';
 import BackLink from './BackLink';
 import { useScrollEdges } from '../hooks/useScrollEdges';
 import { formatSize } from '../utils/fileSize';
 import { cameFromList, FROM_LIST } from '../utils/fromList';
+import { head, outOfReach, savedCopy } from '../pdfjs/saved';
+import { useOnline } from '../hooks/useOnline';
+import { CANT_SHOW } from './cantShow';
 
 // The page draws the rulebook itself, searchable, on every screen: phones
 // can't show an embedded PDF (Android Chrome shows nothing, iOS Safari only
@@ -20,41 +24,83 @@ import { cameFromList, FROM_LIST } from '../utils/fromList';
 // rules page rather than with the app.
 const PdfReader = lazy(() => import('./PdfReader'));
 
+// Said in place of a rulebook that can't be shown: one the browser can't
+// show, whose file the links above still give (CANT_SHOW), or one that
+// isn't saved on this device and has no network to come from, whose links
+// are gone too.
+const NOT_SAVED = (
+  <div className="pdf-offline">
+    <Notice tone="info">Not saved on this device yet. Open it once with signal.</Notice>
+  </div>
+);
+
 /**
  * Falls back to a note if the reader fails to load or throws (its chunk is
  * gone after a deploy, or the browser can't run it), so the rest of the
  * rules page (the chat, the link to the PDF) keeps working.
  */
-class ReaderBoundary extends Component<{ children: ReactNode; onFail: () => void }, { failed: boolean }> {
+class ReaderBoundary extends Component<{ children: ReactNode; pdf: string; note: ReactNode; onFail: (pdf: string) => void }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() {
     return { failed: true };
   }
   componentDidCatch() {
-    this.props.onFail();
+    this.props.onFail(this.props.pdf);
   }
   render() {
-    return this.state.failed
-      ? <p className="pdf-note">This rulebook couldn’t be shown here. Download the PDF above instead.</p>
-      : this.props.children;
+    return this.state.failed ? this.props.note : this.props.children;
   }
 }
 
-/** The PDF's size from a HEAD request, or null until (or unless) it answers. */
-function usePdfSize(pdf: string, wanted: boolean): number | null {
+/**
+ * The PDF's HEAD, asked once for each reader (`attempt` counts them): its
+ * size, null until (or unless) it answers, and `reached`, whether the
+ * network answered it, which a reader that fails asks (see outOfReach)
+ * rather than sending a second HEAD after the first.
+ */
+function usePdfHead(pdf: string, attempt: number, wanted: boolean) {
   const [size, setSize] = useState<{ pdf: string; bytes: number } | null>(null);
+  const answer = useRef<{ pdf: string; attempt: number; reached: Promise<boolean> } | null>(null);
   useEffect(() => {
     if (!wanted) return;
     const controller = new AbortController();
-    fetch(pdf, { method: 'HEAD', signal: controller.signal })
+    const asked = head(pdf, controller.signal);
+    answer.current = { pdf, attempt, reached: asked.then((res) => res !== null) };
+    asked
       .then((res) => {
-        const bytes = Number(res.headers.get('content-length'));
-        if (res.ok && bytes > 0) setSize({ pdf, bytes });
+        const bytes = Number(res?.headers.get('content-length'));
+        if (res?.ok && bytes > 0) setSize({ pdf, bytes });
       })
       .catch(() => {});
     return () => controller.abort();
-  }, [pdf, wanted]);
-  return size?.pdf === pdf ? size.bytes : null;
+  }, [pdf, attempt, wanted]);
+  /** Whether the network answered this reader's HEAD, or a new one if it hasn't been sent. */
+  const reached = useCallback((of: string, at: number) => {
+    const a = answer.current;
+    return a?.pdf === of && a.attempt === at ? a.reached : head(of).then((res) => res !== null);
+  }, []);
+  return { size: size?.pdf === pdf ? size.bytes : null, reached };
+}
+
+/**
+ * Whether the rulebook is saved on this device, for the chat's offline
+ * notice. Asked again as the browser goes offline, since one read online is
+ * saved as it is read: 'asking' meanwhile, unless it was saved already
+ * (which a copy stays). On another tab, the last answer stands until this
+ * one's comes, so a notice up doesn't lose its sentence and get it back.
+ */
+function useSaved(pdf: string, online: boolean): boolean | 'asking' {
+  const [known, setKnown] = useState<{ pdf: string; online: boolean; saved: boolean } | null>(null);
+  useEffect(() => {
+    let live = true;
+    void savedCopy(pdf).then((saved) => {
+      if (live) setKnown({ pdf, online, saved });
+    });
+    return () => { live = false; };
+  }, [pdf, online]);
+  if (known === null) return 'asking';
+  if (known.pdf === pdf && known.online !== online && !known.saved) return 'asking';
+  return known.saved;
 }
 
 
@@ -99,16 +145,43 @@ export default function RulesPage() {
   const citedAt = citedPageParam(search);
   const game = GAMES.find(g => g.slug === slug);
   const [wordCheckerOpen, setWordCheckerOpen] = useState(false);
-  // Once a reader has failed, citations open the PDF again: a jump would
-  // land on the note that the rulebook can't be shown.
-  const [readerFailed, setReaderFailed] = useState(false);
-  const readerFails = useCallback(() => setReaderFailed(true), []);
+  // The rulebook that couldn't be shown, and whether that was for want of a
+  // network (outOfReach): undefined until that is known. Forgotten when the
+  // reader opens another (a tab back to it gets a fresh reader, which may
+  // well load), and when the network comes back, which gives it another go.
+  const [failure, setFailure] = useState<{ pdf: string; unreachable?: boolean } | null>(null);
+  // Readers given that other go: a new one each, keyed by it.
+  const [attempt, setAttempt] = useState(0);
   // The page an answer cites in another tab's rulebook, which the reader
   // opens and draws out of sight while the answer is read (see warmCited).
   const [warm, setWarm] = useState<readonly { src: string; page: number }[]>([]);
   const books = game ? rulebooks(game) : [];
   const book = books.find(b => b.part === part);
-  const size = usePdfSize(book?.pdf ?? '', book !== undefined);
+  if (failure !== null && failure.pdf !== book?.pdf) setFailure(null);
+  const { size, reached } = usePdfHead(book?.pdf ?? '', attempt, book !== undefined);
+  const online = useOnline();
+  const saved = useSaved(book?.pdf ?? '', online);
+  const readerFails = useCallback((pdf: string) => {
+    // This failure, and not one after it, is what the answer is for.
+    const mine = { pdf };
+    setFailure(mine);
+    void outOfReach(pdf, () => reached(pdf, attempt)).then((unreachable) => setFailure((f) => (f === mine ? { pdf, unreachable } : f)));
+  }, [reached, attempt]);
+  // A rulebook that failed has another go when the network comes back:
+  // one that failed for want of it then loads by itself. While the reader
+  // on screen has failed, citations open the PDF again (a jump would land
+  // on the note that it can't be shown); a fresh reader, on another tab or
+  // that other go, takes them again.
+  const failed = failure !== null;
+  useEffect(() => {
+    if (!failed) return;
+    const retry = () => {
+      setFailure(null);
+      setAttempt((n) => n + 1);
+    };
+    window.addEventListener('online', retry);
+    return () => window.removeEventListener('online', retry);
+  }, [failed]);
   const [edges, stripRef, strip] = useScrollEdges();
   // A deck has a dozen tabs; on a phone the chosen one can sit past the
   // edge of the strip, so bring it into view, clear of the faded edge. Once
@@ -132,6 +205,14 @@ export default function RulesPage() {
    * it (its part, '' for the game's own), which its links are read against.
    */
   const askedOn = (tab: string | undefined) => books.find((b) => (b.part ?? '') === tab)!;
+
+  // This tab's rulebook, if it couldn't be shown (failure is only ever this
+  // tab's): nothing said until it is known why, so one note doesn't give
+  // way to another.
+  const unreachable = failure?.unreachable === true;
+  let failNote: ReactNode = CANT_SHOW;
+  if (failure && failure.unreachable === undefined) failNote = null;
+  else if (unreachable) failNote = NOT_SAVED;
 
   /**
    * A citation of one of the game's rulebooks opens it in the reader rather
@@ -160,7 +241,7 @@ export default function RulesPage() {
    * once the reader has failed, when a citation opens the PDF itself.
    */
   const warmCited = (answer: string, tab?: string) => {
-    if (readerFailed) return;
+    if (failed) return;
     const other = citationsIn(answer, game, askedOn(tab)).find((c) => c.book.pdf !== book.pdf);
     setWarm(other ? [{ src: other.book.pdf, page: other.page }] : []);
   };
@@ -246,30 +327,37 @@ export default function RulesPage() {
           linksFor={(answer, tab) => mentionedRulebooks(answer, game, askedOn(tab)).map((b) => ({ label: b.label, to: rulebookPath(game.slug, b.part), state: arrival }))}
           citeLinks={(answer, tab) => linkCitations(answer, game, askedOn(tab))}
           isCitation={(href) => citedPage(href, game) !== null}
-          onCite={readerFailed ? undefined : showCited}
+          onCite={failed ? undefined : showCited}
           onAnswer={warmCited}
           starters={starterQuestions(game, book)}
+          rulebookFailed={failed}
+          rulebookSaved={saved}
         />
         {wordCheckerOpen && <WordChecker />}
         {/* Above the reader, where a long rulebook would bury it: the file,
             with its size so nobody starts a big download unawares, and the
-            browser's own viewer, for its zoom, thumbnails and printing. */}
-        <div className="rules-pdf-links">
-          <a href={book.pdf} download className="rules-download" aria-label="Download PDF" aria-describedby="rules-download-size">
-            Download PDF
-            {size !== null && (
-              <>
-                <span className="rules-download-size" aria-hidden="true">·</span>
-                <span className="rules-download-size" id="rules-download-size">{formatSize(size)}</span>
-              </>
-            )}
-          </a>
-          <a href={book.pdf} target="_blank" rel="noopener noreferrer" className="rules-download">Open PDF</a>
-        </div>
-        {/* The reader's pages draw only near the screen, so a printout of
-            this page would be empty boxes: it prints this instead. */}
-        <p className="rules-print-note">To print this rulebook, use Open PDF and print it from the browser’s PDF viewer.</p>
-        <ReaderBoundary key={book.pdf} onFail={readerFails}>
+            browser's own viewer, for its zoom, thumbnails and printing. Not
+            for a rulebook out of reach, where both would be dead links. */}
+        {!unreachable && (
+          <>
+            <div className="rules-pdf-links">
+              <a href={book.pdf} download className="rules-download" aria-label="Download PDF" aria-describedby="rules-download-size">
+                Download PDF
+                {size !== null && (
+                  <>
+                    <span className="rules-download-size" aria-hidden="true">·</span>
+                    <span className="rules-download-size" id="rules-download-size">{formatSize(size)}</span>
+                  </>
+                )}
+              </a>
+              <a href={book.pdf} target="_blank" rel="noopener noreferrer" className="rules-download">Open PDF</a>
+            </div>
+            {/* The reader's pages draw only near the screen, so a printout of
+                this page would be empty boxes: it prints this instead. */}
+            <p className="rules-print-note">To print this rulebook, use Open PDF and print it from the browser’s PDF viewer.</p>
+          </>
+        )}
+        <ReaderBoundary key={`${book.pdf}#${attempt}`} pdf={book.pdf} note={failNote} onFail={readerFails}>
           <Suspense fallback={<p className="pdf-note">Loading the rulebook…</p>}>
             <PdfReader
               src={book.pdf}
@@ -282,6 +370,7 @@ export default function RulesPage() {
               }}
               warm={warm}
               onFail={readerFails}
+              failNote={failNote}
             />
           </Suspense>
         </ReaderBoundary>

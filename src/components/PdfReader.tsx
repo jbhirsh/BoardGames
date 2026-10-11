@@ -1,9 +1,10 @@
 // First, so the methods pdf.js expects are there before its code runs.
 import '../pdfjs/polyfills';
-import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { TextLayer, type PDFDocumentProxy, type RenderTask } from 'pdfjs-dist';
 import { findMatches, piecesOf, type Match } from '../utils/pdfSearch';
 import { findCited, lineBreaks, passageStart } from '../utils/citeMatch';
+import { CANT_SHOW } from './cantShow';
 import { drawOrder, OFF_SCREEN, renderQueue, type RenderQueue } from '../pdfjs/renderQueue';
 import { heldDocument, openDocument, readerOpens, sharedWorker, textOf as readTextOf, warmPage, type PageTextData } from '../pdfjs/documents';
 
@@ -520,12 +521,13 @@ export interface Warm {
  * page is laid out, again for each new `key`, but not for one it has
  * already made (Back, a reload). `warm` names pages in other rulebooks an
  * answer cites, opened and drawn out of sight ahead of a tap (each once).
- * `onFail` hears that the rulebook can't be shown.
+ * `onFail` hears that the rulebook at `src` can't be shown, and `failNote`, if
+ * given, is what is shown instead (null for nothing yet).
  */
-export default function PdfReader({ src, title, jump, warm, onFail }: { src: string; title: string; jump?: Jump; warm?: readonly Warm[]; onFail?: () => void }) {
+export default function PdfReader({ src, title, jump, warm, onFail, failNote = CANT_SHOW }: { src: string; title: string; jump?: Jump; warm?: readonly Warm[]; onFail?: (src: string) => void; failNote?: ReactNode }) {
   const [doc, setDoc] = useState<PDFDocumentProxy | null>(null);
   const [failed, setFailed] = useState(false);
-  const failedNow = useEffectEvent(() => onFail?.());
+  const failedNow = useEffectEvent(() => onFail?.(src));
   const [ratio, setRatio] = useState(1.3);
   const [width, setWidth] = useState(0);
   const pixels = usePixelRatio();
@@ -783,32 +785,35 @@ export default function PdfReader({ src, title, jump, warm, onFail }: { src: str
 
   return (
     <section className="pdf-reader" aria-label={title}>
-      <div className="pdf-search">
-        <form role="search" className="pdf-search-form" onSubmit={search}>
-          <input
-            type="search"
-            aria-label="Search the rulebook"
-            placeholder="Search the rulebook"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            enterKeyHint="search"
-          />
-          <button type="submit" disabled={!doc}>Search</button>
-        </form>
-        {/* Always in the page, so a screen reader hears its first message. */}
-        <div className={status ? 'pdf-search-results' : 'pdf-search-results pdf-search-results--idle'}>
-          <p className="pdf-search-status" role="status">{status}</p>
-          {!searching && hits && hits.length > 1 && (
-            <span className="pdf-search-nav">
-              <button type="button" aria-label="Previous match" onClick={() => step(-1)}>&uarr;</button>
-              <button type="button" aria-label="Next match" onClick={() => step(1)}>&darr;</button>
-            </span>
-          )}
+      {/* Not once the rulebook has failed, with nothing to search. */}
+      {!failed && (
+        <div className="pdf-search">
+          <form role="search" className="pdf-search-form" onSubmit={search}>
+            <input
+              type="search"
+              aria-label="Search the rulebook"
+              placeholder="Search the rulebook"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              enterKeyHint="search"
+            />
+            <button type="submit" disabled={!doc}>Search</button>
+          </form>
+          {/* Always in the page, so a screen reader hears its first message. */}
+          <div className={status ? 'pdf-search-results' : 'pdf-search-results pdf-search-results--idle'}>
+            <p className="pdf-search-status" role="status">{status}</p>
+            {!searching && hits && hits.length > 1 && (
+              <span className="pdf-search-nav">
+                <button type="button" aria-label="Previous match" onClick={() => step(-1)}>&uarr;</button>
+                <button type="button" aria-label="Next match" onClick={() => step(1)}>&darr;</button>
+              </span>
+            )}
+          </div>
         </div>
-      </div>
+      )}
       {/* Not the status line, whose growing would move the pages mid-jump. */}
       <div className="sr-only" aria-live="polite">{said}</div>
-      {failed && <p className="pdf-note">This rulebook couldn’t be shown here. Download the PDF above instead.</p>}
+      {failed && failNote}
       {!failed && !doc && <p className="pdf-note">Loading the rulebook…</p>}
       <div className="pdf-pages" ref={pagesRef}>
         {doc && Array.from({ length: doc.numPages }, (_, i) => (

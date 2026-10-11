@@ -3,6 +3,7 @@ import './polyfills';
 import { getDocument, PDFWorker, type PDFDocumentLoadingTask, type PDFDocumentProxy, type PDFPageProxy } from 'pdfjs-dist';
 import { pageText, type PageText, type TextRun } from '../utils/pdfSearch';
 import { startWorker } from './startWorker';
+import { savedCopy, type Online } from './saved';
 
 // The rulebooks the reader opens, on one worker, and the ones it opens ahead
 // of time: an answer that cites another tab's rulebook has that rulebook
@@ -30,8 +31,6 @@ export const WARM_TURN_MS = 2500;
 // dropped: time for that reader's cancelled drawings to stop (pdf.js gives
 // them 100 ms), since a document can't be tidied while one is running.
 export const TIDY_MS = 250;
-// The service worker's saved rulebooks (src/sw/sw.ts).
-const SAVED = 'gameroom-rulebooks';
 // Marks a warm's requests, which the service worker answers without saving
 // the file: WARM_HEADER in utils/offline.ts, written out here since the
 // service worker may share no code with the app (vite.config.ts).
@@ -40,10 +39,13 @@ const WARM_HEADER = 'X-Warm';
 // One worker for every rulebook the page opens, started on first use. It is
 // our own entry, which installs the polyfills before pdf.js's worker code.
 // Handing it to getDocument as `worker` keeps it alive when a document is
-// destroyed: a reader for the next tab must not find it shutting down.
+// destroyed: a reader for the next tab must not find it shutting down. One
+// that failed (its file not saved, and no network to fetch it from) gives
+// way to a new one for the next reader, so a rulebook that failed offline
+// can load once the network is back (the rules page opens it again then).
 let shared: { worker: PDFWorker; broken: boolean; port: Worker } | null = null;
 export function sharedWorker() {
-  if (!shared) {
+  if (!shared || shared.broken) {
     const port = startWorker();
     const current = { worker: new PDFWorker({ port: port as never }), broken: false, port };
     port.addEventListener('error', () => { current.broken = true; });
@@ -214,20 +216,8 @@ interface Connection {
 }
 
 /** What warmWay reads of the browser: online, the connection where it says, and the service worker. */
-export interface Browser {
-  onLine: boolean;
+export interface Browser extends Online {
   connection?: Connection;
-  serviceWorker?: { controller: unknown };
-}
-
-/** Whether the service worker has the rulebook saved, so reading it costs no data. */
-async function savedCopy(src: string, nav: Browser, store: CacheStorage | undefined): Promise<boolean> {
-  if (!store || !nav.serviceWorker?.controller) return false;
-  try {
-    return (await store.match(src, { cacheName: SAVED })) !== undefined;
-  } catch {
-    return false;
-  }
 }
 
 /**

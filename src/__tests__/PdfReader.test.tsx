@@ -221,10 +221,26 @@ describe('PdfReader', () => {
     expect(screen.getByText('Loading the rulebook…')).toBeInTheDocument();
   });
 
-  it('says so when the PDF cannot be shown', async () => {
+  it('says so when the PDF cannot be shown, with no search for a rulebook that isn\'t there', async () => {
     pdf.fail = true;
     render(<PdfReader src="/rules/x.pdf" title="X rules" />);
+    expect(screen.getByRole('search')).toBeInTheDocument();
     expect(await screen.findByText(/couldn’t be shown here/)).toBeInTheDocument();
+    expect(screen.queryByRole('search')).not.toBeInTheDocument();
+    expect(screen.queryByRole('searchbox', { name: 'Search the rulebook' })).not.toBeInTheDocument();
+  });
+
+  it('says what the page gives it instead, when given a note, or nothing for a null one', async () => {
+    pdf.fail = true;
+    const onFail = vi.fn();
+    const { rerender } = render(<PdfReader src="/rules/x.pdf" title="X rules" onFail={onFail} failNote={null} />);
+    await vi.waitFor(() => expect(onFail).toHaveBeenCalledWith('/rules/x.pdf'));
+    expect(screen.queryByText(/couldn’t be shown here/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Loading the rulebook…')).not.toBeInTheDocument();
+    rerender(<PdfReader src="/rules/x.pdf" title="X rules" onFail={onFail} failNote={<p>Not saved here.</p>} />);
+    expect(screen.getByText('Not saved here.')).toBeInTheDocument();
+    expect(screen.queryByText(/couldn’t be shown here/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('search')).not.toBeInTheDocument();
   });
 
   it('finds matches across pages, marks them and steps through them', async () => {
@@ -1124,15 +1140,21 @@ describe('PdfReader', () => {
     });
   });
 
-  // Last: a broken worker stays broken for the rest of the module.
-  it('says the rulebook cannot be shown when the worker fails to start', async () => {
+  // Last: it leaves the module on a second worker.
+  it('says the rulebook cannot be shown when the worker fails to start, and starts another for the next reader', async () => {
     pdf.pages = [['x']];
     render(<PdfReader src="/rules/x.pdf" title="X rules" />);
     act(() => { ports[0].dispatchEvent(new Event('error')); });
     expect(await screen.findByText(/couldn’t be shown here/)).toBeInTheDocument();
-    // A reader opened afterwards knows the worker is gone.
+    // A reader opened afterwards (the rules page's, once the network is
+    // back) doesn't inherit it, and fails only if its own worker does.
+    pdf.pages = [['Second worker']];
     render(<PdfReader key="again" src="/rules/z.pdf" title="Z rules" />);
-    await act(async () => {});
-    expect(screen.getAllByText(/couldn’t be shown here/)).toHaveLength(2);
+    expect(await screen.findByText('Second worker')).toBeInTheDocument();
+    expect(ports).toHaveLength(2);
+    expect(pdf.workers).toHaveLength(2);
+    expect(screen.getAllByText(/couldn’t be shown here/)).toHaveLength(1);
+    act(() => { ports[1].dispatchEvent(new Event('error')); });
+    expect(await screen.findAllByText(/couldn’t be shown here/)).toHaveLength(2);
   });
 });

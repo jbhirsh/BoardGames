@@ -84,7 +84,7 @@ test('a rate-limited question comes back to the box and Retry asks it again', as
   await expect(page.getByText(question)).toHaveCount(1);
 });
 
-test('the daily cap says the assistant is done for today, not to wait a minute', async ({ page }) => {
+test('the daily cap says the assistant is resting for today, by the box, not to wait a minute', async ({ page }) => {
   await page.route('**/api/chat', (route) =>
     route.fulfill({
       status: 429,
@@ -97,7 +97,11 @@ test('the daily cap says the assistant is done for today, not to wait a minute',
   await page.getByPlaceholder('Ask a rules question...').fill('Does everyone answer each question?');
   await page.getByRole('button', { name: 'Send' }).click();
 
-  await expect(page.getByRole('alert')).toHaveText(/reached its limit for today\. The rulebook still works\./);
+  // Said by the chat's live region by the box, its notice no live region of its own.
+  await expect(page.getByText('The assistant is resting for today. The rulebook below still works.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Retry' })).toHaveCount(0);
+  await expect(page.getByPlaceholder('Ask a rules question...')).toHaveValue('Does everyone answer each question?');
 });
 
 test('under a players filter, Rules opens the add-on the game fits through', async ({ page }) => {

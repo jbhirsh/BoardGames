@@ -145,6 +145,63 @@ test('a rulebook opened once reads on a phone with no network', async ({ page, c
   await expect(reader.getByRole('status')).toHaveText(/^1 of \d+ · page \d+$/);
 });
 
+test('offline on a rules page, the chat says the assistant needs a connection and waits for one', async ({ page, context }) => {
+  await page.goto('/');
+  await controlled(page);
+  await page.goto('/rules/catan');
+  // The rulebook drawn and saved first, so it still works offline, as the
+  // chat says (one not saved couldn't draw the pages it hasn't fetched).
+  await expect(page.getByRole('region', { name: 'Catan rules' }).getByRole('button', { name: 'Search' })).toBeEnabled();
+  await saved(page, '/rules/catan.pdf');
+  await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
+  const send = page.getByRole('button', { name: 'Send' });
+  const starter = page.getByRole('group', { name: 'Try asking' }).getByRole('button').first();
+  await expect(starter).toBeEnabled();
+
+  await goOffline(context);
+  const reason = "You're offline — the assistant needs a connection. The rulebook below still works.";
+  await expect(page.getByText(reason)).toBeVisible();
+  await page.getByPlaceholder('Ask a rules question...').fill('Can I build on the coast?');
+  await expect(send).toBeDisabled();
+  await expect(send).toHaveAccessibleDescription(reason);
+  await expect(starter).toBeDisabled();
+
+  await goOnline(context);
+  await expect(page.getByText(reason)).toHaveCount(0);
+  await expect(send).toBeEnabled();
+  await expect(starter).toBeEnabled();
+});
+
+test('a rulebook never opened says offline that it isn\'t saved, with no dead links to it', async ({ page, context }) => {
+  await page.goto('/');
+  await controlled(page);
+  await goOffline(context);
+
+  await page.goto('/rules/azul');
+  await expect(page.getByRole('heading', { level: 1, name: 'Azul' })).toBeVisible();
+  await expect(page.getByText('Not saved on this device yet. Open it once with signal.')).toBeVisible();
+  await expect(page.getByText(/couldn’t be shown here/)).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Download PDF' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Open PDF' })).toHaveCount(0);
+  // Nothing to search either.
+  await expect(page.getByRole('search')).toHaveCount(0);
+});
+
+test('a rulebook that failed offline loads by itself when the network comes back', async ({ page, context }) => {
+  await page.goto('/');
+  await controlled(page);
+  await goOffline(context);
+  await page.goto('/rules/azul');
+  const notSaved = page.getByText('Not saved on this device yet. Open it once with signal.');
+  await expect(notSaved).toBeVisible();
+
+  await goOnline(context);
+  await expect(page.getByRole('region', { name: 'Azul rules' }).getByRole('button', { name: 'Search' })).toBeEnabled();
+  await expect(notSaved).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Download PDF' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Open PDF' })).toBeVisible();
+});
+
 test('the saved rulebook answers byte ranges the way the server does', async ({ page }) => {
   await page.goto('/rules/azul');
   await controlled(page);

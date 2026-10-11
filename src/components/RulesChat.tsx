@@ -1,10 +1,12 @@
-import { useState, useEffect, useEffectEvent, useRef, createContext, useContext } from 'react';
+import { useState, useEffect, useEffectEvent, useId, useLayoutEffect, useRef, createContext, useContext } from 'react';
 import type { ComponentProps, FormEvent, MouseEvent, ReactNode } from 'react';
 import * as Sentry from '@sentry/react';
 import { Link } from 'react-router';
 import Markdown, { type Components } from 'react-markdown';
 import { AiRulesIcon } from './Icons';
+import Notice from './Notice';
 import { citingClause } from '../utils/citeMatch';
+import { useOnline } from '../hooks/useOnline';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -23,8 +25,24 @@ const STALL_MS = 30_000;
 
 const FAILED = 'Sorry, something went wrong. Please try again.';
 const RATE_LIMITED = 'Too many questions just now. Wait a minute, then try again.';
-const DAILY_LIMITED = 'The rules assistant has reached its limit for today. The rulebook still works.';
 const TIMED_OUT = 'That took too long to answer. Please try again.';
+
+/**
+ * Why the assistant can't answer at all just now, as against a question
+ * that failed: no network (the browser says so, or a request found none),
+ * or the site's daily cap (api/chat.ts). Said by the box, not in the
+ * conversation, and nothing to report.
+ */
+type Unavailable = 'offline' | 'resting';
+
+const UNAVAILABLE: Record<Unavailable, string> = {
+  offline: "You're offline — the assistant needs a connection.",
+  resting: 'The assistant is resting for today.',
+};
+// What still works: at the cap, the rulebook, unless it can't be shown
+// either; offline, only a rulebook saved on this device, since one opened
+// online but not saved can't draw the pages it hasn't fetched.
+const STILL_WORKS = ' The rulebook below still works.';
 
 /** Whether a 429 is the site-wide daily cap rather than the per-minute limit. */
 async function isDailyLimit(response: Response): Promise<boolean> {
@@ -119,8 +137,13 @@ const ANSWER_COMPONENTS: Components = { a: AnswerLink };
  * the tab on screen; each answer keeps the one it was asked on and hands it
  * to `linksFor` and `citeLinks`, since the panel stays as tabs change.
  * `onAnswer` hears each answer once it has come in whole, with its tab.
+ * `rulebookFailed` says the rulebook below can't be shown, so a notice that
+ * the assistant can't answer doesn't point to it, and `rulebookSaved`
+ * whether it is saved on this device, without which the offline notice
+ * doesn't either: 'asking' while the page asks again, which holds back a
+ * notice about to appear until it can be said whole.
  */
-export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFor, citeLinks, isCitation = NO_CITATIONS, onCite, onAnswer, starters = [] }: {
+export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFor, citeLinks, isCitation = NO_CITATIONS, onCite, onAnswer, starters = [], rulebookFailed = false, rulebookSaved = false }: {
   slug: string;
   gameName: string;
   parts?: string[];
@@ -132,6 +155,8 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
   onCite?: (href: string, quote: string) => boolean;
   onAnswer?: (answer: string, tab?: string) => void;
   starters?: string[];
+  rulebookFailed?: boolean;
+  rulebookSaved?: boolean | 'asking';
 }) {
   const { isOpen } = useContext(ChatContext);
   const [messages, setMessages] = useState<Message[]>([
@@ -139,12 +164,34 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  // Set by the last question asked, cleared by the next.
+  const [unavailable, setUnavailable] = useState<Unavailable | null>(null);
+  // While the browser says it is offline nothing is sent, and the box says why.
+  const online = useOnline();
+  const shown = online ? unavailable : 'offline';
+  const statusId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Gone offline with Send, a starter or Retry in focus, which going offline
+  // turns off, the person goes to the box, rather than left on a button
+  // that does nothing (or, as the browser moves focus off it, nowhere).
+  // Before paint, while focus is still on the button.
+  useLayoutEffect(() => {
+    const at = document.activeElement;
+    if (!online && at instanceof HTMLButtonElement && at.disabled && panelRef.current?.contains(at)) {
+      inputRef.current?.focus({ preventScroll: true });
+    }
+  }, [online]);
   // The request in flight, aborted if the page goes away under it.
   const requestRef = useRef<AbortController | null>(null);
   useEffect(() => () => requestRef.current?.abort(), []);
+  // Back online, a request that found no network may be sent again.
+  useEffect(() => {
+    const back = () => setUnavailable((u) => (u === 'offline' ? null : u));
+    window.addEventListener('online', back);
+    return () => window.removeEventListener('online', back);
+  }, []);
 
   useEffect(() => {
     const el = messagesContainerRef.current;
@@ -167,12 +214,13 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
 
   /** `fromBox` is false for a starter, which leaves whatever was typed alone. */
   async function ask(userMsg: string, fromBox = true) {
-    if (!userMsg || isLoading) return;
+    if (!userMsg || isLoading || !online) return;
 
     // A retry replaces the notice the last attempt left.
     const prior = messages.filter((m) => !m.error);
     setMessages([...prior, { role: 'user', content: userMsg }]);
     if (fromBox) setInput('');
+    setUnavailable(null);
     setIsLoading(true);
 
     const history = prior
@@ -202,19 +250,38 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
       setInput((current) => current || userMsg);
       failed = true;
     };
+    // The same, with the reason said by the box instead.
+    const refuse = (why: Unavailable) => {
+      setMessages(prior);
+      setInput((current) => current || userMsg);
+      setUnavailable(why);
+      failed = true;
+    };
+    // Whether any of the answer has come in: a network lost before it did
+    // is no network at all, one lost after it is a broken answer.
+    let received = false;
+    // Whether the request itself failed (fetch, or reading the stream), the
+    // only failure the network can be blamed for: any other is a fault of
+    // ours, and goes to Sentry.
+    let lost = false;
+    const network = <T,>(request: Promise<T>) => request.catch((err: unknown) => {
+      lost = true;
+      throw err;
+    });
 
     try {
-      const response = await fetch('/api/chat', {
+      const response = await network(fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ slug, message: userMsg, history, ...(parts.length > 0 ? { parts } : {}) }),
         signal: controller.signal,
-      });
+      }));
 
       if (!response.ok) {
         // A 429 is the rate limiter doing its job, not a fault to report.
         if (response.status === 429) {
-          fail((await isDailyLimit(response)) ? DAILY_LIMITED : RATE_LIMITED);
+          if (await isDailyLimit(response)) refuse('resting');
+          else fail(RATE_LIMITED);
         } else {
           Sentry.captureMessage(`rules chat request failed: HTTP ${response.status}`, {
             level: 'error',
@@ -242,9 +309,10 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
       // holds those bytes for the next chunk instead of garbling them, and
       // the final decode() flushes any the stream cut off.
       while (true) {
-        const { done, value } = await reader.read();
+        const { done, value } = await network(reader.read());
         if (done) break;
         stillAlive();
+        received = true;
         append(decoder.decode(value, { stream: true }));
       }
       const tail = decoder.decode();
@@ -252,7 +320,11 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
     } catch (err) {
       // Aborted by leaving the page: nobody is waiting for an answer.
       if (controller.signal.aborted && !timedOut) return;
-      if (timedOut) {
+      // fetch rejects with a TypeError when there is no network, as a
+      // stream cut off does; offline, whatever the request met, that is why.
+      if (lost && (!navigator.onLine || (!received && err instanceof TypeError))) {
+        refuse('offline');
+      } else if (timedOut) {
         Sentry.captureMessage('rules chat request timed out', { level: 'warning', tags: { slug } });
         fail(TIMED_OUT);
       } else {
@@ -283,6 +355,11 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
 
   // Before the first question the panel shrinks to the greeting and starters.
   const fresh = messages.length === 1 && !isLoading;
+  // Gone offline while the page asks whether the rulebook is saved: said
+  // once that is known, not said and then added to. A no-network notice
+  // already up keeps what it said meanwhile.
+  const holding = shown === 'offline' && rulebookSaved === 'asking' && unavailable !== 'offline';
+  const stillWorks = !rulebookFailed && (shown === 'resting' || rulebookSaved === true);
 
   return (
     <div ref={panelRef} className={`rules-chat-panel${fresh ? ' rules-chat-panel-fresh' : ''}`}>
@@ -294,7 +371,7 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
             {msg.error ? (
               <div className="rules-chat-bubble rules-chat-error">
                 <p role="alert">{msg.content}</p>
-                <button type="button" className="rules-chat-retry" onClick={() => void ask(input.trim())} disabled={!input.trim()}>
+                <button type="button" className="rules-chat-retry" onClick={() => void ask(input.trim())} disabled={!input.trim() || !online} aria-describedby={online ? undefined : statusId}>
                   Retry
                 </button>
               </div>
@@ -314,7 +391,7 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
         {fresh && starters.length > 0 && (
           <div className="rules-chat-starters" role="group" aria-label="Try asking">
             {starters.map((q) => (
-              <button key={q} type="button" className="rules-chat-starter" onClick={() => void ask(q, false)}>{q}</button>
+              <button key={q} type="button" className="rules-chat-starter" onClick={() => void ask(q, false)} disabled={!online} aria-describedby={online ? undefined : statusId}>{q}</button>
             ))}
           </div>
         )}
@@ -322,6 +399,22 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
           <div className="rules-chat-msg rules-chat-msg-assistant">
             <div className="rules-chat-bubble rules-chat-thinking">Thinking...</div>
           </div>
+        )}
+      </div>
+      {/* In the panel while empty too, so what it comes to say is read out:
+          the one live region for it, so its notice isn't one as well. */}
+      <div id={statusId} className="rules-chat-status" aria-live="polite">
+        {shown && !holding && (
+          <Notice
+            tone="info"
+            live={false}
+            // Retry for a request that found no network while the browser
+            // said it had one (a captive or dead Wi-Fi), which may come back
+            // without telling it.
+            action={shown === 'offline' && online && input.trim() ? { label: 'Retry', onClick: () => void ask(input.trim()) } : undefined}
+          >
+            {UNAVAILABLE[shown]}{stillWorks && STILL_WORKS}
+          </Notice>
         )}
       </div>
       <form className="rules-chat-input" onSubmit={handleSend}>
@@ -333,7 +426,7 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
           placeholder="Ask a rules question..."
           disabled={isLoading}
         />
-        <button type="submit" disabled={!input.trim() || isLoading}>
+        <button type="submit" disabled={!input.trim() || isLoading || !online} aria-describedby={online ? undefined : statusId}>
           Send
         </button>
       </form>

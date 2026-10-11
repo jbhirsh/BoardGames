@@ -78,7 +78,19 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
     only near the screen, with a search that marks matches in place. Above
     it, "Download PDF" (and the file's size) and "Open PDF", the browser's
     own viewer in a new tab for its zoom, thumbnails and printing; a printed
-    rules page shows a note saying so in place of the reader. pdf.js's
+    rules page shows a note saying so in place of the reader. A rulebook
+    that fails to load is checked (`outOfReach`, `src/pdfjs/saved.ts`, the
+    same saved check the warming uses, without loading pdf.js): not saved
+    by the service worker, and offline or the PDF's HEAD (the one that
+    asked its size, given up after 5 s) finding no network, it says "Not
+    saved on this device yet. Open it once with signal." in an info
+    `Notice` and the two links, dead then, go; otherwise it says to
+    download the PDF instead. Either way the reader's search goes too. The
+    failure is the open tab's alone: another tab, or the same one opened
+    again, gets a fresh reader, and when the browser comes back online a
+    failed one is remounted (on a new pdf.js worker if the shared one
+    failed to start, its file not saved yet), so a rulebook that failed
+    offline loads by itself. pdf.js's
     modern build is used with the few newer JavaScript methods it calls
     polyfilled (`src/pdfjs/polyfills.ts`, also loaded first in its worker,
     `src/pdfjs/worker.ts`); a Vite plugin copies its WebAssembly image
@@ -196,7 +208,24 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   is reading for the tab on screen (`chatScope`) and, until the first
   question, offers three starters shaped by that tab
   (`starterQuestions`). A game with a score calculator links it beside the
-  chat's button.
+  chat's button. When the assistant can't answer at all, an info `Notice`
+  says why on a strip above the chat's box (the one live region for it,
+  kept in the panel while empty; the `Notice` there passes `live={false}`
+  so it isn't announced twice), not a red error in the conversation:
+  offline (`hooks/useOnline`, the browser's online/offline events) Send,
+  the starters and an error's Retry are off, described by it ("You're
+  offline — the assistant needs a connection"), and focus on one of them
+  moves to the box; a request that finds no network though the browser
+  says online (a captive or dead Wi-Fi: `fetch` or the stream's `read`
+  rejecting with a TypeError before any bytes) says the same, with Retry
+  and unreported, while any other error, a TypeError of our own included,
+  goes to Sentry; the daily cap says the assistant is resting for today.
+  The cap adds "The rulebook below still works" unless the reader failed
+  too; offline adds it only for a rulebook saved on this device
+  (`rulebookSaved`, which the rules page asks again as the browser goes
+  offline, since one read online is saved as it is read, holding back a
+  notice about to appear until it can be said whole). Other failures keep
+  the red error and Retry (#198).
   A game's `houseRules` (Hogwarts Battle's) are listed in a folded section
   above the rulebook on every one of its tabs; the assistant still answers
   from the printed rules only.
@@ -233,7 +262,9 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
 - **`components/`** — presentational + interactive UI (grid/list views, filter
   bar, random picker, rules page, rules chat, word checker, score calculator,
   wishlist + voting). `Icons.tsx` holds inline SVGs. `Notice` is the one
-  info / warning / error message (icon, one line, optional action), coloured
+  info / warning / error message (icon, one line, optional action; a
+  status, or an alert for an error, unless `live={false}` inside a live
+  region that announces it already), coloured
   by the `--info-`, `--warn-` and `--danger-` tokens, which a test holds to
   4.5:1 in both themes; use it rather than a one-off coloured box. The filter bar's
   choices are drawn once (`FilterBar/FilterOptions.tsx`) for two homes: the
@@ -377,7 +408,7 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   `_lib/rateLimit.ts`, and capped at 500 questions a day across every caller
   (a fixed-key limiter checked last, so per-IP refusals and bad requests
   don't spend it; its 429 carries `code: 'daily-limit'`, which `RulesChat`
-  words as done for today). It is the only paid API, so the daily limiter
+  words as resting for today). It is the only paid API, so the daily limiter
   fails closed (503) when Redis errors or times out, with a 2 s Upstash
   timeout so an outage refuses quickly; the per-IP limiter, like every other
   endpoint's, fails open. Production reports a missing KV config, which
@@ -456,7 +487,8 @@ most of their meaningful words, marked only with at least three of them,
 two beyond words every rulebook uses, and half; widened to whole sentences,
 never across a heading's change of type; otherwise the page is only
 ringed). A click meant for a new tab, or a
-reader that failed, opens the PDF itself. A bare page with several
+reader on screen that failed, opens the PDF itself (a fresh reader, on
+another tab or remounted when the network comes back, takes them again). A bare page with several
 rulebooks read, or a name it wasn't sent, stays plain text. The eval grades
 facts with citations stripped, and its `citation` entries check the
 citations alone.
