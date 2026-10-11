@@ -4,18 +4,20 @@ import { MemoryRouter, Routes, Route } from 'react-router';
 import RulesPage from '../components/RulesPage';
 import { FROM_LIST } from '../utils/fromList';
 import { renderRouted } from './routed';
+import { PROBE_MS } from '../pdfjs/saved';
 
 // pdf.js needs a real browser; PdfReader.test.tsx covers the reader itself.
-// This one says it has failed when a test sets `reader.fails`.
-const reader = vi.hoisted(() => ({ fails: false }));
+// This one says it has failed when a test sets `reader.fails`, and throws
+// for a rulebook whose path holds `reader.broken`.
+const reader = vi.hoisted(() => ({ fails: false, broken: 'vampire' as string | null }));
 vi.mock('../components/PdfReader', async () => {
   const { useEffect } = await import('react');
   return {
-    default: function PdfReader({ src, title, jump, warm, onFail }: { src: string; title: string; jump?: { page: number; key: string; place?: string; quote?: string }; warm?: readonly { src: string; page: number }[]; onFail?: () => void }) {
-      if (src.includes('vampire')) throw new Error('reader broke');
+    default: function PdfReader({ src, title, jump, warm, onFail }: { src: string; title: string; jump?: { page: number; key: string; place?: string; quote?: string }; warm?: readonly { src: string; page: number }[]; onFail?: (src: string) => void }) {
+      if (reader.broken !== null && src.includes(reader.broken)) throw new Error('reader broke');
       useEffect(() => {
-        if (reader.fails) onFail?.();
-      }, [onFail]);
+        if (reader.fails) onFail?.(src);
+      }, [onFail, src]);
       return <section aria-label={title} data-src={src} data-jump={jump && `${jump.page}:${jump.key}`} data-place={jump?.place} data-quote={jump?.quote} data-warm={warm?.map((w) => `${w.src}:${w.page}`).join(' ')} />;
     },
   };
@@ -376,8 +378,15 @@ describe('RulesPage\'s reader', () => {
 
   it('leaves the size out when the server does not give one', async () => {
     const fetchSpy = headWith({ 'content-length': '5000000' }, false);
-    renderAt('/rules/7-wonders');
+    const { unmount } = renderAt('/rules/7-wonders');
     await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+    await act(async () => {});
+    expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAccessibleDescription('');
+    unmount();
+    // Nor a size of nothing.
+    fetchSpy.mockResolvedValue({ ok: true, headers: new Headers({ 'content-length': '0' }) } as Response);
+    renderAt('/rules/7-wonders');
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2));
     await act(async () => {});
     expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAccessibleDescription('');
   });
@@ -409,6 +418,266 @@ describe('RulesPage\'s reader', () => {
     expect(await screen.findByText(/couldn’t be shown here/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Download PDF' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+  });
+
+  describe('offline', () => {
+    const NOT_SAVED = 'Not saved on this device yet. Open it once with signal.';
+    const OFFLINE = "You're offline — the assistant needs a connection.";
+    const STILL_WORKS = ' The rulebook below still works.';
+    const VAMPIRE = '/rules/one-night-werewolf.vampire.pdf';
+    /** The service worker in charge, with these rulebooks saved. */
+    const savedHere = (...saved: string[]) => {
+      Object.defineProperty(navigator, 'serviceWorker', { value: { controller: {} }, configurable: true });
+      const match = vi.fn(async (src: string) => (saved.includes(src) ? new Response('%PDF') : undefined));
+      vi.stubGlobal('caches', { match });
+      return match;
+    };
+    /** Says the browser is online or not, and tells the page, as the browser does. */
+    const goOnline = (online: boolean) => {
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(online);
+      act(() => { window.dispatchEvent(new Event(online ? 'online' : 'offline')); });
+    };
+    /** The chat's live region by its box, where it says why it can't answer. */
+    const chatSays = () => screen.getByPlaceholderText('Ask a rules question...').closest('form')!.previousElementSibling as HTMLElement;
+    const tab = (name: RegExp) => within(screen.getByRole('navigation', { name: 'Rulebooks' })).getByRole('link', { name });
+
+    afterEach(() => {
+      delete (navigator as { serviceWorker?: unknown }).serviceWorker;
+      reader.broken = 'vampire';
+      vi.useRealTimers();
+    });
+
+    it('says a rulebook not saved on this device needs signal, and drops its dead links', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+      savedHere('/rules/catan.pdf');
+      renderAt('/rules/one-night-werewolf/vampire');
+
+      expect(await screen.findByRole('status')).toHaveTextContent(NOT_SAVED);
+      expect(screen.getByRole('status')).toHaveClass('notice-info');
+      expect(screen.queryByText(/couldn’t be shown here/)).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Download PDF' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Open PDF' })).not.toBeInTheDocument();
+      expect(screen.queryByText(/To print this rulebook/)).not.toBeInTheDocument();
+      // The chat's own notice doesn't send them to it.
+      fireEvent.click(screen.getByRole('button', { name: /ai rules assistant/i }));
+      expect(screen.getByText(OFFLINE, { exact: true })).toBeInTheDocument();
+    });
+
+    it('says it only of the tab whose rulebook it is, and sends the chat to one that shows and is saved', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+      savedHere('/rules/one-night-werewolf.pdf');
+      renderAt('/rules/one-night-werewolf/vampire');
+      expect(await screen.findByText(NOT_SAVED)).toBeInTheDocument();
+
+      fireEvent.click(within(screen.getByRole('navigation', { name: 'Rulebooks' })).getAllByRole('link')[0]);
+      expect(await screen.findByRole('region', { name: /rules$/ })).toHaveAttribute('data-src', '/rules/one-night-werewolf.pdf');
+      expect(screen.queryByText(NOT_SAVED)).not.toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Download PDF' })).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: /ai rules assistant/i }));
+      await vi.waitFor(() => expect(chatSays()).toHaveTextContent(OFFLINE + STILL_WORKS));
+    });
+
+    it('doesn\'t send the chat to a rulebook that shows but isn\'t saved, which can\'t draw the pages it hasn\'t fetched', async () => {
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      headWith({});
+      const match = savedHere();
+      renderAt('/rules/catan');
+      await screen.findByRole('region', { name: 'Catan rules' });
+      fireEvent.click(screen.getByRole('button', { name: /ai rules assistant/i }));
+      await vi.waitFor(() => expect(match).toHaveBeenCalledWith('/rules/catan.pdf', expect.anything()));
+      await vi.waitFor(() => expect(chatSays()).toHaveTextContent(new RegExp(`^${OFFLINE}$`)));
+    });
+
+    it('asks again as the browser goes offline, saying the notice whole once it knows', async () => {
+      headWith({});
+      renderAt('/rules/catan');
+      await screen.findByRole('region', { name: 'Catan rules' });
+      fireEvent.click(screen.getByRole('button', { name: /ai rules assistant/i }));
+      await act(async () => {});
+      // Saved in the background since it was opened.
+      const match = savedHere('/rules/catan.pdf');
+      goOnline(false);
+      // Not said and then added to: nothing until it is known.
+      expect(chatSays()).toBeEmptyDOMElement();
+      await vi.waitFor(() => expect(chatSays()).toHaveTextContent(OFFLINE + STILL_WORKS));
+      expect(match).toHaveBeenCalledWith('/rules/catan.pdf', expect.anything());
+    });
+
+    it('keeps what the notice says while another tab\'s rulebook is asked after', async () => {
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      headWith({});
+      let answer: (saved: boolean) => void = () => {};
+      savedHere('/rules/catan.pdf');
+      renderAt('/rules/catan');
+      await screen.findByRole('region', { name: 'Catan rules' });
+      fireEvent.click(screen.getByRole('button', { name: /ai rules assistant/i }));
+      await vi.waitFor(() => expect(chatSays()).toHaveTextContent(OFFLINE + STILL_WORKS));
+
+      vi.stubGlobal('caches', { match: () => new Promise((resolve) => { answer = (saved) => resolve(saved ? new Response('%PDF') : undefined); }) });
+      fireEvent.click(tab(/Cities & Knights/));
+      expect(await screen.findByRole('region', { name: /Cities & Knights rules/ })).toBeInTheDocument();
+      expect(chatSays()).toHaveTextContent(OFFLINE + STILL_WORKS);
+      await act(async () => answer(false));
+      expect(chatSays()).toHaveTextContent(new RegExp(`^${OFFLINE}$`));
+    });
+
+    it('forgets a rulebook\'s failure once another tab is open, so going back gives it a fresh reader', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+      savedHere();
+      renderAt('/rules/one-night-werewolf/vampire');
+      expect(await screen.findByText(NOT_SAVED)).toBeInTheDocument();
+
+      fireEvent.click(within(screen.getByRole('navigation', { name: 'Rulebooks' })).getAllByRole('link')[0]);
+      await screen.findByRole('region', { name: /rules$/ });
+      // Saved meanwhile (another window read it), so it loads offline now.
+      reader.broken = null;
+      savedHere(VAMPIRE);
+      fireEvent.click(tab(/Vampire/));
+      expect(await screen.findByRole('region', { name: /Vampire rules/ })).toHaveAttribute('data-src', VAMPIRE);
+      expect(screen.queryByText(NOT_SAVED)).not.toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Download PDF' })).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: /ai rules assistant/i }));
+      await vi.waitFor(() => expect(chatSays()).toHaveTextContent(OFFLINE + STILL_WORKS));
+    });
+
+    it('gives a rulebook that failed offline another go when the network comes back', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+      renderAt('/rules/one-night-werewolf/vampire');
+      expect(await screen.findByText(NOT_SAVED)).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Download PDF' })).not.toBeInTheDocument();
+
+      reader.broken = null;
+      fetchSpy.mockResolvedValue({ ok: true, headers: new Headers({ 'content-length': '2048' }) } as Response);
+      goOnline(true);
+      expect(await screen.findByRole('region', { name: /Vampire rules/ })).toHaveAttribute('data-src', VAMPIRE);
+      expect(screen.queryByText(NOT_SAVED)).not.toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Download PDF' })).toBeInTheDocument();
+      // Its size asked afresh, now that it can be.
+      await vi.waitFor(() => expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAccessibleDescription('2 KB'));
+    });
+
+    it('judges a failure on the network\'s return by that attempt\'s own HEAD, not the last one\'s', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      // A dead Wi-Fi, which the browser calls online, then the network back.
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new TypeError('Failed to fetch'));
+      fetchSpy.mockResolvedValue({ ok: true, headers: new Headers() } as Response);
+      renderAt('/rules/one-night-werewolf/vampire');
+      expect(await screen.findByText(NOT_SAVED)).toBeInTheDocument();
+
+      // The reader still can't show it, but now for want of nothing the
+      // network could give: the note that says to download it, and the links.
+      goOnline(true);
+      expect(await screen.findByText(/couldn’t be shown here/)).toBeInTheDocument();
+      expect(screen.queryByText(NOT_SAVED)).not.toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Download PDF' })).toBeInTheDocument();
+    });
+
+    it('pays no heed to the saved check of a tab left before it answered', async () => {
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      headWith({});
+      Object.defineProperty(navigator, 'serviceWorker', { value: { controller: {} }, configurable: true });
+      let late: (saved: boolean) => void = () => {};
+      vi.stubGlobal('caches', {
+        match: (src: string) => (src === '/rules/catan.pdf'
+          ? new Promise((resolve) => { late = (saved) => resolve(saved ? new Response('%PDF') : undefined); })
+          : Promise.resolve(undefined)),
+      });
+      renderAt('/rules/catan');
+      await screen.findByRole('region', { name: 'Catan rules' });
+      fireEvent.click(screen.getByRole('button', { name: /ai rules assistant/i }));
+      fireEvent.click(tab(/Cities & Knights/));
+      await vi.waitFor(() => expect(chatSays()).toHaveTextContent(new RegExp(`^${OFFLINE}$`)));
+      await act(async () => late(true));
+      expect(chatSays()).toHaveTextContent(new RegExp(`^${OFFLINE}$`));
+    });
+
+    it('says so again if it fails again, and no longer listens once it loads', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+      renderAt('/rules/one-night-werewolf/vampire');
+      expect(await screen.findByText(NOT_SAVED)).toBeInTheDocument();
+      const heads = () => fetchSpy.mock.calls.filter(([, init]) => init?.method === 'HEAD').length;
+      const before = heads();
+
+      // Back, it says, but with nothing coming through.
+      goOnline(true);
+      expect(await screen.findByText(NOT_SAVED)).toBeInTheDocument();
+      expect(heads()).toBeGreaterThan(before);
+
+      reader.broken = null;
+      goOnline(true);
+      expect(await screen.findByRole('region', { name: /Vampire rules/ })).toBeInTheDocument();
+      const remove = vi.spyOn(window, 'removeEventListener');
+      const add = vi.spyOn(window, 'addEventListener');
+      goOnline(true);
+      expect(screen.getByRole('region', { name: /Vampire rules/ })).toBeInTheDocument();
+      expect(add).not.toHaveBeenCalledWith('online', expect.anything());
+      expect(remove).not.toHaveBeenCalledWith('online', expect.anything());
+    });
+
+    it('says nothing in the reader\'s place until it knows why it failed, and counts no answer in time as no network', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      // The network neither answers nor fails.
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockReturnValue(new Promise<Response>(() => {}));
+      renderAt('/rules/one-night-werewolf/vampire');
+      await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledWith(VAMPIRE, expect.objectContaining({ method: 'HEAD' })));
+      await act(async () => {});
+      expect(screen.queryByText(/couldn’t be shown here/)).not.toBeInTheDocument();
+      expect(screen.queryByText(NOT_SAVED)).not.toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Download PDF' })).toBeInTheDocument();
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(PROBE_MS); });
+      expect(screen.getByText(NOT_SAVED)).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Download PDF' })).not.toBeInTheDocument();
+    });
+
+    it('counts a network that doesn\'t answer as none, though the browser says it is online, asking it once', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+      renderAt('/rules/one-night-werewolf/vampire');
+
+      expect(await screen.findByRole('status')).toHaveTextContent(NOT_SAVED);
+      // The HEAD that asked its size answers for it too.
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(fetchSpy).toHaveBeenCalledWith(VAMPIRE, expect.objectContaining({ method: 'HEAD' }));
+      expect(screen.queryByRole('link', { name: 'Download PDF' })).not.toBeInTheDocument();
+    });
+
+    it('keeps the note and the links for a rulebook saved on this device', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+      const match = savedHere(VAMPIRE);
+      renderAt('/rules/one-night-werewolf/vampire');
+
+      await vi.waitFor(() => expect(match).toHaveBeenCalledWith(VAMPIRE, { cacheName: 'gameroom-rulebooks', ignoreVary: true }));
+      await act(async () => {});
+      expect(screen.getByText(/couldn’t be shown here/)).toBeInTheDocument();
+      expect(screen.queryByText(NOT_SAVED)).not.toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Download PDF' })).toBeInTheDocument();
+    });
+
+    it('keeps the note and the links for a rulebook that fails online', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      const fetchSpy = headWith({});
+      renderAt('/rules/one-night-werewolf/vampire');
+
+      await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+      await act(async () => {});
+      expect(screen.getByText(/couldn’t be shown here/)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Download PDF' })).toBeInTheDocument();
+      expect(screen.queryByText(NOT_SAVED)).not.toBeInTheDocument();
+    });
   });
 
   /** A HEAD for the PDF's size gets no answer; a question gets `answer`. */
@@ -573,6 +842,42 @@ describe('RulesPage\'s reader', () => {
     const link = await screen.findByRole('link', { name: 'Vampire p. 2' });
     expect(fireEvent.click(link)).toBe(true);
     expect(router.state.location.search).toBe('');
+  });
+
+  it('takes citations in the reader again once a rulebook that failed offline loads on the network\'s return', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    answering('A vampire wakes (Vampire p. 2).');
+    try {
+      const router = renderRouted(<RulesPage />, ['/rules/one-night-werewolf/vampire'], '/rules/:slug/:part?');
+      expect(await screen.findByText('Not saved on this device yet. Open it once with signal.')).toBeInTheDocument();
+
+      reader.broken = null;
+      onLine.mockReturnValue(true);
+      act(() => { window.dispatchEvent(new Event('online')); });
+      const shown = await screen.findByRole('region', { name: /Vampire rules/ });
+      ask();
+      const link = await screen.findByRole('link', { name: 'Vampire p. 2' });
+      expect(fireEvent.click(link)).toBe(false);
+      expect(router.state.location).toMatchObject({ pathname: '/rules/one-night-werewolf/vampire', search: '?page=2' });
+      expect(screen.getByRole('region', { name: /Vampire rules/ })).toBe(shown);
+      expect(shown).toHaveAttribute('data-jump', expect.stringMatching(/^2:/));
+    } finally {
+      reader.broken = 'vampire';
+    }
+  });
+
+  it('takes citations in the reader again on another tab once one has failed', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    answering('Everyone wakes in order (p. 3).');
+    const router = renderRouted(<RulesPage />, ['/rules/one-night-werewolf/vampire'], '/rules/:slug/:part?');
+    await screen.findByText(/couldn’t be shown here/);
+    fireEvent.click(within(screen.getByRole('navigation', { name: 'Rulebooks' })).getAllByRole('link')[0]);
+    await screen.findByRole('region', { name: /rules$/ });
+    ask();
+    const link = await screen.findByRole('link', { name: /p\. 3/ });
+    expect(fireEvent.click(link)).toBe(false);
+    expect(router.state.location.search).toBe('?page=3');
   });
 
   it('opens a citation in place on a desktop too, leaving a new tab to a modified click', async () => {

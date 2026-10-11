@@ -38,6 +38,14 @@ function setup(parts?: string[], scope?: string) {
   );
 }
 
+/**
+ * The live region by the box, where the chat says why it can't answer: the
+ * one live region for that, so the notice in it isn't one as well.
+ */
+function statusRegion(): HTMLElement {
+  return screen.getByPlaceholderText('Ask a rules question...').closest('form')!.previousElementSibling as HTMLElement;
+}
+
 function openPanel() {
   fireEvent.click(screen.getByRole('button', { name: /ai rules assistant/i }));
 }
@@ -422,6 +430,21 @@ describe('RulesChat', () => {
     );
   });
 
+  it('reports a fault of ours that is no network\'s doing, though it is a TypeError before any answer', async () => {
+    // A 200 with no body to read: the code's fault, not the visitor's network.
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, body: null }) as unknown as Response));
+    setup();
+    openPanel();
+    send('How many players?');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Sorry, something went wrong. Please try again.');
+    expect(statusRegion()).toBeEmptyDOMElement();
+    expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(
+      expect.any(TypeError),
+      expect.objectContaining({ tags: { slug: 'cranium' } }),
+    );
+  });
+
   it('shows the error bubble and reports to Sentry when fetch throws', async () => {
     const boom = new Error('network down');
     vi.stubGlobal('fetch', vi.fn(async () => { throw boom; }));
@@ -472,7 +495,7 @@ describe('RulesChat', () => {
     expect(vi.mocked(Sentry.captureMessage)).not.toHaveBeenCalled();
   });
 
-  it('says the assistant is done for the day when the daily cap answers', async () => {
+  it('says the assistant is resting for the day when the daily cap answers, by the box and not as an error', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => ({
       ok: false,
       status: 429,
@@ -482,7 +505,15 @@ describe('RulesChat', () => {
     openPanel();
     send('How many players?');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('The rules assistant has reached its limit for today. The rulebook still works.');
+    await waitFor(() => expect(statusRegion()).toHaveTextContent('The assistant is resting for today. The rulebook below still works.'));
+    expect(statusRegion().firstElementChild).toHaveClass('notice-info');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    // Asking again today won't help, so there is no Retry; the question
+    // is back in the box, and Send stays for later in the day.
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Ask a rules question...')).toHaveValue('How many players?');
+    expect(screen.queryByText('How many players?', { selector: '.rules-chat-bubble' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled();
     expect(vi.mocked(Sentry.captureMessage)).not.toHaveBeenCalled();
   });
 
@@ -653,3 +684,317 @@ describe('RulesChat', () => {
   });
 });
 
+describe('RulesChat when the assistant can\'t answer', () => {
+  const OFFLINE = "You're offline — the assistant needs a connection.";
+  const STILL_WORKS = ' The rulebook below still works.';
+
+  /** Says the browser is online or not, and tells the page, as the browser does. */
+  function goOnline(online: boolean) {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(online);
+    act(() => { window.dispatchEvent(new Event(online ? 'online' : 'offline')); });
+  }
+
+  type Rulebook = { rulebookFailed?: boolean; rulebookSaved?: boolean | 'asking' };
+  const panel = (rulebook: Rulebook) => (
+    <RulesChatProvider>
+      <RulesChatToggle />
+      <RulesChatPanel slug="uno" gameName="UNO" starters={['How do you win?']} {...rulebook} />
+    </RulesChatProvider>
+  );
+
+  function withStarters(rulebook: Rulebook = {}) {
+    const view = render(panel(rulebook));
+    openPanel();
+    return { rerender: (next: Rulebook) => view.rerender(panel(next)) };
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('keeps an empty live region by the box until there is something to say', () => {
+    setup();
+    openPanel();
+    expect(statusRegion()).toHaveAttribute('aria-live', 'polite');
+    expect(statusRegion()).toBeEmptyDOMElement();
+  });
+
+  it('says so offline, and turns off Send and the starters with the reason', () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    withStarters();
+
+    expect(statusRegion()).toHaveTextContent(OFFLINE);
+    // Said once, by the region: the notice in it is no live region of its own.
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(statusRegion().firstElementChild).toHaveClass('notice', 'notice-info');
+    fireEvent.change(screen.getByPlaceholderText('Ask a rules question...'), { target: { value: 'How many cards?' } });
+    const sendButton = screen.getByRole('button', { name: 'Send' });
+    expect(sendButton).toBeDisabled();
+    expect(sendButton).toHaveAccessibleDescription(OFFLINE);
+    const starter = screen.getByRole('button', { name: 'How do you win?' });
+    expect(starter).toBeDisabled();
+    expect(starter).toHaveAccessibleDescription(OFFLINE);
+    // Enter in the box sends nothing either.
+    fireEvent.submit(sendButton.closest('form')!);
+    expect(fetchMock).not.toHaveBeenCalled();
+    // The question typed stays for later; nothing to retry.
+    expect(screen.getByPlaceholderText('Ask a rules question...')).toHaveValue('How many cards?');
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+  });
+
+  it('points to the rulebook offline only when it is saved on this device', () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    const { rerender } = withStarters({ rulebookSaved: true });
+    expect(statusRegion()).toHaveTextContent(new RegExp(`^${OFFLINE}${STILL_WORKS}$`));
+    expect(screen.getByRole('button', { name: 'How do you win?' })).toHaveAccessibleDescription(OFFLINE + STILL_WORKS);
+    // One opened online but not saved can't draw the pages it hasn't fetched.
+    rerender({ rulebookSaved: false });
+    expect(statusRegion()).toHaveTextContent(new RegExp(`^${OFFLINE}$`));
+    // Nor one that can't be shown at all, saved or not.
+    rerender({ rulebookSaved: true, rulebookFailed: true });
+    expect(statusRegion()).toHaveTextContent(new RegExp(`^${OFFLINE}$`));
+  });
+
+  it('holds a notice about to appear while the page asks whether the rulebook is saved, then says it whole', () => {
+    const { rerender } = withStarters({ rulebookSaved: false });
+    goOnline(false);
+    // The page asks again as the browser goes offline.
+    rerender({ rulebookSaved: 'asking' });
+    expect(statusRegion()).toBeEmptyDOMElement();
+    // Send is off meanwhile all the same.
+    expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
+    rerender({ rulebookSaved: true });
+    expect(statusRegion()).toHaveTextContent(new RegExp(`^${OFFLINE}${STILL_WORKS}$`));
+  });
+
+  it('keeps a no-network notice already up as it was while the page asks', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    const { rerender } = withStarters({ rulebookSaved: false });
+    fireEvent.click(screen.getByRole('button', { name: 'How do you win?' }));
+    const said = () => statusRegion().querySelector('.notice-text');
+    await waitFor(() => expect(said()).toHaveTextContent(new RegExp(`^${OFFLINE}$`)));
+    goOnline(false);
+    rerender({ rulebookSaved: 'asking' });
+    expect(said()).toHaveTextContent(new RegExp(`^${OFFLINE}$`));
+  });
+
+  it('keeps pointing to the rulebook at the cap while the page asks whether it is saved', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 429, json: async () => ({ code: 'daily-limit' }) }) as Response));
+    withStarters({ rulebookSaved: 'asking' });
+    fireEvent.click(screen.getByRole('button', { name: 'How do you win?' }));
+    await waitFor(() => expect(statusRegion()).toHaveTextContent('The assistant is resting for today.' + STILL_WORKS));
+  });
+
+  it('follows the browser offline and back online', () => {
+    withStarters();
+    fireEvent.change(screen.getByPlaceholderText('Ask a rules question...'), { target: { value: 'How many cards?' } });
+    expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled();
+
+    goOnline(false);
+    expect(statusRegion()).toHaveTextContent(OFFLINE);
+    expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'How do you win?' })).toBeDisabled();
+
+    goOnline(true);
+    expect(statusRegion()).toBeEmptyDOMElement();
+    expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Send' })).not.toHaveAccessibleDescription();
+    expect(screen.getByRole('button', { name: 'How do you win?' })).toBeEnabled();
+  });
+
+  it('moves focus to the box from a button that going offline turns off', () => {
+    withStarters();
+    const box = screen.getByPlaceholderText('Ask a rules question...');
+    fireEvent.change(box, { target: { value: 'How many cards?' } });
+    screen.getByRole('button', { name: 'Send' }).focus();
+    goOnline(false);
+    expect(box).toHaveFocus();
+
+    goOnline(true);
+    screen.getByRole('button', { name: 'How do you win?' }).focus();
+    goOnline(false);
+    expect(box).toHaveFocus();
+  });
+
+  it('leaves focus alone when it is elsewhere', () => {
+    render(
+      <>
+        <button type="button">Elsewhere</button>
+        {panel({})}
+      </>,
+    );
+    openPanel();
+    const elsewhere = screen.getByRole('button', { name: 'Elsewhere' });
+    elsewhere.focus();
+    goOnline(false);
+    expect(elsewhere).toHaveFocus();
+    // Nor from the box itself, which stays on.
+    goOnline(true);
+    const box = screen.getByPlaceholderText('Ask a rules question...');
+    box.focus();
+    goOnline(false);
+    expect(box).toHaveFocus();
+  });
+
+  it('says the same when a request finds no network though the browser says it has one, with Retry', async () => {
+    const fetchMock = vi.fn()
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce(streamResponse(['Seven cards each.']));
+    vi.stubGlobal('fetch', fetchMock);
+    setup();
+    openPanel();
+    send('How many cards?');
+
+    await waitFor(() => expect(statusRegion()).toHaveTextContent(OFFLINE));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Ask a rules question...')).toHaveValue('How many cards?');
+    // The visitor's connection, not a fault of ours.
+    expect(vi.mocked(Sentry.captureException)).not.toHaveBeenCalled();
+    // A captive Wi-Fi still says online, so Send stays.
+    expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled();
+
+    // Asked as typed, less the spaces around it.
+    fireEvent.change(screen.getByPlaceholderText('Ask a rules question...'), { target: { value: ' How many cards? ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(await screen.findByText('Seven cards each.')).toBeInTheDocument();
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).message).toBe('How many cards?');
+    expect(statusRegion()).toBeEmptyDOMElement();
+    expect(screen.getAllByText('How many cards?', { selector: '.rules-chat-bubble' })).toHaveLength(1);
+  });
+
+  it('stops following the browser online and offline once it goes', () => {
+    const added = vi.spyOn(window, 'addEventListener');
+    const removed = vi.spyOn(window, 'removeEventListener');
+    const { unmount } = render(
+      <RulesChatProvider>
+        <RulesChatToggle />
+        <RulesChatPanel slug="uno" gameName="UNO" />
+      </RulesChatProvider>,
+    );
+    openPanel();
+    const following = added.mock.calls.filter(([type]) => type === 'online' || type === 'offline');
+    expect(following.length).toBeGreaterThan(0);
+    unmount();
+    // Every listener it set on the window for them is taken off again,
+    // however many it uses.
+    for (const [type, listener] of following) expect(removed).toHaveBeenCalledWith(type, listener);
+  });
+
+  it('offers Retry only with a question in the box to ask', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    setup();
+    openPanel();
+    send('How many cards?');
+    await waitFor(() => expect(statusRegion()).toHaveTextContent(OFFLINE));
+    fireEvent.change(screen.getByPlaceholderText('Ask a rules question...'), { target: { value: '  ' } });
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+    expect(statusRegion()).toHaveTextContent(OFFLINE);
+  });
+
+  it('drops the no-network notice once the browser is back online', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    setup();
+    openPanel();
+    send('How many cards?');
+    await waitFor(() => expect(statusRegion()).toHaveTextContent(OFFLINE));
+
+    // Gone offline, it says so without a Retry that can't work.
+    goOnline(false);
+    expect(statusRegion()).toHaveTextContent(OFFLINE);
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+
+    goOnline(true);
+    expect(statusRegion()).toBeEmptyDOMElement();
+  });
+
+  it('keeps the cap\'s notice when the browser comes back online', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: false,
+      status: 429,
+      json: async () => ({ code: 'daily-limit' }),
+    }) as Response));
+    setup();
+    openPanel();
+    send('How many cards?');
+    await waitFor(() => expect(statusRegion()).not.toBeEmptyDOMElement());
+    goOnline(true);
+    expect(statusRegion()).toHaveTextContent('The assistant is resting for today.');
+  });
+
+  it('counts a stream cut off before any of the answer came as no network', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      body: { getReader: () => ({ read: () => Promise.reject(new TypeError('network error')) }) },
+    }) as unknown as Response));
+    setup();
+    openPanel();
+    send('How many cards?');
+
+    await waitFor(() => expect(statusRegion()).toHaveTextContent(OFFLINE));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(vi.mocked(Sentry.captureException)).not.toHaveBeenCalled();
+  });
+
+  it('counts one cut off partway through the answer as a broken answer', async () => {
+    const encoder = new TextEncoder();
+    let calls = 0;
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      body: {
+        getReader: () => ({
+          read: () => (calls++ === 0
+            ? Promise.resolve({ done: false, value: encoder.encode('Seven') })
+            : Promise.reject(new TypeError('network error'))),
+        }),
+      },
+    }) as unknown as Response));
+    setup();
+    openPanel();
+    send('How many cards?');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Sorry, something went wrong. Please try again.');
+    expect(statusRegion()).toBeEmptyDOMElement();
+  });
+
+  it('puts any failure of the request down to the network once the browser says it is offline', async () => {
+    let fail = () => {};
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>((_, reject) => {
+      fail = () => reject(new Error('net::ERR_INTERNET_DISCONNECTED'));
+    })));
+    setup();
+    openPanel();
+    send('How many cards?');
+    goOnline(false);
+    await act(async () => fail());
+
+    expect(statusRegion()).toHaveTextContent(OFFLINE);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Ask a rules question...')).toHaveValue('How many cards?');
+    expect(vi.mocked(Sentry.captureException)).not.toHaveBeenCalled();
+  });
+
+  it('turns off an error\'s Retry while offline, and says why', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 500 }) as Response));
+    setup();
+    openPanel();
+    send('How many cards?');
+    await screen.findByRole('alert');
+    const retry = screen.getByRole('button', { name: 'Retry' });
+    expect(retry).toBeEnabled();
+    expect(retry).not.toHaveAccessibleDescription();
+    goOnline(false);
+    expect(retry).toBeDisabled();
+    expect(retry).toHaveAccessibleDescription(OFFLINE);
+    // One notice by the box; the error stays where it was said.
+    expect(statusRegion().children).toHaveLength(1);
+    expect(screen.getByRole('alert')).toHaveTextContent('Sorry, something went wrong.');
+  });
+
+  it('doesn\'t point to the rulebook when it can\'t be shown either', () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    withStarters({ rulebookFailed: true });
+    expect(statusRegion()).toHaveTextContent(new RegExp(`^${OFFLINE}$`));
+  });
+});

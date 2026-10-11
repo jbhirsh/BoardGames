@@ -826,6 +826,10 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 }
 .pdf-reader{margin-bottom:16px;}
 .pdf-note{font-size:14px;color:var(--text2);padding:24px 0;text-align:center;}
+/* A rulebook not saved on this device, with no network to come from: in
+   the place of the links above the reader, which go, so it sits the same
+   gap below the header (or the tab row) as they do. */
+.pdf-offline{padding:0 0 24px;}
 /* The search stays in reach while the pages scroll under it. */
 .pdf-search{position:sticky;top:0;z-index:2;padding:8px 0;margin-bottom:8px;background:var(--bg);}
 .pdf-search-form{display:flex;gap:8px;}
@@ -883,7 +887,9 @@ a.rules-chat-toggle{text-decoration:none;}
 .rules-chat-panel-fresh .rules-chat-messages{flex:none;}
 .rules-chat-starters{display:flex;flex-wrap:wrap;gap:8px;}
 .rules-chat-starter{padding:7px 12px;font-size:13px;font-weight:500;color:var(--blue);background:var(--surface);border:1px solid rgba(var(--blue-rgb),0.3);border-radius:999px;cursor:pointer;font-family:inherit;text-align:left;}
-.rules-chat-starter:hover{background:var(--blue-bg);}
+.rules-chat-starter:hover:not(:disabled){background:var(--blue-bg);}
+/* Offline: dimmed as Send is, the notice by the box says why. */
+.rules-chat-starter:disabled{opacity:.5;cursor:not-allowed;}
 
 .rules-chat-msg{display:flex;}
 .rules-chat-msg-user{justify-content:flex-end;}
@@ -911,6 +917,12 @@ a.rules-chat-toggle{text-decoration:none;}
 .rules-chat-retry:hover:not(:disabled){background:var(--blue-bg);}
 .rules-chat-retry:disabled{opacity:.5;cursor:default;}
 
+/* Why the assistant can't answer (offline, or resting for the day), on the
+   box's own strip, above it; empty, it takes no room but stays in the page,
+   a live region. */
+.rules-chat-status{padding:12px 16px 0;border-top:1px solid var(--border);background:var(--bg);}
+.rules-chat-status:empty{padding:0;border-top:none;}
+.rules-chat-status:not(:empty) + .rules-chat-input{border-top:none;}
 .rules-chat-input{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);background:var(--bg);}
 /* 16px is a functional minimum, not a style choice: iOS Safari zooms the
    whole page when a focused input computes below it, and does not zoom back. */
@@ -1196,6 +1208,7 @@ a.rules-chat-toggle{text-decoration:none;}
   .rules-chat-panel.word-checker-panel{ height:auto; }
   .rules-chat-panel-fresh{ height:auto; }
   .rules-chat-messages{ padding:14px; }
+  .rules-chat-status:not(:empty){ padding:10px 12px 0; }
   .rules-chat-input{ padding:10px 12px; padding-bottom:max(10px, env(safe-area-inset-bottom)); }
   /* On top of the word checker, nowhere near the home indicator. */
   .word-checker-panel .rules-chat-input{ padding-bottom:10px; }
