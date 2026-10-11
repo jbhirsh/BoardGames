@@ -45,7 +45,10 @@ jobs:
   mutation:
     name: StrykerJS
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    # A PR touching many components mutates thousands of mutants: one with
+    # 32 changed files (about 4,000 mutants) took 86 minutes. The cap only
+    # stops a hung run, so leave such a PR room to finish.
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v5
         with:
