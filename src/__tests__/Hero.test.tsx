@@ -31,6 +31,19 @@ describe('Hero', () => {
     ).toBeInTheDocument();
   });
 
+  it('speaks to a friend opening the wishlist when the toggle is on want', () => {
+    render(
+      <MemoryRouter>
+        <Hero want />
+      </MemoryRouter>
+    );
+    expect(screen.getByText('Help us pick our next game from the wishlist below.')).toBeInTheDocument();
+    expect(screen.queryByText(/What fits tonight\?/)).not.toBeInTheDocument();
+    // The title and the shelf stay put.
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Our Game Room');
+    expect(screen.getByRole('list', { name: 'Rulebooks' })).toBeInTheDocument();
+  });
+
   it('shows a shelf of box covers, each opening its rulebook', () => {
     renderHero();
     const links = within(screen.getByRole('list', { name: 'Rulebooks' })).getAllByRole('link');

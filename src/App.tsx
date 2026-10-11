@@ -32,7 +32,7 @@ export function HomePage() {
       <WishlistProvider>
         <title>The Game Room</title>
         <div className="clip-wrap">
-          <Hero />
+          <Hero want={state.collection === 'want'} />
           <div className="sticky-header" ref={stickyRef}>
             <FilterBar />
             {!isPhone && <ActiveTags />}

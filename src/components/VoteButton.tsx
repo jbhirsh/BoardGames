@@ -8,23 +8,27 @@ interface Props {
   disabled?: boolean;
 }
 
+/**
+ * The verb always shows, so the button reads as an action rather than a
+ * badge: "♡ Vote", "♡ Vote · 2", and "♥ Voted · 3" once this viewer has
+ * voted. The accessible name starts with the same word the button shows,
+ * so a voice-control user can say what they see.
+ */
 export default function VoteButton({ itemName, voteCount, voted, onClick, disabled }: Props) {
   const plural = voteCount === 1 ? 'vote' : 'votes';
-  const label = voted
-    ? `Remove your vote for ${itemName} (${voteCount} ${plural})`
-    : `Vote for ${itemName} (${voteCount} ${plural})`;
+  const verb = voted ? 'Voted' : 'Vote';
   return (
     <button
       type="button"
       className={`vote-btn${voted ? ' vote-btn--on' : ''}`}
-      aria-label={label}
+      aria-label={`${verb} for ${itemName} (${voteCount} ${plural})`}
       aria-pressed={voted}
       onClick={onClick}
       disabled={disabled}
     >
       <span className="vote-heart" aria-hidden="true">{voted ? '♥' : '♡'}</span>
-      {/* A row of "♡ 0" says nobody cares; "Vote" says what the button does. */}
-      <span className="vote-count">{voteCount > 0 ? voteCount : 'Vote'}</span>
+      {/* No count until there is one: "Vote · 0" says nobody cares. */}
+      <span className="vote-label">{voteCount > 0 ? `${verb} · ${voteCount}` : verb}</span>
     </button>
   );
 }

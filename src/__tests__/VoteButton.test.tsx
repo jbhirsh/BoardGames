@@ -3,30 +3,47 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import VoteButton from '../components/VoteButton';
 
 describe('VoteButton', () => {
-  it('renders unpressed state with vote label', () => {
+  it('reads "♡ Vote" with no votes yet, not a zero', () => {
     render(<VoteButton itemName="Splendor" voteCount={0} voted={false} onClick={() => {}} />);
     const btn = screen.getByRole('button', { name: 'Vote for Splendor (0 votes)' });
     expect(btn).toHaveAttribute('aria-pressed', 'false');
-    // No votes yet reads as the action, not as a zero.
-    expect(btn).toHaveTextContent('Vote');
-    expect(btn).not.toHaveTextContent('0');
+    expect(btn).toHaveTextContent(/^♡Vote$/);
+    expect(btn.className).not.toContain('vote-btn--on');
   });
 
-  it('shows the count once there are votes', () => {
+  it('keeps the verb beside the count once there are votes: "♡ Vote · 3"', () => {
     render(<VoteButton itemName="Splendor" voteCount={3} voted={false} onClick={() => {}} />);
-    expect(screen.getByRole('button', { name: 'Vote for Splendor (3 votes)' })).toHaveTextContent('3');
+    const btn = screen.getByRole('button', { name: 'Vote for Splendor (3 votes)' });
+    expect(btn).toHaveTextContent(/^♡Vote · 3$/);
+    expect(btn).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('renders pressed state with remove-vote label when voted', () => {
+  it('reads "♥ Voted · 5", filled and pressed, once this viewer has voted', () => {
     render(<VoteButton itemName="Splendor" voteCount={5} voted onClick={() => {}} />);
-    const btn = screen.getByRole('button', { name: 'Remove your vote for Splendor (5 votes)' });
+    const btn = screen.getByRole('button', { name: 'Voted for Splendor (5 votes)' });
+    expect(btn).toHaveTextContent(/^♥Voted · 5$/);
     expect(btn).toHaveAttribute('aria-pressed', 'true');
     expect(btn.className).toContain('vote-btn--on');
   });
 
+  it('says "Voted" with no count while the count has not caught up', () => {
+    render(<VoteButton itemName="Splendor" voteCount={0} voted onClick={() => {}} />);
+    expect(screen.getByRole('button', { name: 'Voted for Splendor (0 votes)' })).toHaveTextContent(/^♥Voted$/);
+  });
+
+  it('starts its accessible name with the word it shows', () => {
+    const { rerender } = render(<VoteButton itemName="Splendor" voteCount={2} voted={false} onClick={() => {}} />);
+    const btn = screen.getByRole('button');
+    const shown = () => btn.querySelector('.vote-label')!.textContent!.split(' ')[0];
+    expect(btn.getAttribute('aria-label')!.startsWith(`${shown()} `)).toBe(true);
+    rerender(<VoteButton itemName="Splendor" voteCount={3} voted onClick={() => {}} />);
+    expect(shown()).toBe('Voted');
+    expect(btn.getAttribute('aria-label')!.startsWith(`${shown()} `)).toBe(true);
+  });
+
   it('uses singular "vote" when count is 1', () => {
     render(<VoteButton itemName="Splendor" voteCount={1} voted={false} onClick={() => {}} />);
-    expect(screen.getByRole('button', { name: 'Vote for Splendor (1 vote)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Vote for Splendor (1 vote)' })).toHaveTextContent('Vote · 1');
   });
 
   it('uses plural "votes" when count is 0 or greater than 1', () => {

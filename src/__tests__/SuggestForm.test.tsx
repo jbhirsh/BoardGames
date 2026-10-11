@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SuggestForm from '../components/SuggestForm';
+import { alreadyListed } from '../utils/alreadyListed';
 
 function jsonResponse(body: unknown, ok = true): Response {
   return { ok, json: async () => body } as unknown as Response;
@@ -15,6 +16,19 @@ function fill() {
 describe('SuggestForm', () => {
   beforeEach(() => localStorage.clear());
   afterEach(() => vi.restoreAllMocks());
+
+  it('marks each placeholder as an example, not a typed value', () => {
+    render(<SuggestForm />);
+    for (const field of [screen.getByLabelText('Game'), screen.getByLabelText('Your name'), screen.getByLabelText(/Why\?/)]) {
+      expect(field.getAttribute('placeholder')).toMatch(/^e\.g\. \S/);
+    }
+  });
+
+  it('gives an example game that is on neither the collection nor the wishlist', () => {
+    render(<SuggestForm />);
+    const example = screen.getByLabelText('Game').getAttribute('placeholder')!.replace(/^e\.g\. /, '');
+    expect(alreadyListed(example)).toBeNull();
+  });
 
   it('prefills the name the browser remembers', () => {
     localStorage.setItem('gameroom:name', 'Jess');

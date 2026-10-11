@@ -14,7 +14,10 @@ import { useWishlistItems } from '../context/useWishlistItems';
 import { useWishlistVotes } from '../hooks/useWishlistVotes';
 import { useKeepSectionInView } from '../hooks/useKeepSectionInView';
 import { useIsPhone } from '../hooks/useIsPhone';
+import { useCopyLink } from '../hooks/useCopyLink';
 import { filterWishlist, isGrouped } from '../utils/filterGames';
+import { buildShareUrl } from '../utils/filterUrl';
+import { initialFilterState } from '../data/initialFilterState';
 
 /**
  * Takes the reader to the suggestion form, ready to type the game. The
@@ -42,6 +45,9 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
   const filtered = useMemo(() => filterWishlist(items, state), [items, state]);
   const sectionRef = useRef<HTMLElement>(null);
   useKeepSectionInView(sectionRef, !hidden);
+  // The Share link's copy, with the wishlist's own URL: /?c=want, none of
+  // the filters, so a friend sees every entry.
+  const { copied, copy } = useCopyLink();
 
   return (
     <section className="wishlist" id={hidden ? undefined : 'collection'} ref={sectionRef} hidden={hidden}>
@@ -51,15 +57,32 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
         {/* The wishlist's counterpart to the collection's Pick for us, on
             the heading's line: the form sits below every entry. */}
         {loaded && (
-          <button type="button" className="pick-btn" onClick={goToSuggest}>
-            Suggest a game
-          </button>
+          <div className="sec-actions">
+            {/* data-label sizes the button to its longer label, so
+                "Copied!" doesn't shrink it (see .share-btn::before). */}
+            <button
+              type="button"
+              className="share-btn"
+              data-label="Share wishlist"
+              onClick={() => copy(buildShareUrl({ ...initialFilterState, collection: 'want' }))}
+            >
+              <span className="share-btn-label">{copied ? 'Copied!' : 'Share wishlist'}</span>
+            </button>
+            <button type="button" className="pick-btn" onClick={goToSuggest}>
+              Suggest a game
+            </button>
+          </div>
         )}
+        <span className="sr-only" aria-live="polite" aria-atomic="true">
+          {copied ? 'Link copied to clipboard' : ''}
+        </span>
         <div className="sec-switch">
           <CollectionToggle />
           {!isPhone && <ViewToggle />}
         </div>
       </div>
+      {/* What a vote does, for the friend a shared link brought here. */}
+      <p className="wish-purpose">Heart the games you'd play. The top pick is what we buy next.</p>
       {loaded && <WishlistBody items={items} filtered={filtered} isPhone={isPhone} />}
     </section>
   );

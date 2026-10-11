@@ -81,6 +81,16 @@ describe('App', () => {
     expect(fetchSpy.mock.calls.length).toBe(requestsAfterLoad);
   });
 
+  it("the hero's subtitle follows the Own/Want toggle", () => {
+    renderApp('/?c=want');
+    const want = 'Help us pick our next game from the wishlist below.';
+    expect(screen.getByText(want)).toBeVisible();
+    expect(screen.queryByText(/What fits tonight\?/)).not.toBeInTheDocument();
+    fireEvent.click(within(screen.getByRole('group', { name: 'Which games to show' })).getByRole('button', { name: 'We own' }));
+    expect(screen.getByText(/What fits tonight\?/)).toBeVisible();
+    expect(screen.queryByText(want)).not.toBeInTheDocument();
+  });
+
   it('toggling keeps the scroll position and hands focus to the twin control', async () => {
     const scrollTo = vi.fn();
     window.scrollTo = scrollTo as unknown as typeof window.scrollTo;

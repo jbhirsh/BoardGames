@@ -88,7 +88,7 @@ function SubGameRow({ parent, sub }: { parent: string; sub: SubGame }) {
           </Link>
         )}
         <a
-          className="sub-link"
+          className="sub-link sub-yt"
           href={ytURL(sub.yt)}
           aria-label={`Watch ${sub.name} tutorial on YouTube`}
           title="Watch Tutorial"

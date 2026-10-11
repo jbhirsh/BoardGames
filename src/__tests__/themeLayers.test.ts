@@ -25,10 +25,15 @@ const FILL_ON_FILL: [fill: string, base: string, where: string][] = [
 // `r,g,b` token name or a literal triple, as App.css writes it in rgba().
 type Fill = string | { tint: string | [number, number, number]; alpha: number; over: string };
 
+// A dark block inherits what it doesn't redeclare from the light :root, as
+// the cascade does: the vote button's red and --on-fill are set once.
+const own = (block: string, name: string) => declarations(block).has(name) ? block : BLOCKS.light;
+const tokenIn = (block: string, name: string) => token(own(block, name), name);
+
 function fillHex(block: string, fill: Fill): string {
-  if (typeof fill === 'string') return token(block, fill);
-  const rgb = typeof fill.tint === 'string' ? rgbToken(block, fill.tint) : fill.tint;
-  return mix(rgb, fill.alpha, token(block, fill.over));
+  if (typeof fill === 'string') return tokenIn(block, fill);
+  const rgb = typeof fill.tint === 'string' ? rgbToken(own(block, fill.tint), fill.tint) : fill.tint;
+  return mix(rgb, fill.alpha, tokenIn(block, fill.over));
 }
 
 function fillName(fill: Fill): string {
@@ -45,15 +50,21 @@ const TEXT_ON_FILL: [text: string, fill: Fill, where: string][] = [
   ['text', 'bg3', 'a hovered Any/All button or score calculator tab'],
   ['text', 'row-hover', 'a hovered table row'],
   ['text2', 'bg', "the hero's subtitle, the chat's scope line"],
-  ['text2', 'surface', 'card descriptions, dropdown options'],
+  ['text2', 'surface', "card descriptions, dropdown options, the Score and Word Checker buttons and a list row's Rules"],
   ['text2', 'bg2', "keyword and duration pills, the filter sheet's close button, the Any/All buttons, rulebook tabs"],
   ['text2', 'bg3', 'the house rules count'],
   ['text2', 'row-hover', "a hovered row's players, difficulty and short line"],
-  ['text3', 'bg', "section counts, a score calculator box's unit"],
+  ['text3', 'bg', "section counts, a score calculator box's unit, the suggest form's placeholders"],
   ['text3', 'surface', "card meta, dropdown counts, popover titles, the filter sheet section titles, a score calculator field's points"],
   ['text3', 'bg2', "table headers, the toggles' other buttons, the score calculator tabs, a hovered option's count, Clear all"],
   ['text3', 'row-hover', "a hovered row's chevron and credit"],
   ['text3', 'bg3', "a score calculator tab's name while its remove button is hovered"],
+  ['yt-red', 'surface', "the play glyph on a card's or an add-on's video button"],
+  ['yt-red', 'bg2', "the play glyph on an expanded row's video button"],
+  ['on-fill', 'vote', 'a voted Vote button'],
+  ['on-fill', 'vote-hover', 'a voted Vote button, hovered'],
+  ['text', { tint: 'vote-rgb', alpha: 0.10, over: 'surface' }, 'a Vote button on a card or a list row'],
+  ['text', { tint: 'vote-rgb', alpha: 0.18, over: 'surface' }, 'a Vote button on a card or a list row, hovered'],
   ['blue', 'bg2', "links in the assistant's answer bubble, the Share link on the active filters bar, the sorted column's arrow"],
   ['blue', 'bg3', "the sorted column's arrow while its header is hovered"],
   ['blue', blueTint(0.08, 'bg2'), 'an active filter chip on the active filters bar, hovered or not; a hovered Rules link in an expanded row'],
@@ -103,7 +114,7 @@ describe('layered theme tokens', () => {
     for (const [text, fill, where] of TEXT_ON_FILL) {
       if (knownFailure(theme, text, fill)) continue;
       it(`--${text} reads at 4.5:1 or better on ${fillName(fill)} (${theme}): ${where}`, () => {
-        expect(contrast(token(block, text), fillHex(block, fill))).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(tokenIn(block, text), fillHex(block, fill))).toBeGreaterThanOrEqual(4.5);
       });
     }
   }
