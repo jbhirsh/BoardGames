@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type CSSProperties } from 'react';
 import { useParams } from 'react-router';
 import { GAMES } from '../data/games';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
 import { digitNudge } from '../utils/digitNudge';
 import { breakdown, ordinal, scienceScore, standings, tieBreaks, treasuryScore, type Breakdown, type Tally } from '../utils/sevenWonders';
+import { useWakeLock } from '../hooks/useWakeLock';
 import NotFoundPage from './NotFoundPage';
 import BackLink from './BackLink';
 import { ScoreIcon, type ScoreIconKind } from './ScoreIcons';
@@ -106,14 +107,59 @@ function saveGame(game: SavedGame): void {
   }
 }
 
+// Each box says what it takes: points as the pad scores them, or the coins
+// the page converts. Wonder is the pad's points for the stages built, not
+// how many were built.
 const CATEGORIES = [
-  { key: 'military', label: 'Military', color: '#d44' },
-  { key: 'coins', label: 'Treasury (coins)', color: '#c90' },
-  { key: 'wonder', label: 'Wonder Stages', color: '#a87b4f' },
-  { key: 'civilian', label: 'Civilian (Blue)', color: '#3b82f6' },
-  { key: 'commercial', label: 'Commercial (Yellow)', color: '#ca8a04' },
-  { key: 'guilds', label: 'Guilds (Purple)', color: '#8b5cf6' },
+  { key: 'military', label: 'Military', unit: 'VP', color: '#d44' },
+  { key: 'coins', label: 'Treasury', unit: 'coins', color: '#c90' },
+  { key: 'wonder', label: 'Wonder', unit: 'VP', color: '#a87b4f' },
+  { key: 'civilian', label: 'Civilian (Blue)', unit: 'VP', color: '#3b82f6' },
+  { key: 'commercial', label: 'Commercial (Yellow)', unit: 'VP', color: '#ca8a04' },
+  { key: 'guilds', label: 'Guilds (Purple)', unit: 'VP', color: '#8b5cf6' },
 ] as const;
+
+interface ScoreInputProps {
+  id: string;
+  /** The unit shown inside the box; a science box shows its unit on the label line instead. */
+  unit?: 'VP' | 'coins';
+  value: string;
+  color: string;
+  negative?: boolean;
+  /** More text for the box's description, after its unit: a converted field's points. */
+  describedBy?: string;
+  label?: string;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+}
+
+// A score box, with its unit inside in muted text that screen readers get
+// as the box's description. A phone opens its number pad for it; military's
+// minus comes from the ± button beside it, since that pad has no minus key.
+function ScoreInput({ id, unit, value, color, negative = false, describedBy, label, onChange }: ScoreInputProps) {
+  const input = (
+    <input
+      id={id}
+      className={unit ? `sc-input sc-input-${unit}` : 'sc-input'}
+      type="number"
+      inputMode="numeric"
+      pattern={negative ? undefined : '[0-9]*'}
+      min={negative ? undefined : 0}
+      placeholder="0"
+      aria-label={label}
+      aria-describedby={[unit && `${id}-unit`, describedBy].filter(Boolean).join(' ')}
+      value={value}
+      onChange={onChange}
+      style={{ borderColor: color }}
+    />
+  );
+  if (!unit) return input;
+  return (
+    <span className="sc-field">
+      {input}
+      <span className="sc-unit" id={`${id}-unit`} aria-hidden="true"><span>{unit}</span></span>
+    </span>
+  );
+}
 
 const SCIENCE_COLOR = '#22c55e';
 
@@ -166,6 +212,8 @@ export default function ScoreCalculatorPage() {
   const nameRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const [nudge] = useState(measureDigitNudge);
+  // The phone sits on the table between turns: keep its screen on.
+  useWakeLock(game !== undefined);
 
   useEffect(() => {
     saveGame({ players, active: activePlayer });
@@ -373,14 +421,17 @@ export default function ScoreCalculatorPage() {
               />
             </div>
 
-            {CATEGORIES.map(({ key, label, color }) => (
+            {CATEGORIES.map(({ key, label, unit, color }) => (
               <div key={key} className="sc-row">
                 <label className="sc-label" htmlFor={`sc-${key}`}>
                   <span className="sc-label-icon" style={{ color }}><ScoreIcon kind={ICON_FOR[key]} /></span>
-                  <span>{label}</span>
-                  {key === 'coins' && num(current.coins) > 0 && (
-                    <span className="sc-vp-note">= {treasuryVP} VP</span>
-                  )}
+                  <span className="sc-label-text">
+                    <span>{label}</span>
+                    {/* Out of the box's name: its description reads it. */}
+                    {key === 'coins' && (
+                      <span className="sc-vp-note sc-vp-pts" id="sc-coins-vp" aria-hidden="true">= {treasuryVP} VP</span>
+                    )}
+                  </span>
                 </label>
                 <div className="sc-input-wrap">
                   {key === 'military' && (
@@ -395,14 +446,14 @@ export default function ScoreCalculatorPage() {
                       &plusmn;
                     </button>
                   )}
-                  <input
+                  <ScoreInput
                     id={`sc-${key}`}
-                    className="sc-input"
-                    type="number"
-                    placeholder="0"
+                    unit={unit}
                     value={current[key]}
+                    color={color}
+                    negative={key === 'military'}
+                    describedBy={key === 'coins' ? 'sc-coins-vp' : undefined}
                     onChange={(e) => updateField(key, cleanInput(e.target.value, key === 'military'))}
-                    style={{ borderColor: color }}
                   />
                 </div>
               </div>
@@ -411,22 +462,27 @@ export default function ScoreCalculatorPage() {
             <div className="sc-science-section">
               <div className="sc-label">
                 <span className="sc-label-icon" style={{ color: SCIENCE_COLOR }}><ScoreIcon kind="science" /></span>
-                <span>Science (Green)</span>
-                <span className="sc-vp-note">= {scienceVP} VP</span>
+                <span className="sc-label-text">
+                  <span>Science (Green)</span>
+                  {/* The icons say which symbol; the unit is said once, here. */}
+                  <span className="sc-vp-note">
+                    <span id="sc-science-unit">symbols</span>
+                    <span aria-hidden="true"> · </span>
+                    <span id="sc-science-vp" className="sc-vp-pts">= {scienceVP} VP</span>
+                  </span>
+                </span>
               </div>
               <div className="sc-science-inputs">
                 {(['tablets', 'compasses', 'gears'] as const).map((field) => (
-                  <label key={field} className="sc-science-field" style={{ color: SCIENCE_COLOR }}>
+                  <label key={field} className="sc-science-field" htmlFor={`sc-${field}`} style={{ color: SCIENCE_COLOR }}>
                     <ScoreIcon kind={field} />
-                    <input
-                      className="sc-input"
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      aria-label={field}
+                    <ScoreInput
+                      id={`sc-${field}`}
+                      label={field}
                       value={current[field]}
+                      color={SCIENCE_COLOR}
+                      describedBy="sc-science-unit sc-science-vp"
                       onChange={(e) => updateField(field, cleanInput(e.target.value, false))}
-                      style={{ borderColor: SCIENCE_COLOR }}
                     />
                   </label>
                 ))}
