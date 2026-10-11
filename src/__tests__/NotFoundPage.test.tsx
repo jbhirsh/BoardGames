@@ -3,11 +3,17 @@ import { act, render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import * as Sentry from '@sentry/react';
 import NotFoundPage, { RouteError } from '../components/NotFoundPage';
+import { RELOAD_KEY } from '../utils/chunkReload';
 
 vi.mock('@sentry/react', () => ({ captureException: vi.fn() }));
 
 function Boom(): never {
   throw new Error('render failed');
+}
+
+// A page whose code won't load, as a lazy page's import fails after a deploy.
+function Stale(): never {
+  throw new TypeError('Failed to fetch dynamically imported module: http://localhost/assets/ScoreCalculatorPage-old.js');
 }
 
 // The same shape as main.tsx: an error element on the root, a catch-all child.
@@ -19,6 +25,7 @@ function renderAt(path: string) {
       children: [
         { index: true, element: <p>Home</p> },
         { path: 'boom', element: <Boom /> },
+        { path: 'stale', element: <Stale /> },
         { path: 'gone', loader: () => { throw new Response('', { status: 404 }); }, element: <p>Never</p> },
         { path: 'broken', loader: () => { throw new Response('', { status: 500 }); }, element: <p>Never</p> },
         { path: '*', element: <NotFoundPage /> },
@@ -67,6 +74,25 @@ describe('NotFoundPage', () => {
     renderAt('/broken');
     expect(await screen.findByRole('heading', { name: 'Something went wrong' })).toBeInTheDocument();
     await waitFor(() => expect(Sentry.captureException).toHaveBeenCalledWith(expect.objectContaining({ status: 500 })));
+  });
+
+  it('reloads once for a page whose code won\'t load, showing nothing meanwhile', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    window.sessionStorage.removeItem(RELOAD_KEY);
+    const { container } = renderAt('/stale');
+    // jsdom can't reload; the flag says the reload was asked for.
+    await waitFor(() => expect(window.sessionStorage.getItem(RELOAD_KEY)).not.toBeNull());
+    expect(container).toBeEmptyDOMElement();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+  });
+
+  it('says something went wrong, and reports it, when the reload didn\'t help', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    window.sessionStorage.setItem(RELOAD_KEY, '1');
+    renderAt('/stale');
+    expect(await screen.findByRole('heading', { name: 'Something went wrong' })).toBeInTheDocument();
+    await waitFor(() => expect(Sentry.captureException).toHaveBeenCalledWith(expect.any(TypeError)));
+    window.sessionStorage.removeItem(RELOAD_KEY);
   });
 
   it('keeps the page out of search results', () => {

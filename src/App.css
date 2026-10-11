@@ -110,6 +110,24 @@
 }
 @media(max-width:900px){ :root{ --gutter:24px; } }
 @media(max-width:520px){ :root{ --gutter:16px; } }
+/* Playfair Display, the headings' face, served from public/fonts (SIL Open
+   Font License, OFL.txt there) and saved for offline use with the app. The
+   Latin subset, which every name in the collection fits. The roman file is
+   variable, so it draws both 700 and 900. Text shows at once in the
+   fallback (font-display: swap), which is Times New Roman Bold (or Liberation
+   Serif, its metric twin on Linux), or on Android Noto Serif Bold (Droid
+   Serif on older ones), each scaled to Playfair's width on the collection's
+   names and to its line height, per weight, so the swap barely moves a
+   line. Noto's metrics differ from Times's, so it is a family of its own:
+   a face whose local() font isn't there is skipped for the next family. */
+@font-face{font-family:'Playfair Display';font-style:normal;font-weight:400 900;font-display:swap;src:url(/fonts/playfair-display-latin.woff2) format('woff2');}
+@font-face{font-family:'Playfair Display';font-style:italic;font-weight:700;font-display:swap;src:url(/fonts/playfair-display-latin-italic.woff2) format('woff2');}
+@font-face{font-family:'Playfair Fallback';font-weight:700;src:local('Times New Roman Bold'),local('TimesNewRomanPS-BoldMT'),local('Liberation Serif Bold'),local('LiberationSerif-Bold');size-adjust:106.57%;ascent-override:101.53%;descent-override:23.55%;line-gap-override:0%;}
+@font-face{font-family:'Playfair Fallback';font-weight:900;src:local('Times New Roman Bold'),local('TimesNewRomanPS-BoldMT'),local('Liberation Serif Bold'),local('LiberationSerif-Bold');size-adjust:107.40%;ascent-override:100.75%;descent-override:23.37%;line-gap-override:0%;}
+@font-face{font-family:'Playfair Fallback';font-style:italic;font-weight:700;src:local('Times New Roman Bold Italic'),local('TimesNewRomanPS-BoldItalicMT'),local('Liberation Serif Bold Italic'),local('LiberationSerif-BoldItalic');size-adjust:107.29%;ascent-override:100.85%;descent-override:23.39%;line-gap-override:0%;}
+@font-face{font-family:'Playfair Fallback Noto';font-weight:700;src:local('Noto Serif Bold'),local('NotoSerif-Bold'),local('Droid Serif Bold'),local('DroidSerif-Bold');size-adjust:90.72%;ascent-override:119.27%;descent-override:27.67%;line-gap-override:0%;}
+@font-face{font-family:'Playfair Fallback Noto';font-weight:900;src:local('Noto Serif Bold'),local('NotoSerif-Bold'),local('Droid Serif Bold'),local('DroidSerif-Bold');size-adjust:94.83%;ascent-override:114.10%;descent-override:26.47%;line-gap-override:0%;}
+@font-face{font-family:'Playfair Fallback Noto';font-style:italic;font-weight:700;src:local('Noto Serif Bold Italic'),local('NotoSerif-BoldItalic'),local('Droid Serif Bold Italic'),local('DroidSerif-BoldItalic');size-adjust:88.43%;ascent-override:122.36%;descent-override:28.38%;line-gap-override:0%;}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;}
@@ -128,7 +146,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   border-bottom:1px solid var(--border);position:relative;overflow:hidden;
 }
 .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(var(--blue-rgb),0.05) 0%,transparent 70%);pointer-events:none;}
-.hero h1{font-family:'Playfair Display',serif;font-size:clamp(34px,7vw,80px);font-weight:900;line-height:1.0;letter-spacing:-0.022em;color:var(--dark);margin-bottom:12px;}
+.hero h1{font-family:'Playfair Display','Playfair Fallback','Playfair Fallback Noto',serif;font-size:clamp(34px,7vw,80px);font-weight:900;line-height:1.0;letter-spacing:-0.022em;color:var(--dark);margin-bottom:12px;}
 .hero h1 em{font-style:italic;color:var(--blue);}
 .hero-sub{font-size:17px;color:var(--text2);line-height:1.5;max-width:440px;margin:0 auto 24px;font-weight:400;}
 /* The not-found page's way home. */
@@ -158,7 +176,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 }
 .filter-sheet:focus{outline:none;}
 .sheet-hd{display:flex;align-items:center;justify-content:space-between;padding:14px var(--gutter) 10px;border-bottom:1px solid var(--border);}
-.sheet-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--dark);}
+.sheet-title{font-family:'Playfair Display','Playfair Fallback','Playfair Fallback Noto',serif;font-size:20px;font-weight:700;color:var(--dark);}
 .sheet-close{width:36px;height:36px;border:none;border-radius:50%;background:var(--bg2);color:var(--text2);font-size:15px;cursor:pointer;}
 .sheet-body{overflow-y:auto;overscroll-behavior:contain;padding:0 var(--gutter) 12px;}
 .sheet-sec-title{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin:16px 0 8px;}
@@ -277,7 +295,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
    sticky bar. */
 #collection{scroll-margin-top:var(--thead-top,91px);}
 #suggest{scroll-margin-top:calc(var(--thead-top,91px) + 16px);}
-.sec-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;letter-spacing:-.5px;color:var(--dark);line-height:1.15;}
+.sec-title{font-family:'Playfair Display','Playfair Fallback','Playfair Fallback Noto',serif;font-size:26px;font-weight:700;letter-spacing:-.5px;color:var(--dark);line-height:1.15;}
 .sec-count{font-size:11px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;}
 /* The count shares the title's baseline, then rises so its capitals sit in
    the middle of the title's lowercase letters, which is where the eye puts a
@@ -300,7 +318,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .pick-eyebrow{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:12px;}
 .pick-img{width:120px;height:120px;object-fit:cover;border-radius:14px;margin:0 auto 14px;display:block;transition:transform .25s ease;}
 .pick-card.spinning .pick-img{animation:pick-shake .3s ease-in-out infinite;}
-.pick-name{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--dark);margin-bottom:6px;letter-spacing:-.3px;}
+.pick-name{font-family:'Playfair Display','Playfair Fallback','Playfair Fallback Noto',serif;font-size:24px;font-weight:700;color:var(--dark);margin-bottom:6px;letter-spacing:-.3px;}
 .pick-meta{display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;color:var(--text3);margin-bottom:12px;}
 .pick-with{font-size:13px;font-weight:600;color:var(--blue);margin:-2px 0 8px;}
 .pick-short{font-size:13.5px;line-height:1.55;color:var(--text2);margin:0 auto 8px;max-width:36ch;}
@@ -365,7 +383,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .dur-quick,.dur-medium,.dur-long{background:var(--bg2);color:var(--text2);border:1px solid var(--border);}
 .dur-pill{font-size:11px;font-weight:500;letter-spacing:.4px;padding:3px 9px;border-radius:20px;flex-shrink:0;}
 .card-head{padding:16px 18px 12px;border-bottom:1px solid var(--border);position:relative;}
-.card-name{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;line-height:1.2;margin-bottom:8px;color:var(--dark);padding-right:86px;}
+.card-name{font-family:'Playfair Display','Playfair Fallback','Playfair Fallback Noto',serif;font-size:16px;font-weight:700;line-height:1.2;margin-bottom:8px;color:var(--dark);padding-right:86px;}
 .card-meta{display:flex;gap:12px;}
 .cmeta{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text3);}
 .cmeta svg{flex-shrink:0;}
@@ -421,7 +439,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .game-row:last-of-type td{border-bottom:none;}
 
 /* col: name */
-.col-name{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;line-height:1.2;white-space:nowrap;color:var(--dark);}
+.col-name{font-family:'Playfair Display','Playfair Fallback','Playfair Fallback Noto',serif;font-size:15px;font-weight:700;line-height:1.2;white-space:nowrap;color:var(--dark);}
 /* A long name wraps to a second line rather than take the width the
    description needs: the longest held the column at 268px, so the
    description wrapped to three lines beside it. The header sets the width. */
@@ -557,7 +575,7 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 }
 .detail-section{margin-bottom:18px;}
 .detail-section h3{
-  font-family:'Playfair Display',serif;font-size:13px;font-weight:700;
+  font-family:'Playfair Display','Playfair Fallback','Playfair Fallback Noto',serif;font-size:13px;font-weight:700;
   color:var(--dark);margin-bottom:6px;letter-spacing:-.2px;
 }
 .detail-section p{font-size:13px;line-height:1.75;color:var(--text2);}
@@ -678,7 +696,7 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .awards-list li{overflow-wrap:anywhere;}
 /* Suggest a game */
 .suggest{margin-top:36px;padding:24px;border-radius:var(--r);background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow-sm);}
-.suggest-title{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;color:var(--dark);margin-bottom:6px;}
+.suggest-title{font-family:'Playfair Display','Playfair Fallback','Playfair Fallback Noto',serif;font-size:19px;font-weight:700;color:var(--dark);margin-bottom:6px;}
 .suggest-sub{font-size:12.5px;color:var(--text2);margin-bottom:16px;}
 .suggest-fields{display:grid;grid-template-columns:max-content 1fr;gap:10px 14px;align-items:center;max-width:520px;}
 .suggest-label{font-size:12px;color:var(--text2);font-weight:500;}
@@ -723,9 +741,18 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .rules-title-row{display:flex;align-items:center;gap:20px;}
 .rules-title-info{flex:1;min-width:0;}
 .rules-box-art{width:80px;height:80px;object-fit:cover;border-radius:var(--r-sm);border:1px solid var(--border);flex-shrink:0;}
-.rules-game-name{font-family:'Playfair Display',serif;font-size:clamp(24px,4vw,36px);font-weight:700;color:var(--dark);line-height:1.2;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rules-game-name{font-family:'Playfair Display','Playfair Fallback','Playfair Fallback Noto',serif;font-size:clamp(24px,4vw,36px);font-weight:700;color:var(--dark);line-height:1.2;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rules-game-desc{font-size:14px;color:var(--text2);line-height:1.5;}
 .rules-title-row .rules-chat-toggle{flex-shrink:0;}
+/* A page's header while its code loads (RouteFallback): its text and
+   buttons laid out as the page's, in grey bars, so nothing moves when the
+   page comes in. The Back link above them works meanwhile. */
+.route-fallback .rules-title-row{animation:fallback-pulse 1.6s ease-in-out infinite;}
+.route-fallback .rules-box-art{background:var(--bg3);}
+.skeleton-text{color:transparent;background:var(--bg3);border-radius:6px;-webkit-box-decoration-break:clone;box-decoration-break:clone;}
+.route-fallback .rules-chat-toggle{color:transparent;background:var(--bg3);border-color:transparent;cursor:default;}
+.route-fallback .rules-chat-toggle svg{visibility:hidden;}
+@keyframes fallback-pulse{50%{opacity:.6;}}
 /* Not found: the hero, filling the screen since it is the whole page. */
 .not-found{min-height:100svh;display:flex;flex-direction:column;justify-content:center;border-bottom:none;}
 .not-found .pick-btn{text-decoration:none;}
@@ -1115,7 +1142,7 @@ a.rules-chat-toggle{text-decoration:none;}
 
 /* ---- Admin mode (owner tools in the wishlist) ---- */
 .admin-panel{margin-bottom:28px;padding:20px 24px;border-radius:var(--r);background:rgba(var(--blue-rgb),0.04);border:1px solid rgba(var(--blue-rgb),0.18);}
-.admin-title{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;color:var(--dark);margin-bottom:12px;}
+.admin-title{font-family:'Playfair Display','Playfair Fallback','Playfair Fallback Noto',serif;font-size:19px;font-weight:700;color:var(--dark);margin-bottom:12px;}
 .admin-subtitle{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);font-weight:600;margin:16px 0 10px;}
 .admin-muted{font-size:12.5px;color:var(--text2);}
 .admin-error{font-size:12.5px;color:var(--error-fg);margin-top:8px;}

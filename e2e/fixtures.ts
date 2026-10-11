@@ -42,9 +42,9 @@ async function stubBackend(page: Page, baseURL: string, unexpected: string[]): P
   const isApi = (url: URL, path: string) => url.origin === origin && url.pathname === path;
 
   // Playwright tries routes newest first, so this catch-all goes in first and
-  // every stub below takes precedence over it. Anything off this origin (Google
-  // Fonts, a missed stub, the dictionary when a spec doesn't stub it) is
-  // aborted rather than reaching the network.
+  // every stub below takes precedence over it. Anything off this origin (a
+  // missed stub, the dictionary when a spec doesn't stub it) is aborted
+  // rather than reaching the network.
   await page.route((url) => url.origin !== origin, (route) => route.abort('blockedbyclient'));
 
   // An /api call none of the stubs below handles: answer it, but record it so

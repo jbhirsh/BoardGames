@@ -10,9 +10,9 @@ export type Route =
   | 'page'
   /** A rulebook: the saved copy once it has been opened, ranges and all. */
   | 'rulebook'
-  /** Part of the app saved at install: the saved copy first. */
+  /** Part of this build's saved app (at install, or the reader's files with a rulebook): the saved copy first. */
   | 'shell'
-  /** Other files of the app (box art, code split off later): saved as fetched. */
+  /** Other files of the app (box art, code split off later, the rest of pdf.js's): saved as fetched. */
   | 'asset';
 
 /** The parts of a Request the route depends on. */
@@ -40,7 +40,8 @@ const ASSET = /^\/(assets|images|pdfjs)\//;
 
 /**
  * Which of the service worker's strategies a request takes. `shell` lists the
- * paths saved at install (the precache).
+ * paths kept in the build's saved app: the precache and the reader's files
+ * (utils/precache.ts).
  */
 export function routeFor({ url, method, mode }: RouteRequest, origin: string, shell: ReadonlySet<string>): Route {
   const { origin: from, pathname } = new URL(url);
