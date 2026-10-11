@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { BrowserContext, Locator, Page, Route } from '@playwright/test';
 import { test, expect } from './fixtures';
 
 // The service worker (src/sw/sw.ts) is blocked for every other spec.
@@ -9,18 +9,82 @@ async function controlled(page: Page) {
   await expect.poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null)).toBe(true);
 }
 
-/** Waits until a rulebook opened while online is saved for offline. */
-async function saved(page: Page, pdf: string) {
-  await expect.poll(() => page.evaluate(async (path) => (await caches.match(path)) !== undefined, pdf)).toBe(true);
+/** Answers every request that reaches the network as a dropped connection would. */
+const NO_NETWORK = (route: Route) => route.abort('internetdisconnected');
+
+/**
+ * Takes the network away. setOffline alone leaves the service worker's own
+ * fetches online in Chromium, so a file it should have saved would still
+ * come; a route cuts those (the page's own stubs answer first, as the API
+ * would).
+ */
+async function goOffline(context: BrowserContext) {
+  await context.setOffline(true);
+  await context.route('**/*', NO_NETWORK);
 }
 
-test('the installed site lists the collection and checks words with no network', async ({ page, context }) => {
+async function goOnline(context: BrowserContext) {
+  await context.unroute('**/*', NO_NETWORK);
+  await context.setOffline(false);
+}
+
+/** Waits until a rulebook opened while online is saved for offline. */
+async function saved(page: Page, pdf: string) {
+  await expect.poll(() => page.evaluate(async (path) => (await caches.match(path)) !== undefined, pdf), { timeout: 15_000 }).toBe(true);
+}
+
+/**
+ * Waits until the rulebook reader's own files are saved, which the service
+ * worker does once a rulebook is: the JPEG 2000 decoder stands for them.
+ */
+async function readerSaved(page: Page) {
+  await expect.poll(() => page.evaluate(async () => (await caches.match('/pdfjs/wasm/openjpeg.wasm')) !== undefined), { timeout: 15_000 }).toBe(true);
+}
+
+/** A hash of a rulebook page's drawing, once it is drawn (its text is laid over it after). */
+async function drawing(group: Locator): Promise<string> {
+  await group.scrollIntoViewIfNeeded();
+  await expect.poll(() => group.evaluate((el) => el.querySelector('.textLayer')?.childElementCount ?? 0), { timeout: 15_000 }).toBeGreaterThan(0);
+  return group.evaluate(async (el) => {
+    const canvas = el.querySelector('canvas')!;
+    const pixels = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data;
+    const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', pixels));
+    return `${canvas.width}x${canvas.height} ${[...hash].map((b) => b.toString(16).padStart(2, '0')).join('')}`;
+  });
+}
+
+/**
+ * Opens a rulebook while online after a first visit (at p. 1), then scrolls
+ * to page `n` with no network, then online again: the page's drawing both
+ * ways. A page whose images need a decoder the reader never fetched online
+ * would be missing them offline.
+ */
+async function offlineAndOnline(page: Page, context: BrowserContext, slug: string, name: string, n: number) {
+  await page.goto('/');
+  await controlled(page);
+  await page.goto(`/rules/${slug}`);
+  const reader = page.getByRole('region', { name: `${name} rules` });
+  await expect(reader.getByRole('button', { name: 'Search' })).toBeEnabled();
+  await saved(page, `/rules/${slug}.pdf`);
+  await readerSaved(page);
+
+  await goOffline(context);
+  await page.reload();
+  const shown = reader.getByRole('group', { name: new RegExp(`^Page ${n} of \\d+$`) });
+  const offline = await drawing(shown);
+
+  await goOnline(context);
+  await page.reload();
+  return { offline, online: await drawing(shown) };
+}
+
+test('after a first visit, the installed site lists the collection, checks words and keeps score with no network', async ({ page, context }) => {
   await page.goto('/');
   await controlled(page);
   // Box art opened in its own tab is a page too, and must not stand in for
   // the app.
   await page.goto('/images/catan.webp');
-  await context.setOffline(true);
+  await goOffline(context);
 
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 2, name: 'Our Collection' })).toBeVisible();
@@ -40,6 +104,27 @@ test('the installed site lists the collection and checks words with no network',
   await page.getByRole('button', { name: 'Check' }).click();
   await expect(page.getByText('qi', { exact: true })).toBeVisible();
   await expect(page.getByText('Valid word', { exact: true })).toBeVisible();
+
+  // The score calculator, whose code (like every page's but the home
+  // page's) loads when it is opened, saved at install all the same.
+  await page.goto('/score/7-wonders');
+  await expect(page.getByRole('heading', { level: 1, name: 'Score Calculator', exact: true })).toBeVisible();
+  await page.getByRole('spinbutton', { name: /Military/ }).fill('5');
+  await page.getByRole('spinbutton', { name: /Civilian/ }).fill('10');
+  await expect(page.getByText('15 VP', { exact: true })).toBeVisible();
+});
+
+test('a rulebook opened online draws offline, its JPEG 2000 pages included', async ({ page, context }) => {
+  // Catan's p. 5 is drawn over a JPEG 2000 image.
+  const { offline, online } = await offlineAndOnline(page, context, 'catan', 'Catan', 5);
+  expect(offline).toBe(online);
+});
+
+test('a saved rulebook draws offline a page with images never opened online', async ({ page, context }) => {
+  // Azul's only JPEG 2000 image is on p. 6, which opening the rulebook at
+  // p. 1 never draws: its decoder comes with the saved rulebook.
+  const { offline, online } = await offlineAndOnline(page, context, 'azul', 'Azul', 6);
+  expect(offline).toBe(online);
 });
 
 test('a rulebook opened once reads on a phone with no network', async ({ page, context }) => {
@@ -53,7 +138,7 @@ test('a rulebook opened once reads on a phone with no network', async ({ page, c
   await expect(reader.getByRole('button', { name: 'Search' })).toBeEnabled();
   await saved(page, '/rules/azul.pdf');
 
-  await context.setOffline(true);
+  await goOffline(context);
   await page.reload();
   await reader.getByRole('searchbox', { name: 'Search the rulebook' }).fill('factory display');
   await reader.getByRole('button', { name: 'Search' }).click();

@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
+import { isChunkLoadError, mayReload, reloadOnce } from '../utils/chunkReload';
 import { Link, isRouteErrorResponse, useRouteError } from 'react-router';
 import * as Sentry from '@sentry/react';
 
@@ -30,18 +31,26 @@ export default function NotFoundPage({
   );
 }
 
+// Where a reload for code that won't load is counted.
+const SESSION = () => window.sessionStorage;
+
 /**
  * The router's error page. Unknown addresses are caught by the catch-all
  * route, so anything here is a thrown error: a 404 response reads as not
- * found, and anything else is reported to Sentry.
+ * found, and anything else is reported to Sentry. A page whose code won't
+ * load (a deploy since the tab loaded, perhaps offline) reloads once first
+ * (utils/chunkReload.ts), showing nothing meanwhile.
  */
 export function RouteError() {
   const error = useRouteError();
   const notFound = isRouteErrorResponse(error) && error.status === 404;
+  const reloading = useMemo(() => isChunkLoadError(error) && mayReload(SESSION), [error]);
   useEffect(() => {
-    if (!notFound) Sentry.captureException(error);
-  }, [error, notFound]);
+    if (reloading) reloadOnce(SESSION, () => window.location.reload());
+    else if (!notFound) Sentry.captureException(error);
+  }, [error, notFound, reloading]);
 
+  if (reloading) return null;
   return notFound
     ? <NotFoundPage />
     : <NotFoundPage title="Something went wrong" message="This page hit a snag. Try reloading, or head back to the collection." />;

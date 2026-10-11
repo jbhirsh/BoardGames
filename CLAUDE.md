@@ -50,7 +50,17 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
 
 ### Client (`src/`)
 - **`main.tsx`** — entry point. Imports `./instrument` first (Sentry), then
-  mounts a `createBrowserRouter` with four routes:
+  mounts a `createBrowserRouter` with these routes. Only the home page (and
+  the not-found page, which the router's error page needs) is in the main
+  bundle; the others are `React.lazy` (`lazyPages.ts`) and load on first
+  open behind a `Suspense` fallback, `RouteFallback`: the page's header in
+  grey with a working Back link, its bars the header's own text laid out
+  unseen so the page drops in without moving (`RulesFallback` takes the
+  game's name, rulebook line and buttons from the data; the sign-in page's
+  words are in `data/signIn.ts` for both). Code that won't load (a deploy
+  since the tab loaded) reaches `RouteError`, which reloads once
+  (`utils/chunkReload.ts`, a sessionStorage flag cleared when a page's
+  code loads) before saying something went wrong:
   - `/` — `HomePage` (hero with a shelf of box covers that open their
     rulebooks, filter bar, then the collection or the wishlist,
     switched by the Own/Want toggle; both stay mounted so a toggle never
@@ -71,7 +81,11 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
     modern build is used with the few newer JavaScript methods it calls
     polyfilled (`src/pdfjs/polyfills.ts`, also loaded first in its worker,
     `src/pdfjs/worker.ts`); a Vite plugin copies its WebAssembly image
-    decoders, standard fonts and ICC profile to `/pdfjs/`. Documents open
+    decoders, standard fonts and ICC profile to `/pdfjs/`. The worker
+    fetches what it needs itself: openjpeg (JPEG 2000), jbig2 (JBIG2 and
+    CCITT fax), qcms and the CMYK profile; the standard fonts only for a
+    PDF that leaves out Symbol or ZapfDingbats (none of ours), since it
+    uses the system's fonts. Documents open
     with `useWorkerFetch: true`: otherwise pdf.js fetches its decoders
     through the last document opened, and closing that one left JPEG 2000
     pages of another undrawn forever (it also turns on CMYK colour
@@ -243,12 +257,24 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   an inline script in `index.html` applies it before first paint.
   `e2e/theme.spec.ts` runs axe's colour-contrast rule over the main
   pages in both themes, so a new colour has to pass AA in each.
+- **Fonts** — headings are Playfair Display, self-hosted (no third-party
+  request, and saved for offline): `public/fonts/` holds Google Fonts'
+  Latin subset, the variable roman (700 and 900) and the 700 italic, with
+  the OFL licence. `App.css` declares them with `font-display: swap`
+  behind a `'Playfair Fallback'` face per style, Times New Roman Bold (or
+  Liberation Serif, its metric twin), then `'Playfair Fallback Noto'`,
+  Noto Serif Bold (Droid Serif) for Android, each with `size-adjust` and
+  ascent/descent overrides measured against Playfair on the collection's
+  names, so the swap barely moves a line;
+  `index.html` preloads the roman file. Body text is the system font.
 - **`utils/`** — pure helpers (`filterGames.ts`, `pickRandom.ts`, `filterUrl.ts`,
   `urls.ts`, `shortDesc.ts`, `subgames.ts`, `rulebooks.ts`, `pdfSearch.ts`,
   `citeMatch.ts`, the passage of a page a citation points to; `fileSize.ts`,
   `sevenWonders.ts`, the score pad's arithmetic: science, standings with
   the coins tie-break; `difficulty.ts`, the Light/Medium/Heavy words for a
   weight; `offline.ts`, the service worker's routing and byte ranges;
+  `precache.ts`, which build files the service worker saves when;
+  `chunkReload.ts`, the one reload for a page's code that won't load;
   `fromList.ts`, the router state that marks a sub-page as opened from the
   list; `wordList.ts`, the word checker's normalising of a typed word and
   parsing of its list; `wiktionary.ts`, the reading of a Wiktionary answer
@@ -258,16 +284,33 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   `main.tsx` registers it in production builds only; the `serviceWorker()`
   plugin in `vite.config.ts` bundles it to `/sw.js` (a classic worker: the
   build fails if it would import a chunk shared with the app) and writes in
-  the precache list (the app's code bar the Sentry replay chunk, which
-  only an error loads; the collection's box art, pdf.js's fonts
-  and decoders, the word list), the saved shell's name (a hash of
-  `index.html` and all of those, so a build that changes none keeps it) and a
-  hash of each rulebook. Sentry stamps `sw.js` on every build, so every
+  the precache list (`utils/precache.ts` sorts the build: every page's
+  code, bar the Sentry replay chunk, which only an error loads; the
+  collection's box art, the headings' font, both word lists, the favicons,
+  apple-touch icon and manifest), the reader's list (pdf.js's worker and
+  the four decoders in `PDFJS_DECODERS`, about 1.7 MB; the build fails if
+  one is missing), the saved shell's name (a hash of `index.html` and all
+  of those, so a build that changes none keeps it) and a hash of each
+  rulebook. What each cache keeps, and when, is `sw/shell.ts`, written
+  against `CacheStorage` so `swShell.test.ts` drives it with a fake: the
+  reader goes into the shell with the first rulebook saved and at install
+  once one is, so a saved rulebook's pages never opened online still draw
+  offline. A rulebook first saved while an older build still ran leaves
+  the new build's reader incomplete: activating fetches nothing (requests
+  wait meanwhile), keeps the older shells that hold a reader until the new
+  one is complete, and `healReader` completes it once active and whenever
+  a saved rulebook opens online. The rest of `/pdfjs/` (no-WebAssembly
+  fallbacks, standard fonts, licences) goes to the runtime
+  `gameroom-assets` cache if it is ever fetched, and each update clears it
+  with the old code. Sentry stamps `sw.js` on every build, so every
   deploy installs a new worker; without `skipWaiting` it waits until no tab
   runs the old app, so a long-open tab keeps its own code offline. Pages
   come from the network (4s at most), falling back to the app saved at
   install, which nothing else replaces; `/api/*` and other sites are never
-  touched. A rulebook is saved whole the first time it's opened, never
+  touched. A saved file the network can't give is looked for in every
+  cache, so a page reloaded online after a deploy (the new build's code
+  under the old worker) still opens its pages offline from the new build's
+  waiting shell. A rulebook is saved whole the first time it's opened, never
   by a warm (a request carrying `X-Warm`; `savesRulebook()` in
   `utils/offline.ts` decides) (the
   reader asks for byte ranges, which the Cache API can't store, so ranges
@@ -510,6 +553,8 @@ secrets belong in tracked source.
   Add a test here for a new user-facing flow. The service worker is blocked
   (`serviceWorkers: 'block'` in `playwright.config.ts`), since requests it
   answers never reach `page.route`; only `e2e/offline.spec.ts` lets it run.
+  There `setOffline` alone leaves the service worker's own fetches online,
+  so its `goOffline` also aborts every request that reaches the network.
 - **Pure utilities stay pure.** Filtering/sorting/URL logic in `src/utils/` and
   `src/context/filterReducer.ts` should have no side effects and be directly
   unit-testable. The import side of this (utils/data may not reach React or
