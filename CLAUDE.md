@@ -105,9 +105,23 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
     close when the rules page does
   - `/score/:slug` — score calculator for a game in
     `data/scoreCalculators.ts` (currently 7 Wonders); any other slug shows
-    the not-found page. Results is a score sheet like the printed pad (a
-    row per category, a column per player, the category column pinned
-    while it scrolls sideways on a phone)
+    the not-found page. Each score box carries its unit inside it at the
+    right edge, muted and given to screen readers as the box's description:
+    VP for the pad's points (Wonder is the stages' points, not how many
+    were built), coins for Treasury. The box keeps the unit's room on both
+    sides, so the score is centred in the whole box. The science boxes show
+    no unit (their icons say which symbol): the Science label line says
+    "symbols" once, beside its "= N VP", and each box's description reads
+    both. Treasury's "= N VP" sits beside its label too; both notes always
+    show, "= 0 VP" included. The boxes open a phone's number pad
+    (`inputMode="numeric"`), so military's minus comes from its ± button.
+    While the page is open it holds a screen wake lock
+    (`hooks/useWakeLock.ts`, asked for again whenever the page comes back
+    into view or the system drops it in view; nothing where the browser
+    lacks it or refuses), so a phone on the table doesn't lock between
+    turns. Results is a score sheet like the printed pad (a row
+    per category, a column per player, the category column pinned while it
+    scrolls sideways on a phone)
   - `/word-checker` — word lookup for word games: the bundled lists
     (`public/words/`: ENABLE, plus `additions.txt`, the hand-picked words it
     predates) answer at once; a word they lack reads "Not in our word list"

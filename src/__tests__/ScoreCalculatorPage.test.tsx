@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router';
 import ScoreCalculatorPage from '../components/ScoreCalculatorPage';
 
@@ -107,11 +107,11 @@ describe('ScoreCalculatorPage', () => {
     expect(screen.getByText('26 VP')).toBeInTheDocument();
   });
 
-  it('shows treasury VP note only when coins > 0', () => {
+  it('shows treasury\'s VP note from the start, so the first coin moves nothing', () => {
     renderPage();
     const treasuryLabel = screen.getByLabelText(/Treasury/).closest('.sc-row');
     expect(treasuryLabel).not.toBeNull();
-    expect(within(treasuryLabel as HTMLElement).queryByText(/= \d+ VP/)).not.toBeInTheDocument();
+    expect(within(treasuryLabel as HTMLElement).getByText('= 0 VP')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(/Treasury/), { target: { value: '9' } });
     expect(within(treasuryLabel as HTMLElement).getByText('= 3 VP')).toBeInTheDocument();
   });
@@ -121,6 +121,13 @@ describe('ScoreCalculatorPage', () => {
     const civilian = screen.getByLabelText(/Civilian/) as HTMLInputElement;
     fireEvent.change(civilian, { target: { value: '-5' } });
     expect(civilian.value).toBe('0');
+  });
+
+  it('floors a science symbol count at 0', () => {
+    renderPage();
+    const tablets = screen.getByLabelText('tablets') as HTMLInputElement;
+    fireEvent.change(tablets, { target: { value: '-2' } });
+    expect(tablets.value).toBe('0');
   });
 
   it('allows negative military scores', () => {
@@ -351,6 +358,80 @@ describe('ScoreCalculatorPage', () => {
     fireEvent.change(screen.getByLabelText(/Civilian/), { target: { value: '4' } });
     fireEvent.click(screen.getByRole('button', { name: 'New game' }));
     expect(screen.getByLabelText(/Civilian/)).toHaveValue(4);
+  });
+
+  it('names each box\'s unit in its description, and the points a converted one is worth', () => {
+    renderPage();
+    const box = (name: string) => screen.getByRole('spinbutton', { name });
+    for (const name of ['Military', 'Wonder', 'Civilian (Blue)', 'Commercial (Yellow)', 'Guilds (Purple)']) {
+      expect(box(name)).toHaveAccessibleDescription('VP');
+    }
+    expect(box('Treasury')).toHaveAccessibleDescription('coins = 0 VP');
+    for (const name of ['tablets', 'compasses', 'gears']) {
+      expect(box(name)).toHaveAccessibleDescription('symbols = 0 VP');
+    }
+
+    fireEvent.change(box('Treasury'), { target: { value: '11' } });
+    expect(box('Treasury')).toHaveAccessibleDescription('coins = 3 VP');
+    // The points are Treasury's alone: once, beside its label, and in no other box's description.
+    expect(screen.getAllByText('= 3 VP')).toHaveLength(1);
+    expect(box('Wonder')).toHaveAccessibleDescription('VP');
+    fireEvent.change(box('tablets'), { target: { value: '3' } });
+    fireEvent.change(box('gears'), { target: { value: '1' } });
+    // 3² + 1² = 10, and no full set.
+    expect(box('gears')).toHaveAccessibleDescription('symbols = 10 VP');
+    expect(screen.getByText('= 10 VP')).toBeInTheDocument();
+  });
+
+  it('puts a box\'s unit inside it, and a converted field\'s points on its label line', () => {
+    const { container } = renderPage();
+    const box = (name: string) => screen.getByRole('spinbutton', { name });
+    const unitIn = (input: HTMLElement) => input.parentElement!.querySelector('.sc-unit');
+    expect(unitIn(box('Wonder'))).toHaveTextContent('VP');
+    expect(unitIn(box('Treasury'))).toHaveTextContent('coins');
+    // Treasury's points sit in its label, beside the name, yet out of the box's name.
+    expect((box('Treasury') as HTMLInputElement).labels![0]).toHaveTextContent('Treasury= 0 VP');
+    // The icons say which symbol; the unit is said once, on the label line.
+    for (const name of ['tablets', 'compasses', 'gears']) expect(unitIn(box(name))).toBeNull();
+    const scienceLabel = container.querySelector('.sc-science-section > .sc-label');
+    expect(scienceLabel).toHaveTextContent('Science (Green)symbols · = 0 VP');
+    fireEvent.change(box('tablets'), { target: { value: '2' } });
+    expect(scienceLabel).toHaveTextContent('symbols · = 4 VP');
+  });
+
+  it('calls the wonder row Wonder, as the results sheet does', () => {
+    renderPage();
+    expect(screen.getByRole('spinbutton', { name: 'Wonder' })).toBeInTheDocument();
+    expect(screen.queryByText(/Wonder Stages/)).not.toBeInTheDocument();
+  });
+
+  it('opens a phone\'s number pad for every score box', () => {
+    renderPage();
+    const boxes = screen.getAllByRole('spinbutton');
+    expect(boxes).toHaveLength(9);
+    for (const box of boxes) expect(box).toHaveAttribute('inputmode', 'numeric');
+    // Military can go below zero, which [0-9]* would call invalid; its
+    // minus comes from the ± button.
+    for (const box of boxes.filter((b) => b.id !== 'sc-military')) expect(box).toHaveAttribute('pattern', '[0-9]*');
+    expect(screen.getByRole('spinbutton', { name: 'Military' })).not.toHaveAttribute('pattern');
+  });
+
+  it('keeps the screen on while scoring', async () => {
+    const request = vi.fn(async () => Object.assign(new EventTarget(), { released: false, release: vi.fn(async () => {}) }));
+    Object.defineProperty(navigator, 'wakeLock', { configurable: true, value: { request } });
+    try {
+      const { unmount } = renderPage();
+      await act(async () => {});
+      expect(request).toHaveBeenCalledWith('screen');
+      unmount();
+      // No calculator, no lock.
+      request.mockClear();
+      renderPage('/score/catan');
+      await act(async () => {});
+      expect(request).not.toHaveBeenCalled();
+    } finally {
+      delete (navigator as { wakeLock?: unknown }).wakeLock;
+    }
   });
 
   it('highlights only the Results tab while results are showing', () => {
