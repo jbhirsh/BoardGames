@@ -13,9 +13,11 @@ import BackLink from './BackLink';
 import { useScrollEdges } from '../hooks/useScrollEdges';
 import { formatSize } from '../utils/fileSize';
 import { cameFromList, FROM_LIST } from '../utils/fromList';
-import { head, outOfReach, savedCopy } from '../pdfjs/saved';
+import { head, outOfReach, rulebookBytes, savedCopy, waitsForSave } from '../pdfjs/saved';
 import { useOnline } from '../hooks/useOnline';
+import { useOfflineSave } from '../hooks/useOfflineSave';
 import { CANT_SHOW } from './cantShow';
+import SaveOffline from './SaveOffline';
 
 // The page draws the rulebook itself, searchable, on every screen: phones
 // can't show an embedded PDF (Android Chrome shows nothing, iOS Safari only
@@ -27,10 +29,15 @@ const PdfReader = lazy(() => import('./PdfReader'));
 // Said in place of a rulebook that can't be shown: one the browser can't
 // show, whose file the links above still give (CANT_SHOW), or one that
 // isn't saved on this device and has no network to come from, whose links
-// are gone too.
-const NOT_SAVED = (
+// are gone too. Opening one with signal saves it, unless it is a large one
+// (or the browser saves data), which waits for its Save for offline button.
+const notSaved = (pdf: string) => (
   <div className="pdf-offline">
-    <Notice tone="info">Not saved on this device yet. Open it once with signal.</Notice>
+    <Notice tone="info">
+      {waitsForSave(pdf)
+        ? 'Not saved on this device yet. Tap Save for offline next time you have signal.'
+        : 'Not saved on this device yet. Open it once with signal.'}
+    </Notice>
   </div>
 );
 
@@ -53,41 +60,34 @@ class ReaderBoundary extends Component<{ children: ReactNode; pdf: string; note:
 }
 
 /**
- * The PDF's HEAD, asked once for each reader (`attempt` counts them): its
- * size, null until (or unless) it answers, and `reached`, whether the
- * network answered it, which a reader that fails asks (see outOfReach)
- * rather than sending a second HEAD after the first.
+ * The PDF's HEAD, asked once for each reader (`attempt` counts them), and
+ * `reached`, whether the network answered it, which a reader that fails
+ * asks (see outOfReach) rather than sending a second HEAD after the first,
+ * so one that fails on a dead network is told so sooner.
  */
 function usePdfHead(pdf: string, attempt: number, wanted: boolean) {
-  const [size, setSize] = useState<{ pdf: string; bytes: number } | null>(null);
   const answer = useRef<{ pdf: string; attempt: number; reached: Promise<boolean> } | null>(null);
   useEffect(() => {
     if (!wanted) return;
     const controller = new AbortController();
-    const asked = head(pdf, controller.signal);
-    answer.current = { pdf, attempt, reached: asked.then((res) => res !== null) };
-    asked
-      .then((res) => {
-        const bytes = Number(res?.headers.get('content-length'));
-        if (res?.ok && bytes > 0) setSize({ pdf, bytes });
-      })
-      .catch(() => {});
+    answer.current = { pdf, attempt, reached: head(pdf, controller.signal).then((res) => res !== null) };
     return () => controller.abort();
   }, [pdf, attempt, wanted]);
   /** Whether the network answered this reader's HEAD, or a new one if it hasn't been sent. */
-  const reached = useCallback((of: string, at: number) => {
+  return useCallback((of: string, at: number) => {
     const a = answer.current;
     return a?.pdf === of && a.attempt === at ? a.reached : head(of).then((res) => res !== null);
   }, []);
-  return { size: size?.pdf === pdf ? size.bytes : null, reached };
 }
 
 /**
  * Whether the rulebook is saved on this device, for the chat's offline
- * notice. Asked again as the browser goes offline, since one read online is
- * saved as it is read: 'asking' meanwhile, unless it was saved already
- * (which a copy stays). On another tab, the last answer stands until this
- * one's comes, so a notice up doesn't lose its sentence and get it back.
+ * notice and the Save for offline button. Asked again as the browser goes
+ * offline, since one read online may have been saved meanwhile (a small
+ * one as it is read, any by that button): 'asking' meanwhile, unless it
+ * was saved already (which a copy stays). On another tab, the last answer
+ * stands until this one's comes, so a notice up doesn't lose its sentence
+ * and get it back.
  */
 function useSaved(pdf: string, online: boolean): boolean | 'asking' {
   const [known, setKnown] = useState<{ pdf: string; online: boolean; saved: boolean } | null>(null);
@@ -158,9 +158,11 @@ export default function RulesPage() {
   const books = game ? rulebooks(game) : [];
   const book = books.find(b => b.part === part);
   if (failure !== null && failure.pdf !== book?.pdf) setFailure(null);
-  const { size, reached } = usePdfHead(book?.pdf ?? '', attempt, book !== undefined);
+  const reached = usePdfHead(book?.pdf ?? '', attempt, book !== undefined);
+  const size = rulebookBytes(book?.pdf ?? '');
   const online = useOnline();
   const saved = useSaved(book?.pdf ?? '', online);
+  const offline = useOfflineSave(book?.pdf ?? '', saved, online);
   const readerFails = useCallback((pdf: string) => {
     // This failure, and not one after it, is what the answer is for.
     const mine = { pdf };
@@ -212,7 +214,7 @@ export default function RulesPage() {
   const unreachable = failure?.unreachable === true;
   let failNote: ReactNode = CANT_SHOW;
   if (failure && failure.unreachable === undefined) failNote = null;
-  else if (unreachable) failNote = NOT_SAVED;
+  else if (unreachable) failNote = notSaved(book.pdf);
 
   /**
    * A citation of one of the game's rulebooks opens it in the reader rather
@@ -335,9 +337,12 @@ export default function RulesPage() {
         />
         {wordCheckerOpen && <WordChecker />}
         {/* Above the reader, where a long rulebook would bury it: the file,
-            with its size so nobody starts a big download unawares, and the
-            browser's own viewer, for its zoom, thumbnails and printing. Not
-            for a rulebook out of reach, where both would be dead links. */}
+            with its size (from the build, so it is there from the first
+            paint) so nobody starts a big download unawares, the browser's
+            own viewer, for its zoom, thumbnails and printing, and the
+            rulebook's place on this device: Save for offline, or how that
+            stands. Not for a rulebook out of reach, where all three would
+            be dead. */}
         {!unreachable && (
           <>
             <div className="rules-pdf-links">
@@ -351,6 +356,9 @@ export default function RulesPage() {
                 )}
               </a>
               <a href={book.pdf} target="_blank" rel="noopener noreferrer" className="rules-download">Open PDF</a>
+              {offline.state !== null && (
+                <SaveOffline pdf={book.pdf} state={offline.state} hidden={offline.hidden} sized={size !== null} onSave={offline.save} />
+              )}
             </div>
             {/* The reader's pages draw only near the screen, so a printout of
                 this page would be empty boxes: it prints this instead. */}

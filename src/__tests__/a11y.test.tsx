@@ -8,6 +8,7 @@ import WordCheckerPage from '../components/WordCheckerPage';
 import ScoreCalculatorPage from '../components/ScoreCalculatorPage';
 import SignInPage from '../components/SignInPage';
 import RulesPage from '../components/RulesPage';
+import SaveOffline from '../components/SaveOffline';
 import { WISHLIST } from '../data/wishlist';
 
 expect.extend(matchers);
@@ -123,6 +124,20 @@ describe('accessibility', () => {
     screen.getByText('House rules').closest('details')!.open = true;
     const results = await axe(container, axeOptions);
     expect(results).toHaveNoViolations();
+  }, TIMEOUT_MS);
+
+  it('Save for offline item has no axe violations in any state', async () => {
+    for (const state of ['unsaved', 'saving', 'saved', 'failed', 'full'] as const) {
+      const { container, unmount } = render(
+        <main>
+          <span id="rules-download-size">4.6 MB</span>
+          <SaveOffline pdf="/rules/7-wonders.pdf" state={state} sized onSave={() => {}} />
+        </main>,
+      );
+      const results = await axe(container, axeOptions);
+      expect(results).toHaveNoViolations();
+      unmount();
+    }
   }, TIMEOUT_MS);
 
   it('home page (wishlist) has no axe violations', async () => {

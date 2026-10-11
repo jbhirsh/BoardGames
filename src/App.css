@@ -818,6 +818,21 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 /* The page draws the rulebook (PdfReader), with the download link and the
    file's size above it. */
 .rules-download-size{font-weight:400;color:var(--text2);}
+/* Save for offline (SaveOffline), the row's third item: a button styled as
+   the links beside it, or once it stands for nothing to do, a status in
+   the secondary text, a green tick for Saved. On a phone the three don't
+   fit one line, so it takes its own, the same from the first paint
+   whatever it says, rather than wrapping as its words change. */
+.rules-save-slot{display:inline-flex;}
+.rules-save{font-family:inherit;line-height:inherit;}
+button.rules-save{padding:0;border:0;background:none;cursor:pointer;}
+.rules-save-status{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);}
+.rules-save-status:focus{outline:none;}
+.rules-save svg{flex:none;width:14px;height:14px;}
+.rules-save-saved svg{color:var(--ok-fg);}
+.rules-save .spin{animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@media(max-width:600px){ .rules-save-slot{flex-basis:100%;} }
 /* Printed instead of the reader, whose pages draw only near the screen. */
 .rules-print-note{display:none;}
 @media print{

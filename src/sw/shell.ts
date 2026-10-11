@@ -1,7 +1,8 @@
 // What the service worker (sw.ts) keeps in its caches, and when: the app
-// saved at install, the rulebook reader's files, and what an update clears
-// away. Written against CacheStorage alone (Cache.addAll does the fetching),
-// so tests drive it with a fake (src/__tests__/swShell.test.ts).
+// saved at install, the rulebook reader's files, the rulebooks saved one by
+// one, and what an update clears away. Written against CacheStorage (whose
+// Cache.addAll does the fetching) and a fetch passed in, so tests drive it
+// with fakes (src/__tests__/swShell.test.ts).
 
 /** One build's saved app, as vite.config.ts writes it into sw.js. */
 export interface Build {
@@ -19,7 +20,7 @@ export interface Build {
 export const SHELL_PREFIX = 'gameroom-shell-';
 /** Files fetched along the way; outlives a build. */
 export const ASSETS = 'gameroom-assets';
-/** Rulebooks once opened; outlives a build. */
+/** Rulebooks saved: small ones once opened, any when asked; outlives a build. */
 export const RULEBOOKS = 'gameroom-rulebooks';
 /** A saved rulebook's contents hash, from the build that saved it. */
 export const RULEBOOK_VERSION = 'X-Rulebook-Version';
@@ -111,4 +112,107 @@ export async function activate(build: Build, caches: CacheStorage): Promise<void
 export async function healReader(build: Build, caches: CacheStorage): Promise<void> {
   if (!(await hasRulebooks(caches)) || (await readerSaved(build, caches))) return;
   await saveReader(build, caches);
+}
+
+/**
+ * Saves a rulebook whole (the Cache API keeps no byte ranges, so sw.ts cuts
+ * them from the whole file), marked with this build's hash of it, then the
+ * reader's files (`reader`, by default saveReader), so it reads offline from
+ * any page. A rulebook already saved isn't fetched again, only the reader
+ * completed. Rejects if either can't be had.
+ */
+export async function saveRulebook(
+  path: string,
+  build: Build,
+  caches: CacheStorage,
+  fetcher: (path: string) => Promise<Response>,
+  reader: () => Promise<void> = () => saveReader(build, caches),
+): Promise<void> {
+  const rulebooks = await caches.open(RULEBOOKS);
+  if (!(await rulebooks.match(path, MATCH))) {
+    const response = await fetcher(path);
+    if (response.status !== 200) throw new Error(`${path}: ${response.status}`);
+    const headers = new Headers(response.headers);
+    headers.set(RULEBOOK_VERSION, build.rulebooks[path] ?? '');
+    await rulebooks.put(path, new Response(await response.arrayBuffer(), { status: 200, headers }));
+  }
+  await reader();
+}
+
+/**
+ * What the rules page sends the service worker about a rulebook on screen
+ * (src/pdfjs/saved.ts, which writes the type out again since the two share
+ * no code): where it stands on this device, and with `save`, to save it
+ * (its Save for offline button). Answered on the MessagePort sent with it.
+ */
+export const SAVE_MESSAGE = 'gameroom-rulebook';
+export interface SaveRequest {
+  type: typeof SAVE_MESSAGE;
+  path: string;
+  save: boolean;
+}
+
+/**
+ * Each answer on the port: 'saved', or 'unsaved' when not asked to save it;
+ * else 'saving', then how the save ended (one the service worker began on
+ * its own, on a small rulebook's first open, too): 'saved', 'full' when the
+ * browser has no room left for the site, or 'failed'.
+ */
+export type SaveState = 'saved' | 'unsaved' | 'saving' | SaveOutcome;
+/** How a save ends. */
+export type SaveOutcome = 'saved' | 'failed' | 'full';
+export interface SaveReply {
+  path: string;
+  state: SaveState;
+}
+
+/** The service worker's saving of rulebooks: on first open, or asked by the rules page. */
+export interface Saver {
+  /** Saves a rulebook, or joins the save under way, resolving to how it ended. */
+  save(path: string): Promise<SaveOutcome>;
+  /** Answers a page's message (SaveRequest) through `reply`; anything else, or a path that names no rulebook of the build, gets no answer. */
+  answer(message: unknown, reply: (answer: SaveReply) => void): Promise<void>;
+}
+
+/** Whether a save failed for want of room: the Cache API's quota error. */
+const isFull = (error: unknown) => (error as { name?: unknown } | null)?.name === 'QuotaExceededError';
+
+export function saver(build: Build, caches: CacheStorage, fetcher: (path: string) => Promise<Response>): Saver {
+  // One save per rulebook, however many requests and pages ask for it.
+  const saving = new Map<string, Promise<SaveOutcome>>();
+  // And one saving of the reader's files, however many rulebooks are saved
+  // at once: each would otherwise fetch the files none has saved yet.
+  let readerSaving: Promise<void> | null = null;
+  const reader = () => {
+    readerSaving ??= saveReader(build, caches).finally(() => { readerSaving = null; });
+    return readerSaving;
+  };
+  const save = (path: string) => {
+    let done = saving.get(path);
+    if (!done) {
+      done = saveRulebook(path, build, caches, fetcher, reader)
+        .then((): SaveOutcome => 'saved', (error: unknown): SaveOutcome => (isFull(error) ? 'full' : 'failed'))
+        .finally(() => saving.delete(path));
+      saving.set(path, done);
+    }
+    return done;
+  };
+  const isRequest = (message: unknown): message is SaveRequest => {
+    const m = message as Partial<SaveRequest> | null;
+    return typeof m === 'object' && m !== null && m.type === SAVE_MESSAGE && typeof m.save === 'boolean'
+      && typeof m.path === 'string' && Object.hasOwn(build.rulebooks, m.path);
+  };
+  return {
+    save,
+    async answer(message, reply) {
+      if (!isRequest(message)) return;
+      const { path } = message;
+      if (!saving.has(path) && (await (await caches.open(RULEBOOKS)).match(path, MATCH))) return reply({ path, state: 'saved' });
+      // Asked again after the wait: a save may have begun meanwhile.
+      const done = saving.get(path) ?? (message.save ? save(path) : null);
+      if (!done) return reply({ path, state: 'unsaved' });
+      reply({ path, state: 'saving' });
+      reply({ path, state: await done });
+    },
+  };
 }
