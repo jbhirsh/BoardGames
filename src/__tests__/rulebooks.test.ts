@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { rulebooks, rulebookPath, citedPage, citedPageParam, chatParts, chatScope, rulesPathFor, mentionedRulebooks, linkCitations, starterQuestions } from '../utils/rulebooks';
+import { rulebooks, rulebookPath, citedPage, citedPageParam, chatParts, chatScope, citationsIn, rulesPathFor, mentionedRulebooks, linkCitations, starterQuestions } from '../utils/rulebooks';
 import { initialFilterState } from '../data/initialFilterState';
 import { GAMES } from '../data/games';
 import { quickGame } from './testData';
@@ -352,6 +352,25 @@ describe('linkCitations', () => {
       expect(title === undefined).toBe(/^(Base game|Cities & Knights) /.test(text));
       if (title) expect(title).toMatch(new RegExp(`^${text}, (Base game|Cities & Knights)$`));
     }
+  });
+});
+
+describe('citationsIn', () => {
+  const catan = GAMES.find((g) => g.slug === 'catan')!;
+  const [base, knights] = ['Base game', 'Cities & Knights'].map((label) => rulebooks(catan).find((b) => b.label === label)!);
+
+  it('lists the rulebook and page each citation opens, once each, in the order cited', () => {
+    const answer = 'Knights (Cities And Knights p. 4). A 7 (Catan p. 5, 6). Again (Catan p. 5); see also [a link](https://example.com).';
+    expect(citationsIn(answer, catan, knights)).toEqual([
+      { book: knights, page: 4 },
+      { book: base, page: 5 },
+      { book: base, page: 6 },
+    ]);
+  });
+
+  it('lists nothing for an answer without a citation it can link', () => {
+    expect(citationsIn('Roll two dice (p. 3).', catan, knights)).toEqual([]);
+    expect(citationsIn('Roll two dice.', catan, base)).toEqual([]);
   });
 });
 

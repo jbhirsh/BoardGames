@@ -15,6 +15,9 @@ const PDFJS_ASSETS: Record<string, (file: string) => boolean> = {
   // quickjs is pdf.js's sandbox for scripted forms, which rulebooks don't use.
   wasm: (file) => !file.startsWith('quickjs'),
   standard_fonts: () => true,
+  // The colour profile for CMYK images (8 KB), which pdf.js's worker reads
+  // itself (useWorkerFetch, src/pdfjs/documents.ts).
+  iccs: (file) => file.endsWith('.icc'),
 }
 
 function pdfjsAssets(): Plugin {

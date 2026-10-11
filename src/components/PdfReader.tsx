@@ -1,10 +1,11 @@
 // First, so the methods pdf.js expects are there before its code runs.
 import '../pdfjs/polyfills';
 import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { getDocument, PDFWorker, TextLayer, type PDFDocumentProxy, type PDFPageProxy, type RenderTask } from 'pdfjs-dist';
-import { findMatches, pageText, piecesOf, type Match, type PageText, type TextRun } from '../utils/pdfSearch';
+import { TextLayer, type PDFDocumentProxy, type RenderTask } from 'pdfjs-dist';
+import { findMatches, piecesOf, type Match } from '../utils/pdfSearch';
 import { findCited, lineBreaks, passageStart } from '../utils/citeMatch';
-import { startWorker } from '../pdfjs/startWorker';
+import { drawOrder, OFF_SCREEN, renderQueue, type RenderQueue } from '../pdfjs/renderQueue';
+import { heldDocument, openDocument, readerOpens, sharedWorker, textOf as readTextOf, warmPage, type PageTextData } from '../pdfjs/documents';
 
 // The rules page draws the rulebook itself with pdf.js rather than leaving
 // it to the browser's viewer (which a phone hasn't got: Android draws
@@ -13,12 +14,13 @@ import { startWorker } from '../pdfjs/startWorker';
 // citation open it at its page with the passage it cites marked. This
 // module is loaded only when it is needed.
 
-// The decoders for JPEG 2000 and JBIG2 images, and the fonts PDFs name but
-// don't embed. vite.config.ts copies them from pdfjs-dist into the build.
-const ASSETS = '/pdfjs/';
 // Pages within this distance of the screen are drawn; further ones give
 // their canvas back, which keeps a 50-page rulebook within a phone's memory.
 const NEAR = '1000px 0px';
+// How many pages a reader draws at once, besides the one a citation or a
+// search asks for: the worker draws one page at a time, so drawing more at
+// once only finishes the one most on screen later.
+const RENDERS = 1;
 // A cap on one page's canvas, in pixels: iOS refuses canvases past its
 // memory budget and draws them blank.
 const MAX_PIXELS = 4_000_000;
@@ -153,56 +155,33 @@ function usePixelRatio(): number {
 }
 
 /**
- * Text for a live region, and a way to say it: emptied first and set a
- * frame later, so the same words said twice are read out twice.
+ * Text for a live region, a way to say it, and a way to add to it: said
+ * by emptying the region first and setting it a frame later, so the same
+ * words said twice are read out twice. What is added joins words not yet
+ * said, as one update, or follows them as an update of its own.
  */
-function useAnnouncement(): [string, (text: string) => void] {
+function useAnnouncement(): [string, (text: string) => void, (more: string) => void] {
   const [text, setText] = useState('');
   const frame = useRef(0);
+  // The words waiting for their frame.
+  const coming = useRef<string | null>(null);
   const say = useCallback((next: string) => {
     cancelAnimationFrame(frame.current);
     setText('');
-    frame.current = requestAnimationFrame(() => setText(next));
+    coming.current = next;
+    frame.current = requestAnimationFrame(() => {
+      coming.current = null;
+      setText(next);
+    });
   }, []);
+  const add = useCallback((more: string) => say(coming.current === null ? more : `${coming.current}. ${more}`), [say]);
   useEffect(() => () => cancelAnimationFrame(frame.current), []);
-  return [text, say];
-}
-
-// One worker for every rulebook the page opens, started on first use. It is
-// our own entry, which installs the polyfills before pdf.js's worker code.
-// Handing it to getDocument as `worker` keeps it alive when a document is
-// destroyed: a reader for the next tab must not find it shutting down.
-let shared: { worker: PDFWorker; broken: boolean; port: Worker } | null = null;
-function sharedWorker() {
-  if (!shared) {
-    const port = startWorker();
-    const current = { worker: new PDFWorker({ port: port as never }), broken: false, port };
-    port.addEventListener('error', () => { current.broken = true; });
-    shared = current;
-  }
-  return shared;
-}
-
-type TextContent = Awaited<ReturnType<PDFPageProxy['getTextContent']>>;
-
-interface PageTextData {
-  content: TextContent;
-  runs: TextRun[];
-  text: PageText;
+  return [text, say, add];
 }
 
 interface Hit {
   page: number;
   match: Match;
-}
-
-/** A page's text, the same items the text layer draws, so offsets line up. */
-async function readText(doc: PDFDocumentProxy, n: number): Promise<PageTextData> {
-  const page = await doc.getPage(n);
-  // Normalized, so a printed "ﬁ" ligature reads (and is found) as "fi".
-  const content = await page.getTextContent({ includeMarkedContent: true });
-  const runs = content.items.filter((item): item is TextRun & typeof item => 'str' in item);
-  return { content, runs, text: pageText(runs) };
 }
 
 interface PageProps {
@@ -227,9 +206,9 @@ interface PageProps {
   onJump: () => void;
   /**
    * Called once a jump to this page is over: scrolled there with the page
-   * drawn (or failed to draw), or the scroll taken over.
+   * drawn (or failed to draw), or the scroll taken over (`takenOver`).
    */
-  onLanded: () => void;
+  onLanded: (takenOver: boolean) => void;
   /**
    * Set while a jump is on its way: the page starts no drawing for coming
    * near, nor lays its text, so neither the pages on screen as a tab opens
@@ -238,9 +217,13 @@ interface PageProps {
   held: boolean;
   /** Set while a jump to this page is on its way: drawn at once, wherever it is. */
   leads: boolean;
+  /** The reader's queue of pages to draw. */
+  queue: RenderQueue;
+  /** Called once the page knows whether it is near the screen, and has asked to be drawn if it is. */
+  onPlaced: () => void;
 }
 
-function PdfPage({ doc, n, width, pixels, ratio, textOf, matches, current, quoted, total, known, cited, onJump, onLanded, held, leads }: PageProps) {
+function PdfPage({ doc, n, width, pixels, ratio, textOf, matches, current, quoted, total, known, cited, onJump, onLanded, held, leads, queue, onPlaced }: PageProps) {
   const boxRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
@@ -266,11 +249,13 @@ function PdfPage({ doc, n, width, pixels, ratio, textOf, matches, current, quote
   const reveal = useRef(false);
 
   // Whether the page is near the screen, followed as the reader scrolls.
+  const placed = useEffectEvent(onPlaced);
   useEffect(() => {
     const box = boxRef.current;
     if (!box) return;
     const io = new IntersectionObserver((entries) => {
       setNear(entries[entries.length - 1].isIntersecting);
+      placed();
     }, { rootMargin: NEAR });
     io.observe(box);
     return () => io.disconnect();
@@ -278,23 +263,42 @@ function PdfPage({ doc, n, width, pixels, ratio, textOf, matches, current, quote
 
   // The page image, drawn while the page is near the screen (or holds the
   // match being shown, or was cited, or a jump is on its way to it) and
-  // given back when it moves away.
-  const drawn = live || leads || current !== null || cited !== null;
+  // given back when it moves away. It waits its turn in the reader's queue:
+  // the page asked for first, then those on screen, then the nearest. Its
+  // text is read in the same turn, before the next page starts, since it
+  // is laid over this one. `drawing` settles once the turn is over (or the
+  // drawing called off).
+  const asked = leads || current !== null || cited !== null;
+  const drawn = live || asked;
+  const drawing = useRef<Promise<unknown>>(Promise.resolve());
+  // A page gone (its reader closing) is asked its place no more; until its
+  // job is taken out, it goes after those on screen.
+  const order = useEffectEvent(() => {
+    const box = boxRef.current;
+    return box ? drawOrder(box.getBoundingClientRect(), window.innerHeight, asked) : OFF_SCREEN;
+  });
   useEffect(() => {
     const canvas = canvasRef.current!;
     // The image drawn before (or the failure) is going, so a new promise.
     if (painted.current.done) painted.current = deferred();
     if (!drawn || width === 0) {
       canvas.width = canvas.height = 0;
+      drawing.current = Promise.resolve();
       return;
     }
     let cancelled = false;
     let task: RenderTask | null = null;
+    let over = () => {};
+    drawing.current = new Promise((resolve) => { over = () => resolve(undefined); });
+    // Called off while loading its page, before there is a drawing to
+    // cancel, it gives its place in the queue back at once all the same.
+    let stop = () => {};
+    const stopped = new Promise<void>((resolve) => { stop = resolve; });
     // A cancelled render rejects too; it leaves the promise to the drawing after it.
     const failed = () => {
       if (!cancelled) painted.current.resolve(false);
     };
-    doc.getPage(n).then((page) => {
+    const draw = () => doc.getPage(n).then((page) => {
       if (cancelled) return;
       const base = page.getViewport({ scale: 1 });
       const viewport = page.getViewport({ scale: width / base.width });
@@ -305,22 +309,47 @@ function PdfPage({ doc, n, width, pixels, ratio, textOf, matches, current, quote
       task = page.render({ canvas, viewport, transform: dpr === 1 ? undefined : [dpr, 0, 0, dpr, 0, 0] });
       // A failed render leaves the page blank, and the download link above
       // the reader still works.
-      task.promise.then(() => painted.current.resolve(true), failed);
+      return task.promise.then(() => painted.current.resolve(true), failed);
     }, failed);
+    const dequeue = queue.add({
+      order: () => order(),
+      run: async () => {
+        try {
+          await Promise.race([stopped, (async () => {
+            await draw();
+            if (!cancelled) await textOf(n);
+          })()]);
+        } finally {
+          over();
+        }
+      },
+    });
     return () => {
       cancelled = true;
+      stop();
+      dequeue();
       task?.cancel();
+      over();
     };
-  }, [doc, n, width, pixels, drawn]);
+  }, [doc, n, width, pixels, drawn, queue, textOf]);
+
+  // A page already waiting its turn when it is asked for goes ahead now.
+  useEffect(() => {
+    if (asked) queue.next();
+  }, [asked, queue]);
 
   // The text layer, laid once the page has come near (it is light, so it
-  // stays) and again when the width changes.
+  // stays) and again when the width changes; after the page's drawing,
+  // which it would otherwise slow.
   const wanted = seen || current !== null;
   useEffect(() => {
     if (!wanted || width === 0) return;
     let cancelled = false;
     let textLayer: TextLayer | null = null;
+    const turn = drawing.current;
     (async () => {
+      await turn;
+      if (cancelled) return;
       const page = await doc.getPage(n);
       const data = await textOf(n);
       if (cancelled) return;
@@ -417,10 +446,10 @@ function PdfPage({ doc, n, width, pixels, ratio, textOf, matches, current, quote
       const ranItsCourse = await scroll.ended;
       if (cancelled) return;
       if (ranItsCourse && Math.abs(offTarget(box)) > 1) box.scrollIntoView({ block: 'start', behavior: 'instant' });
-      if (!ranItsCourse) landed();
+      if (!ranItsCourse) landed(true);
       const drew = await painted.current.promise;
       if (cancelled) return;
-      landed();
+      landed(!ranItsCourse);
       if (ranItsCourse) reveal.current = !revealPassage(box);
       if (!drew) return;
       box.classList.add('pdf-page--cited');
@@ -480,13 +509,20 @@ interface Passage {
   start: string;
 }
 
+/** A page an answer cites in another rulebook, to have ready before it is tapped. */
+export interface Warm {
+  src: string;
+  page: number;
+}
+
 /**
  * `jump` asks for a page, from a citation: the reader scrolls there once the
  * page is laid out, again for each new `key`, but not for one it has
- * already made (Back, a reload). `onFail` hears that the rulebook can't be
- * shown.
+ * already made (Back, a reload). `warm` names pages in other rulebooks an
+ * answer cites, opened and drawn out of sight ahead of a tap (each once).
+ * `onFail` hears that the rulebook can't be shown.
  */
-export default function PdfReader({ src, title, jump, onFail }: { src: string; title: string; jump?: Jump; onFail?: () => void }) {
+export default function PdfReader({ src, title, jump, warm, onFail }: { src: string; title: string; jump?: Jump; warm?: readonly Warm[]; onFail?: () => void }) {
   const [doc, setDoc] = useState<PDFDocumentProxy | null>(null);
   const [failed, setFailed] = useState(false);
   const failedNow = useEffectEvent(() => onFail?.());
@@ -497,6 +533,7 @@ export default function PdfReader({ src, title, jump, onFail }: { src: string; t
   const texts = useRef(new Map<number, Promise<PageTextData>>());
   const place = useRef<{ page: number; into: number } | null>(null);
   const drawnWidth = useRef(0);
+  const [queue] = useState(() => renderQueue(RENDERS));
 
   const [query, setQuery] = useState('');
   const [searched, setSearched] = useState('');
@@ -517,22 +554,28 @@ export default function PdfReader({ src, title, jump, onFail }: { src: string; t
       setFailed(true);
       failedNow();
     };
-    const { worker, broken, port } = sharedWorker();
+    const { broken, port } = sharedWorker();
     // A worker that never started never answers, which would leave the
     // reader loading for good.
     port.addEventListener('error', fail);
     if (broken) queueMicrotask(fail);
-    const task = getDocument({
-      url: src,
-      worker,
-      wasmUrl: `${ASSETS}wasm/`,
-      standardFontDataUrl: `${ASSETS}standard_fonts/`,
-      // Fetch only the parts of the file the pages on screen need (both
-      // flags: a streamed request would bring the whole file anyway).
-      disableAutoFetch: true,
-      disableStream: true,
-    });
-    task.promise
+    // A rulebook opened ahead of a tap (warmPage) is shown as it is, with
+    // the text already read, and left open for the rules page to close. If
+    // it won't load after all (the warm's network gave out), it is opened
+    // afresh, once.
+    const held = heldDocument(src);
+    let task = held ? null : openDocument(src);
+    if (held) texts.current = held.texts;
+    const loaded = held
+      ? held.promise.catch(() => {
+        held.release();
+        if (cancelled) throw new Error('closed');
+        texts.current = new Map();
+        task = openDocument(src);
+        return task.promise;
+      })
+      : task!.promise;
+    loaded
       .then(async (pdf) => {
         const first = (await pdf.getPage(1)).getViewport({ scale: 1 });
         if (cancelled) return;
@@ -543,9 +586,38 @@ export default function PdfReader({ src, title, jump, onFail }: { src: string; t
     return () => {
       cancelled = true;
       port.removeEventListener('error', fail);
-      void task.destroy();
+      held?.release();
+      void task?.destroy();
     };
   }, [src]);
+
+  // The rulebooks kept open are closed once the rules page is left.
+  useEffect(() => readerOpens(), []);
+
+  // As an answer citing other rulebooks lands, rather than when one is
+  // tapped: in the queue, after the pages on screen but before those near
+  // it, which the visitor reading the answer isn't looking at. Not before
+  // this reader's own rulebook is open and its pages know where they are,
+  // so those on screen are in the queue ahead of it.
+  const [placed, setPlaced] = useState(false);
+  const onPlaced = useCallback(() => setPlaced(true), []);
+  // The rulebook is opened and the page loaded first, outside the queue,
+  // where a network that stalls holds none of this reader's pages up.
+  useEffect(() => {
+    if (!placed) return;
+    let cancelled = false;
+    const dequeues: (() => void)[] = [];
+    for (const w of warm ?? []) {
+      if (w.src === src) continue;
+      void warmPage(w.src, w.page).then((draw) => {
+        if (draw && !cancelled) dequeues.push(queue.add({ order: () => OFF_SCREEN, run: draw }));
+      });
+    }
+    return () => {
+      cancelled = true;
+      dequeues.forEach((dequeue) => dequeue());
+    };
+  }, [placed, warm, src, queue]);
 
   // Pages are drawn to the column's width and redrawn if it changes (a phone
   // turned sideways). Every page's height changes with it, so the reader
@@ -577,16 +649,7 @@ export default function PdfReader({ src, title, jump, onFail }: { src: string; t
     window.scrollBy(0, top.top + at.into * top.height);
   }, [width]);
 
-  const textOf = useCallback((n: number) => {
-    let text = texts.current.get(n);
-    if (!text) {
-      text = readText(doc!, n);
-      // A page that failed to load can be asked for again.
-      text.catch(() => texts.current.delete(n));
-      texts.current.set(n, text);
-    }
-    return text;
-  }, [doc]);
+  const textOf = useCallback((n: number) => readTextOf(texts.current, doc!, n), [doc]);
 
   async function search(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -631,57 +694,75 @@ export default function PdfReader({ src, title, jump, onFail }: { src: string; t
   // (a page is otherwise sized like the first until it is drawn), so a
   // rulebook of mixed page sizes doesn't move the page as the scroll passes.
   // Meanwhile the cited page's text is searched for the passage the
-  // citation points to, so the jump can say what it marked.
-  const [known, setKnown] = useState<{ id: string | null; ratios: (number | undefined)[]; passage: Passage | null }>({ id: null, ratios: [], passage: null });
+  // citation points to, which is marked when it is found: the jump doesn't
+  // wait for it, since the worker reads the text only once it has worked
+  // out how to draw the page, a second or more on a phone.
+  const [known, setKnown] = useState<{ id: string | null; ratios: (number | undefined)[] }>({ id: null, ratios: [] });
+  const [found, setFound] = useState<{ id: string | null; passage: Passage | null }>({ id: null, passage: null });
   const upTo = target?.page;
   const quote = target?.quote;
   useEffect(() => {
     if (!doc || upTo === undefined || jumpId === null) return;
     let cancelled = false;
-    const heights = Promise.all(Array.from({ length: upTo }, (_, i) => doc.getPage(i + 1).then((page) => {
+    void Promise.all(Array.from({ length: upTo }, (_, i) => doc.getPage(i + 1).then((page) => {
       const base = page.getViewport({ scale: 1 });
       return base.height / base.width;
-    }, () => undefined)));
-    const passage = quote
-      ? textOf(upTo).then(({ runs, text }): Passage | null => {
-        const match = findCited(text.text, quote, lineBreaks(runs, text.starts));
-        return match && { match, start: passageStart(text.text.slice(...match)) };
-      }, () => null)
-      : null;
-    void Promise.all([heights, passage]).then(([ratios, found]) => {
+    }, () => undefined))).then((ratios) => {
       if (cancelled) return;
       setKnown((prev) => ({
         id: jumpId,
         ratios: Array.from({ length: Math.max(prev.ratios.length, ratios.length) }, (_, i) => ratios[i] ?? prev.ratios[i]),
-        passage: found,
       }));
     });
+    if (quote) {
+      void textOf(upTo).then(({ runs, text }): Passage | null => {
+        const match = findCited(text.text, quote, lineBreaks(runs, text.starts));
+        return match && { match, start: passageStart(text.text.slice(...match)) };
+      }, () => null).then((passage) => {
+        if (!cancelled) setFound({ id: jumpId, passage });
+      });
+    }
     return () => {
       cancelled = true;
     };
   }, [doc, upTo, jumpId, quote, textOf]);
   const cited = target && known.id === jumpId ? target : null;
   // Marked from the jump until the next jump or search.
-  const passage = cited && unmarked !== jumpId ? known.passage : null;
+  const passage = cited && unmarked !== jumpId && found.id === jumpId ? found.passage : null;
   // From the moment a jump is asked for until it is over, the page it goes
-  // to is drawn first and alone: the pages on screen as a tab opens, and
-  // those the scroll passes, would otherwise be drawn ahead of it (and
-  // slow the reading of the heights above), and the ring waits for its image.
-  const [landedId, setLandedId] = useState<string | null>(null);
-  const onLanded = useCallback(() => setLandedId(jumpId), [jumpId]);
-  const going = target && landedId !== jumpId ? target.page : null;
-
-  // Where a jump went, said politely as it starts, with the first words of
-  // the passage it marked: "Base game, page 5. Highlighted: roll a 7…".
-  const [said, say] = useAnnouncement();
+  // to is drawn first, and no other page starts drawing: the pages on
+  // screen as a tab opens, and those the scroll passes, would otherwise be
+  // drawn ahead of it (and slow the reading of the heights above), and the
+  // ring waits for its image.
+  //
+  // Where a jump went is said politely once it is there (or the scroll is
+  // taken over), with the first words of the passage it marked: "Base game,
+  // page 5. Highlighted: roll a 7…". The page's text is read by then, as a
+  // rule; a passage found only after adds its words then: to the place, if
+  // that is still to be said, or after it, unless the visitor took the
+  // scroll over, and has gone on to read something else.
+  const [said, say, add] = useAnnouncement();
+  // The jump whose place has been said, and whether its passage may still be.
+  const told = useRef<{ id: string; more: boolean } | null>(null);
   const book = target?.place;
   const marked = passage?.start;
-  // Only the cited page calls it, so there is a jump.
-  const onJump = useCallback(() => {
-    rememberJump(jumpId!);
+  const [landedId, setLandedId] = useState<string | null>(null);
+  // Only the cited page calls these, so there is a jump.
+  const onJump = useCallback(() => rememberJump(jumpId!), [jumpId]);
+  const onLanded = useCallback((takenOver: boolean) => {
+    setLandedId(jumpId);
+    if (told.current?.id === jumpId) return;
+    told.current = { id: jumpId!, more: marked === undefined && !takenOver };
     const where = book ? `${book}, page ${upTo}` : `Page ${upTo}`;
     say(marked ? `${where}. Highlighted: ${marked}` : where);
   }, [jumpId, upTo, book, marked, say]);
+  const going = target && landedId !== jumpId ? target.page : null;
+  useEffect(() => {
+    const jumped = told.current;
+    if (marked === undefined || jumped?.id !== jumpId || !jumped.more) return;
+    jumped.more = false;
+    add(`Highlighted: ${marked}`);
+  }, [marked, jumpId, add]);
 
   // A citation past the end: the model got the page wrong, so say so rather
   // than guess which page it meant, again for each tap.
@@ -749,6 +830,8 @@ export default function PdfReader({ src, title, jump, onFail }: { src: string; t
             onLanded={onLanded}
             held={going !== null}
             leads={going === i + 1}
+            queue={queue}
+            onPlaced={onPlaced}
           />
         ))}
       </div>

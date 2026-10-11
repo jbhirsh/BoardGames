@@ -90,6 +90,60 @@ describe('RulesChat', () => {
     );
   });
 
+  it('hands on each answer once it is whole, with the tab it was asked on', async () => {
+    const onAnswer = vi.fn();
+    let finish = () => {};
+    const rest = new Promise<void>((resolve) => { finish = resolve; });
+    let i = 0;
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      body: {
+        getReader: () => ({
+          read: async () => {
+            i++;
+            if (i === 1) return { done: false, value: new TextEncoder().encode('Robber moves ') };
+            if (i === 2) {
+              await rest;
+              return { done: false, value: new TextEncoder().encode('(Catan p. 5).') };
+            }
+            return { done: true, value: undefined };
+          },
+        }),
+      },
+    })));
+    render(
+      <RulesChatProvider>
+        <RulesChatToggle />
+        <RulesChatPanel slug="catan" gameName="Catan" tab="cities-and-knights" onAnswer={onAnswer} />
+      </RulesChatProvider>,
+    );
+    openPanel();
+    send('A 7?');
+    await screen.findByText(/Robber moves/);
+    // Not while it is still coming in.
+    expect(onAnswer).not.toHaveBeenCalled();
+    await act(async () => finish());
+    await waitFor(() => expect(onAnswer).toHaveBeenCalledWith('Robber moves (Catan p. 5).', 'cities-and-knights'));
+    // Once, however often the panel draws again.
+    fireEvent.change(screen.getByPlaceholderText('Ask a rules question...'), { target: { value: 'And then?' } });
+    expect(onAnswer).toHaveBeenCalledTimes(1);
+  });
+
+  it('hands on nothing for a failed question', async () => {
+    const onAnswer = vi.fn();
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 500 }) as Response));
+    render(
+      <RulesChatProvider>
+        <RulesChatToggle />
+        <RulesChatPanel slug="catan" gameName="Catan" onAnswer={onAnswer} />
+      </RulesChatProvider>,
+    );
+    openPanel();
+    send('A 7?');
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(onAnswer).not.toHaveBeenCalled();
+  });
+
   // The network splits the stream wherever it likes, including inside a
   // multi-byte character, which must be joined, not decoded half at a time.
   it('joins a character split across two chunks', async () => {

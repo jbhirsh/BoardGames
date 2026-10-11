@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseRange, rangeHeaders, routeFor } from '../utils/offline';
+import { parseRange, rangeHeaders, routeFor, savesRulebook, WARM_HEADER } from '../utils/offline';
 
 const ORIGIN = 'https://game-room.example';
 const SHELL = new Set(['/assets/index-abc.js', '/words/enable.txt', '/images/catan.webp']);
@@ -56,6 +56,18 @@ describe('routeFor', () => {
     expect(route('/assets/index-abc.js', 'HEAD')).toBe('skip');
     expect(route('/images/catan.webp', 'POST')).toBe('skip');
     expect(route('/', 'POST', 'navigate')).toBe('skip');
+  });
+});
+
+describe('savesRulebook', () => {
+  it('saves the whole rulebook for a reader\'s request', () => {
+    expect(savesRulebook(new Headers({ Range: 'bytes=0-65535' }))).toBe(true);
+    expect(savesRulebook(new Headers())).toBe(true);
+  });
+
+  it('saves nothing for a warm request, which fetches only its ranges', () => {
+    expect(WARM_HEADER).toBe('X-Warm');
+    expect(savesRulebook(new Headers({ Range: 'bytes=0-65535', [WARM_HEADER]: '1' }))).toBe(false);
   });
 });
 
