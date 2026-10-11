@@ -23,6 +23,11 @@ const bodyAxeOptions = { rules: { ...axeOptions.rules, region: { enabled: false 
 // 5s can flake, and a timeout here cascades because vitest-axe's axe
 // singleton then reports "Axe is already running" for the next test.
 const TIMEOUT_MS = 30_000;
+// The signed-in wishlist is the heaviest page: both lists stay mounted and
+// every entry carries owner controls. Alone under coverage it takes about
+// 23 s (7 s to load, 16 s for axe), so the parallel pre-push run tips it
+// past 30 s while CI passes.
+const OWNER_TIMEOUT_MS = 60_000;
 
 describe('accessibility', () => {
   it('home page (owned games) has no axe violations', async () => {
@@ -152,7 +157,7 @@ describe('accessibility', () => {
       ], { initialEntries: ['/?c=want'] });
       const { container } = render(<RouterProvider router={router} />);
       // Role queries over the full page are slow in jsdom; give them room.
-      const slow = { timeout: TIMEOUT_MS / 3 };
+      const slow = { timeout: OWNER_TIMEOUT_MS / 3 };
       await screen.findByRole('button', { name: 'Approve Ark Nova' }, slow);
       // The per-entry edit form is the densest admin control; scan it open.
       fireEvent.click(await screen.findByRole('button', { name: 'Edit Root' }, slow));
@@ -162,7 +167,7 @@ describe('accessibility', () => {
     } finally {
       fetchSpy.mockRestore();
     }
-  }, TIMEOUT_MS);
+  }, OWNER_TIMEOUT_MS);
 
   it('owner sign-in page has no axe violations', async () => {
     const router = createMemoryRouter([
