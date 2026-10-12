@@ -8,9 +8,6 @@ import { cameFromList } from '../utils/fromList';
 import FilterBar from '../components/FilterBar/FilterBar';
 import { FilterProvider } from '../context/FilterContext';
 
-/** The picker's "Fits …" line as it reads, across the parts it is drawn in. */
-const whyText = () => document.querySelector('.pick-why')!.textContent;
-
 describe('pickRandom', () => {
   it('throws on empty pool', () => {
     expect(() => pickRandom([])).toThrow('pool empty');
@@ -235,10 +232,8 @@ describe('RandomPicker', () => {
 
     expect(screen.queryByText('Spinning…')).toBeNull();
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    // The reason reads from the list the pick came from, not the empty one,
-    // less the adult games the picker leaves out of it (#197).
-    const adult = GAMES.filter((g) => g.kw.includes('adult')).length;
-    expect(whyText()).toBe(`One of ${GAMES.length - adult} games · adult games left out`);
+    // The reason reads from the list the pick came from, not the empty one.
+    expect(screen.getByText(`One of ${GAMES.length} games`)).toBeInTheDocument();
   });
 
   it('keeps focus inside the dialog on initial Shift+Tab from the card', () => {
@@ -376,7 +371,7 @@ describe('RandomPicker picks something playable', () => {
   it('says how the pick fits the filters', () => {
     renderAt('/?p=4&d=15');
     spin();
-    expect(whyText()).toMatch(/^Fits 4 players · up to 15 min · (one of \d+ games|the only match)$/);
+    expect(screen.getByText(/^Fits 4 players · up to 15 min · (one of \d+ games|the only match)$/)).toBeInTheDocument();
   });
 
   it('names a single match as the only one', () => {
@@ -435,109 +430,3 @@ describe('RandomPicker picks something playable', () => {
   });
 });
 
-describe('RandomPicker leaves adult games out unless asked for', () => {
-  const adultNames = GAMES.filter((g) => g.kw.includes('adult')).map((g) => g.name);
-  const notAdult = GAMES.length - adultNames.length;
-
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-  afterEach(() => {
-    vi.restoreAllMocks();
-    vi.useRealTimers();
-  });
-
-  function renderAt(url: string) {
-    return render(
-      <MemoryRouter initialEntries={[url]}>
-        <FilterProvider>
-          <RandomPicker />
-        </FilterProvider>
-      </MemoryRouter>,
-    );
-  }
-
-  /** The name on the card: the game spinning past, or the pick. */
-  const shownName = () => document.querySelector('.pick-name')!.textContent!;
-
-  it('never spins past or lands on an adult game, and says they were left out', () => {
-    // Walk Math.random through the whole range, so every place in the list comes up.
-    let n = 0;
-    vi.spyOn(Math, 'random').mockImplementation(() => (n++ % 31) / 31);
-    renderAt('/');
-    const seen = new Set<string>();
-    for (let pick = 0; pick < notAdult; pick++) {
-      act(() => fireEvent.click(screen.getByRole('button', { name: pick === 0 ? /^Pick for us$/ : 'Pick again' })));
-      while (screen.queryByText('Spinning…')) {
-        expect(adultNames).not.toContain(shownName());
-        act(() => vi.advanceTimersByTime(75));
-      }
-      seen.add(shownName());
-      expect(adultNames).not.toContain(shownName());
-      expect(whyText()).toBe(`One of ${notAdult} games · adult games left out`);
-    }
-    // Pick again works through the list, so that was every game but the adult ones.
-    expect(seen.size).toBe(notAdult);
-  });
-
-  it('puts the note after the filters on the Fits line', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0);
-    // These Cards Will Get You Drunk seats two.
-    renderAt('/?p=2');
-    act(() => fireEvent.click(screen.getByRole('button', { name: /^Pick for us$/ })));
-    act(() => vi.advanceTimersByTime(2000));
-    expect(whyText()).toMatch(/^Fits 2 players · one of \d+ games · adult games left out$/);
-  });
-
-  it('draws from the adult games, with no note, when the Adult keyword is selected', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0);
-    renderAt('/?k=adult');
-    act(() => fireEvent.click(screen.getByRole('button', { name: /^Pick for us$/ })));
-    act(() => vi.advanceTimersByTime(2000));
-    expect(adultNames).toContain(shownName());
-    expect(screen.getByText(`One of ${adultNames.length} games`)).toBeInTheDocument();
-    expect(screen.queryByText(/adult games left out/)).toBeNull();
-  });
-
-  it('adds no note when the filters had already left the adult games out', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0);
-    // Every adult game takes an hour.
-    renderAt('/?d=15');
-    act(() => fireEvent.click(screen.getByRole('button', { name: /^Pick for us$/ })));
-    act(() => vi.advanceTimersByTime(2000));
-    expect(whyText()).toMatch(/^Fits up to 15 min · one of \d+ games$/);
-    expect(screen.queryByText(/adult games left out/)).toBeNull();
-  });
-
-  it('picks the adult game a search named rather than nothing', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0);
-    renderAt('/?q=Cards%20Against');
-    expect(screen.getByRole('button', { name: /^Pick for us$/ })).toBeEnabled();
-    act(() => fireEvent.click(screen.getByRole('button', { name: /^Pick for us$/ })));
-    act(() => vi.advanceTimersByTime(2000));
-    expect(screen.getByRole('dialog')).toHaveAccessibleName('Tonight, play — Cards Against Humanity');
-    expect(screen.getByText('The only match')).toBeInTheDocument();
-  });
-
-  it('draws the line in whole parts, each after the first led by its "·"', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0);
-    renderAt('/?p=2&d=60');
-    act(() => fireEvent.click(screen.getByRole('button', { name: /^Pick for us$/ })));
-    act(() => vi.advanceTimersByTime(2000));
-    const why = document.querySelector('.pick-why')!;
-    // CSS keeps each part on one line, so a line too long for the card
-    // wraps between parts: before a "·", and never after one.
-    const parts = [...why.children].map((el) => el.textContent);
-    expect([...why.children].every((el) => el.tagName === 'SPAN')).toBe(true);
-    expect(parts).toEqual([
-      'Fits 2 players',
-      '· up to 60 min',
-      expect.stringMatching(/^· one of \d+ games$/),
-      '· adult games left out',
-    ]);
-    for (const part of parts) expect(part).not.toMatch(/·\s*$/);
-    // The spaces are plain ones, so the line copies as it reads.
-    expect(why.textContent).toMatch(/^Fits 2 players · up to 60 min · one of \d+ games · adult games left out$/);
-    expect(why.textContent).not.toContain('\u00a0');
-  });
-});

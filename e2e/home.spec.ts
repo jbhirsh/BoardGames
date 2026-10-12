@@ -217,47 +217,6 @@ test('the picker lands a deck on one of its games', async ({ page }) => {
   await expect(dialog.getByText('Played with the Card Deck')).toBeVisible();
 });
 
-test('the picker leaves adult games out until the Adult keyword asks for them', async ({ page }) => {
-  // A seeded Math.random, so the picks come in the same order every run,
-  // and a fake clock, so each spin settles at once.
-  await page.addInitScript(() => {
-    let seed = 197;
-    Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  });
-  await page.clock.install();
-  await page.goto('/');
-
-  const adult = GAMES.filter((g) => g.kw.includes('adult')).map((g) => g.name);
-  const others = GAMES.length - adult.length;
-  const dialog = page.getByRole('dialog');
-  const settlesOnAGameForAnyone = async () => {
-    await page.clock.runFor(2000);
-    await expect(dialog).toHaveAccessibleName(/^Tonight, play — /);
-    const name = (await dialog.getAttribute('aria-label'))!;
-    expect(adult.filter((a) => name.includes(a)), name).toEqual([]);
-    await expect(dialog.getByText(`One of ${others} games · adult games left out`)).toBeVisible();
-  };
-  // A few picks are enough here; the unit tests walk the whole list.
-  await page.getByRole('button', { name: 'Pick for us' }).click();
-  await settlesOnAGameForAnyone();
-  for (let i = 1; i < 4; i++) {
-    await dialog.getByRole('button', { name: 'Pick again' }).click();
-    await settlesOnAGameForAnyone();
-  }
-  await dialog.getByRole('button', { name: 'Close' }).click();
-
-  await page.getByRole('button', { name: 'Keywords', exact: true }).click();
-  await page.getByRole('button', { name: /^Adult\s*\d+$/ }).click();
-  await expect(page).toHaveURL(/k=adult/);
-  await page.keyboard.press('Escape');
-
-  await page.getByRole('button', { name: 'Pick for us' }).click();
-  await page.clock.runFor(2000);
-  await expect(dialog).toHaveAccessibleName(new RegExp(`^Tonight, play — (${adult.join('|')})$`));
-  await expect(dialog.getByText(`One of ${adult.length} games`, { exact: true })).toBeVisible();
-  await expect(dialog.getByText(/adult games left out/)).toHaveCount(0);
-});
-
 test('a cover on the hero shelf opens that game\'s rulebook', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('list', { name: 'Rulebooks' }).getByRole('link', { name: 'Azul rules' }).click();

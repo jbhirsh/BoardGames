@@ -1,11 +1,11 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router';
 import { useFilter } from '../context/useFilter';
 import type { FilterState, Game } from '../data/types';
 import { pickRandom } from '../utils/pickRandom';
 import { pickFresh, resolvePick, type Pick } from '../utils/resolvePick';
-import { pickPool } from '../utils/pickPool';
+import { tableFiltered } from '../utils/filterGames';
 import { rulebookPath } from '../utils/rulebooks';
 import { DUR_LABELS, playersLabel } from '../data/keywords';
 import Backdrop from './Backdrop';
@@ -16,22 +16,15 @@ import { useScrollLock } from '../hooks/useScrollLock';
 const SPIN_MS = 1400;
 const TICK_MS = 75;
 
-// Why this pick: the players and time it fits, how many it was drawn from,
-// and whether adult games were left out of that (see utils/pickPool), as
-// the parts of the line. Each part after the first starts with its "·", so
-// a line too long for the card wraps before a dot, never after one.
-function whyLine(state: FilterState, poolSize: number, adultLeftOut: boolean): string[] {
+// Why this pick: the players and time it fits, and how many it was drawn from.
+function whyLine(state: FilterState, poolSize: number): string {
+  const ofPool = poolSize === 1 ? 'the only match' : `one of ${poolSize} games`;
+  if (!tableFiltered(state)) return ofPool[0].toUpperCase() + ofPool.slice(1);
   const fits = [
     state.players > 0 ? playersLabel(state.players) : null,
     state.duration !== 'all' ? DUR_LABELS[state.duration].toLowerCase() : null,
-  ].filter((p) => p !== null);
-  const parts = [
-    ...fits,
-    poolSize === 1 ? 'the only match' : `one of ${poolSize} games`,
-    ...(adultLeftOut ? ['adult games left out'] : []),
-  ].map((p, i) => (i > 0 ? `· ${p}` : p));
-  parts[0] = fits.length > 0 ? `Fits ${parts[0]}` : parts[0][0].toUpperCase() + parts[0].slice(1);
-  return parts;
+  ].filter(Boolean).join(' · ');
+  return `Fits ${fits} · ${ofPool}`;
 }
 
 export default function RandomPicker() {
@@ -43,7 +36,7 @@ export default function RandomPicker() {
   // The settled pick, with the game inside it to play when that's what fits,
   // and why it fits, fixed when it settles so a later filter change can't
   // rewrite the reason.
-  const [result, setResult] = useState<(Pick & { why: string[] }) | null>(null);
+  const [result, setResult] = useState<(Pick & { why: string }) | null>(null);
   // Games already offered this session, so Pick again doesn't repeat itself.
   const seenRef = useRef(new Set<Game>());
   const lastRef = useRef<Game | null>(null);
@@ -80,14 +73,11 @@ export default function RandomPicker() {
     setOpen(true);
     setSpinning(true);
     setResult(null);
-    // Adult games are kept out of the spin too, not just the result, so
-    // none flashes past on its way to the pick.
-    setCurrent((prev) => pickRandom(pickPool(pool, startState).games, prev ?? undefined));
+    setCurrent((prev) => pickRandom(pool, prev ?? undefined));
 
     // Settle on a game not offered yet this session. When the list has all
     // come up, start over, but not with the game just shown.
-    const settle = (list: readonly Game[], filters: FilterState) => {
-      const { games: from, adultLeftOut } = pickPool(list, filters);
+    const settle = (from: readonly Game[], filters: FilterState) => {
       const seen = seenRef.current;
       if (from.every((g) => seen.has(g))) {
         seen.clear();
@@ -97,7 +87,7 @@ export default function RandomPicker() {
       lastRef.current = game;
       seen.add(game);
       setCurrent(game);
-      setResult({ ...resolvePick(game, filters), why: whyLine(filters, from.length, adultLeftOut) });
+      setResult({ ...resolvePick(game, filters), why: whyLine(filters, from.length) });
       setSpinning(false);
       tickRef.current = null;
     };
@@ -111,7 +101,7 @@ export default function RandomPicker() {
         settle(pool, startState);
         return;
       }
-      setCurrent((prev) => pickRandom(pickPool(currentPool, stateRef.current).games, prev ?? undefined));
+      setCurrent((prev) => pickRandom(currentPool, prev ?? undefined));
       if (Date.now() - start >= SPIN_MS) {
         settle(currentPool, stateRef.current);
         return;
@@ -186,16 +176,7 @@ export default function RandomPicker() {
             {!spinning && shown && result && (
               <>
                 <p className="pick-short">{shown.short}</p>
-                {/* Each part stays whole (CSS keeps it on one line); the plain
-                    spaces between them are where the line may wrap. */}
-                <p className="pick-why">
-                  {result.why.map((part, i) => (
-                    <Fragment key={part}>
-                      {i > 0 && ' '}
-                      <span>{part}</span>
-                    </Fragment>
-                  ))}
-                </p>
+                <p className="pick-why">{result.why}</p>
               </>
             )}
             {!spinning && (
