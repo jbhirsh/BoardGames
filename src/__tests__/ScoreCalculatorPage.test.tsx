@@ -399,6 +399,27 @@ describe('ScoreCalculatorPage', () => {
     expect(scienceLabel).toHaveTextContent('symbols · = 4 VP');
   });
 
+  it('sets a box\'s score and unit as one line, the input as wide as the score', () => {
+    renderPage();
+    const box = (name: string) => screen.getByRole('spinbutton', { name });
+    const chars = (input: HTMLElement) => input.style.getPropertyValue('--chars');
+    // The wrapper is the box: it wears the category's colour, and holds the
+    // score, a space and the unit.
+    const treasury = box('Treasury').parentElement!;
+    expect(treasury).toHaveClass('sc-field');
+    expect(treasury.style.getPropertyValue('--box-color')).toBe('#c90');
+    expect(treasury.textContent).toBe(' coins');
+    // An empty box still has room for its placeholder's 0.
+    expect(chars(box('Treasury'))).toBe('1');
+    fireEvent.change(box('Treasury'), { target: { value: '23' } });
+    expect(chars(box('Treasury'))).toBe('2');
+    fireEvent.change(box('Military'), { target: { value: '-12' } });
+    expect(chars(box('Military'))).toBe('3');
+    // A science box is a plain input, coloured itself.
+    expect(box('gears')).not.toHaveAttribute('style', expect.stringContaining('--chars'));
+    expect(box('gears').style.getPropertyValue('--box-color')).toBe('#22c55e');
+  });
+
   it('calls the wonder row Wonder, as the results sheet does', () => {
     renderPage();
     expect(screen.getByRole('spinbutton', { name: 'Wonder' })).toBeInTheDocument();
