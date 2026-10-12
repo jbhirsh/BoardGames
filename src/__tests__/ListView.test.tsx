@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import { act, render, screen, fireEvent, within } from '@testing-library/react';
+import { createMemoryRouter, MemoryRouter, Outlet, RouterProvider } from 'react-router';
+import BackLink from '../components/BackLink';
 import ListView from '../components/ListView';
 import { sortGames } from '../utils/filterGames';
 import { FilterProvider } from '../context/FilterContext';
 import { useFilter } from '../context/useFilter';
 import { GAMES } from '../data/games';
+import { GROUPS } from '../data/keywords';
 
 function renderListView() {
   return render(
@@ -185,5 +187,149 @@ describe('ListView', () => {
     fireEvent.click(screen.getByText('Clear filters'));
     expect(screen.queryByText('No games match your filters.')).not.toBeInTheDocument();
     expect(screen.getByText(GAMES[0].name)).toBeInTheDocument();
+  });
+});
+
+/** A filter change the URL mirrors, made from the list's page. */
+function PlayersFilter() {
+  const { dispatch } = useFilter();
+  return <button onClick={() => dispatch({ type: 'SET_PLAYERS', payload: 3 })}>3 players</button>;
+}
+
+/**
+ * The list at `/` with the rules and score pages beside it, each with its
+ * Back link, under one FilterProvider as in App, so a row's links can leave
+ * the list and come back to it.
+ */
+function renderListRoutes(entries: string[] = ['/']) {
+  const router = createMemoryRouter(
+    [{
+      element: <FilterProvider><Outlet /></FilterProvider>,
+      children: [
+        { path: '/', element: <><PlayersFilter /><ListView /></> },
+        { path: '/rules/:slug/:part?', element: <BackLink /> },
+        { path: '/score/:slug', element: <BackLink /> },
+      ],
+    }],
+    { initialEntries: entries },
+  );
+  render(<RouterProvider router={router} />);
+  return router;
+}
+
+const toggleFor = (name: string) => screen.getByRole('button', { name: new RegExp(`^(Show|Hide) details for ${name}$`) });
+const back = () => screen.getByRole('link', { name: /Back to The Game Room/ });
+
+describe('ListView open row through a round trip', () => {
+  it('starts with no row open on a fresh visit', () => {
+    renderListRoutes(['/?p=4']);
+    for (const toggle of screen.getAllByRole('button', { name: /^Show details for / })) {
+      expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    }
+  });
+
+  it('keeps the open row in the list\'s own history entry, not the URL', async () => {
+    const router = renderListRoutes(['/?p=4']);
+    await act(async () => { fireEvent.click(toggleFor('Catan')); });
+    expect(toggleFor('Catan')).toHaveAttribute('aria-expanded', 'true');
+    expect(router.state.historyAction).toBe('REPLACE');
+    expect(router.state.location.pathname).toBe('/');
+    expect(router.state.location.search).toBe('?p=4');
+    expect(router.state.location.state).toEqual({ openRow: 'Catan' });
+
+    // Another row takes its place; closing it leaves none recorded.
+    await act(async () => { fireEvent.click(toggleFor('Pandemic')); });
+    expect(router.state.location.state).toEqual({ openRow: 'Pandemic' });
+    expect(toggleFor('Catan')).toHaveAttribute('aria-expanded', 'false');
+    await act(async () => { fireEvent.click(toggleFor('Pandemic')); });
+    expect(toggleFor('Pandemic')).toHaveAttribute('aria-expanded', 'false');
+    expect(router.state.location.state).toEqual({});
+  });
+
+  it('brings the row back open after its Rules and the page\'s Back link', async () => {
+    const router = renderListRoutes();
+    await act(async () => { fireEvent.click(toggleFor('Catan')); });
+    await act(async () => { fireEvent.click(screen.getByRole('link', { name: 'Rules for Catan' })); });
+    expect(router.state.location.pathname).toBe('/rules/catan');
+
+    await act(async () => { fireEvent.click(back()); });
+    expect(router.state.historyAction).toBe('POP');
+    expect(toggleFor('Catan')).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('link', { name: 'Rules for Catan' })).toBeInTheDocument();
+  });
+
+  it('brings the row back open after its Score and the browser\'s Back', async () => {
+    const router = renderListRoutes();
+    await act(async () => { fireEvent.click(toggleFor('7 Wonders')); });
+    await act(async () => { fireEvent.click(screen.getByRole('link', { name: /Score/ })); });
+    expect(router.state.location.pathname).toBe('/score/7-wonders');
+
+    await act(async () => { await router.navigate(-1); });
+    expect(toggleFor('7 Wonders')).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('keeps the row recorded when a filter rewrites the URL with it open', async () => {
+    const router = renderListRoutes();
+    await act(async () => { fireEvent.click(toggleFor('Catan')); });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '3 players' })); });
+    expect(router.state.location.search).toBe('?p=3');
+    expect(router.state.location.state).toEqual({ openRow: 'Catan' });
+
+    await act(async () => { fireEvent.click(screen.getByRole('link', { name: 'Rules for Catan' })); });
+    await act(async () => { fireEvent.click(back()); });
+    expect(toggleFor('Catan')).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('lists each game once under its own group, and brings a row there back open', async () => {
+    const router = renderListRoutes(['/?p=2&s=group']);
+    const rows = Array.from(document.querySelectorAll<HTMLElement>('tbody tr.game-row, tbody tr.list-group-row'));
+    const names: string[] = [];
+    let heading: string | null = null;
+    for (const row of rows) {
+      if (row.classList.contains('list-group-row')) {
+        // A heading always has a game under it.
+        expect(row.nextElementSibling).toHaveClass('game-row');
+        heading = row.textContent;
+        continue;
+      }
+      const name = row.querySelector('span.col-name')!.textContent!;
+      names.push(name);
+      expect(heading).toBe(GROUPS[GAMES.find((g) => g.name === name)!.group]);
+    }
+    expect(names.length).toBe(new Set(names).size);
+    expect(names.length).toBeLessThan(GAMES.length);
+    // The heading names the group, so no row repeats it as a badge.
+    expect(document.querySelector('.group-badge')).toBeNull();
+
+    await act(async () => { fireEvent.click(toggleFor('Pandemic')); });
+    expect(toggleFor('Pandemic')).toHaveAttribute('aria-expanded', 'true');
+    expect(toggleFor('Dominion')).toHaveAttribute('aria-expanded', 'false');
+    await act(async () => { fireEvent.click(screen.getByRole('link', { name: 'Rules for Pandemic' })); });
+    await act(async () => { await router.navigate(-1); });
+    expect(router.state.location.search).toBe('?p=2&s=group');
+    expect(toggleFor('Pandemic')).toHaveAttribute('aria-expanded', 'true');
+    await act(async () => { fireEvent.click(toggleFor('Pandemic')); });
+    expect(toggleFor('Pandemic')).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('heads only the groups with a game showing, and badges no row with its group', () => {
+    renderListRoutes(['/?q=pandemic&s=group']);
+    expect(document.querySelectorAll('tr.list-group-row')).toHaveLength(1);
+    expect(document.querySelector('.group-badge')).toBeNull();
+  });
+
+  it('badges no row of the flat list with its group either', () => {
+    renderListRoutes(['/']);
+    expect(document.querySelectorAll('tr.list-group-row')).toHaveLength(0);
+    expect(document.querySelector('.group-badge')).toBeNull();
+  });
+
+  it('opens nothing when the list is reached anew rather than by Back', async () => {
+    const router = renderListRoutes();
+    await act(async () => { fireEvent.click(toggleFor('Catan')); });
+    await act(async () => { fireEvent.click(screen.getByRole('link', { name: 'Rules for Catan' })); });
+    // A fresh push to the home page, as from a deep link's Back.
+    await act(async () => { await router.navigate('/'); });
+    expect(toggleFor('Catan')).toHaveAttribute('aria-expanded', 'false');
   });
 });

@@ -1,8 +1,8 @@
 import type { Page } from '@playwright/test';
 import { test, expect } from './fixtures';
 
-/** Every game row in the visible list carries a "Show details for <name>" toggle. */
-const rowToggles = /^Show details for /;
+/** Every game row in the visible list carries a "Show (or Hide) details for <name>" toggle. */
+const rowToggles = /^(Show|Hide) details for /;
 
 const scrollY = (page: Page) => page.evaluate(() => window.scrollY);
 
@@ -49,6 +49,7 @@ test('Back from a rules page returns to the filtered list where it was left', as
   await expect(page.getByText(`${count} games`, { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: rowToggles })).toHaveCount(count);
   await expect(dominion).toBeInViewport();
+  await expect(dominion).toHaveAttribute('aria-expanded', 'true');
   await expect(page.getByRole('heading', { level: 1, name: 'Our Game Room' })).not.toBeInViewport();
   // Put back in one jump, not a glide down from the top past the rows above.
   const at = await scrollY(page);
@@ -117,9 +118,59 @@ test('the open row\'s Rules, at the end of its write-up on the right, opens the 
   await page.getByRole('link', { name: /Back to The Game Room/ }).click();
 
   await expect(page).toHaveURL(/\/$/);
-  // Where the list was left, not its top (the row itself comes back shut).
+  // Where the list was left, not its top, with the row still open.
   await expect.poll(() => scrollY(page)).toBe(left);
   await expect(page.getByRole('heading', { level: 1, name: 'Our Game Room' })).not.toBeInViewport();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+});
+
+test('the open row comes back open, its Rules in view, by the browser\'s Back and the page\'s', async ({ page }) => {
+  await page.goto('/');
+  const toggle = page.getByRole('button', { name: /^(Show|Hide) details for Catan$/ });
+  await toggle.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  // Down to the end of the open row, where its Rules sits.
+  const rules = page.getByRole('link', { name: 'Rules for Catan' });
+  await rules.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
+  await expect(rules).toBeInViewport();
+  const left = await scrollY(page);
+  expect(left).toBeGreaterThan(0);
+
+  const goBacks: [string, () => Promise<unknown>][] = [
+    ['browser', () => page.goBack()],
+    ['page', () => page.getByRole('link', { name: /Back to The Game Room/ }).click()],
+  ];
+  for (const [by, goBack] of goBacks) {
+    await test.step(`by the ${by}'s Back`, async () => {
+      await rules.click();
+      await expect(page).toHaveURL(/\/rules\/catan$/);
+      await expect(page.getByRole('heading', { level: 1, name: 'Catan' })).toBeVisible();
+
+      await goBack();
+
+      await expect(page).toHaveURL(/\/$/);
+      await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+      // Restored with the row open, so the offset lands on its Rules again.
+      await expect.poll(() => scrollY(page)).toBe(left);
+      await expect(rules).toBeInViewport();
+    });
+  }
+});
+
+test('a fresh visit to the list opens no row, even after one was left open', async ({ page }) => {
+  await page.goto('/');
+  const toggle = page.getByRole('button', { name: /^(Show|Hide) details for Catan$/ });
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+  // Away, then to the list by a new entry, as a link or the address bar would.
+  await page.goto('/rules/catan');
+  await expect(page.getByRole('heading', { level: 1, name: 'Catan' })).toBeVisible();
+  await page.goto('/');
+
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByRole('button', { name: /^Hide details for / })).toHaveCount(0);
 });
 
 test('Back from a rules page opened directly goes to the whole collection', async ({ page }) => {
