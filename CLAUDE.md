@@ -40,7 +40,10 @@ npx playwright show-report              # open the last HTML report
 (`npx playwright install chromium`). Where a different preinstalled build has
 to stand in, point `PLAYWRIGHT_CHROMIUM_EXECUTABLE` at it.
 
-Node 24 is used in CI. Git hooks in `.githooks/` (activated by `npm install`
+Node 24 is used in CI; run the unit tests under it before pushing when
+your local Node differs (`npx -y node@24 node_modules/vitest/vitest.mjs
+run`), since some web APIs behave differently between versions (a test
+that passed on Node 22 failed on 24 over a jsdom `Blob`). Git hooks in `.githooks/` (activated by `npm install`
 via `core.hooksPath`) run the same checks locally so failures surface before
 a push: **pre-commit** runs eslint + dependency-cruiser + `tsc -b`;
 **pre-push** runs the test suite with coverage + the production build. Both
@@ -89,7 +92,8 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
     saved on this device yet. Open it once with signal." in an info
     `Notice` (for a rulebook of 3 MB or more, or while the browser saves
     data, when opening one saves nothing: "Tap Save for offline next time
-    you have signal.", `waitsForSave`, from the build's sizes) and the
+    you have signal.", "Save offline" on a phone as its button reads,
+    `waitsForSave`, from the build's sizes) and the
     row, dead then, goes; otherwise it says to download the PDF instead.
     Either way the reader's search goes too. The failure is the open tab's
     alone: another tab, or the same one opened again, gets a fresh reader,
