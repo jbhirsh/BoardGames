@@ -32,8 +32,6 @@ interface CellsProps {
   difficulty?: Pick<Filterable, 'weight' | 'subgames'>;
   /** Any list-specific cell, slotted in before the actions cell to match `GamesTableHead`. */
   extra?: ReactNode;
-  /** A link for the row's main action (the collection's Rules), beside the chevron. */
-  action?: ReactNode;
   isOpen: boolean;
   onToggle: () => void;
 }
@@ -44,7 +42,7 @@ interface CellsProps {
  * the row click and any data attributes.
  */
 export default function TableRowCells({
-  name, players, cat, dur, mins, short, kw, awards, groupBadge, subTag, difficulty, extra, action, isOpen, onToggle,
+  name, players, cat, dur, mins, short, kw, awards, groupBadge, subTag, difficulty, extra, isOpen, onToggle,
 }: CellsProps) {
   const { state, dispatch } = useFilter();
   const budget = budgetFor(mins);
@@ -106,7 +104,6 @@ export default function TableRowCells({
       </td>
       {extra}
       <td className="col-actions">
-        {action}
         <button
           type="button"
           className="row-toggle"

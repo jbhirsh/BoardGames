@@ -42,18 +42,14 @@ describe('ListView', () => {
     expect(within(row).getByText(`Medium · ${catan.weight!.toFixed(1)}`)).toBeInTheDocument();
   });
 
-  it('gives every collapsed row its own Rules link, named for its game', () => {
+  it('puts no Rules link on a collapsed row: Rules lives in the open panel', () => {
     renderListView();
     const rows = Array.from(document.querySelectorAll<HTMLElement>('tr.game-row'));
     expect(rows).toHaveLength(GAMES.length);
-    const names = rows.map((row) => {
-      const name = row.querySelector('span.col-name')!.textContent!;
-      const link = within(row).getByRole('link', { name: `Rules for ${name}` });
-      expect(link).toHaveTextContent(/^Rules$/);
-      return link.getAttribute('aria-label');
-    });
-    // Thirty links, no two read out alike.
-    expect(new Set(names).size).toBe(GAMES.length);
+    for (const row of rows) {
+      expect(within(row).queryAllByRole('link', { name: /^Rules/ })).toHaveLength(0);
+      expect(row.querySelector('td.col-actions')!.children).toHaveLength(1);
+    }
   });
 
   it('shows a dash in the difficulty cell of each game BoardGameGeek has not rated', () => {

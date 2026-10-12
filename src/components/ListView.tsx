@@ -17,8 +17,7 @@ export default function ListView() {
 
   return (
     <div className="table-wrap">
-      {/* row-actions: each row carries a Rules link beside its chevron. */}
-      <table className="games-list row-actions">
+      <table className="games-list">
         <GamesTableHead difficulty />
         <tbody>
           {grouped

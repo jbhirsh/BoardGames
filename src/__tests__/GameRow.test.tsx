@@ -125,40 +125,28 @@ describe('GameRow', () => {
         </FilterProvider>
       </MemoryRouter>
     );
-    // The row's link and the open panel's both.
-    const links = screen.getAllByRole('link', { name: 'Rules for Catan' });
-    expect(links).toHaveLength(2);
-    for (const link of links) expect(link).toHaveAttribute('href', '/rules/catan/5-6-player-extension');
+    // Only the open panel carries Rules; the row itself has none.
+    expect(screen.getByRole('link', { name: 'Rules for Catan' })).toHaveAttribute('href', '/rules/catan/5-6-player-extension');
   });
 
-  it('gives the collapsed row a Rules link named for its game, beside the chevron', () => {
-    const onToggle = vi.fn();
-    const router = renderRouted(
-      <FilterProvider>
-        <table><tbody><GameRow game={sevenWondersGame} isOpen={false} onToggle={onToggle} showGroupBadge={false} /></tbody></table>
-      </FilterProvider>,
-    );
+  it('gives a collapsed row no Rules link: the actions cell holds only the chevron', () => {
+    renderRow(sevenWondersGame);
     const row = document.querySelector('tr.game-row') as HTMLElement;
-    // The name starts with the word on the button (label in name).
-    const link = within(row).getByRole('link', { name: 'Rules for 7 Wonders' });
-    expect(link).toHaveTextContent(/^Rules$/);
-    expect(link).toHaveAttribute('href', '/rules/7-wonders');
-    expect(link).toHaveAttribute('title', 'Rules for 7 Wonders');
-    expect(link).toHaveClass('rules-btn', 'row-rules');
-    expect(link).not.toHaveClass('rules-btn--primary');
-    expect(link.closest('td')).toHaveClass('col-actions');
-    expect(link.nextElementSibling).toBe(within(row).getByRole('button', { name: 'Show details for 7 Wonders' }));
-    fireEvent.click(link);
-    expect(onToggle).not.toHaveBeenCalled();
-    expect(router.state.location).toMatchObject({ pathname: '/rules/7-wonders', state: { fromList: true } });
+    expect(within(row).queryAllByRole('link')).toHaveLength(0);
+    const cell = row.querySelector('td.col-actions')!;
+    expect(Array.from(cell.children).map((el) => el.tagName)).toEqual(['BUTTON']);
+    expect(within(cell as HTMLElement).getByRole('button')).toHaveAccessibleName('Show details for 7 Wonders');
+    // The shut panel's link is the only one, and it is inert until the row opens.
+    expect(screen.getAllByRole('link', { name: 'Rules for 7 Wonders', hidden: true })).toHaveLength(1);
   });
 
-  it('searches for the rules from the collapsed row of a game without a rulebook, without toggling it', () => {
+  it('searches for the rules from the open panel of a game without a rulebook, without toggling it', () => {
     const onToggle = vi.fn();
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
-    renderRow({ ...quickGame, rules: '' }, false, onToggle);
-    const row = document.querySelector('tr.game-row') as HTMLElement;
-    const link = within(row).getByRole('link', { name: 'Rules for Quick Game' });
+    renderRow({ ...quickGame, rules: '' }, true, onToggle);
+    const panel = document.querySelector('tr.row-expand') as HTMLElement;
+    const link = within(panel).getByRole('link', { name: 'Rules for Quick Game' });
+    expect(link).toHaveTextContent(/^Rules$/);
     expect(link).toHaveAttribute('href', expect.stringContaining('google.com/search'));
     expect(link).toHaveAttribute('title', 'Rules for Quick Game');
     expect(fireEvent.click(link)).toBe(false);
@@ -167,24 +155,30 @@ describe('GameRow', () => {
     openSpy.mockRestore();
   });
 
-  it('leads the open row with its actions, Rules filled first and the video last', () => {
+  it('ends the open row with its actions on the right, after the write-up: Rules filled first, the video last', () => {
     renderRow(sevenWondersGame, true);
     const content = document.querySelector('.row-expand-content') as HTMLElement;
-    const bar = content.firstElementChild as HTMLElement;
-    expect(bar).toHaveClass('row-expand-actions');
-    const links = within(bar).getAllByRole('link');
+    const foot = content.lastElementChild as HTMLElement;
+    expect(foot).toHaveClass('row-expand-foot');
+    expect(content.querySelector('.row-expand-actions')).toBeNull();
+    const links = within(foot).getAllByRole('link');
     expect(links.map((a) => a.getAttribute('aria-label') ?? a.textContent!.trim())).toEqual([
       'Rules for 7 Wonders', 'Score', 'Watch 7 Wonders tutorial on YouTube',
     ]);
     expect(links[0]).toHaveClass('rules-btn', 'rules-btn--primary');
     expect(links[1]).toHaveClass('rules-btn');
     expect(links[1]).not.toHaveClass('rules-btn--primary');
-    // The write-up follows the bar.
-    expect(bar.nextElementSibling).toHaveClass('detail-section');
+    expect(links[2]).toHaveClass('row-yt');
+    // The write-up comes first, and every section of the panel before the actions.
+    expect(content.firstElementChild).toHaveClass('detail-section');
+    expect(content.firstElementChild!.innerHTML).toBe(sevenWondersGame.detail);
+    for (const section of Array.from(content.children).slice(0, -1)) expect(section).toHaveClass('detail-section');
     cleanup();
     renderRow(bananagramsGame, true);
-    const bananaBar = document.querySelector('.row-expand-content > .row-expand-actions') as HTMLElement;
-    expect(within(bananaBar).getAllByRole('link').map((a) => a.getAttribute('aria-label') ?? a.textContent!.trim())).toEqual([
+    const bananaContent = document.querySelector('.row-expand-content') as HTMLElement;
+    const bananaFoot = bananaContent.lastElementChild as HTMLElement;
+    expect(bananaFoot).toHaveClass('row-expand-foot');
+    expect(within(bananaFoot).getAllByRole('link').map((a) => a.getAttribute('aria-label') ?? a.textContent!.trim())).toEqual([
       'Rules for Bananagrams', 'Word Checker', 'Watch Bananagrams tutorial on YouTube',
     ]);
   });
