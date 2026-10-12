@@ -35,7 +35,8 @@ const notSaved = (pdf: string) => (
   <div className="pdf-offline">
     <Notice tone="info">
       {waitsForSave(pdf)
-        ? 'Not saved on this device yet. Tap Save for offline next time you have signal.'
+        // Named as its button reads: "Save offline" on a phone.
+        ? <>Not saved on this device yet. Tap Save <span className="rules-wide">for </span>offline next time you have signal.</>
         : 'Not saved on this device yet. Open it once with signal.'}
     </Notice>
   </div>
