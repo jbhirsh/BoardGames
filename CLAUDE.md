@@ -151,11 +151,16 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
     close when the rules page does
   - `/score/:slug` — score calculator for a game in
     `data/scoreCalculators.ts` (currently 7 Wonders); any other slug shows
-    the not-found page. Each score box carries its unit inside it at the
-    right edge, muted and given to screen readers as the box's description:
-    VP for the pad's points (Wonder is the stages' points, not how many
-    were built), coins for Treasury. The box keeps the unit's room on both
-    sides, so the score is centred in the whole box. The science boxes show
+    the not-found page. Each score box carries its unit inside it, given to
+    screen readers as the box's description: VP for the pad's points
+    (Wonder is the stages' points, not how many were built), coins for
+    Treasury. Score and unit read as one line of text ("7 coins"), the
+    unit muted but as big as the digits and on their baseline, centred in
+    the box as a group: the box is a wrapper holding an input sized to its
+    text (`field-sizing: content`, else one `ch` a character) that reaches
+    across the whole box, so a tap anywhere in it lands in the input. Every
+    box is 5.5em, room for "99 coins" in the widest fallback font; on a
+    phone the science boxes share their row in thirds. The science boxes show
     no unit (their icons say which symbol): the Science label line says
     "symbols" once, beside its "= N VP", and each box's description reads
     both. Treasury's "= N VP" sits beside its label too; both notes always

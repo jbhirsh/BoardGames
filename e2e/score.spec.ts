@@ -93,8 +93,9 @@ test('a negative military score can be typed and the game survives a reload', as
   await expect(page.getByText('5 VP', { exact: true })).toBeVisible();
 });
 
-// The box keeps its unit's room on both sides, so the score is centred in
-// the whole box, with the unit in the right-hand room.
+// A score with a unit reads as one line of text, "107 VP": the digits sit
+// dead centre up and down in the box, and digits and unit together are
+// centred across it. A science box holds only its digits.
 test('a score sits dead centre in its box', async ({ page }) => {
   await page.goto('/score/7-wonders');
   // 7, 1 and 0 have no lopsided curve past the cap line or the baseline.
@@ -106,15 +107,18 @@ test('a score sits dead centre in its box', async ({ page }) => {
   for (const [field, value] of fields) {
     await field.fill(value);
     await page.getByRole('heading', { level: 1, name: 'Score Calculator', exact: true }).click();
-    const shot = (await field.screenshot()).toString('base64');
-    // Where the unit's room starts: ink right of it is the unit's.
-    const unitRoom = await field.evaluate((el) => {
-      const s = getComputedStyle(el);
-      return parseFloat(s.borderRightWidth) + parseFloat(s.paddingRight);
+    // The box as drawn: a box with a unit is the wrapper round its input.
+    const box = await field.evaluateHandle((el) => el.closest('.sc-field') ?? el);
+    const shot = (await box.screenshot()).toString('base64');
+    // Where the digits stop: ink right of it is the unit's.
+    const digitsEnd = await box.evaluate((el) => {
+      const { left, width } = el.getBoundingClientRect();
+      const unit = el.querySelector('.sc-unit');
+      return unit ? unit.getBoundingClientRect().left - left : width;
     });
-    // The ink's bounding box, left of the unit's room and inside the 2px
-    // border, against the middle of the box.
-    const off = await page.evaluate(async ({ png, unitRoom }) => {
+    // The ink's bounding box inside the 2px border, against the middle of
+    // the box: the digits' up and down, and everything's across.
+    const off = await page.evaluate(async ({ png, digitsEnd }) => {
       const img = new Image();
       img.src = `data:image/png;base64,${png}`;
       await img.decode();
@@ -125,18 +129,21 @@ test('a score sits dead centre in its box', async ({ page }) => {
       ctx.drawImage(img, 0, 0);
       const { data } = ctx.getImageData(0, 0, img.width, img.height);
       const bg = data[(4 * img.width + 4) * 4];
-      let top = Infinity, bottom = -1, left = Infinity, right = -1;
-      for (let y = 4; y < img.height - 4; y++) {
-        for (let x = 4; x < img.width - unitRoom; x++) {
-          if (Math.abs(data[(y * img.width + x) * 4] - bg) > 80) {
-            top = Math.min(top, y); bottom = Math.max(bottom, y + 1);
-            left = Math.min(left, x); right = Math.max(right, x + 1);
+      const ink = (end: number) => {
+        let top = Infinity, bottom = -1, left = Infinity, right = -1;
+        for (let y = 4; y < img.height - 4; y++) {
+          for (let x = 4; x < Math.min(end, img.width - 4); x++) {
+            if (Math.abs(data[(y * img.width + x) * 4] - bg) > 80) {
+              top = Math.min(top, y); bottom = Math.max(bottom, y + 1);
+              left = Math.min(left, x); right = Math.max(right, x + 1);
+            }
           }
         }
-      }
-      return { x: (left + right - img.width) / 2, y: (top + bottom - img.height) / 2 };
-    }, { png: shot, unitRoom });
-    expect(Math.abs(off.x), `${value}: across`).toBeLessThanOrEqual(0.5);
+        return { x: (left + right - img.width) / 2, y: (top + bottom - img.height) / 2 };
+      };
+      return { x: ink(img.width).x, y: ink(Math.floor(digitsEnd)).y };
+    }, { png: shot, digitsEnd });
+    expect(Math.abs(off.x), `${value}: across`).toBeLessThanOrEqual(1);
     expect(Math.abs(off.y), `${value}: up and down`).toBeLessThanOrEqual(0.5);
   }
 });
@@ -155,12 +162,13 @@ function onOrUnder(a: { x: number; y: number; height: number }, b: { x: number; 
 /**
  * The boxes of several elements read in one go. The page scrolls smoothly
  * after a fill, so boxes read one call apart can come from different scroll
- * positions.
+ * positions. A score box with a unit is drawn by the wrapper round its
+ * input (the input reaches past it, clipped), so that is the one measured.
  */
 async function boxesOf(...locators: Locator[]) {
   const handles = await Promise.all(locators.map((l) => l.elementHandle()));
   return locators[0].page().evaluate((els) => els.map((el) => {
-    const { x, y, width, height } = el!.getBoundingClientRect();
+    const { x, y, width, height } = (el!.closest('.sc-field') ?? el!).getBoundingClientRect();
     return { x, y, width, height };
   }), handles);
 }
@@ -229,52 +237,87 @@ const LONG_SCORES: [name: string, value: string][] = [
 const SCIENCE_SCORES: [name: string, value: string][] = ['tablets', 'compasses', 'gears'].map((name) => [name, '12']);
 
 /**
- * Where a box draws its score (its content area), how wide the score is,
- * and where the box's own unit sits, if it shows one.
+ * A score box as drawn, read in one go (the page scrolls smoothly after a
+ * fill): its inside edges, the score's text (its width measured in the
+ * input's font, set centred in the input's content box), and the unit
+ * beside it, if the box shows one.
  */
-async function scoreAndUnit(field: Locator) {
+async function scoreBox(field: Locator) {
   return field.evaluate((el: HTMLInputElement) => {
+    const box = el.closest('.sc-field') ?? el;
+    const b = box.getBoundingClientRect();
+    const bs = getComputedStyle(box);
+    const i = el.getBoundingClientRect();
     const s = getComputedStyle(el);
-    const box = el.getBoundingClientRect();
-    const ctx = document.createElement('canvas').getContext('2d')!;
-    ctx.font = s.font;
-    const unit = document.getElementById(`${el.id}-unit`)?.firstElementChild?.getBoundingClientRect();
+    const probe = document.createElement('span');
+    probe.style.cssText = `position:absolute;white-space:pre;font-family:${s.fontFamily};font-size:${s.fontSize};font-variant-numeric:${s.fontVariantNumeric}`;
+    probe.textContent = el.value;
+    document.body.append(probe);
+    const textWidth = probe.getBoundingClientRect().width;
+    probe.remove();
+    const content = {
+      left: i.left + parseFloat(s.borderLeftWidth) + parseFloat(s.paddingLeft),
+      right: i.right - parseFloat(s.borderRightWidth) - parseFloat(s.paddingRight),
+      top: i.top + parseFloat(s.borderTopWidth) + parseFloat(s.paddingTop),
+      bottom: i.bottom - parseFloat(s.borderBottomWidth) - parseFloat(s.paddingBottom),
+    };
+    const unitEl = box.querySelector('.sc-unit');
+    const u = unitEl?.getBoundingClientRect();
     return {
-      box: { left: box.left, top: box.top, right: box.right, bottom: box.bottom },
-      content: {
-        left: box.left + parseFloat(s.borderLeftWidth) + parseFloat(s.paddingLeft),
-        right: box.right - parseFloat(s.borderRightWidth) - parseFloat(s.paddingRight),
+      width: b.width,
+      inside: {
+        left: b.left + parseFloat(bs.borderLeftWidth),
+        right: b.right - parseFloat(bs.borderRightWidth),
+        top: b.top + parseFloat(bs.borderTopWidth),
+        bottom: b.bottom - parseFloat(bs.borderBottomWidth),
       },
-      unit: unit && { left: unit.left, top: unit.top, right: unit.right, bottom: unit.bottom },
-      score: ctx.measureText(el.value).width,
+      content,
+      text: { left: (content.left + content.right - textWidth) / 2, width: textWidth },
+      fontSize: s.fontSize,
+      unit: u && { left: u.left, right: u.right, top: u.top, bottom: u.bottom, fontSize: getComputedStyle(unitEl!).fontSize },
     };
   });
 }
 
 for (const width of [1280, 390, 375, 320]) {
-  test(`at ${width}px each box takes a long score whole and centred, clear of its unit`, async ({ page }) => {
+  test(`at ${width}px each box shows a long score and its unit as one centred line`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await page.goto('/score/7-wonders');
-    const fill = async (name: string, value: string) => {
-      const field = page.getByRole('spinbutton', { name, exact: true });
-      await field.fill(value);
-      const measured = await scoreAndUnit(field);
-      const { box, content, score } = measured;
-      expect(score, `${name}: the score fits`).toBeLessThanOrEqual(content.right - content.left);
-      expect(Math.abs((content.left + content.right) / 2 - (box.left + box.right) / 2), `${name}: the score is centred`).toBeLessThanOrEqual(1);
-      return measured;
-    };
+    const field = (name: string) => page.getByRole('spinbutton', { name, exact: true });
+    const widths = new Set<number>();
     for (const [name, value] of LONG_SCORES) {
-      const { box, content, unit } = await fill(name, value);
+      await field(name).fill(value);
+      const { width: boxWidth, inside, content, text, fontSize, unit } = await scoreBox(field(name));
+      widths.add(boxWidth);
+      expect(text.width, `${name}: the input shows the whole score`).toBeLessThanOrEqual(content.right - content.left + 0.5);
       expect(unit, `${name}: a unit in the box`).toBeDefined();
-      expect(unit!.left, `${name}: unit right of the score`).toBeGreaterThanOrEqual(content.right);
-      expect(unit!.right, `${name}: unit inside the box`).toBeLessThanOrEqual(box.right);
-      expect(unit!.top, `${name}: unit inside the box`).toBeGreaterThanOrEqual(box.top);
-      expect(unit!.bottom, `${name}: unit inside the box`).toBeLessThanOrEqual(box.bottom);
+      expect(unit!.fontSize, `${name}: the unit as big as the score`).toBe(fontSize);
+      // The unit follows the score after a space, on its line.
+      expect(unit!.left, `${name}: a space before the unit`).toBeGreaterThan(content.right + 2);
+      expect(Math.abs((unit!.top + unit!.bottom) / 2 - (content.top + content.bottom) / 2), `${name}: unit and score share a middle`)
+        .toBeLessThanOrEqual(1);
+      // Score and unit centred as one, with room to spare on each side.
+      expect(Math.abs((text.left + unit!.right) / 2 - (inside.left + inside.right) / 2), `${name}: centred in the box`)
+        .toBeLessThanOrEqual(1);
+      expect(text.left - inside.left, `${name}: room left of the score`).toBeGreaterThanOrEqual(8);
+      expect(inside.right - unit!.right, `${name}: room right of the unit`).toBeGreaterThanOrEqual(8);
+      expect(unit!.top, `${name}: unit inside the box`).toBeGreaterThanOrEqual(inside.top);
+      expect(unit!.bottom, `${name}: unit inside the box`).toBeLessThanOrEqual(inside.bottom);
     }
+    // Every box with a unit is the same width.
+    expect([...widths], 'one width for every box with a unit').toHaveLength(1);
+    const scienceWidths: number[] = [];
     for (const [name, value] of SCIENCE_SCORES) {
-      expect((await fill(name, value)).unit, `${name}: no unit in the box`).toBeUndefined();
+      await field(name).fill(value);
+      const { width: boxWidth, inside, content, text, unit } = await scoreBox(field(name));
+      scienceWidths.push(boxWidth);
+      expect(unit, `${name}: no unit in the box`).toBeUndefined();
+      expect(text.width, `${name}: the score fits`).toBeLessThanOrEqual(content.right - content.left);
+      expect(Math.abs((content.left + content.right) / 2 - (inside.left + inside.right) / 2), `${name}: the score is centred`).toBeLessThanOrEqual(1);
     }
+    // On a wide screen the science boxes match the others; on a phone they
+    // share their row in thirds.
+    expect(scienceWidths.every((w) => widths.has(w)), 'science boxes as wide as the others').toBe(width > 520);
     // The page doesn't pan.
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
   });

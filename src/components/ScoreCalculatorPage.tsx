@@ -135,11 +135,15 @@ interface ScoreInputProps {
 // A score box, with its unit inside in muted text that screen readers get
 // as the box's description. A phone opens its number pad for it; military's
 // minus comes from the ± button beside it, since that pad has no minus key.
+// With a unit, the box is a wrapper holding the score's input, as wide as
+// its text, then a space and the unit: "7 coins" reads as one line of text
+// centred in the box. --chars sizes the input where the browser can't size
+// it to its text.
 function ScoreInput({ id, unit, value, color, negative = false, describedBy, label, onChange }: ScoreInputProps) {
   const input = (
     <input
       id={id}
-      className={unit ? `sc-input sc-input-${unit}` : 'sc-input'}
+      className="sc-input"
       type="number"
       inputMode="numeric"
       pattern={negative ? undefined : '[0-9]*'}
@@ -149,14 +153,13 @@ function ScoreInput({ id, unit, value, color, negative = false, describedBy, lab
       aria-describedby={[unit && `${id}-unit`, describedBy].filter(Boolean).join(' ')}
       value={value}
       onChange={onChange}
-      style={{ borderColor: color }}
+      style={unit ? { '--chars': Math.max(1, value.length) } as CSSProperties : { '--box-color': color } as CSSProperties}
     />
   );
   if (!unit) return input;
   return (
-    <span className="sc-field">
-      {input}
-      <span className="sc-unit" id={`${id}-unit`} aria-hidden="true"><span>{unit}</span></span>
+    <span className="sc-field" style={{ '--box-color': color } as CSSProperties}>
+      {input}{' '}<span className="sc-unit" id={`${id}-unit`} aria-hidden="true">{unit}</span>
     </span>
   );
 }

@@ -1000,27 +1000,30 @@ a.rules-chat-toggle{text-decoration:none;}
 .sc-label-icon{display:inline-flex;}
 .sc-vp-note{font-size:12px;color:var(--text3);font-weight:400;margin-left:4px;}
 /* 16px for the same iOS reason — this screen has ten of these in a column. */
-.sc-input{width:80px;padding:8px 10px;font-size:16px;border:2px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--text);text-align:center;font-family:inherit;outline:none;transition:border-color .15s;}
-.sc-input:focus{border-color:var(--blue);}
+.sc-input{width:80px;padding:8px 10px;font-size:16px;border:2px solid var(--box-color,var(--border));border-radius:var(--r-sm);background:var(--bg);color:var(--text);text-align:center;font-family:inherit;outline:none;transition:border-color .15s,box-shadow .15s;}
+.sc-input:focus,.sc-field:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg2);}
 /* A label's muted note sits on its line, and wraps under the label's text
    (in line with it) where the row is too narrow. It keeps room for two
    digits of points, so a value going from 9 to 10 can't wrap it. */
 .sc-label-text{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:12px;}
 .sc-label-text .sc-vp-note{margin-left:0;white-space:nowrap;}
 .sc-vp-pts{display:inline-block;min-width:7ch;}
-/* A score box's unit sits inside it at the right edge, small and muted so
-   it doesn't compete with the score, on the score's baseline; taps go
-   through it to the box. The box keeps the unit's room as padding on both
-   sides, so the score stays centred in the box. Width, padding and unit are
-   in em, so text-only zoom grows them together. The pad's 5em box leaves
-   Treasury's "coins" and two digits about a space apart at .625em, set a
-   touch tight; at 12px they'd touch. */
-.sc-field{position:relative;display:inline-flex;}
-.sc-field .sc-input{width:5em;padding-left:var(--unit-room);padding-right:var(--unit-room);}
-.sc-input-VP{--unit-room:1.5em;}
-.sc-input-coins{--unit-room:1.75em;}
-.sc-unit{position:absolute;top:0;right:0;bottom:0;padding:calc(10px + var(--digit-nudge, 0px)) .3125em 0 0;font-size:16px;line-height:normal;pointer-events:none;}
-.sc-unit > span{font-size:.625em;letter-spacing:-.02em;color:var(--text3);}
+/* A score box with a unit is a wrapper drawn as the box, holding the score's
+   input sized to its text, a space and the unit: "7 coins" is one line in
+   the boxes' 16px, the unit muted, centred in the box as a group and on
+   the score's baseline. The input reaches across the whole box (padding
+   it gives back as negative margin, clipped by the box), so a tap anywhere
+   in the box lands in it; nothing else in the box takes taps. 5.5em fits
+   "99 coins" and "107 VP" with about 8px to spare a side in the widest
+   fallback font. Where the browser can't size the input to its text, it is
+   one ch per character (tabular digits are a ch each). */
+.sc-field{display:block;width:5.5em;font-size:16px;line-height:normal;text-align:center;white-space:nowrap;overflow:hidden;border:2px solid var(--box-color,var(--border));border-radius:var(--r-sm);background:var(--bg);pointer-events:none;transition:border-color .15s,box-shadow .15s;}
+.sc-field .sc-input{--reach:6em;width:calc(var(--chars,1) * 1ch + 2 * var(--reach));margin:0 calc(-1 * var(--reach));padding-left:var(--reach);padding-right:var(--reach);border:0;border-radius:0;background:transparent;box-shadow:none;font-variant-numeric:tabular-nums;pointer-events:auto;}
+@supports (field-sizing:content){ .sc-field .sc-input{field-sizing:content;width:auto;} }
+.sc-unit{color:var(--text3);}
+/* The science boxes match them where they sit in a row; a phone shares
+   their row out in thirds (below). */
+.sc-science-field .sc-input{width:5.5em;}
 /* No spin buttons: desktop browsers keep their width inside the box (Chrome
    even while they're hidden), so centred numbers sat 7px left of centre. Typing, or a
    phone's keypad, is how these get filled in anyway. */
