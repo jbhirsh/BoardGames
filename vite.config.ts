@@ -6,7 +6,7 @@ import { defineConfig, type Plugin } from 'vite'
 import { configDefaults } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { sentryVitePlugin } from '@sentry/vite-plugin'
-import { PDFJS_DECODERS, savedWhen } from './src/utils/precache.ts'
+import { PDFJS_DECODERS, savedWhen, WISHLIST_ART_DIR } from './src/utils/precache.ts'
 
 // pdf.js loads its image decoders (JPEG 2000, JBIG2, colour profiles) and the
 // standard fonts at run time, by URL, so they can't go through the bundle.
@@ -65,8 +65,8 @@ const REPLAY_CODE = /[\\/]node_modules[\\/](@sentry[\\/]replay|@sentry-internal[
 // saves at install, the rulebook reader's files it saves with the first
 // rulebook (src/utils/precache.ts sorts them), a version naming that saved
 // copy (a hash of index.html and every one of them, so a build that changes
-// none keeps it) and a hash of each rulebook, so a saved one is dropped once
-// its file changes.
+// none keeps it) and a hash of each rulebook and of each wishlist box art,
+// so a saved one is dropped once its file changes.
 function serviceWorker(): Plugin {
   let publicDir = ''
   const hashOf = (...parts: (string | Uint8Array)[]) => {
@@ -132,7 +132,10 @@ function serviceWorker(): Plugin {
       const version = hashOf(html.source, ...[...saved.keys()].sort().flatMap((path) => [path, saved.get(path)!]))
       const rulebooks = Object.fromEntries(readdirSync(join(publicDir, 'rules')).filter((file) => file.endsWith('.pdf'))
         .map((file) => [`/rules/${file}`, hashOf(readFileSync(join(publicDir, 'rules', file)))]))
-      sw.code = `const __PRECACHE__=${JSON.stringify(paths)},__READER__=${JSON.stringify(readerPaths)},__SW_VERSION__=${JSON.stringify(version)},__RULEBOOKS__=${JSON.stringify(rulebooks)};${sw.code}`
+      // The wishlist's box art, saved as fetched, by the same hash.
+      const art = Object.fromEntries(readdirSync(join(publicDir, WISHLIST_ART_DIR))
+        .map((file) => [`/${WISHLIST_ART_DIR}/${file}`, hashOf(readFileSync(join(publicDir, WISHLIST_ART_DIR, file)))]))
+      sw.code = `const __PRECACHE__=${JSON.stringify(paths)},__READER__=${JSON.stringify(readerPaths)},__SW_VERSION__=${JSON.stringify(version)},__RULEBOOKS__=${JSON.stringify(rulebooks)},__ART__=${JSON.stringify(art)};${sw.code}`
     },
   }
 }

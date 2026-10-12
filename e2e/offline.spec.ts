@@ -131,6 +131,33 @@ test('after a first visit, the installed site lists the collection, checks words
   await expect(page.getByText('15 VP', { exact: true })).toBeVisible();
 });
 
+test('the wishlist\'s box art, seen once online, shows on its cards with no network', async ({ page, context }) => {
+  await page.goto('/');
+  await controlled(page);
+  await page.goto('/?c=want&v=grid');
+  // The bundled art the cards near the screen drew (the rest loads lazily,
+  // and a friend's suggestion shows BoardGameGeek's, which the worker
+  // leaves alone), once the worker has saved it, marked with the build's
+  // hash of the file so an update that changes it drops the copy.
+  const art = page.getByRole('img', { name: / box art$/ });
+  const drawn = () => art.evaluateAll((imgs) => (imgs as HTMLImageElement[])
+    .filter((img) => img.getAttribute('src')!.startsWith('/images/wishlist/') && img.complete && img.naturalWidth > 0)
+    .map((img) => ({ name: img.alt, src: img.getAttribute('src')! })));
+  await expect.poll(async () => (await drawn()).length).toBeGreaterThanOrEqual(3);
+  const seen = await drawn();
+  await expect.poll(() => page.evaluate(async (paths) => {
+    for (const path of paths) if (!(await caches.match(path))?.headers.get('X-Art-Version')) return false;
+    return true;
+  }, seen.map((img) => img.src)), { timeout: 15_000 }).toBe(true);
+
+  await goOffline(context);
+  await page.reload();
+  for (const { name } of seen) {
+    const img = page.getByRole('img', { name, exact: true });
+    await expect.poll(() => img.evaluate((el) => (el as HTMLImageElement).naturalWidth), { message: name }).toBeGreaterThan(0);
+  }
+});
+
 test('a large rulebook saved with Save for offline draws offline, its JPEG 2000 pages included', async ({ page, context }) => {
   // Catan's p. 5 is drawn over a JPEG 2000 image; at 3.7 MB, opening it
   // doesn't save it.
