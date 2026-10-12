@@ -225,7 +225,12 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   award count, close its description (in its column, or under the name
   where the description folds in there), and both list their names on
   hover or tap (`Popover`, shared with `AwardsBadge`); the expanded row
-  lists the games in full. When the players and time filters admit a game
+  lists the games in full. A collapsed row carries only its chevron, on a
+  desktop and on the narrow list alike: its Rules, Score or Word Checker
+  and video close the expanded row, under the write-up, add-ons and
+  awards, on the right. Rules there and on a card is one `RulesLink`,
+  named "Rules for <game>" (label in name) and marked as leaving the list
+  so the rules page's Back returns to it. When the players and time filters admit a game
   only through an add-on with its own rulebook, its Rules link opens that
   tab (`rulesPathFor`: Catan at five opens the 5–6 Player Extension).
   An add-on with a fuller `desc` or
@@ -278,7 +283,9 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   other typed weight with BGG's.
   Cards, sub-game lists and the collection table's Difficulty column (it
   sorts, and hides under 1080px where the table has no room) read
-  "Medium · 2.3", a deck as the span of its games (`utils/difficulty.ts`).
+  "Medium · 2.3", a deck as the span of its games (`utils/difficulty.ts`);
+  the column shows an unrated game as an en dash, read out as "Not rated on
+  BoardGameGeek".
 - **`context/`** — filtering state. `FilterContext` holds a `useReducer` store
   (`filterReducer.ts`); `useFilter.ts` is the consumer hook; `useFilterUrlSync.ts`
   keeps filter state mirrored to the URL query string so views are shareable.
@@ -328,7 +335,7 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   and its accessible name starts with the same word; it and Share
   wishlist keep their width as a vote lands or "Copied!" shows. Footer
   buttons share one size and radius (44px on a phone); Rules is the one
-  filled button on a collection card and Vote the strongest on a wishlist
+  filled button on a collection card or open row and Vote the strongest on a wishlist
   card, while Score, Word Checker, video, cart and price history are one
   quiet outline (the video's play glyph in `--yt-red`). An entry with
   `expands` (the base game's name) wears an "Expansion for Catan (owned)"

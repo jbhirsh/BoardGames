@@ -8,9 +8,8 @@ const SLUG = 'far-out-questions';
 test('a rules page shows the rulebook and the assistant answers a question', async ({ page, request }) => {
   await page.goto('/');
   await page.getByPlaceholder('Search games...').fill(GAME);
-  // The row's own Rules link, beside its chevron (its shut panel holds another).
-  const row = page.getByRole('row').filter({ has: page.getByRole('button', { name: `Show details for ${GAME}` }) });
-  await row.getByRole('link', { name: `Rules for ${GAME}` }).click();
+  await page.getByRole('button', { name: `Show details for ${GAME}` }).click();
+  await page.getByRole('link', { name: `Rules for ${GAME}` }).click();
 
   await expect(page).toHaveURL(new RegExp(`/rules/${SLUG}$`));
   await expect(page.getByRole('heading', { level: 1, name: GAME })).toBeVisible();

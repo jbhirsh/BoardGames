@@ -461,11 +461,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 /* col: name */
 .col-name{font-family:'Playfair Display','Playfair Fallback','Playfair Fallback Noto',serif;font-size:15px;font-weight:700;line-height:1.2;white-space:nowrap;color:var(--dark);}
-/* A long name wraps to a second line rather than take the width the
-   description needs: the longest held the column at 268px, so the
-   description wrapped to three lines beside it. The header sets the width. */
-table.games-list th.col-name-h{width:150px;}
-.game-row .col-name{white-space:normal;}
 .col-name-wrap{display:flex;flex-direction:column;gap:3px;}
 .group-badge{
   font-family:inherit;font-size:9px;font-weight:400;
@@ -520,11 +515,8 @@ table.games-list th.col-name-h{width:150px;}
 /* col: keywords */
 .col-kw .kw-pill{font-size:11px;padding:2px 8px;margin:2px 2px 2px 0;display:inline-block;}
 
-/* col: actions, the chevron and, in the collection, Rules before it */
-.col-actions{white-space:nowrap;text-align:right;width:1%;}
-/* Rules as a card's footer has it, outlined here: thirty filled buttons
-   down the column would shout over the names. */
-.row-rules{vertical-align:middle;margin-right:10px;}
+/* col: icon actions (chevron only in row) */
+.col-actions{white-space:nowrap;text-align:center;width:28px;}
 .col-actions span,.row-toggle{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;}
 .row-toggle{background:none;border:0;padding:8px;margin:-8px;color:inherit;font:inherit;cursor:pointer;border-radius:6px;}
 .row-toggle:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
@@ -539,8 +531,8 @@ table.games-list th.col-name-h{width:150px;}
 .rules-btn:hover{background:var(--blue-bg);border-color:rgba(var(--blue-rgb),0.3);color:var(--blue);box-shadow:var(--shadow-md);}
 .rules-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
 .rules-btn svg{width:14px;height:14px;flex-shrink:0;display:block;}
-/* Rules is what the site is for, so on a card it is the one filled button;
-   the plain one (Score, Word Checker, a list row's Rules) is the same quiet
+/* Rules is what the site is for, so on a card or an open row it is the one
+   filled button; the plain one (Score, Word Checker) is the same quiet
    outline as the video button beside it. */
 .rules-btn--primary{background:var(--blue-fill);border-color:var(--blue-fill);color:var(--on-fill);font-weight:600;}
 .rules-btn--primary:hover{background:var(--blue-fill-hover);border-color:var(--blue-fill-hover);color:var(--on-fill);}
@@ -602,11 +594,6 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
   color:var(--dark);margin-bottom:6px;letter-spacing:-.2px;
 }
 .detail-section p{font-size:13px;line-height:1.75;color:var(--text2);}
-/* The expanded row's actions lead it, Rules first, as on a card. */
-.row-expand-actions{
-  display:flex;flex-wrap:wrap;align-items:center;gap:8px;
-  padding:0 0 16px;margin-bottom:18px;border-bottom:1px solid var(--border);
-}
 .row-expand-foot{
   display:flex;justify-content:flex-end;align-items:center;
   gap:8px;padding:12px 4px 4px;margin-top:4px;border-top:1px solid var(--border);
@@ -1099,9 +1086,6 @@ a.rules-chat-toggle{text-decoration:none;}
   .games-list th.col-dur-h{ width:104px; }
   .games-list th.col-vote{ width:90px; }
   .games-list th.col-actions-h{ width:52px; }
-  /* the collection's Rules link, word and all, and the chevron */
-  .games-list.row-actions th.col-actions-h{ width:136px; }
-  table.games-list th.col-name-h{ width:auto; }
   .game-row td{ padding:10px 10px; }
   .game-row td:first-child{ padding-left:16px; }
 }
@@ -1152,10 +1136,10 @@ a.rules-chat-toggle{text-decoration:none;}
 
   /* 44px touch targets for the buttons under a card, an add-on's row and
      an expanded row's actions, still one size and radius across them. */
-  :is(.card-foot,.row-expand-actions,.row-expand-foot,.sub-links) :is(.rules-btn,.vote-btn,.row-yt,.wish-yt,.wish-amz,.wish-track,.sub-link){ height:44px; min-width:44px; border-radius:10px; }
+  :is(.card-foot,.row-expand-foot,.sub-links) :is(.rules-btn,.vote-btn,.row-yt,.wish-yt,.wish-amz,.wish-track,.sub-link){ height:44px; min-width:44px; border-radius:10px; }
   /* Vote keeps room for "♥ Voted · 12" beside two 44px buttons and the
      award count on a 320px card: a little less padding, a little less gap. */
-  :is(.card-foot,.row-expand-actions,.row-expand-foot) .vote-btn{ min-width:8em; padding:0 10px; }
+  :is(.card-foot,.row-expand-foot) .vote-btn{ min-width:8em; padding:0 10px; }
   .card-foot-end{ gap:6px; }
 
   /* clip-path stays on here. `border-radius` alone does not clip the child

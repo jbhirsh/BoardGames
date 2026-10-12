@@ -113,11 +113,11 @@ describe('TableRowCells', () => {
     expect(row.querySelector('.col-vote')).toHaveTextContent('7');
   });
 
-  it('puts the row action in the actions cell, before the chevron', () => {
-    const { row } = renderCells({ action: <a href="/rules/cell-game">Rules</a> });
+  it('holds only the chevron in the actions cell', () => {
+    const { row } = renderCells();
     const cell = row.querySelector('td.col-actions')!;
-    expect(Array.from(cell.children).map((el) => el.tagName)).toEqual(['A', 'BUTTON']);
-    expect(cell.firstElementChild).toHaveTextContent('Rules');
+    expect(Array.from(cell.children).map((el) => el.tagName)).toEqual(['BUTTON']);
+    expect(within(row).queryAllByRole('link')).toHaveLength(0);
   });
 
   it('reads out a rated difficulty and shows no dash', () => {

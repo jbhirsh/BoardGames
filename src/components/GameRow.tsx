@@ -38,15 +38,30 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
           groupBadge={showGroupBadge ? game.group : undefined}
           subTag={game.subgames && <SubGamesTag game={{ ...game, subgames: game.subgames }} />}
           difficulty={game}
-          action={<RulesLink game={game} className="rules-btn row-rules" />}
           isOpen={isOpen}
           onToggle={onToggle}
         />
       </tr>
       <TableRowExpand colSpan={COLLECTION_COLUMNS} isOpen={isOpen}>
-        {/* What the row is for comes first, as on a card: Rules filled,
-            then the game's own tools and its video. */}
-        <div className="row-expand-actions">
+        <div
+          className="detail-section"
+          dangerouslySetInnerHTML={{ __html: game.detail }}
+        />
+        {isOpen && game.subgames && hasFitting && (
+          <div className="detail-section row-subgames">
+            <h3>{subgameTitle(game.subgames)}</h3>
+            <SubGameList game={{ ...game, subgames: game.subgames }} />
+          </div>
+        )}
+        {game.awards.length > 0 && (
+          <div className="detail-section row-awards">
+            <h3>Awards</h3>
+            <AwardsList awards={game.awards} />
+          </div>
+        )}
+        {/* The actions close the panel on the right, Rules filled as on a
+            card, then the game's own tools and its video. */}
+        <div className="row-expand-foot">
           <RulesLink game={game} className="rules-btn rules-btn--primary" />
           {SCORE_CALCULATORS.has(game.slug) && (
             <Link
@@ -77,22 +92,6 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
             <YouTubeIcon />
           </a>
         </div>
-        <div
-          className="detail-section"
-          dangerouslySetInnerHTML={{ __html: game.detail }}
-        />
-        {isOpen && game.subgames && hasFitting && (
-          <div className="detail-section row-subgames">
-            <h3>{subgameTitle(game.subgames)}</h3>
-            <SubGameList game={{ ...game, subgames: game.subgames }} />
-          </div>
-        )}
-        {game.awards.length > 0 && (
-          <div className="detail-section row-awards">
-            <h3>Awards</h3>
-            <AwardsList awards={game.awards} />
-          </div>
-        )}
       </TableRowExpand>
     </>
   );

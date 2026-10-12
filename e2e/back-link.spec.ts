@@ -80,39 +80,36 @@ test('Back from the picked game\'s rules returns to the list where it was', asyn
   await expect.poll(() => scrollY(page)).toBe(left);
 });
 
-test('a list row\'s own Rules link opens the rules page, and Back returns to the row', async ({ page }) => {
-  await page.goto('/');
-  // A desktop opens on the list. Each collapsed row carries Rules beside its
-  // chevron; Pandemic's sits far enough down that the top would hide it.
-  const row = page.getByRole('row').filter({ has: page.getByRole('button', { name: 'Show details for Pandemic' }) });
-  const rules = row.getByRole('link', { name: 'Rules for Pandemic' });
-  await expect(rules).toHaveText('Rules');
-  await rules.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
-  await expect(rules).toBeInViewport();
-  await rules.click();
-  await expect(page).toHaveURL(/\/rules\/pandemic$/);
-  await expect(page.getByRole('heading', { level: 1, name: 'Pandemic' })).toBeVisible();
-
-  await page.getByRole('link', { name: /Back to The Game Room/ }).click();
-
-  await expect(page).toHaveURL(/\/$/);
-  await expect(rules).toBeInViewport();
-  // The row stayed shut: the link opened the page, not the row.
-  await expect(row.getByRole('button', { name: 'Show details for Pandemic' })).toHaveAttribute('aria-expanded', 'false');
-  await expect(page.getByRole('heading', { level: 1, name: 'Our Game Room' })).not.toBeInViewport();
+test('a collapsed list row carries no Rules link, on a desktop or the narrow list', async ({ page }) => {
+  for (const width of [1280, 640]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    const row = page.getByRole('row').filter({ has: page.getByRole('button', { name: 'Show details for Pandemic' }) });
+    await expect(row).toBeVisible();
+    // Only the chevron: Rules lives at the end of the open row.
+    await expect(row.getByRole('link')).toHaveCount(0);
+  }
 });
 
-test('the open row\'s Rules, at the head of its panel, opens the rules page, and Back returns to the list', async ({ page }) => {
+test('the open row\'s Rules, at the end of its write-up on the right, opens the rules page, and Back returns to the list', async ({ page }) => {
   await page.goto('/');
   const toggle = page.getByRole('button', { name: /^(Show|Hide) details for Pandemic$/ });
   await toggle.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
   await toggle.click();
   await expect(toggle).toHaveAttribute('aria-expanded', 'true');
   // The panel is the cell spanning the table under the row; its Rules is the
-  // filled one, ahead of the write-up.
+  // filled one, after the write-up and over on the right.
   const panel = page.getByRole('cell').filter({ has: page.getByRole('link', { name: 'Watch Pandemic tutorial on YouTube' }) });
   const rules = panel.getByRole('link', { name: 'Rules for Pandemic' });
+  await rules.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
   await expect(rules).toBeInViewport();
+  const lastHeading = await panel.getByRole('heading', { name: 'Difficulty and Legacy' }).boundingBox();
+  const rulesBox = await rules.boundingBox();
+  const panelBox = await panel.boundingBox();
+  expect(rulesBox!.y).toBeGreaterThan(lastHeading!.y + lastHeading!.height);
+  expect(rulesBox!.x).toBeGreaterThan(panelBox!.x + panelBox!.width / 2);
+  const left = await scrollY(page);
+  expect(left).toBeGreaterThan(0);
   await rules.click();
   await expect(page).toHaveURL(/\/rules\/pandemic$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Pandemic' })).toBeVisible();
@@ -120,7 +117,8 @@ test('the open row\'s Rules, at the head of its panel, opens the rules page, and
   await page.getByRole('link', { name: /Back to The Game Room/ }).click();
 
   await expect(page).toHaveURL(/\/$/);
-  await expect(toggle).toBeInViewport();
+  // Where the list was left, not its top (the row itself comes back shut).
+  await expect.poll(() => scrollY(page)).toBe(left);
   await expect(page.getByRole('heading', { level: 1, name: 'Our Game Room' })).not.toBeInViewport();
 });
 
