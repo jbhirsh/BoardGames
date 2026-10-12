@@ -1,15 +1,17 @@
-import { useState, Fragment } from 'react';
+import { Fragment } from 'react';
 import { useFilter } from '../context/useFilter';
 import { isGrouped } from '../utils/filterGames';
 import NoResults from './NoResults';
 import GamesTableHead, { COLLECTION_COLUMNS } from './GamesTableHead';
 import { GROUPS, GROUP_ORDER } from '../data/keywords';
 import GameRow from './GameRow';
+import { useOpenRow } from '../hooks/useOpenRow';
 import type { GroupId } from '../data/types';
 
 export default function ListView() {
   const { state, filteredGames } = useFilter();
-  const [openRow, setOpenRow] = useState<string | null>(null);
+  // Kept in the page's history entry, so Back from a row's Rules finds it open.
+  const [openRow, toggleRow] = useOpenRow();
 
   if (filteredGames.length === 0) return <NoResults kind="games" />;
 
@@ -34,7 +36,7 @@ export default function ListView() {
                         key={g.name}
                         game={g}
                         isOpen={openRow === g.name}
-                        onToggle={() => setOpenRow(openRow === g.name ? null : g.name)}
+                        onToggle={() => toggleRow(g.name)}
                         showGroupBadge={false}
                       />
                     ))}
@@ -46,7 +48,7 @@ export default function ListView() {
                   key={g.name}
                   game={g}
                   isOpen={openRow === g.name}
-                  onToggle={() => setOpenRow(openRow === g.name ? null : g.name)}
+                  onToggle={() => toggleRow(g.name)}
                   showGroupBadge={false}
                 />
               ))}

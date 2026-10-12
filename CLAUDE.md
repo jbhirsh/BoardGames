@@ -209,6 +209,16 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   links `replace` and pass that state on, so a rules page is one history
   entry however many tabs are read. A deep link, or
   the score page reached from a rules page, goes to `/`.
+  The list's open row comes back with it: `ListView` keeps it in the list
+  page's own history entry (`hooks/useOpenRow.ts`, `utils/openRow.ts`;
+  each toggle `replace`s the entry with `openRow` in its router state,
+  scroll left alone, and the filter URL sync's own replaces carry that
+  state over), not in the URL or storage, so Back by the browser or the
+  page's link finds the same row open, while a fresh visit to `/` opens
+  none. The row is open from the first render, before `ScrollRestoration`
+  measures, and a row inserted open skips its slide-open transition, so
+  the offset lands on the row's actions again. The wishlist's rows link
+  only to other sites, in new tabs, so they keep plain local state.
 - **`App.tsx`** — layout shell: wraps the router `Outlet` in `FilterProvider`
   and mounts Vercel `Analytics`.
 - **`data/`** — the static data layer. `games.ts` is the source of truth for
@@ -382,7 +392,7 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   names, so the swap barely moves a line;
   `index.html` preloads the roman file. Body text is the system font.
 - **`utils/`** — pure helpers (`filterGames.ts`, `pickRandom.ts`, `filterUrl.ts`,
-  `urls.ts`, `shortDesc.ts`, `subgames.ts`, `rulebooks.ts`, `pdfSearch.ts`,
+  `urls.ts`, `openRow.ts`, `shortDesc.ts`, `subgames.ts`, `rulebooks.ts`, `pdfSearch.ts`,
   `citeMatch.ts`, the passage of a page a citation points to; `fileSize.ts`,
   `sevenWonders.ts`, the score pad's arithmetic: science, standings with
   the coins tie-break; `difficulty.ts`, the Light/Medium/Heavy words for a
