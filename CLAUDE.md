@@ -409,11 +409,19 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   against `CacheStorage` so `swShell.test.ts` drives it with a fake: the
   reader goes into the shell with the first rulebook saved and at install
   once one is, so a saved rulebook's pages never opened online still draw
-  offline. A rulebook first saved while an older build still ran leaves
-  the new build's reader incomplete: activating fetches nothing (requests
-  wait meanwhile), keeps the older shells that hold a reader until the new
-  one is complete, and `healReader` completes it once active and whenever
-  a saved rulebook opens online. The rest of `/pdfjs/` (no-WebAssembly
+  offline. A rulebook first saved while an older build still ran (after
+  the new one installed, without one saved) would leave the new build's
+  reader incomplete, and its app asks for its own pdf.js worker, a hashed
+  name no older shell holds, so taking over offline a saved rulebook
+  couldn't draw. So the worker running the app tells a newer one,
+  installing or waiting, of each rulebook it saves (`tellNewer`,
+  `READER_MESSAGE`), and that one completes its reader then, while there
+  is a network, still waiting, so activating stays quick. Should that
+  miss (a browser that can't message between workers, the network gone
+  that moment), activating fetches nothing (requests wait meanwhile),
+  keeps the older shells that hold a reader until the new one is
+  complete, and `healReader` completes it once active and whenever a
+  saved rulebook opens online. The rest of `/pdfjs/` (no-WebAssembly
   fallbacks, standard fonts, licences) goes to the runtime
   `gameroom-assets` cache if it is ever fetched, and each update clears it
   with the old code. The wishlist's box art (`WISHLIST_ART_DIR`, 39 files,

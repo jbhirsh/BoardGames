@@ -133,7 +133,10 @@ export function stamped(build: Build, path: string, response: Response): Respons
  * Completes the reader for the saved rulebooks, if an update left it
  * incomplete (a rulebook first saved while the old build ran filled the old
  * shell's); the older shells can go after (pruneShells). Rejects with no
- * network. Without saved rulebooks there is nothing to do.
+ * network. Without saved rulebooks there is nothing to do. Run by a build
+ * waiting to take over too, told of the save (READER_MESSAGE): once active
+ * it may be offline, and its app asks for its own pdf.js worker, under a
+ * name no older shell has.
  */
 export async function healReader(build: Build, caches: CacheStorage): Promise<void> {
   if (!(await hasRulebooks(caches)) || (await readerSaved(build, caches))) return;
@@ -179,6 +182,17 @@ export interface SaveRequest {
 }
 
 /**
+ * What the worker running the app sends a newer build's, installed and
+ * waiting to take over (or still installing), once it has saved a rulebook:
+ * a build installed with no rulebook saved has no reader in its shell, and
+ * completes it on hearing this (healReader), while there is a network.
+ */
+export const READER_MESSAGE = 'gameroom-reader';
+export function isReaderMessage(message: unknown): boolean {
+  return (message as { type?: unknown } | null)?.type === READER_MESSAGE;
+}
+
+/**
  * Each answer on the port: 'saved', or 'unsaved' when not asked to save it;
  * else 'saving', then how the save ended (one the service worker began on
  * its own, on a small rulebook's first open, too): 'saved', 'full' when the
@@ -203,7 +217,13 @@ export interface Saver {
 /** Whether a save failed for want of room: the Cache API's quota error. */
 const isFull = (error: unknown) => (error as { name?: unknown } | null)?.name === 'QuotaExceededError';
 
-export function saver(build: Build, caches: CacheStorage, fetcher: (path: string) => Promise<Response>): Saver {
+/** `saved` is told of each save that ends saved, once however many asked for it. */
+export function saver(
+  build: Build,
+  caches: CacheStorage,
+  fetcher: (path: string) => Promise<Response>,
+  saved: (path: string) => void = () => {},
+): Saver {
   // One save per rulebook, however many requests and pages ask for it.
   const saving = new Map<string, Promise<SaveOutcome>>();
   // And one saving of the reader's files, however many rulebooks are saved
@@ -217,7 +237,7 @@ export function saver(build: Build, caches: CacheStorage, fetcher: (path: string
     let done = saving.get(path);
     if (!done) {
       done = saveRulebook(path, build, caches, fetcher, reader)
-        .then((): SaveOutcome => 'saved', (error: unknown): SaveOutcome => (isFull(error) ? 'full' : 'failed'))
+        .then((): SaveOutcome => { saved(path); return 'saved'; }, (error: unknown): SaveOutcome => (isFull(error) ? 'full' : 'failed'))
         .finally(() => saving.delete(path));
       saving.set(path, done);
     }

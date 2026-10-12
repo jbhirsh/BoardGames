@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { activate, ART_VERSION, ASSETS, healReader, install, pruneShells, readerSaved, RULEBOOK_VERSION, RULEBOOKS, SAVE_MESSAGE, saveReader, saveRulebook, saver, stamped, type Build, type SaveReply } from '../sw/shell';
+import { activate, ART_VERSION, ASSETS, healReader, install, isReaderMessage, pruneShells, READER_MESSAGE, readerSaved, RULEBOOK_VERSION, RULEBOOKS, SAVE_MESSAGE, saveReader, saveRulebook, saver, stamped, type Build, type SaveReply } from '../sw/shell';
 
 const ORIGIN = 'https://game-room.example';
 const pathOf = (request: RequestInfo | URL) => new URL(typeof request === 'object' && 'url' in request ? request.url : String(request), ORIGIN).pathname;
@@ -141,6 +141,10 @@ describe('an update', () => {
     expect(await readerSaved(B, storage(fake))).toBe(false);
     expect(await fake.keys()).toContain(A.shell);
     expect(await fake.match('/assets/worker-a.js')).toBeDefined();
+    // But B's app asks for B's own pdf.js worker, which no cache holds: the
+    // saved rulebook can't draw until B heals online. Hence telling B of the
+    // save while it waits (below).
+    expect(await fake.match('/assets/worker-b.js')).toBeUndefined();
 
     // Pruning again changes nothing while B's reader is incomplete.
     await pruneShells(B, storage(fake));
@@ -151,6 +155,29 @@ describe('an update', () => {
     await healReader(B, storage(fake));
     expect(await readerSaved(B, storage(fake))).toBe(true);
     await pruneShells(B, storage(fake));
+    expect(await fake.keys()).not.toContain(A.shell);
+  });
+
+  it('(a) B, waiting, told of the first rulebook A saves, completes its reader then, so it has all it asks for activating offline', async () => {
+    const fake = new FakeCaches();
+    online(fake, A);
+    await install(A, storage(fake));
+    await activate(A, storage(fake));
+    online(fake, A, B);
+    await install(B, storage(fake));
+    expect(await readerSaved(B, storage(fake))).toBe(false);
+
+    // A saves the first rulebook and tells B, which heals (sw.ts: tellNewer, then B's message handler).
+    const told: string[] = [];
+    const saving = saver(A, storage(fake), async () => new Response('%PDF'), (path) => told.push(path));
+    expect(await saving.save('/rules/azul.pdf')).toBe('saved');
+    expect(told).toEqual(['/rules/azul.pdf']);
+    await healReader(B, storage(fake));
+    expect(await readerSaved(B, storage(fake))).toBe(true);
+
+    offline(fake);
+    await activate(B, storage(fake));
+    for (const path of B.reader) expect(await fake.match(path)).toBeDefined();
     expect(await fake.keys()).not.toContain(A.shell);
   });
 
@@ -420,6 +447,20 @@ describe('saver', () => {
     expect(fetched).toEqual(['/rules/azul.pdf']);
   });
 
+  it('tells of each save that ends saved once, however many asked for it, and of none that failed', async () => {
+    const fake = new FakeCaches();
+    online(fake, A);
+    const told: string[] = [];
+    let ok = true;
+    const saving = saver(A, storage(fake), async () => new Response('%PDF', { status: ok ? 200 : 500 }), (path) => told.push(path));
+    const replies: SaveReply[] = [];
+    await Promise.all([saving.save('/rules/azul.pdf'), saving.answer(ask('/rules/azul.pdf', true), (r) => replies.push(r))]);
+    expect(told).toEqual(['/rules/azul.pdf']);
+    ok = false;
+    expect(await saving.save('/rules/catan.pdf')).toBe('failed');
+    expect(told).toEqual(['/rules/azul.pdf']);
+  });
+
   it('answers nothing but its own message, for one of the build\'s rulebooks', async () => {
     const { fetched, release, replies, reply, saving } = setUp();
     release();
@@ -435,5 +476,14 @@ describe('saver', () => {
     ]) await saving.answer(message, reply);
     expect(replies).toEqual([]);
     expect(fetched).toEqual([]);
+  });
+});
+
+describe('isReaderMessage', () => {
+  it('knows only the message an older build\'s worker sends a newer one', () => {
+    expect(isReaderMessage({ type: READER_MESSAGE })).toBe(true);
+    for (const message of [null, undefined, READER_MESSAGE, 42, {}, { type: SAVE_MESSAGE, path: '/rules/azul.pdf', save: true }]) {
+      expect(isReaderMessage(message)).toBe(false);
+    }
   });
 });

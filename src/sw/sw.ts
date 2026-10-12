@@ -5,7 +5,7 @@
 // byte ranges live in utils/offline.ts; what each cache keeps, and when, in
 // ./shell.ts.
 import { parseRange, rangeHeaders, routeFor, savesOnOpen, savingData } from '../utils/offline';
-import { activate, ASSETS, healReader, install, MATCH, pruneShells, RULEBOOKS, saver, SHELL_PREFIX, stamped, type Build, type SaveReply } from './shell';
+import { activate, ASSETS, healReader, install, isReaderMessage, MATCH, pruneShells, READER_MESSAGE, RULEBOOKS, saver, SHELL_PREFIX, stamped, type Build, type SaveReply } from './shell';
 
 declare const self: ServiceWorkerGlobalScope;
 /** Paths saved at install: the app's code (every page's), box art, the font, the word lists. */
@@ -28,8 +28,8 @@ const BUILD: Build = { shell: SHELL, precache: __PRECACHE__, reader: __READER__,
 // The reader's files too: saved or not yet, they are this build's, kept in its shell.
 const SHELL_PATHS = new Set([...__PRECACHE__, ...__READER__]);
 // Rulebooks saved whole, once each however many range requests and pages
-// ask for one.
-const saving = saver(BUILD, caches, (path) => fetch(path));
+// ask for one; a newer build on its way in is told of each (tellNewer).
+const saving = saver(BUILD, caches, (path) => fetch(path), () => tellNewer());
 // Give a slow network this long before a page comes from the saved app.
 const PAGE_TIMEOUT_MS = 4000;
 
@@ -50,8 +50,11 @@ self.addEventListener('activate', (event) => {
 
 // The rules page asking after the rulebook on screen, or to save it (its
 // Save for offline button): answered on the port it sends, the worker kept
-// alive until the save ends.
+// alive until the save ends. Or an older build's worker, running the app
+// while this one waits, saying it saved a rulebook: this build's reader is
+// completed now, while there is a network (tellNewer).
 self.addEventListener('message', (event) => {
+  if (isReaderMessage(event.data)) return event.waitUntil(heal());
   const [port] = event.ports;
   if (port) event.waitUntil(saving.answer(event.data, (reply: SaveReply) => port.postMessage(reply)));
 });
@@ -106,6 +109,26 @@ async function saved(event: FetchEvent, cacheName: string): Promise<Response> {
   const path = new URL(event.request.url).pathname;
   if (response.ok) event.waitUntil(cache.put(event.request, stamped(BUILD, path, response.clone())).catch(() => {}));
   return response;
+}
+
+/**
+ * Tells a newer build, installed and waiting (or installing), that a
+ * rulebook is saved. Installed with none saved, it has no reader in its
+ * shell, and might take over offline before healReader could run: its app
+ * asks for its own pdf.js worker (a new hashed name when pdf.js or the
+ * reader's code changed), which no older shell holds, and a saved rulebook
+ * couldn't draw. It completes its reader on hearing this (heal), still
+ * waiting, so activating stays quick. A browser that can't message one
+ * worker from another leaves it to healReader once active.
+ */
+function tellNewer() {
+  for (const worker of [self.registration.installing, self.registration.waiting]) {
+    try {
+      worker?.postMessage({ type: READER_MESSAGE });
+    } catch {
+      // healReader completes it once active, online.
+    }
+  }
 }
 
 // The reader being completed (healReader), started once however often asked.
