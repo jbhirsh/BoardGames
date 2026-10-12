@@ -193,7 +193,12 @@ test('a large rulebook isn\'t saved by opening it, and offline says to tap Save 
 
   await goOffline(context);
   await page.reload();
-  await expect(page.getByText('Not saved on this device yet. Tap Save for offline next time you have signal.')).toBeVisible();
+  // The notice names the button as it reads: "Save offline" on a phone.
+  const notice = page.getByText(/^Not saved on this device yet\. Tap Save/);
+  await expect(notice).toBeVisible();
+  expect(await notice.evaluate((el) => (el as HTMLElement).innerText)).toBe('Not saved on this device yet. Tap Save offline next time you have signal.');
+  await page.setViewportSize({ width: 1280, height: 812 });
+  expect(await notice.evaluate((el) => (el as HTMLElement).innerText)).toBe('Not saved on this device yet. Tap Save for offline next time you have signal.');
   await expect(page.getByRole('button', { name: /^Save/ })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Download PDF' })).toHaveCount(0);
 });

@@ -1113,7 +1113,7 @@ describe('RulesPage\'s reader', () => {
       savedHere();
       worker();
       renderAt('/rules/7-wonders');
-      expect(await screen.findByText(/Tap Save for offline next time/)).toBeInTheDocument();
+      expect(await screen.findByRole('status')).toHaveTextContent(/Tap Save for offline next time/);
       expect(screen.queryByRole('button', { name: /^Save/ })).not.toBeInTheDocument();
     });
   });
