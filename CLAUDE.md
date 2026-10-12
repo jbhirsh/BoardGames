@@ -102,17 +102,25 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
     link's size, "Saving…" with a spinner, then plain status text, "Saved
     on this device" with a green tick (`--ok-fg`) in `--text2`, or "Not
     enough space on this device" (a quota error, nothing to retry), or a
-    "Couldn't save. Try again" button. On a phone (600px and narrower) it
-    takes a line of its own from the first paint, as the three don't fit
-    one. It shows from the first paint whenever a service worker is in
-    charge and the browser is online (or the rulebook is saved), starting
-    from what the build's size predicts (Save for offline for a large one,
-    Saving… for a small one, which saves itself), held unseen until the
-    page's saved check (`savedCopy`) answers so a saved one never says
-    Save first, then put right by it or the service worker's answer
-    (`askWorker`, a message with a `MessagePort` it answers on: the page
-    asks it to save a small one, joining the save opening it began, and
-    only asks after a large one). A worker that doesn't answer within 1.5 s
+    "Couldn't save. Try again" button. On a phone (600px and narrower) the
+    three keep one line, from the first paint and in every state, by
+    showing fewer words: "Download", "Open", "Save offline" ("Saving…",
+    "Saved", "No space", "Try again"). The words dropped from sight
+    (`rules-more` in `App.css`) are still read out, so the names stay
+    "Download PDF", "Open PDF", "Couldn't save. Try again", and the
+    statuses are read in full; only the Save button is named "Save
+    offline" there, as a name must hold the words it shows (WCAG 2.5.3)
+    and "for" would split them. Below 360px the row's gaps close up so
+    Pandemic's 16.4 MB still fits at 320px. It shows from the first paint
+    whenever a service worker is in charge and the browser is online (or
+    the rulebook is saved), starting from what the build's size predicts
+    (Save for offline for a large one, Saving… for a small one, which
+    saves itself), held unseen until the page's saved check (`savedCopy`)
+    answers so a saved one never says Save first, then put right by it or
+    the service worker's answer (`askWorker`, a message with a
+    `MessagePort` it answers on: the page asks it to save a small one,
+    joining the save opening it began, and only asks after a large one). A
+    worker that doesn't answer within 1.5 s
     (an older one) leaves no item. While saving, the page asks again every
     10 s and as it comes back into view, since a worker stopped mid-save
     (iOS suspends them) never says how it ended. It follows

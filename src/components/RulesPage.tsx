@@ -342,12 +342,13 @@ export default function RulesPage() {
             own viewer, for its zoom, thumbnails and printing, and the
             rulebook's place on this device: Save for offline, or how that
             stands. Not for a rulebook out of reach, where all three would
-            be dead. */}
+            be dead. On a phone the three keep one line by dropping words
+            from sight (rules-more), not from their names: Download, Open. */}
         {!unreachable && (
           <>
             <div className="rules-pdf-links">
               <a href={book.pdf} download className="rules-download" aria-label="Download PDF" aria-describedby="rules-download-size">
-                Download PDF
+                <span>Download <span className="rules-more">PDF</span></span>
                 {size !== null && (
                   <>
                     <span className="rules-download-size" aria-hidden="true">·</span>
@@ -355,7 +356,9 @@ export default function RulesPage() {
                   </>
                 )}
               </a>
-              <a href={book.pdf} target="_blank" rel="noopener noreferrer" className="rules-download">Open PDF</a>
+              <a href={book.pdf} target="_blank" rel="noopener noreferrer" className="rules-download">
+                <span>Open <span className="rules-more">PDF</span></span>
+              </a>
               {offline.state !== null && (
                 <SaveOffline pdf={book.pdf} state={offline.state} hidden={offline.hidden} sized={size !== null} onSave={offline.save} />
               )}

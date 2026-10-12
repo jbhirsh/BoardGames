@@ -170,22 +170,26 @@ test('a large rulebook isn\'t saved by opening it, and offline says to tap Save 
   // Ticket to Ride's rulebook is 3.6 MB.
   await page.goto('/rules/ticket-to-ride');
   await expect(page.getByRole('region', { name: 'Ticket to Ride rules' }).getByRole('button', { name: 'Search' })).toBeEnabled();
-  // Described by the Download link's size, the third item in its row:
-  // level with it on a desktop.
+  // Described by the Download link's size, the third item in its row.
   const save = page.getByRole('button', { name: 'Save for offline' });
   await expect(save).toHaveAccessibleDescription('3.6 MB');
   expect(await inCache(page, '/rules/ticket-to-ride.pdf')).toBe(false);
   const download = page.getByRole('link', { name: 'Download PDF' });
   const open = page.getByRole('link', { name: 'Open PDF' });
-  const [d, o, s] = await Promise.all([download.boundingBox(), open.boundingBox(), save.boundingBox()]);
-  expect(s!.y).toBe(d!.y);
-  expect(s!.height).toBe(d!.height);
-  expect(s!.x).toBeGreaterThan(o!.x + o!.width);
-  // On a phone, on a line of its own under Download PDF.
-  await page.setViewportSize({ width: 375, height: 812 });
-  const [phoneDownload, phoneSave] = await Promise.all([download.boundingBox(), save.boundingBox()]);
-  expect(phoneSave!.x).toBe(phoneDownload!.x);
-  expect(phoneSave!.y).toBeGreaterThan(phoneDownload!.y + phoneDownload!.height);
+  // Level with them on a desktop, and on a phone too, where the three keep
+  // one line in fewer words: Download and Open, "PDF" still read out, and
+  // Save offline, named so (a name holds the words it shows).
+  for (const width of [1280, 414, 375, 320]) {
+    await page.setViewportSize({ width, height: 812 });
+    const item = width > 600 ? save : page.getByRole('button', { name: 'Save offline' });
+    await expect(item).toBeVisible();
+    const [d, o, s] = await Promise.all([download.boundingBox(), open.boundingBox(), item.boundingBox()]);
+    expect([o!.y, s!.y], `at ${width}px`).toEqual([d!.y, d!.y]);
+    expect([o!.height, s!.height], `at ${width}px`).toEqual([d!.height, d!.height]);
+    expect(o!.x, `at ${width}px`).toBeGreaterThan(d!.x + d!.width);
+    expect(s!.x, `at ${width}px`).toBeGreaterThan(o!.x + o!.width);
+    expect(s!.x + s!.width, `at ${width}px`).toBeLessThanOrEqual(width - 16);
+  }
 
   await goOffline(context);
   await page.reload();
