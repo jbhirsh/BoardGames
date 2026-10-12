@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { activate, ASSETS, healReader, install, pruneShells, readerSaved, RULEBOOK_VERSION, RULEBOOKS, SAVE_MESSAGE, saveReader, saveRulebook, saver, type Build, type SaveReply } from '../sw/shell';
+import { activate, ART_VERSION, ASSETS, healReader, install, pruneShells, readerSaved, RULEBOOK_VERSION, RULEBOOKS, SAVE_MESSAGE, saveReader, saveRulebook, saver, stamped, type Build, type SaveReply } from '../sw/shell';
 
 const ORIGIN = 'https://game-room.example';
 const pathOf = (request: RequestInfo | URL) => new URL(typeof request === 'object' && 'url' in request ? request.url : String(request), ORIGIN).pathname;
@@ -57,6 +57,7 @@ function build(version: string, worker: string): Build {
     precache: [`/assets/index-${version}.js`, '/words/enable.txt'],
     reader: [`/assets/${worker}.js`, '/pdfjs/wasm/openjpeg.wasm'],
     rulebooks: { '/rules/azul.pdf': 'azul1', '/rules/catan.pdf': 'catan1' },
+    art: { '/images/wishlist/ark-nova.jpg': 'ark1', '/images/wishlist/cascadia.jpg': `cascadia-${version}` },
   };
 }
 
@@ -186,9 +187,10 @@ describe('an update', () => {
     await fake.saveRulebook(A, '/rules/azul.pdf');
     await (await fake.open(RULEBOOKS)).put('/rules/catan.pdf', new Response('%PDF-', { headers: { [RULEBOOK_VERSION]: 'catan0' } }));
     const assets = await fake.open(ASSETS);
-    for (const path of ['/assets/later-a.js', '/pdfjs/wasm/openjpeg_nowasm_fallback.js', '/pdfjs/standard_fonts/FoxitSymbol.pfb', '/images/wishlist/ark-nova.jpg', '/images/assets/shelf.webp']) {
+    for (const path of ['/assets/later-a.js', '/pdfjs/wasm/openjpeg_nowasm_fallback.js', '/pdfjs/standard_fonts/FoxitSymbol.pfb', '/images/assets/shelf.webp']) {
       await assets.put(path, new Response(path));
     }
+    await assets.put('/images/wishlist/ark-nova.jpg', new Response('art', { headers: { [ART_VERSION]: 'ark1' } }));
     await activate(B, storage(fake));
     expect(fake.paths(RULEBOOKS)).toEqual(['/rules/azul.pdf']);
     expect(fake.paths(ASSETS)).toEqual(['/images/assets/shelf.webp', '/images/wishlist/ark-nova.jpg']);
@@ -203,6 +205,38 @@ describe('an update', () => {
     await activate(B, storage(fake));
     expect(fake.paths(RULEBOOKS)).toEqual([]);
     expect(await fake.keys()).not.toContain(A.shell);
+  });
+});
+
+describe('wishlist box art', () => {
+  it('is kept marked with the build\'s hash of it, and everything else as it came', async () => {
+    const art = stamped(A, '/images/wishlist/cascadia.jpg', new Response('jpeg', { status: 200, statusText: 'OK', headers: { 'Content-Type': 'image/jpeg' } }));
+    expect(art.headers.get(ART_VERSION)).toBe('cascadia-a');
+    expect(art.headers.get('Content-Type')).toBe('image/jpeg');
+    expect([art.status, art.statusText, await art.text()]).toEqual([200, 'OK', 'jpeg']);
+    const code = new Response('js');
+    expect(stamped(A, '/assets/later-a.js', code)).toBe(code);
+    // Art in another folder isn't the wishlist's, nor are other origins' thumbnails (sw.ts never sees them).
+    const other = new Response('webp');
+    expect(stamped(A, '/images/catan.webp', other)).toBe(other);
+  });
+
+  it('saved as fetched, survives an update that keeps the file, and goes with one that changes or drops it', async () => {
+    const fake = new FakeCaches();
+    online(fake, A, B);
+    await install(A, storage(fake));
+    await activate(A, storage(fake));
+    const assets = await fake.open(ASSETS);
+    for (const path of ['/images/wishlist/ark-nova.jpg', '/images/wishlist/cascadia.jpg', '/images/wishlist/gone.jpg']) {
+      await assets.put(path, stamped(A, path, new Response(path)));
+    }
+    // Saved before copies were marked: its file may have changed since.
+    await assets.put('/images/wishlist/old.jpg', new Response('old'));
+    await install(B, storage(fake));
+    await activate(B, storage(fake));
+    // Ark Nova's file is the same in both builds; Cascadia's changed, and B has no gone.jpg.
+    expect(fake.paths(ASSETS)).toEqual(['/images/wishlist/ark-nova.jpg']);
+    expect(await (await assets.match('/images/wishlist/ark-nova.jpg'))!.text()).toBe('/images/wishlist/ark-nova.jpg');
   });
 });
 

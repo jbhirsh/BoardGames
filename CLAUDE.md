@@ -416,9 +416,17 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   a saved rulebook opens online. The rest of `/pdfjs/` (no-WebAssembly
   fallbacks, standard fonts, licences) goes to the runtime
   `gameroom-assets` cache if it is ever fetched, and each update clears it
-  with the old code. Sentry stamps `sw.js` on every build, so every
-  deploy installs a new worker; without `skipWaiting` it waits until no tab
-  runs the old app, so a long-open tab keeps its own code offline. Pages
+  with the old code. The wishlist's box art (`WISHLIST_ART_DIR`, 39 files,
+  608 KB: more than the collection's 30 at 577 KB, and 16% on top of the
+  3.9 MB install, for a list behind the Want toggle many never open) goes
+  there too, each file as a card draws it (lazily, so a card never
+  scrolled to online has no art offline), marked with the build's hash of
+  it (`__ART__`, `stamped`); an update keeps it unless its file changed
+  (`npm run wishlist-art -- --refresh`) or went. A friend's suggestion's
+  BoardGameGeek thumbnail is another site's, so never saved. Sentry stamps
+  `sw.js` on every build, so every deploy installs a new worker; without
+  `skipWaiting` it waits until no tab runs the old app, so a long-open tab
+  keeps its own code offline. Pages
   come from the network (4s at most), falling back to the app saved at
   install, which nothing else replaces; `/api/*` and other sites are never
   touched. A saved file the network can't give is looked for in every

@@ -20,6 +20,16 @@ export const PDFJS_DECODERS: readonly string[] = [
   'iccs/CGATS001Compat-v2-micro.icc',
 ];
 
+/**
+ * The wishlist's box art, under public/ (`npm run wishlist-art`): not saved
+ * at install, since its 39 files come to 608 KB, more than the collection's
+ * 30 (577 KB), for a list behind the Want toggle that a visitor may never
+ * open. The service worker saves each one as it is fetched (src/sw/shell.ts,
+ * marked with the build's hash of the file, which vite.config.ts writes in),
+ * so an update drops a copy whose file has changed or gone.
+ */
+export const WISHLIST_ART_DIR = 'images/wishlist';
+
 /** When a file of the build is saved for offline use. */
 export type SavedWhen =
   /** At install: the app, every page's code included, so each page works offline after one visit. */

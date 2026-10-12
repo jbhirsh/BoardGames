@@ -1,11 +1,11 @@
 /// <reference lib="webworker" />
 // The service worker: the site installed and usable offline, for game nights
 // in basements and cabins. Built to /sw.js by the serviceWorker() plugin in
-// vite.config.ts, which writes the four constants below. Routing and the
+// vite.config.ts, which writes the five constants below. Routing and the
 // byte ranges live in utils/offline.ts; what each cache keeps, and when, in
 // ./shell.ts.
 import { parseRange, rangeHeaders, routeFor, savesOnOpen, savingData } from '../utils/offline';
-import { activate, ASSETS, healReader, install, MATCH, pruneShells, RULEBOOKS, saver, SHELL_PREFIX, type Build, type SaveReply } from './shell';
+import { activate, ASSETS, healReader, install, MATCH, pruneShells, RULEBOOKS, saver, SHELL_PREFIX, stamped, type Build, type SaveReply } from './shell';
 
 declare const self: ServiceWorkerGlobalScope;
 /** Paths saved at install: the app's code (every page's), box art, the font, the word lists. */
@@ -20,9 +20,11 @@ declare const __READER__: string[];
 declare const __SW_VERSION__: string;
 /** Each rulebook's path and a hash of its contents, to drop stale saved copies. */
 declare const __RULEBOOKS__: Record<string, string>;
+/** Each wishlist box art's path and a hash of its contents, likewise: saved as fetched, never at install. */
+declare const __ART__: Record<string, string>;
 
 const SHELL = `${SHELL_PREFIX}${__SW_VERSION__}`;
-const BUILD: Build = { shell: SHELL, precache: __PRECACHE__, reader: __READER__, rulebooks: __RULEBOOKS__ };
+const BUILD: Build = { shell: SHELL, precache: __PRECACHE__, reader: __READER__, rulebooks: __RULEBOOKS__, art: __ART__ };
 // The reader's files too: saved or not yet, they are this build's, kept in its shell.
 const SHELL_PATHS = new Set([...__PRECACHE__, ...__READER__]);
 // Rulebooks saved whole, once each however many range requests and pages
@@ -101,7 +103,8 @@ async function saved(event: FetchEvent, cacheName: string): Promise<Response> {
     if (elsewhere) return elsewhere;
     throw error;
   }
-  if (response.ok) event.waitUntil(cache.put(event.request, response.clone()).catch(() => {}));
+  const path = new URL(event.request.url).pathname;
+  if (response.ok) event.waitUntil(cache.put(event.request, stamped(BUILD, path, response.clone())).catch(() => {}));
   return response;
 }
 

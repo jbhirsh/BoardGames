@@ -3,6 +3,7 @@
 // one, and what an update clears away. Written against CacheStorage (whose
 // Cache.addAll does the fetching) and a fetch passed in, so tests drive it
 // with fakes (src/__tests__/swShell.test.ts).
+import { WISHLIST_ART_DIR } from '../utils/precache';
 
 /** One build's saved app, as vite.config.ts writes it into sw.js. */
 export interface Build {
@@ -14,6 +15,8 @@ export interface Build {
   reader: readonly string[];
   /** Each rulebook's path and a hash of its contents. */
   rulebooks: Readonly<Record<string, string>>;
+  /** Each wishlist box art's path (WISHLIST_ART_DIR) and a hash of its contents. */
+  art: Readonly<Record<string, string>>;
 }
 
 /** Every build's shell cache is named this, then its version. */
@@ -24,6 +27,9 @@ export const ASSETS = 'gameroom-assets';
 export const RULEBOOKS = 'gameroom-rulebooks';
 /** A saved rulebook's contents hash, from the build that saved it. */
 export const RULEBOOK_VERSION = 'X-Rulebook-Version';
+/** A saved wishlist box art's contents hash, from the build that saved it. */
+export const ART_VERSION = 'X-Art-Version';
+const ART = `/${WISHLIST_ART_DIR}/`;
 // A module script asks with an Origin header and the server may answer
 // Vary: Origin, which a copy saved without one would never match.
 export const MATCH = { ignoreVary: true } as const;
@@ -94,13 +100,33 @@ export async function activate(build: Build, caches: CacheStorage): Promise<void
     if (copy?.headers.get(RULEBOOK_VERSION) !== build.rulebooks[pathOf(request)]) await rulebooks.delete(request);
   }
   await pruneShells(build, caches);
-  // Older builds' code (hashed names this build won't ask for), and pdf.js's
-  // files fetched along the way, whose names don't change with its version.
-  // Box art stays.
+  // Older builds' code (hashed names this build won't ask for), pdf.js's
+  // files fetched along the way, whose names don't change with its version,
+  // and wishlist box art whose file has changed or gone (or saved before
+  // copies were marked). The rest of the art stays.
   const assets = await caches.open(ASSETS);
   for (const request of await assets.keys()) {
-    if (/^\/(assets|pdfjs)\//.test(pathOf(request))) await assets.delete(request);
+    const path = pathOf(request);
+    if (/^\/(assets|pdfjs)\//.test(path)
+      || (path.startsWith(ART) && (await assets.match(request))?.headers.get(ART_VERSION) !== build.art[path])) {
+      await assets.delete(request);
+    }
   }
+}
+
+/**
+ * The copy of a file fetched along the way to keep: wishlist box art marked
+ * with the build's hash of it, so the first build whose file differs drops
+ * it on activating; anything else as it came. The network's file is taken
+ * for this build's: a worker serving an older build marks the newer file
+ * with its own hash, which a change drops once the newer build activates.
+ */
+export function stamped(build: Build, path: string, response: Response): Response {
+  const hash = build.art[path];
+  if (hash === undefined) return response;
+  const headers = new Headers(response.headers);
+  headers.set(ART_VERSION, hash);
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
 /**
