@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, within } from '@testing-library/react';
 import SaveOffline from '../components/SaveOffline';
 import type { SaveState } from '../pdfjs/saved';
 
@@ -50,7 +50,7 @@ describe('SaveOffline', () => {
   it('says once saved that it is on this device, as plain text', () => {
     const { container } = renderItem({ state: 'saved' });
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
-    expect(screen.getByText('Saved on this device')).toHaveClass('rules-save-status', 'rules-save-saved');
+    expect(screen.getByText('Saved on this device').parentElement).toHaveClass('rules-save-status', 'rules-save-saved');
     // Already saved when it came: nothing to announce.
     expect(said(container)).toBeEmptyDOMElement();
   });
@@ -67,13 +67,42 @@ describe('SaveOffline', () => {
   it('says when the device has no room, with nothing to try again', () => {
     renderItem({ state: 'full' });
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
-    expect(screen.getByText('Not enough space on this device')).toHaveClass('rules-save-full');
+    expect(screen.getByText('Not enough space on this device').parentElement).toHaveClass('rules-save-status', 'rules-save-full');
+  });
+
+  // On a phone (App.css, 600px and narrower) the row's three items keep one
+  // line in fewer words: rules-more goes from sight but is still read out,
+  // rules-short stands in for it unread, and rules-wide goes altogether, so
+  // a button's name holds the words it shows.
+  it.each([
+    ['unsaved', 'Save for offline', 'for', 'rules-wide', 'Save offline'],
+    ['failed', 'Couldn’t save. Try again', 'Couldn’t save.', 'rules-more', 'Try again'],
+  ] as const)('keeps a %s button to fewer words on a phone, named so it holds them', (state, name, dropped, how, shown) => {
+    renderItem({ state });
+    const button = screen.getByRole('button', { name });
+    const words = within(button).getByText(dropped);
+    expect(words).toHaveAttribute('class', how);
+    words.remove();
+    expect(button).toHaveTextContent(new RegExp(`^${shown}$`));
+  });
+
+  it.each([
+    ['saved', 'Saved on this device', 'Saved'],
+    ['full', 'Not enough space on this device', 'No space'],
+  ] as const)('says %s in fewer words on a phone, reading out the full ones', (state, full, short) => {
+    const { container } = renderItem({ state });
+    const status = within(container.querySelector<HTMLElement>('.rules-save-status')!);
+    expect(status.getByText(full)).toHaveClass('rules-more');
+    expect(status.getByText(short)).toHaveClass('rules-short');
+    expect(status.getByText(short)).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('holds its place unseen while hidden', () => {
-    renderItem({ state: 'unsaved', hidden: true });
+    const { container } = renderItem({ state: 'unsaved', hidden: true });
     expect(screen.queryByRole('button', { name: 'Save for offline' })).not.toBeInTheDocument();
-    expect(screen.getByText('Save for offline')).not.toBeVisible();
+    const button = container.querySelector('button.rules-save');
+    expect(button).toHaveTextContent('Save for offline');
+    expect(button).not.toBeVisible();
   });
 
   it.each([

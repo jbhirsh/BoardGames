@@ -9,11 +9,24 @@ const ENDED: Partial<Record<SaveState, string>> = {
   full: 'Not enough space on this device to save the rulebook.',
 };
 
+/**
+ * Words that a phone (600px and narrower, where the row's three items keep
+ * one line) shows `short`, with `full` read out in their place.
+ */
+function Said({ full, short }: { full: string; short: string }) {
+  return (
+    <>
+      <span className="rules-more">{full}</span>
+      <span className="rules-short" aria-hidden="true">{short}</span>
+    </>
+  );
+}
+
 /** What each state that isn't a button says, after its icon. */
 const STATUS: Partial<Record<SaveState, ReactNode>> = {
   saving: <><SavingIcon />Saving…</>,
-  saved: <><SavedIcon />Saved on this device</>,
-  full: <><WarningIcon />Not enough space on this device</>,
+  saved: <><SavedIcon /><Said full="Saved on this device" short="Saved" /></>,
+  full: <><WarningIcon /><Said full="Not enough space on this device" short="No space" /></>,
 };
 
 /**
@@ -21,7 +34,8 @@ const STATUS: Partial<Record<SaveState, ReactNode>> = {
  * the reader, after Download PDF (whose size, `sized`, is what saving
  * costs, so the button is described by it) and Open PDF, styled as they
  * are. A button to save it, or to try again after a failure; otherwise a
- * status: Saving…, Saved on this device, or that there is no room. `hidden`
+ * status: Saving…, Saved on this device, or that there is no room (on a
+ * phone, in fewer words: Save offline, Saved, No space, Try again). `hidden`
  * holds its place unseen (useOfflineSave). Focus on the button moves to the
  * status that replaces it (and back, to Try again), and the live region
  * says how a save ended, only as it ends: not for a tab whose rulebook was
@@ -71,7 +85,12 @@ export default function SaveOffline({ pdf, state, hidden = false, sized, onSave 
           onClick={onSave}
         >
           <SaveOfflineIcon />
-          {state === 'unsaved' ? 'Save for offline' : 'Couldn’t save. Try again'}
+          {/* On a phone, Save offline, named so (a name read out must hold
+              the words on screen, and "for" would split them), and Try
+              again, with what came before read out still. */}
+          {state === 'unsaved'
+            ? <span>Save <span className="rules-wide">for</span> offline</span>
+            : <span><span className="rules-more">Couldn’t save.</span> Try again</span>}
         </button>
       ) : (
         <span ref={ref} className={`rules-save rules-save-status rules-save-${state}`} tabIndex={-1}>
