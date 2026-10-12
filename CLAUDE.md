@@ -306,16 +306,7 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   (`FilterSheet`), so the sticky bar is one row; there the active tags
   scroll away with the page instead of sitting in the sticky header. The
   sheet and the random picker share `hooks/useDialogFocus` (focus, Escape,
-  Tab kept inside) and `hooks/useScrollLock`. "Pick for us"
-  (`RandomPicker`, on the collection only; the wishlist has no picker)
-  draws from the filtered list less the games tagged adult, unless the
-  Adult keyword is selected (`utils/pickPool.ts`), since it announces its
-  game in big type to the room; the spin never shows them either. Its
-  "Fits …" line ends "· adult games left out" only when that took a game
-  out, and a list of nothing but adult games (a search naming one) is
-  drawn from whole, so the rule never leaves the button nothing to pick.
-  The collection itself still lists them. The line's parts don't break
-  inside, so it wraps before a "·". The wishlist wears the
+  Tab kept inside) and `hooks/useScrollLock`. The wishlist wears the
   collection's clothes: `WishlistCard` reuses the `game-card` layout (vote
   and buy/video links in the footer) and `WishlistListView` renders
   the collection's table (`GamesTableHead` is the shared sortable header)
@@ -366,19 +357,19 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   ascent/descent overrides measured against Playfair on the collection's
   names, so the swap barely moves a line;
   `index.html` preloads the roman file. Body text is the system font.
-- **`utils/`** — pure helpers (`filterGames.ts`, `pickRandom.ts`,
-  `pickPool.ts`, `filterUrl.ts`, `urls.ts`, `shortDesc.ts`, `subgames.ts`,
-  `rulebooks.ts`, `pdfSearch.ts`, `citeMatch.ts`, the passage of a page a
-  citation points to; `fileSize.ts`, `sevenWonders.ts`, the score pad's
-  arithmetic: science, standings with the coins tie-break; `difficulty.ts`,
-  the Light/Medium/Heavy words for a weight; `offline.ts`, the service
-  worker's routing and byte ranges; `precache.ts`, which build files the
-  service worker saves when; `chunkReload.ts`, the one reload for a page's
-  code that won't load; `fromList.ts`, the router state that marks a
-  sub-page as opened from the list; `wordList.ts`, the word checker's
-  normalising of a typed word and parsing of its list; `wiktionary.ts`, the
-  reading of a Wiktionary answer and which words in it are playable). Keep
-  these free of React and side effects.
+- **`utils/`** — pure helpers (`filterGames.ts`, `pickRandom.ts`, `filterUrl.ts`,
+  `urls.ts`, `shortDesc.ts`, `subgames.ts`, `rulebooks.ts`, `pdfSearch.ts`,
+  `citeMatch.ts`, the passage of a page a citation points to; `fileSize.ts`,
+  `sevenWonders.ts`, the score pad's arithmetic: science, standings with
+  the coins tie-break; `difficulty.ts`, the Light/Medium/Heavy words for a
+  weight; `offline.ts`, the service worker's routing and byte ranges;
+  `precache.ts`, which build files the service worker saves when;
+  `chunkReload.ts`, the one reload for a page's code that won't load;
+  `fromList.ts`, the router state that marks a sub-page as opened from the
+  list; `wordList.ts`, the word checker's normalising of a typed word and
+  parsing of its list; `wiktionary.ts`, the reading of a Wiktionary answer
+  and which words in it are playable). Keep these free of React and side
+  effects.
 - **`sw/sw.ts`** — the service worker, for game nights with no signal.
   `main.tsx` registers it in production builds only; the `serviceWorker()`
   plugin in `vite.config.ts` bundles it to `/sw.js` (a classic worker: the
