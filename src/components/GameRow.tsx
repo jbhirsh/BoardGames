@@ -19,10 +19,9 @@ interface Props {
   game: Game;
   isOpen: boolean;
   onToggle: () => void;
-  showGroupBadge: boolean;
 }
 
-export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Props) {
+export default function GameRow({ game, isOpen, onToggle }: Props) {
   const { state } = useFilter();
   const hasFitting = game.subgames !== undefined && fittingSubgames(game.subgames, state).length > 0;
   return (
@@ -37,7 +36,6 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
           short={game.short}
           kw={game.kw}
           awards={game.awards}
-          groupBadge={showGroupBadge ? game.group : undefined}
           subTag={game.subgames && <SubGamesTag game={{ ...game, subgames: game.subgames }} />}
           difficulty={game}
           isOpen={isOpen}

@@ -21,8 +21,6 @@ interface CellsProps {
   short: string;
   kw: KeywordId[];
   awards: Award[];
-  /** Group label to show beside the name (the collection's grouped sort). */
-  groupBadge?: string;
   /** A tag for the games this one holds (`SubGamesTag`), after the description. */
   subTag?: ReactNode;
   /**
@@ -42,7 +40,7 @@ interface CellsProps {
  * the row click and any data attributes.
  */
 export default function TableRowCells({
-  name, players, cat, dur, mins, short, kw, awards, groupBadge, subTag, difficulty, extra, isOpen, onToggle,
+  name, players, cat, dur, mins, short, kw, awards, subTag, difficulty, extra, isOpen, onToggle,
 }: CellsProps) {
   const { state, dispatch } = useFilter();
   const budget = budgetFor(mins);
@@ -64,7 +62,6 @@ export default function TableRowCells({
       <td className="col-name">
         <div className="col-name-wrap">
           <span className="col-name">{name}</span>
-          {groupBadge && <span className="group-badge">{groupBadge}</span>}
           <span className="mobile-short">{short} {badges}</span>
         </div>
       </td>

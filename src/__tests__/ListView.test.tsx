@@ -3,7 +3,7 @@ import { act, render, screen, fireEvent, within } from '@testing-library/react';
 import { createMemoryRouter, MemoryRouter, Outlet, RouterProvider } from 'react-router';
 import BackLink from '../components/BackLink';
 import ListView from '../components/ListView';
-import { sortGames } from '../utils/filterGames';
+import { sortItems } from '../utils/filterGames';
 import { FilterProvider } from '../context/FilterContext';
 import { useFilter } from '../context/useFilter';
 import { GAMES } from '../data/games';
@@ -32,11 +32,12 @@ describe('ListView', () => {
     const header = screen.getByRole('columnheader', { name: /Difficulty/ });
     const firstRowName = () => screen.getAllByRole('row')[1].querySelector('span.col-name')!.textContent;
     fireEvent.click(header);
-    // The order is sortGames' (tested on its own), a deck placed by its games.
-    expect(firstRowName()).toBe(sortGames(GAMES, 'weight-asc')[0].name);
+    // The order is sortItems' (tested on its own), a deck placed by its
+    // games; the group order plays no part in a weight sort.
+    expect(firstRowName()).toBe(sortItems(GAMES, 'weight-asc', () => 0)[0].name);
     expect(header).toHaveClass('sort-asc');
     fireEvent.click(header);
-    expect(firstRowName()).toBe(sortGames(GAMES, 'weight-desc')[0].name);
+    expect(firstRowName()).toBe(sortItems(GAMES, 'weight-desc', () => 0)[0].name);
     expect(header).toHaveClass('sort-desc');
     // Each game's row reads its weight.
     const catan = GAMES.find((g) => g.slug === 'catan')!;
@@ -298,8 +299,6 @@ describe('ListView open row through a round trip', () => {
     }
     expect(names.length).toBe(new Set(names).size);
     expect(names.length).toBeLessThan(GAMES.length);
-    // The heading names the group, so no row repeats it as a badge.
-    expect(document.querySelector('.group-badge')).toBeNull();
 
     await act(async () => { fireEvent.click(toggleFor('Pandemic')); });
     expect(toggleFor('Pandemic')).toHaveAttribute('aria-expanded', 'true');
@@ -312,16 +311,14 @@ describe('ListView open row through a round trip', () => {
     expect(toggleFor('Pandemic')).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it('heads only the groups with a game showing, and badges no row with its group', () => {
+  it('heads only the groups with a game showing', () => {
     renderListRoutes(['/?q=pandemic&s=group']);
     expect(document.querySelectorAll('tr.list-group-row')).toHaveLength(1);
-    expect(document.querySelector('.group-badge')).toBeNull();
   });
 
-  it('badges no row of the flat list with its group either', () => {
+  it('heads no groups in the flat list', () => {
     renderListRoutes(['/']);
     expect(document.querySelectorAll('tr.list-group-row')).toHaveLength(0);
-    expect(document.querySelector('.group-badge')).toBeNull();
   });
 
   it('opens nothing when the list is reached anew rather than by Back', async () => {

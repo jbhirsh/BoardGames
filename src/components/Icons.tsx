@@ -14,17 +14,6 @@ export function YouTubeIcon() {
   );
 }
 
-export function PdfIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-      <path d="M3 2a1 1 0 0 1 1-1h6l3 3v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2z" stroke="currentColor" strokeWidth="1.3" />
-      <path d="M9 1v3h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-      <path d="M5.5 9.5h5M5.5 11.5h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-      <rect x="5" y="6.5" width="6" height="1.5" rx=".5" fill="currentColor" opacity=".35" />
-    </svg>
-  );
-}
-
 export function SearchIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">

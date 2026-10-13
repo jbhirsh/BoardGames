@@ -1,11 +1,17 @@
 import { filterWishlist } from '../utils/filterGames';
 import { WISHLIST } from '../data/wishlist';
-import { WISHLIST_TYPE_ORDER } from '../data/keywords';
+import { GROUP_ORDER, WISHLIST_TYPE_ORDER } from '../data/keywords';
 import { describe, it, expect } from 'vitest';
-import { filterGames, sortGames, sortItems, sortedKw, isGrouped, fitsTable, tableFiltered, budgetFor } from '../utils/filterGames';
+import { filterGames, sortItems, sortedKw, isGrouped, fitsTable, tableFiltered, budgetFor } from '../utils/filterGames';
 import { initialFilterState } from '../data/initialFilterState';
 import { testGames, quickGame, mediumGame, longGame } from './testData';
 import type { FilterState, Game, SubGame } from '../data/types';
+
+// The collection's sort: sortItems with the games' group order, as
+// filterGames applies it.
+function sortGames(list: Game[], sort: string): Game[] {
+  return sortItems(list, sort, (g) => GROUP_ORDER.indexOf(g.group));
+}
 
 function makeState(overrides: Partial<FilterState> = {}): FilterState {
   return { ...initialFilterState, ...overrides };

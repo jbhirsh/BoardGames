@@ -851,7 +851,7 @@ describe('PdfReader', () => {
     });
 
     it('scrolls at once for someone who asked for less motion, and waits for nothing', async () => {
-      vi.stubGlobal('matchMedia', (q: string) => ({ matches: q === '(prefers-reduced-motion: reduce)' }));
+      vi.stubGlobal('matchMedia', (q: string) => ({ matches: q === '(prefers-reduced-motion: reduce)', addEventListener: () => {}, removeEventListener: () => {} }));
       top = (p) => (p === '2' ? 400 : 0);
       await openAt([['One'], ['Two']], { page: 2, key: key() });
       expect(scrolled).toMatchObject([
@@ -862,7 +862,7 @@ describe('PdfReader', () => {
     });
 
     it('scrolls smoothly when motion is fine', async () => {
-      vi.stubGlobal('matchMedia', () => ({ matches: false }));
+      vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} }));
       await openAt([['One'], ['Two']], { page: 2, key: key() });
       expect(scrolled).toMatchObject([{ page: '2', options: { block: 'start', behavior: 'smooth' } }]);
     });
