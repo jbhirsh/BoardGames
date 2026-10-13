@@ -812,11 +812,15 @@ runs StrykerJS over the source files a PR touched and fails below the
 `break` score in `stryker.config.json` (a weekly full sweep applies the
 same bar). Both run incremental (`--incremental`, results kept with
 actions/cache): a PR run starts from its own last results, else main's
-latest sweep, narrowed to its own files
+latest results, narrowed to its own files
 (`.github/scripts/stryker-incremental-scope.mjs`), and re-tests only the
 mutants whose code or covering tests changed, reused results still
 counting toward the score; the sweep starts from nothing, re-tests
-everything and becomes main's baseline. `e2e.yml` (workflow `E2E`, job `E2E Tests (Playwright)`) runs
+everything and becomes main's baseline, and each merge to main re-tests
+just what it changed to keep that baseline current (it gates nothing,
+and waits for a first sweep to have finished).
+Runs queue rather than cancel, because Stryker saves its results only when
+a run ends: a push waits for its PR's running check, then starts from it. `e2e.yml` (workflow `E2E`, job `E2E Tests (Playwright)`) runs
 the Playwright suite on every PR, installing its own Chromium, and uploads
 the HTML report and the failing attempt's trace when it fails or times
 out; in CI a failed test is retried once, and a test that passes only on
