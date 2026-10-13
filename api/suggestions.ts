@@ -42,6 +42,8 @@ const itemKey = (id: string) => `suggestions:${id}`;
 export type SuggestionStatus = 'pending' | 'approved' | 'denied' | 'unsent' | 'removed';
 
 const decidable = (s: SuggestionStatus) => s === 'pending' || s === 'unsent';
+// How long a decision's claim may stand without the decision landing.
+const STALE_CLAIM_MS = 60_000;
 
 // Lists the client also has (src/data/keywords.ts): the two trees can't
 // import each other, so these are mirrored by hand and tests keep them in step.
@@ -383,7 +385,14 @@ async function decide(deps: SuggestionsDeps, item: Suggestion, wanted: 'approved
   const at = now();
   // Only a decision ever sets decidedAt, so a decidable record has none and
   // HSETNX on it is an atomic claim.
-  if (!(await redis.hsetnx(key, 'decidedAt', at))) return false;
+  if (!(await redis.hsetnx(key, 'decidedAt', at))) {
+    // A claim whose decision never landed (the function died between claim
+    // and write, or giving it back failed) would block the record for good,
+    // so one that is still undecided a minute on is abandoned: take it over.
+    const current = parse(await redis.hgetall(key));
+    if (!current || !decidable(current.status) || at - (current.decidedAt ?? at) < STALE_CLAIM_MS) return false;
+    await redis.hset(key, { decidedAt: at });
+  }
   const tx = redis.multi().hset(key, { status: wanted, decidedAt: at });
   if (item.status === 'unsent') tx.lrem(UNSENT_KEY, 0, item.id);
   if (wanted === 'approved') {
@@ -596,9 +605,14 @@ export async function handleSuggestions(
       try {
         await mailer.send(approvalMail(item, link('approve'), link('deny')));
       } catch (err) {
-        await redis.lrem(ACTIVE_KEY, 0, id);
-        await redis.hset(itemKey(id), { status: 'unsent' });
-        await redis.lpush(UNSENT_KEY, id);
+        // The owner can decide it from the site's queue while the send is
+        // still trying; a decision stands, so only an undecided record
+        // becomes unsent.
+        if (parse(await redis.hgetall(itemKey(id)))?.decidedAt === undefined) {
+          await redis.lrem(ACTIVE_KEY, 0, id);
+          await redis.hset(itemKey(id), { status: 'unsent' });
+          await redis.lpush(UNSENT_KEY, id);
+        }
         throw err;
       }
       return res.status(201).json({ item: publicView(item) });
