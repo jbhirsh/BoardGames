@@ -356,6 +356,21 @@ describe('handleSuggestions', () => {
       expect(stale.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
     });
 
+    it('lets only one of two requests take over the same abandoned claim', async () => {
+      const redis = makeRedis({ 'suggestions:sug-aaaaaa': { ...pending, decidedAt: 1000 } }, { 'suggestions:active': ['sug-aaaaaa'] });
+      const lookup = vi.fn(async () => null);
+      const late = deps({ redis, lookup, now: () => 1000 + 60_000 });
+      const [a, b] = [makeRes(), makeRes()];
+      await Promise.all([
+        handleSuggestions(late, { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, a),
+        handleSuggestions(late, { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, b),
+      ]);
+      expect([String(a.body), String(b.body)].filter((body) => body.includes('is now on the wishlist'))).toHaveLength(1);
+      expect([String(a.body), String(b.body)].filter((body) => body.includes('Already'))).toHaveLength(1);
+      expect(lookup).toHaveBeenCalledTimes(1);
+      expect(redis.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
+    });
+
     it('does not change an already-decided suggestion', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': { ...pending, status: 'denied', decidedAt: 10 } });
       const res = makeRes();
