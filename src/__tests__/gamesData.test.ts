@@ -3,46 +3,17 @@ import { GAMES } from '../data/games';
 import { GAME_WEIGHTS } from '../data/gameWeights';
 import { KW } from '../data/keywords';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
-import type { Award, DurationCategory } from '../data/types';
+import type { Award } from '../data/types';
 import { durationCategory } from '../hooks/useSuggestions';
 import { isDeck } from '../utils/filterGames';
+import { expectCoherentTable, numbers } from './coherentTable';
 
 /**
  * The collection's filter fields, kept coherent the way wishlistData.test.ts
- * keeps the wishlist's. Each game states its players and time twice, once as
- * text for the card (`players`, `dur`) and once as numbers for the filters
- * (`min`, `max`, `mins`, `cat`), and nothing else notices when the two drift:
- * the card says one thing while the players or time filter does another.
+ * keeps the wishlist's (see coherentTable.ts for why).
  */
 
 const KEYWORDS = Object.keys(KW);
-const numbers = (s: string) => (s.match(/\d+/g) ?? []).map(Number);
-
-interface Table {
-  players: string;
-  min: number;
-  max: number;
-  dur: string;
-  mins: number;
-  cat: DurationCategory;
-}
-
-/** The checks a game and a game inside one share. */
-function expectCoherentTable(t: Table, label: string) {
-  expect(t.min, `${label}: min`).toBeGreaterThan(0);
-  expect(t.max, `${label}: max`).toBeGreaterThanOrEqual(t.min);
-  expect(t.mins, `${label}: mins`).toBeGreaterThan(0);
-
-  // The card's time ends at `mins`, the number the sorts and filters use.
-  expect(t.dur, `${label}: dur`).toMatch(/^\d+(–\d+)? (min|hrs?)$/);
-  const top = numbers(t.dur).at(-1)!;
-  expect(t.dur.endsWith('min') ? top : top * 60, `${label}: dur vs mins`).toBe(t.mins);
-
-  // The card's players start at `min`; an open-ended count ("2+") is max 99.
-  expect(t.players, `${label}: players`).toMatch(/^\d+(–\d+)?\+?$/);
-  expect(numbers(t.players)[0], `${label}: players vs min`).toBe(t.min);
-  expect(t.players.endsWith('+'), `${label}: open-ended players vs max`).toBe(t.max >= 99);
-}
 
 /**
  * A difficulty comes from BoardGameGeek alone: the weight is the one
