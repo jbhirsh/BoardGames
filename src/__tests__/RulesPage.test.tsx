@@ -5,6 +5,7 @@ import RulesPage from '../components/RulesPage';
 import { FROM_LIST } from '../utils/fromList';
 import { renderRouted } from './routed';
 import { PROBE_MS, type SaveState } from '../pdfjs/saved';
+import { stubMatchMedia } from './helpers/stubMatchMedia';
 
 // pdf.js needs a real browser; PdfReader.test.tsx covers the reader itself.
 // This one says it has failed when a test sets `reader.fails`, and throws
@@ -360,8 +361,7 @@ describe('RulesPage', () => {
 describe('RulesPage\'s reader', () => {
   // The page reads no media query: a desktop, a phone and a touch tablet
   // all get the reader. `desktop` makes every query answer as a desktop would.
-  const desktop = () =>
-    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} })));
+  const desktop = () => stubMatchMedia(false);
   const headWith = (headers: Record<string, string>, ok = true) =>
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok, headers: new Headers(headers) } as Response);
 

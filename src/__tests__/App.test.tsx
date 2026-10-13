@@ -3,6 +3,7 @@ import { render, screen, fireEvent, cleanup, waitFor, within } from '@testing-li
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import App, { HomePage } from '../App';
 import { GAMES } from '../data/games';
+import { stubMatchMedia } from './helpers/stubMatchMedia';
 
 function renderApp(url = '/') {
   const router = createMemoryRouter([
@@ -118,7 +119,7 @@ describe('App on a phone', () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it('lets the active tags scroll away rather than holding a sticky row', () => {
-    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener: () => {}, removeEventListener: () => {} })));
+    stubMatchMedia(true);
     const { container } = renderApp('/?p=4');
     const tags = container.querySelector('.atags')!;
     expect(tags).toHaveClass('show');

@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router';
 import GameCollection from '../components/GameCollection';
 import FilterBar from '../components/FilterBar/FilterBar';
 import { FilterProvider } from '../context/FilterContext';
+import { stubMatchMedia } from './helpers/stubMatchMedia';
 
 function renderWithFilter(hidden = false) {
   return render(
@@ -134,7 +135,7 @@ describe('GameCollection count', () => {
 
 describe('GameCollection on a phone', () => {
   beforeEach(() => {
-    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener: () => {}, removeEventListener: () => {} })));
+    stubMatchMedia(true);
   });
   afterEach(() => vi.unstubAllGlobals());
 

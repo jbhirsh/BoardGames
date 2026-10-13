@@ -8,6 +8,7 @@ import { AuthContext } from '../context/authContextValue';
 import { useFilter } from '../context/useFilter';
 import { WISHLIST } from '../data/wishlist';
 import { WISHLIST_TYPES, WISHLIST_TYPE_ORDER } from '../data/keywords';
+import { stubMatchMedia } from './helpers/stubMatchMedia';
 
 function jsonResponse(body: unknown, ok = true): Response {
   return { ok, json: async () => body } as unknown as Response;
@@ -233,7 +234,7 @@ describe('Wishlist', () => {
   });
 
   it('shows cards on a phone even with the list view chosen, and no view toggle', async () => {
-    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener: () => {}, removeEventListener: () => {} })));
+    stubMatchMedia(true);
     try {
       mockVotes({});
       renderWishlist('/?c=want');

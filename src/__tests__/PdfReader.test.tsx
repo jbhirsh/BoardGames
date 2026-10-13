@@ -120,6 +120,7 @@ vi.mock('pdfjs-dist', () => {
 
 import PdfReader from '../components/PdfReader';
 import { WARM_TURN_MS } from '../pdfjs/documents';
+import { stubMatchMedia } from './helpers/stubMatchMedia';
 
 // The worker's port: one for the whole module, as in the app.
 const ports: EventTarget[] = [];
@@ -328,22 +329,17 @@ describe('PdfReader', () => {
   });
 
   it('draws the pages again for a new pixel ratio, as when the browser is zoomed', async () => {
-    const listeners: (() => void)[] = [];
-    const queries: string[] = [];
-    vi.stubGlobal('matchMedia', (query: string) => {
-      queries.push(query);
-      return { matches: false, addEventListener: (_: string, f: () => void) => listeners.push(f), removeEventListener: () => {} };
-    });
+    const media = stubMatchMedia(false);
     vi.stubGlobal('devicePixelRatio', 1);
     await open([['Only page']]);
     const canvas = document.querySelector('canvas')!;
     expect(canvas.width).toBe(300);
-    expect(queries).toContain('(resolution: 1dppx)');
+    expect(media.matchMedia).toHaveBeenCalledWith('(resolution: 1dppx)');
     vi.stubGlobal('devicePixelRatio', 1.5);
-    await act(async () => listeners.at(-1)!());
+    await act(async () => media.set(false));
     expect(canvas.width).toBe(450);
     // And it listens for the next change from there.
-    expect(queries).toContain('(resolution: 1.5dppx)');
+    expect(media.matchMedia).toHaveBeenCalledWith('(resolution: 1.5dppx)');
   });
 
   it('searches past a page that will not load', async () => {
@@ -864,7 +860,7 @@ describe('PdfReader', () => {
     });
 
     it('scrolls at once for someone who asked for less motion, and waits for nothing', async () => {
-      vi.stubGlobal('matchMedia', (q: string) => ({ matches: q === '(prefers-reduced-motion: reduce)', addEventListener: () => {}, removeEventListener: () => {} }));
+      stubMatchMedia((q) => q === '(prefers-reduced-motion: reduce)');
       top = (p) => (p === '2' ? 400 : 0);
       await openAt([['One'], ['Two']], { page: 2, key: key() });
       expect(scrolled).toMatchObject([
@@ -875,7 +871,7 @@ describe('PdfReader', () => {
     });
 
     it('scrolls smoothly when motion is fine', async () => {
-      vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} }));
+      stubMatchMedia(false);
       await openAt([['One'], ['Two']], { page: 2, key: key() });
       expect(scrolled).toMatchObject([{ page: '2', options: { block: 'start', behavior: 'smooth' } }]);
     });

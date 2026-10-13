@@ -6,6 +6,7 @@ import { FilterProvider } from '../context/FilterContext';
 import { useFilter } from '../context/useFilter';
 import { GAMES } from '../data/games';
 import { WISHLIST } from '../data/wishlist';
+import { stubMatchMedia } from './helpers/stubMatchMedia';
 
 function Probe() {
   const { state } = useFilter();
@@ -29,7 +30,7 @@ const sheet = () => screen.getByRole('dialog', { name: 'Filters' });
 
 describe('the filter bar on a phone', () => {
   beforeEach(() => {
-    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener: () => {}, removeEventListener: () => {} })));
+    stubMatchMedia(true);
   });
   afterEach(() => vi.unstubAllGlobals());
 
