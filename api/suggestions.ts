@@ -390,7 +390,10 @@ async function decide(deps: SuggestionsDeps, item: Suggestion, wanted: 'approved
     // and write, or giving it back failed) would block the record for good,
     // so one that is still undecided a minute on is abandoned: take it over.
     const current = parse(await redis.hgetall(key));
-    if (!current || !decidable(current.status) || at - (current.decidedAt ?? at) < STALE_CLAIM_MS) return false;
+    if (!current?.decidedAt || !decidable(current.status) || at - current.decidedAt < STALE_CLAIM_MS) return false;
+    // Two requests can find the same abandoned claim, so taking it over is a
+    // claim of its own: HSETNX on a field named for that claim lets one win.
+    if (!(await redis.hsetnx(key, `takeover:${current.decidedAt}`, at))) return false;
     await redis.hset(key, { decidedAt: at });
   }
   const tx = redis.multi().hset(key, { status: wanted, decidedAt: at });
