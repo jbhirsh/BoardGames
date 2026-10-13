@@ -36,8 +36,12 @@ const warning: ErrorEvent = {
 };
 const failed: ErrorEvent = { type: undefined, level: 'error', message: 'rules chat request failed: HTTP 502' };
 
-/** Lets a dynamic import and the promises after it settle. */
-const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+/**
+ * Lets a dynamic import and the promises after it settle: Vitest waits on
+ * every import still loading, however long it takes, so "nothing loaded"
+ * holds rather than "nothing loaded yet".
+ */
+const settle = () => vi.dynamicImportSettled();
 
 describe('instrument', () => {
   beforeEach(() => {

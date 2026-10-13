@@ -182,8 +182,11 @@ afterEach(() => vi.unstubAllGlobals());
 async function open(pages: string[][]) {
   pdf.pages = pages;
   const view = render(<PdfReader src="/rules/x.pdf" title="X rules" />);
-  await screen.findByText(pages.flat()[0] ?? '\u0000', {}, { timeout: 1000 }).catch(() => {});
-  await act(async () => {});
+  // The pages are in place once the rulebook has loaded; their drawing and
+  // text follow as promises, which a flush lets settle (even a page with
+  // no text, or one that fails, which waiting on a page's words could not).
+  await screen.findAllByRole('group');
+  await flush();
   return view;
 }
 
@@ -445,6 +448,7 @@ describe('PdfReader', () => {
     });
     afterEach(() => {
       delete (navigator as { connection?: unknown }).connection;
+      vi.useRealTimers();
     });
 
     it('opens it as the answer lands, draws the cited page out of sight, and the reader for it uses that', async () => {
@@ -511,21 +515,30 @@ describe('PdfReader', () => {
     });
 
     it('gives its own pages their turn back when the drawing out of sight doesn\'t finish', async () => {
+      // The warm's turn is timed from when it starts drawing, so the clock is
+      // fake from the outset. Timeouts only: the flushes below yield to the
+      // real event loop (as advancing the fake clock does), and RTL's async
+      // queries, which wait on a real timeout, aren't used.
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+      const tick = (ms = 0) => act(() => vi.advanceTimersByTimeAsync(ms));
       pdf.hangFrom = '/rules/y.pdf';
       pdf.away = true;
       pdf.pages = [['One'], ['Two']];
       render(<PdfReader src="/rules/x.pdf" title="X rules" warm={[Y]} />);
-      await screen.findAllByRole('group');
-      await flush();
+      await tick();
+      await tick();
+      expect(screen.getAllByRole('group')).toHaveLength(2);
       // Page 2 comes near, off screen: after the warm, which never finishes.
       vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
         return ((this as HTMLElement).dataset.page === '2' ? { top: 900, bottom: 1000 } : { top: -2000, bottom: -1500 }) as DOMRect;
       });
       act(() => observers[1]([{ isIntersecting: true }]));
-      await flush();
+      await tick();
       expect(pdf.drawn).toEqual(['/rules/y.pdf 2']);
-      await act(() => new Promise((resolve) => setTimeout(resolve, WARM_TURN_MS)));
-      await flush();
+      await tick(WARM_TURN_MS - 1);
+      expect(pdf.drawn).toEqual(['/rules/y.pdf 2']);
+      await tick(1);
+      await tick();
       expect(pdf.drawn).toEqual(['/rules/y.pdf 2', '/rules/x.pdf 2']);
       vi.restoreAllMocks();
     });
@@ -1036,17 +1049,30 @@ describe('PdfReader', () => {
       });
 
       it('says nothing more of a passage found after someone took the scroll over, but marks it', async () => {
+        // Frames run only when the test runs them, so "nothing more" is
+        // nothing waiting for a frame, not nothing said within a while.
+        const frames = new Map<number, FrameRequestCallback>();
+        let id = 0;
+        vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => { frames.set(++id, cb); return id; });
+        vi.stubGlobal('cancelAnimationFrame', (n: number) => { frames.delete(n); });
+        const runFrames = () => act(() => {
+          const due = [...frames.values()];
+          frames.clear();
+          for (const cb of due) cb(0);
+        });
         let text = () => {};
         pdf.slowText = 2;
         pdf.textUntil = new Promise<void>((resolve) => { text = resolve; });
         top = (p) => (p === '2' ? 400 : 0);
         await openAt(ROBBER, { page: 2, key: key(), quote: QUOTE });
         await act(async () => { window.dispatchEvent(new Event('touchstart')); });
-        await vi.waitFor(() => expect(said()).toHaveTextContent(/^Page 2$/));
+        await flush();
+        runFrames();
+        expect(said()).toHaveTextContent(/^Page 2$/);
         await act(async () => text());
         await flush();
         expect(cites()).toEqual(PASSAGE);
-        await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+        expect(frames.size).toBe(0);
         expect(said()).toHaveTextContent(/^Page 2$/);
       });
 
