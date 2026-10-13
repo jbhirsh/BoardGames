@@ -1,0 +1,21 @@
+{
+  // The options every project shares, so their strictness can't drift apart.
+  // Each tsconfig.*.json extends this and adds its own module setup, libraries,
+  // types and files.
+  "compilerOptions": {
+    "target": "ES2023",
+    "skipLibCheck": true,
+
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  }
+}

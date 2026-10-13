@@ -706,8 +706,10 @@ secrets belong in tracked source.
   `tsconfig.app.json` (`src`, DOM libs), `tsconfig.api.json` (`api`, Node libs),
   `tsconfig.node.json` (`vite.config.ts`), `tsconfig.eval.json` (`eval`),
   `tsconfig.sw.json` (`src/sw`, WebWorker libs) and
-  `tsconfig.e2e.json` (`e2e`, `playwright.config.ts`). `npm run build` runs
-  `tsc -b` across all of them.
+  `tsconfig.e2e.json` (`e2e`, `playwright.config.ts`). Each extends
+  `tsconfig.base.json`, which holds the strict options they share, and
+  adds only its own module setup, libraries, types and files. `npm run
+  build` runs `tsc -b` across all of them.
 - **TypeScript 7 runs side by side with the TypeScript 6 API.** TS 7 (the
   native compiler) ships no JavaScript API, and typescript-eslint loads that
   API through `require('typescript')` (its peer range stops below 6.1). So
