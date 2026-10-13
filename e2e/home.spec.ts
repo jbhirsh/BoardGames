@@ -217,13 +217,6 @@ test('the picker lands a deck on one of its games', async ({ page }) => {
   await expect(dialog.getByText('Played with the Card Deck')).toBeVisible();
 });
 
-test('a cover on the hero shelf opens that game\'s rulebook', async ({ page }) => {
-  await page.goto('/');
-  await page.getByRole('list', { name: 'Rulebooks' }).getByRole('link', { name: 'Azul rules' }).click();
-  await expect(page).toHaveURL(/\/rules\/azul$/);
-  await expect(page.getByRole('heading', { level: 1, name: 'Azul' })).toBeVisible();
-});
-
 /** "Medium · 2.3", as utils/difficulty labels a BoardGameGeek weight: the word for the number shown. */
 function weightLabel(weight: number): string {
   const shown = Math.round(weight * 10) / 10;

@@ -106,8 +106,8 @@ test('after a first visit, the installed site lists the collection, checks words
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 2, name: 'Our Collection' })).toBeVisible();
   // Box art, saved at install: the hero's Catan box drew.
-  const box = page.getByRole('link', { name: 'Catan rules' });
-  await expect.poll(() => box.evaluate((link) => link.querySelector('img')?.naturalWidth ?? 0)).toBeGreaterThan(0);
+  const box = page.getByRole('button', { name: 'Show Catan in the list' });
+  await expect.poll(() => box.evaluate((cover) => cover.querySelector('img')?.naturalWidth ?? 0)).toBeGreaterThan(0);
 
   // A page not opened yet still loads: every page is the same saved app.
   await page.goto('/word-checker');
@@ -154,6 +154,10 @@ test('the wishlist\'s box art, seen once online, shows on its cards with no netw
   await page.reload();
   for (const { name } of seen) {
     const img = page.getByRole('img', { name, exact: true });
+    // The hero's covers load the same files, so a card far down the list
+    // can draw online from the memory cache without coming near the
+    // screen; offline it waits, lazily, until it does.
+    await img.scrollIntoViewIfNeeded();
     await expect.poll(() => img.evaluate((el) => (el as HTMLImageElement).naturalWidth), { message: name }).toBeGreaterThan(0);
   }
 });

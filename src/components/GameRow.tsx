@@ -9,6 +9,7 @@ import SubGamesTag from './SubGamesTag';
 import RulesLink from './RulesLink';
 import { FROM_LIST } from '../utils/fromList';
 import { fittingSubgames, subgameTitle } from '../utils/subgames';
+import { gameAnchor } from '../utils/heroCovers';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
 import { useFilter } from '../context/useFilter';
 import { YouTubeIcon, CalculatorIcon, SearchIcon } from './Icons';
@@ -25,7 +26,7 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
   const hasFitting = game.subgames !== undefined && fittingSubgames(game.subgames, state).length > 0;
   return (
     <>
-      <tr className={`game-row${isOpen ? ' open' : ''}`} onClick={onToggle}>
+      <tr id={gameAnchor(game.slug)} className={`game-row${isOpen ? ' open' : ''}`} onClick={onToggle}>
         <TableRowCells
           name={game.name}
           players={game.players}

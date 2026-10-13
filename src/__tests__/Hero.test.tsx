@@ -1,15 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, within, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import Hero from '../components/Hero';
+import { FilterProvider } from '../context/FilterContext';
 import { GAMES } from '../data/games';
 import { collectionSpan } from '../utils/collectionStats';
-import { renderRouted } from './routed';
 
-function renderHero() {
+function renderHero(want = false) {
   return render(
     <MemoryRouter>
-      <Hero />
+      <FilterProvider>
+        <Hero want={want} />
+      </FilterProvider>
     </MemoryRouter>
   );
 }
@@ -32,34 +34,18 @@ describe('Hero', () => {
   });
 
   it('speaks to a friend opening the wishlist when the toggle is on want', () => {
-    render(
-      <MemoryRouter>
-        <Hero want />
-      </MemoryRouter>
-    );
+    renderHero(true);
     expect(screen.getByText('Help us pick our next game from the wishlist below.')).toBeInTheDocument();
     expect(screen.queryByText(/What fits tonight\?/)).not.toBeInTheDocument();
-    // The title and the shelf stay put.
+    // The title stays put; the covers turn to the wishlist's.
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Our Game Room');
-    expect(screen.getByRole('list', { name: 'Rulebooks' })).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Wishlist covers' })).toBeInTheDocument();
   });
 
-  it('shows a shelf of box covers, each opening its rulebook', () => {
+  it('shows the collection\'s covers under the subtitle', () => {
     renderHero();
-    const links = within(screen.getByRole('list', { name: 'Rulebooks' })).getAllByRole('link');
-    expect(links).toHaveLength(7);
-    for (const link of links) {
-      const name = link.getAttribute('aria-label')!.replace(/ rules$/, '');
-      const game = GAMES.find((g) => g.name === name)!;
-      expect(link).toHaveAttribute('href', `/rules/${game.slug}`);
-      expect(link.querySelector('img')).toHaveAttribute('src', game.img);
-    }
-  });
-
-  it('marks a cover\'s link as leaving the list, so the rules page\'s Back returns to it', () => {
-    const router = renderRouted(<Hero />);
-    fireEvent.click(screen.getByRole('link', { name: 'Catan rules' }));
-    expect(router.state.location).toMatchObject({ pathname: '/rules/catan', state: { fromList: true } });
+    expect(screen.getByRole('list', { name: 'Collection covers' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Pause cover carousel' })).toBeInTheDocument();
   });
 
   it('leaves picking and the list switch to the collection header', () => {

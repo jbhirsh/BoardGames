@@ -7,6 +7,7 @@ import AdminItemControls from './AdminItemControls';
 import { TABLE_COLUMNS } from './GamesTableHead';
 import TableRowCells, { TableRowExpand } from './TableRowCells';
 import { shortDesc } from '../utils/shortDesc';
+import { wishAnchor } from '../utils/heroCovers';
 
 /** The shared columns plus the vote column. */
 export const WISHLIST_COLUMNS = TABLE_COLUMNS + 1;
@@ -28,7 +29,7 @@ interface Props {
 export default function WishlistRow({ item, voteCount, voted, onVote, disabled, isOpen, onToggle }: Props) {
   return (
     <>
-      <tr className={`game-row${isOpen ? ' open' : ''}`} onClick={onToggle} data-testid="wishlist-item" data-item-id={item.id}>
+      <tr id={wishAnchor(item.id)} className={`game-row${isOpen ? ' open' : ''}`} onClick={onToggle} data-testid="wishlist-item" data-item-id={item.id}>
         <TableRowCells
           name={item.name}
           players={item.players}

@@ -11,6 +11,7 @@ import AwardsBadge from './AwardsBadge';
 import VoteButton from './VoteButton';
 import AdminItemControls from './AdminItemControls';
 import ExpansionTag from './ExpansionTag';
+import { wishAnchor } from '../utils/heroCovers';
 
 interface Props {
   item: WishlistItem;
@@ -35,10 +36,10 @@ export default function WishlistCard({ item, voteCount, voted, onVote, disabled,
   const hasMore = short !== item.desc.trim();
 
   return (
-    <div className="game-card wish-card" data-testid="wishlist-item" data-item-id={item.id}>
+    <div id={wishAnchor(item.id)} className="game-card wish-card" data-testid="wishlist-item" data-item-id={item.id}>
       <div className={`card-head${item.img ? '' : ' no-art'}`}>
         {item.img && <img src={item.img} alt={`${item.name} box art`} className="card-corner-img" loading="lazy" />}
-        <Heading className="card-name">{item.name}</Heading>
+        <Heading className="card-name" tabIndex={-1}>{item.name}</Heading>
         <div className="card-meta">
           {item.players && <span className="cmeta"><UserIcon /> {item.players}</span>}
           {item.dur && <span className="cmeta"><ClockIcon /> {item.dur}</span>}

@@ -162,11 +162,66 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 /* The not-found page's way home. */
 .hero-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;position:relative;}
 .hero-actions .pick-btn{height:48px;padding:0 24px;font-size:15px;border-radius:12px;}
-.hero-shelf{display:flex;gap:18px;justify-content:center;list-style:none;margin:0;padding:0;position:relative;}
-.hero-shelf li{flex:0 1 104px;min-width:0;}
-.hero-shelf a{display:block;border-radius:20px;transition:transform .15s;}
-@media (hover:hover) and (pointer:fine){ .hero-shelf a:hover{transform:translateY(-3px);} }
-.hero-shelf img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:cover;border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,.12);}
+/* The cover reel: the old shelf's covers (size, corners, shadow, spacing)
+   set gliding left in an endless row. The track holds the row twice and
+   slides one copy's width per lap, so the loop has no seam; each copy ends
+   on a gap's width of padding so the spacing holds across the join. The
+   reel runs out to the screen's edges, where it fades, so covers glide in
+   and out rather than being cut. The view's padding (taken back by its
+   margins, which flow-root keeps inside the reel) is room for the covers'
+   shadows and their hover lift inside the clip. */
+.hero-reel{
+  --cover:104px;--cover-gap:18px;--cover-r:20px;--cover-shadow:0 8px 24px rgba(0,0,0,.12);--reel-fade:clamp(40px,12vw,200px);
+  display:flow-root;position:relative;margin:0 calc(-1 * var(--gutter));
+}
+.hero-reel-view{
+  overflow:hidden;overflow:clip;padding:12px 0 32px;margin:-12px 0 -32px;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 var(--reel-fade),#000 calc(100% - var(--reel-fade)),transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 var(--reel-fade),#000 calc(100% - var(--reel-fade)),transparent);
+}
+.hero-reel-track{position:relative;display:flex;width:max-content;animation:hero-reel var(--reel-lap,60s) linear infinite;will-change:transform;}
+@keyframes hero-reel{to{transform:translateX(-50%);}}
+/* Held still while pointed at (where a pointer can hover, so a tap on a
+   phone doesn't leave it stuck), while a cover has focus (not the pause
+   button, which keeps focus after a click), off screen, and when paused. */
+.hero-reel.is-paused .hero-reel-track,
+.hero-reel.is-idle .hero-reel-track,
+.hero-reel-view:focus-within .hero-reel-track{animation-play-state:paused;}
+.hero-reel-list{display:flex;gap:var(--cover-gap);padding-right:var(--cover-gap);list-style:none;margin:0;}
+.hero-reel-list li{flex:none;width:var(--cover);}
+.hero-reel-cover{display:block;width:100%;padding:0;border:none;background:none;border-radius:var(--cover-r);cursor:pointer;transition:transform .15s;}
+.hero-reel-cover:focus-visible{outline:2px solid var(--blue);outline-offset:3px;}
+.hero-reel-cover img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:cover;border-radius:var(--cover-r);box-shadow:var(--cover-shadow);}
+@media (hover:hover) and (pointer:fine){
+  .hero-reel:hover .hero-reel-track{animation-play-state:paused;}
+  .hero-reel-cover:hover{transform:translateY(-3px);}
+}
+/* The pause button sits just under the row's right end, in the hero's
+   bottom padding, clear of the covers and in line with the theme picker
+   at the top. */
+.hero-reel-toggle{
+  position:absolute;right:var(--gutter);top:calc(100% + 16px);z-index:1;
+  display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;
+  border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text2);
+  box-shadow:var(--shadow-sm);cursor:pointer;opacity:.85;transition:opacity .15s,color .15s;
+}
+.hero-reel-toggle:hover{opacity:1;color:var(--text);}
+.hero-reel-toggle:focus-visible{opacity:1;outline:2px solid var(--blue);outline-offset:2px;}
+/* Less motion: the favourites stand still in a centred row, as the shelf
+   did, shrinking to fit before they'd overflow. */
+.hero-reel--still{margin:0;}
+.hero-reel--still .hero-reel-view{-webkit-mask-image:none;mask-image:none;overflow:visible;padding:0;margin:0;}
+.hero-reel--still .hero-reel-track{width:auto;animation:none;}
+.hero-reel--still .hero-reel-list{flex:1;justify-content:center;padding-right:0;}
+.hero-reel--still .hero-reel-list li{flex:0 1 var(--cover);min-width:0;}
+/* Where a cover leads: a ring round the card, or a tint on the row, held
+   while the page scrolls to it and then let go. */
+.game-card{scroll-margin-top:calc(var(--thead-top,91px) + 16px);}
+.game-row{scroll-margin-top:calc(var(--thead-top,91px) + 48px);}
+@keyframes card-arrive{from{box-shadow:0 0 0 3px rgba(var(--blue-rgb),.45),var(--shadow-lg);}}
+@keyframes row-arrive{from{background:rgba(var(--blue-rgb),.12);}}
+.game-card.jump-arrive{animation:card-arrive 1.4s ease-out .6s backwards;}
+.game-row.jump-arrive td{animation:row-arrive 1.4s ease-out .6s backwards;}
 
 /* ══ STICKY HEADER WRAPPER ════════════════════════════════ */
 .sticky-header{
@@ -739,10 +794,10 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 /* ══ CARD CORNER IMAGE ═══════════════════════════════════════ */
 .card-corner-img{position:absolute;top:12px;right:14px;width:76px;height:76px;border-radius:14px;object-fit:contain;border:1px solid var(--border);box-shadow:var(--shadow-sm);flex-shrink:0;}
 /* Box art sits on a white matte: most of it is drawn for a white box. Every
-   art tile (cards, wishlist rows, the hero shelf, the picker, the rules,
+   art tile (cards, wishlist rows, the hero's covers, the picker, the rules,
    score and word-checker headers) shares the one matte and filter, which
    the dark theme dims so the tiles don't glare off the page. */
-.card-corner-img,.row-art,.hero-shelf img,.pick-img,.rules-box-art{background:var(--art-matte);filter:var(--art-dim);}
+.card-corner-img,.row-art,.hero-reel-cover img,.pick-img,.rules-box-art{background:var(--art-matte);filter:var(--art-dim);}
 
 
 /* ══ RULES PAGE ══════════════════════════════════════════════ */
@@ -1083,6 +1138,8 @@ a.rules-chat-toggle{text-decoration:none;}
      the narrowing title can run under it. */
   .hero{ padding:16px var(--gutter) 40px; }
   .theme-toggle{ position:static; width:max-content; margin:0 0 24px auto; }
+  /* The hero's bottom padding is 40px here: the pause button fits inside. */
+  .hero-reel-toggle{ top:calc(100% + 8px); }
 
   /* Hide Tags, and fold the description under the name as on phones: four
      columns this narrow left names and descriptions wrapping to three or
@@ -1186,10 +1243,12 @@ a.rules-chat-toggle{text-decoration:none;}
   .hero{ padding:16px var(--gutter) 24px; }
   .theme-toggle{ margin-bottom:12px; }
   .hero-sub{ font-size:15px; margin-bottom:20px; }
-  .hero-shelf{ gap:10px; }
-  .hero-shelf li:nth-child(n+6){ display:none; }
-  .hero-shelf li{ flex-basis:58px; }
-  .hero-shelf img{ border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,.12); }
+  .hero-reel{ --cover:58px; --cover-gap:10px; --cover-r:14px; --cover-shadow:0 4px 12px rgba(0,0,0,.12); }
+  .hero-reel-view{ padding:8px 0 20px; margin:-8px 0 -20px; }
+  /* Room under the row for its pause button. */
+  .hero:has(.hero-reel-toggle){ padding-bottom:42px; }
+  .hero-reel-toggle{ top:calc(100% + 10px); width:24px; height:24px; }
+  .hero-reel--still li:nth-child(n+6){ display:none; }
   .main{ padding-top:24px; }
 
   /* score calculator: three icon+input pairs are 360px wide and overflow
