@@ -548,7 +548,8 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   approving an unsent record returns it to the active list. A decision
   first claims the record (HSETNX on its `decidedAt`, which only a decision
   sets), so a double-submitted form, or the email link and the site at
-  once, decides it once and the loser answers "Already ..."; the writes
+  once, decides it once and the loser answers "Already ..." (a claim
+  still undecided a minute on is abandoned and taken over); the writes
   that follow go through one MULTI/EXEC, and a push removes the id first,
   so no list holds it twice. On approval the handler
   looks the game up on BoardGameGeek (`_lib/bgg.ts`, XML API 2, bearer token

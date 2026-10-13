@@ -340,6 +340,22 @@ describe('handleSuggestions', () => {
       expect(redis.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
     });
 
+    it('takes over a claim whose decision never landed, once it is a minute old', async () => {
+      const stuck = { ...pending, decidedAt: 1000 };
+      const fresh = makeRedis({ 'suggestions:sug-aaaaaa': stuck }, { 'suggestions:active': ['sug-aaaaaa'] });
+      const held = makeRes();
+      await handleSuggestions(deps({ redis: fresh, now: () => 1000 + 59_999 }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, held);
+      expect(String(held.body)).toContain('Already');
+      expect(fresh.lists['suggestions:approved']).toBeUndefined();
+
+      const stale = makeRedis({ 'suggestions:sug-aaaaaa': stuck }, { 'suggestions:active': ['sug-aaaaaa'] });
+      const res = makeRes();
+      await handleSuggestions(deps({ redis: stale, now: () => 1000 + 60_000 }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, res);
+      expect(String(res.body)).toContain('is now on the wishlist');
+      expect(stale.store['suggestions:sug-aaaaaa']).toMatchObject({ status: 'approved', decidedAt: 61_000 });
+      expect(stale.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
+    });
+
     it('does not change an already-decided suggestion', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': { ...pending, status: 'denied', decidedAt: 10 } });
       const res = makeRes();
@@ -444,6 +460,22 @@ describe('handleSuggestions', () => {
       await handleSuggestions(d, { method: 'POST', query: {}, body: { ...valid, game: 'Tak <3', note: '<img src=x>' } }, makeRes());
       expect(d.sent[0].html).toContain('Tak &lt;3');
       expect(d.sent[0].html).toContain('&lt;img src=x&gt;');
+    });
+
+    it('leaves a suggestion the owner decided while the email was failing as decided', async () => {
+      const redis = makeRedis();
+      const send = vi.fn(async () => {
+        // The owner approves it from the site's queue before the send gives up.
+        await redis.hset('suggestions:sug-bbbbbb', { status: 'approved', decidedAt: 4000 });
+        await redis.lpush('suggestions:approved', 'sug-bbbbbb');
+        throw new Error('resend timed out');
+      });
+      const res = makeRes();
+      await handleSuggestions(deps({ redis, mailer: { send } }), { method: 'POST', query: {}, body: valid }, res);
+      expect(res.statusCode).toBe(500);
+      expect(redis.store['suggestions:sug-bbbbbb'].status).toBe('approved');
+      expect(redis.lists['suggestions:active']).toEqual(['sug-bbbbbb']);
+      expect(redis.lists['suggestions:unsent']).toBeUndefined();
     });
 
     it('rolls the record out of the active list when the email fails, so a retry is not a duplicate', async () => {
