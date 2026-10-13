@@ -620,6 +620,14 @@ describe('RulesChat', () => {
 
   it('hands focus back without scrolling, and not when it has gone elsewhere meanwhile', async () => {
     const focus = vi.spyOn(HTMLElement.prototype, 'focus');
+    // Focus goes back a frame after the answer; frames run only when the
+    // test runs them, so focus left alone is known, not waited for.
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => frames.push(cb));
+    const runFrames = async () => {
+      await waitFor(() => expect(frames).toHaveLength(1));
+      act(() => { for (const cb of frames.splice(0)) cb(0); });
+    };
     let fail = () => {};
     vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>((resolve) => {
       fail = () => resolve({ ok: false, status: 500 } as Response);
@@ -639,7 +647,7 @@ describe('RulesChat', () => {
     screen.getByRole('button', { name: 'Elsewhere' }).focus();
     await act(async () => fail());
     await screen.findByRole('alert');
-    await act(async () => { await new Promise((resolve) => requestAnimationFrame(resolve)); });
+    await runFrames();
     expect(screen.getByRole('button', { name: 'Elsewhere' })).toHaveFocus();
 
     // Asked from the box, which a browser blurs while it is disabled (focus
@@ -648,7 +656,8 @@ describe('RulesChat', () => {
     screen.getByRole('button', { name: 'Elsewhere' }).blur();
     expect(document.activeElement).toBe(document.body);
     await act(async () => fail());
-    await waitFor(() => expect(screen.getByPlaceholderText('Ask a rules question...')).toHaveFocus());
+    await runFrames();
+    expect(screen.getByPlaceholderText('Ask a rules question...')).toHaveFocus();
     expect(focus).toHaveBeenLastCalledWith({ preventScroll: true });
 
     // Focus still in the panel counts as not having moved on.
@@ -656,7 +665,8 @@ describe('RulesChat', () => {
     focus.mockClear();
     send('How many players?');
     await act(async () => fail());
-    await waitFor(() => expect(focus).toHaveBeenCalledWith({ preventScroll: true }));
+    await runFrames();
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true });
     focus.mockRestore();
   });
 

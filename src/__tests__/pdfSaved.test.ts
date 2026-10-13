@@ -19,6 +19,7 @@ const hangs = () => vi.fn((_src: string | URL | Request, init?: RequestInit) => 
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('savedCopy', () => {
@@ -185,6 +186,19 @@ describe('askWorker', () => {
     }),
   });
 
+  /**
+   * The next message channel made, with ports that hand each message over
+   * at once, closed or not, as a real port may hand over one already on its
+   * way when closed: "nothing heard" is then known, rather than waited for.
+   * Gives the port askWorker listens on.
+   */
+  const heldChannel = () => {
+    const port1 = { onmessage: null as ((event: { data: unknown }) => void) | null, close: vi.fn() };
+    const port2 = { postMessage: (data: unknown) => port1.onmessage?.({ data }) };
+    vi.stubGlobal('MessageChannel', class { port1 = port1; port2 = port2; });
+    return port1;
+  };
+
   it('asks after a rulebook in the service worker\'s own message, sending the port it answers on', () => {
     const w = worker();
     askWorker(w, '/rules/catan.pdf', true, () => {});
@@ -197,12 +211,12 @@ describe('askWorker', () => {
     await vi.waitFor(() => expect(heard.mock.calls).toEqual([['saving'], ['saved']]));
   });
 
-  it('stops listening after an answer that ends it', async () => {
+  it('stops listening after an answer that ends it, even to one already on its way', () => {
+    const port = heldChannel();
     const heard = vi.fn();
     askWorker(worker('unsaved', 'saving'), '/rules/catan.pdf', false, heard);
-    await vi.waitFor(() => expect(heard).toHaveBeenCalledWith('unsaved'));
-    await new Promise((resolve) => setTimeout(resolve, 20));
     expect(heard.mock.calls).toEqual([['unsaved']]);
+    expect(port.close).toHaveBeenCalledOnce();
   });
 
   it('pays no heed to an answer about another rulebook', async () => {
@@ -216,15 +230,16 @@ describe('askWorker', () => {
     expect(heard.mock.calls).toEqual([['failed']]);
   });
 
-  it('hears nothing once told to stop', async () => {
+  it('hears nothing once told to stop, even an answer already on its way', () => {
+    const port = heldChannel();
     const heard = vi.fn();
     let send: (state: SaveState) => void = () => {};
     const stop = askWorker({ postMessage: (_m: unknown, [port]: Transferable[]) => {
       send = (state) => (port as MessagePort).postMessage({ path: '/rules/catan.pdf', state });
     } }, '/rules/catan.pdf', false, heard);
     stop();
+    expect(port.close).toHaveBeenCalledOnce();
     send('saved');
-    await new Promise((resolve) => setTimeout(resolve, 20));
     expect(heard).not.toHaveBeenCalled();
   });
 });
