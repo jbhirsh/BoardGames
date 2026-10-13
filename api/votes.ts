@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as Sentry from '@sentry/node';
 import { enforceRateLimit, getLimiter } from './_lib/rateLimit.js';
-import { SLUG_RE } from './_lib/slug.js';
+import { SLUG_RE, isSuggestionId } from './_lib/slug.js';
 import { ANON_RE, parseIds, optionalAnonId } from './_lib/ids.js';
 import { getRedis } from './_lib/redis.js';
 import { WISHLIST_IDS } from './_lib/wishlistIds.js';
@@ -34,6 +34,7 @@ export interface VotesRedis {
 // for good: only the compiled-in wishlist and approved suggestions take votes.
 async function isVotable(redis: VotesRedis, id: string): Promise<boolean> {
   if (WISHLIST_IDS.has(id)) return true;
+  if (!isSuggestionId(id)) return false;
   return (await redis.hget(suggestionKey(id), 'status')) === 'approved';
 }
 

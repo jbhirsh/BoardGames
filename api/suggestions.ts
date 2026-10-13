@@ -4,7 +4,7 @@ import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { enforceRateLimit, getLimiter } from './_lib/rateLimit.js';
 import { getRawRedis } from './_lib/redis.js';
 import { lookupGame, type GameDetails } from './_lib/bgg.js';
-import { SLUG_RE } from './_lib/slug.js';
+import { SLUG_RE, isSuggestionId } from './_lib/slug.js';
 import { baseUrl, button, escapeHtml, page, resendMailer, type Mail, type Mailer } from './_lib/mail.js';
 import { isAdmin, isJsonRequest, type Headers } from './_lib/session.js';
 
@@ -307,7 +307,7 @@ async function authorise(
     res.status(code).send(decisionPage(title, body));
     return null;
   };
-  if (typeof id !== 'string' || typeof token !== 'string' || !SLUG_RE.test(id) || !TOKEN_RE.test(token)) {
+  if (typeof id !== 'string' || typeof token !== 'string' || !SLUG_RE.test(id) || !isSuggestionId(id) || !TOKEN_RE.test(token)) {
     return fail(400, 'Link not recognised', 'This link is incomplete or mistyped. Open it again from the email.');
   }
   const item = parse(await redis.hgetall(itemKey(id)));
@@ -339,7 +339,7 @@ async function requireAdmin(deps: SuggestionsDeps, req: SuggestionsRequest, res:
 
 /** Look up an item by id for an owner action; writes the error response itself. */
 async function loadItem(redis: SuggestionsRedis, id: unknown, res: SuggestionsResponse): Promise<(Suggestion & { token: string }) | null> {
-  if (typeof id !== 'string' || !SLUG_RE.test(id)) {
+  if (typeof id !== 'string' || !SLUG_RE.test(id) || !isSuggestionId(id)) {
     res.status(400).json({ error: 'invalid id' });
     return null;
   }
