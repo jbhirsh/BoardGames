@@ -73,7 +73,7 @@ export default function RandomPicker() {
     setOpen(true);
     setSpinning(true);
     setResult(null);
-    setCurrent((prev) => pickRandom(pool, prev ?? undefined));
+    setCurrent((prev) => pickRandom(pool, prev ?? undefined, Math.random));
 
     // Settle on a game not offered yet this session. When the list has all
     // come up, start over, but not with the game just shown.
@@ -101,7 +101,7 @@ export default function RandomPicker() {
         settle(pool, startState);
         return;
       }
-      setCurrent((prev) => pickRandom(currentPool, prev ?? undefined));
+      setCurrent((prev) => pickRandom(currentPool, prev ?? undefined, Math.random));
       if (Date.now() - start >= SPIN_MS) {
         settle(currentPool, stateRef.current);
         return;

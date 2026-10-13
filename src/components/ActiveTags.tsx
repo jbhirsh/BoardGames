@@ -53,7 +53,7 @@ export default function ActiveTags() {
         <button
           type="button"
           className="share-link"
-          onClick={() => copy(buildShareUrl(state))}
+          onClick={() => copy(buildShareUrl(state, window.location.origin))}
         >
           {copied ? 'Copied!' : 'Share link'}
         </button>
