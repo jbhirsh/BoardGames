@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { addGame, callJson, decideSuggestion, editGame, fetchPending, removeGame } from '../hooks/adminApi';
+import { addGame, callJson, decideSuggestion, editGame, fetchPending, removeGame } from '../client/adminApi';
 
 function jsonResponse(body: unknown, ok = true): Response {
   return { ok, json: async () => body } as unknown as Response;

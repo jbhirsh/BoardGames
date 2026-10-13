@@ -40,7 +40,7 @@ describe('loadWordList', () => {
 
   it('fetches ENABLE and the additions once, as one shared set', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => serve(url));
-    const { loadWordList } = await import('../hooks/wordList');
+    const { loadWordList } = await import('../client/wordList');
     const [a, b] = await Promise.all([loadWordList(), loadWordList()]);
     expect(a).toBe(b);
     expect([...a!].sort()).toEqual(['cat', 'dog', 'qi', 'za']);
@@ -54,7 +54,7 @@ describe('loadWordList', () => {
     let enableDown = true;
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => (
       String(url).endsWith('enable.txt') && enableDown ? { ok: false, status: 503 } as Response : serve(url)));
-    const { loadWordList } = await import('../hooks/wordList');
+    const { loadWordList } = await import('../client/wordList');
     expect(await loadWordList()).toBeNull();
     enableDown = false;
     expect((await loadWordList())?.has('qi')).toBe(true);
@@ -64,7 +64,7 @@ describe('loadWordList', () => {
   it('answers from ENABLE alone when the additions cannot load', async () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => (
       String(url).endsWith('additions.txt') ? Promise.reject(new TypeError('Failed to fetch')) : serve(url)));
-    const { loadWordList } = await import('../hooks/wordList');
+    const { loadWordList } = await import('../client/wordList');
     const words = await loadWordList();
     expect(words?.has('cat')).toBe(true);
     expect(words?.has('qi')).toBe(false);
@@ -76,7 +76,7 @@ describe('loadWordList', () => {
       vi.spyOn(globalThis, 'fetch').mockImplementation((_url, init) => new Promise((_, reject) => {
         init!.signal!.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
       }));
-      const { loadWordList } = await import('../hooks/wordList');
+      const { loadWordList } = await import('../client/wordList');
       const pending = loadWordList();
       await vi.advanceTimersByTimeAsync(10_000);
       expect(await pending).toBeNull();

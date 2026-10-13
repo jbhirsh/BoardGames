@@ -3,8 +3,8 @@ import type { FormEvent } from 'react';
 import { normalizeWord } from '../utils/wordList';
 import { wiktionaryPage } from '../utils/wiktionary';
 import type { Meaning } from '../utils/wiktionary';
-import { loadWordList } from '../hooks/wordList';
-import { lookUp } from '../hooks/dictionary';
+import { loadWordList } from '../client/wordList';
+import { lookUp } from '../client/dictionary';
 import Notice from './Notice';
 
 /**

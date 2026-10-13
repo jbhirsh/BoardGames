@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { safeStorage } from '../client/safeStorage';
 
 const ANON_KEY = 'wishlist:anonId';
 
@@ -19,16 +20,12 @@ let sessionAnonId: string | null = null;
  * session.
  */
 export function getAnonId(): string {
-  try {
-    const stored = localStorage.getItem(ANON_KEY);
-    if (stored !== null && ANON_ID_RE.test(stored)) return stored;
-    const id = crypto.randomUUID();
-    localStorage.setItem(ANON_KEY, id);
-    return id;
-  } catch {
-    sessionAnonId ??= crypto.randomUUID();
-    return sessionAnonId;
-  }
+  const stored = safeStorage.get(ANON_KEY);
+  if (stored !== null && ANON_ID_RE.test(stored)) return stored;
+  const id = crypto.randomUUID();
+  if (safeStorage.set(ANON_KEY, id)) return id;
+  sessionAnonId ??= id;
+  return sessionAnonId;
 }
 
 export interface VotesSnapshot {

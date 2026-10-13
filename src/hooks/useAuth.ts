@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { callJson } from './adminApi';
+import { callJson } from '../client/adminApi';
 
 export interface AuthState {
   /** True when this browser holds a live owner session. */

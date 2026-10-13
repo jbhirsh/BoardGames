@@ -13,7 +13,7 @@ const MISSING_PAGE = { status: 404, type: 'Internal error' };
 
 /** A fresh copy of the module: "once per page load" starts over. */
 async function load() {
-  return (await import('../hooks/dictionary')).lookUp;
+  return (await import('../client/dictionary')).lookUp;
 }
 
 const unreachableReports = () =>

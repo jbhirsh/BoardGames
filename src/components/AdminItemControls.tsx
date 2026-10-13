@@ -4,7 +4,7 @@ import { KW, WISHLIST_SECTIONS, WISHLIST_TYPES } from '../data/keywords';
 import { DESC_MAX, GAME_MAX, GAME_MIN, MINS_MAX, PLAYERS_MAX } from '../data/suggestionLimits';
 import { useAuth } from '../context/useAuth';
 import { useWishlistItems } from '../context/useWishlistItems';
-import { editGame, removeGame } from '../hooks/adminApi';
+import { editGame, removeGame } from '../client/adminApi';
 
 interface Props {
   item: WishlistItem;

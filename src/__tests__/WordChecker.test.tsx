@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import * as Sentry from '@sentry/react';
 import WordChecker from '../components/WordChecker';
-import { loadWordList } from '../hooks/wordList';
+import { loadWordList } from '../client/wordList';
 
 vi.mock('@sentry/react', () => ({
   captureMessage: vi.fn(),
@@ -10,7 +10,7 @@ vi.mock('@sentry/react', () => ({
 
 // Without a word list (null: it couldn't load) the checker asks only the
 // dictionary, which is what the tests in the first block exercise.
-vi.mock('../hooks/wordList', () => ({ loadWordList: vi.fn(async () => null) }));
+vi.mock('../client/wordList', () => ({ loadWordList: vi.fn(async () => null) }));
 
 beforeEach(() => {
   vi.restoreAllMocks();
@@ -214,7 +214,7 @@ describe('WordChecker', () => {
     });
     expect(screen.queryByText('Not a valid word')).not.toBeInTheDocument();
     expect(screen.queryByText('Valid word')).not.toBeInTheDocument();
-    // Whether it's reported is up to hooks/dictionary.ts (dictionary.test.ts).
+    // Whether it's reported is up to client/dictionary.ts (dictionary.test.ts).
     expect(Sentry.captureMessage).not.toHaveBeenCalledWith(
       'word checker: unexpected dictionary response',
       expect.anything(),

@@ -5,6 +5,7 @@ import { TextLayer, type PDFDocumentProxy, type RenderTask } from 'pdfjs-dist';
 import { findMatches, piecesOf, type Match } from '../utils/pdfSearch';
 import { findCited, lineBreaks, passageStart } from '../utils/citeMatch';
 import { CANT_SHOW } from './cantShow';
+import { safeSessionStorage } from '../client/safeStorage';
 import { drawOrder, OFF_SCREEN, renderQueue, type RenderQueue } from '../pdfjs/renderQueue';
 import { heldDocument, openDocument, readerOpens, sharedWorker, textOf as readTextOf, warmPage, type PageTextData } from '../pdfjs/documents';
 
@@ -41,20 +42,17 @@ const jumpsMade = new Set<string>();
 
 function madeJumps(): Set<string> {
   try {
-    for (const id of JSON.parse(sessionStorage.getItem(JUMPS) ?? '[]') as string[]) jumpsMade.add(id);
+    for (const id of JSON.parse(safeSessionStorage.get(JUMPS) ?? '[]') as string[]) jumpsMade.add(id);
   } catch {
-    // Storage blocked: this page load's jumps are still remembered.
+    // Not the list rememberJump writes: this page load's jumps still count.
   }
   return new Set(jumpsMade);
 }
 
 function rememberJump(id: string) {
   jumpsMade.add(id);
-  try {
-    sessionStorage.setItem(JUMPS, JSON.stringify([...jumpsMade].slice(-50)));
-  } catch {
-    // As above.
-  }
+  // Where storage is blocked, this page load's jumps are still remembered.
+  safeSessionStorage.set(JUMPS, JSON.stringify([...jumpsMade].slice(-50)));
 }
 
 /**

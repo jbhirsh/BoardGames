@@ -1,9 +1,9 @@
 import { useId, useState, type FormEvent } from 'react';
-import { getDisplayName, setDisplayName } from '../hooks/displayName';
+import { getDisplayName, setDisplayName } from '../client/displayName';
 import { isValidDisplayName, NAME_HINT } from '../utils/displayName';
 import { alreadyListed } from '../utils/alreadyListed';
 import { GAME_MAX, GAME_MIN, NAME_MAX, NOTE_MAX } from '../data/suggestionLimits';
-import { callJson } from '../hooks/adminApi';
+import { callJson } from '../client/adminApi';
 
 type Status = { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent'; game: string } | { kind: 'error'; message: string };
 
