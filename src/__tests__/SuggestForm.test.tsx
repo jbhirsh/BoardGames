@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SuggestForm from '../components/SuggestForm';
 import { alreadyListed } from '../utils/alreadyListed';
+import { GAME_MAX, GAME_MIN, NAME_MAX, NOTE_MAX } from '../data/suggestionLimits';
 
 function jsonResponse(body: unknown, ok = true): Response {
   return { ok, json: async () => body } as unknown as Response;
@@ -28,6 +29,14 @@ describe('SuggestForm', () => {
     render(<SuggestForm />);
     const example = screen.getByLabelText('Game').getAttribute('placeholder')!.replace(/^e\.g\. /, '');
     expect(alreadyListed(example)).toBeNull();
+  });
+
+  it('bounds each field as the API does', () => {
+    render(<SuggestForm />);
+    expect(screen.getByLabelText('Game')).toHaveAttribute('minlength', String(GAME_MIN));
+    expect(screen.getByLabelText('Game')).toHaveAttribute('maxlength', String(GAME_MAX));
+    expect(screen.getByLabelText('Your name')).toHaveAttribute('maxlength', String(NAME_MAX));
+    expect(screen.getByLabelText(/Why\?/)).toHaveAttribute('maxlength', String(NOTE_MAX));
   });
 
   it('prefills the name the browser remembers', () => {

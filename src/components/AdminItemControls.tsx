@@ -1,6 +1,7 @@
 import { useId, useState, type FormEvent } from 'react';
 import type { KeywordId, WishlistItem } from '../data/types';
 import { KW, WISHLIST_SECTIONS, WISHLIST_TYPES } from '../data/keywords';
+import { DESC_MAX, GAME_MAX, GAME_MIN, MINS_MAX, PLAYERS_MAX } from '../data/suggestionLimits';
 import { useAuth } from '../context/useAuth';
 import { useWishlistItems } from '../context/useWishlistItems';
 import { editGame, removeGame } from '../hooks/adminApi';
@@ -105,7 +106,7 @@ function EditForm({ item, onDone }: Props & { onDone: () => void }) {
     <form className="admin-edit" onSubmit={save} aria-label={`Edit ${item.name}`}>
       <div className="suggest-fields">
         <label className="suggest-label" htmlFor={`${uid}-game`}>Name</label>
-        <input id={`${uid}-game`} className="suggest-input" value={game} onChange={(e) => setGame(e.target.value)} required minLength={2} maxLength={80} />
+        <input id={`${uid}-game`} className="suggest-input" value={game} onChange={(e) => setGame(e.target.value)} required minLength={GAME_MIN} maxLength={GAME_MAX} />
         <label className="suggest-label" htmlFor={`${uid}-type`}>Section</label>
         <select id={`${uid}-type`} className="suggest-input" value={type} onChange={(e) => setType(e.target.value)}>
           <option value="">{WISHLIST_TYPES.suggested}</option>
@@ -113,14 +114,14 @@ function EditForm({ item, onDone }: Props & { onDone: () => void }) {
         </select>
         <label className="suggest-label" htmlFor={`${uid}-min`}>Players</label>
         <div className="admin-range">
-          <input id={`${uid}-min`} className="suggest-input admin-num" type="number" min={1} max={99} value={min} onChange={(e) => setMin(e.target.value)} aria-label="Minimum players" required />
+          <input id={`${uid}-min`} className="suggest-input admin-num" type="number" min={1} max={PLAYERS_MAX} value={min} onChange={(e) => setMin(e.target.value)} aria-label="Minimum players" required />
           <span className="admin-muted">to</span>
-          <input className="suggest-input admin-num" type="number" min={1} max={99} value={max} onChange={(e) => setMax(e.target.value)} aria-label="Maximum players" required />
+          <input className="suggest-input admin-num" type="number" min={1} max={PLAYERS_MAX} value={max} onChange={(e) => setMax(e.target.value)} aria-label="Maximum players" required />
         </div>
         <label className="suggest-label" htmlFor={`${uid}-mins`}>Minutes</label>
-        <input id={`${uid}-mins`} className="suggest-input admin-num" type="number" min={0} max={600} value={mins} onChange={(e) => setMins(e.target.value)} required />
+        <input id={`${uid}-mins`} className="suggest-input admin-num" type="number" min={0} max={MINS_MAX} value={mins} onChange={(e) => setMins(e.target.value)} required />
         <label className="suggest-label" htmlFor={`${uid}-desc`}>Description</label>
-        <textarea id={`${uid}-desc`} className="suggest-input admin-desc" value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={600} rows={3} />
+        <textarea id={`${uid}-desc`} className="suggest-input admin-desc" value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={DESC_MAX} rows={3} />
       </div>
       <fieldset className="admin-kw">
         <legend className="suggest-label">Keywords</legend>

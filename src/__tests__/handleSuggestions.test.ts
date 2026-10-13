@@ -3,6 +3,13 @@ import {
   handleSuggestions,
   KEYWORD_IDS,
   WISHLIST_SECTION_IDS,
+  NAME_RE,
+  GAME_MIN,
+  GAME_MAX,
+  NOTE_MAX,
+  DESC_MAX,
+  MINS_MAX,
+  PLAYERS_MAX,
   type SuggestionsDeps,
   type SuggestionsRedis,
   type SuggestionsTransaction,
@@ -11,6 +18,7 @@ import {
 } from '../../api/suggestions';
 import { resendMailer } from '../../api/_lib/mail';
 import { KW, WISHLIST_SECTIONS } from '../data/keywords';
+import * as clientLimits from '../data/suggestionLimits';
 
 function makeRes() {
   const res = {
@@ -1099,6 +1107,14 @@ describe('handleSuggestions', () => {
     it('knows the same keyword ids and wishlist sections as the client', () => {
       expect([...KEYWORD_IDS].sort()).toEqual(Object.keys(KW).sort());
       expect([...WISHLIST_SECTION_IDS].sort()).toEqual([...WISHLIST_SECTIONS].sort());
+    });
+
+    it('puts the same bounds on an entry as the client\'s forms', () => {
+      const { NAME_MAX, ...bounds } = clientLimits;
+      expect(bounds).toEqual({ GAME_MIN, GAME_MAX, NOTE_MAX, DESC_MAX, PLAYERS_MAX, MINS_MAX });
+      // The name's bound lives in NAME_RE: the longest name it takes is the form's.
+      expect(NAME_RE.test('x'.repeat(NAME_MAX))).toBe(true);
+      expect(NAME_RE.test('x'.repeat(NAME_MAX + 1))).toBe(false);
     });
 
     it('recognises a removed status and a stored section when parsing', async () => {
