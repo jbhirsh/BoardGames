@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type FocusEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type FocusEvent, type KeyboardEvent } from 'react';
 import { flushSync } from 'react-dom';
 import { GAMES } from '../data/games';
 import { useFilter } from '../context/useFilter';
@@ -42,7 +42,9 @@ function jumpTo(anchor: string) {
  * row is drawn twice side by side and slid left by one copy's width, so
  * the loop never jumps; the second copy is hidden from screen readers and
  * the Tab order, so each game is met once. Each cover takes the reader to
- * its game in the list below.
+ * its game in the list below. The row is one Tab stop, as a toolbar is,
+ * with the arrow keys (and Home, End) between its covers, so the filters
+ * stay a few Tabs from the top rather than thirty.
  *
  * It holds still while pointed at, while a cover has focus, while off
  * screen or in a background tab, and for good with its pause button
@@ -57,12 +59,15 @@ export default function CoverCarousel({ want }: { want: boolean }) {
   const [paused, setPaused] = useState(false);
   const [idle, setIdle] = useState(false);
   const [warm, setWarm] = useState(false);
+  // The cover the row's Tab stop is on: the last one a key moved to.
+  const [active, setActive] = useState(0);
   const reelRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
 
   const covers = useMemo(() => (want ? wantCovers(items) : ownCovers(GAMES)), [want, items]);
   const shown = still ? covers.slice(0, STILL_COUNT) : covers;
+  const stop = Math.min(active, shown.length - 1);
 
   // Off screen or in a hidden tab there is no one to see it move.
   useEffect(() => {
@@ -117,6 +122,15 @@ export default function CoverCarousel({ want }: { want: boolean }) {
     anim.currentTime = ((((offset % half) + half) % half) / half) * lap;
   };
 
+  const move = (e: KeyboardEvent<HTMLElement>, i: number) => {
+    const to = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: shown.length - 1 }[e.key];
+    if (to === undefined) return;
+    e.preventDefault();
+    const next = (to + shown.length) % shown.length;
+    setActive(next);
+    e.currentTarget.closest('ul')!.querySelectorAll<HTMLElement>('.hero-reel-cover')[next].focus();
+  };
+
   const list = (copy: boolean) => (
     <ul
       className="hero-reel-list"
@@ -130,9 +144,12 @@ export default function CoverCarousel({ want }: { want: boolean }) {
             className="hero-reel-cover"
             aria-label={`Show ${c.name} in the list`}
             title={c.name}
-            tabIndex={copy ? -1 : undefined}
+            tabIndex={copy || i !== stop ? -1 : 0}
             onClick={() => show(c)}
+            // A click on the hidden copy mustn't leave focus inside it.
+            onMouseDown={copy ? (e) => e.preventDefault() : undefined}
             onFocus={copy ? undefined : reveal}
+            onKeyDown={copy ? undefined : (e) => move(e, i)}
           >
             <img
               src={c.img}
@@ -153,13 +170,7 @@ export default function CoverCarousel({ want }: { want: boolean }) {
 
   return (
     <div ref={reelRef} className={classes} style={lap}>
-      <div ref={viewRef} className="hero-reel-view">
-        {/* Keyed on the list, so a switch starts the new row from its first cover. */}
-        <div ref={trackRef} className="hero-reel-track" key={want ? 'want' : 'own'}>
-          {list(false)}
-          {!still && list(true)}
-        </div>
-      </div>
+      {/* First in the Tab order, ahead of the covers; App.css sets it under the row. */}
       {!still && (
         <button
           type="button"
@@ -171,6 +182,13 @@ export default function CoverCarousel({ want }: { want: boolean }) {
           {paused ? <PlayIcon /> : <PauseIcon />}
         </button>
       )}
+      <div ref={viewRef} className="hero-reel-view">
+        {/* Keyed on the list, so a switch starts the new row from its first cover. */}
+        <div ref={trackRef} className="hero-reel-track" key={want ? 'want' : 'own'}>
+          {list(false)}
+          {!still && list(true)}
+        </div>
+      </div>
     </div>
   );
 }

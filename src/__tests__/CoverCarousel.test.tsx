@@ -91,7 +91,78 @@ describe('CoverCarousel', () => {
     expect(lists[1]).toHaveAttribute('aria-hidden', 'true');
     expect(lists[1].querySelectorAll('button')).toHaveLength(GAMES.length);
     for (const b of lists[1].querySelectorAll('button')) expect(b).toHaveAttribute('tabindex', '-1');
-    for (const b of lists[0].querySelectorAll('button')) expect(b).not.toHaveAttribute('tabindex');
+  });
+
+  it('keeps a click on the hidden copy from putting focus inside it', () => {
+    const { container } = renderReel();
+    const [shown, copy] = [...container.querySelectorAll('.hero-reel-list')].map((l) => l.querySelector('button')!);
+    expect(fireEvent.mouseDown(copy)).toBe(false);
+    expect(fireEvent.mouseDown(shown)).toBe(true);
+  });
+
+  it('puts the pause button ahead of the covers in the Tab order', () => {
+    const { container } = renderReel();
+    const toggle = screen.getByRole('button', { name: 'Pause cover carousel' });
+    const first = container.querySelector('.hero-reel-cover')!;
+    expect(toggle.compareDocumentPosition(first) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  describe('as one Tab stop', () => {
+    const tabbable = (c: HTMLElement) =>
+      [...c.querySelectorAll('.hero-reel-list:not([aria-hidden]) button')].filter((b) => b.getAttribute('tabindex') === '0');
+    const covers = () => within(screen.getByRole('list', { name: 'Collection covers' })).getAllByRole('button');
+
+    it('starts on the first cover, the rest out of the Tab order', () => {
+      const { container } = renderReel();
+      expect(tabbable(container)).toEqual([covers()[0]]);
+      expect(covers().slice(1).every((b) => b.getAttribute('tabindex') === '-1')).toBe(true);
+    });
+
+    it('moves between covers with the arrow keys, Home and End, wrapping at the ends', () => {
+      const { container } = renderReel();
+      const all = covers();
+      const last = all.length - 1;
+      const press = (key: string) => fireEvent.keyDown(document.activeElement!, { key });
+      all[0].focus();
+      press('ArrowRight');
+      expect(document.activeElement).toBe(all[1]);
+      expect(tabbable(container)).toEqual([all[1]]);
+      press('ArrowLeft');
+      expect(document.activeElement).toBe(all[0]);
+      press('ArrowLeft');
+      expect(document.activeElement).toBe(all[last]);
+      press('ArrowRight');
+      expect(document.activeElement).toBe(all[0]);
+      press('End');
+      expect(document.activeElement).toBe(all[last]);
+      press('Home');
+      expect(document.activeElement).toBe(all[0]);
+    });
+
+    it('leaves other keys to the browser', () => {
+      renderReel();
+      const first = covers()[0];
+      first.focus();
+      expect(fireEvent.keyDown(first, { key: 'Enter' })).toBe(true);
+      expect(fireEvent.keyDown(first, { key: 'ArrowDown' })).toBe(true);
+      expect(document.activeElement).toBe(first);
+    });
+
+    it('keeps its stop on the last cover when the row turns to a shorter list', () => {
+      const { container, rerender } = renderReel(true);
+      const wish = within(screen.getByRole('list', { name: 'Wishlist covers' })).getAllByRole('button');
+      expect(wish.length).toBeGreaterThan(GAMES.length);
+      wish[0].focus();
+      fireEvent.keyDown(wish[0], { key: 'End' });
+      rerender(
+        <MemoryRouter>
+          <FilterProvider>
+            <CoverCarousel want={false} />
+          </FilterProvider>
+        </MemoryRouter>,
+      );
+      expect(tabbable(container)).toEqual([covers().at(-1)]);
+    });
   });
 
   it('times a lap by the number of covers, so the speed is the same in both lists', () => {
