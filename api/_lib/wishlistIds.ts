@@ -1,0 +1,14 @@
+// The ids of the compiled-in wishlist (src/data/wishlist.ts), the entries a
+// vote may name besides approved suggestions. The api and src trees can't
+// import each other, so this is mirrored by hand and a test keeps it in step:
+// add an entry there and the test names the id to add here.
+export const WISHLIST_IDS: ReadonlySet<string> = new Set([
+  'lost-cities', 'nemesis', 'blood-on-the-clocktower', 'splendor', 'wyrmspan',
+  'wyrmspan-dragon-academy', 'dominion-seaside', 'dominion-prosperity', 'catan-seafarers',
+  'harmonies', 'zombie-burrito', 'everdell', 'exploding-kittens-board-game', '7-wonders-duel',
+  'dnup', 'sky-team', 'star-realms', 'the-crew', 'pandemic-legacy-season-1', 'bomb-busters',
+  'micromacro-crime-city', 'wingspan', 'quacks-of-quedlinburg', 'cascadia', 'survive-the-island',
+  'akropolis', 'seti', 'ark-nova', 'terraforming-mars', 'the-mind', 'wavelength', 'just-one',
+  'decrypto', 'flip-7', 'sounds-fishy', 'glyphics', 'lovestruck', 'herd-mentality',
+  'two-rooms-and-a-boom',
+]);

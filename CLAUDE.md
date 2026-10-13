@@ -516,6 +516,12 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   (`VotesRedis`, `VotesRequest`, `VotesResponse`) so it can be unit-tested with
   a fake Redis; the default export wires in the real client. Votes are stored as
   Redis sets keyed `wishlist:votes:<id>`, deduped by an anonymous browser id.
+  A vote set has no TTL, so a vote must name a real entry: a compiled-in
+  wishlist id (mirrored by hand in `api/_lib/wishlistIds.ts`, since api
+  can't import src; a test keeps it equal to `src/data/wishlist.ts`) or an
+  approved suggestion (its `suggestions:<id>` hash has status `approved`);
+  anything else is a 404 that writes nothing. Reading counts (`GET ?ids=`)
+  isn't filtered, as `scard` never creates a key.
   Per-IP rate limited via `_lib/rateLimit.ts`. Errors reported to Sentry
   (`@sentry/node`).
 - **`suggestions.ts`** — friend suggestions with owner approval by email and
