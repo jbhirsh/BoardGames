@@ -1,13 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as Sentry from '@sentry/node';
-import { loadRulesText, otherRulebooks, otherRulebooksNote, streamRulesAnswer, RULES_ASSISTANT_MAX_OUTPUT_TOKENS } from './_lib/rulesAssistant.js';
+import { assembleRulesText, streamRulesAnswer, RULES_ASSISTANT_MAX_OUTPUT_TOKENS } from './_lib/rulesAssistant.js';
 import { enforceRateLimit, getLimiter } from './_lib/rateLimit.js';
 import { SLUG_RE } from './_lib/slug.js';
+import { initSentry, reportError } from './_lib/sentry.js';
 
-Sentry.init({
-  dsn: process.env.SENTRY_DSN,
-  tracesSampleRate: 0.1,
-});
+initSentry();
 
 // SLUG_RE constrains the slug before it reaches a filesystem path in
 // loadRulesText, so it can't traverse out of rules-text/.
@@ -138,7 +136,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Read rules text
   let rulesText: string;
   try {
-    rulesText = loadRulesText(slug, parts) + otherRulebooksNote(otherRulebooks(slug, parts));
+    rulesText = assembleRulesText(slug, parts);
   } catch {
     return res.status(404).json({ error: 'Rules not found for this game' });
   }
@@ -190,9 +188,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
         continue;
       }
-      Sentry.captureException(err);
-      await Sentry.flush(2000);
-      console.error('Gemini API error:', err);
+      await reportError('Gemini API error:', err);
       if (streaming) {
         res.end(CUT_OFF_NOTE);
         return;

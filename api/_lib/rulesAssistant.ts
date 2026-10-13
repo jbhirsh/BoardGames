@@ -116,6 +116,16 @@ export function otherRulebooksNote(parts: string[]): string {
     'so the player can open it, rather than saying the rules don\'t cover it. ===';
 }
 
+/**
+ * Everything the assistant is told about a game's rules: the rulebooks it
+ * reads (loadRulesText) and then the names of the ones it doesn't. Chat and
+ * the eval harness both send this, so the eval grades the prompt production
+ * uses. Throws, as loadRulesText does, when the game has no rules text.
+ */
+export function assembleRulesText(slug: string, parts?: string[]): string {
+  return loadRulesText(slug, parts) + otherRulebooksNote(otherRulebooks(slug, parts));
+}
+
 /** Builds the Gemini conversation: rules text first, then history, then the new question. */
 export function buildContents(
   rulesText: string,
@@ -194,9 +204,8 @@ export interface AskRulesAssistantOptions {
  * prompt, call Gemini, and collect the streamed reply into one string.
  */
 export async function askRulesAssistant(options: AskRulesAssistantOptions): Promise<string> {
-  const rulesText = loadRulesText(options.slug, options.parts) + otherRulebooksNote(otherRulebooks(options.slug, options.parts));
   const stream = await streamRulesAnswer({
-    rulesText,
+    rulesText: assembleRulesText(options.slug, options.parts),
     message: options.message,
     history: options.history,
     apiKey: options.apiKey,

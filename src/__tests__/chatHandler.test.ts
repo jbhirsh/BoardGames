@@ -11,9 +11,7 @@ vi.mock('@sentry/node', () => ({
 }));
 
 vi.mock('../../api/_lib/rulesAssistant.js', () => ({
-  loadRulesText: vi.fn(),
-  otherRulebooks: vi.fn(() => []),
-  otherRulebooksNote: vi.fn(() => ''),
+  assembleRulesText: vi.fn(),
   streamRulesAnswer: vi.fn(),
   RULES_ASSISTANT_MAX_OUTPUT_TOKENS: 1024,
 }));
@@ -25,7 +23,7 @@ vi.mock('../../api/_lib/rateLimit.js', () => ({
 
 import * as Sentry from '@sentry/node';
 import handler from '../../api/chat';
-import { loadRulesText, otherRulebooks, otherRulebooksNote, streamRulesAnswer } from '../../api/_lib/rulesAssistant.js';
+import { assembleRulesText, streamRulesAnswer } from '../../api/_lib/rulesAssistant.js';
 import { enforceRateLimit } from '../../api/_lib/rateLimit.js';
 
 type Stream = Awaited<ReturnType<typeof streamRulesAnswer>>;
@@ -62,7 +60,7 @@ async function* fakeStream(...texts: (string | undefined)[]) {
 describe('chat handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(loadRulesText).mockReturnValue('the rules');
+    vi.mocked(assembleRulesText).mockReturnValue('the rules');
     vi.mocked(streamRulesAnswer).mockResolvedValue(
       fakeStream('Hello') as unknown as Stream,
     );
@@ -87,27 +85,23 @@ describe('chat handler', () => {
   it('rejects a slug that is not a clean identifier (path traversal guard)', async () => {
     const res = await run({ slug: '../../etc/passwd', message: 'hi' });
     expect(res.statusCode).toBe(400);
-    expect(vi.mocked(loadRulesText)).not.toHaveBeenCalled();
+    expect(vi.mocked(assembleRulesText)).not.toHaveBeenCalled();
   });
 
   it('reads the rulebooks named in parts along with the game\'s own', async () => {
     await run({ slug: 'catan', message: 'hi', parts: ['cities-and-knights'] });
-    expect(vi.mocked(loadRulesText)).toHaveBeenCalledWith('catan', ['cities-and-knights']);
+    expect(vi.mocked(assembleRulesText)).toHaveBeenCalledWith('catan', ['cities-and-knights']);
     expect(vi.mocked(streamRulesAnswer)).toHaveBeenCalled();
   });
 
-  it('names the game\'s other rulebooks after the ones it reads', async () => {
-    vi.mocked(otherRulebooks).mockReturnValueOnce(['5-6-player-extension']);
-    vi.mocked(otherRulebooksNote).mockReturnValueOnce(' + the extension exists');
+  it('sends Gemini the rules text it assembled', async () => {
     await run({ slug: 'catan', message: 'hi', parts: ['cities-and-knights'] });
-    expect(vi.mocked(otherRulebooks)).toHaveBeenCalledWith('catan', ['cities-and-knights']);
-    expect(vi.mocked(otherRulebooksNote)).toHaveBeenCalledWith(['5-6-player-extension']);
-    expect(vi.mocked(streamRulesAnswer).mock.calls[0][0].rulesText).toBe('the rules + the extension exists');
+    expect(vi.mocked(streamRulesAnswer).mock.calls[0][0].rulesText).toBe('the rules');
   });
 
   it('reads only the game\'s own rules when no parts are named', async () => {
     await run({ slug: 'catan', message: 'hi' });
-    expect(vi.mocked(loadRulesText)).toHaveBeenCalledWith('catan', undefined);
+    expect(vi.mocked(assembleRulesText)).toHaveBeenCalledWith('catan', undefined);
   });
 
   it('rejects parts that are not a short list of clean identifiers', async () => {
@@ -115,10 +109,10 @@ describe('chat handler', () => {
       const res = await run({ slug: 'card-deck', message: 'hi', parts });
       expect(res.statusCode, JSON.stringify(parts)).toBe(400);
     }
-    expect(vi.mocked(loadRulesText)).not.toHaveBeenCalled();
+    expect(vi.mocked(assembleRulesText)).not.toHaveBeenCalled();
     // Sixteen is the cap, not one under it.
     await run({ slug: 'card-deck', message: 'hi', parts: Array.from({ length: 16 }, (_, i) => `p${i}`) });
-    expect(vi.mocked(loadRulesText)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(assembleRulesText)).toHaveBeenCalledTimes(1);
   });
 
   it('rejects a history entry with a bad role or non-string content', async () => {
@@ -181,7 +175,7 @@ describe('chat handler', () => {
   });
 
   it('returns 404 when no rules text exists for the slug', async () => {
-    vi.mocked(loadRulesText).mockImplementation(() => { throw new Error('ENOENT'); });
+    vi.mocked(assembleRulesText).mockImplementation(() => { throw new Error('ENOENT'); });
     const res = await run({ slug: 'unknown-game', message: 'hi' });
     expect(res.statusCode).toBe(404);
     expect(res.body).toEqual({ error: 'Rules not found for this game' });

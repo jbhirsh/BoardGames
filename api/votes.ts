@@ -1,15 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import * as Sentry from '@sentry/node';
 import { enforceRateLimit, getLimiter } from './_lib/rateLimit.js';
 import { SLUG_RE, isSuggestionId } from './_lib/slug.js';
 import { ANON_RE, parseIds, optionalAnonId } from './_lib/ids.js';
 import { getRedis } from './_lib/redis.js';
+import { failWith500, initSentry } from './_lib/sentry.js';
 import { WISHLIST_IDS } from './_lib/wishlistIds.js';
 
-Sentry.init({
-  dsn: process.env.SENTRY_DSN,
-  tracesSampleRate: 0.1,
-});
+initSentry();
 
 const voteKey = (id: string) => `wishlist:votes:${id}`;
 // The suggestion hash api/suggestions.ts keeps per id; only an approved one
@@ -111,10 +108,7 @@ export async function handleVotes(
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (err) {
-    Sentry.captureException(err);
-    await Sentry.flush(2000);
-    console.error('votes api error:', err);
-    return res.status(500).json({ error: 'Server error' });
+    return failWith500(res, 'votes api error:', err);
   }
 }
 

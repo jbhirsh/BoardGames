@@ -13,7 +13,7 @@
 
 import * as Sentry from '@sentry/node';
 import { Ratelimit } from '@upstash/ratelimit';
-import { Redis } from '@upstash/redis';
+import { getRedis } from './redis.js';
 
 /** Minimal shape of what enforceRateLimit needs — satisfied by @upstash/ratelimit. */
 export interface RateLimiter {
@@ -129,14 +129,14 @@ export function getLimiter(
   // a different budget can't silently hand back the first caller's limiter.
   const cacheKey = `${prefix}:${requests}:${windowSeconds}:${options.timeoutMs}`;
   if (cache.has(cacheKey)) return cache.get(cacheKey)!;
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  if (!url || !token) {
+  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
     cache.set(cacheKey, null);
     return null;
   }
   const limiter = new Ratelimit({
-    redis: new Redis({ url, token }),
+    // The function's shared client, with the default reply parsing the
+    // limiter has always had (getRawRedis() turns it off, for suggestions).
+    redis: getRedis(),
     limiter: Ratelimit.slidingWindow(requests, `${windowSeconds} s`),
     prefix: `ratelimit:${prefix}`,
     timeout: options.timeoutMs,

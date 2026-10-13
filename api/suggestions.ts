@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/node';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { enforceRateLimit, getLimiter } from './_lib/rateLimit.js';
 import { getRawRedis } from './_lib/redis.js';
+import { failWith500, initSentry } from './_lib/sentry.js';
 import { lookupGame, type GameDetails } from './_lib/bgg.js';
 import { SLUG_RE, isSuggestionId } from './_lib/slug.js';
 import { baseUrl, button, escapeHtml, page, resendMailer, type Mail, type Mailer } from './_lib/mail.js';
@@ -10,10 +11,7 @@ import { isAdmin, isJsonRequest, type Headers } from './_lib/session.js';
 
 export type { Mail, Mailer } from './_lib/mail.js';
 
-Sentry.init({
-  dsn: process.env.SENTRY_DSN,
-  tracesSampleRate: 0.1,
-});
+initSentry();
 
 // Same display-name shape as the client's utils/displayName.ts.
 const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} .'-]{0,29}$/u;
@@ -676,10 +674,7 @@ export async function handleSuggestions(
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (err) {
-    Sentry.captureException(err);
-    await Sentry.flush(2000);
-    console.error('suggestions api error:', err);
-    return res.status(500).json({ error: 'Server error' });
+    return failWith500(res, 'suggestions api error:', err);
   }
 }
 
