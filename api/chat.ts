@@ -35,7 +35,8 @@ const RETRY_DELAY_MS = 1000;
 // Vercel ends the function at its maxDuration (60 s, vercel.json). Gemini
 // gets this much of it, shared by both attempts, so a hung stream ends in the
 // error path below (a 500, or the cut-off note) rather than the platform's
-// kill, leaving time for the rate-limit checks before and Sentry's flush after.
+// kill. The budget starts after the rate-limit checks, and the 15 s left over
+// covers them and Sentry's flush after.
 const GEMINI_BUDGET_MS = 45_000;
 
 function isOverloaded(err: unknown): boolean {

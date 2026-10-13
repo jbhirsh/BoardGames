@@ -796,7 +796,7 @@ secrets belong in tracked source.
 Vercel (`vercel.json`): `framework: vite`, output `dist/`, SPA rewrites send
 non-API, non-file routes to `index.html`, and `api/*` maps to the serverless
 functions, each with its own `maxDuration` (chat 60 s for streaming, the
-others 10 to 15 s; the Hobby plan allows 60). The content-hashed build output under `/assets/` is served
+others 10 to 15 s, none over 60 s). The content-hashed build output under `/assets/` is served
 `public, max-age=31536000, immutable`; `index.html` and `sw.js` revalidate. CI (`.github/workflows/ci.yml`) runs lint, type-check, a11y tests,
 unit tests with coverage, a build and a production dependency audit
 (`npm audit --omit=dev`, high and above) on `ubuntu-latest` for every PR to
