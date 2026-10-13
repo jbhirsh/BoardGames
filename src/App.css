@@ -793,7 +793,7 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
    and the score calculator. ══════════════════════════════════ */
 /* ══ CARD CORNER IMAGE ═══════════════════════════════════════ */
 .card-corner-img{position:absolute;top:12px;right:14px;width:76px;height:76px;border-radius:14px;object-fit:contain;border:1px solid var(--border);box-shadow:var(--shadow-sm);flex-shrink:0;}
-/* The collection's covers (flat front covers, cropped square) and the
+/* The collection's covers (flat front covers, made square) and the
    wishlist's bundled art fill their tiles; the matte behind them shows only
    while one loads or around a picture that isn't square, such as a friend's
    suggestion's thumbnail, which a card contains rather than crops. Every

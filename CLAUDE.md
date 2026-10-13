@@ -643,11 +643,13 @@ reason for each file.
   `npm run wishlist-art` fetches each one's 200x200 box art by that id from
   the site's own item endpoint, which needs no token, into
   `public/images/wishlist/` and the generated `src/data/wishlistArt.ts`.
-  The collection's box art is one style, each game's flat front cover cut
-  to fill a 400x400 square: `npm run collection-art [-- <slug>...]`
-  (`scripts/fetch-collection-art.ts`, needs ImageMagick) fetches the BGG
-  image pinned for each game in its `COVERS` map (picked by eye from the
-  item's gallery, with a crop box and where the square sits) by image id
+  The collection's box art is one style, each game's flat front cover as
+  a 400x400 square with its whole title in view: `npm run collection-art
+  [-- <slug>...]` (`scripts/fetch-collection-art.ts`, needs ImageMagick)
+  fetches the BGG image pinned for each game in its `COVERS` map (picked
+  by eye from the item's gallery, with a crop box and where the square
+  sits, or `fit` for a box too wide or tall to crop, which centres the
+  whole cover on bands of its edge colour or a set `pad`) by image id
   from the same no-token endpoints and writes `public/images/<slug>.webp`.
   A game missing from the map falls back to its main image; the ones
   marked `keep` (games not on BGG, or editions it lacks) are left as
