@@ -120,13 +120,17 @@ describe('WishlistRow', () => {
   });
 
   it('opens the links in a new window without an opener', () => {
-    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     renderRow({ item: { ...testItem, asin: 'B0TESTASIN' }, isOpen: true });
-    fireEvent.click(screen.getByRole('link', { name: /YouTube/ }));
-    expect(openSpy).toHaveBeenLastCalledWith(expect.stringContaining('youtube.com'), '_blank', 'noopener');
-    fireEvent.click(screen.getByRole('link', { name: 'Buy Row Game on Amazon' }));
-    expect(openSpy).toHaveBeenLastCalledWith('https://www.amazon.com/dp/B0TESTASIN', '_blank', 'noopener');
-    fireEvent.click(screen.getByRole('link', { name: /price history/ }));
-    expect(openSpy).toHaveBeenLastCalledWith('https://camelcamelcamel.com/product/B0TESTASIN', '_blank', 'noopener');
+    const links = [
+      [/YouTube/, expect.stringContaining('youtube.com')],
+      ['Buy Row Game on Amazon', 'https://www.amazon.com/dp/B0TESTASIN'],
+      [/price history/, 'https://camelcamelcamel.com/product/B0TESTASIN'],
+    ] as const;
+    for (const [name, href] of links) {
+      const link = screen.getByRole('link', { name });
+      expect(link).toHaveAttribute('href', href);
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    }
   });
 });

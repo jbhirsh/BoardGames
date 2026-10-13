@@ -84,12 +84,12 @@ describe('SubGameList', () => {
   });
 
   it('opens the game\'s video in a new tab without toggling the row around it', () => {
-    const open = vi.spyOn(window, 'open').mockImplementation(() => null);
     const { onParentClick } = renderList(deckGame);
     const video = screen.getByRole('link', { name: 'Watch Speed tutorial on YouTube' });
     expect(video).toHaveAttribute('href', expect.stringContaining('how%20to%20play%20speed'));
+    expect(video).toHaveAttribute('target', '_blank');
+    expect(video).toHaveAttribute('rel', 'noopener noreferrer');
     fireEvent.click(video);
-    expect(open).toHaveBeenCalledWith(video.getAttribute('href'), '_blank');
     expect(onParentClick).not.toHaveBeenCalled();
   });
 

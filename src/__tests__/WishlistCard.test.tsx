@@ -120,14 +120,18 @@ describe('WishlistCard', () => {
   });
 
   it('opens YouTube and Amazon in a new window, and the price tracker when an ASIN is pinned', () => {
-    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     renderCard({ item: { ...testItem, asin: 'B0TESTASIN' } });
-    fireEvent.click(screen.getByRole('link', { name: /YouTube/ }));
-    expect(openSpy).toHaveBeenLastCalledWith(expect.stringContaining('youtube.com'), '_blank', 'noopener');
-    fireEvent.click(screen.getByRole('link', { name: 'Buy Test Wishlist Game on Amazon' }));
-    expect(openSpy).toHaveBeenLastCalledWith(expect.stringContaining('amazon.com'), '_blank', 'noopener');
-    fireEvent.click(screen.getByRole('link', { name: /price history/ }));
-    expect(openSpy).toHaveBeenLastCalledWith('https://camelcamelcamel.com/product/B0TESTASIN', '_blank', 'noopener');
+    const links = [
+      [/YouTube/, expect.stringContaining('youtube.com')],
+      ['Buy Test Wishlist Game on Amazon', expect.stringContaining('amazon.com')],
+      [/price history/, 'https://camelcamelcamel.com/product/B0TESTASIN'],
+    ] as const;
+    for (const [name, href] of links) {
+      const link = screen.getByRole('link', { name });
+      expect(link).toHaveAttribute('href', href);
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    }
   });
 });
 
