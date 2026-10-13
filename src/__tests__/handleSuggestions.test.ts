@@ -5,6 +5,7 @@ import {
   WISHLIST_SECTION_IDS,
   type SuggestionsDeps,
   type SuggestionsRedis,
+  type SuggestionsTransaction,
   type SuggestionsResponse,
   type Mail,
 } from '../../api/suggestions';
@@ -37,11 +38,17 @@ function makeRedis(seed: Store = {}, lists: Lists = {}): SuggestionsRedis & { st
   const l: Lists = JSON.parse(JSON.stringify(lists));
   const asStored = (v: unknown) => (typeof v === 'object' ? JSON.stringify(v) : String(v));
   const get = (k: string) => Object.entries(store[k] ?? {}).flatMap(([f, v]) => [f, asStored(v)]);
-  return {
+  const redis: SuggestionsRedis & { store: Store; lists: Lists } = {
     store,
     lists: l,
     hset: vi.fn(async (key, fields) => { store[key] = { ...(store[key] ?? {}), ...fields }; return Object.keys(fields).length; }),
     hgetall: vi.fn(async (key) => get(key)),
+    hsetnx: vi.fn(async (key, field, value) => {
+      if (store[key]?.[field] !== undefined) return 0;
+      store[key] = { ...(store[key] ?? {}), [field]: value };
+      return 1;
+    }),
+    hdel: vi.fn(async (key, field) => { const had = store[key]?.[field] !== undefined; delete store[key]?.[field]; return had ? 1 : 0; }),
     lpush: vi.fn(async (key, value) => { (l[key] ??= []).unshift(value); return l[key].length; }),
     lrem: vi.fn(async (key, _count, value) => { const before = (l[key] ?? []).length; l[key] = (l[key] ?? []).filter((v) => v !== value); return before - l[key].length; }),
     lrange: vi.fn(async (key) => [...(l[key] ?? [])]),
@@ -53,7 +60,21 @@ function makeRedis(seed: Store = {}, lists: Lists = {}): SuggestionsRedis & { st
       };
       return api;
     },
+    // Queued writes run through the spies above (so assertions on them still
+    // see each one) and all at once on exec, with nothing interleaved, as
+    // MULTI/EXEC runs them.
+    multi: vi.fn(() => {
+      const ops: Array<() => Promise<unknown>> = [];
+      const tx: SuggestionsTransaction = {
+        hset: (key, fields) => { ops.push(() => redis.hset(key, fields)); return tx; },
+        lpush: (key, value) => { ops.push(() => redis.lpush(key, value)); return tx; },
+        lrem: (key, count, value) => { ops.push(() => redis.lrem(key, count, value)); return tx; },
+        exec: async () => Promise.all(ops.map((op) => op())),
+      };
+      return tx;
+    }),
   };
+  return redis;
 }
 
 // Deliberately low-entropy so secret scanners don't mistake them for keys.
@@ -126,6 +147,15 @@ describe('handleSuggestions', () => {
       const res = makeRes();
       await handleSuggestions(d, { method: 'GET', query: {} }, res);
       expect((res.body as { items: Array<{ game: string }> }).items.map((i) => i.game)).toEqual([game]);
+    });
+
+    it('shows a game once even if its id is listed twice', async () => {
+      const redis = makeRedis({
+        'suggestions:sug-a': { ...pending, id: 'sug-a', status: 'approved', decidedAt: 10 },
+      }, { 'suggestions:approved': ['sug-a', 'sug-a'] });
+      const res = makeRes();
+      await handleSuggestions(deps({ redis }), { method: 'GET', query: {} }, res);
+      expect((res.body as { items: Array<{ id: string }> }).items.map((i) => i.id)).toEqual(['sug-a']);
     });
 
     it('returns an empty list when nothing has been approved', async () => {
@@ -242,6 +272,54 @@ describe('handleSuggestions', () => {
       expect(redis.lists['suggestions:active']).toEqual(['sug-other']);
       expect(redis.lists['suggestions:approved']).toBeUndefined();
       expect(String(res.body)).toContain('Denied');
+    });
+
+    it('approves once when the same approval arrives twice at the same moment', async () => {
+      const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
+      const lookup = vi.fn(async () => ({ bggId: 266192, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'] }));
+      const owner = { ...deps({ redis, lookup }), admin: async () => true };
+      const byEmail = makeRes();
+      const bySite = makeRes();
+      const twice = makeRes();
+      await Promise.all([
+        handleSuggestions(deps({ redis, lookup }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, byEmail),
+        handleSuggestions(deps({ redis, lookup }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, twice),
+        handleSuggestions(owner, { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa' }, headers: { 'content-type': 'application/json' } }, bySite),
+      ]);
+      expect(String(byEmail.body)).toContain('is now on the wishlist');
+      expect(String(twice.body)).toContain('Already');
+      expect(bySite.statusCode).toBe(409);
+      expect(lookup).toHaveBeenCalledTimes(1);
+      expect(redis.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
+      expect(redis.lists['suggestions:active']).toEqual(['sug-aaaaaa']);
+      const res = makeRes();
+      await handleSuggestions(deps({ redis }), { method: 'GET', query: {} }, res);
+      expect((res.body as { items: Array<{ id: string }> }).items.map((i) => i.id)).toEqual(['sug-aaaaaa']);
+    });
+
+    it('lists an id once even if the approved list already held it', async () => {
+      const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'], 'suggestions:approved': ['sug-aaaaaa'] });
+      await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, makeRes());
+      expect(redis.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
+    });
+
+    it('gives the claim back when the writes fail, so the decision can be retried', async () => {
+      const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
+      const multi = redis.multi;
+      redis.multi = vi.fn(() => {
+        const tx = multi();
+        tx.exec = async () => { throw new Error('redis down'); };
+        return tx;
+      });
+      const failed = makeRes();
+      await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, failed);
+      expect(failed.statusCode).toBe(500);
+      expect(redis.store['suggestions:sug-aaaaaa'].decidedAt).toBeUndefined();
+      redis.multi = multi;
+      const retry = makeRes();
+      await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, retry);
+      expect(String(retry.body)).toContain('is now on the wishlist');
+      expect(redis.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
     });
 
     it('does not change an already-decided suggestion', async () => {

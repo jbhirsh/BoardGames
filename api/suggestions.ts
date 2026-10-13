@@ -91,6 +91,14 @@ export interface SuggestionsPipeline {
   exec(): Promise<unknown[]>;
 }
 
+/** MULTI/EXEC: the queued writes land together or not at all. */
+export interface SuggestionsTransaction {
+  hset(key: string, fields: Record<string, string | number>): SuggestionsTransaction;
+  lpush(key: string, value: string): SuggestionsTransaction;
+  lrem(key: string, count: number, value: string): SuggestionsTransaction;
+  exec(): Promise<unknown[]>;
+}
+
 /**
  * The handler reads through a client that skips Upstash's JSON parsing (see
  * getRawRedis), so HGETALL answers a flat [field, value, ...] list of strings.
@@ -98,10 +106,13 @@ export interface SuggestionsPipeline {
 export interface SuggestionsRedis {
   hset(key: string, fields: Record<string, string | number>): Promise<number>;
   hgetall(key: string): Promise<unknown>;
+  hsetnx(key: string, field: string, value: string | number): Promise<number>;
+  hdel(key: string, field: string): Promise<number>;
   lpush(key: string, value: string): Promise<number>;
   lrem(key: string, count: number, value: string): Promise<number>;
   lrange(key: string, start: number, stop: number): Promise<string[]>;
   pipeline(): SuggestionsPipeline;
+  multi(): SuggestionsTransaction;
 }
 
 export interface SuggestionsRequest {
@@ -224,7 +235,9 @@ function mergeDetails(current: SuggestionDetails | undefined, raw: unknown): { o
 }
 
 async function loadList(redis: SuggestionsRedis, key: string): Promise<Array<Suggestion & { token: string }>> {
-  const ids = await redis.lrange(key, 0, -1);
+  // Writes never list an id twice; deduping here keeps a stray repeat from
+  // showing a game twice all the same.
+  const ids = [...new Set(await redis.lrange(key, 0, -1))];
   if (ids.length === 0) return [];
   const pipe = redis.pipeline();
   for (const id of ids) pipe.hgetall(itemKey(id));
@@ -352,21 +365,49 @@ async function enrich(deps: SuggestionsDeps, item: Suggestion, extra: Partial<Su
   if (details) await deps.redis.hset(itemKey(item.id), { details: JSON.stringify({ ...details, ...extra }) });
 }
 
-/** Flip a decidable suggestion; the caller has already checked it can be decided. */
-async function decide(deps: SuggestionsDeps, item: Suggestion, wanted: 'approved' | 'denied', now: () => number): Promise<void> {
+/**
+ * Flip a suggestion the caller has seen as decidable. Two requests can both
+ * see it so (a double-clicked confirm form, or the email link and the site at
+ * once), so the first claims it and the other gets false: only one flips the
+ * status, touches the lists and runs the lookup.
+ */
+async function decide(deps: SuggestionsDeps, item: Suggestion, wanted: 'approved' | 'denied', now: () => number): Promise<boolean> {
   const { redis } = deps;
-  await redis.hset(itemKey(item.id), { status: wanted, decidedAt: now() });
-  if (item.status === 'unsent') await redis.lrem(UNSENT_KEY, 0, item.id);
+  const key = itemKey(item.id);
+  const at = now();
+  // Only a decision ever sets decidedAt, so a decidable record has none and
+  // HSETNX on it is an atomic claim.
+  if (!(await redis.hsetnx(key, 'decidedAt', at))) return false;
+  const tx = redis.multi().hset(key, { status: wanted, decidedAt: at });
+  if (item.status === 'unsent') tx.lrem(UNSENT_KEY, 0, item.id);
   if (wanted === 'approved') {
-    await redis.lpush(APPROVED_KEY, item.id);
+    // Each push removes the id first, so a list can never hold it twice.
+    tx.lrem(APPROVED_KEY, 0, item.id).lpush(APPROVED_KEY, item.id);
     // An unsent record left the active list; approving it puts it back
     // so the duplicate check sees it again.
-    if (item.status === 'unsent') await redis.lpush(ACTIVE_KEY, item.id);
-    await enrich(deps, item);
+    if (item.status === 'unsent') tx.lrem(ACTIVE_KEY, 0, item.id).lpush(ACTIVE_KEY, item.id);
   } else {
-    await redis.lrem(ACTIVE_KEY, 0, item.id);
+    tx.lrem(ACTIVE_KEY, 0, item.id);
   }
+  try {
+    await tx.exec();
+  } catch (err) {
+    // Give the claim back so the decision can be retried.
+    await redis.hdel(key, 'decidedAt');
+    throw err;
+  }
+  if (wanted === 'approved') await enrich(deps, item);
+  return true;
 }
+
+/** What a request that lost the claim reports: the winner's status, once it has landed. */
+async function settledStatus(redis: SuggestionsRedis, id: string): Promise<string> {
+  const current = parse(await redis.hgetall(itemKey(id)));
+  return current && !decidable(current.status) ? current.status : 'decided';
+}
+
+const alreadyPage = (game: string, status: string) =>
+  decisionPage(`Already ${status}`, `${escapeHtml(game)} was ${status} earlier. Nothing changed.`);
 
 function validateGame(v: unknown): { ok: true; game: string } | { ok: false; error: string } {
   const game = typeof v === 'string' ? v.trim().replace(/\s+/g, ' ') : '';
@@ -417,10 +458,7 @@ export async function handleSuggestions(
 
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       if (!decidable(item.status)) {
-        return res.status(200).send(decisionPage(
-          `Already ${item.status}`,
-          `${escapeHtml(item.game)} was ${item.status} earlier. Nothing changed.`,
-        ));
+        return res.status(200).send(alreadyPage(item.game, item.status));
       }
       return res.status(200).send(confirmPage(item, action, req.query.token as string));
     }
@@ -444,7 +482,9 @@ export async function handleSuggestions(
           if (!decidable(item.status)) {
             return res.status(409).json({ error: `${item.game} was already ${item.status}` });
           }
-          await decide(deps, item, wanted, now);
+          if (!(await decide(deps, item, wanted, now))) {
+            return res.status(409).json({ error: `${item.game} was already ${await settledStatus(redis, item.id)}` });
+          }
           const updated = parse(await redis.hgetall(itemKey(item.id)));
           return res.status(200).json({ item: updated ? publicView(updated) : null });
         }
@@ -452,15 +492,13 @@ export async function handleSuggestions(
         const item = await authorise(redis, body.id, body.token, res);
         if (!item) return res;
 
-        if (!decidable(item.status)) {
-          res.setHeader('Content-Type', 'text/html; charset=utf-8');
-          return res.status(200).send(decisionPage(
-            `Already ${item.status}`,
-            `${escapeHtml(item.game)} was ${item.status} earlier. Nothing changed.`,
-          ));
-        }
-        await decide(deps, item, wanted, now);
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        if (!decidable(item.status)) {
+          return res.status(200).send(alreadyPage(item.game, item.status));
+        }
+        if (!(await decide(deps, item, wanted, now))) {
+          return res.status(200).send(alreadyPage(item.game, await settledStatus(redis, item.id)));
+        }
         return res.status(200).send(decisionPage(
           wanted === 'approved' ? 'Approved' : 'Denied',
           wanted === 'approved'
@@ -494,9 +532,11 @@ export async function handleSuggestions(
         const token = (deps.randomToken ?? (() => randomBytes(24).toString('base64url')))();
         const at = now();
         const item: Suggestion = { id, game: g.game, name, note, status: 'approved', createdAt: at, decidedAt: at, source: 'owner' };
-        await redis.hset(itemKey(id), { id, game: g.game, name, note, status: 'approved', createdAt: at, decidedAt: at, source: 'owner', token });
-        await redis.lpush(ACTIVE_KEY, id);
-        await redis.lpush(APPROVED_KEY, id);
+        await redis.multi()
+          .hset(itemKey(id), { id, game: g.game, name, note, status: 'approved', createdAt: at, decidedAt: at, source: 'owner', token })
+          .lpush(ACTIVE_KEY, id)
+          .lpush(APPROVED_KEY, id)
+          .exec();
         await enrich(deps, item, body.type !== undefined ? { type: body.type } : {});
         const stored = parse(await redis.hgetall(itemKey(id)));
         return res.status(201).json({ item: stored ? publicView(stored) : publicView(item) });
@@ -603,9 +643,11 @@ export async function handleSuggestions(
       if (item.status !== 'approved') {
         return res.status(409).json({ error: `${item.game} is not on the wishlist` });
       }
-      await redis.lrem(APPROVED_KEY, 0, item.id);
-      await redis.lrem(ACTIVE_KEY, 0, item.id);
-      await redis.hset(itemKey(item.id), { status: 'removed', decidedAt: now() });
+      await redis.multi()
+        .lrem(APPROVED_KEY, 0, item.id)
+        .lrem(ACTIVE_KEY, 0, item.id)
+        .hset(itemKey(item.id), { status: 'removed', decidedAt: now() })
+        .exec();
       return res.status(200).json({ ok: true });
     }
 
