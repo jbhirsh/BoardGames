@@ -444,7 +444,7 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   fallbacks, standard fonts, licences) goes to the runtime
   `gameroom-assets` cache if it is ever fetched, and each update clears it
   with the old code. The wishlist's box art (`WISHLIST_ART_DIR`, 39 files,
-  608 KB: more than the collection's 30 at 549 KB, and 16% on top of the
+  608 KB: more than the collection's 30 at 539 KB, and 16% on top of the
   3.9 MB install, for a list behind the Want toggle many never open) goes
   there too, each file as a card draws it (lazily, so a card never
   scrolled to online has no art offline), marked with the build's hash of
