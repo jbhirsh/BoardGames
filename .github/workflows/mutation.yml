@@ -92,9 +92,10 @@ jobs:
 
       - run: npm ci
 
-      # On PRs, narrow mutation to changed files inside the configured scope
-      # (mirror the mutate list in stryker.config.json). --diff-filter=d drops
-      # deletions: a removed file must not be passed to --mutate.
+      # On PRs, narrow mutation to changed files inside the configured scope:
+      # the script filters the diff through stryker.config.json's own mutate
+      # globs, so the two can't drift. --diff-filter=d drops deletions: a
+      # removed file must not be passed to --mutate.
       - name: Determine mutation scope
         id: scope
         if: github.event_name == 'pull_request'
@@ -103,12 +104,8 @@ jobs:
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
-          CHANGED=$(git diff --name-only --diff-filter=d "origin/${BASE_REF}"...HEAD -- \
-              src/utils src/context/filterReducer.ts src/components src/App.tsx \
-              src/sw/shell.ts src/pdfjs/saved.ts api \
-            | grep -E '\.(ts|tsx)$' \
-            | grep -v '\.d\.ts$' \
-            || true)
+          CHANGED=$(git diff --name-only --diff-filter=d "origin/${BASE_REF}"...HEAD \
+            | node .github/scripts/stryker-mutate-scope.mjs)
           if [ -z "$CHANGED" ]; then
             echo "No mutable files changed — running the utils smoke scope to validate the Stryker wiring."
             echo "mutate=src/utils/filterUrl.ts,src/utils/pickRandom.ts,src/utils/urls.ts" >> "$GITHUB_OUTPUT"
