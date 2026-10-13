@@ -322,7 +322,7 @@ async function authorise(
 
 /**
  * Owner-only requests: a live session, and for anything that mutates, a
- * JSON body (the CSRF check; see isJsonRequest). Writes the 403 itself.
+ * JSON body (a CSRF layer behind SameSite; see isJsonRequest). Writes the 403 itself.
  */
 async function requireAdmin(deps: SuggestionsDeps, req: SuggestionsRequest, res: SuggestionsResponse, mutation = true): Promise<boolean> {
   const headers = req.headers ?? {};
