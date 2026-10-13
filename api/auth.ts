@@ -1,17 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import * as Sentry from '@sentry/node';
 import { enforceRateLimit, getLimiter } from './_lib/rateLimit.js';
 import { getRedis } from './_lib/redis.js';
+import { failWith500, initSentry, reportError } from './_lib/sentry.js';
 import { baseUrl, button, escapeHtml, ownerEmail, page, resendMailer, type Mailer } from './_lib/mail.js';
 import {
   ID_RE, SESSION_TTL_S, isAdmin, isJsonRequest, newId, sessionCookie, sessionIdFrom, sessionKey,
   type Headers, type SessionRedis,
 } from './_lib/session.js';
 
-Sentry.init({
-  dsn: process.env.SENTRY_DSN,
-  tracesSampleRate: 0.1,
-});
+initSentry();
 
 /**
  * Owner sign-in by magic link. POST an email: if it is the owner's, a
@@ -150,9 +147,7 @@ export async function handleAuth(deps: AuthDeps, req: AuthRequest, res: AuthResp
         try {
           await deps.mailer.send(signInMail(link));
         } catch (err) {
-          Sentry.captureException(err);
-          await Sentry.flush(2000);
-          console.error('auth: could not send the sign-in link', err);
+          await reportError('auth: could not send the sign-in link', err);
         }
       }
       return res;
@@ -160,10 +155,7 @@ export async function handleAuth(deps: AuthDeps, req: AuthRequest, res: AuthResp
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (err) {
-    Sentry.captureException(err);
-    await Sentry.flush(2000);
-    console.error('auth api error:', err);
-    return res.status(500).json({ error: 'Server error' });
+    return failWith500(res, 'auth api error:', err);
   }
 }
 

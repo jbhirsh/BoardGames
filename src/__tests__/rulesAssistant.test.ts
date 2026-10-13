@@ -4,6 +4,7 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import {
   askRulesAssistant,
+  assembleRulesText,
   buildContents,
   loadRulesText,
   streamRulesAnswer,
@@ -163,6 +164,22 @@ describe('otherRulebooksNote', () => {
     expect(one).toContain("this game's other rulebook, 5 6 Player Extension.");
     expect(one).toContain('say which rulebook covers it');
     expect(otherRulebooksNote(['a-b', 'c', 'd'])).toContain("other rulebooks, A B, C and D.");
+  });
+});
+
+describe('assembleRulesText', () => {
+  it('reads the named parts, then names the rulebooks it left out', () => {
+    expect(assembleRulesText('catan', ['cities-and-knights'])).toBe(
+      loadRulesText('catan', ['cities-and-knights']) + otherRulebooksNote(['5-6-player-extension']),
+    );
+  });
+
+  it('is just the game\'s own rules when it has no others', () => {
+    expect(assembleRulesText('uno')).toBe(loadRulesText('uno'));
+  });
+
+  it('throws when the game has no rules text', () => {
+    expect(() => assembleRulesText('no-such-game')).toThrow(/ENOENT/);
   });
 });
 

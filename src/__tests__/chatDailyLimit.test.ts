@@ -20,9 +20,7 @@ vi.mock('@upstash/redis', () => ({
 }));
 
 vi.mock('../../api/_lib/rulesAssistant.js', () => ({
-  loadRulesText: vi.fn(() => 'the rules'),
-  otherRulebooks: vi.fn(() => []),
-  otherRulebooksNote: vi.fn(() => ''),
+  assembleRulesText: vi.fn(() => 'the rules'),
   streamRulesAnswer: vi.fn(),
   RULES_ASSISTANT_MAX_OUTPUT_TOKENS: 1024,
 }));
@@ -46,7 +44,7 @@ import votes from '../../api/votes';
 import suggestions from '../../api/suggestions';
 import auth from '../../api/auth';
 import { getLimiter } from '../../api/_lib/rateLimit.js';
-import { loadRulesText, streamRulesAnswer } from '../../api/_lib/rulesAssistant.js';
+import { assembleRulesText, streamRulesAnswer } from '../../api/_lib/rulesAssistant.js';
 
 type Handler = (req: VercelRequest, res: VercelResponse) => unknown;
 
@@ -126,7 +124,7 @@ describe('the rules assistant daily cap', () => {
   });
 
   it('spends none of the budget on a game with no rules', async () => {
-    vi.mocked(loadRulesText).mockImplementationOnce(() => { throw new Error('ENOENT'); });
+    vi.mocked(assembleRulesText).mockImplementationOnce(() => { throw new Error('ENOENT'); });
     expect((await ask('1.2.3.4')).statusCode).toBe(404);
     expect(redis.counts.has('chat-global:global')).toBe(false);
   });
