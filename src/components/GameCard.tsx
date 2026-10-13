@@ -14,6 +14,7 @@ import RulesLink from './RulesLink';
 import Popover from './Popover';
 import { FROM_LIST } from '../utils/fromList';
 import { fittingSubgames, subgameLabel } from '../utils/subgames';
+import { gameAnchor } from '../utils/heroCovers';
 import { YouTubeIcon, UserIcon, ClockIcon, CalculatorIcon, SearchIcon } from './Icons';
 
 interface Props {
@@ -33,11 +34,13 @@ export default function GameCard({ game }: Props) {
 
   return (
     // An open card (its write-up or its add-ons list) takes a grid row of its
-    // own, so the cards that share its subgrid rows aren't stretched.
-    <div className={`game-card${moreOpen || (subsOpen && hasFitting) ? ' card-open' : ''}`}>
+    // own, so the cards that share its subgrid rows aren't stretched. The
+    // id is where the hero's cover for this game leads, and the name takes
+    // focus there.
+    <div id={gameAnchor(game.slug)} className={`game-card${moreOpen || (subsOpen && hasFitting) ? ' card-open' : ''}`}>
       <div className="card-head">
         <img src={game.img} alt={`${game.name} box art`} className="card-corner-img" loading="lazy" />
-        <h3 className="card-name">{game.name}</h3>
+        <h3 className="card-name" tabIndex={-1}>{game.name}</h3>
         <div className="card-meta">
           <span className="cmeta">
             <UserIcon /> {game.players}

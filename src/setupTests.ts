@@ -12,3 +12,12 @@ globalThis.ResizeObserver = class ResizeObserver {
   unobserve() {}
   disconnect() {}
 } as unknown as typeof ResizeObserver;
+
+// IntersectionObserver is not available in jsdom either; tests that need
+// its callbacks stub their own.
+globalThis.IntersectionObserver = class IntersectionObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+  takeRecords() { return []; }
+} as unknown as typeof IntersectionObserver;

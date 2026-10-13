@@ -222,3 +222,20 @@ export function SavingIcon() {
     </svg>
   );
 }
+
+export function PauseIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+      <rect x="1.5" y="1" width="2.4" height="8" rx=".8" fill="currentColor" />
+      <rect x="6.1" y="1" width="2.4" height="8" rx=".8" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function PlayIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+      <path d="M2.5 1.4v7.2a.6.6 0 0 0 .9.5l5.8-3.6a.6.6 0 0 0 0-1L3.4.9a.6.6 0 0 0-.9.5z" fill="currentColor" />
+    </svg>
+  );
+}

@@ -64,8 +64,17 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   since the tab loaded) reaches `RouteError`, which reloads once
   (`utils/chunkReload.ts`, a sessionStorage flag cleared when a page's
   code loads) before saying something went wrong:
-  - `/` — `HomePage` (hero with a shelf of box covers that open their
-    rulebooks, its subtitle speaking to a friend when `c=want`, filter
+  - `/` — `HomePage` (hero, its subtitle speaking to a friend when
+    `c=want`, over `CoverCarousel`: every collection game's cover, or each
+    wishlist entry's bundled art in Want mode (`utils/heroCovers.ts`;
+    friends' BoardGameGeek thumbnails stay out), gliding left in an endless
+    row (a CSS transform on a doubled track, the copy `aria-hidden` and out
+    of the Tab order, a lap of 2.4 s per cover, the ends faded). It holds
+    still on hover, while a cover has focus, off screen or in a hidden tab,
+    and from its pause button; under `prefers-reduced-motion` it is the
+    seven favourites standing still with no button. A cover scrolls to its
+    game's card or row (`id` `game-<slug>` / `wish-<id>`) and focuses its
+    name or row toggle, clearing the filters first if they hide it; filter
     bar, then the collection or the wishlist,
     switched by the Own/Want toggle; both stay mounted so a toggle never
     refetches, and only the visible one carries the `#collection` anchor)
@@ -391,7 +400,7 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   ascent/descent overrides measured against Playfair on the collection's
   names, so the swap barely moves a line;
   `index.html` preloads the roman file. Body text is the system font.
-- **`utils/`** — pure helpers (`filterGames.ts`, `pickRandom.ts`, `filterUrl.ts`,
+- **`utils/`** — pure helpers (`filterGames.ts`, `pickRandom.ts`, `filterUrl.ts`, `heroCovers.ts`,
   `urls.ts`, `openRow.ts`, `shortDesc.ts`, `subgames.ts`, `rulebooks.ts`, `pdfSearch.ts`,
   `citeMatch.ts`, the passage of a page a citation points to; `fileSize.ts`,
   `sevenWonders.ts`, the score pad's arithmetic: science, standings with
