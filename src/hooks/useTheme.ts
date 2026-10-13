@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { safeStorage } from '../client/safeStorage';
 
 /** The reader's colour theme: their system's, or one they picked. */
 export type ThemeChoice = 'system' | 'light' | 'dark';
@@ -23,12 +24,9 @@ export function applyTheme(choice: ThemeChoice) {
   const root = document.documentElement;
   if (choice === 'system') delete root.dataset.theme;
   else root.dataset.theme = choice;
-  try {
-    if (choice === 'system') localStorage.removeItem(THEME_KEY);
-    else localStorage.setItem(THEME_KEY, choice);
-  } catch {
-    // Storage blocked (private mode): the choice lasts for this page.
-  }
+  // Where storage is blocked (private mode), the choice lasts for this page.
+  if (choice === 'system') safeStorage.remove(THEME_KEY);
+  else safeStorage.set(THEME_KEY, choice);
   document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((meta) => {
     const scheme = meta.media.includes('dark') ? 'dark' : 'light';
     meta.content = CHROME[choice === 'system' ? scheme : choice];

@@ -6,6 +6,7 @@
  *
  *   data  → data                      (leaf: types + compiled-in constants)
  *   utils → utils, data               (pure helpers; no React, no context)
+ *   client ↛ components, context, hooks (plain browser modules; no React)
  *   context ↛ components              (state layer under the UI, not beside it)
  *   api ⇹ src                         (serverless bundle and SPA stay separate)
  *   e2e → src/data                    (browser tests drive the built app)
@@ -34,6 +35,20 @@ module.exports = {
       severity: 'error',
       comment: 'src/utils must stay framework-free so they remain directly unit-testable.',
       from: { path: '^src/utils' },
+      to: { path: '^node_modules/(react|react-dom|react-router)' },
+    },
+    {
+      name: 'client-below-ui',
+      severity: 'error',
+      comment: 'src/client holds plain browser modules (API calls, storage) that hooks, context and components use; they may not reach back into the UI.',
+      from: { path: '^src/client' },
+      to: { path: '^src/(components|context|hooks)/' },
+    },
+    {
+      name: 'client-no-react',
+      severity: 'error',
+      comment: 'src/client is for modules that are not hooks or components; anything needing React belongs in src/hooks.',
+      from: { path: '^src/client' },
       to: { path: '^node_modules/(react|react-dom|react-router)' },
     },
     {

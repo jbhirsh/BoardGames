@@ -5,6 +5,7 @@ import { SCORE_CALCULATORS } from '../data/scoreCalculators';
 import { digitNudge } from '../utils/digitNudge';
 import { breakdown, ordinal, scienceScore, standings, tieBreaks, treasuryScore, type Breakdown, type Tally } from '../utils/sevenWonders';
 import { useWakeLock } from '../hooks/useWakeLock';
+import { safeStorage } from '../client/safeStorage';
 import NotFoundPage from './NotFoundPage';
 import BackLink from './BackLink';
 import { ScoreIcon, type ScoreIconKind } from './ScoreIcons';
@@ -83,7 +84,7 @@ function isPlayer(p: unknown): p is PlayerScores {
 
 function loadGame(): SavedGame {
   try {
-    const saved: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
+    const saved: unknown = JSON.parse(safeStorage.get(STORAGE_KEY) ?? 'null');
     if (typeof saved === 'object' && saved !== null) {
       const { players, active } = saved as Record<string, unknown>;
       if (Array.isArray(players) && players.length >= 2 && players.length <= 7 && players.every(isPlayer)
@@ -94,17 +95,14 @@ function loadGame(): SavedGame {
       }
     }
   } catch {
-    // Unreadable or unavailable storage: start a fresh game.
+    // Not a saved game's JSON, or none stored: start a fresh game.
   }
   return newGame();
 }
 
+/** Where storage is unavailable (private mode), the game just isn't remembered. */
 function saveGame(game: SavedGame): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(game));
-  } catch {
-    // Storage unavailable (private mode); the game just isn't remembered.
-  }
+  safeStorage.set(STORAGE_KEY, JSON.stringify(game));
 }
 
 // Each box says what it takes: points as the pad scores them, or the coins

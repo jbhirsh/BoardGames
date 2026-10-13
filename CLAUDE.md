@@ -417,6 +417,14 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   parsing of its list; `wiktionary.ts`, the reading of a Wiktionary answer
   and which words in it are playable). Keep these free of React and side
   effects.
+- **`client/`** — the browser-side modules that have side effects but are
+  not hooks: `adminApi.ts`, the owner's calls to the API; `dictionary.ts`,
+  the Wiktionary lookup; `wordList.ts`, loading the word checker's lists;
+  `displayName.ts`, the remembered name; and `safeStorage.ts`, localStorage
+  and sessionStorage that never throw (blocked, full or missing storage
+  reads as nothing stored), for the score pad's game, the theme, the
+  voter id, the display name and the reader's jumps.
+  dependency-cruiser keeps them free of React and of the UI above them.
 - **`sw/sw.ts`** — the service worker, for game nights with no signal.
   `main.tsx` registers it in production builds only; the `serviceWorker()`
   plugin in `vite.config.ts` bundles it to `/sw.js` (a classic worker: the
@@ -644,7 +652,7 @@ reason for each file.
   with no token), so none are served.
 - **Wiktionary** — the REST definition API
   (`en.wiktionary.org/api/rest_v1/page/definition/<word>`, keyless, open to
-  any origin), called from the browser by `hooks/dictionary.ts` for a word's
+  any origin), called from the browser by `client/dictionary.ts` for a word's
   meanings and for words missing from the bundled lists. It lists far more
   than a word-game list, so `utils/wiktionary.ts` counts a word only for an
   English sense that isn't a proper noun, abbreviation, initialism, acronym,

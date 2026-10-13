@@ -1,11 +1,11 @@
 import { useEffect, useId, useState, type FormEvent } from 'react';
 import { WISHLIST_SECTIONS, WISHLIST_TYPES } from '../data/keywords';
 import { GAME_MAX, GAME_MIN, NAME_MAX, NOTE_MAX } from '../data/suggestionLimits';
-import { getDisplayName, setDisplayName } from '../hooks/displayName';
+import { getDisplayName, setDisplayName } from '../client/displayName';
 import { useWishlistItems } from '../context/useWishlistItems';
 import { alreadyListed } from '../utils/alreadyListed';
 import { isValidDisplayName, NAME_HINT } from '../utils/displayName';
-import { addGame, decideSuggestion, fetchPending, type PendingSuggestion } from '../hooks/adminApi';
+import { addGame, decideSuggestion, fetchPending, type PendingSuggestion } from '../client/adminApi';
 import AdminItemControls from './AdminItemControls';
 
 type Queue = { kind: 'loading' } | { kind: 'ready'; items: PendingSuggestion[] } | { kind: 'error' };
