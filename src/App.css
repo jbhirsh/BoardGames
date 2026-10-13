@@ -517,11 +517,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 /* col: name */
 .col-name{font-family:'Playfair Display','Playfair Fallback','Playfair Fallback Noto',serif;font-size:15px;font-weight:700;line-height:1.2;white-space:nowrap;color:var(--dark);}
 .col-name-wrap{display:flex;flex-direction:column;gap:3px;}
-.group-badge{
-  font-family:inherit;font-size:9px;font-weight:400;
-  letter-spacing:.6px;text-transform:uppercase;
-  color:var(--text3);
-}
 /* The add-ons tag and the award count close the description, kept
    together and on its last line when they fit. */
 .row-badges{white-space:nowrap;}

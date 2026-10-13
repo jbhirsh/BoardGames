@@ -147,10 +147,8 @@ function usePixelRatio(): number {
     // Matches only the ratio it was made for, so it changes when that does.
     const query = window.matchMedia(`(resolution: ${ratio}dppx)`);
     const changed = () => setRatio(window.devicePixelRatio || 1);
-    // Safari before 14 has only the older addListener; there a zoom keeps
-    // the pages drawn as they were.
-    query.addEventListener?.('change', changed);
-    return () => query.removeEventListener?.('change', changed);
+    query.addEventListener('change', changed);
+    return () => query.removeEventListener('change', changed);
   }, [ratio]);
   return ratio;
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ytURL, rulesURL, slugify, amazonURL, priceTrackerURL } from '../utils/urls';
+import { ytURL, rulesURL, amazonURL, priceTrackerURL } from '../utils/urls';
 
 describe('ytURL', () => {
   it('returns a YouTube search URL with encoded query', () => {
@@ -19,20 +19,6 @@ describe('rulesURL', () => {
     expect(url).toBe(
       'https://www.google.com/search?q=Catan%20board%20game%20rules%20PDF',
     );
-  });
-});
-
-describe('slugify', () => {
-  it('lowercases and replaces non-alphanumeric with hyphens', () => {
-    expect(slugify('Hello World')).toBe('hello-world');
-  });
-
-  it('strips leading and trailing hyphens', () => {
-    expect(slugify('--Hello--')).toBe('hello');
-  });
-
-  it('collapses consecutive non-alpha chars', () => {
-    expect(slugify('A  B!!C')).toBe('a-b-c');
   });
 });
 

@@ -1,8 +1,8 @@
 import type { Filterable } from '../data/types';
 
 /** Lighter than this (BoardGameGeek weight) reads as Light; from HEAVY up, Heavy. */
-export const LIGHT_BELOW = 2;
-export const HEAVY_FROM = 3;
+const LIGHT_BELOW = 2;
+const HEAVY_FROM = 3;
 
 /** Light, Medium or Heavy for a BoardGameGeek weight. */
 export function weightWord(weight: number): 'Light' | 'Medium' | 'Heavy' {

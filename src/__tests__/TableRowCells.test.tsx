@@ -85,19 +85,6 @@ describe('TableRowCells', () => {
     expect(row.querySelector('.col-actions .row-toggle .row-chevron')).toBeInTheDocument();
   });
 
-  it('shows the group badge only when one is given', () => {
-    const { row, unmount } = renderCells();
-    expect(row.querySelector('.group-badge')).toBeNull();
-    expect(row.querySelector('.awards')).toBeNull();
-    unmount();
-    const second = renderCells({ groupBadge: 'strat' });
-    const badge = second.row.querySelector('.col-name-wrap .group-badge')!;
-    expect(badge).toHaveTextContent('strat');
-    // The badge sits between the name and the mobile description.
-    expect(badge.previousElementSibling).toHaveClass('col-name');
-    expect(badge.nextElementSibling).toHaveClass('mobile-short');
-  });
-
   it('leaves the duration cell empty when the play time is unknown', () => {
     const { row } = renderCells({ dur: '' });
     const durCell = row.children[2];

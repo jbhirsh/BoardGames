@@ -37,7 +37,6 @@ export default function ListView() {
                         game={g}
                         isOpen={openRow === g.name}
                         onToggle={() => toggleRow(g.name)}
-                        showGroupBadge={false}
                       />
                     ))}
                   </Fragment>
@@ -49,7 +48,6 @@ export default function ListView() {
                   game={g}
                   isOpen={openRow === g.name}
                   onToggle={() => toggleRow(g.name)}
-                  showGroupBadge={false}
                 />
               ))}
         </tbody>

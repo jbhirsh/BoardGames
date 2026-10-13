@@ -8,13 +8,13 @@ import type { Game } from '../data/types';
 import { GAMES } from '../data/games';
 import { renderRouted } from './routed';
 
-function renderRow(game: Game, isOpen = false, onToggle = vi.fn(), showGroupBadge = false) {
+function renderRow(game: Game, isOpen = false, onToggle = vi.fn()) {
   return render(
     <MemoryRouter>
       <FilterProvider>
         <table>
           <tbody>
-            <GameRow game={game} isOpen={isOpen} onToggle={onToggle} showGroupBadge={showGroupBadge} />
+            <GameRow game={game} isOpen={isOpen} onToggle={onToggle} />
           </tbody>
         </table>
       </FilterProvider>
@@ -53,7 +53,7 @@ describe('GameRow', () => {
     rerender(
       <MemoryRouter>
         <FilterProvider>
-          <table><tbody><GameRow game={quickGame} isOpen onToggle={onToggle} showGroupBadge={false} /></tbody></table>
+          <table><tbody><GameRow game={quickGame} isOpen onToggle={onToggle} /></tbody></table>
         </FilterProvider>
       </MemoryRouter>
     );
@@ -92,11 +92,6 @@ describe('GameRow', () => {
     expect(onToggle).not.toHaveBeenCalled();
   });
 
-  it('shows group badge when showGroupBadge is true', () => {
-    renderRow(quickGame, false, vi.fn(), true);
-    expect(screen.getByText('party')).toBeInTheDocument();
-  });
-
   it('renders expanded content when isOpen', () => {
     renderRow(quickGame, true);
     expect(screen.getByText('How to Play')).toBeInTheDocument();
@@ -121,7 +116,7 @@ describe('GameRow', () => {
     render(
       <MemoryRouter initialEntries={['/?p=5']}>
         <FilterProvider>
-          <table><tbody><GameRow game={catan} isOpen onToggle={vi.fn()} showGroupBadge={false} /></tbody></table>
+          <table><tbody><GameRow game={catan} isOpen onToggle={vi.fn()} /></tbody></table>
         </FilterProvider>
       </MemoryRouter>
     );
@@ -215,7 +210,7 @@ describe('GameRow', () => {
   ])('marks the open row\'s %s link as leaving the list, so the page\'s Back returns to it', (name, game, pathname) => {
     const router = renderRouted(
       <FilterProvider>
-        <table><tbody><GameRow game={game} isOpen onToggle={vi.fn()} showGroupBadge={false} /></tbody></table>
+        <table><tbody><GameRow game={game} isOpen onToggle={vi.fn()} /></tbody></table>
       </FilterProvider>,
     );
     const panel = document.querySelector('tr.row-expand') as HTMLElement;
@@ -298,7 +293,7 @@ describe('GameRow', () => {
     const renderAt = (url: string) => render(
       <MemoryRouter initialEntries={[url]}>
         <FilterProvider>
-          <table><tbody><GameRow game={deckGame} isOpen={false} onToggle={vi.fn()} showGroupBadge={false} /></tbody></table>
+          <table><tbody><GameRow game={deckGame} isOpen={false} onToggle={vi.fn()} /></tbody></table>
         </FilterProvider>
       </MemoryRouter>,
     );
@@ -314,7 +309,7 @@ describe('GameRow', () => {
     render(
       <MemoryRouter initialEntries={['/?p=2']}>
         <FilterProvider>
-          <table><tbody><GameRow game={deckGame} isOpen={false} onToggle={onToggle} showGroupBadge={false} /></tbody></table>
+          <table><tbody><GameRow game={deckGame} isOpen={false} onToggle={onToggle} /></tbody></table>
         </FilterProvider>
       </MemoryRouter>,
     );
@@ -347,7 +342,7 @@ describe('GameRow', () => {
     render(
       <MemoryRouter initialEntries={['/?p=9']}>
         <FilterProvider>
-          <table><tbody><GameRow game={deckGame} isOpen onToggle={vi.fn()} showGroupBadge={false} /></tbody></table>
+          <table><tbody><GameRow game={deckGame} isOpen onToggle={vi.fn()} /></tbody></table>
         </FilterProvider>
       </MemoryRouter>,
     );

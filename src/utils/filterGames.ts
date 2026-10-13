@@ -111,10 +111,6 @@ export function sortItems<T extends Filterable>(list: T[], sort: string, groupIn
   });
 }
 
-export function sortGames(list: Game[], sort: string): Game[] {
-  return sortItems(list, sort, (g) => GROUP_ORDER.indexOf(g.group));
-}
-
 /** The group sort is active whether chosen directly or as the base under a column sort. */
 export function isGrouped(state: FilterState): boolean {
   return state.sort === 'group' || state.baseSort === 'group';

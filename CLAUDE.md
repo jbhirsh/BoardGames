@@ -28,6 +28,8 @@ npx vitest                              # watch mode
 npx vitest run                          # single run (CI uses this)
 npx vitest run --coverage               # with coverage (thresholds enforced)
 npx vitest run src/__tests__/a11y.test.tsx   # accessibility suite only
+npm run test:mutation                   # StrykerJS, full run (mutation.yml calls
+                                        # `npx stryker run --incremental` itself)
 
 # End-to-end (Playwright, Chromium): builds the app, serves it with
 # `vite preview` on port 4174, and drives it with every /api call stubbed
