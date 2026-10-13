@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Component, lazy, Suspense, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useParams, useLocation, useNavigate, Link, Navigate } from 'react-router';
 import { GAMES } from '../data/games';
 import { rulebooks, rulebookPath, chatParts, chatScope, citationsIn, citedPage, citedPageParam, linkCitations, mentionedRulebooks, starterQuestions } from '../utils/rulebooks';
@@ -105,8 +105,9 @@ function useSaved(pdf: string, online: boolean): boolean | 'asking' {
 }
 
 
-// How far the tab strip's edges fade (App.css .rules-books); a tab within
-// this of either side is partly hidden.
+// How far the tab strip's edges fade; a tab within this of either side is
+// partly hidden. The strip hands it to App.css's .rules-books as
+// --strip-fade, so the fade and the scrolling here can't disagree.
 const STRIP_FADE = 48;
 
 /** Scrolls the tab strip sideways to its chosen tab, clear of the faded edge. */
@@ -287,6 +288,7 @@ export default function RulesPage() {
             // Faded at an end with more tabs past it, so a cut-off strip
             // reads as one that scrolls.
             className={`rules-books${edges.start ? ' fade-start' : ''}${edges.end ? ' fade-end' : ''}`}
+            style={{ '--strip-fade': `${STRIP_FADE}px` } as CSSProperties}
             aria-label="Rulebooks"
             onFocus={(e) => revealTab(e.currentTarget, e.target as HTMLElement)}
           >

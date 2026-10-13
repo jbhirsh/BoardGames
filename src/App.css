@@ -458,14 +458,18 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 .dur-quick,.dur-medium,.dur-long{background:var(--bg2);color:var(--text2);border:1px solid var(--border);}
 .dur-pill{font-size:11px;font-weight:500;letter-spacing:.4px;padding:3px 9px;border-radius:20px;flex-shrink:0;}
-.card-head{padding:16px 18px 12px;border-bottom:1px solid var(--border);position:relative;}
-.card-name{font-family:'Playfair Display','Playfair Fallback','Playfair Fallback Noto',serif;font-size:16px;font-weight:700;line-height:1.2;margin-bottom:8px;color:var(--dark);padding-right:86px;}
+/* --corner-art sizes the box art in the head's corner (.card-corner-img),
+   and --corner-clear is the text's right padding that keeps clear of it:
+   the art sits 14px in from the edge and the text 18px, so the art plus
+   10px leaves 14px between them. */
+.card-head{padding:16px 18px 12px;border-bottom:1px solid var(--border);position:relative;--corner-art:76px;--corner-clear:calc(var(--corner-art) + 10px);}
+.card-name{font-family:'Playfair Display','Playfair Fallback','Playfair Fallback Noto',serif;font-size:16px;font-weight:700;line-height:1.2;margin-bottom:8px;color:var(--dark);padding-right:var(--corner-clear);}
 .card-meta{display:flex;gap:12px;}
 .cmeta{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text3);}
 .cmeta svg{flex-shrink:0;}
-.card-kw{padding:8px 86px 0 0;display:flex;flex-wrap:wrap;gap:4px;align-items:flex-start;}
+.card-kw{padding:8px var(--corner-clear) 0 0;display:flex;flex-wrap:wrap;gap:4px;align-items:flex-start;}
 /* An expansion's base game, a label rather than a control. */
-.card-expands{padding:8px 86px 0 0;}
+.card-expands{padding:8px var(--corner-clear) 0 0;}
 .card-head.no-art .card-expands{padding-right:0;}
 .expands-tag{display:inline-block;font-size:11.5px;font-weight:600;line-height:1.5;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:999px;padding:1px 8px;}
 .expands-owned{color:var(--dark);}
@@ -754,7 +758,7 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 .pop-title{font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
 .awards-list{list-style:none;margin:0;padding:0;color:var(--text2);font-size:12px;line-height:1.5;display:flex;flex-direction:column;gap:3px;}
 .awards-year{color:var(--text3);margin-left:4px;}
-.card-meta{flex-wrap:wrap;row-gap:4px;padding-right:86px;}
+.card-meta{flex-wrap:wrap;row-gap:4px;padding-right:var(--corner-clear);}
 .row-awards .awards-list{margin-top:6px;max-width:520px;padding:8px 10px;border-radius:8px;background:var(--surface);border:1px solid var(--border);}
 .awards-list li{overflow-wrap:anywhere;}
 /* Suggest a game */
@@ -787,7 +791,7 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
    killed every mobile override for the rules page, the chat panel
    and the score calculator. ══════════════════════════════════ */
 /* ══ CARD CORNER IMAGE ═══════════════════════════════════════ */
-.card-corner-img{position:absolute;top:12px;right:14px;width:76px;height:76px;border-radius:14px;object-fit:contain;border:1px solid var(--border);box-shadow:var(--shadow-sm);flex-shrink:0;}
+.card-corner-img{position:absolute;top:12px;right:14px;width:var(--corner-art);height:var(--corner-art);border-radius:14px;object-fit:contain;border:1px solid var(--border);box-shadow:var(--shadow-sm);flex-shrink:0;}
 /* The collection's covers (flat front covers, made square) and the
    wishlist's bundled art fill their tiles; the matte behind them shows only
    while one loads or around a picture that isn't square, such as a friend's
@@ -823,13 +827,15 @@ table.games-list thead tr th.sort-desc .sort-icon{opacity:1;color:var(--blue);}
 /* Not found: the hero, filling the screen since it is the whole page. */
 .not-found{min-height:100svh;display:flex;flex-direction:column;justify-content:center;border-bottom:none;}
 .not-found .pick-btn{text-decoration:none;}
-.rules-books{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:thin;scroll-snap-type:x proximity;scroll-padding-inline:48px;}
+/* --strip-fade, how far each end fades, is set on the strip from
+   RulesPage.tsx's STRIP_FADE, which scrolls a tab clear of it. */
+.rules-books{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:thin;scroll-snap-type:x proximity;scroll-padding-inline:var(--strip-fade);}
 /* A fade at each end with more tabs past it: without one, a tab cut at the
    edge ("Monster Box 2 EXPA") gave no sign the strip scrolls. A mask's
    black is only opacity, not a colour, so it holds in both themes. */
-.rules-books.fade-end{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 48px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 48px),transparent);}
-.rules-books.fade-start{-webkit-mask-image:linear-gradient(to left,#000 calc(100% - 48px),transparent);mask-image:linear-gradient(to left,#000 calc(100% - 48px),transparent);}
-.rules-books.fade-start.fade-end{-webkit-mask-image:linear-gradient(to right,transparent,#000 48px,#000 calc(100% - 48px),transparent);mask-image:linear-gradient(to right,transparent,#000 48px,#000 calc(100% - 48px),transparent);}
+.rules-books.fade-end{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - var(--strip-fade)),transparent);mask-image:linear-gradient(to right,#000 calc(100% - var(--strip-fade)),transparent);}
+.rules-books.fade-start{-webkit-mask-image:linear-gradient(to left,#000 calc(100% - var(--strip-fade)),transparent);mask-image:linear-gradient(to left,#000 calc(100% - var(--strip-fade)),transparent);}
+.rules-books.fade-start.fade-end{-webkit-mask-image:linear-gradient(to right,transparent,#000 var(--strip-fade),#000 calc(100% - var(--strip-fade)),transparent);mask-image:linear-gradient(to right,transparent,#000 var(--strip-fade),#000 calc(100% - var(--strip-fade)),transparent);}
 .rules-book{scroll-snap-align:start;display:inline-flex;align-items:center;gap:7px;flex-shrink:0;padding:8px 14px;font-size:13px;font-weight:500;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);text-decoration:none;white-space:nowrap;transition:background .15s,color .15s,border-color .15s;}
 .rules-book:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),0.3);background:var(--blue-bg);}
 .rules-book[aria-current="page"]{background:var(--dark);border-color:var(--dark);color:var(--surface);}
