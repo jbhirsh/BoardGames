@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { parseIds, optionalAnonId, ANON_RE, MAX_IDS } from '../../api/_lib/ids';
-import { getRedis, resetRedisForTests } from '../../api/_lib/redis';
+import { getRawRedis, getRedis, resetRedisForTests } from '../../api/_lib/redis';
 import { NAME_RE as CLIENT_NAME_RE } from '../utils/displayName';
 
 const errorOf = (v: unknown) => { const r = parseIds(v); return r.ok ? undefined : r.error; };
@@ -49,6 +49,24 @@ describe('getRedis', () => {
     process.env.KV_REST_API_TOKEN = 'token';
     const a = getRedis();
     expect(getRedis()).toBe(a);
+    const raw = getRawRedis();
+    expect(getRawRedis()).toBe(raw);
+    expect(raw).not.toBe(a);
+  });
+
+  it('hands hash values back as stored from the raw client only', async () => {
+    process.env.KV_REST_API_URL = 'https://example.upstash.io';
+    process.env.KV_REST_API_TOKEN = 'token';
+    // Upstash's REST reply, base64-encoded as the client asks for it.
+    const stored = ['game', 'null', 'alt', 'true', 'price', '1.50'];
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
+      new Response(JSON.stringify({ result: stored.map((v) => Buffer.from(v).toString('base64')) })));
+    try {
+      expect(await getRawRedis().hgetall('k')).toEqual(stored);
+      expect(await getRedis().hgetall('k')).toEqual({ game: null, alt: true, price: '1.50' });
+    } finally {
+      fetchSpy.mockRestore();
+    }
   });
 });
 

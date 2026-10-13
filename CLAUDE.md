@@ -533,8 +533,10 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   follow every URL); plain `GET` lists approved suggestions, which the
   wishlist renders under "Suggested by friends". Redis keeps one hash per
   suggestion plus two id lists, `suggestions:active` (pending + approved,
-  for duplicate checks) and `suggestions:approved` (the public list).
-  A new suggestion is stored before the email is sent so the emailed links
+  for duplicate checks) and `suggestions:approved` (the public list),
+  read through `getRawRedis()` (`_lib/redis.ts`), a client with Upstash's
+  automatic JSON parsing off, so a value comes back as the text stored (a
+  game called `null` or `1.50` stays that). A new suggestion is stored before the email is sent so the emailed links
   always resolve; if the send call fails the record is dropped from the
   active list and marked `unsent` (tracked on `suggestions:unsent`) so the
   suggester can retry, but its links keep working (a timeout can follow a

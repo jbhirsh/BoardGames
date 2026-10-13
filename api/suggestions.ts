@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as Sentry from '@sentry/node';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { enforceRateLimit, getLimiter } from './_lib/rateLimit.js';
-import { getRedis } from './_lib/redis.js';
+import { getRawRedis } from './_lib/redis.js';
 import { lookupGame, type GameDetails } from './_lib/bgg.js';
 import { SLUG_RE } from './_lib/slug.js';
 import { baseUrl, button, escapeHtml, page, resendMailer, type Mail, type Mailer } from './_lib/mail.js';
@@ -91,9 +91,13 @@ export interface SuggestionsPipeline {
   exec(): Promise<unknown[]>;
 }
 
+/**
+ * The handler reads through a client that skips Upstash's JSON parsing (see
+ * getRawRedis), so HGETALL answers a flat [field, value, ...] list of strings.
+ */
 export interface SuggestionsRedis {
   hset(key: string, fields: Record<string, string | number>): Promise<number>;
-  hgetall(key: string): Promise<Record<string, unknown> | null>;
+  hgetall(key: string): Promise<unknown>;
   lpush(key: string, value: string): Promise<number>;
   lrem(key: string, count: number, value: string): Promise<number>;
   lrange(key: string, start: number, stop: number): Promise<string[]>;
@@ -131,41 +135,42 @@ export interface SuggestionsDeps {
 
 const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
-// The Upstash client JSON-parses hash values, so "1830" comes back as a
-// number and "true" as a boolean: coerce rather than reject.
-const str = (v: unknown): string | undefined => (v === undefined || v === null ? undefined : String(v));
+// Values come back exactly as stored, so a game called "null" or "1.50"
+// reads as that text; a missing hash is an empty list.
+function fields(raw: unknown): Record<string, string> | null {
+  if (!Array.isArray(raw) || raw.length === 0) return null;
+  const h: Record<string, string> = {};
+  for (let i = 0; i + 1 < raw.length; i += 2) h[String(raw[i])] = String(raw[i + 1]);
+  return h;
+}
 
 function parse(hash: unknown): (Suggestion & { token: string }) | null {
-  if (!hash || typeof hash !== 'object') return null;
-  const h = hash as Record<string, unknown>;
-  const id = str(h.id);
-  const game = str(h.game);
-  const name = str(h.name);
+  const h = fields(hash);
+  if (!h) return null;
+  const { id, game, name, status } = h;
   if (!id || !game || !name) return null;
-  const status = str(h.status);
   return {
     id,
     game,
     name,
-    note: str(h.note) ?? '',
+    note: h.note ?? '',
     status: status === 'approved' || status === 'denied' || status === 'unsent' || status === 'removed' ? status : 'pending',
     createdAt: Number(h.createdAt) || 0,
     decidedAt: h.decidedAt !== undefined ? Number(h.decidedAt) || 0 : undefined,
     details: parseDetails(h.details),
-    source: str(h.source) === 'owner' ? 'owner' : 'friend',
-    token: str(h.token) ?? '',
+    source: h.source === 'owner' ? 'owner' : 'friend',
+    token: h.token ?? '',
   };
 }
 
 const isWishlistType = (v: unknown): v is SuggestionDetails['type'] =>
   typeof v === 'string' && (WISHLIST_SECTION_IDS as readonly string[]).includes(v);
 
-// Details are stored as one JSON field; the client may hand it back parsed.
-function parseDetails(raw: unknown): SuggestionDetails | undefined {
-  let v: unknown = raw;
-  if (typeof v === 'string') {
-    try { v = JSON.parse(v); } catch { return undefined; }
-  }
+// Details are stored as one JSON field.
+function parseDetails(raw: string | undefined): SuggestionDetails | undefined {
+  if (raw === undefined) return undefined;
+  let v: unknown;
+  try { v = JSON.parse(raw); } catch { return undefined; }
   if (!v || typeof v !== 'object') return undefined;
   const d = v as Record<string, unknown>;
   const n = (x: unknown, fallback: number) => (typeof x === 'number' && Number.isFinite(x) ? x : fallback);
@@ -624,7 +629,7 @@ function isCreate(req: VercelRequest): boolean {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (isCreate(req) && !(await enforceRateLimit(suggestLimiter, req, res))) return;
-  const redis = getRedis();
+  const redis = getRawRedis();
   await handleSuggestions({
     redis,
     mailer: resendMailer(),
