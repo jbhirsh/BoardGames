@@ -61,9 +61,8 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
-      - name: Accessibility tests (axe-core on rendered components)
-        run: npx vitest run src/__tests__/a11y.test.tsx
-
+      # The axe-core accessibility suite (src/__tests__/a11y.test.tsx) runs
+      # here with the rest, not in a step of its own that would run it twice.
       - name: Unit tests with coverage
         run: npx vitest run --coverage
 
