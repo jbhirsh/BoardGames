@@ -5,6 +5,7 @@ import { FROM_LIST } from '../utils/fromList';
 import { rulesPathFor } from '../utils/rulebooks';
 import { rulesURL } from '../utils/urls';
 import { AiRulesIcon } from './Icons';
+import ExternalLink from './ExternalLink';
 
 /**
  * A game's Rules action, the same on a card and on a list row's expanded
@@ -31,14 +32,8 @@ export default function RulesLink({ game, className }: { game: Game; className: 
       {content}
     </Link>
   ) : (
-    <a
-      className={className}
-      href={rulesURL(game.name)}
-      aria-label={label}
-      title={label}
-      onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(rulesURL(game.name), '_blank'); }}
-    >
+    <ExternalLink className={className} href={rulesURL(game.name)} aria-label={label} title={label}>
       {content}
-    </a>
+    </ExternalLink>
   );
 }

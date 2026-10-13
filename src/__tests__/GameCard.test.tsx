@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import GameCard from '../components/GameCard';
@@ -96,31 +96,22 @@ describe('GameCard', () => {
 
   it('renders fallback rules link when game has no rules field', () => {
     const noRulesGame: Game = { ...quickGame, rules: '' };
-    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
 
     renderWithContext(<GameCard game={noRulesGame} />);
     const rulesLink = screen.getByTitle('Rules for Quick Game');
-    fireEvent.click(rulesLink);
 
-    expect(openSpy).toHaveBeenCalledWith(
-      expect.stringContaining('google.com/search'),
-      '_blank',
-    );
-    openSpy.mockRestore();
+    expect(rulesLink).toHaveAttribute('href', expect.stringContaining('google.com/search'));
+    expect(rulesLink).toHaveAttribute('target', '_blank');
+    expect(rulesLink).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
   it('renders YouTube link that opens in new window', () => {
-    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
-
     renderWithContext(<GameCard game={quickGame} />);
     const ytLink = screen.getByTitle('Watch Tutorial');
-    fireEvent.click(ytLink);
 
-    expect(openSpy).toHaveBeenCalledWith(
-      expect.stringContaining('youtube.com'),
-      '_blank',
-    );
-    openSpy.mockRestore();
+    expect(ytLink).toHaveAttribute('href', expect.stringContaining('youtube.com'));
+    expect(ytLink).toHaveAttribute('target', '_blank');
+    expect(ytLink).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
   it('renders Word Checker link for bananagrams', () => {

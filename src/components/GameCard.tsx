@@ -11,6 +11,7 @@ import AwardsBadge, { AwardsList } from './AwardsBadge';
 import SubGameList from './SubGameList';
 import DifficultyMeta from './DifficultyMeta';
 import RulesLink from './RulesLink';
+import ExternalLink from './ExternalLink';
 import Popover from './Popover';
 import { FROM_LIST } from '../utils/fromList';
 import { fittingSubgames, subgameLabel } from '../utils/subgames';
@@ -128,15 +129,14 @@ export default function GameCard({ game }: Props) {
               <SearchIcon /> Word Checker
             </Link>
           )}
-          <a
+          <ExternalLink
             className="row-yt"
             href={ytURL(game.yt)}
-            onClick={(e) => { e.preventDefault(); window.open(ytURL(game.yt), '_blank'); }}
             title="Watch Tutorial"
             aria-label={`Watch ${game.name} tutorial on YouTube`}
           >
             <YouTubeIcon />
-          </a>
+          </ExternalLink>
         </div>
       </div>
       {game.subgames && hasFitting && subsOpen && (

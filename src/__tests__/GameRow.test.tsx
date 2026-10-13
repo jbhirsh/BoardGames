@@ -142,17 +142,16 @@ describe('GameRow', () => {
 
   it('searches for the rules from the open panel of a game without a rulebook, without toggling it', () => {
     const onToggle = vi.fn();
-    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     renderRow({ ...quickGame, rules: '' }, true, onToggle);
     const panel = document.querySelector('tr.row-expand') as HTMLElement;
     const link = within(panel).getByRole('link', { name: 'Rules for Quick Game' });
     expect(link).toHaveTextContent(/^Rules$/);
     expect(link).toHaveAttribute('href', expect.stringContaining('google.com/search'));
     expect(link).toHaveAttribute('title', 'Rules for Quick Game');
-    expect(fireEvent.click(link)).toBe(false);
-    expect(openSpy).toHaveBeenCalledWith(expect.stringContaining('google.com/search'), '_blank');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    fireEvent.click(link);
     expect(onToggle).not.toHaveBeenCalled();
-    openSpy.mockRestore();
   });
 
   it('ends the open row with its actions on the right, after the write-up: Rules filled first, the video last', () => {
@@ -226,18 +225,13 @@ describe('GameRow', () => {
 
   it('renders fallback rules link when game has no rules', () => {
     const noRulesGame: Game = { ...quickGame, rules: '' };
-    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     renderRow(noRulesGame, true);
 
     const rulesLinks = screen.getAllByText(/Rules/);
     const link = rulesLinks.find((el) => el.closest('a[href*="google"]'));
-    fireEvent.click(link!);
 
-    expect(openSpy).toHaveBeenCalledWith(
-      expect.stringContaining('google.com/search'),
-      '_blank',
-    );
-    openSpy.mockRestore();
+    expect(link!.closest('a')).toHaveAttribute('href', expect.stringContaining('google.com/search'));
+    expect(link!.closest('a')).toHaveAttribute('target', '_blank');
   });
 
   it('renders Word Checker link for bananagrams when expanded', () => {
@@ -258,18 +252,14 @@ describe('GameRow', () => {
   });
 
   it('renders YouTube link that opens in new window', () => {
-    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     renderRow(quickGame, true);
 
     const ytLinks = screen.getAllByRole('link');
     const ytLink = ytLinks.find((el) => el.getAttribute('href')?.includes('youtube'));
-    fireEvent.click(ytLink!);
 
-    expect(openSpy).toHaveBeenCalledWith(
-      expect.stringContaining('youtube.com'),
-      '_blank',
-    );
-    openSpy.mockRestore();
+    expect(ytLink).toHaveAttribute('href', expect.stringContaining('youtube.com'));
+    expect(ytLink).toHaveAttribute('target', '_blank');
+    expect(ytLink).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
   it('lists the games inside under their own heading in the expanded row', () => {

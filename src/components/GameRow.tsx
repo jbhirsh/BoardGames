@@ -7,6 +7,7 @@ import TableRowCells, { TableRowExpand } from './TableRowCells';
 import SubGameList from './SubGameList';
 import SubGamesTag from './SubGamesTag';
 import RulesLink from './RulesLink';
+import ExternalLink from './ExternalLink';
 import { FROM_LIST } from '../utils/fromList';
 import { fittingSubgames, subgameTitle } from '../utils/subgames';
 import { gameAnchor } from '../utils/heroCovers';
@@ -84,14 +85,13 @@ export default function GameRow({ game, isOpen, onToggle, showGroupBadge }: Prop
               <SearchIcon /> Word Checker
             </Link>
           )}
-          <a
+          <ExternalLink
             className="row-yt"
             href={ytURL(game.yt)}
             aria-label={`Watch ${game.name} tutorial on YouTube`}
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(ytURL(game.yt), '_blank'); }}
           >
             <YouTubeIcon />
-          </a>
+          </ExternalLink>
         </div>
       </TableRowExpand>
     </>

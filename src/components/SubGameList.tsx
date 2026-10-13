@@ -7,6 +7,7 @@ import { rulebookPath } from '../utils/rulebooks';
 import { fittingSubgames, shownKind, subgameNoun } from '../utils/subgames';
 import { YouTubeIcon, AiRulesIcon, UserIcon, ClockIcon } from './Icons';
 import AwardsBadge from './AwardsBadge';
+import ExternalLink from './ExternalLink';
 import DifficultyMeta from './DifficultyMeta';
 import { FROM_LIST } from '../utils/fromList';
 
@@ -87,15 +88,14 @@ function SubGameRow({ parent, sub }: { parent: string; sub: SubGame }) {
             <AiRulesIcon size={14} />
           </Link>
         )}
-        <a
+        <ExternalLink
           className="sub-link sub-yt"
           href={ytURL(sub.yt)}
           aria-label={`Watch ${sub.name} tutorial on YouTube`}
           title="Watch Tutorial"
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(ytURL(sub.yt), '_blank'); }}
         >
           <YouTubeIcon />
-        </a>
+        </ExternalLink>
       </div>
     </li>
   );
