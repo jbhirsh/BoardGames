@@ -1,10 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'fs';
+import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 interface Rule { source: string; headers: { key: string; value: string }[] }
 
-const config = JSON.parse(readFileSync(join(process.cwd(), 'vercel.json'), 'utf-8')) as { headers?: Rule[] };
+const config = JSON.parse(readFileSync(join(process.cwd(), 'vercel.json'), 'utf-8')) as {
+  headers?: Rule[];
+  functions?: Record<string, { maxDuration?: number }>;
+};
 const cacheControl = (rule: Rule) => rule.headers.find((h) => h.key.toLowerCase() === 'cache-control')?.value;
 
 describe('vercel.json headers', () => {
@@ -18,5 +21,17 @@ describe('vercel.json headers', () => {
     // rule reaching them could hold a visitor on an old build.
     const cached = (config.headers ?? []).filter((rule) => cacheControl(rule) !== undefined);
     expect(cached.map((rule) => rule.source)).toEqual(['/assets/(.*)']);
+  });
+});
+
+describe('vercel.json functions', () => {
+  it('gives every API function its own time limit, within the Hobby plan\'s 60 s', () => {
+    const functions = readdirSync(join(process.cwd(), 'api')).filter((f) => f.endsWith('.ts')).map((f) => `api/${f}`);
+    expect(functions.length).toBeGreaterThan(0);
+    for (const f of functions) {
+      const limit = config.functions?.[f]?.maxDuration;
+      expect(limit, f).toBeGreaterThan(0);
+      expect(limit, f).toBeLessThanOrEqual(60);
+    }
   });
 });

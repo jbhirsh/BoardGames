@@ -502,7 +502,9 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   `gemini-2.5-flash`) and streams the reply back as plain text. Validates slug
   format and each of `parts` (must match the same slug regex as `votes.ts`,
   since they pick a file), message length (<=500), history length (<=10) and total
-  history content size, and caps Gemini output tokens. Per-IP rate limited via
+  history content size, and caps Gemini output tokens and time (45 s of
+  the function's 60 s, shared with the one overload retry, so a hung stream
+  ends in the handler's own error path). Per-IP rate limited via
   `_lib/rateLimit.ts`, and capped at 500 questions a day across every caller
   (a fixed-key limiter checked last, so per-IP refusals and bad requests
   don't spend it; its 429 carries `code: 'daily-limit'`, which `RulesChat`
@@ -537,7 +539,8 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   read through `getRawRedis()` (`_lib/redis.ts`), a client with Upstash's
   automatic JSON parsing off, so a value comes back as the text stored (a
   game called `null` or `1.50` stays that). A new suggestion is stored before the email is sent so the emailed links
-  always resolve; if the send call fails the record is dropped from the
+  always resolve; if the send call fails (or passes its 5 s timeout, so a
+  hung Resend can't outlast the function) the record is dropped from the
   active list and marked `unsent` (tracked on `suggestions:unsent`) so the
   suggester can retry, but its links keep working (a timeout can follow a
   real delivery), it still shows in the owner's on-site queue, and
@@ -786,7 +789,8 @@ secrets belong in tracked source.
 
 Vercel (`vercel.json`): `framework: vite`, output `dist/`, SPA rewrites send
 non-API, non-file routes to `index.html`, and `api/*` maps to the serverless
-functions. The content-hashed build output under `/assets/` is served
+functions, each with its own `maxDuration` (chat 60 s for streaming, the
+others 10 to 15 s; the Hobby plan allows 60). The content-hashed build output under `/assets/` is served
 `public, max-age=31536000, immutable`; `index.html` and `sw.js` revalidate. CI (`.github/workflows/ci.yml`) runs lint, type-check, a11y tests,
 unit tests with coverage, a build and a production dependency audit
 (`npm audit --omit=dev`, high and above) on `ubuntu-latest` for every PR to

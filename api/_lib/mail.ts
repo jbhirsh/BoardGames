@@ -16,8 +16,13 @@ export function ownerEmail(): string | null {
   return process.env.SUGGESTIONS_TO || null;
 }
 
+// Long enough for a slow Resend, short enough that a hung one fails inside
+// the function's own time limit: the caller's error path (a suggestion marked
+// unsent so it can be retried) only runs if the send gives up first.
+const RESEND_TIMEOUT_MS = 5000;
+
 /** Resend's REST API; null until RESEND_API_KEY and SUGGESTIONS_TO are configured. */
-export function resendMailer(fetchLike: typeof fetch = fetch): Mailer | null {
+export function resendMailer(fetchLike: typeof fetch = fetch, timeoutMs = RESEND_TIMEOUT_MS): Mailer | null {
   const key = process.env.RESEND_API_KEY;
   const to = ownerEmail();
   if (!key || !to) return null;
@@ -28,6 +33,7 @@ export function resendMailer(fetchLike: typeof fetch = fetch): Mailer | null {
         method: 'POST',
         headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ from, to, subject: mail.subject, html: mail.html }),
+        signal: AbortSignal.timeout(timeoutMs),
       });
       if (!r.ok) throw new Error(`Resend responded ${r.status}`);
     },

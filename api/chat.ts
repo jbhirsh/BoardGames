@@ -32,6 +32,12 @@ const CUT_OFF_NOTE = '\n\n_(Answer cut off — please try again.)_';
 // moment: one retry after a short wait turns most of those into an answer.
 const RETRY_DELAY_MS = 1000;
 
+// Vercel ends the function at its maxDuration (60 s, vercel.json). Gemini
+// gets this much of it, shared by both attempts, so a hung stream ends in the
+// error path below (a 500, or the cut-off note) rather than the platform's
+// kill, leaving time for the rate-limit checks before and Sentry's flush after.
+const GEMINI_BUDGET_MS = 45_000;
+
 function isOverloaded(err: unknown): boolean {
   return (err as { status?: unknown } | null)?.status === 503;
 }
@@ -153,6 +159,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // the wire, so a later failure can only end the response with a note.
   let streaming = false;
   let retried = false;
+  const deadline = Date.now() + GEMINI_BUDGET_MS;
   for (;;) {
     try {
       const response = await streamRulesAnswer({
@@ -160,6 +167,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         message,
         history,
         apiKey: process.env.GEMINI_API_KEY!,
+        timeoutMs: Math.max(0, deadline - Date.now()),
       });
 
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');

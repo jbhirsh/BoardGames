@@ -158,6 +158,8 @@ export interface StreamRulesAnswerOptions {
   temperature?: number;
   /** Output-token cap; defaults to RULES_ASSISTANT_MAX_OUTPUT_TOKENS. */
   maxOutputTokens?: number;
+  /** Abandons the call, streamed reply included, after this long; omitted, it waits indefinitely. */
+  timeoutMs?: number;
 }
 
 /** Prompt construction + Gemini call; returns the streaming response. */
@@ -172,6 +174,7 @@ export async function streamRulesAnswer(
       systemInstruction: RULES_ASSISTANT_SYSTEM_INSTRUCTION,
       maxOutputTokens: options.maxOutputTokens ?? RULES_ASSISTANT_MAX_OUTPUT_TOKENS,
       ...(options.temperature !== undefined ? { temperature: options.temperature } : {}),
+      ...(options.timeoutMs !== undefined ? { abortSignal: AbortSignal.timeout(options.timeoutMs) } : {}),
     },
   });
 }

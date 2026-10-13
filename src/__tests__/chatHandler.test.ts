@@ -240,6 +240,19 @@ describe('chat handler', () => {
       expect(vi.mocked(Sentry.captureException)).not.toHaveBeenCalled();
     });
 
+    it('gives both attempts one shared time budget, under the function\'s 60 s limit', async () => {
+      vi.mocked(streamRulesAnswer)
+        .mockRejectedValueOnce(overloaded)
+        .mockResolvedValueOnce(fakeStream('Hello') as unknown as Stream);
+      const pending = run({ slug: 'catan', message: 'hi' });
+      await vi.runAllTimersAsync();
+      await pending;
+      const [first, second] = vi.mocked(streamRulesAnswer).mock.calls.map(([o]) => o.timeoutMs ?? 0);
+      expect(first).toBeGreaterThan(0);
+      expect(first).toBeLessThanOrEqual(45_000);
+      expect(second).toBe(first - 1000);
+    });
+
     it('returns 500 and reports once when the retry fails too', async () => {
       vi.mocked(streamRulesAnswer).mockRejectedValue(overloaded);
       const pending = run({ slug: 'catan', message: 'hi' });
