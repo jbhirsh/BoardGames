@@ -66,6 +66,13 @@ ${button(link, 'Sign in', '#0071E3')}
 
 const html = (res: AuthResponse) => res.setHeader('Content-Type', 'text/html; charset=utf-8');
 
+// The sign-in link and its confirmation form open in a browser, so a bad
+// token gets a page a person can read, not JSON.
+const badLink = (res: AuthResponse) => html(res).status(400).send(page(
+  'Link not recognised',
+  '<p>This sign-in link is incomplete or mistyped. Ask for a new one from the wishlist.</p>',
+));
+
 export async function handleAuth(deps: AuthDeps, req: AuthRequest, res: AuthResponse): Promise<AuthResponse> {
   const { redis } = deps;
   try {
@@ -74,9 +81,7 @@ export async function handleAuth(deps: AuthDeps, req: AuthRequest, res: AuthResp
       if (token === undefined) {
         return res.status(200).json({ admin: await isAdmin(redis, req.headers) });
       }
-      if (typeof token !== 'string' || !ID_RE.test(token)) {
-        return res.status(400).json({ error: 'invalid token' });
-      }
+      if (typeof token !== 'string' || !ID_RE.test(token)) return badLink(res);
       const live = (await redis.get(magicKey(token))) !== null;
       html(res);
       if (!live) {
@@ -95,9 +100,7 @@ export async function handleAuth(deps: AuthDeps, req: AuthRequest, res: AuthResp
 
       if (body.action === 'verify') {
         const token = body.token;
-        if (typeof token !== 'string' || !ID_RE.test(token)) {
-          return res.status(400).json({ error: 'invalid token' });
-        }
+        if (typeof token !== 'string' || !ID_RE.test(token)) return badLink(res);
         // getdel makes the link single-use even under a double submit.
         if ((await redis.getdel(magicKey(token))) === null) {
           html(res);

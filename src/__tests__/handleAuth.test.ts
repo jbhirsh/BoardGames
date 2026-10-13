@@ -127,6 +127,8 @@ describe('handleAuth', () => {
       const bad = makeRes();
       await handleAuth(deps(), { method: 'GET', query: { token: 'nope' }, headers: {} }, bad);
       expect(bad.statusCode).toBe(400);
+      expect(bad.headers['Content-Type']).toBe('text/html; charset=utf-8');
+      expect(String(bad.body)).toContain('<h1>Link not recognised</h1>');
     });
   });
 
@@ -156,7 +158,12 @@ describe('handleAuth', () => {
       expect(res.statusCode).toBe(403);
       expect(String(res.body)).toContain('Link expired');
       expect(res.headers['Set-Cookie']).toBeUndefined();
-      expect((await verify('short')).res.statusCode).toBe(400);
+      for (const token of ['short', undefined]) {
+        const bad = (await verify(token)).res;
+        expect(bad.statusCode).toBe(400);
+        expect(bad.headers['Content-Type']).toBe('text/html; charset=utf-8');
+        expect(String(bad.body)).toContain('<h1>Link not recognised</h1>');
+      }
     });
   });
 

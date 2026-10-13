@@ -532,7 +532,8 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   `pending`; `GET ?action=approve|deny&id&token` verifies the token and
   renders a confirmation page whose form `POST`s `{ decision, id, token }`
   to flip the status (a bare GET never mutates, because mail link-scanners
-  follow every URL); plain `GET` lists approved suggestions, which the
+  follow every URL); a malformed, unknown or mismatched link, on either
+  step, gets a standalone page with its 400, 404 or 403, not JSON; plain `GET` lists approved suggestions, which the
   wishlist renders under "Suggested by friends". Redis keeps one hash per
   suggestion plus two id lists, `suggestions:active` (pending + approved,
   for duplicate checks) and `suggestions:approved` (the public list),
@@ -575,7 +576,8 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   when it matches `SUGGESTIONS_TO`, emails a single-use link (a random token
   in Redis with a 15-minute TTL). The link opens a confirmation page whose
   form `POST`s `{ action: 'verify', token }` (mail scanners follow links, so
-  a bare GET never signs anyone in); that consumes the token with `getdel`,
+  a bare GET never signs anyone in; a malformed token on either step gets a
+  standalone page with its 400, not JSON); that consumes the token with `getdel`,
   stores a session id for 30 days and sets it as an HttpOnly, Secure,
   SameSite=Lax cookie. `GET` reports `{ admin }` for the cookie it carries;
   `POST { action: 'logout' }` deletes the session. Helpers in
