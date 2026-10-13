@@ -567,10 +567,12 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   wishlist (stored approved with `source: 'owner'`, enriched the same way),
   `PATCH { id, game?, note?, details? }` edits how it reads (players, time,
   description, keywords, section) and `DELETE { id }` takes it off (status
-  `removed`, hash kept, lists forget it). Every owner mutation must be a
-  JSON request: a cross-site form can post urlencoded bodies with the
-  cookie attached but cannot send JSON without a preflight, so the
-  content type is the CSRF check.
+  `removed`, hash kept, lists forget it). CSRF protection is mainly the
+  session cookie's SameSite=Lax, which keeps it off cross-site POSTs. As a
+  second layer every owner mutation must be a JSON request, judged by the
+  media type alone (`text/plain; x=application/json` fails): a cross-site
+  form can post urlencoded bodies but cannot send JSON without a
+  preflight.
 - **`auth.ts`** — owner sign-in by magic link, so there is an admin mode but
   no password. `POST { email }` answers the same for every address and, only
   when it matches `SUGGESTIONS_TO`, emails a single-use link (a random token
@@ -579,8 +581,9 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   a bare GET never signs anyone in; a malformed token on either step gets a
   standalone page with its 400, not JSON); that consumes the token with `getdel`,
   stores a session id for 30 days and sets it as an HttpOnly, Secure,
-  SameSite=Lax cookie. `GET` reports `{ admin }` for the cookie it carries;
-  `POST { action: 'logout' }` deletes the session. Helpers in
+  SameSite=Lax cookie (the main CSRF defence). `GET` reports `{ admin }`
+  for the cookie it carries; `POST { action: 'logout' }`, JSON only like
+  every owner mutation, deletes the session. Helpers in
   `_lib/session.ts` (cookie parsing, `isAdmin`, the JSON check) and
   `_lib/mail.ts` (Resend, the public origin, the standalone pages) are
   shared with `suggestions.ts`. Link requests are rate limited per IP.
