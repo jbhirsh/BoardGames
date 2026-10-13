@@ -4,7 +4,17 @@
   "devCommand": "npx vite --port $PORT",
   "functions": {
     "api/chat.ts": {
-      "includeFiles": "rules-text/**"
+      "includeFiles": "rules-text/**",
+      "maxDuration": 60
+    },
+    "api/suggestions.ts": {
+      "maxDuration": 15
+    },
+    "api/auth.ts": {
+      "maxDuration": 15
+    },
+    "api/votes.ts": {
+      "maxDuration": 10
     }
   },
   "headers": [

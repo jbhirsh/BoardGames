@@ -9,6 +9,7 @@ import {
   type SuggestionsResponse,
   type Mail,
 } from '../../api/suggestions';
+import { resendMailer } from '../../api/_lib/mail';
 import { KW, WISHLIST_SECTIONS } from '../data/keywords';
 
 function makeRes() {
@@ -444,6 +445,27 @@ describe('handleSuggestions', () => {
       await handleSuggestions(ok, { method: 'POST', query: {}, body: valid }, res);
       expect(res.statusCode).toBe(201);
       expect(ok.sent).toHaveLength(1);
+    });
+
+    it('marks it unsent when Resend hangs, rather than waiting out the function', async () => {
+      vi.stubEnv('RESEND_API_KEY', 're_test');
+      vi.stubEnv('SUGGESTIONS_TO', 'owner@example.com');
+      try {
+        // Answers only by failing once the mailer's timeout aborts it.
+        const hanging = vi.fn((_url: string | URL | Request, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(init.signal?.reason));
+        }));
+        const redis = makeRedis();
+        const res = makeRes();
+        await handleSuggestions(deps({ redis, mailer: resendMailer(hanging, 10) }), { method: 'POST', query: {}, body: valid }, res);
+        expect(hanging).toHaveBeenCalledTimes(1);
+        expect(res.statusCode).toBe(500);
+        expect(redis.store['suggestions:sug-bbbbbb'].status).toBe('unsent');
+        expect(redis.lists['suggestions:active']).toEqual([]);
+        expect(redis.lists['suggestions:unsent']).toEqual(['sug-bbbbbb']);
+      } finally {
+        vi.unstubAllEnvs();
+      }
     });
 
     it('does not email when the store itself fails', async () => {

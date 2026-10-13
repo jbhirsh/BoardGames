@@ -196,6 +196,16 @@ describe('streamRulesAnswer', () => {
     expect('temperature' in request.config).toBe(false);
   });
 
+  it('bounds the call with an abort signal only when given a timeout', async () => {
+    mocks.generateContentStream.mockResolvedValue(fakeStream());
+    await streamRulesAnswer({ rulesText: 'RULES TEXT', message: 'q', apiKey: 'test-key', timeoutMs: 30_000 });
+    const signal = lastRequest().config.abortSignal;
+    expect(signal).toBeInstanceOf(AbortSignal);
+    expect(signal.aborted).toBe(false);
+    await streamRulesAnswer({ rulesText: 'RULES TEXT', message: 'q', apiKey: 'test-key' });
+    expect('abortSignal' in lastRequest().config).toBe(false);
+  });
+
   it('forwards temperature 0 and an explicit maxOutputTokens when provided', async () => {
     mocks.generateContentStream.mockResolvedValue(fakeStream());
     await streamRulesAnswer({
