@@ -1,5 +1,6 @@
 import { useEffect, useId, useState, type FormEvent } from 'react';
 import { WISHLIST_SECTIONS, WISHLIST_TYPES } from '../data/keywords';
+import { GAME_MAX, GAME_MIN, NAME_MAX, NOTE_MAX } from '../data/suggestionLimits';
 import { getDisplayName, setDisplayName } from '../hooks/displayName';
 import { useWishlistItems } from '../context/useWishlistItems';
 import { alreadyListed } from '../utils/alreadyListed';
@@ -116,16 +117,16 @@ function AddGameForm() {
       <h4 id={`${uid}-title`} className="admin-subtitle">Add a game</h4>
       <div className="suggest-fields">
         <label className="suggest-label" htmlFor={`${uid}-game`}>Game</label>
-        <input id={`${uid}-game`} className="suggest-input" value={game} onChange={(e) => setGame(e.target.value)} required minLength={2} maxLength={80} placeholder="Ark Nova" />
+        <input id={`${uid}-game`} className="suggest-input" value={game} onChange={(e) => setGame(e.target.value)} required minLength={GAME_MIN} maxLength={GAME_MAX} placeholder="Ark Nova" />
         <label className="suggest-label" htmlFor={`${uid}-type`}>Section</label>
         <select id={`${uid}-type`} className="suggest-input" value={type} onChange={(e) => setType(e.target.value)}>
           {WISHLIST_SECTIONS.map((t) => <option key={t} value={t}>{WISHLIST_TYPES[t]}</option>)}
           <option value="">{WISHLIST_TYPES.suggested}</option>
         </select>
         <label className="suggest-label" htmlFor={`${uid}-name`}>Added by</label>
-        <input id={`${uid}-name`} className="suggest-input" value={name} onChange={(e) => setName(e.target.value)} required maxLength={30} />
+        <input id={`${uid}-name`} className="suggest-input" value={name} onChange={(e) => setName(e.target.value)} required maxLength={NAME_MAX} />
         <label className="suggest-label" htmlFor={`${uid}-note`}>Note <span className="suggest-opt">(optional)</span></label>
-        <input id={`${uid}-note`} className="suggest-input" value={note} onChange={(e) => setNote(e.target.value)} maxLength={200} placeholder="Shows on the card in quotes" />
+        <input id={`${uid}-note`} className="suggest-input" value={note} onChange={(e) => setNote(e.target.value)} maxLength={NOTE_MAX} placeholder="Shows on the card in quotes" />
       </div>
       <div className="suggest-actions">
         <button type="submit" className="suggest-btn" disabled={status.kind === 'sending'}>

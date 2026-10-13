@@ -13,11 +13,13 @@ export type { Mail, Mailer } from './_lib/mail.js';
 
 initSentry();
 
-// Same display-name shape as the client's utils/displayName.ts.
-const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} .'-]{0,29}$/u;
-const GAME_MIN = 2;
-const GAME_MAX = 80;
-const NOTE_MAX = 200;
+// Same display-name shape as the client's utils/displayName.ts. It and the
+// bounds below are mirrored by the client's forms (src/data/suggestionLimits.ts),
+// which tests keep in step.
+export const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} .'-]{0,29}$/u;
+export const GAME_MIN = 2;
+export const GAME_MAX = 80;
+export const NOTE_MAX = 200;
 const TOKEN_RE = /^[A-Za-z0-9_-]{20,64}$/;
 
 // Ids that still count for duplicate checks (pending + approved) and ids the
@@ -53,9 +55,9 @@ export const KEYWORD_IDS = [
   'team', 'party', 'adult', 'active', 'creative', 'card-game', 'word', 'family', 'classic', 'thematic',
   'portable', 'quick-play',
 ] as const;
-const DESC_MAX = 600;
-const MINS_MAX = 600;
-const PLAYERS_MAX = 99;
+export const DESC_MAX = 600;
+export const MINS_MAX = 600;
+export const PLAYERS_MAX = 99;
 const KW_MAX = 20;
 
 /** Details filled in from BoardGameGeek on approval, editable by the owner. */

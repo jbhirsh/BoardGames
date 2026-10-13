@@ -2,6 +2,8 @@ import { useId, useState, type FormEvent } from 'react';
 import { getDisplayName, setDisplayName } from '../hooks/displayName';
 import { isValidDisplayName, NAME_HINT } from '../utils/displayName';
 import { alreadyListed } from '../utils/alreadyListed';
+import { GAME_MAX, GAME_MIN, NAME_MAX, NOTE_MAX } from '../data/suggestionLimits';
+import { callJson } from '../hooks/adminApi';
 
 type Status = { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent'; game: string } | { kind: 'error'; message: string };
 
@@ -30,24 +32,15 @@ export default function SuggestForm() {
       return;
     }
     setStatus({ kind: 'sending' });
-    try {
-      const r = await fetch('/api/suggestions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ game: game.trim(), name: trimmedName, note: note.trim() }),
-      });
-      const data = (await r.json().catch(() => ({}))) as { error?: string };
-      if (!r.ok) {
-        setStatus({ kind: 'error', message: data.error ?? 'Something went wrong. Try again in a minute.' });
-        return;
-      }
-      if (trimmedName) setDisplayName(trimmedName);
-      setStatus({ kind: 'sent', game: game.trim() });
-      setGame('');
-      setNote('');
-    } catch {
-      setStatus({ kind: 'error', message: 'Something went wrong. Try again in a minute.' });
+    const result = await callJson('/api/suggestions', 'POST', { game: game.trim(), name: trimmedName, note: note.trim() });
+    if (!result.ok) {
+      setStatus({ kind: 'error', message: result.error });
+      return;
     }
+    if (trimmedName) setDisplayName(trimmedName);
+    setStatus({ kind: 'sent', game: game.trim() });
+    setGame('');
+    setNote('');
   };
 
   return (
@@ -56,11 +49,11 @@ export default function SuggestForm() {
       <p className="suggest-sub">Know something we'd love? Jess gets an email and can add it with one click.</p>
       <div className="suggest-fields">
         <label className="suggest-label" htmlFor={`${uid}-game`}>Game</label>
-        <input id={`${uid}-game`} className="suggest-input" value={game} onChange={(e) => setGame(e.target.value)} required minLength={2} maxLength={80} placeholder="e.g. Kingdomino" />
+        <input id={`${uid}-game`} className="suggest-input" value={game} onChange={(e) => setGame(e.target.value)} required minLength={GAME_MIN} maxLength={GAME_MAX} placeholder="e.g. Kingdomino" />
         <label className="suggest-label" htmlFor={`${uid}-name`}>Your name</label>
-        <input id={`${uid}-name`} className="suggest-input" value={name} onChange={(e) => setName(e.target.value)} required maxLength={30} autoComplete="given-name" placeholder="e.g. Alex" />
+        <input id={`${uid}-name`} className="suggest-input" value={name} onChange={(e) => setName(e.target.value)} required maxLength={NAME_MAX} autoComplete="given-name" placeholder="e.g. Alex" />
         <label className="suggest-label" htmlFor={`${uid}-note`}>Why? <span className="suggest-opt">(optional)</span></label>
-        <input id={`${uid}-note`} className="suggest-input" value={note} onChange={(e) => setNote(e.target.value)} maxLength={200} placeholder="e.g. Great with six people" />
+        <input id={`${uid}-note`} className="suggest-input" value={note} onChange={(e) => setNote(e.target.value)} maxLength={NOTE_MAX} placeholder="e.g. Great with six people" />
       </div>
       <div className="suggest-actions">
         <button type="submit" className="suggest-btn" disabled={status.kind === 'sending'}>

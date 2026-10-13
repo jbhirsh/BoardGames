@@ -4,6 +4,7 @@ import AdminPanel from '../components/AdminPanel';
 import { AuthContext } from '../context/authContextValue';
 import { WishlistContext } from '../context/wishlistContextValue';
 import { WISHLIST } from '../data/wishlist';
+import { GAME_MAX, GAME_MIN, NAME_MAX, NOTE_MAX } from '../data/suggestionLimits';
 import type { WishlistItem } from '../data/types';
 
 function jsonResponse(body: unknown, ok = true): Response {
@@ -87,6 +88,16 @@ describe('AdminPanel', () => {
     mockApi(new Error('offline'));
     renderPanel();
     expect(await screen.findByText(/Couldn't load the queue/)).toBeInTheDocument();
+  });
+
+  it('bounds each field of the add form as the API does', async () => {
+    mockApi({ items: [] });
+    renderPanel();
+    const form = await screen.findByRole('form', { name: 'Add a game' });
+    expect(within(form).getByLabelText('Game')).toHaveAttribute('minlength', String(GAME_MIN));
+    expect(within(form).getByLabelText('Game')).toHaveAttribute('maxlength', String(GAME_MAX));
+    expect(within(form).getByLabelText('Added by')).toHaveAttribute('maxlength', String(NAME_MAX));
+    expect(within(form).getByLabelText(/Note/)).toHaveAttribute('maxlength', String(NOTE_MAX));
   });
 
   it('adds a game with the chosen section, remembers the name and reloads', async () => {

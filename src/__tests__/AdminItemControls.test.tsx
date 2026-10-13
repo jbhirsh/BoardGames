@@ -4,6 +4,7 @@ import AdminItemControls from '../components/AdminItemControls';
 import { AuthContext } from '../context/authContextValue';
 import { WishlistContext } from '../context/wishlistContextValue';
 import type { WishlistItem } from '../data/types';
+import { DESC_MAX, GAME_MAX, GAME_MIN, MINS_MAX, PLAYERS_MAX } from '../data/suggestionLimits';
 
 function jsonResponse(body: unknown, ok = true): Response {
   return { ok, json: async () => body } as unknown as Response;
@@ -68,6 +69,18 @@ describe('AdminItemControls', () => {
     } });
     expect(screen.queryByRole('form')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Edit Root' })).toBeInTheDocument();
+  });
+
+  it('bounds each field of the edit form as the API does', () => {
+    renderControls();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Root' }));
+    const form = screen.getByRole('form', { name: 'Edit Root' });
+    expect(within(form).getByLabelText('Name')).toHaveAttribute('minlength', String(GAME_MIN));
+    expect(within(form).getByLabelText('Name')).toHaveAttribute('maxlength', String(GAME_MAX));
+    expect(within(form).getByLabelText('Minimum players')).toHaveAttribute('max', String(PLAYERS_MAX));
+    expect(within(form).getByLabelText('Maximum players')).toHaveAttribute('max', String(PLAYERS_MAX));
+    expect(within(form).getByLabelText('Minutes')).toHaveAttribute('max', String(MINS_MAX));
+    expect(within(form).getByLabelText('Description')).toHaveAttribute('maxlength', String(DESC_MAX));
   });
 
   it('keeps the form open and shows the reason when saving fails, and cancels cleanly', async () => {
