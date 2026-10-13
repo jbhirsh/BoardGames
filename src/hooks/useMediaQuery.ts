@@ -1,5 +1,8 @@
 import { useCallback, useSyncExternalStore } from 'react';
 
+/** The media query for someone who asked their system for less motion. */
+export const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
+
 function mediaQuery(query: string): MediaQueryList | null {
   return typeof window !== 'undefined' && typeof window.matchMedia === 'function' ? window.matchMedia(query) : null;
 }

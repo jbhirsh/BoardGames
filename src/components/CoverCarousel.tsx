@@ -3,12 +3,11 @@ import { flushSync } from 'react-dom';
 import { GAMES } from '../data/games';
 import { useFilter } from '../context/useFilter';
 import { useWishlistItems } from '../context/useWishlistItems';
-import { useMediaQuery } from '../hooks/useMediaQuery';
+import { REDUCED_MOTION, useMediaQuery } from '../hooks/useMediaQuery';
 import { filterWishlist } from '../utils/filterGames';
 import { ownCovers, wantCovers, SECONDS_PER_COVER, STILL_COUNT, type HeroCover } from '../utils/heroCovers';
 import { PauseIcon, PlayIcon } from './Icons';
 
-const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
 // The first covers on screen load with the page. The rest wait (lazy)
 // until it has settled, then all load: a lazy image in the clipped row
 // only starts once it is already gliding into view, and would show its

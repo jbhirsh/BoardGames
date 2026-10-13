@@ -6,6 +6,7 @@ import { findMatches, piecesOf, type Match } from '../utils/pdfSearch';
 import { findCited, lineBreaks, passageStart } from '../utils/citeMatch';
 import { CANT_SHOW } from './cantShow';
 import { safeSessionStorage } from '../client/safeStorage';
+import { REDUCED_MOTION } from '../hooks/useMediaQuery';
 import { drawOrder, OFF_SCREEN, renderQueue, type RenderQueue } from '../pdfjs/renderQueue';
 import { heldDocument, openDocument, readerOpens, sharedWorker, textOf as readTextOf, warmPage, type PageTextData } from '../pdfjs/documents';
 
@@ -61,7 +62,7 @@ function rememberJump(id: string) {
  * InstantRouteScroll turns off for the route change a jump comes with.
  */
 function scrollBehavior(): ScrollBehavior {
-  return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth';
+  return typeof window.matchMedia === 'function' && window.matchMedia(REDUCED_MOTION).matches ? 'instant' : 'smooth';
 }
 
 /** How far below the top of the screen a jump puts a page: its scroll margin, clear of the search bar. */

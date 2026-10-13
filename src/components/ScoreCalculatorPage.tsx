@@ -66,6 +66,10 @@ function tally(p: PlayerScores): Tally {
   };
 }
 
+// 7 Wonders' player count.
+const MIN_PLAYERS = 2;
+const MAX_PLAYERS = 7;
+
 // The game in progress survives a reload, a back-swipe or a discarded tab.
 const STORAGE_KEY = 'gameroom:score:7-wonders';
 
@@ -87,7 +91,7 @@ function loadGame(): SavedGame {
     const saved: unknown = JSON.parse(safeStorage.get(STORAGE_KEY) ?? 'null');
     if (typeof saved === 'object' && saved !== null) {
       const { players, active } = saved as Record<string, unknown>;
-      if (Array.isArray(players) && players.length >= 2 && players.length <= 7 && players.every(isPlayer)
+      if (Array.isArray(players) && players.length >= MIN_PLAYERS && players.length <= MAX_PLAYERS && players.every(isPlayer)
         && new Set(players.map(p => p.id)).size === players.length) {
         nextPlayerId = Math.max(nextPlayerId, ...players.map(p => p.id + 1));
         const idx = typeof active === 'number' && active >= 0 && active < players.length ? active : 0;
@@ -105,16 +109,27 @@ function saveGame(game: SavedGame): void {
   safeStorage.set(STORAGE_KEY, JSON.stringify(game));
 }
 
+// Each category's colour, the same on the form and the Results sheet.
+const COLORS: Record<keyof Omit<Breakdown, 'total'>, string> = {
+  military: '#d44',
+  treasury: '#c90',
+  wonder: '#a87b4f',
+  civilian: '#3b82f6',
+  science: '#22c55e',
+  commercial: '#ca8a04',
+  guilds: '#8b5cf6',
+};
+
 // Each box says what it takes: points as the pad scores them, or the coins
 // the page converts. Wonder is the pad's points for the stages built, not
 // how many were built.
 const CATEGORIES = [
-  { key: 'military', label: 'Military', unit: 'VP', color: '#d44' },
-  { key: 'coins', label: 'Treasury', unit: 'coins', color: '#c90' },
-  { key: 'wonder', label: 'Wonder', unit: 'VP', color: '#a87b4f' },
-  { key: 'civilian', label: 'Civilian (Blue)', unit: 'VP', color: '#3b82f6' },
-  { key: 'commercial', label: 'Commercial (Yellow)', unit: 'VP', color: '#ca8a04' },
-  { key: 'guilds', label: 'Guilds (Purple)', unit: 'VP', color: '#8b5cf6' },
+  { key: 'military', label: 'Military', unit: 'VP', color: COLORS.military },
+  { key: 'coins', label: 'Treasury', unit: 'coins', color: COLORS.treasury },
+  { key: 'wonder', label: 'Wonder', unit: 'VP', color: COLORS.wonder },
+  { key: 'civilian', label: 'Civilian (Blue)', unit: 'VP', color: COLORS.civilian },
+  { key: 'commercial', label: 'Commercial (Yellow)', unit: 'VP', color: COLORS.commercial },
+  { key: 'guilds', label: 'Guilds (Purple)', unit: 'VP', color: COLORS.guilds },
 ] as const;
 
 interface ScoreInputProps {
@@ -162,17 +177,15 @@ function ScoreInput({ id, unit, value, color, negative = false, describedBy, lab
   );
 }
 
-const SCIENCE_COLOR = '#22c55e';
-
 // The Results sheet's rows, in the printed pad's order.
-const SHEET_ROWS: { key: keyof Omit<Breakdown, 'total'>; label: string; icon: ScoreIconKind; color: string }[] = [
-  { key: 'military', label: 'Military', icon: 'military', color: '#d44' },
-  { key: 'treasury', label: 'Treasury', icon: 'treasury', color: '#c90' },
-  { key: 'wonder', label: 'Wonder', icon: 'wonder', color: '#a87b4f' },
-  { key: 'civilian', label: 'Civilian', icon: 'civilian', color: '#3b82f6' },
-  { key: 'science', label: 'Science', icon: 'science', color: SCIENCE_COLOR },
-  { key: 'commercial', label: 'Commercial', icon: 'commercial', color: '#ca8a04' },
-  { key: 'guilds', label: 'Guilds', icon: 'guilds', color: '#8b5cf6' },
+const SHEET_ROWS: { key: keyof Omit<Breakdown, 'total'>; label: string; icon: ScoreIconKind }[] = [
+  { key: 'military', label: 'Military', icon: 'military' },
+  { key: 'treasury', label: 'Treasury', icon: 'treasury' },
+  { key: 'wonder', label: 'Wonder', icon: 'wonder' },
+  { key: 'civilian', label: 'Civilian', icon: 'civilian' },
+  { key: 'science', label: 'Science', icon: 'science' },
+  { key: 'commercial', label: 'Commercial', icon: 'commercial' },
+  { key: 'guilds', label: 'Guilds', icon: 'guilds' },
 ];
 
 const ICON_FOR: Record<typeof CATEGORIES[number]['key'], ScoreIconKind> = {
@@ -242,13 +255,13 @@ export default function ScoreCalculatorPage() {
   }
 
   function addPlayer() {
-    if (players.length >= 7) return;
+    if (players.length >= MAX_PLAYERS) return;
     setPlayers(prev => [...prev, emptyScores(`Player ${prev.length + 1}`)]);
     setActivePlayer(players.length);
   }
 
   function removePlayer(idx: number) {
-    if (players.length <= 2) return;
+    if (players.length <= MIN_PLAYERS) return;
     const p = players[idx];
     if (hasScores(p) && !window.confirm(`Remove ${p.name} and their scores?`)) return;
     setPlayers(prev => prev.filter((_, i) => i !== idx));
@@ -326,7 +339,7 @@ export default function ScoreCalculatorPage() {
               >
                 {p.name}
               </button>
-              {players.length > 2 && (
+              {players.length > MIN_PLAYERS && (
                 <button
                   type="button"
                   className="sc-player-remove"
@@ -339,7 +352,7 @@ export default function ScoreCalculatorPage() {
             </div>
           ))}
         </div>
-        {players.length < 7 && (
+        {players.length < MAX_PLAYERS && (
           <button type="button" className="sc-add-player" aria-label="Add player" onClick={addPlayer}>+</button>
         )}
         <button
@@ -374,7 +387,7 @@ export default function ScoreCalculatorPage() {
                 {SHEET_ROWS.map(row => (
                   <tr key={row.key}>
                     <th scope="row">
-                      <span className="sc-sheet-label" style={{ color: row.color }}><ScoreIcon kind={row.icon} /></span>
+                      <span className="sc-sheet-label" style={{ color: COLORS[row.key] }}><ScoreIcon kind={row.icon} /></span>
                       {row.label}
                     </th>
                     {players.map((p, i) => (
@@ -462,7 +475,7 @@ export default function ScoreCalculatorPage() {
 
             <div className="sc-science-section">
               <div className="sc-label">
-                <span className="sc-label-icon" style={{ color: SCIENCE_COLOR }}><ScoreIcon kind="science" /></span>
+                <span className="sc-label-icon" style={{ color: COLORS.science }}><ScoreIcon kind="science" /></span>
                 <span className="sc-label-text">
                   <span>Science (Green)</span>
                   {/* The icons say which symbol; the unit is said once, here. */}
@@ -475,13 +488,13 @@ export default function ScoreCalculatorPage() {
               </div>
               <div className="sc-science-inputs">
                 {(['tablets', 'compasses', 'gears'] as const).map((field) => (
-                  <label key={field} className="sc-science-field" htmlFor={`sc-${field}`} style={{ color: SCIENCE_COLOR }}>
+                  <label key={field} className="sc-science-field" htmlFor={`sc-${field}`} style={{ color: COLORS.science }}>
                     <ScoreIcon kind={field} />
                     <ScoreInput
                       id={`sc-${field}`}
                       label={field}
                       value={current[field]}
-                      color={SCIENCE_COLOR}
+                      color={COLORS.science}
                       describedBy="sc-science-unit sc-science-vp"
                       onChange={(e) => updateField(field, cleanInput(e.target.value, false))}
                     />
