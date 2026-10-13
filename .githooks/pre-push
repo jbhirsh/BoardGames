@@ -1,15 +1,65 @@
 #!/bin/sh
-# Full pre-flight before code leaves the machine — the half of CI too slow to
-# run on every commit: the test suite (a11y included) under the coverage
-# thresholds CI enforces, plus the production build. `vite build` can fail
-# where `tsc -b` passes (see the #26 extensionless-ESM-import incident that
-# broke production), so building here closes that gap before it reaches CI.
+# Pre-flight before code leaves the machine: the tests that touch what this
+# push changes, plus the production build. `vite build` can fail where
+# `tsc -b` passes (see the #26 extensionless-ESM-import incident that broke
+# production), so building here closes that gap before it reaches CI.
+#
+# The whole suite under the coverage thresholds is CI's job: run here it took
+# minutes on every push, and a per-file threshold can't be judged on a subset.
+# `vitest related` runs the test files that import a changed code file,
+# directly or not, and any changed test file itself. Files no test reads
+# (docs, workflows, hooks, the e2e suite, the data scripts) need no tests.
+# Anything else runs the whole suite, still without coverage: dependencies
+# and config, but also the files tests read rather than import (the rules
+# text, PDFs and word lists, App.css's theme tokens, vercel.json, the
+# Stryker config, the eval's golden set, the PR template, test fixtures).
 #
 # No-op in CI (see pre-commit).
 [ -n "$CI" ] && exit 0
 
 set -e
-echo "▶ pre-push: vitest --coverage"
-npx vitest run --coverage
+zero=0000000000000000000000000000000000000000
+changed=$(mktemp)
+trap 'rm -f "$changed"' EXIT
+
+# Git passes one line per ref being pushed. What changed is what the remote
+# hasn't seen: since its tip when the push builds on it, else (a new branch,
+# or a rebase, whose old tip would bring in all of main's news) since main.
+pushed=
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+  [ "$local_sha" = "$zero" ] && continue # a branch deletion pushes no code
+  base=
+  if [ "$remote_sha" != "$zero" ] && git merge-base --is-ancestor "$remote_sha" "$local_sha" 2>/dev/null; then
+    base=$remote_sha
+  else
+    base=$(git merge-base "$local_sha" origin/main 2>/dev/null || true)
+  fi
+  pushed=yes
+  if [ -n "$base" ]; then
+    git -c core.quotePath=false diff --name-only --diff-filter=d "$base" "$local_sha" >> "$changed"
+  else
+    echo '(unknown base)' >> "$changed"
+  fi
+done
+
+# Only branch deletions: nothing to test or build.
+[ -n "$pushed" ] || exit 0
+
+code='^(src|api|eval|\.github/scripts)/.+\.(ts|tsx|mts|mjs|js)$'
+untested='^([^/]+\.md|docs/.*|\.github/workflows/.*|\.github/dependabot\.yml|\.githooks/.*|e2e/.*|playwright\.config\.ts|scripts/.*|index\.html|\.gitignore|\.env\.example)$'
+if grep -vE "$code" "$changed" | grep -vqE "$untested"; then
+  echo "▶ pre-push: vitest (whole suite: a change reaches beyond the code tests import)"
+  npx vitest run
+else
+  files=$(grep -E "$code" "$changed" | sort -u || true)
+  if [ -n "$files" ]; then
+    echo "▶ pre-push: vitest related to the changed files"
+    # shellcheck disable=SC2086 # one path per word, by design
+    npx vitest related --run --passWithNoTests $files
+  else
+    echo "▶ pre-push: no changes any test reads, so no tests to run"
+  fi
+fi
+
 echo "▶ pre-push: production build"
 npm run build
