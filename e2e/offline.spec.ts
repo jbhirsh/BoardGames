@@ -210,9 +210,10 @@ test('a large rulebook isn\'t saved by opening it, and offline says to tap Save 
   // Level with them on a desktop, and on a phone too, where the three keep
   // one line in fewer words: Download and Open, "PDF" still read out, and
   // Save offline, named so (a name holds the words it shows).
-  for (const width of [1280, 414, 375, 320]) {
+  const widths = [[1280, 'Save for offline'], [414, 'Save offline'], [375, 'Save offline'], [320, 'Save offline']] as const;
+  for (const [width, name] of widths) {
     await page.setViewportSize({ width, height: 812 });
-    const item = width > 600 ? save : page.getByRole('button', { name: 'Save offline' });
+    const item = page.getByRole('button', { name, exact: true });
     await expect(item).toBeVisible();
     const [d, o, s] = await Promise.all([download.boundingBox(), open.boundingBox(), item.boundingBox()]);
     expect([o!.y, s!.y], `at ${width}px`).toEqual([d!.y, d!.y]);
