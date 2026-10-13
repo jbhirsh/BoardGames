@@ -8,8 +8,9 @@ const CI = !!process.env.CI;
 
 /**
  * End-to-end tests: the production build, served by `vite preview`, driven
- * in Chromium. Every `/api/*` call and the dictionary API are stubbed with
- * fixtures (e2e/fixtures.ts), so a run needs no network and no secrets.
+ * in Chromium. Every `/api/*` call is stubbed with fixtures (e2e/fixtures.ts),
+ * which abort any request off the preview origin, and a spec that needs the
+ * dictionary API stubs it itself, so a run needs no network and no secrets.
  */
 export default defineConfig({
   testDir: './e2e',

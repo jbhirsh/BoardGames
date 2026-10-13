@@ -445,9 +445,9 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   saved rulebook opens online. The rest of `/pdfjs/` (no-WebAssembly
   fallbacks, standard fonts, licences) goes to the runtime
   `gameroom-assets` cache if it is ever fetched, and each update clears it
-  with the old code. The wishlist's box art (`WISHLIST_ART_DIR`, 39 files,
-  608 KB: more than the collection's 30 at 539 KB, and 16% on top of the
-  3.9 MB install, for a list behind the Want toggle many never open) goes
+  with the old code. The wishlist's box art (`WISHLIST_ART_DIR`, about as
+  much as the collection's own art, for a list behind the Want toggle
+  many never open) goes
   there too, each file as a card draws it (lazily, so a card never
   scrolled to online has no art offline), marked with the build's hash of
   it (`__ART__`, `stamped`); an update keeps it unless its file changed
@@ -831,16 +831,15 @@ on GitHub-hosted `ubuntu-latest` runners. `pr-visuals.yml` (`PR visuals`)
 runs on every push and description edit; autofix skips it, since what it
 wants is pictures in the description, not a code change.
 
-Every PR check is a required status check on `main` (`ci`, Claude Review,
-Secret scan, StrykerJS, Answer-Quality Eval, E2E Tests (Playwright),
-Semgrep, Vercel, API smoke test, PR visuals), so nothing merges until all
-of them report. (E2E Tests (Playwright) and PR visuals are new: the owner
-adds them to the `main` rule's required checks; until then bot PRs can merge
-past them.) A required check that never reports blocks the PR forever, so
+Every PR check but PR visuals is a required status check on `main` (`ci`,
+Claude Review, Secret scan, StrykerJS, Answer-Quality Eval, E2E Tests
+(Playwright), `semgrep-cloud-platform/scan`, Vercel, API smoke test), so
+nothing merges until all of them report; PR visuals is not required. A
+required check that never reports blocks the PR forever, so
 PR workflows must not use a workflow-level `paths:` filter; decide inside
 the job instead and skip the expensive step (a skipped step still reports
-success). Because every check
-is required, arming auto-merge early is safe: GitHub waits for all of them.
+success). Because those checks
+are required, arming auto-merge early is safe: GitHub waits for all of them.
 
 Dependabot's npm PRs merge themselves: `dependabot-merge.yml` turns on
 auto-merge as each one opens, and branch protection does the gating — every

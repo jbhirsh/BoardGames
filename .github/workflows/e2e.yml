@@ -2,8 +2,9 @@
 # preview, driven in Chromium through the flows people use — browsing and
 # filtering the collection, the wishlist and its votes, the random picker, a
 # rules page and its assistant, the score calculator and the word checker.
-# Every /api call and the dictionary API are stubbed (e2e/fixtures.ts), so
-# the job needs no secrets and touches no live service.
+# Every /api call is stubbed (e2e/fixtures.ts, which also aborts any request
+# off the preview origin) and a spec that needs the dictionary API stubs it
+# itself, so the job needs no secrets and touches no live service.
 name: E2E
 
 on:
