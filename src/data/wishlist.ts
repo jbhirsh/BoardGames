@@ -12,6 +12,9 @@ import { WISHLIST_ART } from './wishlistArt';
 // filters and sorts work on the wishlist (see Filterable in types.ts).
 // `cat` follows the collection's convention: quick <= 15 min, medium <= 60,
 // long beyond that.
+//
+// The votes API accepts only known ids, so each `id` is mirrored in
+// api/_lib/wishlistIds.ts (a test fails until a new one is added there).
 const ENTRIES: WishlistItem[] = [
   { id:"lost-cities", bgg:50,             name:"Lost Cities",             players:"2",    type:"two-player", desc:"An elegant two-player card game of expeditions. Do you commit or hold back? Deceptively tense, quick, and endlessly replayable — the head-to-head filler you don't own yet.", yt:"how to play Lost Cities board game tutorial",
     min:2, max:2, dur:"30 min", mins:30, cat:"medium", kw:['card-game','strategy','quick-play'],

@@ -4,6 +4,7 @@ import { enforceRateLimit, getLimiter } from './_lib/rateLimit.js';
 import { SLUG_RE } from './_lib/slug.js';
 import { ANON_RE, parseIds, optionalAnonId } from './_lib/ids.js';
 import { getRedis } from './_lib/redis.js';
+import { WISHLIST_IDS } from './_lib/wishlistIds.js';
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -11,6 +12,9 @@ Sentry.init({
 });
 
 const voteKey = (id: string) => `wishlist:votes:${id}`;
+// The suggestion hash api/suggestions.ts keeps per id; only an approved one
+// is on the public wishlist.
+const suggestionKey = (id: string) => `suggestions:${id}`;
 
 export interface VotesPipeline {
   scard(key: string): VotesPipeline;
@@ -22,7 +26,15 @@ export interface VotesRedis {
   sadd(key: string, member: string): Promise<number>;
   srem(key: string, member: string): Promise<number>;
   scard(key: string): Promise<number>;
+  hget(key: string, field: string): Promise<unknown>;
   pipeline(): VotesPipeline;
+}
+
+// A vote set has no TTL, so a vote for a made-up id would leave a key behind
+// for good: only the compiled-in wishlist and approved suggestions take votes.
+async function isVotable(redis: VotesRedis, id: string): Promise<boolean> {
+  if (WISHLIST_IDS.has(id)) return true;
+  return (await redis.hget(suggestionKey(id), 'status')) === 'approved';
 }
 
 export interface VotesRequest {
@@ -82,6 +94,9 @@ export async function handleVotes(
       }
       if (vote !== 0 && vote !== 1) {
         return res.status(400).json({ error: 'vote must be 0 or 1' });
+      }
+      if (!(await isVotable(redis, itemId))) {
+        return res.status(404).json({ error: 'unknown itemId' });
       }
 
       if (vote === 1) {

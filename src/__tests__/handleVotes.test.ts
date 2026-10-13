@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { handleVotes, type VotesRedis, type VotesRequest, type VotesResponse } from '../../api/votes';
+import { WISHLIST_IDS } from '../../api/_lib/wishlistIds';
+import { WISHLIST } from '../data/wishlist';
 
 function makeRes() {
   const res = {
@@ -25,6 +27,7 @@ function makeRedis(overrides: Partial<VotesRedis> = {}): VotesRedis {
     sadd: vi.fn(async () => 1),
     srem: vi.fn(async () => 1),
     scard: vi.fn(async () => 0),
+    hget: vi.fn(async () => null),
     pipeline,
     ...overrides,
   };
@@ -139,11 +142,58 @@ describe('handleVotes', () => {
     const res = makeRes();
     await handleVotes(
       redis,
-      { method: 'POST', query: {}, body: { itemId: 'dominion', anonId: 'anon-1234567', vote: 0 } },
+      { method: 'POST', query: {}, body: { itemId: 'dominion-seaside', anonId: 'anon-1234567', vote: 0 } },
       res,
     );
-    expect(redis.srem).toHaveBeenCalledWith('wishlist:votes:dominion', 'anon-1234567');
-    expect(res.body).toEqual({ itemId: 'dominion', count: 2, myVote: 0 });
+    expect(redis.srem).toHaveBeenCalledWith('wishlist:votes:dominion-seaside', 'anon-1234567');
+    expect(res.body).toEqual({ itemId: 'dominion-seaside', count: 2, myVote: 0 });
+  });
+
+  describe('POST accepts only known items', () => {
+    const vote = (redis: VotesRedis, itemId: string, v: 0 | 1 = 1) => {
+      const res = makeRes();
+      return handleVotes(redis, { method: 'POST', query: {}, body: { itemId, anonId: 'anon-1234567', vote: v } }, res).then(() => res);
+    };
+    const withStatus = (status: string | null) => makeRedis({ hget: vi.fn(async () => status) });
+
+    it('answers 404 for an id on neither list and writes nothing', async () => {
+      const redis = makeRedis();
+      for (const v of [1, 0] as const) {
+        const res = await vote(redis, 'made-up-game', v);
+        expect(res.statusCode).toBe(404);
+        expect(res.body).toEqual({ error: 'unknown itemId' });
+      }
+      expect(redis.hget).toHaveBeenCalledWith('suggestions:made-up-game', 'status');
+      expect(redis.sadd).not.toHaveBeenCalled();
+      expect(redis.srem).not.toHaveBeenCalled();
+      expect(redis.scard).not.toHaveBeenCalled();
+    });
+
+    it('takes a compiled-in wishlist id without looking up a suggestion', async () => {
+      const redis = makeRedis();
+      const res = await vote(redis, 'the-mind');
+      expect(res.statusCode).toBe(200);
+      expect(redis.hget).not.toHaveBeenCalled();
+      expect(redis.sadd).toHaveBeenCalledWith('wishlist:votes:the-mind', 'anon-1234567');
+    });
+
+    it('takes an approved suggestion', async () => {
+      const redis = withStatus('approved');
+      const res = await vote(redis, 'sug-abc123');
+      expect(res.statusCode).toBe(200);
+      expect(redis.sadd).toHaveBeenCalledWith('wishlist:votes:sug-abc123', 'anon-1234567');
+    });
+
+    it.each(['pending', 'unsent', 'denied', 'removed'])('refuses a %s suggestion', async (status) => {
+      const redis = withStatus(status);
+      const res = await vote(redis, 'sug-abc123');
+      expect(res.statusCode).toBe(404);
+      expect(redis.sadd).not.toHaveBeenCalled();
+    });
+  });
+
+  it('knows the same compiled-in wishlist ids as the client', () => {
+    expect([...WISHLIST_IDS].sort()).toEqual(WISHLIST.map((w) => w.id).sort());
   });
 
   it('POST rejects invalid itemId', async () => {
