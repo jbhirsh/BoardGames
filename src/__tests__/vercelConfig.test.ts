@@ -25,7 +25,7 @@ describe('vercel.json headers', () => {
 });
 
 describe('vercel.json functions', () => {
-  it('gives every API function its own time limit, within the Hobby plan\'s 60 s', () => {
+  it('gives every API function its own time limit, of at most 60 s', () => {
     const functions = readdirSync(join(process.cwd(), 'api')).filter((f) => f.endsWith('.ts')).map((f) => `api/${f}`);
     expect(functions.length).toBeGreaterThan(0);
     for (const f of functions) {
