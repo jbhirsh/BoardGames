@@ -73,6 +73,24 @@ test('a cover Tabbed to and pressed brings its game\'s card into view', async ({
   await expect(name).toBeFocused();
 });
 
+test('the row is one Tab stop after its pause button, with arrow keys between covers', async ({ page }) => {
+  await page.goto('/');
+  const row = track(page);
+  const covers = row.getByRole('button');
+  await page.getByRole('button', { name: 'Pause cover carousel' }).focus();
+  await page.keyboard.press('Tab');
+  await expect(covers.first()).toBeFocused();
+  await page.keyboard.press('ArrowLeft');
+  // Wrapped round to the last cover, which the row winds into view.
+  await expect(covers.last()).toBeFocused();
+  await expect(covers.last()).toBeInViewport();
+  await page.keyboard.press('Tab');
+  // Out of the row in one step, not thirty.
+  expect(await row.evaluate((el) => el.contains(document.activeElement))).toBe(false);
+  await page.keyboard.press('Shift+Tab');
+  await expect(covers.last()).toBeFocused();
+});
+
 test('a cover whose game the filters hide clears them to show it', async ({ page }) => {
   await page.goto('/?q=catan');
   await page.getByRole('button', { name: 'Pause cover carousel' }).click();

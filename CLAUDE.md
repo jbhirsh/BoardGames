@@ -69,10 +69,12 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
     wishlist entry's bundled art in Want mode (`utils/heroCovers.ts`;
     friends' BoardGameGeek thumbnails stay out), gliding left in an endless
     row (a CSS transform on a doubled track, the copy `aria-hidden` and out
-    of the Tab order, a lap of 2.4 s per cover, the ends faded). It holds
-    still on hover, while a cover has focus, off screen or in a hidden tab,
-    and from its pause button; under `prefers-reduced-motion` it is the
-    seven favourites standing still with no button. A cover scrolls to its
+    of the Tab order, a lap of 2.4 s per cover, the ends faded). The row is
+    one Tab stop after its pause button, the arrow keys, Home and End moving
+    between covers. It holds still on hover, while a cover has focus, off
+    screen or in a hidden tab, and from its pause button; under
+    `prefers-reduced-motion` it is the list's first seven (the favourites,
+    in Own mode; five on a phone) standing still with no button. A cover scrolls to its
     game's card or row (`id` `game-<slug>` / `wish-<id>`) and focuses its
     name or row toggle, clearing the filters first if they hide it; filter
     bar, then the collection or the wishlist,
