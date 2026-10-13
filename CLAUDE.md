@@ -823,7 +823,9 @@ so a separate file keeps PRs that change CI reviewed. `claude-autofix.yml`
 addresses unresolved review comments on bots' PRs (Dependabot's) once CI and
 the review have both passed, and attempts mechanical fixes when their npm
 bumps fail a check (a person's PR is left to its author). `mutation.yml`
-runs StrykerJS over the source files a PR touched and fails below the
+runs StrykerJS over the source files a PR touched (the changed files that
+`stryker.config.json`'s `mutate` globs select, picked by
+`.github/scripts/stryker-mutate-scope.mjs`) and fails below the
 `break` score in `stryker.config.json` (a weekly full sweep applies the
 same bar). Both run incremental (`--incremental`, results kept with
 actions/cache): a PR run starts from its own last results, else main's
