@@ -614,6 +614,19 @@ describe('handleSuggestions', () => {
       return res;
     };
 
+    it('400s on an id that names one of the id lists, without reading it as a suggestion', async () => {
+      const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending });
+      for (const id of ['active', 'approved', 'unsent']) {
+        const res = await decide(redis, { id });
+        expect(res.statusCode, id).toBe(400);
+        expect(res.headers['Content-Type']).toContain('text/html');
+        const link = makeRes();
+        await handleSuggestions(deps({ redis }), { method: 'GET', query: { action: 'approve', id, token: TOKEN } }, link);
+        expect(link.statusCode, id).toBe(400);
+      }
+      expect(redis.hgetall).not.toHaveBeenCalled();
+    });
+
     it('403s, rather than crashing, on a well-formed token of a different length', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending });
       const res = await decide(redis, { token: 'test-token-' + 'a'.repeat(9) });
@@ -1003,6 +1016,14 @@ describe('handleSuggestions', () => {
         const list = makeRes();
         await handleSuggestions(asOwner({ redis }), { method: 'GET', query: {} }, list);
         expect((list.body as { items: unknown[] }).items).toEqual([]);
+      });
+
+      it('400s on an id that names one of the id lists, without reading it as a suggestion', async () => {
+        const redis = makeRedis();
+        const res = makeRes();
+        await handleSuggestions(asOwner({ redis }), { method: 'DELETE', query: {}, body: { id: 'approved' }, headers: JSON_H }, res);
+        expect(res.statusCode).toBe(400);
+        expect(redis.hgetall).not.toHaveBeenCalled();
       });
 
       it('only removes what is on the wishlist: a pending or already-removed record answers 409 untouched', async () => {

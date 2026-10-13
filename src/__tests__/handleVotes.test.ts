@@ -163,10 +163,26 @@ describe('handleVotes', () => {
         expect(res.statusCode).toBe(404);
         expect(res.body).toEqual({ error: 'unknown itemId' });
       }
-      expect(redis.hget).toHaveBeenCalledWith('suggestions:made-up-game', 'status');
+      // Not a suggestion's id either, so nothing is looked up.
+      expect(redis.hget).not.toHaveBeenCalled();
       expect(redis.sadd).not.toHaveBeenCalled();
       expect(redis.srem).not.toHaveBeenCalled();
       expect(redis.scard).not.toHaveBeenCalled();
+    });
+
+    it('answers 404 for a suggestion id with no record', async () => {
+      const redis = makeRedis();
+      const res = await vote(redis, 'sug-made-up');
+      expect(res.statusCode).toBe(404);
+      expect(redis.hget).toHaveBeenCalledWith('suggestions:sug-made-up', 'status');
+      expect(redis.sadd).not.toHaveBeenCalled();
+    });
+
+    it.each(['active', 'approved', 'unsent'])('answers 404 for %s, an id list rather than a suggestion, without reading it', async (id) => {
+      const redis = makeRedis();
+      const res = await vote(redis, id);
+      expect(res.statusCode).toBe(404);
+      expect(redis.hget).not.toHaveBeenCalled();
     });
 
     it('takes a compiled-in wishlist id without looking up a suggestion', async () => {
