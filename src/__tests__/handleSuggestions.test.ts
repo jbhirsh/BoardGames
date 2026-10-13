@@ -189,6 +189,23 @@ describe('handleSuggestions', () => {
       expect(res.statusCode).toBe(403);
     });
 
+    it('answers a bad, unknown or mismatched link with a page, keeping the status', async () => {
+      const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending });
+      for (const [query, code, title] of [
+        [{ action: 'approve', id: 'sug-aaaaaa' }, 400, 'Link not recognised'],
+        [{ action: 'deny', id: 'Bad!', token: TOKEN }, 400, 'Link not recognised'],
+        [{ action: 'approve', id: 'sug-zzzzzz', token: TOKEN }, 404, 'Suggestion not found'],
+        [{ action: 'approve', id: 'sug-aaaaaa', token: 'test-token-' + 'z'.repeat(21) }, 403, 'Link not valid'],
+      ] as const) {
+        const res = makeRes();
+        await handleSuggestions(deps({ redis }), { method: 'GET', query }, res);
+        expect(res.statusCode, title).toBe(code);
+        expect(res.headers['Content-Type']).toBe('text/html; charset=utf-8');
+        expect(String(res.body)).toContain(`<h1>${title}</h1>`);
+        expect(String(res.body)).toContain('name="robots" content="noindex"');
+      }
+    });
+
     it('never mutates on GET: renders a confirmation form carrying the decision', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending });
       const res = makeRes();
@@ -601,7 +618,8 @@ describe('handleSuggestions', () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending });
       const res = await decide(redis, { token: 'test-token-' + 'a'.repeat(9) });
       expect(res.statusCode).toBe(403);
-      expect(res.body).toEqual({ error: 'invalid token' });
+      expect(res.headers['Content-Type']).toContain('text/html');
+      expect(String(res.body)).toContain('Link not valid');
       expect(redis.hset).not.toHaveBeenCalled();
     });
 
@@ -610,7 +628,7 @@ describe('handleSuggestions', () => {
       for (const token of ['!' + 'a'.repeat(20), 'a'.repeat(20) + '!', 'a'.repeat(65)]) {
         const res = await decide(redis, { token });
         expect(res.statusCode, token).toBe(400);
-        expect(res.body).toEqual({ error: 'invalid id or token' });
+        expect(String(res.body)).toContain('Link not recognised');
       }
     });
 
@@ -619,7 +637,7 @@ describe('handleSuggestions', () => {
       for (const body of [{ id: 7 }, { token: 1e19 }, { id: undefined }]) {
         const res = await decide(redis, body);
         expect(res.statusCode, JSON.stringify(body)).toBe(400);
-        expect(res.body).toEqual({ error: 'invalid id or token' });
+        expect(String(res.body)).toContain('Link not recognised');
       }
       const res = makeRes();
       await handleSuggestions(deps({ redis }), { method: 'GET', query: { action: 'approve', token: TOKEN } }, res);
@@ -630,7 +648,7 @@ describe('handleSuggestions', () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending });
       let res = await decide(redis, { id: 'sug-zzzzzz' });
       expect(res.statusCode).toBe(404);
-      expect(res.body).toEqual({ error: 'suggestion not found' });
+      expect(String(res.body)).toContain('Suggestion not found');
       res = await decide(redis, { decision: 'maybe' });
       expect(res.body).toEqual({ error: 'unknown decision' });
       res = makeRes();

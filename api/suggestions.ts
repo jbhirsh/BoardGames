@@ -291,25 +291,31 @@ function tokenMatches(stored: string, given: string): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-/** Look up a suggestion for a decision link; writes the error response itself. */
+/**
+ * Look up a suggestion for a decision link; writes the error response itself.
+ * The link and its confirmation form open in a browser, so a bad link gets a
+ * page a person can read, not JSON.
+ */
 async function authorise(
   redis: SuggestionsRedis,
   id: unknown,
   token: unknown,
   res: SuggestionsResponse,
 ): Promise<(Suggestion & { token: string }) | null> {
-  if (typeof id !== 'string' || typeof token !== 'string' || !SLUG_RE.test(id) || !TOKEN_RE.test(token)) {
-    res.status(400).json({ error: 'invalid id or token' });
+  const fail = (code: number, title: string, body: string) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.status(code).send(decisionPage(title, body));
     return null;
+  };
+  if (typeof id !== 'string' || typeof token !== 'string' || !SLUG_RE.test(id) || !TOKEN_RE.test(token)) {
+    return fail(400, 'Link not recognised', 'This link is incomplete or mistyped. Open it again from the email.');
   }
   const item = parse(await redis.hgetall(itemKey(id)));
   if (!item) {
-    res.status(404).json({ error: 'suggestion not found' });
-    return null;
+    return fail(404, 'Suggestion not found', 'There is no suggestion behind this link any more.');
   }
   if (!tokenMatches(item.token, token)) {
-    res.status(403).json({ error: 'invalid token' });
-    return null;
+    return fail(403, 'Link not valid', 'This link does not match the suggestion. Open it again from the email.');
   }
   return item;
 }
