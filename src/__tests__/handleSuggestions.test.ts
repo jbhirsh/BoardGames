@@ -26,11 +26,17 @@ function makeRes() {
 type Store = Record<string, Record<string, unknown>>;
 type Lists = Record<string, string[]>;
 
-/** In-memory hashes and lists; values round-trip through JSON like the Upstash client. */
+/**
+ * In-memory hashes and lists. Reads answer like the handler's Upstash client
+ * with automatic deserialisation off: HGETALL is a flat [field, value, ...]
+ * list holding each value as Redis stores it (strings as written, anything
+ * else as the client serialises it), and [] for a missing key.
+ */
 function makeRedis(seed: Store = {}, lists: Lists = {}): SuggestionsRedis & { store: Store; lists: Lists } {
   const store: Store = JSON.parse(JSON.stringify(seed));
   const l: Lists = JSON.parse(JSON.stringify(lists));
-  const get = (k: string) => (store[k] && Object.keys(store[k]).length ? store[k] : null);
+  const asStored = (v: unknown) => (typeof v === 'object' ? JSON.stringify(v) : String(v));
+  const get = (k: string) => Object.entries(store[k] ?? {}).flatMap(([f, v]) => [f, asStored(v)]);
   return {
     store,
     lists: l,
@@ -95,7 +101,7 @@ describe('handleSuggestions', () => {
       expect(redis.lrange).toHaveBeenCalledWith('suggestions:approved', 0, -1);
     });
 
-    it('coerces values the Redis client deserialised, so a game called 1830 survives', async () => {
+    it('reads stored values as text, so a game called 1830 survives', async () => {
       const redis = makeRedis({
         'suggestions:sug-n': { ...pending, id: 'sug-n', game: 1830, name: 42, note: true, status: 'approved', decidedAt: 1 },
       }, { 'suggestions:approved': ['sug-n'] });
@@ -103,6 +109,23 @@ describe('handleSuggestions', () => {
       await handleSuggestions(deps({ redis }), { method: 'GET', query: {} }, res);
       expect((res.body as { items: Array<{ game: string; name: string; note: string }> }).items[0])
         .toMatchObject({ game: '1830', name: '42', note: 'true' });
+    });
+
+    it.each(['null', 'true', '1.50', '007'])('keeps a game called %s as written, through the duplicate check, its links and the list', async (game) => {
+      const d = deps();
+      const post = async (body: Record<string, unknown>) => {
+        const res = makeRes();
+        await handleSuggestions(d, { method: 'POST', query: {}, body }, res);
+        return res;
+      };
+      expect((await post({ game, name: 'Sam' })).statusCode).toBe(201);
+      expect((await post({ game, name: 'Kim' })).statusCode).toBe(409);
+      const approve = await post({ decision: 'approve', id: 'sug-bbbbbb', token: NEW_TOKEN });
+      expect(approve.statusCode).toBe(200);
+      expect(String(approve.body)).toContain(`${game} is now on the wishlist`);
+      const res = makeRes();
+      await handleSuggestions(d, { method: 'GET', query: {} }, res);
+      expect((res.body as { items: Array<{ game: string }> }).items.map((i) => i.game)).toEqual([game]);
     });
 
     it('returns an empty list when nothing has been approved', async () => {
@@ -542,12 +565,12 @@ describe('handleSuggestions', () => {
     const approved = { ...pending, status: 'approved', decidedAt: 10 };
     const without = (o: Record<string, unknown>, key: string) => Object.fromEntries(Object.entries(o).filter(([k]) => k !== key));
 
-    it('skips hashes missing an id, game or name, or with a null game, instead of crashing', async () => {
+    it('skips hashes missing an id, game or name, or with an empty game, instead of crashing', async () => {
       const redis = makeRedis({
         'suggestions:sug-1': without(approved, 'id'),
         'suggestions:sug-2': without(approved, 'game'),
         'suggestions:sug-3': without(approved, 'name'),
-        'suggestions:sug-4': { ...approved, id: 'sug-4', game: null },
+        'suggestions:sug-4': { ...approved, id: 'sug-4', game: '' },
         'suggestions:sug-5': { ...approved, id: 'sug-5', game: 'Kept' },
       }, { 'suggestions:approved': ['sug-1', 'sug-2', 'sug-3', 'sug-4', 'sug-5', 'sug-missing'] });
       expect((await list(redis)).map((i) => i.game)).toEqual(['Kept']);
