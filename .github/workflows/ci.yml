@@ -10,6 +10,13 @@ on:
   # runs land on the PR's head commit.
   workflow_dispatch:
 
+# A new push supersedes the run for the old head, whose result no longer
+# gates anything. A dispatched run has no PR number and groups by its branch,
+# so it never cancels (or is cancelled by) the PR's own runs.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
