@@ -541,7 +541,12 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   active list and marked `unsent` (tracked on `suggestions:unsent`) so the
   suggester can retry, but its links keep working (a timeout can follow a
   real delivery), it still shows in the owner's on-site queue, and
-  approving an unsent record returns it to the active list. On approval the handler
+  approving an unsent record returns it to the active list. A decision
+  first claims the record (HSETNX on its `decidedAt`, which only a decision
+  sets), so a double-submitted form, or the email link and the site at
+  once, decides it once and the loser answers "Already ..."; the writes
+  that follow go through one MULTI/EXEC, and a push removes the id first,
+  so no list holds it twice. On approval the handler
   looks the game up on BoardGameGeek (`_lib/bgg.ts`, XML API 2, bearer token
   from `BGG_API_TOKEN`) and stores players, playing time, a two-sentence
   description, year, mapped keywords and the box-art thumbnail URL as a
