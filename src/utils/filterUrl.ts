@@ -145,10 +145,9 @@ export function searchParamsToFilter(params: URLSearchParams): FilterState {
   };
 }
 
-export function buildShareUrl(
-  state: FilterState,
-  origin: string = window.location.origin,
-): string {
+// `origin` is the page's (window.location.origin), passed in by the caller
+// so this stays free of the browser globals.
+export function buildShareUrl(state: FilterState, origin: string): string {
   const query = filterToSearchParams(state).toString();
   return query ? `${origin}/?${query}` : `${origin}/`;
 }

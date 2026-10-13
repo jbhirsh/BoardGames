@@ -9,42 +9,35 @@ import FilterBar from '../components/FilterBar/FilterBar';
 import { FilterProvider } from '../context/FilterContext';
 
 describe('pickRandom', () => {
+  const first = () => 0;
+  const last = () => 0.999;
+
   it('throws on empty pool', () => {
-    expect(() => pickRandom([])).toThrow('pool empty');
+    expect(() => pickRandom([], undefined, first)).toThrow('pool empty');
   });
 
   it('returns the only element when pool length is 1', () => {
-    expect(pickRandom(['a'])).toBe('a');
-    expect(pickRandom(['a'], 'a')).toBe('a');
+    expect(pickRandom(['a'], undefined, last)).toBe('a');
+    expect(pickRandom(['a'], 'a', last)).toBe('a');
   });
 
   it('never returns the excluded element, even at the last index', () => {
     const pool = ['a', 'b', 'c', 'd'];
-    const random = vi.spyOn(Math, 'random').mockReturnValue(0.999);
-    try {
-      // Without exclude: uniform pick lands on the last element.
-      expect(pickRandom(pool)).toBe('d');
-      // With exclude='d': candidates = ['a','b','c'], uniform draw at 0.999 -> 'c'
-      expect(pickRandom(pool, 'd')).toBe('c');
-    } finally {
-      random.mockRestore();
-    }
+    // Without exclude: uniform pick lands on the last element.
+    expect(pickRandom(pool, undefined, last)).toBe('d');
+    // With exclude='d': candidates = ['a','b','c'], uniform draw at 0.999 -> 'c'
+    expect(pickRandom(pool, 'd', last)).toBe('c');
   });
 
   it('draws uniformly from the non-excluded candidates', () => {
     const pool = ['a', 'b', 'c'];
-    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
-    try {
-      // candidates excluding 'a' = ['b','c']; index 0 = 'b'
-      expect(pickRandom(pool, 'a')).toBe('b');
-    } finally {
-      random.mockRestore();
-    }
+    // candidates excluding 'a' = ['b','c']; index 0 = 'b'
+    expect(pickRandom(pool, 'a', first)).toBe('b');
   });
 
   it('falls back to the first pool element when every item equals exclude', () => {
     const pool = ['a', 'a', 'a'];
-    expect(pickRandom(pool, 'a')).toBe('a');
+    expect(pickRandom(pool, 'a', last)).toBe('a');
   });
 });
 

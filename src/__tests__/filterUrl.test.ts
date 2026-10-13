@@ -206,13 +206,15 @@ describe('roundtrip', () => {
 });
 
 describe('buildShareUrl', () => {
+  const origin = 'https://games.example';
+
   it('returns origin + "/" when no filters are set', () => {
-    expect(buildShareUrl(initialFilterState)).toBe(`${window.location.origin}/`);
+    expect(buildShareUrl(initialFilterState, origin)).toBe(`${origin}/`);
   });
 
   it('appends a query string when filters are set', () => {
-    const url = buildShareUrl(makeState({ duration: 15, players: 4 }));
-    expect(url.startsWith(`${window.location.origin}/?`)).toBe(true);
+    const url = buildShareUrl(makeState({ duration: 15, players: 4 }), origin);
+    expect(url.startsWith(`${origin}/?`)).toBe(true);
     expect(url).toContain('d=15');
     expect(url).toContain('p=4');
   });

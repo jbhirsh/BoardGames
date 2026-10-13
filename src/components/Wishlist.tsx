@@ -64,7 +64,9 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
               type="button"
               className="share-btn"
               data-label="Share wishlist"
-              onClick={() => copy(buildShareUrl({ ...initialFilterState, collection: 'want' }))}
+              onClick={() =>
+                copy(buildShareUrl({ ...initialFilterState, collection: 'want' }, window.location.origin))
+              }
             >
               <span className="share-btn-label">{copied ? 'Copied!' : 'Share wishlist'}</span>
             </button>
