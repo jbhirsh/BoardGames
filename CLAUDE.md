@@ -48,7 +48,10 @@ run`), since some web APIs behave differently between versions (a test
 that passed on Node 22 failed on 24 over a jsdom `Blob`). Git hooks in `.githooks/` (activated by `npm install`
 via `core.hooksPath`) run the same checks locally so failures surface before
 a push: **pre-commit** runs eslint + dependency-cruiser + `tsc -b`;
-**pre-push** runs the test suite with coverage + the production build. Both
+**pre-push** runs the tests related to what the push changes (`vitest
+related`; none for docs, workflows or the e2e suite; the whole suite for
+anything else, such as dependencies, config, or files tests read like the
+rules text and `App.css`) + the production build, leaving the coverage gate to CI. Both
 no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
 
 ## Architecture
