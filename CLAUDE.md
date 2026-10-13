@@ -751,7 +751,9 @@ secrets belong in tracked source.
   tests. Tests must be pure logic or RTL — no real network, no real browser.
   The one exception to the location is a CI helper's test, which sits beside
   it (`.github/scripts/*.test.mjs`) and runs in the same suite and coverage
-  gate.
+  gate. Shared fakes live in `src/__tests__/helpers/`: `fakeRedis` (an
+  in-memory Redis for the API handlers, answering as the default or, with
+  `raw`, the raw client) and `stubMatchMedia`.
 - **End-to-end tests live in `e2e/`** (Playwright, Chromium only), run
   against the production build. They are the one place with a real browser,
   and still no real network: `e2e/fixtures.ts` stubs every `/api/*` call

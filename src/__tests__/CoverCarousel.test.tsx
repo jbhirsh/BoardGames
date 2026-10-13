@@ -7,6 +7,7 @@ import { FilterProvider } from '../context/FilterContext';
 import { GAMES } from '../data/games';
 import { WISHLIST } from '../data/wishlist';
 import { FAVOURITES, SECONDS_PER_COVER, ownCovers, wantCovers } from '../utils/heroCovers';
+import { stubMatchMedia } from './helpers/stubMatchMedia';
 
 function renderReel(want = false) {
   return render(
@@ -28,11 +29,7 @@ function renderHome(entry = '/') {
 
 /** Reports `reduce` for prefers-reduced-motion, as a reader who asked for less motion. */
 function preferLessMotion() {
-  vi.stubGlobal('matchMedia', vi.fn((q: string) => ({
-    matches: q === '(prefers-reduced-motion: reduce)',
-    addEventListener: () => {},
-    removeEventListener: () => {},
-  })));
+  stubMatchMedia((q) => q === '(prefers-reduced-motion: reduce)');
 }
 
 const scrolled = vi.fn();

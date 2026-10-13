@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { handleAuth, type AuthDeps, type AuthRedis, type AuthResponse } from '../../api/auth';
+import { handleAuth, type AuthDeps, type AuthResponse } from '../../api/auth';
 import type { Mail } from '../../api/_lib/mail';
+import { fakeRedis } from './helpers/fakeRedis';
 
 function makeRes() {
   const res = {
@@ -15,19 +16,8 @@ function makeRes() {
   return res;
 }
 
-/** In-memory string keys with TTLs recorded, like the Upstash client's set/get/getdel/del. */
-function makeRedis(seed: Record<string, string> = {}): AuthRedis & { store: Record<string, string>; ttl: Record<string, number> } {
-  const store = { ...seed };
-  const ttl: Record<string, number> = {};
-  return {
-    store,
-    ttl,
-    get: vi.fn(async (key: string) => store[key] ?? null),
-    getdel: vi.fn(async (key: string) => { const v = store[key] ?? null; delete store[key]; return v; }),
-    set: vi.fn(async (key: string, value: string, opts: { ex: number }) => { store[key] = value; ttl[key] = opts.ex; return 'OK'; }),
-    del: vi.fn(async (key: string) => { const had = key in store ? 1 : 0; delete store[key]; return had; }),
-  };
-}
+/** String keys, with the TTL each SET gave, as the default client answers. */
+const makeRedis = (strings: Record<string, string> = {}) => fakeRedis({ strings });
 
 // Low-entropy on purpose so secret scanners don't mistake them for keys.
 const TOKEN = 'test-token-' + 'a'.repeat(21);
@@ -63,7 +53,7 @@ describe('handleAuth', () => {
       expect(d.sent[0].subject).toBe('Sign in to The Game Room');
       expect(d.sent[0].html).toContain(`https://games.example/api/auth?token=${TOKEN}`);
       const redis = d.redis as ReturnType<typeof makeRedis>;
-      expect(redis.store[`auth:magic:${TOKEN}`]).toBe('1');
+      expect(redis.strings[`auth:magic:${TOKEN}`]).toBe('1');
       expect(redis.ttl[`auth:magic:${TOKEN}`]).toBe(15 * 60);
     });
 
@@ -76,7 +66,7 @@ describe('handleAuth', () => {
       const redis = d.redis as ReturnType<typeof makeRedis>;
       expect(redis.set).not.toHaveBeenCalled();
       expect(redis.get).toHaveBeenCalledTimes(1);
-      expect(Object.keys(redis.store)).toEqual([]);
+      expect(Object.keys(redis.strings)).toEqual([]);
     });
 
     it('still answers 200 to the owner when the send fails, so the address cannot be read off the status', async () => {
@@ -117,7 +107,7 @@ describe('handleAuth', () => {
       expect(res.headers['Content-Type']).toBe('text/html; charset=utf-8');
       expect(String(res.body)).toContain('name="action" value="verify"');
       expect(String(res.body)).toContain(`name="token" value="${TOKEN}"`);
-      expect((d.redis as ReturnType<typeof makeRedis>).store[`auth:magic:${TOKEN}`]).toBe('1');
+      expect((d.redis as ReturnType<typeof makeRedis>).strings[`auth:magic:${TOKEN}`]).toBe('1');
     });
 
     it('says so when the token is gone, and rejects a malformed one', async () => {
@@ -146,8 +136,8 @@ describe('handleAuth', () => {
       expect(res.headers.Location).toBe('/?c=want');
       expect(res.headers['Set-Cookie']).toContain(`gr_session=${SID}; Max-Age=2592000`);
       expect(res.headers['Set-Cookie']).toContain('HttpOnly');
-      expect(redis.store[`auth:magic:${TOKEN}`]).toBeUndefined();
-      expect(redis.store[`auth:session:${SID}`]).toBe('1');
+      expect(redis.strings[`auth:magic:${TOKEN}`]).toBeUndefined();
+      expect(redis.strings[`auth:session:${SID}`]).toBe('1');
       expect(redis.ttl[`auth:session:${SID}`]).toBe(30 * 24 * 3600);
     });
 
@@ -189,13 +179,13 @@ describe('handleAuth', () => {
       await handleAuth(d, { method: 'POST', query: {}, body: { action: 'logout' }, headers: { 'content-type': 'application/x-www-form-urlencoded' } }, form);
       expect(form.statusCode).toBe(403);
       expect(form.headers['Set-Cookie']).toBeUndefined();
-      expect((d.redis as ReturnType<typeof makeRedis>).store[`auth:session:${SID}`]).toBe('1');
+      expect((d.redis as ReturnType<typeof makeRedis>).strings[`auth:session:${SID}`]).toBe('1');
 
       const res = makeRes();
       await handleAuth(d, { method: 'POST', query: {}, body: { action: 'logout' }, headers: { ...JSON_H, cookie: `gr_session=${SID}` } }, res);
       expect(res.body).toEqual({ ok: true });
       expect(res.headers['Set-Cookie']).toContain('gr_session=; Max-Age=0');
-      expect((d.redis as ReturnType<typeof makeRedis>).store[`auth:session:${SID}`]).toBeUndefined();
+      expect((d.redis as ReturnType<typeof makeRedis>).strings[`auth:session:${SID}`]).toBeUndefined();
       // Without a cookie it still clears, harmlessly.
       const bare = makeRes();
       await handleAuth(d, { method: 'POST', query: {}, body: { action: 'logout' }, headers: JSON_H }, bare);

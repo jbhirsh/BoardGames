@@ -1,26 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useIsPhone } from '../hooks/useIsPhone';
-
-/** A matchMedia stand-in whose answer the test can flip, firing 'change'. */
-function stubMatchMedia(matches: boolean) {
-  const listeners = new Set<() => void>();
-  const mql = {
-    get matches() { return matches; },
-    addEventListener: (_: string, fn: () => void) => listeners.add(fn),
-    removeEventListener: (_: string, fn: () => void) => listeners.delete(fn),
-  };
-  const matchMedia = vi.fn(() => mql);
-  vi.stubGlobal('matchMedia', matchMedia);
-  return {
-    matchMedia,
-    listeners,
-    set(next: boolean) {
-      matches = next;
-      listeners.forEach((fn) => fn());
-    },
-  };
-}
+import { stubMatchMedia } from './helpers/stubMatchMedia';
 
 afterEach(() => vi.unstubAllGlobals());
 

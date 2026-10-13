@@ -12,13 +12,13 @@ import {
   PLAYERS_MAX,
   type SuggestionsDeps,
   type SuggestionsRedis,
-  type SuggestionsTransaction,
   type SuggestionsResponse,
   type Mail,
 } from '../../api/suggestions';
 import { resendMailer } from '../../api/_lib/mail';
 import { KW, WISHLIST_SECTIONS } from '../data/keywords';
 import * as clientLimits from '../data/suggestionLimits';
+import { fakeRedis, type FakeRedisSeed } from './helpers/fakeRedis';
 
 function makeRes() {
   const res = {
@@ -33,58 +33,9 @@ function makeRes() {
   return res;
 }
 
-type Store = Record<string, Record<string, unknown>>;
-type Lists = Record<string, string[]>;
-
-/**
- * In-memory hashes and lists. Reads answer like the handler's Upstash client
- * with automatic deserialisation off: HGETALL is a flat [field, value, ...]
- * list holding each value as Redis stores it (strings as written, anything
- * else as the client serialises it), and [] for a missing key.
- */
-function makeRedis(seed: Store = {}, lists: Lists = {}): SuggestionsRedis & { store: Store; lists: Lists } {
-  const store: Store = JSON.parse(JSON.stringify(seed));
-  const l: Lists = JSON.parse(JSON.stringify(lists));
-  const asStored = (v: unknown) => (typeof v === 'object' ? JSON.stringify(v) : String(v));
-  const get = (k: string) => Object.entries(store[k] ?? {}).flatMap(([f, v]) => [f, asStored(v)]);
-  const redis: SuggestionsRedis & { store: Store; lists: Lists } = {
-    store,
-    lists: l,
-    hset: vi.fn(async (key, fields) => { store[key] = { ...(store[key] ?? {}), ...fields }; return Object.keys(fields).length; }),
-    hgetall: vi.fn(async (key) => get(key)),
-    hsetnx: vi.fn(async (key, field, value) => {
-      if (store[key]?.[field] !== undefined) return 0;
-      store[key] = { ...(store[key] ?? {}), [field]: value };
-      return 1;
-    }),
-    hdel: vi.fn(async (key, field) => { const had = store[key]?.[field] !== undefined; delete store[key]?.[field]; return had ? 1 : 0; }),
-    lpush: vi.fn(async (key, value) => { (l[key] ??= []).unshift(value); return l[key].length; }),
-    lrem: vi.fn(async (key, _count, value) => { const before = (l[key] ?? []).length; l[key] = (l[key] ?? []).filter((v) => v !== value); return before - l[key].length; }),
-    lrange: vi.fn(async (key) => [...(l[key] ?? [])]),
-    pipeline: () => {
-      const keys: string[] = [];
-      const api = {
-        hgetall: vi.fn((key: string) => { keys.push(key); return api; }),
-        exec: vi.fn(async () => keys.map(get)),
-      };
-      return api;
-    },
-    // Queued writes run through the spies above (so assertions on them still
-    // see each one) and all at once on exec, with nothing interleaved, as
-    // MULTI/EXEC runs them.
-    multi: vi.fn(() => {
-      const ops: Array<() => Promise<unknown>> = [];
-      const tx: SuggestionsTransaction = {
-        hset: (key, fields) => { ops.push(() => redis.hset(key, fields)); return tx; },
-        lpush: (key, value) => { ops.push(() => redis.lpush(key, value)); return tx; },
-        lrem: (key, count, value) => { ops.push(() => redis.lrem(key, count, value)); return tx; },
-        exec: async () => Promise.all(ops.map((op) => op())),
-      };
-      return tx;
-    }),
-  };
-  return redis;
-}
+/** Suggestion hashes and id lists, as the handler's raw client answers. */
+const makeRedis = (hashes: FakeRedisSeed['hashes'] = {}, lists: FakeRedisSeed['lists'] = {}) =>
+  fakeRedis({ hashes, lists, raw: true });
 
 // Deliberately low-entropy so secret scanners don't mistake them for keys.
 const TOKEN = 'test-token-' + 'a'.repeat(21);
@@ -286,7 +237,7 @@ describe('handleSuggestions', () => {
         await handleSuggestions(deps({ redis, lookup }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, res);
         expect(res.statusCode).toBe(200);
         expect(redis.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
-        expect(redis.store['suggestions:sug-aaaaaa'].details).toBeUndefined();
+        expect(redis.hashes['suggestions:sug-aaaaaa'].details).toBeUndefined();
       }
     });
 
@@ -340,7 +291,7 @@ describe('handleSuggestions', () => {
       const failed = makeRes();
       await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, failed);
       expect(failed.statusCode).toBe(500);
-      expect(redis.store['suggestions:sug-aaaaaa'].decidedAt).toBeUndefined();
+      expect(redis.hashes['suggestions:sug-aaaaaa'].decidedAt).toBeUndefined();
       redis.multi = multi;
       const retry = makeRes();
       await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, retry);
@@ -360,7 +311,7 @@ describe('handleSuggestions', () => {
       const res = makeRes();
       await handleSuggestions(deps({ redis: stale, now: () => 1000 + 60_000 }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, res);
       expect(String(res.body)).toContain('is now on the wishlist');
-      expect(stale.store['suggestions:sug-aaaaaa']).toMatchObject({ status: 'approved', decidedAt: 61_000 });
+      expect(stale.hashes['suggestions:sug-aaaaaa']).toMatchObject({ status: 'approved', decidedAt: 61_000 });
       expect(stale.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
     });
 
@@ -454,7 +405,7 @@ describe('handleSuggestions', () => {
     it('stores the suggestion before emailing, so the emailed links always resolve', async () => {
       const order: string[] = [];
       const redis = makeRedis();
-      redis.hset = vi.fn(async (key, fields) => { order.push(`hset:${key}`); redis.store[key] = { ...(redis.store[key] ?? {}), ...fields }; return 1; });
+      redis.hset = vi.fn(async (key, fields) => { order.push(`hset:${key}`); redis.hashes[key] = { ...(redis.hashes[key] ?? {}), ...fields }; return 1; });
       const mailer = { send: vi.fn(async () => { order.push('send'); }) };
       await handleSuggestions(deps({ redis, mailer }), { method: 'POST', query: {}, body: valid }, makeRes());
       expect(order).toEqual(['hset:suggestions:sug-bbbbbb', 'send']);
@@ -496,7 +447,7 @@ describe('handleSuggestions', () => {
       const res = makeRes();
       await handleSuggestions(deps({ redis, mailer: { send } }), { method: 'POST', query: {}, body: valid }, res);
       expect(res.statusCode).toBe(500);
-      expect(redis.store['suggestions:sug-bbbbbb'].status).toBe('approved');
+      expect(redis.hashes['suggestions:sug-bbbbbb'].status).toBe('approved');
       expect(redis.lists['suggestions:active']).toEqual(['sug-bbbbbb']);
       expect(redis.lists['suggestions:unsent']).toBeUndefined();
     });
@@ -508,7 +459,7 @@ describe('handleSuggestions', () => {
       await handleSuggestions(d, { method: 'POST', query: {}, body: valid }, res);
       expect(res.statusCode).toBe(500);
       expect(redis.lists['suggestions:active']).toEqual([]);
-      expect(redis.store['suggestions:sug-bbbbbb'].status).toBe('unsent');
+      expect(redis.hashes['suggestions:sug-bbbbbb'].status).toBe('unsent');
       // Tracked so the owner's on-site queue can still surface it.
       expect(redis.lists['suggestions:unsent']).toEqual(['sug-bbbbbb']);
 
@@ -532,7 +483,7 @@ describe('handleSuggestions', () => {
         await handleSuggestions(deps({ redis, mailer: resendMailer(hanging, 10) }), { method: 'POST', query: {}, body: valid }, res);
         expect(hanging).toHaveBeenCalledTimes(1);
         expect(res.statusCode).toBe(500);
-        expect(redis.store['suggestions:sug-bbbbbb'].status).toBe('unsent');
+        expect(redis.hashes['suggestions:sug-bbbbbb'].status).toBe('unsent');
         expect(redis.lists['suggestions:active']).toEqual([]);
         expect(redis.lists['suggestions:unsent']).toEqual(['sug-bbbbbb']);
       } finally {
@@ -888,7 +839,7 @@ describe('handleSuggestions', () => {
         const anon = makeRes();
         await handleSuggestions(deps({ redis }), decideReq({ decision: 'approve', id: 'sug-aaaaaa' }), anon);
         expect(anon.statusCode).toBe(403);
-        expect(redis.store['suggestions:sug-aaaaaa'].status).toBe('pending');
+        expect(redis.hashes['suggestions:sug-aaaaaa'].status).toBe('pending');
       });
 
       it('approves with enrichment, box art included, and answers JSON, not a page', async () => {
@@ -1014,7 +965,7 @@ describe('handleSuggestions', () => {
         const { res, redis } = await patch({ game: '  Root:  A Game  ', note: 'Mean', details: { mins: 60, kw: ['strategy', 'thematic', 'strategy'], type: 'heavy' } });
         expect(res.statusCode).toBe(200);
         expect(res.body).toMatchObject({ item: { game: 'Root: A Game', note: 'Mean', details: { min: 2, max: 4, mins: 60, desc: 'Woodland war.', kw: ['strategy', 'thematic'], type: 'heavy' } } });
-        expect(JSON.parse(String(redis.store['suggestions:sug-ok'].details))).toMatchObject({ mins: 60, type: 'heavy' });
+        expect(JSON.parse(String(redis.hashes['suggestions:sug-ok'].details))).toMatchObject({ mins: 60, type: 'heavy' });
       });
 
       it('clears the section with null and folds the textarea\'s line breaks into the description', async () => {
@@ -1066,7 +1017,7 @@ describe('handleSuggestions', () => {
         expect(res.body).toEqual({ ok: true });
         expect(redis.lists['suggestions:approved']).toEqual(['sug-other']);
         expect(redis.lists['suggestions:active']).toEqual([]);
-        expect(redis.store['suggestions:sug-ok']).toMatchObject({ status: 'removed', decidedAt: 5000, game: 'Root' });
+        expect(redis.hashes['suggestions:sug-ok']).toMatchObject({ status: 'removed', decidedAt: 5000, game: 'Root' });
         // A later public read no longer shows it.
         const list = makeRes();
         await handleSuggestions(asOwner({ redis }), { method: 'GET', query: {} }, list);
@@ -1088,7 +1039,7 @@ describe('handleSuggestions', () => {
           await handleSuggestions(asOwner({ redis }), { method: 'DELETE', query: {}, body: { id: 'sug-x' }, headers: JSON_H }, res);
           expect(res.statusCode).toBe(409);
           expect(res.body).toEqual({ error: 'Wingspan is not on the wishlist' });
-          expect(redis.store['suggestions:sug-x'].status).toBe(status);
+          expect(redis.hashes['suggestions:sug-x'].status).toBe(status);
           expect(redis.lists['suggestions:active']).toEqual(['sug-x']);
           expect(redis.lists['suggestions:unsent']).toEqual(['sug-x']);
         }

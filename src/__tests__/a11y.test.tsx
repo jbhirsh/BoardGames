@@ -10,6 +10,7 @@ import SignInPage from '../components/SignInPage';
 import RulesPage from '../components/RulesPage';
 import SaveOffline from '../components/SaveOffline';
 import { WISHLIST } from '../data/wishlist';
+import { stubMatchMedia } from './helpers/stubMatchMedia';
 
 expect.extend(matchers);
 
@@ -55,7 +56,7 @@ describe('accessibility', () => {
   }, TIMEOUT_MS);
 
   it('phone filter sheet has no axe violations while open', async () => {
-    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener: () => {}, removeEventListener: () => {} })));
+    stubMatchMedia(true);
     try {
       const router = createMemoryRouter([
         { element: <App />, children: [{ path: '/', element: <HomePage /> }] },

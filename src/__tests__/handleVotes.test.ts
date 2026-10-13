@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-import { handleVotes, type VotesRedis, type VotesRequest, type VotesResponse } from '../../api/votes';
+import { handleVotes, type VotesPipeline, type VotesRedis, type VotesRequest, type VotesResponse } from '../../api/votes';
 import { WISHLIST_IDS } from '../../api/_lib/wishlistIds';
 import { WISHLIST } from '../data/wishlist';
+import { fakeRedis } from './helpers/fakeRedis';
 
 function makeRes() {
   const res = {
@@ -13,43 +14,26 @@ function makeRes() {
   return res;
 }
 
-function makeRedis(overrides: Partial<VotesRedis> = {}): VotesRedis {
-  const pipeline = () => {
-    const ops: Array<() => Promise<unknown>> = [];
-    const api = {
-      scard: vi.fn(() => { ops.push(() => Promise.resolve(0)); return api; }),
-      sismember: vi.fn(() => { ops.push(() => Promise.resolve(0)); return api; }),
-      exec: vi.fn(async () => Promise.all(ops.map((f) => f()))),
-    };
-    return api;
-  };
-  return {
-    sadd: vi.fn(async () => 1),
-    srem: vi.fn(async () => 1),
-    scard: vi.fn(async () => 0),
-    hget: vi.fn(async () => null),
-    pipeline,
-    ...overrides,
-  };
-}
+/** `n` voters other than the one asking. */
+const voters = (n: number) => Array.from({ length: n }, (_, i) => `anon-other-${i}`);
 
 describe('handleVotes', () => {
   it('returns 405 for unsupported method', async () => {
     const res = makeRes();
-    await handleVotes(makeRedis(), { method: 'PATCH', query: {} }, res);
+    await handleVotes(fakeRedis(), { method: 'PATCH', query: {} }, res);
     expect(res.statusCode).toBe(405);
   });
 
   it('GET returns 400 when no ids given', async () => {
     const res = makeRes();
-    await handleVotes(makeRedis(), { method: 'GET', query: {} }, res);
+    await handleVotes(fakeRedis(), { method: 'GET', query: {} }, res);
     expect(res.statusCode).toBe(400);
   });
 
   it('GET returns 400 for >100 ids', async () => {
     const res = makeRes();
     const ids = Array.from({ length: 101 }, (_, i) => `x${i}`).join(',');
-    await handleVotes(makeRedis(), { method: 'GET', query: { ids } }, res);
+    await handleVotes(fakeRedis(), { method: 'GET', query: { ids } }, res);
     expect(res.statusCode).toBe(400);
   });
 
@@ -58,22 +42,16 @@ describe('handleVotes', () => {
     // weakened to `>= 100`, which would reject a legitimate 100-id request.
     const res = makeRes();
     const ids = Array.from({ length: 100 }, (_, i) => `g${i}`).join(',');
-    await handleVotes(makeRedis(), { method: 'GET', query: { ids } }, res);
+    await handleVotes(fakeRedis(), { method: 'GET', query: { ids } }, res);
     expect(res.statusCode).toBe(200);
   });
 
   it('GET filters invalid ids and returns counts map', async () => {
-    const redis = makeRedis({
-      pipeline: () => {
-        const calls: string[] = [];
-        const api = {
-          scard: vi.fn((key: string) => { calls.push(key); return api; }),
-          sismember: vi.fn(() => api),
-          exec: vi.fn(async () => calls.map((k) => (k.endsWith(':a') ? 3 : 5))),
-        };
-        return api;
-      },
-    });
+    const redis = fakeRedis({ sets: {
+      'wishlist:votes:a': voters(3),
+      'wishlist:votes:b': voters(5),
+      'wishlist:votes:c': voters(5),
+    } });
     const req: VotesRequest = { method: 'GET', query: { ids: 'a,b,INVALID ID!,c' } };
     const res = makeRes();
     await handleVotes(redis, req, res);
@@ -82,16 +60,10 @@ describe('handleVotes', () => {
   });
 
   it('GET returns myVotes when valid anonId is provided', async () => {
-    const redis = makeRedis({
-      pipeline: () => {
-        const api = {
-          scard: vi.fn(() => api),
-          sismember: vi.fn(() => api),
-          exec: vi.fn(async () => [2, 7, 1, 0]),
-        };
-        return api;
-      },
-    });
+    const redis = fakeRedis({ sets: {
+      'wishlist:votes:a': ['anon-1234567', ...voters(1)],
+      'wishlist:votes:b': voters(7),
+    } });
     const res = makeRes();
     await handleVotes(
       redis,
@@ -102,16 +74,7 @@ describe('handleVotes', () => {
   });
 
   it('GET ignores malformed anonId', async () => {
-    const redis = makeRedis({
-      pipeline: () => {
-        const api = {
-          scard: vi.fn(() => api),
-          sismember: vi.fn(() => api),
-          exec: vi.fn(async () => [1]),
-        };
-        return api;
-      },
-    });
+    const redis = fakeRedis({ sets: { 'wishlist:votes:a': voters(1) } });
     const res = makeRes();
     await handleVotes(
       redis,
@@ -122,10 +85,7 @@ describe('handleVotes', () => {
   });
 
   it('POST vote=1 calls sadd and returns new count', async () => {
-    const redis = makeRedis({
-      sadd: vi.fn(async () => 1),
-      scard: vi.fn(async () => 4),
-    });
+    const redis = fakeRedis({ sets: { 'wishlist:votes:lost-cities': voters(3) } });
     const res = makeRes();
     await handleVotes(
       redis,
@@ -138,7 +98,7 @@ describe('handleVotes', () => {
   });
 
   it('POST vote=0 calls srem', async () => {
-    const redis = makeRedis({ srem: vi.fn(async () => 1), scard: vi.fn(async () => 2) });
+    const redis = fakeRedis({ sets: { 'wishlist:votes:dominion-seaside': ['anon-1234567', ...voters(2)] } });
     const res = makeRes();
     await handleVotes(
       redis,
@@ -154,10 +114,10 @@ describe('handleVotes', () => {
       const res = makeRes();
       return handleVotes(redis, { method: 'POST', query: {}, body: { itemId, anonId: 'anon-1234567', vote: v } }, res).then(() => res);
     };
-    const withStatus = (status: string | null) => makeRedis({ hget: vi.fn(async () => status) });
+    const withStatus = (status: string) => fakeRedis({ hashes: { 'suggestions:sug-abc123': { status } } });
 
     it('answers 404 for an id on neither list and writes nothing', async () => {
-      const redis = makeRedis();
+      const redis = fakeRedis();
       for (const v of [1, 0] as const) {
         const res = await vote(redis, 'made-up-game', v);
         expect(res.statusCode).toBe(404);
@@ -171,7 +131,7 @@ describe('handleVotes', () => {
     });
 
     it('answers 404 for a suggestion id with no record', async () => {
-      const redis = makeRedis();
+      const redis = fakeRedis();
       const res = await vote(redis, 'sug-made-up');
       expect(res.statusCode).toBe(404);
       expect(redis.hget).toHaveBeenCalledWith('suggestions:sug-made-up', 'status');
@@ -179,14 +139,14 @@ describe('handleVotes', () => {
     });
 
     it.each(['active', 'approved', 'unsent'])('answers 404 for %s, an id list rather than a suggestion, without reading it', async (id) => {
-      const redis = makeRedis();
+      const redis = fakeRedis();
       const res = await vote(redis, id);
       expect(res.statusCode).toBe(404);
       expect(redis.hget).not.toHaveBeenCalled();
     });
 
     it('takes a compiled-in wishlist id without looking up a suggestion', async () => {
-      const redis = makeRedis();
+      const redis = fakeRedis();
       const res = await vote(redis, 'the-mind');
       expect(res.statusCode).toBe(200);
       expect(redis.hget).not.toHaveBeenCalled();
@@ -215,7 +175,7 @@ describe('handleVotes', () => {
   it('POST rejects invalid itemId', async () => {
     const res = makeRes();
     await handleVotes(
-      makeRedis(),
+      fakeRedis(),
       { method: 'POST', query: {}, body: { itemId: 'BadId!', anonId: 'anon-1234567', vote: 1 } },
       res,
     );
@@ -225,7 +185,7 @@ describe('handleVotes', () => {
   it('POST rejects invalid anonId', async () => {
     const res = makeRes();
     await handleVotes(
-      makeRedis(),
+      fakeRedis(),
       { method: 'POST', query: {}, body: { itemId: 'lost-cities', anonId: 'x', vote: 1 } },
       res,
     );
@@ -235,7 +195,7 @@ describe('handleVotes', () => {
   it('POST rejects non-0/1 vote value', async () => {
     const res = makeRes();
     await handleVotes(
-      makeRedis(),
+      fakeRedis(),
       { method: 'POST', query: {}, body: { itemId: 'lost-cities', anonId: 'anon-1234567', vote: 2 } },
       res,
     );
@@ -243,16 +203,8 @@ describe('handleVotes', () => {
   });
 
   it('returns 500 on redis error', async () => {
-    const redis = makeRedis({
-      pipeline: () => {
-        const api = {
-          scard: vi.fn(() => api),
-          sismember: vi.fn(() => api),
-          exec: vi.fn(async () => { throw new Error('redis down'); }),
-        };
-        return api;
-      },
-    });
+    const broken: VotesPipeline = { scard: () => broken, sismember: () => broken, exec: async () => { throw new Error('redis down'); } };
+    const redis: VotesRedis = { ...fakeRedis(), pipeline: () => broken };
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const res = makeRes();
     await handleVotes(redis, { method: 'GET', query: { ids: 'a' } }, res);
