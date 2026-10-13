@@ -444,7 +444,7 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   fallbacks, standard fonts, licences) goes to the runtime
   `gameroom-assets` cache if it is ever fetched, and each update clears it
   with the old code. The wishlist's box art (`WISHLIST_ART_DIR`, 39 files,
-  608 KB: more than the collection's 30 at 577 KB, and 16% on top of the
+  608 KB: more than the collection's 30 at 549 KB, and 16% on top of the
   3.9 MB install, for a list behind the Want toggle many never open) goes
   there too, each file as a card draws it (lazily, so a card never
   scrolled to online has no art offline), marked with the build's hash of
@@ -641,6 +641,15 @@ reason for each file.
   `npm run wishlist-art` fetches each one's 200x200 box art by that id from
   the site's own item endpoint, which needs no token, into
   `public/images/wishlist/` and the generated `src/data/wishlistArt.ts`.
+  The collection's box art is one style, each game's flat front cover cut
+  to fill a 400x400 square: `npm run collection-art [-- <slug>...]`
+  (`scripts/fetch-collection-art.ts`, needs ImageMagick) fetches the BGG
+  image pinned for each game in its `COVERS` map (picked by eye from the
+  item's gallery, with a crop box and where the square sits) by image id
+  from the same no-token endpoints and writes `public/images/<slug>.webp`.
+  A game missing from the map falls back to its main image; the ones
+  marked `keep` (games not on BGG, or editions it lacks) are left as
+  checked in.
   The collection's games carry their ids too, and `npm run game-weights`
   reads each one's community weight from the site's no-token stats endpoint
   (`api.geekdo.com/api/dynamicinfo`) into the generated
