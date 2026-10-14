@@ -6,21 +6,16 @@ import { digitNudge } from '../utils/digitNudge';
 import { breakdown, ordinal, scienceScore, standings, tieBreaks, treasuryScore, type Breakdown, type Tally } from '../utils/sevenWonders';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { safeStorage } from '../client/safeStorage';
+import { revealInStrip } from '../client/revealInStrip';
 import NotFoundPage from './NotFoundPage';
-import BackLink from './BackLink';
+import PageHeader from './PageHeader';
 import { ScoreIcon, type ScoreIconKind } from './ScoreIcons';
 
 let nextPlayerId = 0;
 
 // Scrolls the player strip sideways just far enough to show the chosen tab.
-// scrollIntoView would also scroll the page to bring the strip into view.
 function scrollIntoStrip(el: HTMLDivElement | null) {
-  const strip = el?.parentElement;
-  if (!el || !strip) return;
-  const left = el.offsetLeft - strip.offsetLeft;
-  const right = left + el.offsetWidth;
-  if (left < strip.scrollLeft) strip.scrollLeft = left;
-  else if (right > strip.scrollLeft + strip.clientWidth) strip.scrollLeft = right - strip.clientWidth;
+  if (el?.parentElement) revealInStrip(el.parentElement, el);
 }
 
 const SCORE_FIELDS = ['military', 'coins', 'wonder', 'civilian', 'tablets', 'compasses', 'gears', 'commercial', 'guilds'] as const;
@@ -311,16 +306,7 @@ export default function ScoreCalculatorPage() {
   return (
     <div className="rules-page" style={{ '--digit-nudge': `${nudge}px` } as CSSProperties}>
       <title>{`${game.name} score · The Game Room`}</title>
-      <header className="rules-header">
-        <BackLink />
-        <div className="rules-title-row">
-          <img src={game.img} alt={`${game.name} box art`} className="rules-box-art" />
-          <div className="rules-title-info">
-            <h1 className="rules-game-name">Score Calculator</h1>
-            <p className="rules-game-desc">{game.name}</p>
-          </div>
-        </div>
-      </header>
+      <PageHeader title="Score Calculator" desc={game.name} art={game} />
 
       {/* One row, however many play: the players scroll sideways in their
           own strip, with Add and Results always at its end. */}

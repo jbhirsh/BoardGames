@@ -63,7 +63,9 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   bundle; the others are `React.lazy` (`lazyPages.ts`) and load on first
   open behind a `Suspense` fallback, `RouteFallback`: the page's header in
   grey with a working Back link, its bars the header's own text laid out
-  unseen so the page drops in without moving (`RulesFallback` takes the
+  unseen so the page drops in without moving (the rules, score and
+  word-checker pages and the fallback all draw it with `PageHeader`, the
+  fallback with `loading`; `RulesFallback` takes the
   game's name, rulebook line and buttons from the data; the sign-in page's
   words are in `data/signIn.ts` for both). Code that won't load (a deploy
   since the tab loaded) reaches `RouteError`, which reloads once
@@ -423,7 +425,9 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
 - **`client/`** — the browser-side modules that have side effects but are
   not hooks: `adminApi.ts`, the owner's calls to the API; `dictionary.ts`,
   the Wiktionary lookup; `wordList.ts`, loading the word checker's lists;
-  `displayName.ts`, the remembered name; and `safeStorage.ts`, localStorage
+  `displayName.ts`, the remembered name; `revealInStrip.ts`, which scrolls
+  a sideways strip (the rulebook tabs, the score pad's players) just far
+  enough to show an item; and `safeStorage.ts`, localStorage
   and sessionStorage that never throw (blocked, full or missing storage
   reads as nothing stored), for the score pad's game, the theme, the
   voter id, the display name and the reader's jumps.
