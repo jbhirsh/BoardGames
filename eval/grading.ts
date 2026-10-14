@@ -116,7 +116,7 @@ export function gradeRegex(pattern: string, answer: string): boolean {
 }
 
 // A page citation, "(p. 4)" or "(Europe p. 4)", as the assistant is asked to
-// write them and the chat links them (src/utils/rulebooks.ts).
+// write them and the chat links them (src/utils/citations.ts).
 const CITATION = /\([^()\n]{0,80}?\bp\.\s?\d{1,4}\)/g;
 
 /** The answer's page citations, brackets and all. */
