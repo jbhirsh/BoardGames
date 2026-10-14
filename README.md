@@ -137,9 +137,20 @@ and is configurable — see [`eval/run-eval.ts`](eval/run-eval.ts).
 
 **In CI:** the eval runs as a separate workflow
 ([`.github/workflows/eval.yml`](.github/workflows/eval.yml)), not as part of
-the unit-test job, because it costs real API calls. It triggers only on pull
-requests that touch `api/**`, `eval/**`, or `rules-text/**` (plus a manual
-`workflow_dispatch`), and skips gracefully with a clear message when
+the unit-test job, because it costs real API calls. It calls Gemini only when
+the AI code — the rules assistant (`api/_lib/rulesAssistant.ts`), `eval/**`
+or `rules-text/**` — changes, and never for a draft: when a PR opens ready, is
+reopened or is marked ready, if the PR touches that code; and on a later push
+unless that code is as it was when the workflow last finished a run on the PR
+and that run passed. So
+rebasing on, or merging in, a `main` that moved doesn't re-grade, but a push
+after a failed, errored or cancelled grade does.
+`.github/scripts/eval-should-grade.mjs` makes the call; a manual
+`workflow_dispatch` always grades (use one after changing the workflow, which
+doesn't grade on its own). A run that doesn't grade still reports the
+required check, as passing. Grading every push of any PR touching
+`api/` used to hit the Gemini project's monthly spend cap. It also skips
+gracefully with a clear message when
 `GEMINI_API_KEY` isn't available — e.g. on PRs from forks, which don't receive
 repository secrets.
 
