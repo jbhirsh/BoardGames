@@ -66,8 +66,9 @@ export default defineConfig([
     },
   },
   {
-    // Plain Node CI helpers (.github/scripts). Untyped JS.
-    files: ['.github/scripts/**/*.mjs'],
+    // Plain Node CI helpers (.github/scripts) and the data scripts
+    // (scripts/). Untyped JS.
+    files: ['.github/scripts/**/*.mjs', 'scripts/**/*.mjs'],
     extends: [js.configs.recommended],
     languageOptions: { globals: globals.node },
   },

@@ -114,8 +114,11 @@ const magick = (() => {
 const pause = () => new Promise((resolve) => setTimeout(resolve, 1200));
 class Stop extends Error {}
 const get = async (url: string) => {
-  const r = await fetch(url, { headers: { 'User-Agent': UA } });
-  // A rate limit or a challenge page ends the run; what was written stays.
+  // A rate limit, a challenge page or a stall ends the run; what was written stays.
+  const r = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(30_000) }).catch((e: unknown) => {
+    if ((e as Error).name === 'TimeoutError') throw new Stop(`BoardGameGeek stopped answering for ${url}; stopping, re-run later for the rest.`);
+    throw e;
+  });
   if (r.status === 429 || r.status === 403) throw new Stop(`BoardGameGeek answered ${r.status} for ${url}; stopping, re-run later for the rest.`);
   await pause();
   return r;

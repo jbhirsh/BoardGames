@@ -43,9 +43,14 @@ for (const { name, bgg } of games) {
     if (kept !== undefined) weights.set(bgg, kept);
     continue;
   }
-  const r = await fetch(STATS_URL(bgg));
-  if (r.status === 429) {
-    console.error(`BoardGameGeek is rate limiting (429) at ${name}; keeping the last weights for the rest, re-run later.`);
+  // A stalled answer stops the run like a rate limit, so what was fetched is
+  // still written.
+  const r = await fetch(STATS_URL(bgg), { signal: AbortSignal.timeout(30_000) }).catch((e: unknown) => {
+    if ((e as Error).name !== 'TimeoutError') throw e;
+    return undefined;
+  });
+  if (!r || r.status === 429) {
+    console.error(`BoardGameGeek ${r ? 'is rate limiting (429)' : 'stopped answering'} at ${name}; keeping the last weights for the rest, re-run later.`);
     stopped = true;
     const kept = previous.get(bgg);
     if (kept !== undefined) weights.set(bgg, kept);

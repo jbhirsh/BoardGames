@@ -6,8 +6,10 @@ import { extractText } from "unpdf";
 const RULES_DIR = join(import.meta.dirname, "..", "public", "rules");
 const OUTPUT_DIR = join(import.meta.dirname, "..", "rules-text");
 // A page with real text runs to hundreds of characters; an image-only scan
-// gives next to none. Judge per page, so a one-page house-rules sheet of a few
-// hundred characters isn't mistaken for a scan and sent to OCR.
+// gives next to none. The test is the whole PDF's text against this much per
+// page (an average across its pages, not each page on its own), so a one-page
+// house-rules sheet of a few hundred characters isn't mistaken for a scan and
+// sent to OCR.
 const MIN_CHARS_PER_PAGE = 200;
 
 // Each page opens with "[Page N]" (its page in the PDF, as #page=N opens it),
