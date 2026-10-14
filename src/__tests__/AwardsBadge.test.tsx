@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import AwardsBadge from '../components/AwardsBadge';
+import AwardsBadge, { AwardsSection } from '../components/AwardsBadge';
 
 const awards = [
   { name: 'Spiel des Jahres', year: 2024 },
@@ -118,5 +118,21 @@ describe('AwardsBadge', () => {
     fireEvent.mouseEnter(btn);
     fireEvent.click(btn);
     expect(screen.queryByRole('group')).not.toBeInTheDocument();
+  });
+});
+
+describe('AwardsSection', () => {
+  it('lists every win, with its year, under an Awards heading', () => {
+    const { container } = render(<AwardsSection awards={awards} />);
+    const section = container.firstElementChild!;
+    expect(section).toHaveClass('detail-section', 'row-awards');
+    expect(screen.getByRole('heading', { level: 3, name: 'Awards' })).toBeInTheDocument();
+    const items = screen.getAllByRole('listitem');
+    expect(items.map((li) => li.textContent)).toEqual(['Spiel des Jahres 2024', 'Golden Geek Best Two-Player Game 2023']);
+  });
+
+  it('renders nothing for an entry with no wins', () => {
+    const { container } = render(<AwardsSection awards={[]} />);
+    expect(container).toBeEmptyDOMElement();
   });
 });

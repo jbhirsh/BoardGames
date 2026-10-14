@@ -3,6 +3,7 @@ import { useParams, useLocation, useNavigate, Link, Navigate } from 'react-route
 import { GAMES } from '../data/games';
 import { rulebooks, rulebookPath, chatParts, chatScope, citationsIn, citedPage, citedPageParam, linkCitations, mentionedRulebooks, starterQuestions } from '../utils/rulebooks';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
+import { WORD_CHECKER_GAME } from '../data/wordChecker';
 import { CalculatorIcon } from './Icons';
 import { shownKind } from '../utils/subgames';
 import RulesChatProvider, { RulesChatToggle, RulesChatPanel } from './RulesChat';
@@ -247,7 +248,7 @@ export default function RulesPage() {
               <CalculatorIcon /> Score calculator
             </Link>
           )}
-          {game.slug === 'bananagrams' && (
+          {game.slug === WORD_CHECKER_GAME && (
             <button
               className="rules-chat-toggle"
               onClick={() => setWordCheckerOpen(o => !o)}

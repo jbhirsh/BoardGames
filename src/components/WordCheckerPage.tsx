@@ -1,9 +1,10 @@
 import PageHeader from './PageHeader';
 import { GAMES } from '../data/games';
+import { WORD_CHECKER_GAME } from '../data/wordChecker';
 import WordChecker from './WordChecker';
 
 export default function WordCheckerPage() {
-  const game = GAMES.find(g => g.slug === 'bananagrams');
+  const game = GAMES.find(g => g.slug === WORD_CHECKER_GAME);
 
   if (!game) return null;
 
