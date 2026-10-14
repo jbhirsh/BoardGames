@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -118,16 +118,24 @@ describe('lastRun', () => {
 
 // Real git histories in throwaway repos: a bare "origin" and a clone that
 // plays the CI checkout. No network: origin is a local directory, and the
-// user's git config is kept out (signing, hooks, aliases).
+// user's git config is kept out (signing, hooks, aliases), as are inherited
+// GIT_* variables: run from a git hook, GIT_DIR would point every command
+// here, the script's own included, at the repository being pushed instead
+// of the scratch one.
 describe('evaluate', () => {
   const AI = ['api/ai.ts', 'eval'];
   const dirs = [];
+  const inherited = Object.keys(process.env).filter((key) => key.startsWith('GIT_'));
+  beforeAll(() => {
+    for (const key of inherited) vi.stubEnv(key, undefined);
+  });
+  afterAll(() => vi.unstubAllEnvs());
   afterEach(() => {
     for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true });
   });
 
   const env = {
-    ...process.env,
+    ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !inherited.includes(key))),
     GIT_CONFIG_GLOBAL: '/dev/null',
     GIT_CONFIG_NOSYSTEM: '1',
     GIT_AUTHOR_NAME: 't',

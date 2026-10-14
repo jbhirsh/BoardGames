@@ -45,6 +45,13 @@ done
 # Only branch deletions: nothing to test or build.
 [ -n "$pushed" ] || exit 0
 
+# Git runs this hook with GIT_DIR and the like pointing at this repository.
+# A test that runs git in a scratch repository would inherit them and act on
+# this one instead (an `init --bare` there once set core.bare on it), so
+# they are cleared before any test runs.
+# shellcheck disable=SC2046 # one variable name per word, by design
+unset $(git rev-parse --local-env-vars)
+
 code='^(src|api|eval|\.github/scripts)/.+\.(ts|tsx|mts|mjs|js)$'
 untested='^([^/]+\.md|docs/.*|\.github/workflows/.*|\.github/dependabot\.yml|\.githooks/.*|e2e/.*|playwright\.config\.ts|scripts/.*|index\.html|\.gitignore|\.env\.example)$'
 if grep -vE "$code" "$changed" | grep -vqE "$untested"; then
