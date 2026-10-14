@@ -1,5 +1,10 @@
-import type { FilterState, SubGame, SubGameKind } from '../data/types';
+import type { FilterState, Game, GameWithSubgames, SubGame, SubGameKind } from '../data/types';
 import { fitsTable, isDeck, tableFiltered } from './filterGames';
+
+/** Whether a game holds others, as the add-ons tag and list need it to. */
+export function hasSubgames(game: Game): game is GameWithSubgames {
+  return game.subgames !== undefined;
+}
 
 /**
  * What the games inside a game are: "game(s)" for a deck's card games, the

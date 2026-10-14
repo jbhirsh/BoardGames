@@ -40,42 +40,49 @@ export interface DetailSection {
 }
 
 /**
- * A game that lives under another one: Catan's add-ons, or the games a deck of
- * cards plays. Each has its own players, time, video and (usually) rulebook, so
- * the filters can find the parent through it.
+ * What a game and a game inside one both carry: who and how long it plays
+ * for, its line and video, its rulebooks, awards and write-up.
  */
-export interface SubGame {
-  name: string;
-  /** Unique within the parent; its rulebook is /rules/<parent>.<slug>.pdf. */
+export interface TableInfo extends Pick<Filterable, 'name' | 'min' | 'max' | 'dur' | 'mins' | 'bgg' | 'weight'> {
+  /**
+   * Names its rulebook: a game's is /rules/<slug>.pdf, and a game inside
+   * one, whose slug is unique within the game, /rules/<game>.<slug>.pdf.
+   */
   slug: string;
-  kind: SubGameKind;
   players: string;
-  min: number;
-  max: number;
-  dur: string;
-  mins: number;
   short: string;
   yt: string;
-  /** As a game's (see Filterable). */
-  bgg?: number;
-  /** As a game's (see Filterable); a deck's games and versions have one, add-ons don't. */
-  weight?: number;
-  /** Absent when no rulebook is bundled (the rules came in the box). */
+  /** Absent on a game inside another when no rulebook is bundled (the rules came in the box). */
   rules?: string;
-  /** The tab for `rules`; the sub-game's name when absent. */
+  /**
+   * The rules page's tab for `rules`; when absent, a game's says "Base
+   * game" ("Overview" for a deck) and a game inside one's its name.
+   */
   rulesLabel?: string;
   /**
-   * Further rulebooks for this sub-game, like the Monster Box's sheets for
-   * Boxes 2 to 4, each a tab after its own. Their slugs share the parent's
-   * namespace: /rules/<parent>.<slug>.pdf.
+   * Further rulebooks for the same game, each a tab after its own, such as
+   * Hogwarts Battle's sheets for Games 2 to 7 or the Monster Box's for
+   * Boxes 2 to 4. Their slugs share the game's namespace, at
+   * /rules/<game>.<slug>.pdf. They build on its rules and on each other,
+   * so the rules assistant reads the one on screen and those before it.
    */
   moreRules?: ExtraRulebook[];
-  /** Confirmed award wins of its own, like a game's. */
+  /** Confirmed award wins of its own. */
   awards?: Award[];
+  /** The long write-up, a section at a time (a game inside one shows it under `desc`). */
+  detail?: DetailSection[];
+}
+
+/**
+ * A game that lives under another one: Catan's add-ons, or the games a deck of
+ * cards plays. Each has its own players, time, video and (usually) rulebook, so
+ * the filters can find the parent through it. A deck's games and versions
+ * have a weight; add-ons don't.
+ */
+export interface SubGame extends TableInfo {
+  kind: SubGameKind;
   /** The fuller description its row opens to, after `short`. */
   desc?: string;
-  /** Write-up sections like a game's `detail`, shown under `desc`. */
-  detail?: DetailSection[];
 }
 
 /**
@@ -107,37 +114,28 @@ export interface Filterable {
   subgames?: SubGame[];
 }
 
-export interface Game extends Filterable {
-  slug: string;
+export interface Game extends Filterable, TableInfo {
   /** Box art, /images/<slug>.webp unless its entry names another (games.ts fills both in). */
   img: string;
   /** Its own rulebook, /rules/<slug>.pdf. */
   rules: string;
-  /** The rules page's tab for `rules`; "Base game" (or "Overview" for a deck) when absent. */
-  rulesLabel?: string;
-  /**
-   * More rulebooks for this same game, such as Hogwarts Battle's sheets for
-   * Games 2 to 7, each a tab at /rules/<game>.<slug>.pdf. They build on the
-   * game's own rules and on each other, so the rules assistant reads the one
-   * on screen and those before it.
-   */
-  moreRules?: ExtraRulebook[];
   /**
    * The ways we play it differently from the printed rules, listed above the
    * rulebook on every tab of its rules page (an add-on's tabs included, since
    * it is played on top of the game).
    */
   houseRules?: HouseRule[];
-  players: string;
   group: GroupId;
-  short: string;
-  /** The long write-up, a section at a time. */
   detail: DetailSection[];
-  yt: string;
   awards: Award[];
 }
 
+/** A game with games inside it, as the add-ons tag and list take it. */
+export type GameWithSubgames = Game & { subgames: SubGame[] };
+
 export type WishlistType = 'two-player' | 'coop' | 'strategy' | 'heavy' | 'party' | 'suggested';
+/** The sections the owner can file a game under: every type but the friends' one. */
+export type WishlistSection = Exclude<WishlistType, 'suggested'>;
 
 /** One confirmed award win from a recognised body (nominations excluded). */
 export interface Award {
@@ -145,8 +143,8 @@ export interface Award {
   year: number;
 }
 
-
-export interface WishlistItem extends Filterable {
+/** What every wishlist entry carries, compiled in or stored. */
+interface WishlistEntry extends Filterable {
   id: string;
   yt: string;
   players: string;
@@ -158,10 +156,6 @@ export interface WishlistItem extends Filterable {
   img?: string;
   /** Set on approved friend suggestions: the display name that suggested it. */
   suggestedBy?: string;
-  /** Present on entries that live in the suggestions store (editable by the owner); absent on compiled-in entries. */
-  source?: 'friend' | 'owner';
-  /** The stored description on its own, without the credit line, for the owner's edit form. */
-  blurb?: string;
   /**
    * The game this one adds to, by name, when it is an expansion. A name in
    * the collection is marked as owned, so nobody votes for it thinking it
@@ -169,6 +163,21 @@ export interface WishlistItem extends Filterable {
    */
   expands?: string;
 }
+
+/** An entry compiled in from wishlist.ts, edited in the source. */
+export interface CompiledWishlistItem extends WishlistEntry {
+  source?: undefined;
+}
+
+/** An entry that lives in the suggestions store, which the signed-in owner can edit or remove. */
+export interface StoredWishlistItem extends WishlistEntry {
+  /** A friend's approved suggestion, or a game the owner added. */
+  source: 'friend' | 'owner';
+  /** The stored description on its own, without the credit line, for the owner's edit form. */
+  blurb: string;
+}
+
+export type WishlistItem = CompiledWishlistItem | StoredWishlistItem;
 
 /** The most minutes a game may take to show under the duration filter. */
 export type TimeBudget = 15 | 30 | 60;

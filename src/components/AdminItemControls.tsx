@@ -1,5 +1,5 @@
 import { useId, useState, type FormEvent } from 'react';
-import type { KeywordId, WishlistItem } from '../data/types';
+import type { KeywordId, StoredWishlistItem, WishlistItem } from '../data/types';
 import { KW, WISHLIST_SECTIONS, WISHLIST_TYPES } from '../data/keywords';
 import { DESC_MAX, GAME_MAX, GAME_MIN, MINS_MAX, PLAYERS_MAX } from '../data/suggestionLimits';
 import { useAuth } from '../context/useAuth';
@@ -8,6 +8,10 @@ import { editGame, removeGame } from '../client/adminApi';
 
 interface Props {
   item: WishlistItem;
+}
+
+interface StoredProps {
+  item: StoredWishlistItem;
 }
 
 /**
@@ -23,7 +27,7 @@ export default function AdminItemControls({ item }: Props) {
 
 type Mode = 'idle' | 'editing' | 'confirming';
 
-function Controls({ item }: Props) {
+function Controls({ item }: StoredProps) {
   const { reload } = useWishlistItems();
   const [mode, setMode] = useState<Mode>('idle');
   const [busy, setBusy] = useState(false);
@@ -64,7 +68,7 @@ function Controls({ item }: Props) {
   );
 }
 
-function EditForm({ item, onDone }: Props & { onDone: () => void }) {
+function EditForm({ item, onDone }: StoredProps & { onDone: () => void }) {
   const { reload } = useWishlistItems();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,7 +77,7 @@ function EditForm({ item, onDone }: Props & { onDone: () => void }) {
   const [min, setMin] = useState(String(item.min));
   const [max, setMax] = useState(String(item.max));
   const [mins, setMins] = useState(String(item.mins));
-  const [desc, setDesc] = useState(item.blurb ?? '');
+  const [desc, setDesc] = useState(item.blurb);
   const [kw, setKw] = useState<Set<KeywordId>>(() => new Set(item.kw));
   const uid = useId();
 

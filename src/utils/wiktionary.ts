@@ -120,11 +120,6 @@ function isPlayableDefinition(text: string, word: string): boolean {
 const isObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
-interface Sense {
-  partOfSpeech: string;
-  definitions: { definition: string; example?: string }[];
-}
-
 function firstExample(v: Record<string, unknown>): string | undefined {
   const parsed = Array.isArray(v.parsedExamples) ? v.parsedExamples[0] : undefined;
   const html = isObject(parsed) && typeof parsed.example === 'string' ? parsed.example : undefined;
@@ -132,7 +127,7 @@ function firstExample(v: Record<string, unknown>): string | undefined {
   return text || undefined;
 }
 
-function parseSense(v: unknown): Sense | null {
+function parseSense(v: unknown): Meaning | null {
   if (!isObject(v) || typeof v.partOfSpeech !== 'string' || !Array.isArray(v.definitions)) return null;
   const definitions = [];
   for (const d of v.definitions) {

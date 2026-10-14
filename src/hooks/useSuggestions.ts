@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { KeywordId, WishlistItem, WishlistType } from '../data/types';
+import type { KeywordId, StoredWishlistItem, WishlistItem, WishlistSection } from '../data/types';
 import { KW, WISHLIST_TYPES } from '../data/keywords';
 
 export interface SuggestionDetails {
@@ -25,7 +25,7 @@ export interface ApprovedSuggestion {
   source?: 'friend' | 'owner';
 }
 
-const isSection = (v: unknown): v is Exclude<WishlistType, 'suggested'> =>
+const isSection = (v: unknown): v is WishlistSection =>
   typeof v === 'string' && v !== 'suggested' && v in WISHLIST_TYPES;
 
 function playersLabel(min: number, max: number): string {
@@ -34,7 +34,7 @@ function playersLabel(min: number, max: number): string {
 }
 
 /** Shape an approved suggestion like a wishlist entry so the same cards render it. */
-export function suggestionToItem(s: ApprovedSuggestion): WishlistItem {
+export function suggestionToItem(s: ApprovedSuggestion): StoredWishlistItem {
   const d = s.details;
   const owner = s.source === 'owner';
   // A friend's pick is credited; the owner's own addition just reads as an

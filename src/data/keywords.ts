@@ -1,4 +1,4 @@
-import type { DurationFilter, GroupId, KeywordId, SortMode, TimeBudget, WishlistType } from './types';
+import type { DurationCategory, DurationFilter, GroupId, KeywordId, SortMode, TimeBudget, WishlistSection, WishlistType } from './types';
 
 export const KW: Record<KeywordId, string> = {
   'social': 'Social',
@@ -31,7 +31,8 @@ export const GROUPS: Record<GroupId, string> = {
   coop: 'Cooperative',
 };
 
-export const GROUP_ORDER: GroupId[] = ['social', 'word', 'party', 'strat', 'coop'];
+/** The groups in the order their headings take, which is GROUPS' own. */
+export const GROUP_ORDER = Object.keys(GROUPS) as GroupId[];
 
 export const WISHLIST_TYPES: Record<WishlistType, string> = {
   'two-player': 'Two-Player',
@@ -43,9 +44,10 @@ export const WISHLIST_TYPES: Record<WishlistType, string> = {
 };
 
 /** The sections the owner can file a game under: every wishlist type but the friends' one. */
-export const WISHLIST_SECTIONS: Exclude<WishlistType, 'suggested'>[] = ['party', 'strategy', 'coop', 'two-player', 'heavy'];
+export const WISHLIST_SECTIONS: WishlistSection[] = ['party', 'strategy', 'coop', 'two-player', 'heavy'];
 
-export const WISHLIST_TYPE_ORDER: WishlistType[] = ['party', 'strategy', 'coop', 'two-player', 'heavy', 'suggested'];
+/** The wishlist's headings in order: the sections, then the friends' suggestions. */
+export const WISHLIST_TYPE_ORDER: WishlistType[] = [...WISHLIST_SECTIONS, 'suggested'];
 
 /** The time budgets the duration filter offers, in minutes. */
 export const TIME_BUDGETS: readonly TimeBudget[] = [15, 30, 60];
@@ -58,7 +60,7 @@ export const DUR_LABELS: Record<DurationFilter, string> = {
   60: 'Up to 60 min',
 };
 
-export const DUR_PILL_LABELS: Record<string, string> = {
+export const DUR_PILL_LABELS: Record<DurationCategory, string> = {
   quick: 'Quick',
   medium: 'Medium',
   long: 'Long',

@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest';
 import type { WishlistItem } from '../data/types';
 import { mergeWishlist } from '../utils/mergeWishlist';
 
-const item = (name: string, over: Partial<WishlistItem> = {}): WishlistItem => ({
+// Merging reads names alone, so a stored entry here is one with a `source`
+// and nothing else a stored one carries.
+const item = (name: string, over: Partial<WishlistItem> = {}) => ({
   id: name.toLowerCase().replace(/\W+/g, '-'),
   name,
   desc: `About ${name}.`,
@@ -16,7 +18,7 @@ const item = (name: string, over: Partial<WishlistItem> = {}): WishlistItem => (
   type: 'party',
   awards: [],
   ...over,
-});
+}) as WishlistItem;
 
 describe('mergeWishlist', () => {
   it('keeps both lists when nothing overlaps, compiled entries first', () => {
