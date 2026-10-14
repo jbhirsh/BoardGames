@@ -5,6 +5,7 @@ import TableRowCells, { TableRowExpand } from './TableRowCells';
 import SubGameList from './SubGameList';
 import SubGamesTag from './SubGamesTag';
 import GameActions from './GameActions';
+import GameDetail from './GameDetail';
 import { fittingSubgames, subgameTitle } from '../utils/subgames';
 import { gameAnchor } from '../utils/heroCovers';
 import { useFilter } from '../context/useFilter';
@@ -37,10 +38,7 @@ export default function GameRow({ game, isOpen, onToggle }: Props) {
         />
       </tr>
       <TableRowExpand colSpan={COLLECTION_COLUMNS} isOpen={isOpen}>
-        <div
-          className="detail-section"
-          dangerouslySetInnerHTML={{ __html: game.detail }}
-        />
+        <GameDetail sections={game.detail} />
         {isOpen && game.subgames && hasFitting && (
           <div className="detail-section row-subgames">
             <h3>{subgameTitle(game.subgames)}</h3>

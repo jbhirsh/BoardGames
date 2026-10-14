@@ -31,6 +31,15 @@ export interface HouseRule {
 }
 
 /**
+ * One section of a game's long write-up (`detail`), the part a card's More
+ * and an open list row show: a heading over a paragraph of plain text.
+ */
+export interface DetailSection {
+  heading: string;
+  body: string;
+}
+
+/**
  * A game that lives under another one: Catan's add-ons, or the games a deck of
  * cards plays. Each has its own players, time, video and (usually) rulebook, so
  * the filters can find the parent through it.
@@ -66,8 +75,8 @@ export interface SubGame {
   awards?: Award[];
   /** The fuller description its row opens to, after `short`. */
   desc?: string;
-  /** Detail sections, HTML like a game's `detail`, shown under `desc`. */
-  detail?: string;
+  /** Write-up sections like a game's `detail`, shown under `desc`. */
+  detail?: DetailSection[];
 }
 
 /**
@@ -122,7 +131,8 @@ export interface Game extends Filterable {
   players: string;
   group: GroupId;
   short: string;
-  detail: string;
+  /** The long write-up, a section at a time. */
+  detail: DetailSection[];
   yt: string;
   awards: Award[];
 }

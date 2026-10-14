@@ -165,7 +165,7 @@ describe('GameRow', () => {
     expect(links[2]).toHaveClass('row-yt');
     // The write-up comes first, and every section of the panel before the actions.
     expect(content.firstElementChild).toHaveClass('detail-section');
-    expect(content.firstElementChild!.innerHTML).toBe(sevenWondersGame.detail);
+    expect(content.firstElementChild).toHaveTextContent(`${sevenWondersGame.detail[0].heading}${sevenWondersGame.detail[0].body}`);
     for (const section of Array.from(content.children).slice(0, -1)) expect(section).toHaveClass('detail-section');
     cleanup();
     renderRow(bananagramsGame, true);

@@ -4,7 +4,7 @@ import { GAME_WEIGHTS } from '../data/gameWeights';
 import { KW } from '../data/keywords';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
 import { WORD_CHECKER_GAME } from '../data/wordChecker';
-import type { Award } from '../data/types';
+import type { Award, DetailSection } from '../data/types';
 import { durationCategory } from '../hooks/useSuggestions';
 import { isDeck } from '../utils/filterGames';
 import { expectCoherentTable, numbers } from './coherentTable';
@@ -61,6 +61,23 @@ describe('games data', () => {
 
   it.each([...SCORE_CALCULATORS])('score calculator %s is a game in the collection', (slug) => {
     expect(GAMES.map((g) => g.slug)).toContain(slug);
+  });
+
+  const writeUps = GAMES.flatMap((g) => [
+    [g.slug, g.detail] as const,
+    ...(g.subgames ?? []).filter((sub) => sub.detail).map((sub) => [`${g.slug}.${sub.slug}`, sub.detail!] as const),
+  ]);
+
+  // The write-up is rendered as text, so markup in it would show as written.
+  it.each(writeUps)('%s has a write-up of named sections in plain text', (_slug, sections: DetailSection[]) => {
+    expect(sections.length).toBeGreaterThan(0);
+    expect(new Set(sections.map((s) => s.heading)).size).toBe(sections.length);
+    for (const s of sections) {
+      for (const text of [s.heading, s.body]) {
+        expect(text.trim()).not.toBe('');
+        expect(text).not.toMatch(/<\/?[a-z][^>]*>|&[a-z]+;/i);
+      }
+    }
   });
 
   it('the word checker\'s game is in the collection', () => {

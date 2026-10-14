@@ -270,7 +270,7 @@ describe('GameCard add-ons layout', () => {
 
 describe('GameCard More', () => {
   it('sits at the end of the description and opens the long write-up and awards in place', () => {
-    const game: Game = { ...quickGame, detail: '<h3>How it plays</h3><p>Full rules story.</p>', awards: [{ name: 'Mensa Select', year: 2009 }] };
+    const game: Game = { ...quickGame, detail: [{ heading: 'How it plays', body: 'Full rules story.' }], awards: [{ name: 'Mensa Select', year: 2009 }] };
     const { container } = renderWithContext(<GameCard game={game} />);
     const more = screen.getByRole('button', { name: 'More about Quick Game' });
     expect(more.closest('.card-desc')).toHaveTextContent(`${quickGame.short} More`);
