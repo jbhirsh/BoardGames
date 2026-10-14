@@ -2,7 +2,8 @@
 import '../pdfjs/polyfills';
 import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { TextLayer, type PDFDocumentProxy, type RenderTask } from 'pdfjs-dist';
-import { findMatches, piecesOf, type Match } from '../utils/pdfSearch';
+import { findMatches, type Match } from '../utils/pdfSearch';
+import { planMarks } from '../utils/pdfMarks';
 import { findCited, lineBreaks, passageStart } from '../utils/citeMatch';
 import { CANT_SHOW } from './cantShow';
 import { safeSessionStorage } from '../client/safeStorage';
@@ -376,33 +377,13 @@ function PdfPage({ doc, n, width, pixels, ratio, textOf, matches, current, quote
     divs.forEach((div, i) => {
       if (div.childElementCount > 0) div.textContent = data.runs[i].str;
     });
-    type Marked = { from: number; to: number; className: string; isCurrent: boolean };
-    const byItem = new Map<number, Marked[]>();
-    for (const match of matches) {
-      const className = match === current ? 'pdf-hit pdf-hit--current' : 'pdf-hit';
-      for (const { item, from, to } of piecesOf(data.text, data.runs, match)) {
-        byItem.set(item, [...(byItem.get(item) ?? []), { from, to, className, isCurrent: match === current }]);
-      }
-    }
-    // The cited passage around them: a search's matches inside it stay
-    // marked as matches, the current one too.
-    for (const piece of quoted ? piecesOf(data.text, data.runs, quoted) : []) {
-      const hits = byItem.get(piece.item) ?? [];
-      const cited: Marked[] = [];
-      let from = piece.from;
-      for (const hit of [...hits, { from: piece.to, to: piece.to }].sort((a, b) => a.from - b.from)) {
-        const to = Math.min(hit.from, piece.to);
-        if (to > from) cited.push({ from, to, className: 'pdf-hit pdf-hit--cited', isCurrent: false });
-        from = Math.max(from, hit.to);
-      }
-      byItem.set(piece.item, [...hits, ...cited]);
-    }
+    const byItem = planMarks(data.text, data.runs, matches, current, quoted);
     let currentMark: HTMLElement | null = null;
     for (const [item, pieces] of byItem) {
       const str = data.runs[item].str;
       const parts: (string | HTMLElement)[] = [];
       let at = 0;
-      for (const p of pieces.sort((a, b) => a.from - b.from)) {
+      for (const p of pieces) {
         parts.push(str.slice(at, p.from));
         const el = document.createElement('mark');
         el.className = p.className;
