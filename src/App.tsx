@@ -33,7 +33,7 @@ export function HomePage() {
         <title>The Game Room</title>
         <div className="clip-wrap">
           <Hero want={state.collection === 'want'} />
-          <div className="sticky-header" ref={stickyRef}>
+          <div className="sticky-header" ref={stickyRef} data-sticky-header>
             <FilterBar />
             {!isPhone && <ActiveTags />}
           </div>

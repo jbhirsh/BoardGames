@@ -83,8 +83,8 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
     `prefers-reduced-motion` it is the list's first seven (the favourites,
     in Own mode; five on a phone) standing still with no button. A cover scrolls to its
     game's card or row (`id` `game-<slug>` / `wish-<id>`) and focuses its
-    name or row toggle, clearing the filters first if they hide it; filter
-    bar, then the collection or the wishlist,
+    name or row toggle, clearing the filters first if they hide it. Below
+    the hero, the filter bar, then the collection or the wishlist,
     switched by the Own/Want toggle; both stay mounted so a toggle never
     refetches, and only the visible one carries the `#collection` anchor)
   - `/rules/:slug/:part?` — bundled rule PDF viewer + AI rules assistant;
@@ -440,10 +440,13 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   the Wiktionary lookup; `wordList.ts`, loading the word checker's lists;
   `displayName.ts`, the remembered name; `revealInStrip.ts`, which scrolls
   a sideways strip (the rulebook tabs, the score pad's players) just far
-  enough to show an item; and `safeStorage.ts`, localStorage
+  enough to show an item; `safeStorage.ts`, localStorage
   and sessionStorage that never throw (blocked, full or missing storage
   reads as nothing stored), for the score pad's game, the theme, the
-  voter id, the display name and the reader's jumps.
+  voter id, the display name and the reader's jumps; and `focus.ts`,
+  handing focus from one component to another (a cover's jump, the
+  Own/Want toggle, the empty state, Suggest a game) by the target's
+  `data-focus-target`, never by a class, since classes are styling's.
   dependency-cruiser keeps them free of React and of the UI above them.
 - **`sw/sw.ts`** — the service worker, for game nights with no signal.
   `main.tsx` registers it in production builds only; the `serviceWorker()`

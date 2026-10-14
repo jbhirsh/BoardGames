@@ -5,6 +5,7 @@ import { useFilter } from '../context/useFilter';
 import { useWishlistItems } from '../context/useWishlistItems';
 import { REDUCED_MOTION, useMediaQuery } from '../hooks/useMediaQuery';
 import { filterWishlist } from '../utils/filterGames';
+import { focusTarget } from '../client/focus';
 import { ownCovers, wantCovers, SECONDS_PER_COVER, STILL_COUNT, type HeroCover } from '../utils/heroCovers';
 import { PauseIcon, PlayIcon } from './Icons';
 
@@ -26,7 +27,7 @@ function jumpTo(anchor: string) {
   const target = document.getElementById(anchor);
   const landing = target ?? document.getElementById('collection')!;
   landing.scrollIntoView({ block: 'start' });
-  landing.querySelector<HTMLElement>('.row-toggle, .card-name, .sec-title')!.focus({ preventScroll: true });
+  focusTarget(landing, target ? 'item' : 'title', { preventScroll: true });
   if (!target) return;
   target.classList.remove('jump-arrive');
   // Read layout so the ring starts over when the same cover is clicked twice.

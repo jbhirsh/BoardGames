@@ -104,6 +104,7 @@ export default function TableRowCells({
         <button
           type="button"
           className="row-toggle"
+          data-focus-target="item"
           aria-expanded={isOpen}
           aria-label={`${isOpen ? 'Hide' : 'Show'} details for ${name}`}
           onClick={(e) => { e.stopPropagation(); onToggle(); }}

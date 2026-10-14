@@ -49,7 +49,7 @@ export default function SuggestForm() {
       <p className="suggest-sub">Know something we'd love? Jess gets an email and can add it with one click.</p>
       <div className="suggest-fields">
         <label className="suggest-label" htmlFor={`${uid}-game`}>Game</label>
-        <input id={`${uid}-game`} className="suggest-input" value={game} onChange={(e) => setGame(e.target.value)} required minLength={GAME_MIN} maxLength={GAME_MAX} placeholder="e.g. Kingdomino" />
+        <input id={`${uid}-game`} className="suggest-input" data-focus-target="field" value={game} onChange={(e) => setGame(e.target.value)} required minLength={GAME_MIN} maxLength={GAME_MAX} placeholder="e.g. Kingdomino" />
         <label className="suggest-label" htmlFor={`${uid}-name`}>Your name</label>
         <input id={`${uid}-name`} className="suggest-input" value={name} onChange={(e) => setName(e.target.value)} required maxLength={NAME_MAX} autoComplete="given-name" placeholder="e.g. Alex" />
         <label className="suggest-label" htmlFor={`${uid}-note`}>Why? <span className="suggest-opt">(optional)</span></label>
