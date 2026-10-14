@@ -55,18 +55,23 @@ const onDisk = async () => {
   return map;
 };
 
-// Either host answering 429 ends the run; the map still gets written with
-// what was fetched, and the next run picks up the rest.
-const rateLimited = (res: Response, name: string) => {
-  if (res.status !== 429) return false;
-  console.error(`BoardGameGeek is rate limiting (429) at ${name}; keeping what was fetched, re-run later for the rest.`);
+// Either host answering 429, or stalling, ends the run; the map still gets
+// written with what was fetched, and the next run picks up the rest.
+const get = (url: string) =>
+  fetch(url, { signal: AbortSignal.timeout(30_000) }).catch((e: unknown) => {
+    if ((e as Error).name !== 'TimeoutError') throw e;
+    return undefined;
+  });
+const rateLimited = (res: Response | undefined, name: string): res is undefined => {
+  if (res && res.status !== 429) return false;
+  console.error(`BoardGameGeek ${res ? 'is rate limiting (429)' : 'stopped answering'} at ${name}; keeping what was fetched, re-run later for the rest.`);
   return true;
 };
 
 let have = await onDisk();
 for (const { id, bgg, name } of entries) {
   if (have[id] && !refresh) continue;
-  const r = await fetch(ITEM_URL(bgg));
+  const r = await get(ITEM_URL(bgg));
   if (rateLimited(r, name)) break;
   if (!r.ok) {
     console.warn(`no art for ${name}: BoardGameGeek answered ${r.status} for item ${bgg}`);
@@ -84,7 +89,7 @@ for (const { id, bgg, name } of entries) {
     console.warn(`no art for ${name}: item ${bgg} has no image`);
     continue;
   }
-  const img = await fetch(url);
+  const img = await get(url);
   if (rateLimited(img, name)) break;
   if (!img.ok) {
     console.warn(`could not download art for ${name}: ${img.status}`);
