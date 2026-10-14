@@ -161,4 +161,49 @@ describe('filterReducer', () => {
     expect(state.baseSort).toBe('group');
     expect(state.view).toBe('grid'); // preserved
   });
+  it('SET_FILTERS sets the filters it is given and leaves the rest', () => {
+    const start: FilterState = { ...initialFilterState, duration: 30, players: 4, sort: 'name-desc', baseSort: 'group', view: 'grid' };
+    const state = filterReducer(start, { type: 'SET_FILTERS', payload: { players: 0, search: 'azul' } });
+    expect(state).toEqual({ ...start, players: 0, search: 'azul' });
+  });
+
+  it('SET_FILTERS takes only the filters from a whole state, as NoResults hands it one', () => {
+    const start: FilterState = { ...initialFilterState, duration: 30, view: 'grid', collection: 'want' };
+    const other: FilterState = { ...initialFilterState, duration: 'all', search: 'x', view: 'list', sort: 'quick', baseSort: 'quick' };
+    const state = filterReducer(start, { type: 'SET_FILTERS', payload: other });
+    expect(state).toEqual({ ...start, duration: 'all', search: 'x' });
+  });
+
+  it('CLEAR_FILTERS turns off the filters named, and every one with none named', () => {
+    const start: FilterState = {
+      ...initialFilterState,
+      duration: 15, players: 4, keywords: new Set(['party'] as const), keywordMode: 'and', search: 'cat',
+      sort: 'players-asc', baseSort: 'long', view: 'grid', collection: 'want',
+    };
+    const sheet = filterReducer(start, { type: 'CLEAR_FILTERS', payload: ['duration', 'players', 'keywords'] });
+    expect(sheet).toEqual({ ...start, duration: 'all', players: 0, keywords: new Set(), search: 'cat' });
+    // Unlike CLEAR_ALL, the keyword mode and the column sort stay.
+    const all = filterReducer(start, { type: 'CLEAR_FILTERS' });
+    expect(all).toEqual({ ...start, duration: 'all', players: 0, keywords: new Set(), search: '' });
+  });
+
+  it('CLEAR_ALL leaves nothing of the old state but the view, the list and the sorts', () => {
+    const modified: FilterState = {
+      duration: 15, players: 4, keywords: new Set(['strategy'] as const), keywordMode: 'and', search: 'test',
+      sort: 'dur-desc', baseSort: 'quick', view: 'grid', collection: 'want',
+    };
+    expect(filterReducer(modified, { type: 'CLEAR_ALL' })).toEqual({
+      ...initialFilterState, sort: 'quick', baseSort: 'quick', view: 'grid', collection: 'want',
+    });
+  });
+
+  it('SET_COLUMN_SORT starts every column ascending and flips it on a second click', () => {
+    for (const col of ['name', 'players', 'dur', 'weight'] as const) {
+      const once = filterReducer(initialFilterState, { type: 'SET_COLUMN_SORT', payload: col });
+      expect(once.sort).toBe(`${col}-asc`);
+      expect(filterReducer(once, { type: 'SET_COLUMN_SORT', payload: col }).sort).toBe(`${col}-desc`);
+      // The filter bar's A→Z orders as name-asc does, but is not that column sort.
+      expect(once.baseSort).toBe('az');
+    }
+  });
 });

@@ -2,6 +2,7 @@ import { useFilter } from '../../context/useFilter';
 import { useWishlistItems } from '../../context/useWishlistItems';
 import { DUR_LABELS, KW, PLAYER_OPTIONS, SORT_OPTIONS, TIME_BUDGETS, playersLabel } from '../../data/keywords';
 import { GAMES } from '../../data/games';
+import { sortAllowed } from '../../utils/filterState';
 import { CheckIcon } from '../Icons';
 import RadioOptions from './RadioOptions';
 import type { DurationFilter, Filterable, KeywordId } from '../../data/types';
@@ -58,8 +59,7 @@ export function PlayersOptions({ onPicked }: PickProps) {
 
 export function SortOptions({ onPicked }: PickProps) {
   const { state, dispatch } = useFilter();
-  // Only the wishlist has votes to sort by.
-  const options = state.collection === 'want' ? SORT_OPTIONS : SORT_OPTIONS.filter((o) => o.value !== 'votes');
+  const options = SORT_OPTIONS.filter((o) => sortAllowed(o.value, state.collection));
   return (
     <RadioOptions
       label="Sort"

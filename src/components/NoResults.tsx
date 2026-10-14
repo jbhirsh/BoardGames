@@ -45,7 +45,7 @@ export default function NoResults({ kind }: Props) {
                 type="button"
                 className="no-results-opt"
                 aria-label={`Drop ${r.label}, ${plural(r.count)}`}
-                onClick={() => dispatch({ type: 'HYDRATE', payload: r.without })}
+                onClick={() => dispatch({ type: 'SET_FILTERS', payload: r.without })}
               >
                 Drop {r.label} <span aria-hidden="true">→</span> {plural(r.count)}
               </button>

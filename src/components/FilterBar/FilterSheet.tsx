@@ -4,12 +4,16 @@ import { useWishlistItems } from '../../context/useWishlistItems';
 import { GAMES } from '../../data/games';
 import { filterGames, filterWishlist } from '../../utils/filterGames';
 import { activeFilters } from '../../utils/relaxFilters';
+import type { FilterField } from '../../utils/filterState';
 import { filterToSearchParams } from '../../utils/filterUrl';
 import { keepSectionInView } from '../../hooks/useKeepSectionInView';
 import { useDialogFocus } from '../../hooks/useDialogFocus';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import Backdrop from '../Backdrop';
 import { DurationOptions, KeywordOptions, PlayersOptions, SortOptions } from './FilterOptions';
+
+// Search has its own box in the bar; the sheet holds, and clears, the rest.
+const SHEET_FILTERS: readonly FilterField[] = ['duration', 'players', 'keywords'];
 
 /**
  * The phone's filters: one "Filters" button beside the search, so the sticky
@@ -55,9 +59,7 @@ export default function FilterSheet() {
     : filterGames(GAMES, state).length;
 
   function clearFilters() {
-    dispatch({ type: 'SET_DURATION', payload: 'all' });
-    dispatch({ type: 'SET_PLAYERS', payload: 0 });
-    dispatch({ type: 'CLEAR_KEYWORDS' });
+    dispatch({ type: 'CLEAR_FILTERS', payload: SHEET_FILTERS });
     // The button goes once nothing is on; keep focus in the sheet.
     doneRef.current?.focus();
   }

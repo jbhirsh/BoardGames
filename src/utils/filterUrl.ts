@@ -1,4 +1,5 @@
 import type {
+  BaseSort,
   CollectionMode,
   DurationFilter,
   FilterState,
@@ -10,6 +11,7 @@ import type {
 } from '../data/types';
 import { KW, TIME_BUDGETS } from '../data/keywords';
 import { initialFilterState } from '../data/initialFilterState';
+import { filterOn, sortAllowed } from './filterState';
 
 // Links from before the duration filter became a time budget name a bucket
 // (d=quick|medium|long). Each opens the budget that still shows its games;
@@ -18,9 +20,8 @@ const LEGACY_DURATIONS: Record<string, DurationFilter> = { quick: 15, medium: 60
 const KEYWORD_MODES: Exclude<KeywordMode, 'or'>[] = ['and'];
 const VIEWS: Exclude<ViewMode, 'list'>[] = ['grid'];
 const COLLECTIONS: Exclude<CollectionMode, 'own'>[] = ['want'];
-const SORTS: Exclude<SortMode, `${string}-${'asc' | 'desc'}`>[] = [
-  'az', 'group', 'quick', 'long', 'votes',
-];
+// Column sorts are a passing look at the list and never go in a link.
+const SORTS: BaseSort[] = ['az', 'group', 'quick', 'long', 'votes'];
 
 // Compile-time completeness checks: if a new non-default value is added to
 // the underlying type and forgotten in one of the whitelists above, the
@@ -53,11 +54,11 @@ const _collectionsExhaustive: _CollectionsExhaustive = true;
 void _collectionsExhaustive;
 
 type _SortsExhaustive = Exclude<
-  Exclude<SortMode, `${string}-${'asc' | 'desc'}`>,
+  BaseSort,
   (typeof SORTS)[number]
 > extends never
   ? true
-  : 'SORTS is missing a non-column SortMode value';
+  : 'SORTS is missing a BaseSort value';
 const _sortsExhaustive: _SortsExhaustive = true;
 void _sortsExhaustive;
 
@@ -65,22 +66,25 @@ const VALID_KEYWORDS = new Set(Object.keys(KW) as KeywordId[]);
 const MAX_PLAYERS = 99;
 
 export function filterToSearchParams(state: FilterState): URLSearchParams {
+  // Each value is written only when it differs from the one a bare URL
+  // reads as (initialFilterState), so the shortest link opens the same view.
   const params = new URLSearchParams();
-  if (state.duration !== 'all') params.set('d', String(state.duration));
-  if (state.players > 0) params.set('p', String(state.players));
-  if (state.keywords.size > 0) {
+  const initial = initialFilterState;
+  if (filterOn(state, 'duration')) params.set('d', String(state.duration));
+  if (filterOn(state, 'players')) params.set('p', String(state.players));
+  if (filterOn(state, 'keywords')) {
     params.set('k', [...state.keywords].sort().join(','));
   }
-  if (state.keywordMode !== 'or') params.set('m', state.keywordMode);
-  if (state.search) params.set('q', state.search);
+  if (state.keywordMode !== initial.keywordMode) params.set('m', state.keywordMode);
+  if (filterOn(state, 'search')) params.set('q', state.search);
   if (
-    state.baseSort !== 'az' &&
+    state.baseSort !== initial.baseSort &&
     (SORTS as readonly string[]).includes(state.baseSort)
   ) {
     params.set('s', state.baseSort);
   }
-  if (state.view !== 'list') params.set('v', state.view);
-  if (state.collection !== 'own') params.set('c', state.collection);
+  if (state.view !== initial.view) params.set('v', state.view);
+  if (state.collection !== initial.collection) params.set('c', state.collection);
   return params;
 }
 
@@ -120,7 +124,7 @@ export function searchParamsToFilter(params: URLSearchParams): FilterState {
 
   const s = params.get('s');
   const parsedSort: SortMode =
-    s && (SORTS as readonly string[]).includes(s) ? (s as SortMode) : initialFilterState.sort;
+    s && (SORTS as readonly string[]).includes(s) ? (s as BaseSort) : initialFilterState.sort;
 
   const v = params.get('v');
   const view: ViewMode =
@@ -129,8 +133,7 @@ export function searchParamsToFilter(params: URLSearchParams): FilterState {
   const c = params.get('c');
   const collection: CollectionMode =
     c && (COLLECTIONS as readonly string[]).includes(c) ? (c as CollectionMode) : initialFilterState.collection;
-  // Only the wishlist has votes to sort by.
-  const sort = parsedSort === 'votes' && collection !== 'want' ? initialFilterState.sort : parsedSort;
+  const sort = sortAllowed(parsedSort, collection) ? parsedSort : initialFilterState.sort;
 
   return {
     duration,

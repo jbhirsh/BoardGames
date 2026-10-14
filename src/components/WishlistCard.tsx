@@ -50,9 +50,9 @@ export default function WishlistCard({ item, voteCount, voted, onVote, disabled,
             {sortedKw(item.kw).map((kw) => (
               <KeywordPill
                 key={kw}
-                keyword={kw as KeywordId}
-                active={lit(kw as KeywordId)}
-                onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: kw as KeywordId })}
+                keyword={kw}
+                active={lit(kw)}
+                onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: kw })}
               />
             ))}
           </div>

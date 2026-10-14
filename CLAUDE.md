@@ -429,7 +429,9 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   ascent/descent overrides measured against Playfair on the collection's
   names, so the swap barely moves a line;
   `index.html` preloads the roman file. Body text is the system font.
-- **`utils/`** — pure helpers (`filterGames.ts`, `pickRandom.ts`, `filterUrl.ts`, `heroCovers.ts`,
+- **`utils/`** — pure helpers (`filterGames.ts`, `filterState.ts`, which
+  filters are on, turning them off, which sorts a list allows, against
+  `initialFilterState`; `pickRandom.ts`, `filterUrl.ts`, `heroCovers.ts`,
   `urls.ts`, `openRow.ts`, `shortDesc.ts`, `subgames.ts`, `rulebooks.ts`, `pdfSearch.ts`, `duration.ts`,
   `citations.ts`, the rulebooks an assistant answer names and the pages it
   cites, as links; `citeMatch.ts`, the passage of a page a citation points to; `fileSize.ts`,

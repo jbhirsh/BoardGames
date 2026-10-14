@@ -1,5 +1,6 @@
-import type { Game, FilterState, Filterable, GroupId, SubGame, TimeBudget, WishlistItem, WishlistType } from '../data/types';
+import type { BaseSort, ColumnSort, Game, FilterState, Filterable, GroupId, SortMode, SubGame, TimeBudget, WishlistItem, WishlistType } from '../data/types';
 import { GROUP_ORDER, KW, TIME_BUDGETS, WISHLIST_TYPE_ORDER } from '../data/keywords';
+import { anyFilterOn } from './filterState';
 
 /**
  * Apply the filter bar to any Filterable list. `groupIndex` orders items for
@@ -40,7 +41,7 @@ export function isDeck(subs: SubGame[] = []): boolean {
 
 /** Whether the players and time filters are narrowing anything. */
 export function tableFiltered(state: FilterState): boolean {
-  return state.players > 0 || state.duration !== 'all';
+  return anyFilterOn(state, ['players', 'duration']);
 }
 
 /**
@@ -121,17 +122,29 @@ const byWeight = (dir: 1 | -1) => (a: Filterable, b: Filterable) => {
   return (wa - wb) * dir;
 };
 
-export function sortItems<T extends Filterable>(list: T[], sort: string, groupIndex: (item: T) => number): T[] {
-  // 'votes' starts from A→Z: the wishlist puts the most voted first from
-  // there, since the counts live outside the filter.
-  if (sort === 'az' || sort === 'name-asc' || sort === 'votes')  return [...list].sort((a, b) => a.name.localeCompare(b.name));
-  if (sort === 'name-desc') return [...list].sort((a, b) => b.name.localeCompare(a.name));
-  if (sort === 'quick' || sort === 'dur-asc') return [...list].sort((a, b) => mins(a) - mins(b));
-  if (sort === 'long'  || sort === 'dur-desc') return [...list].sort((a, b) => b.mins - a.mins);
-  if (sort === 'players-asc')  return [...list].sort((a, b) => a.min - b.min || a.max - b.max);
-  if (sort === 'players-desc') return [...list].sort((a, b) => b.min - a.min || b.max - a.max);
-  if (sort === 'weight-asc') return [...list].sort(byWeight(1));
-  if (sort === 'weight-desc') return [...list].sort(byWeight(-1));
+/** Whether a sort is a column header's rather than one the filter bar offers. */
+export function isColumnSort(sort: SortMode): sort is ColumnSort {
+  return sort.endsWith('-asc') || sort.endsWith('-desc');
+}
+
+// The filter bar's orders other than by group are the Name and Duration
+// columns' under their own names (so a column's arrow shows only for a
+// column sort). 'votes' starts from A→Z: the wishlist puts the most voted
+// first from there, since the counts live outside the filter.
+const AS_COLUMN: Record<Exclude<BaseSort, 'group'>, ColumnSort> = {
+  az: 'name-asc', votes: 'name-asc', quick: 'dur-asc', long: 'dur-desc',
+};
+
+export function sortItems<T extends Filterable>(list: T[], sort: SortMode, groupIndex: (item: T) => number): T[] {
+  const order = sort === 'group' || isColumnSort(sort) ? sort : AS_COLUMN[sort];
+  if (order === 'name-asc') return [...list].sort((a, b) => a.name.localeCompare(b.name));
+  if (order === 'name-desc') return [...list].sort((a, b) => b.name.localeCompare(a.name));
+  if (order === 'dur-asc') return [...list].sort((a, b) => mins(a) - mins(b));
+  if (order === 'dur-desc') return [...list].sort((a, b) => b.mins - a.mins);
+  if (order === 'players-asc')  return [...list].sort((a, b) => a.min - b.min || a.max - b.max);
+  if (order === 'players-desc') return [...list].sort((a, b) => b.min - a.min || b.max - a.max);
+  if (order === 'weight-asc') return [...list].sort(byWeight(1));
+  if (order === 'weight-desc') return [...list].sort(byWeight(-1));
   // group
   return [...list].sort((a, b) => {
     const gi = groupIndex(a) - groupIndex(b);
@@ -144,6 +157,10 @@ export function isGrouped(state: FilterState): boolean {
   return state.sort === 'group' || state.baseSort === 'group';
 }
 
-export function sortedKw(kw: string[]): string[] {
-  return [...kw].sort((a, b) => (KW[a as keyof typeof KW] || a).localeCompare(KW[b as keyof typeof KW] || b));
+// A keyword's label; a key KW doesn't know sorts by itself.
+const kwLabel = (k: string): string => (KW as Partial<Record<string, string>>)[k] ?? k;
+
+/** Keywords in the order of their labels, keeping their own type. */
+export function sortedKw<K extends string>(kw: readonly K[]): K[] {
+  return [...kw].sort((a, b) => kwLabel(a).localeCompare(kwLabel(b)));
 }

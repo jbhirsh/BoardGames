@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import type { Game, KeywordId } from '../data/types';
+import type { Game } from '../data/types';
 import { isKeywordLit } from '../utils/keywordLit';
 import { useFilter } from '../context/useFilter';
 import { sortedKw } from '../utils/filterGames';
@@ -51,9 +51,9 @@ export default function GameCard({ game }: Props) {
           {sortedKw(game.kw).map((kw) => (
             <KeywordPill
               key={kw}
-              keyword={kw as KeywordId}
-              active={isKeywordLit(state, kw as KeywordId)}
-              onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: kw as KeywordId })}
+              keyword={kw}
+              active={isKeywordLit(state, kw)}
+              onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: kw })}
             />
           ))}
         </div>

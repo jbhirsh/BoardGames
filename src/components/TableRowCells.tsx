@@ -93,9 +93,9 @@ export default function TableRowCells({
         {sortedKw(kw).map((k) => (
           <KeywordPill
             key={k}
-            keyword={k as KeywordId}
-            active={isKeywordLit(state, k as KeywordId)}
-            onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: k as KeywordId })}
+            keyword={k}
+            active={isKeywordLit(state, k)}
+            onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: k })}
           />
         ))}
       </td>

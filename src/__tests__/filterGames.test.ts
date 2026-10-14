@@ -2,7 +2,7 @@ import { filterWishlist } from '../utils/filterGames';
 import { WISHLIST } from '../data/wishlist';
 import { GROUP_ORDER, WISHLIST_TYPE_ORDER } from '../data/keywords';
 import { describe, it, expect } from 'vitest';
-import { filterGames, sortItems, sortedKw, isGrouped, fitsTable, tableFiltered, budgetFor, groupGames, groupItems } from '../utils/filterGames';
+import { filterGames, sortItems, sortedKw, isColumnSort, isGrouped, fitsTable, tableFiltered, budgetFor, groupGames, groupItems } from '../utils/filterGames';
 import { GAMES } from '../data/games';
 import { initialFilterState } from '../data/initialFilterState';
 import { testGames, quickGame, mediumGame, longGame } from './testData';
@@ -11,7 +11,7 @@ import { durationCategory } from '../utils/duration';
 
 // The collection's sort: sortItems with the games' group order, as
 // filterGames applies it.
-function sortGames(list: Game[], sort: string): Game[] {
+function sortGames(list: Game[], sort: SortMode): Game[] {
   return sortItems(list, sort, (g) => GROUP_ORDER.indexOf(g.group));
 }
 
@@ -349,7 +349,7 @@ describe('sortItems ordering', () => {
     expect(names(sortItems(input, 'votes', () => 0))).toEqual(['Alpha', 'Bravo', 'Charlie', 'Delta']);
   });
 
-  it.each(['az', 'name-asc'])('%s sorts A to Z', (sort) => {
+  it.each<SortMode>(['az', 'name-asc'])('%s sorts A to Z', (sort) => {
     expect(names(sortGames(input, sort))).toEqual(['Alpha', 'Bravo', 'Charlie', 'Delta']);
   });
 
@@ -357,12 +357,12 @@ describe('sortItems ordering', () => {
     expect(names(sortGames(input, 'name-desc'))).toEqual(['Delta', 'Charlie', 'Bravo', 'Alpha']);
   });
 
-  it.each(['quick', 'dur-asc'])('%s sorts shortest first, equal times in their incoming order', (sort) => {
+  it.each<SortMode>(['quick', 'dur-asc'])('%s sorts shortest first, equal times in their incoming order', (sort) => {
     // Charlie and Delta are both 40 min, and stay as the input has them.
     expect(names(sortGames(input, sort))).toEqual(['Alpha', 'Charlie', 'Delta', 'Bravo']);
   });
 
-  it.each(['quick', 'dur-asc', 'long', 'dur-desc'])('%s puts an unknown play time (mins 0) last', (sort) => {
+  it.each<SortMode>(['quick', 'dur-asc', 'long', 'dur-desc'])('%s puts an unknown play time (mins 0) last', (sort) => {
     // A suggestion whose lookup failed has mins 0: not the quickest game,
     // just one we know nothing about.
     const unknown = mk('Unknown', { mins: 0 });
@@ -370,7 +370,7 @@ describe('sortItems ordering', () => {
     expect(sorted[sorted.length - 1]).toBe('Unknown');
   });
 
-  it.each(['long', 'dur-desc'])('%s sorts longest first, equal times in their incoming order', (sort) => {
+  it.each<SortMode>(['long', 'dur-desc'])('%s sorts longest first, equal times in their incoming order', (sort) => {
     // Input has Delta ahead of Charlie, both 40 min, and they stay that way.
     expect(names(sortGames([alpha, delta, charlie, bravo], sort))).toEqual(['Bravo', 'Delta', 'Charlie', 'Alpha']);
   });
@@ -535,5 +535,11 @@ describe('weight sort', () => {
 
   it('puts the heaviest first, a deck by its heaviest game, unknowns still last', () => {
     expect(names(sortGames([unknown, b, a, deck, c], 'weight-desc'))).toEqual(['Deck', 'A', 'B', 'C', 'Unknown']);
+  });
+});
+describe('isColumnSort', () => {
+  it('tells a column header sort from a filter bar one', () => {
+    for (const s of ['name-asc', 'name-desc', 'players-asc', 'dur-desc', 'weight-asc'] as const) expect(isColumnSort(s)).toBe(true);
+    for (const s of ['az', 'group', 'quick', 'long', 'votes'] as const) expect(isColumnSort(s)).toBe(false);
   });
 });
