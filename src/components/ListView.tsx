@@ -1,4 +1,4 @@
-import { useFilter } from '../context/useFilter';
+import { useFilterResults } from '../context/useFilter';
 import NoResults from './NoResults';
 import GamesTableHead, { COLLECTION_COLUMNS } from './GamesTableHead';
 import GroupedRows from './GroupedRows';
@@ -7,7 +7,7 @@ import GameRow from './GameRow';
 import { useOpenRow } from '../hooks/useOpenRow';
 
 export default function ListView() {
-  const { filteredGames, gameGroups } = useFilter();
+  const { filteredGames, gameGroups } = useFilterResults();
   // Kept in the page's history entry, so Back from a row's Rules finds it open.
   const [openRow, toggleRow] = useOpenRow();
 
@@ -27,7 +27,7 @@ export default function ListView() {
                 key={g.name}
                 game={g}
                 isOpen={openRow === g.name}
-                onToggle={() => toggleRow(g.name)}
+                onToggle={toggleRow}
               />
             )}
           />

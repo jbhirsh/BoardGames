@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { WISHLIST_TYPES } from '../data/keywords';
 import type { WishlistGroup } from '../utils/filterGames';
 import GamesTableHead from './GamesTableHead';
@@ -16,6 +16,8 @@ interface Props {
 /** The wishlist as the collection's table, with a vote column. */
 export default function WishlistListView({ groups, counts, myVotes, onVote, disabled }: Props) {
   const [openRow, setOpenRow] = useState<string | null>(null);
+  // One toggle for every row, so the rows a change leaves alone stay as drawn.
+  const toggleRow = useCallback((id: string) => setOpenRow((open) => (open === id ? null : id)), []);
 
   return (
     <div className="table-wrap">
@@ -32,10 +34,10 @@ export default function WishlistListView({ groups, counts, myVotes, onVote, disa
                 item={item}
                 voteCount={counts[item.id] ?? 0}
                 voted={myVotes.has(item.id)}
-                onVote={() => onVote(item.id)}
+                onVote={onVote}
                 disabled={disabled}
                 isOpen={openRow === item.id}
-                onToggle={() => setOpenRow(openRow === item.id ? null : item.id)}
+                onToggle={toggleRow}
               />
             )}
           />

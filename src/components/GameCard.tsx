@@ -1,7 +1,6 @@
-import { useId, useState } from 'react';
+import { memo, useId, useState } from 'react';
 import type { Game } from '../data/types';
-import { isKeywordLit } from '../utils/keywordLit';
-import { useFilter } from '../context/useFilter';
+import { useFilterDispatch, useItemFilter } from '../context/useFilter';
 import { sortedKw } from '../utils/filterGames';
 import KeywordPill from './KeywordPill';
 import AwardsBadge, { AwardsSection } from './AwardsBadge';
@@ -18,16 +17,20 @@ interface Props {
   game: Game;
 }
 
-export default function GameCard({ game }: Props) {
-  const { state, dispatch } = useFilter();
+/** Memoized: a filter change that leaves this game as it was doesn't redraw it. */
+export default memo(GameCard);
+
+function GameCard({ game }: Props) {
+  const filter = useItemFilter();
+  const dispatch = useFilterDispatch();
   const [subsOpen, setSubsOpen] = useState(false);
   const subsId = useId();
   const [moreOpen, setMoreOpen] = useState(false);
   const moreId = useId();
   // The button and its list go away while no game inside fits the filters.
-  const fitting = game.subgames ? fittingSubgames(game.subgames, state) : [];
+  const fitting = game.subgames ? fittingSubgames(game.subgames, filter) : [];
   const hasFitting = fitting.length > 0;
-  const subsLabel = game.subgames ? subgameLabel(game.subgames, state) : '';
+  const subsLabel = game.subgames ? subgameLabel(game.subgames, filter) : '';
 
   return (
     // An open card (its write-up or its add-ons list) takes a grid row of its
@@ -52,7 +55,7 @@ export default function GameCard({ game }: Props) {
             <KeywordPill
               key={kw}
               keyword={kw}
-              active={isKeywordLit(state, kw)}
+              active={filter.lit.has(kw)}
               onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: kw })}
             />
           ))}

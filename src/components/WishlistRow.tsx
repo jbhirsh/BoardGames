@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { WishlistItem } from '../data/types';
 import { AwardsSection } from './AwardsBadge';
 import WishlistLinks from './WishlistLinks';
@@ -16,17 +17,22 @@ interface Props {
   item: WishlistItem;
   voteCount: number;
   voted: boolean;
-  onVote: () => void;
+  /** Called with the entry's id, as onToggle is, so one callback serves every row. */
+  onVote: (id: string) => void;
   disabled?: boolean;
   isOpen: boolean;
-  onToggle: () => void;
+  onToggle: (id: string) => void;
 }
 
 /**
  * A wishlist entry in the list: the collection's table row, with a vote
- * column, and the buy and video links in the expanded section.
+ * column, and the buy and video links in the expanded section. Memoized: a
+ * filter change that leaves this entry as it was doesn't redraw it.
  */
-export default function WishlistRow({ item, voteCount, voted, onVote, disabled, isOpen, onToggle }: Props) {
+export default memo(WishlistRow);
+
+function WishlistRow({ item, voteCount, voted, onVote, disabled, isOpen, onToggle: toggleRow }: Props) {
+  const onToggle = () => toggleRow(item.id);
   return (
     <>
       <tr id={wishAnchor(item.id)} className={`game-row${isOpen ? ' open' : ''}`} onClick={onToggle} data-testid="wishlist-item" data-item-id={item.id}>
@@ -47,7 +53,7 @@ export default function WishlistRow({ item, voteCount, voted, onVote, disabled, 
                 itemName={item.name}
                 voteCount={voteCount}
                 voted={voted}
-                onClick={(e) => { e.stopPropagation(); onVote(); }}
+                onClick={(e) => { e.stopPropagation(); onVote(item.id); }}
                 disabled={disabled}
               />
             </td>

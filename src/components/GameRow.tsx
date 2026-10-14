@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { Game } from '../data/types';
 import { AwardsSection } from './AwardsBadge';
 import { COLLECTION_COLUMNS } from './GamesTableHead';
@@ -8,17 +9,25 @@ import GameActions from './GameActions';
 import GameDetail from './GameDetail';
 import { fittingSubgames, hasSubgames, subgameTitle } from '../utils/subgames';
 import { gameAnchor } from '../utils/heroCovers';
-import { useFilter } from '../context/useFilter';
+import { useItemFilter } from '../context/useFilter';
 
 interface Props {
   game: Game;
   isOpen: boolean;
-  onToggle: () => void;
+  /**
+   * Called with the game's name, so the list can pass one callback to every
+   * row and a row it leaves alone isn't redrawn for a new one.
+   */
+  onToggle: (name: string) => void;
 }
 
-export default function GameRow({ game, isOpen, onToggle }: Props) {
-  const { state } = useFilter();
-  const hasFitting = game.subgames !== undefined && fittingSubgames(game.subgames, state).length > 0;
+/** Memoized: a filter change that leaves this game as it was doesn't redraw it. */
+export default memo(GameRow);
+
+function GameRow({ game, isOpen, onToggle: toggleRow }: Props) {
+  const filter = useItemFilter();
+  const onToggle = () => toggleRow(game.name);
+  const hasFitting = game.subgames !== undefined && fittingSubgames(game.subgames, filter).length > 0;
   return (
     <>
       <tr id={gameAnchor(game.slug)} className={`game-row${isOpen ? ' open' : ''}`} onClick={onToggle}>

@@ -1,7 +1,7 @@
 import { useId, useState } from 'react';
 import { Link } from 'react-router';
 import type { GameWithSubgames, SubGame } from '../data/types';
-import { useFilter } from '../context/useFilter';
+import { useItemFilter } from '../context/useFilter';
 import { ytURL } from '../utils/urls';
 import { rulebookPath } from '../utils/rulebooks';
 import { fittingSubgames, shownKind, subgameNoun } from '../utils/subgames';
@@ -22,10 +22,10 @@ interface Props {
  * and time filters are listed.
  */
 export default function SubGameList({ game }: Props) {
-  const { state } = useFilter();
+  const filter = useItemFilter();
   return (
     <ul className="sub-list" aria-label={`${game.name} ${subgameNoun(game.subgames, 2)}`}>
-      {fittingSubgames(game.subgames, state).map((sub) => (
+      {fittingSubgames(game.subgames, filter).map((sub) => (
         <SubGameRow key={sub.slug} parent={game.slug} sub={sub} />
       ))}
     </ul>

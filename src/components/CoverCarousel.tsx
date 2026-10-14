@@ -3,8 +3,8 @@ import { flushSync } from 'react-dom';
 import { GAMES } from '../data/games';
 import { useFilter } from '../context/useFilter';
 import { useWishlistItems } from '../context/useWishlistItems';
+import { useFilteredWishlist } from '../context/useFilteredWishlist';
 import { REDUCED_MOTION, useMediaQuery } from '../hooks/useMediaQuery';
-import { filterWishlist } from '../utils/filterGames';
 import { focusTarget } from '../client/focus';
 import { ownCovers, wantCovers, SECONDS_PER_COVER, STILL_COUNT, type HeroCover } from '../utils/heroCovers';
 import { PauseIcon, PlayIcon } from './Icons';
@@ -53,8 +53,9 @@ function jumpTo(anchor: string) {
  * nothing to pause.
  */
 export default function CoverCarousel({ want }: { want: boolean }) {
-  const { state, dispatch, filteredGames } = useFilter();
+  const { dispatch, filteredGames } = useFilter();
   const { items } = useWishlistItems();
+  const filteredWishlist = useFilteredWishlist();
   const still = useMediaQuery(REDUCED_MOTION);
   const [paused, setPaused] = useState(false);
   const [idle, setIdle] = useState(false);
@@ -95,7 +96,7 @@ export default function CoverCarousel({ want }: { want: boolean }) {
     // A game the filters hide has no card to go to: clear them (as the
     // bar's Clear all does, keeping the view and the list) so it has one.
     const listed = want
-      ? filterWishlist(items, state).some((w) => w.id === cover.id)
+      ? filteredWishlist.some((w) => w.id === cover.id)
       : filteredGames.some((g) => g.slug === cover.id);
     if (!listed) flushSync(() => dispatch({ type: 'CLEAR_ALL' }));
     jumpTo(cover.anchor);

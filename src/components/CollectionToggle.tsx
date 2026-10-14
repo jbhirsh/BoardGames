@@ -1,11 +1,11 @@
-import { useFilter } from '../context/useFilter';
+import { useFilterDispatch, useFilterLayout } from '../context/useFilter';
 import { focusSection } from '../client/focus';
 import type { CollectionMode } from '../data/types';
 
 /** Own / Want segmented control. The filter bar applies to whichever is selected. */
 export default function CollectionToggle() {
-  const { state, dispatch } = useFilter();
-  const mode = state.collection;
+  const { collection: mode } = useFilterLayout();
+  const dispatch = useFilterDispatch();
 
   function choose(next: CollectionMode) {
     dispatch({ type: 'SET_COLLECTION', payload: next });

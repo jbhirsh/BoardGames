@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router';
-import { useFilter } from '../context/useFilter';
+import { useFilterResults } from '../context/useFilter';
 import type { FilterState, Game } from '../data/types';
 import { pickRandom } from '../utils/pickRandom';
 import { pickFresh, resolvePick, type Pick } from '../utils/resolvePick';
@@ -28,7 +28,7 @@ function whyLine(state: FilterState, poolSize: number): string {
 }
 
 export default function RandomPicker() {
-  const { state, filteredGames } = useFilter();
+  const { state, filteredGames } = useFilterResults();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [spinning, setSpinning] = useState(false);

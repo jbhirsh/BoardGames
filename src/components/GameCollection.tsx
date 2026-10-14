@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { useFilter } from '../context/useFilter';
+import { useFilterResults } from '../context/useFilter';
 import { useKeepSectionInView } from '../hooks/useKeepSectionInView';
 import { useIsPhone } from '../hooks/useIsPhone';
 import ViewToggle from './ViewToggle';
@@ -14,7 +14,7 @@ import RandomPicker from './RandomPicker';
  * the visible section carries the `collection` anchor id.
  */
 export default function GameCollection({ hidden = false }: { hidden?: boolean }) {
-  const { state, filteredGames } = useFilter();
+  const { state, filteredGames } = useFilterResults();
   // Phones get the cards only: the table has too few columns to be useful
   // there, and a card's More holds what an expanded row would.
   const isPhone = useIsPhone();

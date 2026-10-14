@@ -1,5 +1,5 @@
 import type { GameWithSubgames } from '../data/types';
-import { useFilter } from '../context/useFilter';
+import { useItemFilter } from '../context/useFilter';
 import { fittingSubgames, subgameLabel } from '../utils/subgames';
 import Popover from './Popover';
 
@@ -14,10 +14,10 @@ interface Props {
  * none fit.
  */
 export default function SubGamesTag({ game }: Props) {
-  const { state } = useFilter();
-  const fitting = fittingSubgames(game.subgames, state);
+  const filter = useItemFilter();
+  const fitting = fittingSubgames(game.subgames, filter);
   if (fitting.length === 0) return null;
-  const label = subgameLabel(game.subgames, state);
+  const label = subgameLabel(game.subgames, filter);
   return (
     <Popover
       className="sub-tag-wrap"

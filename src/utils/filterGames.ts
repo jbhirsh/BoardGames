@@ -39,8 +39,14 @@ export function isDeck(subs: SubGame[] = []): boolean {
   return subs.length > 0 && subs.every((s) => s.kind === 'card-game');
 }
 
+/**
+ * The players and time filters, the ones a game inside another is held to:
+ * all a card or row needs of the state to say which of its games fit.
+ */
+export type TableFilter = Pick<FilterState, 'players' | 'duration'>;
+
 /** Whether the players and time filters are narrowing anything. */
-export function tableFiltered(state: FilterState): boolean {
+export function tableFiltered(state: TableFilter): boolean {
   return anyFilterOn(state, ['players', 'duration']);
 }
 
@@ -52,7 +58,7 @@ export function tableFiltered(state: FilterState): boolean {
  * a suggestion BGG didn't resolve) can't be excluded by duration, so it stays
  * under every budget.
  */
-export function fitsTable(g: Table, state: FilterState): boolean {
+export function fitsTable(g: Table, state: TableFilter): boolean {
   if (state.duration !== 'all' && g.mins > state.duration) return false;
   return state.players === 0 || (g.min <= state.players && g.max >= state.players);
 }
