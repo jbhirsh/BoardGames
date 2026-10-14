@@ -1,3 +1,10 @@
+/* Every colour is a token here; the dark theme below redefines them, under
+   prefers-color-scheme: dark (unless data-theme="light") and under
+   [data-theme="dark"]. So use a token, never a literal, and
+   rgba(var(--blue-rgb), a) for a blue tint. PDF pages stay white, and box
+   art stays on a light matte (--art-matte, a little dimmed in the dark
+   theme). e2e/theme.spec.ts runs axe's colour-contrast rule over the main
+   pages in both themes, so a new colour has to pass AA in each. */
 :root {
   --bg:         #FBFBFD;
   --bg2:        #F5F5F7;
@@ -129,7 +136,8 @@
    Serif on older ones), each scaled to Playfair's width on the collection's
    names and to its line height, per weight, so the swap barely moves a
    line. Noto's metrics differ from Times's, so it is a family of its own:
-   a face whose local() font isn't there is skipped for the next family. */
+   a face whose local() font isn't there is skipped for the next family.
+   index.html preloads the roman file. Body text is the system font. */
 @font-face{font-family:'Playfair Display';font-style:normal;font-weight:400 900;font-display:swap;src:url(/fonts/playfair-display-latin.woff2) format('woff2');}
 @font-face{font-family:'Playfair Display';font-style:italic;font-weight:700;font-display:swap;src:url(/fonts/playfair-display-latin-italic.woff2) format('woff2');}
 @font-face{font-family:'Playfair Fallback';font-weight:700;src:local('Times New Roman Bold'),local('TimesNewRomanPS-BoldMT'),local('Liberation Serif Bold'),local('LiberationSerif-Bold');size-adjust:106.57%;ascent-override:101.53%;descent-override:23.55%;line-gap-override:0%;}

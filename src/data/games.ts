@@ -1,6 +1,11 @@
 import type { ExtraRulebook, Game, SubGame } from './types';
 import { GAME_WEIGHTS } from './gameWeights';
 
+// The collection, and the source of truth for it: a compiled-in constant,
+// with no database on the read path. The rest of src/data supports it (the
+// wishlist, keywords, the initial filter state, which games have a score
+// calculator or the word checker, the types).
+//
 // A game's box art and rulebooks live at paths its slugs name, so the
 // entries below leave them out and withPaths fills them in: the box art at
 // /images/<slug>.webp unless an entry says otherwise, and every rulebook at
@@ -502,7 +507,14 @@ function withPaths({ img, moreRules, subgames, ...game }: GameEntry): Game {
   };
 }
 
-/** BoardGameGeek's weight for a game, or a game inside one, where BGG rates it. */
+/**
+ * BoardGameGeek's weight for a game, or a game inside one, where BGG rates
+ * it (gameWeights.ts, `npm run game-weights`): a difficulty is never typed
+ * in. Something BGG doesn't rate (no id, or null in the map) shows none; a
+ * deck has none of its own, and an add-on, learned on top of its game, has
+ * no id. The data test (gamesData.test.ts) fails on an id the script hasn't
+ * fetched and on any weight but the fetched one.
+ */
 function weighed<T extends { bgg?: number; weight?: number }>(t: T): T {
   const weight = t.bgg === undefined ? undefined : GAME_WEIGHTS[t.bgg];
   return weight == null ? t : { ...t, weight };

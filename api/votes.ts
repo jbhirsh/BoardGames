@@ -8,6 +8,14 @@ import { WISHLIST_IDS } from './_lib/wishlistIds.js';
 
 initSentry();
 
+// Anonymous wishlist voting on Upstash Redis. Votes are Redis sets keyed
+// wishlist:votes:<id>, deduped by an anonymous browser id: GET ?ids= reads
+// the counts (and this browser's own votes, given its id), POST adds or
+// takes back one. A vote must name a real entry (isVotable); reading isn't
+// filtered, as scard never creates a key. handleVotes() is written against
+// small interfaces (VotesRedis, VotesRequest, VotesResponse) so tests drive
+// it with a fake Redis; the default export wires in the real client.
+
 const voteKey = (id: string) => `wishlist:votes:${id}`;
 // The suggestion hash api/suggestions.ts keeps per id; only an approved one
 // is on the public wishlist.

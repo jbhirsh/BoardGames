@@ -1,5 +1,10 @@
 import { Redis } from '@upstash/redis';
 
+// The API's one store: Upstash Redis (provisioned as Vercel KV, hence the
+// KV_REST_API_* variables), holding the wishlist votes, friends'
+// suggestions, the owner's sessions and sign-in links, and the rate
+// limiters' counters (_lib/rateLimit.ts, on the shared client).
+
 let cached: Redis | null = null;
 let cachedRaw: Redis | null = null;
 

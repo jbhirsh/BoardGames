@@ -1,3 +1,20 @@
+// The rules assistant's text: every rulebook in public/rules/*.pdf, extracted
+// with unpdf (or, for an image-only PDF, OCR'd with tesseract.js by
+// ./ocr-pdfs.mjs), to rules-text/*.txt, which vercel.json bundles into the
+// api/chat.ts function.
+//
+//   npm run rules-text
+//
+// Give a newly added scan an OCR text layer first (npm run rules-text-layer,
+// ./add-text-layer.mjs), so it is searchable in the reader too. A scan whose
+// OCR is too noisy to answer from (the Monster Box sheets, Cranium) carries a
+// hand transcription as text pages after its scanned ones, so this reads the
+// transcription and never OCRs over it (Cranium's scanned pages also had
+// their garbled text layer removed); the Dominion books end with typed pages
+// of what they print only as pictures, card costs and coin amounts.
+// src/__tests__/rulesTextQuality.test.ts fails a file below a words-per-page
+// or dictionary-word floor, above a stray-letter ceiling, or sharing most of
+// its text with another.
 import { readdir, readFile, writeFile, mkdir } from "node:fs/promises";
 import { join, basename } from "node:path";
 import { execFileSync } from "node:child_process";

@@ -197,6 +197,13 @@ export type ViewMode = 'grid' | 'list';
 export type CollectionMode = 'own' | 'want';
 export type KeywordMode = 'and' | 'or';
 
+/**
+ * The filter bar's state, mirrored to the URL (utils/filterUrl.ts) so a view
+ * can be shared. `duration` is a time budget (d=15|30|60): a game fits by
+ * its own `mins`, quick ones included; its Quick, Medium or Long bucket only
+ * colours its time pill (utils/duration.ts). `collection` (c=want) picks the
+ * list the section shows and the keyword counts tally; Clear all keeps it.
+ */
 export interface FilterState {
   duration: DurationFilter;
   players: number;

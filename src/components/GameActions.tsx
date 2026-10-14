@@ -23,7 +23,11 @@ const stop = (e: MouseEvent) => e.stopPropagation();
 /**
  * A game's actions, the same on a card and on an open list row: Rules
  * filled, then the game's own tools (its score calculator, the word
- * checker) and its tutorial video. Only a card's carry tooltips.
+ * checker) and its tutorial video. Only a card's carry tooltips. Rules is
+ * the one filled button on a card or open row; the rest, like a wishlist
+ * entry's cart and price history, share one quiet outline (the video's play
+ * glyph in --yt-red), and every footer button one size and radius (44px on
+ * a phone, App.css).
  */
 export default function GameActions({ game, variant }: Props) {
   const card = variant === 'card';

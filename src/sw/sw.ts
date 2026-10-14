@@ -3,7 +3,17 @@
 // in basements and cabins. Built to /sw.js by the serviceWorker() plugin in
 // vite.config.ts, which writes the five constants below. Routing and the
 // byte ranges live in utils/offline.ts; what each cache keeps, and when, in
-// ./shell.ts.
+// ./shell.ts; which build files are saved when, in utils/precache.ts.
+// main.tsx registers it in production builds only. It has its own
+// tsconfig.sw.json (the WebWorker library, not the DOM), and
+// public/manifest.webmanifest with its 192 and 512 icons makes the site
+// installable.
+//
+// Pages come from the network (PAGE_TIMEOUT_MS at most), falling back to the
+// app saved at install; /api/* and other sites are never touched, so a
+// friend's suggestion's BoardGameGeek thumbnail is never saved. Sentry
+// stamps sw.js on every build, so every deploy installs a new worker. Bulk
+// saving of rulebooks and precaching the rules text are left out.
 import { parseRange, rangeHeaders, routeFor, savesOnOpen, savingData } from '../utils/offline';
 import { activate, ASSETS, healReader, install, isReaderMessage, MATCH, pruneShells, READER_MESSAGE, RULEBOOKS, saver, SHELL_PREFIX, stamped, type Build, type SaveReply } from './shell';
 

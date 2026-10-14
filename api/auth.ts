@@ -15,7 +15,13 @@ initSentry();
  * single-use link goes out (the answer is the same either way, so the
  * address can't be probed). The link opens a confirmation page whose form
  * POSTs the token back, because mail scanners follow every link; only that
- * POST consumes the token and sets the session cookie.
+ * POST ({ action: 'verify', token }) consumes the token (getdel) and sets the
+ * session cookie: a session id kept 30 days, HttpOnly, Secure and
+ * SameSite=Lax, the main CSRF defence. A malformed token on either step gets
+ * a standalone page with its 400, not JSON. GET reports { admin } for the
+ * cookie a request carries; POST { action: 'logout' }, JSON only like every
+ * owner mutation, deletes the session. The owner is whoever reads the
+ * SUGGESTIONS_TO inbox: there is an admin mode, but no password.
  */
 const MAGIC_TTL_S = 15 * 60;
 const magicKey = (token: string) => `auth:magic:${token}`;

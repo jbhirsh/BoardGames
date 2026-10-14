@@ -49,6 +49,13 @@ export function HomePage() {
   );
 }
 
+/**
+ * The layout shell around every page: the filter store (FilterProvider,
+ * mirrored to the URL so a view can be shared and Back restores it), scroll
+ * restoration with smooth scrolling held off while the router moves the
+ * page (InstantRouteScroll, which must come just before ScrollRestoration),
+ * and Vercel Analytics.
+ */
 export default function App() {
   return (
     <FilterProvider>

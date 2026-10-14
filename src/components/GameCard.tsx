@@ -17,7 +17,16 @@ interface Props {
   game: Game;
 }
 
-/** Memoized: a filter change that leaves this game as it was doesn't redraw it. */
+/**
+ * A collection game in the grid. The card spans four subgrid rows of the
+ * grid (App.css), so heads and footers line up across a row. More opens the
+ * write-up and awards. A game with games inside it has a button bottom left,
+ * beside the award count, named by kind ("+2 expansions", "1 of 12 games
+ * fit" under a filter; just "+N" on a narrow card), that lists the names on
+ * hover and opens the ones that fit (SubGameList) under the footer. The
+ * footer ends with GameActions. Memoized: a filter change that leaves this
+ * game as it was doesn't redraw it.
+ */
 export default memo(GameCard);
 
 function GameCard({ game }: Props) {

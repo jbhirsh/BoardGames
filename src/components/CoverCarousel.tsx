@@ -62,9 +62,12 @@ function jumpTo(anchor: string) {
  * its pause button (WCAG 2.2.2). The row can be dragged sideways, by
  * mouse or finger, to wind it back or on; let go, it glides on from
  * there. A press that hardly moves is still a click on its cover. For
- * people who ask for less motion it doesn't move at all: the favourites
- * stand in a still row, as the shelf did, and there is nothing to pause
- * or drag.
+ * people who ask for less motion it doesn't move at all: the list's first
+ * STILL_COUNT covers (the favourites, in Own mode; App.css shows five on a
+ * phone) stand in a still row, as the shelf did, and there is nothing to
+ * pause or drag. A lap takes SECONDS_PER_COVER a cover, and the row's ends
+ * fade (App.css's --reel-fade). A cover whose game the filters hide clears
+ * them first, so it has a card or row to land on.
  */
 export default function CoverCarousel({ want }: { want: boolean }) {
   const { dispatch, filteredGames } = useFilter();

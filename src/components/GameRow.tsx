@@ -21,7 +21,15 @@ interface Props {
   onToggle: (name: string) => void;
 }
 
-/** Memoized: a filter change that leaves this game as it was doesn't redraw it. */
+/**
+ * A collection game in the list. Collapsed, its actions column holds only
+ * the chevron, on a desktop and on the narrow list alike, and its short line
+ * closes with the tag for the games inside it and the award count, each
+ * listing names on hover or tap. Open, it shows the write-up, the games
+ * inside that fit the filters, the awards, and the actions on the right
+ * (GameActions, the bar a card's footer ends with too). Memoized: a filter
+ * change that leaves this game as it was doesn't redraw it.
+ */
 export default memo(GameRow);
 
 function GameRow({ game, isOpen, onToggle: toggleRow }: Props) {

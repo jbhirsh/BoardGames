@@ -9,6 +9,21 @@ import RouteFallback, { RulesFallback } from './components/RouteFallback'
 import { AuthProvider } from './context/AuthContext'
 import { SIGN_IN_INTRO, SIGN_IN_TITLE } from './data/signIn'
 
+// The app's entry: Sentry first (./instrument), then the router. Its pages:
+//   /                    HomePage (App.tsx): the hero, the filter bar, then the
+//                        collection or the wishlist
+//   /rules/:slug/:part?  a game's rulebooks and the AI rules assistant
+//                        (components/RulesPage.tsx)
+//   /score/:slug         the score pad, for a game in data/scoreCalculators.ts
+//                        (components/ScoreCalculatorPage.tsx)
+//   /word-checker        components/WordCheckerPage.tsx
+//   /sign-in             the owner's magic-link sign-in (components/SignInPage.tsx),
+//                        which nothing on the home page links to
+// Only the home page, and the not-found page the router's error page needs,
+// are in the main bundle. The rest load on first open (lazyPages.ts) behind
+// their header in grey (components/RouteFallback.tsx; the sign-in page's
+// words come from data/signIn.ts for both), and code that won't load
+// reaches RouteError (components/NotFoundPage.tsx), which reloads once.
 const router = createBrowserRouter([
   {
     element: <App />,

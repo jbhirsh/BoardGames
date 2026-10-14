@@ -119,6 +119,32 @@ function scrollToChosenTab(strip: HTMLElement) {
   if (tab) strip.scrollLeft = Math.max(0, tab.offsetLeft - strip.offsetLeft - STRIP_FADE);
 }
 
+/**
+ * /rules/:slug/:part?: a game's rulebooks and the AI rules assistant. A
+ * game with more than one rulebook (rulebooks(): its own, its further
+ * `moreRules`, then each game inside it with one, `rulesLabel` naming a
+ * tab) gets a tab per rulebook, in a strip that fades at an end with more
+ * past it and opens scrolled to the chosen one. Tabs, and the chat's links
+ * to them, replace rather than push, passing on the router state the page
+ * was reached with, so the page is one history entry however many tabs are
+ * read. `?page=N` (citedPageParam) has the reader scroll to page N.
+ *
+ * Under the header (with the score calculator or word checker beside the
+ * assistant's button, for a game that has one) and the tab strip, if any,
+ * come the house rules, folded,
+ * on every tab; the chat (RulesChat), which says what it reads for the tab
+ * on screen (chatScope) and offers three starters shaped by it
+ * (starterQuestions); then one row of links, Download PDF with its size
+ * (from the build), Open PDF in the browser's own viewer, and the tab's
+ * Save for offline item (SaveOffline, useOfflineSave); then the reader
+ * (PdfReader). A printout gets a note in the reader's place.
+ *
+ * A rulebook that fails to load is checked (outOfReach): not saved, and no
+ * network, it says so (notSaved) and the links row goes, being dead too;
+ * otherwise it says to download the PDF instead (CANT_SHOW). The failure is
+ * this tab's alone, and a failed reader is remounted when the browser comes
+ * back online, so one that failed offline loads by itself.
+ */
 export default function RulesPage() {
   const { slug, part } = useParams<{ slug: string; part?: string }>();
   // Passed on by the tabs and the chat's links to them, which replace rather
