@@ -3,6 +3,7 @@ import { useWishlistItems } from '../context/useWishlistItems';
 import { GAMES } from '../data/games';
 import { filterGames, filterWishlist } from '../utils/filterGames';
 import { activeFilters, listFilters, relaxations } from '../utils/relaxFilters';
+import { focusSection } from '../client/focus';
 
 interface Props {
   /** Which list came up empty; the other one is offered when it has matches. */
@@ -13,21 +14,15 @@ const plural = (n: number) => `${n} ${n === 1 ? 'game' : 'games'}`;
 const fit = (n: number) => (n === 1 ? 'fits' : 'fit');
 
 /**
- * Every action here empties or swaps the list, so this block unmounts and
- * the focused button with it. Hand focus to the heading of the section that
- * shows next, rather than dropping it on the page.
- */
-function focusSection() {
-  requestAnimationFrame(() => document.querySelector<HTMLElement>('#collection .sec-title')?.focus());
-}
-
-/**
  * Empty state shared by the collection views and the wishlist. It names the
  * filters that emptied the list and offers, for each one that would bring
  * results back on its own, a one-tap way to drop it.
  */
 export default function NoResults({ kind }: Props) {
   const { state, dispatch: send } = useFilter();
+  // Every action here empties or swaps the list, so this block unmounts and
+  // the focused button with it. Hand focus to the heading of the section
+  // that shows next, rather than dropping it on the page.
   const dispatch: typeof send = (action) => { send(action); focusSection(); };
   const { items } = useWishlistItems();
   const count = kind === 'games'

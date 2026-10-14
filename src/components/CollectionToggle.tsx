@@ -1,4 +1,5 @@
 import { useFilter } from '../context/useFilter';
+import { focusSection } from '../client/focus';
 import type { CollectionMode } from '../data/types';
 
 /** Own / Want segmented control. The filter bar applies to whichever is selected. */
@@ -11,9 +12,7 @@ export default function CollectionToggle() {
     // This control sits inside the section it just hid, which would drop
     // keyboard focus to the body; hand it to the twin control in the section
     // now showing (the one carrying the anchor id) once it has rendered.
-    requestAnimationFrame(() => {
-      document.querySelector<HTMLElement>(`#collection .coll-btn[data-mode="${next}"]`)?.focus();
-    });
+    focusSection(`${next}-toggle`);
   }
 
   return (
@@ -22,7 +21,7 @@ export default function CollectionToggle() {
         type="button"
         className={`coll-btn${mode === 'own' ? ' active' : ''}`}
         aria-pressed={mode === 'own'}
-        data-mode="own"
+        data-focus-target="own-toggle"
         onClick={() => choose('own')}
       >
         We own
@@ -31,7 +30,7 @@ export default function CollectionToggle() {
         type="button"
         className={`coll-btn${mode === 'want' ? ' active' : ''}`}
         aria-pressed={mode === 'want'}
-        data-mode="want"
+        data-focus-target="want-toggle"
         onClick={() => choose('want')}
       >
         We want

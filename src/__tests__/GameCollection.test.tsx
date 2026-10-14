@@ -1,16 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import GameCollection from '../components/GameCollection';
 import FilterBar from '../components/FilterBar/FilterBar';
 import { FilterProvider } from '../context/FilterContext';
+import { useFilter } from '../context/useFilter';
+import type { FilterAction } from '../context/filterReducer';
 import { stubMatchMedia } from './helpers/stubMatchMedia';
 
 function renderWithFilter(hidden = false) {
   return render(
     <MemoryRouter>
       <FilterProvider>
-        <div className="sticky-header" />
+        <div data-sticky-header />
         <FilterBar />
         <GameCollection hidden={hidden} />
       </FilterProvider>
@@ -26,7 +28,7 @@ function selectFirstKeyword() {
 }
 
 function stubHeaderHeight(px: number) {
-  const header = document.querySelector('.sticky-header') as HTMLElement;
+  const header = document.querySelector('[data-sticky-header]') as HTMLElement;
   Object.defineProperty(header, 'offsetHeight', { value: px, configurable: true });
 }
 
@@ -105,6 +107,59 @@ describe('GameCollection scroll behavior', () => {
     expect(scrollToSpy).toHaveBeenCalled();
     const call = scrollToSpy.mock.calls[0][0] as { top: number };
     expect(call.top).toBe(0);
+  });
+});
+
+describe('GameCollection scroll on a change of filters', () => {
+  const scrollToSpy = vi.fn();
+  let send: ReturnType<typeof useFilter>['dispatch'];
+
+  function Dispatcher() {
+    send = useFilter().dispatch;
+    return null;
+  }
+
+  function renderScrolled() {
+    render(
+      <MemoryRouter>
+        <FilterProvider>
+          <div data-sticky-header />
+          <Dispatcher />
+          <GameCollection />
+        </FilterProvider>
+      </MemoryRouter>
+    );
+    stubHeaderHeight(80);
+    stubSectionTop(-200);
+  }
+
+  beforeEach(() => {
+    scrollToSpy.mockReset();
+    window.scrollTo = scrollToSpy as unknown as typeof window.scrollTo;
+    Object.defineProperty(window, 'scrollY', { value: 500, writable: true, configurable: true });
+  });
+
+  it.each<[string, FilterAction]>([
+    ['players', { type: 'SET_PLAYERS', payload: 4 }],
+    ['duration', { type: 'SET_DURATION', payload: 30 }],
+    ['keyword mode', { type: 'SET_KEYWORD_MODE', payload: 'and' }],
+    ['search', { type: 'SET_SEARCH', payload: 'cat' }],
+    ['sort', { type: 'SET_SORT', payload: 'group' }],
+    ['column sort', { type: 'SET_COLUMN_SORT', payload: 'players' }],
+  ])('follows a change of %s', (_name, action) => {
+    renderScrolled();
+    act(() => send(action));
+    expect(scrollToSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('follows each change once, and none that leaves the filters as they were', () => {
+    renderScrolled();
+    act(() => send({ type: 'SET_PLAYERS', payload: 4 }));
+    // A new state object with the same filters: nothing to put back.
+    act(() => send({ type: 'SET_PLAYERS', payload: 4 }));
+    act(() => send({ type: 'CLEAR_KEYWORDS' }));
+    act(() => send({ type: 'SET_VIEW', payload: 'grid' }));
+    expect(scrollToSpy).toHaveBeenCalledTimes(1);
   });
 });
 

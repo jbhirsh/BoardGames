@@ -24,7 +24,7 @@ export default function GameCollection({ hidden = false }: { hidden?: boolean })
   return (
     <section id={hidden ? undefined : 'collection'} ref={sectionRef} hidden={hidden}>
       <div className="sec-hd">
-        <h2 className="sec-title" tabIndex={-1}>Our Collection</h2>
+        <h2 className="sec-title" tabIndex={-1} data-focus-target="title">Our Collection</h2>
         <span className="sec-count">{filteredGames.length} {filteredGames.length === 1 ? 'game' : 'games'}</span>
         {/* On the heading's line, beside the count it picks from. */}
         <RandomPicker />

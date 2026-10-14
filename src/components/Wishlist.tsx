@@ -18,6 +18,7 @@ import { useCopyLink } from '../hooks/useCopyLink';
 import { filterWishlist, groupItems, isGrouped, type WishlistGroup } from '../utils/filterGames';
 import { buildShareUrl } from '../utils/filterUrl';
 import { initialFilterState } from '../data/initialFilterState';
+import { focusTarget } from '../client/focus';
 
 /**
  * Takes the reader to the suggestion form, ready to type the game. The
@@ -26,7 +27,7 @@ import { initialFilterState } from '../data/initialFilterState';
 function goToSuggest() {
   const form = document.getElementById('suggest')!;
   form.scrollIntoView({ block: 'start' });
-  form.querySelector('input')!.focus({ preventScroll: true });
+  focusTarget(form, 'field', { preventScroll: true });
 }
 
 /**
@@ -52,7 +53,7 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
   return (
     <section className="wishlist" id={hidden ? undefined : 'collection'} ref={sectionRef} hidden={hidden}>
       <div className="sec-hd">
-        <h2 className="sec-title" tabIndex={-1}>Wishlist</h2>
+        <h2 className="sec-title" tabIndex={-1} data-focus-target="title">Wishlist</h2>
         <span className="sec-count">{filtered.length} {filtered.length === 1 ? 'game' : 'games'}</span>
         {/* The wishlist's counterpart to the collection's Pick for us, on
             the heading's line: the form sits below every entry. */}

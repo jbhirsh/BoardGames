@@ -37,7 +37,7 @@ export default function GameCard({ game }: Props) {
     <div id={gameAnchor(game.slug)} className={`game-card${moreOpen || (subsOpen && hasFitting) ? ' card-open' : ''}`}>
       <div className="card-head">
         <img src={game.img} alt={`${game.name} box art`} className="card-corner-img" loading="lazy" />
-        <h3 className="card-name" tabIndex={-1}>{game.name}</h3>
+        <h3 className="card-name" tabIndex={-1} data-focus-target="item">{game.name}</h3>
         <div className="card-meta">
           <span className="cmeta">
             <UserIcon /> {game.players}
