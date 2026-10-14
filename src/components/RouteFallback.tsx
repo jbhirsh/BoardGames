@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 import { GAMES } from '../data/games';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
 import { rulebooks } from '../utils/rulebooks';
-import BackLink from './BackLink';
+import PageHeader from './PageHeader';
 import { AiRulesIcon, CalculatorIcon } from './Icons';
 
 interface Props {
@@ -28,18 +28,9 @@ interface Props {
 export default function RouteFallback({ title = 'The Game Room', desc = 'Loading', art = true, children }: Props) {
   return (
     <div className="rules-page route-fallback" aria-busy="true">
-      <header className="rules-header">
-        <BackLink />
-        <p className="sr-only" role="status">Loading…</p>
-        <div className="rules-title-row" aria-hidden="true">
-          {art && <div className="rules-box-art" />}
-          <div className="rules-title-info">
-            <div className="rules-game-name"><span className="skeleton-text">{title}</span></div>
-            <div className="rules-game-desc"><span className="skeleton-text">{desc}</span></div>
-          </div>
-          {children}
-        </div>
-      </header>
+      <PageHeader title={title} desc={desc} art={art} loading>
+        {children}
+      </PageHeader>
     </div>
   );
 }

@@ -9,7 +9,8 @@ import RulesChatProvider, { RulesChatToggle, RulesChatPanel } from './RulesChat'
 import WordChecker from './WordChecker';
 import Notice from './Notice';
 import NotFoundPage from './NotFoundPage';
-import BackLink from './BackLink';
+import PageHeader from './PageHeader';
+import { revealInStrip } from '../client/revealInStrip';
 import { useScrollEdges } from '../hooks/useScrollEdges';
 import { formatSize } from '../utils/fileSize';
 import { cameFromList, FROM_LIST } from '../utils/fromList';
@@ -114,21 +115,6 @@ const STRIP_FADE = 48;
 function scrollToChosenTab(strip: HTMLElement) {
   const tab = strip.querySelector<HTMLElement>('[aria-current="page"]');
   if (tab) strip.scrollLeft = Math.max(0, tab.offsetLeft - strip.offsetLeft - STRIP_FADE);
-}
-
-/**
- * Brings a tab reached by keyboard clear of the faded edges. The browser
- * leaves a partly visible tab where it is, which can put its focus ring
- * under the fade.
- */
-function revealTab(strip: HTMLElement, tab: HTMLElement) {
-  const left = tab.offsetLeft - strip.offsetLeft;
-  const right = left + tab.offsetWidth;
-  if (left < strip.scrollLeft + STRIP_FADE) {
-    strip.scrollLeft = Math.max(0, left - STRIP_FADE);
-  } else if (right > strip.scrollLeft + strip.clientWidth - STRIP_FADE) {
-    strip.scrollLeft = right - strip.clientWidth + STRIP_FADE;
-  }
 }
 
 export default function RulesPage() {
@@ -254,34 +240,22 @@ export default function RulesPage() {
     <RulesChatProvider>
       <div className="rules-page">
         <title>{`${book.name} rules · The Game Room`}</title>
-        <header className="rules-header">
-          <BackLink />
-          <div className="rules-title-row">
-            <img
-              src={game.img}
-              alt={`${game.name} box art`}
-              className="rules-box-art"
-            />
-            <div className="rules-title-info">
-              <h1 className="rules-game-name">{game.name}</h1>
-              <p className="rules-game-desc">{book.short}</p>
-            </div>
-            <RulesChatToggle />
-            {SCORE_CALCULATORS.has(game.slug) && (
-              <Link className="rules-chat-toggle" to={`/score/${game.slug}`}>
-                <CalculatorIcon /> Score calculator
-              </Link>
-            )}
-            {game.slug === 'bananagrams' && (
-              <button
-                className="rules-chat-toggle"
-                onClick={() => setWordCheckerOpen(o => !o)}
-              >
-                {wordCheckerOpen ? 'Close Word Checker' : 'Word Checker'}
-              </button>
-            )}
-          </div>
-        </header>
+        <PageHeader title={game.name} desc={book.short} art={game}>
+          <RulesChatToggle />
+          {SCORE_CALCULATORS.has(game.slug) && (
+            <Link className="rules-chat-toggle" to={`/score/${game.slug}`}>
+              <CalculatorIcon /> Score calculator
+            </Link>
+          )}
+          {game.slug === 'bananagrams' && (
+            <button
+              className="rules-chat-toggle"
+              onClick={() => setWordCheckerOpen(o => !o)}
+            >
+              {wordCheckerOpen ? 'Close Word Checker' : 'Word Checker'}
+            </button>
+          )}
+        </PageHeader>
         {books.length > 1 && (
           <nav
             ref={stripRef}
@@ -290,7 +264,10 @@ export default function RulesPage() {
             className={`rules-books${edges.start ? ' fade-start' : ''}${edges.end ? ' fade-end' : ''}`}
             style={{ '--strip-fade': `${STRIP_FADE}px` } as CSSProperties}
             aria-label="Rulebooks"
-            onFocus={(e) => revealTab(e.currentTarget, e.target as HTMLElement)}
+            // A tab reached by keyboard is brought clear of the faded edges:
+            // the browser leaves a partly visible one where it is, which can
+            // put its focus ring under the fade.
+            onFocus={(e) => revealInStrip(e.currentTarget, e.target as HTMLElement, STRIP_FADE)}
           >
             {books.map(b => (
               <Link
