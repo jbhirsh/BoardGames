@@ -5,7 +5,6 @@ import { KW } from '../data/keywords';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
 import { WORD_CHECKER_GAME } from '../data/wordChecker';
 import type { Award, DetailSection } from '../data/types';
-import { durationCategory } from '../hooks/useSuggestions';
 import { isDeck } from '../utils/filterGames';
 import { expectCoherentTable, numbers } from './coherentTable';
 
@@ -40,7 +39,6 @@ function expectRealAwards(awards: Award[] | undefined, label: string) {
 describe('games data', () => {
   it.each(GAMES.map((g) => [g.slug, g] as const))('%s has coherent filter fields', (slug, g) => {
     expectCoherentTable(g, slug);
-    expect(g.cat, `${slug}: cat`).toBe(durationCategory(g.mins));
 
     // The card shows the box's whole range, so a top count above `max` must
     // come from a game inside it (Catan is 3–4, 3–6 with its extension).
@@ -114,7 +112,6 @@ describe('games data', () => {
 
   it.each(subgames)('%s has coherent filter fields', (label, s) => {
     expectCoherentTable(s, label);
-    expect(s.cat, `${label}: cat`).toBe(durationCategory(s.mins));
     expect(numbers(s.players).at(-1), `${label}: players vs max`).toBe(s.max);
     for (const text of [s.name, s.short, s.yt]) expect(text.trim()).not.toBe('');
     expectRealAwards(s.awards, label);

@@ -12,7 +12,7 @@ function jsonResponse(body: unknown, ok = true): Response {
 
 const item: WishlistItem = {
   id: 'sug-1', name: 'Root', desc: 'Woodland war. “Mean fun”', blurb: 'Woodland war.', yt: '', players: '2–4',
-  min: 2, max: 4, dur: '90 min', mins: 90, cat: 'long', kw: ['strategy'], type: 'suggested', awards: [], suggestedBy: 'Alex', source: 'friend',
+  min: 2, max: 4, dur: '90 min', mins: 90, kw: ['strategy'], type: 'suggested', awards: [], suggestedBy: 'Alex', source: 'friend',
 };
 
 function renderControls(over: Partial<WishlistItem> = {}, admin = true) {

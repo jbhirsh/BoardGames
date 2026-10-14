@@ -10,7 +10,6 @@ export const quickGame: Game = {
   max: 4,
   dur: '10 min',
   mins: 10,
-  cat: 'quick',
   group: 'party',
   kw: ['card-game', 'family'],
   short: 'A quick card game.',
@@ -30,7 +29,6 @@ export const mediumGame: Game = {
   max: 6,
   dur: '45 min',
   mins: 45,
-  cat: 'medium',
   group: 'strat',
   kw: ['strategy', 'classic'],
   short: 'A medium strategy game.',
@@ -50,7 +48,6 @@ export const longGame: Game = {
   max: 5,
   dur: '2 hrs',
   mins: 120,
-  cat: 'long',
   group: 'coop',
   kw: ['cooperative', 'thematic'],
   short: 'A long cooperative game.',
@@ -70,7 +67,6 @@ export const bananagramsGame: Game = {
   max: 8,
   dur: '15 min',
   mins: 15,
-  cat: 'quick',
   group: 'word',
   kw: ['word', 'family', 'quick-play'],
   short: 'A fast word game.',
@@ -90,7 +86,6 @@ export const sevenWondersGame: Game = {
   max: 7,
   dur: '30 min',
   mins: 30,
-  cat: 'medium',
   group: 'strat',
   kw: ['strategy', 'card-game'],
   short: 'A card drafting civilization game.',
@@ -104,13 +99,13 @@ export const testGames: Game[] = [quickGame, mediumGame, longGame];
 
 export const speedSub: SubGame = {
   name: 'Speed', slug: 'speed', kind: 'card-game', players: '2', min: 2, max: 2,
-  dur: '5 min', mins: 5, cat: 'quick', short: 'Race to empty your hand.', yt: 'how to play speed',
+  dur: '5 min', mins: 5, short: 'Race to empty your hand.', yt: 'how to play speed',
   rules: '/rules/deck.speed.pdf',
 };
 
 export const presidentSub: SubGame = {
   name: 'President', slug: 'president', kind: 'card-game', players: '4–8', min: 4, max: 8,
-  dur: '30 min', mins: 30, cat: 'medium', short: 'Shed your hand first.', yt: 'how to play president',
+  dur: '30 min', mins: 30, short: 'Shed your hand first.', yt: 'how to play president',
   rules: '/rules/deck.president.pdf',
 };
 
@@ -130,6 +125,6 @@ export const addonGame: Game = {
   slug: 'island',
   subgames: [{
     name: 'Big Box', slug: 'big-box', kind: 'expansion', players: '3–6', min: 3, max: 6,
-    dur: '90 min', mins: 90, cat: 'long', short: 'More of everything.', yt: 'how to play big box',
+    dur: '90 min', mins: 90, short: 'More of everything.', yt: 'how to play big box',
   }],
 };

@@ -17,7 +17,6 @@ const testItem: WishlistItem = {
   max: 4,
   dur: '30 min',
   mins: 30,
-  cat: 'medium',
   kw: ['strategy', 'card-game'],
   awards: [{ name: 'Spiel des Jahres', year: 2020 }],
 };

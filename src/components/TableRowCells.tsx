@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
-import type { Award, DurationCategory, Filterable, KeywordId } from '../data/types';
+import type { Award, Filterable, KeywordId } from '../data/types';
 import { useFilter } from '../context/useFilter';
 import { budgetFor, sortedKw } from '../utils/filterGames';
 import { isKeywordLit } from '../utils/keywordLit';
 import { difficultyOf } from '../utils/difficulty';
+import { durationCategory } from '../utils/duration';
 import DurationPill from './DurationPill';
 import KeywordPill from './KeywordPill';
 import AwardsBadge from './AwardsBadge';
@@ -12,10 +13,9 @@ import { ChevronIcon } from './Icons';
 interface CellsProps {
   name: string;
   players: string;
-  cat: DurationCategory;
   /** The play time; the duration pill is left out when it is unknown (empty). */
   dur?: string;
-  /** The play time in minutes, which the pill's time filter is chosen by. */
+  /** The play time in minutes, which the pill's colour and time filter are chosen by. */
   mins: number;
   /** One-line description, shown in the description column and under the name on phones. */
   short: string;
@@ -40,7 +40,7 @@ interface CellsProps {
  * the row click and any data attributes.
  */
 export default function TableRowCells({
-  name, players, cat, dur, mins, short, kw, awards, subTag, difficulty, extra, isOpen, onToggle,
+  name, players, dur, mins, short, kw, awards, subTag, difficulty, extra, isOpen, onToggle,
 }: CellsProps) {
   const { state, dispatch } = useFilter();
   const budget = budgetFor(mins);
@@ -69,7 +69,7 @@ export default function TableRowCells({
       <td>
         {dur && (
           <DurationPill
-            cat={cat}
+            cat={durationCategory(mins)}
             className="row-dur"
             label={dur}
             budget={budget}

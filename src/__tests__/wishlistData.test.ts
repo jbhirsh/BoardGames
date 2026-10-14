@@ -5,7 +5,6 @@ import { WISHLIST } from '../data/wishlist';
 import { GAMES } from '../data/games';
 import { KW } from '../data/keywords';
 import { normalizeName } from '../utils/normalizeName';
-import { durationCategory } from '../hooks/useSuggestions';
 import { expectCoherentTable } from './coherentTable';
 
 /** The wishlist shares the collection's filter fields; keep them coherent. */
@@ -46,7 +45,6 @@ describe('wishlist data', () => {
     // The time filter reads `mins` as the long end of `dur`, as it does a
     // game's, so "Up to 60 min" would keep a 40–80 min game stored as 60.
     expectCoherentTable(w, id);
-    expect(w.cat, `${id}: cat`).toBe(durationCategory(w.mins));
     expect(w.dur).toMatch(/min$/);
     expect(w.kw.length).toBeGreaterThan(0);
     for (const k of w.kw) expect(Object.keys(KW)).toContain(k);

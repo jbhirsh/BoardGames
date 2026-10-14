@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { DurationCategory, KeywordId, WishlistItem, WishlistType } from '../data/types';
+import type { KeywordId, WishlistItem, WishlistType } from '../data/types';
 import { KW, WISHLIST_TYPES } from '../data/keywords';
 
 export interface SuggestionDetails {
@@ -28,11 +28,6 @@ export interface ApprovedSuggestion {
 const isSection = (v: unknown): v is Exclude<WishlistType, 'suggested'> =>
   typeof v === 'string' && v !== 'suggested' && v in WISHLIST_TYPES;
 
-/** Same buckets as the compiled collection: quick <= 15 min, medium <= 60, long beyond. */
-export function durationCategory(mins: number): DurationCategory {
-  return mins <= 15 ? 'quick' : mins <= 60 ? 'medium' : 'long';
-}
-
 function playersLabel(min: number, max: number): string {
   if (max >= 99) return `${min}+`;
   return min === max ? String(min) : `${min}–${max}`;
@@ -60,7 +55,6 @@ export function suggestionToItem(s: ApprovedSuggestion): WishlistItem {
     max: d?.max ?? 99,
     mins: d?.mins ?? 0,
     dur: known ? `${d.mins} min` : '',
-    cat: known ? durationCategory(d.mins) : 'medium',
     kw: (d?.kw ?? []).filter((k): k is KeywordId => k in KW),
     type: isSection(d?.type) ? d.type : 'suggested',
     awards: [],

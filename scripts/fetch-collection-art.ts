@@ -81,14 +81,17 @@ const COVERS: Record<string, Entry> = {
 
 // The games are data literals; read them straight off the source rather
 // than importing it (its path-less imports are Vite's, not Node's). A game
-// is a literal with an `img`; its own `bgg` comes before any `subgames`,
+// is a literal with a name and slug and no `kind`, which only a game inside
+// one has; its box art is /images/<slug>.webp unless it names an `img` (as
+// games.ts fills it in), and its own `bgg` comes before any `subgames`,
 // whose ids are theirs.
 const source = await readFile('src/data/games.ts', 'utf8');
-const starts = [...source.matchAll(/\{\s*name:"([^"]+)",\s*slug:"([^"]+)",\s*img:"([^"]+)"/g)];
+const starts = [...source.matchAll(/\{\s*name:"([^"]+)",\s*slug:"([^"]+)",(?!\s*kind:)/g)];
 const games = starts.map((m, i) => {
   const literal = source.slice(m.index, starts[i + 1]?.index ?? source.length).split('subgames:')[0];
   const bgg = /\bbgg:(\d+)/.exec(literal)?.[1];
-  return { name: m[1], slug: m[2], img: m[3], bgg: bgg ? Number(bgg) : undefined };
+  const img = /\bimg:"([^"]+)"/.exec(literal)?.[1] ?? `/images/${m[2]}.webp`;
+  return { name: m[1], slug: m[2], img, bgg: bgg ? Number(bgg) : undefined };
 });
 if (games.length === 0) throw new Error('no games found in src/data/games.ts');
 const only = process.argv.slice(2);

@@ -6,7 +6,8 @@ import { filterGames, sortItems, sortedKw, isGrouped, fitsTable, tableFiltered, 
 import { GAMES } from '../data/games';
 import { initialFilterState } from '../data/initialFilterState';
 import { testGames, quickGame, mediumGame, longGame } from './testData';
-import type { FilterState, Game, SortMode, SubGame } from '../data/types';
+import type { FilterState, Filterable, Game, SortMode, SubGame } from '../data/types';
+import { durationCategory } from '../utils/duration';
 
 // The collection's sort: sortItems with the games' group order, as
 // filterGames applies it.
@@ -40,7 +41,7 @@ describe('filterGames', () => {
     // A game's own minutes decide, not its Quick/Medium/Long bucket: Love
     // Letter (20 min) is "medium" but fits half an hour.
     it('judges a game by its minutes, the budget itself included', () => {
-      const twenty = { ...mediumGame, name: 'Twenty', slug: 'twenty', mins: 20, cat: 'medium' as const };
+      const twenty = { ...mediumGame, name: 'Twenty', slug: 'twenty', mins: 20 };
       const thirty = { ...twenty, name: 'Thirty', slug: 'thirty', mins: 30 };
       const thirtyOne = { ...twenty, name: 'Thirty-one', slug: 'thirty-one', mins: 31 };
       expect(filterGames([twenty, thirty, thirtyOne], makeState({ duration: 30 }))).toEqual([thirty, twenty]);
@@ -149,11 +150,11 @@ describe('filterGames', () => {
   describe('games inside a game', () => {
     const speed: SubGame = {
       name: 'Speed', slug: 'speed', kind: 'card-game', players: '2', min: 2, max: 2,
-      dur: '5 min', mins: 5, cat: 'quick', short: 'Race.', yt: 'how to play speed',
+      dur: '5 min', mins: 5, short: 'Race.', yt: 'how to play speed',
     };
     const president: SubGame = {
       name: 'President', slug: 'president', kind: 'card-game', players: '4–8', min: 4, max: 8,
-      dur: '30 min', mins: 30, cat: 'medium', short: 'Shed your hand.', yt: 'how to play president',
+      dur: '30 min', mins: 30, short: 'Shed your hand.', yt: 'how to play president',
     };
     // The deck's own summary would fit one player and a long game; it is
     // never played on its own, so only its games may keep it.
@@ -194,7 +195,7 @@ describe('filterGames', () => {
 });
 
 describe('fitsTable', () => {
-  const g = { min: 2, max: 4, mins: 30, cat: 'medium' as const };
+  const g = { min: 2, max: 4, mins: 30 };
 
   it('fits everything with no players or time chosen', () => {
     expect(fitsTable(g, makeState())).toBe(true);
@@ -284,18 +285,22 @@ describe('sortGames', () => {
     expect(result.map(g => g.name)).toEqual(['Medium Game', 'Long Game', 'Quick Game']);
   });
 
-  it('breaks duration-sort ties by curated category order', () => {
-    // Two games with identical playtime but different curated `cat` must fall
-    // back to CAT_ORDER (quick < medium < long) instead of keeping input order.
-    // Guards the `|| CAT_ORDER[...]` secondary comparator on both dur sorts.
-    const quickTie = { ...quickGame, name: 'Tie Quick', slug: 'tie-quick', mins: 30, cat: 'quick' as const };
-    const mediumTie = { ...mediumGame, name: 'Tie Medium', slug: 'tie-medium', mins: 30, cat: 'medium' as const };
-
-    const asc = sortGames([mediumTie, quickTie], 'quick');
-    expect(asc.map(g => g.name)).toEqual(['Tie Quick', 'Tie Medium']);
-
-    const desc = sortGames([quickTie, mediumTie], 'long');
-    expect(desc.map(g => g.name)).toEqual(['Tie Medium', 'Tie Quick']);
+  it('sorts the real lists by play time as it did with the time bucket as a tie-break', () => {
+    // The sorts once broke equal times by the bucket (quick < medium <
+    // long), but the bucket is worked out from `mins`, so equal times share
+    // one and it never decided anything. Compared here against that old
+    // comparator on the collection and the wishlist, an unknown time among
+    // them.
+    const RANK = { quick: 0, medium: 1, long: 2 } as const;
+    const known = (m: number) => m || Number.MAX_SAFE_INTEGER;
+    const rank = (m: number) => (m ? RANK[durationCategory(m)] : RANK.medium);
+    const unknown = { ...WISHLIST[0], id: 'sug-x', name: 'Mystery', mins: 0, dur: '' };
+    for (const list of [GAMES, [...WISHLIST, unknown]] as Filterable[][]) {
+      expect(sortItems(list, 'dur-asc', () => 0))
+        .toEqual([...list].sort((a, b) => known(a.mins) - known(b.mins) || rank(a.mins) - rank(b.mins)));
+      expect(sortItems(list, 'dur-desc', () => 0))
+        .toEqual([...list].sort((a, b) => b.mins - a.mins || rank(b.mins) - rank(a.mins)));
+    }
   });
 });
 
@@ -333,10 +338,10 @@ describe('sortItems ordering', () => {
   // can't pass by coincidence. Names, groups, minutes and seats are all
   // deliberately out of step with one another.
   const mk = (name: string, over: Partial<Game>): Game => ({ ...quickGame, name, slug: name.toLowerCase(), ...over });
-  const bravo   = mk('Bravo',   { group: 'party', mins: 60, cat: 'long',   min: 2, max: 4 });
-  const alpha   = mk('Alpha',   { group: 'coop',  mins: 20, cat: 'medium', min: 2, max: 8 });
-  const charlie = mk('Charlie', { group: 'strat', mins: 40, cat: 'medium', min: 4, max: 4 });
-  const delta   = mk('Delta',   { group: 'word',  mins: 40, cat: 'quick',  min: 2, max: 6 });
+  const bravo   = mk('Bravo',   { group: 'party', mins: 60, min: 2, max: 4 });
+  const alpha   = mk('Alpha',   { group: 'coop',  mins: 20, min: 2, max: 8 });
+  const charlie = mk('Charlie', { group: 'strat', mins: 40, min: 4, max: 4 });
+  const delta   = mk('Delta',   { group: 'word',  mins: 40, min: 2, max: 6 });
   const input = [bravo, alpha, charlie, delta];
   const names = (list: Game[]) => list.map(g => g.name);
 
@@ -352,23 +357,22 @@ describe('sortItems ordering', () => {
     expect(names(sortGames(input, 'name-desc'))).toEqual(['Delta', 'Charlie', 'Bravo', 'Alpha']);
   });
 
-  it.each(['quick', 'dur-asc'])('%s sorts shortest first, ties broken quick < medium < long', (sort) => {
-    // Charlie and Delta are both 40 min; Delta (quick) must jump ahead of
-    // Charlie (medium) even though Charlie comes first in the input.
-    expect(names(sortGames(input, sort))).toEqual(['Alpha', 'Delta', 'Charlie', 'Bravo']);
+  it.each(['quick', 'dur-asc'])('%s sorts shortest first, equal times in their incoming order', (sort) => {
+    // Charlie and Delta are both 40 min, and stay as the input has them.
+    expect(names(sortGames(input, sort))).toEqual(['Alpha', 'Charlie', 'Delta', 'Bravo']);
   });
 
   it.each(['quick', 'dur-asc', 'long', 'dur-desc'])('%s puts an unknown play time (mins 0) last', (sort) => {
     // A suggestion whose lookup failed has mins 0: not the quickest game,
     // just one we know nothing about.
-    const unknown = mk('Unknown', { mins: 0, cat: 'medium' });
+    const unknown = mk('Unknown', { mins: 0 });
     const sorted = names(sortGames([unknown, bravo, alpha], sort));
     expect(sorted[sorted.length - 1]).toBe('Unknown');
   });
 
-  it.each(['long', 'dur-desc'])('%s sorts longest first, ties broken long > medium > quick', (sort) => {
-    // Input has Delta ahead of Charlie so the tie-break has to move Charlie.
-    expect(names(sortGames([alpha, delta, charlie, bravo], sort))).toEqual(['Bravo', 'Charlie', 'Delta', 'Alpha']);
+  it.each(['long', 'dur-desc'])('%s sorts longest first, equal times in their incoming order', (sort) => {
+    // Input has Delta ahead of Charlie, both 40 min, and they stay that way.
+    expect(names(sortGames([alpha, delta, charlie, bravo], sort))).toEqual(['Bravo', 'Delta', 'Charlie', 'Alpha']);
   });
 
   it('players-asc sorts by min seats, then max seats', () => {
@@ -517,7 +521,7 @@ describe('weight sort', () => {
   const b = { ...mediumGame, name: 'B', weight: 1.2 };
   const c = { ...longGame, name: 'C', weight: 1.2 };
   const unknown = { ...longGame, name: 'Unknown' };
-  const card = { slug: 'x', kind: 'card-game' as const, players: '2', min: 2, max: 2, dur: '5 min', mins: 5, cat: 'quick' as const, short: '', yt: '' };
+  const card = { slug: 'x', kind: 'card-game' as const, players: '2', min: 2, max: 2, dur: '5 min', mins: 5, short: '', yt: '' };
   // A deck spanning 1.1 to 3.0: lightest first it is a 1.1, heaviest first a 3.0.
   const deck: Game = {
     ...mediumGame, name: 'Deck',

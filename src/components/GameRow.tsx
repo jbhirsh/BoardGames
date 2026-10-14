@@ -25,7 +25,6 @@ export default function GameRow({ game, isOpen, onToggle }: Props) {
         <TableRowCells
           name={game.name}
           players={game.players}
-          cat={game.cat}
           dur={game.dur}
           mins={game.mins}
           short={game.short}

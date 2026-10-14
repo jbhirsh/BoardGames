@@ -11,7 +11,6 @@ type Props = ComponentProps<typeof TableRowCells>;
 const base: Props = {
   name: 'Cell Game',
   players: '2–5',
-  cat: 'long',
   dur: '90 min',
   mins: 90,
   short: 'A game of cells.',
@@ -47,7 +46,7 @@ function renderCells(overrides: Partial<Props> = {}, onRowClick = vi.fn()) {
 describe('TableRowCells', () => {
 
   it("shows the game's own time on the duration pill and names the budget it filters to", () => {
-    renderCells({ cat: 'medium', dur: '20 min', mins: 20 });
+    renderCells({ dur: '20 min', mins: 20 });
     const pill = screen.getByRole('button', { name: '20 min: show games up to 30 min' });
     expect(pill).toHaveTextContent('20 min');
     expect(pill).toHaveClass('dur-medium');
@@ -144,7 +143,7 @@ describe('TableRowCells', () => {
   });
 
   it('filters by duration and keyword from the pills without toggling the row', () => {
-    const { onRowClick } = renderCells({ cat: 'medium', dur: '45 min', mins: 45 });
+    const { onRowClick } = renderCells({ dur: '45 min', mins: 45 });
     expect(screen.getByRole('status')).toHaveTextContent('all|');
     fireEvent.click(screen.getByText('45 min'));
     expect(screen.getByRole('status')).toHaveTextContent('60|');

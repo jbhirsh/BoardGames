@@ -27,7 +27,7 @@ function mockApi(pending: unknown = { items: PENDING }, mutation: Response = jso
 
 const HIDDEN: WishlistItem = {
   id: 'sug-9', name: 'Glyphics', desc: 'Jess thinks we should try this one.', yt: '', players: '',
-  min: 1, max: 99, dur: '', mins: 0, cat: 'medium', kw: [], type: 'suggested', awards: [],
+  min: 1, max: 99, dur: '', mins: 0, kw: [], type: 'suggested', awards: [],
   suggestedBy: 'Jess', source: 'friend',
 };
 

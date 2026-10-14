@@ -7,7 +7,7 @@ import type { Game, SubGame } from '../data/types';
 
 const sub = (over: Partial<SubGame>): SubGame => ({
   name: 'Sub', slug: 'sub', kind: 'card-game', players: '2', min: 2, max: 2,
-  dur: '5 min', mins: 5, cat: 'quick', short: 'A sub-game.', yt: 'how to play sub', ...over,
+  dur: '5 min', mins: 5, short: 'A sub-game.', yt: 'how to play sub', ...over,
 });
 
 describe('mentionedRulebooks', () => {
