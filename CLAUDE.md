@@ -424,7 +424,8 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   `index.html` preloads the roman file. Body text is the system font.
 - **`utils/`** — pure helpers (`filterGames.ts`, `pickRandom.ts`, `filterUrl.ts`, `heroCovers.ts`,
   `urls.ts`, `openRow.ts`, `shortDesc.ts`, `subgames.ts`, `rulebooks.ts`, `pdfSearch.ts`,
-  `citeMatch.ts`, the passage of a page a citation points to; `fileSize.ts`,
+  `citations.ts`, the rulebooks an assistant answer names and the pages it
+  cites, as links; `citeMatch.ts`, the passage of a page a citation points to; `fileSize.ts`,
   `sevenWonders.ts`, the score pad's arithmetic: science, standings with
   the coins tie-break; `difficulty.ts`, the Light/Medium/Heavy words for a
   weight; `offline.ts`, the service worker's routing and byte ranges;
@@ -631,7 +632,7 @@ checks they run 1, 2, 3 from the top of every file). The assistant cites a
 rule as `(p. N)` from the nearest marker. When it reads more than one
 rulebook, each is headed with its name (the game's own too) and every
 citation names one (`(Europe p. 4)`). The chat (`linkCitations` in
-`utils/rulebooks.ts`) turns each into a link to that PDF at `#page=N`, which
+`utils/citations.ts`) turns each into a link to that PDF at `#page=N`, which
 the rules page takes instead: it shows that rulebook's tab in place at
 `?page=N`, the reader scrolls to the page, and the answer's words the
 citation closes (passed in router state, not the URL) mark the passage they

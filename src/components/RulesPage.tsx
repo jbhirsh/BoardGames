@@ -1,7 +1,8 @@
 import { Component, lazy, Suspense, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useParams, useLocation, useNavigate, Link, Navigate } from 'react-router';
 import { GAMES } from '../data/games';
-import { rulebooks, rulebookPath, chatParts, chatScope, citationsIn, citedPage, citedPageParam, linkCitations, mentionedRulebooks, starterQuestions } from '../utils/rulebooks';
+import { rulebooks, rulebookPath, chatParts, chatScope, citedPageParam, starterQuestions } from '../utils/rulebooks';
+import { citationsIn, citedPage, linkCitations, mentionedRulebooks } from '../utils/citations';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
 import { WORD_CHECKER_GAME } from '../data/wordChecker';
 import { CalculatorIcon } from './Icons';

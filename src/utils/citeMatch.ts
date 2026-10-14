@@ -146,6 +146,13 @@ function inOrder(a: readonly string[], b: readonly string[]): number {
 }
 
 /**
+ * A candidate passage, words `from` to `to` of the page: the clause's
+ * words it holds, the sentence ends it crosses, how many of its words are
+ * in the clause's order, and how rare they are on the page (see findCited).
+ */
+type Window = { found: string[]; crossed: number; ordered: number; rarity: number; from: number; to: number };
+
+/**
  * The passage of a page's text that a citing clause most likely points to,
  * as [start, end) offsets into the page's text, or null when no stretch of
  * the page shares enough of its words.
@@ -183,7 +190,6 @@ export function findCited(page: string, clause: string, breaks: readonly number[
   // A sentence ends after word k, or a heading does.
   const endsAfter = all.map((w, k) => ENDS.test(gap(k)) || crosses(w.end, all[k + 1]?.start ?? page.length));
 
-  type Window = { found: string[]; crossed: number; ordered: number; rarity: number; from: number; to: number };
   let best: Window | null = null;
   for (let i = 0; i < all.length; i++) {
     if (!wanted.has(all[i].stem)) continue;
@@ -213,8 +219,8 @@ export function findCited(page: string, clause: string, breaks: readonly number[
 }
 
 /** Whether one candidate passage beats another (see findCited). */
-function better(a: { found: string[]; crossed: number; ordered: number; rarity: number; from: number; to: number }, b: typeof a): boolean {
-  const net = (w: typeof a) => w.found.reduce((sum, s) => sum + (GENERIC.has(s) ? 0.5 : 1), 0) - w.crossed / 2;
+function better(a: Window, b: Window): boolean {
+  const net = (w: Window) => w.found.reduce((sum, s) => sum + (GENERIC.has(s) ? 0.5 : 1), 0) - w.crossed / 2;
   if (net(a) !== net(b)) return net(a) > net(b);
   if (a.crossed !== b.crossed) return a.crossed < b.crossed;
   if (Math.abs(a.rarity - b.rarity) > 1e-9) return a.rarity > b.rarity;
