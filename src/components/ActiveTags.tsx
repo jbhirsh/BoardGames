@@ -3,16 +3,16 @@ import { DUR_LABELS, KW, playersLabel } from '../data/keywords';
 import type { KeywordId } from '../data/types';
 import { buildShareUrl } from '../utils/filterUrl';
 import { useCopyLink } from '../hooks/useCopyLink';
+import { anyFilterOn, FILTER_FIELDS, filterOn } from '../utils/filterState';
 
 export default function ActiveTags() {
   const { state, dispatch } = useFilter();
   const { copied, copy } = useCopyLink();
 
-  const hasDuration = state.duration !== 'all';
-  const hasPlayers = state.players > 0;
-  const hasKeywords = state.keywords.size > 0;
-  const hasSearch = state.search.length > 0;
-  const hasAny = hasDuration || hasPlayers || hasKeywords || hasSearch;
+  const hasDuration = filterOn(state, 'duration');
+  const hasPlayers = filterOn(state, 'players');
+  const hasSearch = filterOn(state, 'search');
+  const hasAny = anyFilterOn(state, FILTER_FIELDS);
 
   return (
     <div className={`atags${hasAny ? ' show' : ''}`}>

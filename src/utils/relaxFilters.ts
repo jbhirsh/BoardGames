@@ -1,5 +1,6 @@
 import type { FilterState, KeywordId, KeywordMode } from '../data/types';
 import { DUR_LABELS, KW, playersLabel } from '../data/keywords';
+import { clearFilters, filterOn, withFilters } from './filterState';
 
 /** One filter that's narrowing the list, and the state without it. */
 export interface ActiveFilter {
@@ -11,20 +12,21 @@ export interface ActiveFilter {
 /** The filters in play, in the order the filter bar shows them. */
 export function activeFilters(state: FilterState): ActiveFilter[] {
   const out: ActiveFilter[] = [];
-  if (state.duration !== 'all') {
+  if (filterOn(state, 'duration')) {
     // Lower case: it reads inside a sentence ("Filtering for up to 30 min").
-    out.push({ id: 'duration', label: DUR_LABELS[state.duration].toLowerCase(), without: { ...state, duration: 'all' } });
+    out.push({ id: 'duration', label: DUR_LABELS[state.duration].toLowerCase(), without: clearFilters(state, ['duration']) });
   }
-  if (state.players > 0) {
-    out.push({ id: 'players', label: playersLabel(state.players), without: { ...state, players: 0 } });
+  if (filterOn(state, 'players')) {
+    out.push({ id: 'players', label: playersLabel(state.players), without: clearFilters(state, ['players']) });
   }
   for (const k of state.keywords) {
     const keywords = new Set(state.keywords);
     keywords.delete(k);
-    out.push({ id: `kw:${k}`, label: KW[k], without: { ...state, keywords } });
+    out.push({ id: `kw:${k}`, label: KW[k], without: withFilters(state, { keywords }) });
   }
+  // Blank space searches for nothing, so it isn't a filter to name or drop.
   if (state.search.trim()) {
-    out.push({ id: 'search', label: `“${state.search.trim()}”`, without: { ...state, search: '' } });
+    out.push({ id: 'search', label: `“${state.search.trim()}”`, without: clearFilters(state, ['search']) });
   }
   return out;
 }

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { SortColumn } from '../data/types';
 import { useFilter } from '../context/useFilter';
 
 /** Columns the shared header renders on its own; a list's `extra` adds to it. */
@@ -15,19 +16,19 @@ export const COLLECTION_COLUMNS = TABLE_COLUMNS + 1;
 export default function GamesTableHead({ extra, difficulty = false }: { extra?: ReactNode; difficulty?: boolean }) {
   const { state, dispatch } = useFilter();
 
-  function thClass(col: string, base = '') {
+  function thClass(col: SortColumn, base = '') {
     const classes = base ? [base, 'sortable'] : ['sortable'];
     if (state.sort === col + '-asc') classes.push('sort-asc');
     if (state.sort === col + '-desc') classes.push('sort-desc');
     return classes.join(' ');
   }
 
-  function sortIcon(col: string) {
+  function sortIcon(col: SortColumn) {
     if (state.sort === col + '-desc') return '▼';
     return '▲';
   }
 
-  const sortable = (col: string, label: string, base = '') => (
+  const sortable = (col: SortColumn, label: string, base = '') => (
     <th className={thClass(col, base)} onClick={() => dispatch({ type: 'SET_COLUMN_SORT', payload: col })}>
       {label} <span className="sort-icon">{sortIcon(col)}</span>
     </th>

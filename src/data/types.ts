@@ -182,12 +182,16 @@ export type WishlistItem = CompiledWishlistItem | StoredWishlistItem;
 /** The most minutes a game may take to show under the duration filter. */
 export type TimeBudget = 15 | 30 | 60;
 export type DurationFilter = 'all' | TimeBudget;
-/** `votes` (most voted first) is the wishlist's alone: the collection has no votes. */
-export type SortMode = 'az' | 'group' | 'quick' | 'long' | 'votes'
-  | 'name-asc' | 'name-desc'
-  | 'dur-asc' | 'dur-desc'
-  | 'players-asc' | 'players-desc'
-  | 'weight-asc' | 'weight-desc';
+/** The list view's sortable columns; `weight` (difficulty) is the collection's alone. */
+export type SortColumn = 'name' | 'players' | 'dur' | 'weight';
+/** A click on a column header sorts by it one way, a second click the other. */
+export type ColumnSort = `${SortColumn}-${'asc' | 'desc'}`;
+/**
+ * The filter bar's sorts, the only ones a link carries. `votes` (most voted
+ * first) is the wishlist's alone: the collection has no votes.
+ */
+export type BaseSort = 'az' | 'group' | 'quick' | 'long' | 'votes';
+export type SortMode = BaseSort | ColumnSort;
 export type ViewMode = 'grid' | 'list';
 /** Which list the filter bar drives: the games we own or the ones we want. */
 export type CollectionMode = 'own' | 'want';
