@@ -3,14 +3,28 @@ name: Rules Assistant Eval
 on:
   # No `paths:` filter: the eval is a required status check on main, and a
   # workflow skipped by path filtering never reports, which leaves the PR
-  # pending forever. The job diffs the PR itself and skips the Gemini run
-  # when nothing the assistant depends on changed; a skipped step still
-  # reports the job as successful.
+  # pending forever. The job runs on every push and decides inside whether
+  # to call Gemini; a skipped step still reports the job as successful.
+  #
+  # It grades only when the AI code changes (the rules assistant, the eval
+  # harness, the rules text), and never a draft: when a PR opens ready, is
+  # reopened or is marked ready, if the PR touches that code; and on a later
+  # push unless that code is as it was at the head of this workflow's last
+  # finished run on the PR and that run passed, so a failed, errored or
+  # cancelled grade is graded again. Manual dispatch
+  # always grades; use it after changing this workflow, which changes when
+  # the eval runs, not what it grades, and so doesn't grade on its own.
+  # .github/scripts/eval-should-grade.mjs makes the call. Grading every push of any PR touching api/ hit the Gemini
+  # project's monthly spend cap, which then blocked every call, production
+  # included.
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 concurrency:
+  # A new push cancels a run still grading the old head; a cancelled run
+  # doesn't count as passed, so the new run grades instead of skipping.
   group: eval-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
@@ -19,6 +33,8 @@ env:
 
 permissions:
   contents: read
+  # To read this workflow's earlier runs on the PR.
+  actions: read
 
 jobs:
   eval:
@@ -30,31 +46,30 @@ jobs:
           # Full history so PR runs can diff against the base branch.
           fetch-depth: 0
 
-      # Only the API, the eval harness and the rules text feed the assistant's
-      # answers; a PR that touches none of them has nothing to evaluate, and
-      # every Gemini call costs real money. Manual runs always evaluate.
+      # Only the rules assistant (api/_lib/rulesAssistant.ts, which the eval
+      # calls directly), the eval harness and the rules text feed the graded
+      # answers; the rest of api/ (auth, votes, mail, rate limits) doesn't.
+      # The script decides from the event, the diff and this workflow's last
+      # finished run on the PR; see its header.
       - name: Decide whether the eval is relevant
         id: relevant
         env:
+          ACTION: ${{ github.event.action }}
+          DRAFT: ${{ github.event.pull_request.draft }}
           BASE_REF: ${{ github.base_ref }}
-        run: |
-          if [ "$GITHUB_EVENT_NAME" != "pull_request" ]; then
-            echo "relevant=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          CHANGED=$(git diff --name-only "origin/${BASE_REF}"...HEAD -- \
-              api eval rules-text .github/workflows/eval.yml || true)
-          if [ -z "$CHANGED" ]; then
-            echo "skipping eval: nothing the rules assistant depends on changed"
-            echo "relevant=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "Evaluating; changed:"; echo "$CHANGED"
-            echo "relevant=true" >> "$GITHUB_OUTPUT"
-          fi
+          HEAD_REF: ${{ github.head_ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          AFTER: ${{ github.event.pull_request.head.sha }}
+          WORKFLOW_FILE: eval.yml
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          node .github/scripts/eval-should-grade.mjs
+          api/_lib/rulesAssistant.ts eval rules-text
+          >> "$GITHUB_OUTPUT"
 
       - name: Check GEMINI_API_KEY availability
         id: gate
-        if: steps.relevant.outputs.relevant == 'true'
+        if: steps.relevant.outputs.run == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
