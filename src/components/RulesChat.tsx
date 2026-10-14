@@ -23,6 +23,11 @@ interface Message {
 // Give up when the reply hasn't started, or has stalled, for this long.
 const STALL_MS = 30_000;
 
+// The most earlier messages sent with a question (the last three
+// exchanges), as context for a follow-up. api/chat.ts refuses more than
+// its MAX_HISTORY, and a test keeps this within it.
+export const HISTORY_SENT = 6;
+
 const FAILED = 'Sorry, something went wrong. Please try again.';
 const RATE_LIMITED = 'Too many questions just now. Wait a minute, then try again.';
 const TIMED_OUT = 'That took too long to answer. Please try again.';
@@ -229,7 +234,7 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
         role: msg.role === 'assistant' ? 'model' : 'user',
         content: msg.content,
       }))
-      .slice(-6);
+      .slice(-HISTORY_SENT);
 
     // Aborts when nothing arrives for STALL_MS: no headers, or a stream gone quiet.
     const controller = new AbortController();
@@ -363,8 +368,8 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
 
   return (
     <div ref={panelRef} className={`rules-chat-panel${fresh ? ' rules-chat-panel-fresh' : ''}`}>
-        {scope && <p className="rules-chat-scope" aria-live="polite">{scope}</p>}
-        <div className="rules-chat-messages" ref={messagesContainerRef}>
+      {scope && <p className="rules-chat-scope" aria-live="polite">{scope}</p>}
+      <div className="rules-chat-messages" ref={messagesContainerRef}>
         {messages.map((msg, i) => (
           // A notice gets its own key so it mounts fresh and its alert is announced.
           <div key={msg.error ? 'error' : i} className={`rules-chat-msg rules-chat-msg-${msg.role}`}>

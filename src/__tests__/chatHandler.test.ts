@@ -22,7 +22,8 @@ vi.mock('../../api/_lib/rateLimit.js', () => ({
 }));
 
 import * as Sentry from '@sentry/node';
-import handler from '../../api/chat';
+import handler, { MAX_HISTORY } from '../../api/chat';
+import { HISTORY_SENT } from '../components/RulesChat';
 import { assembleRulesText, streamRulesAnswer } from '../../api/_lib/rulesAssistant.js';
 import { enforceRateLimit } from '../../api/_lib/rateLimit.js';
 
@@ -192,6 +193,15 @@ describe('chat handler', () => {
     expect(vi.mocked(streamRulesAnswer)).toHaveBeenCalledWith(
       expect.objectContaining({ rulesText: 'the rules', message: 'How many players?' }),
     );
+  });
+
+  it('takes as much history as the rules chat sends', async () => {
+    // RulesChat trims what it sends to HISTORY_SENT; over the cap, every
+    // follow-up in a long chat would be refused.
+    expect(HISTORY_SENT).toBeLessThanOrEqual(MAX_HISTORY);
+    const history = Array.from({ length: HISTORY_SENT }, () => ({ role: 'user', content: 'q' }));
+    await run({ slug: 'catan', message: 'hi', history });
+    expect(vi.mocked(streamRulesAnswer)).toHaveBeenCalledWith(expect.objectContaining({ history }));
   });
 
   it('passes history through to the pipeline', async () => {
