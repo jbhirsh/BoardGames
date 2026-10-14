@@ -252,6 +252,12 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   (name, desc, min/max players, mins, duration bucket, keywords). The filter
   pipeline (`utils/filterGames.ts`) is generic over it: `filterItems` with
   `filterGames` and `filterWishlist` wrappers that decide their own grouping.
+  `groupItems` then splits a filtered list under its headings: the views
+  render groups, never group themselves (`groupGames` for the collection,
+  served ready-made as `gameGroups` by the filter context; the wishlist
+  groups by type, in vote order under the group sort and in the column's
+  order under a column sort), and both tables draw them with
+  `GroupedRows`.
   The time filter is a budget (`FilterState.duration`: up to 15, 30 or 60
   minutes, `d=15|30|60` in the URL; an old `d=quick|medium|long` link opens
   at the budget that keeps its games): a game fits by its own `mins`, quick

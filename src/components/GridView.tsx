@@ -1,42 +1,27 @@
 import { useFilter } from '../context/useFilter';
-import { isGrouped } from '../utils/filterGames';
 import NoResults from './NoResults';
-import { GROUPS, GROUP_ORDER } from '../data/keywords';
+import { GROUPS } from '../data/keywords';
 import GameCard from './GameCard';
-import type { GroupId } from '../data/types';
 
 export default function GridView() {
-  const { state, filteredGames } = useFilter();
+  const { filteredGames, gameGroups } = useFilter();
 
   if (filteredGames.length === 0) return <NoResults kind="games" />;
 
-  if (isGrouped(state)) {
-    const groups = GROUP_ORDER.filter((g) => filteredGames.some((gm) => gm.group === g));
-    return (
-      <>
-        {groups.map((groupId: GroupId) => {
-          const games = filteredGames.filter((g) => g.group === groupId);
-          if (games.length === 0) return null;
-          return (
-            <div key={groupId}>
-              <div className="group-hd">{GROUPS[groupId]}</div>
-              <div className="games-grid">
-                {games.map((g) => (
-                  <GameCard key={g.name} game={g} />
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </>
+  // The flat list is one grid; each group gets a heading over its own.
+  return gameGroups.map(({ key, items }) => {
+    const grid = (
+      <div className="games-grid" key="all">
+        {items.map((g) => (
+          <GameCard key={g.name} game={g} />
+        ))}
+      </div>
     );
-  }
-
-  return (
-    <div className="games-grid">
-      {filteredGames.map((g) => (
-        <GameCard key={g.name} game={g} />
-      ))}
-    </div>
-  );
+    return key ? (
+      <div key={key}>
+        <div className="group-hd">{GROUPS[key]}</div>
+        {grid}
+      </div>
+    ) : grid;
+  });
 }
