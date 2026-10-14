@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { fittingSubgames, shownKind, subgameLabel, subgameNoun, subgameTitle } from '../utils/subgames';
+import { fittingSubgames, hasSubgames, shownKind, subgameLabel, subgameNoun, subgameTitle } from '../utils/subgames';
 import { isDeck } from '../utils/filterGames';
 import { initialFilterState } from '../data/initialFilterState';
-import { addonGame, presidentSub, speedSub } from './testData';
+import { addonGame, presidentSub, quickGame, speedSub } from './testData';
 import type { FilterState } from '../data/types';
 
 const state = (over: Partial<FilterState> = {}): FilterState => ({ ...initialFilterState, ...over });
@@ -15,6 +15,13 @@ describe('isDeck', () => {
     expect(isDeck([...deck, ...addons])).toBe(false);
     expect(isDeck([])).toBe(false);
     expect(isDeck()).toBe(false);
+  });
+});
+
+describe('hasSubgames', () => {
+  it('holds for a game with games inside it and not for one without', () => {
+    expect(hasSubgames(addonGame)).toBe(true);
+    expect(hasSubgames(quickGame)).toBe(false);
   });
 });
 

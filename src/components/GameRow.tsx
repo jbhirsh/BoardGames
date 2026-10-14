@@ -6,7 +6,7 @@ import SubGameList from './SubGameList';
 import SubGamesTag from './SubGamesTag';
 import GameActions from './GameActions';
 import GameDetail from './GameDetail';
-import { fittingSubgames, subgameTitle } from '../utils/subgames';
+import { fittingSubgames, hasSubgames, subgameTitle } from '../utils/subgames';
 import { gameAnchor } from '../utils/heroCovers';
 import { useFilter } from '../context/useFilter';
 
@@ -30,7 +30,7 @@ export default function GameRow({ game, isOpen, onToggle }: Props) {
           short={game.short}
           kw={game.kw}
           awards={game.awards}
-          subTag={game.subgames && <SubGamesTag game={{ ...game, subgames: game.subgames }} />}
+          subTag={hasSubgames(game) && <SubGamesTag game={game} />}
           difficulty={game}
           isOpen={isOpen}
           onToggle={onToggle}
@@ -38,10 +38,10 @@ export default function GameRow({ game, isOpen, onToggle }: Props) {
       </tr>
       <TableRowExpand colSpan={COLLECTION_COLUMNS} isOpen={isOpen}>
         <GameDetail sections={game.detail} />
-        {isOpen && game.subgames && hasFitting && (
+        {isOpen && hasSubgames(game) && hasFitting && (
           <div className="detail-section row-subgames">
             <h3>{subgameTitle(game.subgames)}</h3>
-            <SubGameList game={{ ...game, subgames: game.subgames }} />
+            <SubGameList game={game} />
           </div>
         )}
         <AwardsSection awards={game.awards} />

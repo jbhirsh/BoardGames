@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { Link } from 'react-router';
-import type { Game, SubGame } from '../data/types';
+import type { GameWithSubgames, SubGame } from '../data/types';
 import { useFilter } from '../context/useFilter';
 import { ytURL } from '../utils/urls';
 import { rulebookPath } from '../utils/rulebooks';
@@ -13,7 +13,7 @@ import GameDetail from './GameDetail';
 import { FROM_LIST } from '../utils/fromList';
 
 interface Props {
-  game: Game & { subgames: NonNullable<Game['subgames']> };
+  game: GameWithSubgames;
 }
 
 /**

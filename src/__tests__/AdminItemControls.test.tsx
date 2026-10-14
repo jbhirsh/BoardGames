@@ -3,14 +3,14 @@ import { render, screen, fireEvent, waitFor, within } from '@testing-library/rea
 import AdminItemControls from '../components/AdminItemControls';
 import { AuthContext } from '../context/authContextValue';
 import { WishlistContext } from '../context/wishlistContextValue';
-import type { WishlistItem } from '../data/types';
+import type { StoredWishlistItem, WishlistItem } from '../data/types';
 import { DESC_MAX, GAME_MAX, GAME_MIN, MINS_MAX, PLAYERS_MAX } from '../data/suggestionLimits';
 
 function jsonResponse(body: unknown, ok = true): Response {
   return { ok, json: async () => body } as unknown as Response;
 }
 
-const item: WishlistItem = {
+const item: StoredWishlistItem = {
   id: 'sug-1', name: 'Root', desc: 'Woodland war. “Mean fun”', blurb: 'Woodland war.', yt: '', players: '2–4',
   min: 2, max: 4, dur: '90 min', mins: 90, kw: ['strategy'], type: 'suggested', awards: [], suggestedBy: 'Alex', source: 'friend',
 };

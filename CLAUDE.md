@@ -249,7 +249,11 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   an open row), is a list of `DetailSection`s, a heading over a paragraph
   of plain text, never HTML; `GameDetail` draws it, one `.detail-section`
   each, on a card, a row and an add-on's More. `Game` and `WishlistItem` both extend `Filterable`
-  (name, desc, min/max players, mins, keywords). The filter
+  (name, desc, min/max players, mins, keywords); `Game` and `SubGame`
+  share `TableInfo` (players, time, line, video, rulebooks), and a
+  `WishlistItem` is either compiled in or a `StoredWishlistItem`, told
+  apart by `source`, which only the stored kind has and the owner can
+  edit. The filter
   pipeline (`utils/filterGames.ts`) is generic over it: `filterItems` with
   `filterGames` and `filterWishlist` wrappers that decide their own grouping.
   `groupItems` then splits a filtered list under its headings: the views

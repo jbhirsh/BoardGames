@@ -1,10 +1,10 @@
-import type { Game } from '../data/types';
+import type { GameWithSubgames } from '../data/types';
 import { useFilter } from '../context/useFilter';
 import { fittingSubgames, subgameLabel } from '../utils/subgames';
 import Popover from './Popover';
 
 interface Props {
-  game: Game & { subgames: NonNullable<Game['subgames']> };
+  game: GameWithSubgames;
 }
 
 /**
