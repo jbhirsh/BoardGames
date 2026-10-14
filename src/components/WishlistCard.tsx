@@ -1,8 +1,7 @@
-import { useId, useState } from 'react';
-import type { KeywordId, WishlistItem } from '../data/types';
+import { memo, useId, useState } from 'react';
+import type { WishlistItem } from '../data/types';
 import { shortDesc } from '../utils/shortDesc';
-import { isKeywordLit } from '../utils/keywordLit';
-import { useFilter } from '../context/useFilter';
+import { useFilterDispatch, useItemFilter } from '../context/useFilter';
 import { sortedKw } from '../utils/filterGames';
 import { UserIcon, ClockIcon } from './Icons';
 import KeywordPill from './KeywordPill';
@@ -17,17 +16,24 @@ interface Props {
   item: WishlistItem;
   voteCount: number;
   voted: boolean;
-  onVote: () => void;
+  /** Called with the entry's id, so one callback serves every card. */
+  onVote: (id: string) => void;
   disabled?: boolean;
   /** h4 under a group heading, h3 in a flat list, so heading levels never skip. */
   headingLevel?: 3 | 4;
 }
 
-/** A wishlist entry in the grid: the collection's card, with a vote and buy links where Rules would be. */
-export default function WishlistCard({ item, voteCount, voted, onVote, disabled, headingLevel = 4 }: Props) {
-  const { state, dispatch } = useFilter();
+/**
+ * A wishlist entry in the grid: the collection's card, with a vote and buy
+ * links where Rules would be. Memoized: a filter change that leaves this
+ * entry as it was doesn't redraw it.
+ */
+export default memo(WishlistCard);
+
+function WishlistCard({ item, voteCount, voted, onVote, disabled, headingLevel = 4 }: Props) {
+  const { lit } = useItemFilter();
+  const dispatch = useFilterDispatch();
   const Heading = headingLevel === 3 ? 'h3' : 'h4';
-  const lit = (kw: KeywordId) => isKeywordLit(state, kw);
   // The card opens on the blurb's first sentence, as the list row does, and
   // More shows the rest.
   const [moreOpen, setMoreOpen] = useState(false);
@@ -51,7 +57,7 @@ export default function WishlistCard({ item, voteCount, voted, onVote, disabled,
               <KeywordPill
                 key={kw}
                 keyword={kw}
-                active={lit(kw)}
+                active={lit.has(kw)}
                 onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: kw })}
               />
             ))}
@@ -89,7 +95,7 @@ export default function WishlistCard({ item, voteCount, voted, onVote, disabled,
             itemName={item.name}
             voteCount={voteCount}
             voted={voted}
-            onClick={onVote}
+            onClick={() => onVote(item.id)}
             disabled={disabled}
           />
           <WishlistLinks item={item} />

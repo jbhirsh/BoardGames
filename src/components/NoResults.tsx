@@ -1,5 +1,6 @@
 import { useFilter } from '../context/useFilter';
 import { useWishlistItems } from '../context/useWishlistItems';
+import { useFilteredWishlist } from '../context/useFilteredWishlist';
 import { GAMES } from '../data/games';
 import { filterGames, filterWishlist } from '../utils/filterGames';
 import { activeFilters, listFilters, relaxations } from '../utils/relaxFilters';
@@ -19,18 +20,19 @@ const fit = (n: number) => (n === 1 ? 'fits' : 'fit');
  * results back on its own, a one-tap way to drop it.
  */
 export default function NoResults({ kind }: Props) {
-  const { state, dispatch: send } = useFilter();
+  const { state, dispatch: send, filteredGames } = useFilter();
   // Every action here empties or swaps the list, so this block unmounts and
   // the focused button with it. Hand focus to the heading of the section
   // that shows next, rather than dropping it on the page.
   const dispatch: typeof send = (action) => { send(action); focusSection(); };
   const { items } = useWishlistItems();
+  const filteredWishlist = useFilteredWishlist();
   const count = kind === 'games'
     ? (s: typeof state) => filterGames(GAMES, s).length
     : (s: typeof state) => filterWishlist(items, s).length;
   const filters = activeFilters(state);
   const options = relaxations(state, count).slice(0, 3);
-  const otherCount = kind === 'games' ? filterWishlist(items, state).length : filterGames(GAMES, state).length;
+  const otherCount = kind === 'games' ? filteredWishlist.length : filteredGames.length;
   const noun = kind === 'games' ? 'games' : 'wishlist games';
 
   return (

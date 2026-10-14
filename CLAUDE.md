@@ -352,13 +352,22 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   the column shows an unrated game as an en dash, read out as "Not rated on
   BoardGameGeek".
 - **`context/`** — filtering state. `FilterContext` holds a `useReducer` store
-  (`filterReducer.ts`); `useFilter.ts` is the consumer hook; `useFilterUrlSync.ts`
+  (`filterReducer.ts`), provided in parts by how often each changes so a
+  component re-renders only for what it reads (`useFilter.ts`): dispatch
+  alone (never changes), the state with the filtered collection (every
+  change), the Own/Want and grid/list choice (`useFilterLayout`, which is
+  all the home page reads), and what a single card or row needs
+  (`useItemFilter`: players, time and the lit keywords, untouched by most
+  search keystrokes). The cards and rows are memoized and take id-keyed
+  callbacks, so a change that leaves one as it was doesn't redraw it.
+  `useFilterUrlSync.ts`
   keeps filter state mirrored to the URL query string so views are shareable.
   `WishlistContext` is the one definition of the wishlist for the page (static
   entries plus approved friend suggestions, loaded once and reloadable after
   an owner edit) for the wishlist section, the keyword counts, the filter
   sheet's result count, the empty state's counts and the owner tools
-  (`AdminPanel`, `AdminItemControls`);
+  (`AdminPanel`, `AdminItemControls`); its provider also filters it once for
+  the page (`useFilteredWishlist`);
   `AuthContext` holds the owner-session check that switches admin
   mode on (`SignInPage`, `AdminPanel`, `AdminItemControls`). Its provider
   wraps only the home page and the `/sign-in` route, each with its own

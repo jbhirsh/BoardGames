@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Award, Filterable, KeywordId } from '../data/types';
-import { useFilter } from '../context/useFilter';
+import { useFilterDispatch, useItemFilter } from '../context/useFilter';
 import { budgetFor, sortedKw } from '../utils/filterGames';
-import { isKeywordLit } from '../utils/keywordLit';
 import { difficultyOf } from '../utils/difficulty';
 import { durationCategory } from '../utils/duration';
 import DurationPill from './DurationPill';
@@ -42,7 +41,8 @@ interface CellsProps {
 export default function TableRowCells({
   name, players, dur, mins, short, kw, awards, subTag, difficulty, extra, isOpen, onToggle,
 }: CellsProps) {
-  const { state, dispatch } = useFilter();
+  const { lit } = useItemFilter();
+  const dispatch = useFilterDispatch();
   const budget = budgetFor(mins);
   const label = difficulty && difficultyOf(difficulty);
   // The add-ons tag and the award count close the description, on its last
@@ -94,7 +94,7 @@ export default function TableRowCells({
           <KeywordPill
             key={k}
             keyword={k}
-            active={isKeywordLit(state, k)}
+            active={lit.has(k)}
             onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: k })}
           />
         ))}

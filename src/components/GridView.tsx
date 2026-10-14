@@ -1,10 +1,10 @@
-import { useFilter } from '../context/useFilter';
+import { useFilterResults } from '../context/useFilter';
 import NoResults from './NoResults';
 import { GROUPS } from '../data/keywords';
 import GameCard from './GameCard';
 
 export default function GridView() {
-  const { filteredGames, gameGroups } = useFilter();
+  const { filteredGames, gameGroups } = useFilterResults();
 
   if (filteredGames.length === 0) return <NoResults kind="games" />;
 

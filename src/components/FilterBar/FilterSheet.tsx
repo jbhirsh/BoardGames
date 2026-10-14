@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useFilter } from '../../context/useFilter';
-import { useWishlistItems } from '../../context/useWishlistItems';
-import { GAMES } from '../../data/games';
-import { filterGames, filterWishlist } from '../../utils/filterGames';
+import { useFilteredWishlist } from '../../context/useFilteredWishlist';
 import { activeFilters } from '../../utils/relaxFilters';
 import type { FilterField } from '../../utils/filterState';
 import { filterToSearchParams } from '../../utils/filterUrl';
@@ -22,8 +20,8 @@ const SHEET_FILTERS: readonly FilterField[] = ['duration', 'players', 'keywords'
  * how many games the choices leave.
  */
 export default function FilterSheet() {
-  const { state, dispatch } = useFilter();
-  const { items: wishlist } = useWishlistItems();
+  const { state, dispatch, filteredGames } = useFilter();
+  const filteredWishlist = useFilteredWishlist();
   const [open, setOpen] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -54,9 +52,7 @@ export default function FilterSheet() {
   // Search has its own box in the bar; the button counts, and Clear all
   // clears, the rest.
   const on = activeFilters(state).filter((f) => f.id !== 'search').length;
-  const shown = !open ? 0 : state.collection === 'want'
-    ? filterWishlist(wishlist, state).length
-    : filterGames(GAMES, state).length;
+  const shown = state.collection === 'want' ? filteredWishlist.length : filteredGames.length;
 
   function clearFilters() {
     dispatch({ type: 'CLEAR_FILTERS', payload: SHEET_FILTERS });

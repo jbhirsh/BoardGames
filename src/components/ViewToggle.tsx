@@ -1,26 +1,27 @@
-import { useFilter } from '../context/useFilter';
+import { useFilterDispatch, useFilterLayout } from '../context/useFilter';
 import { GridIcon, ListIcon } from './Icons';
 
 export default function ViewToggle() {
-  const { state, dispatch } = useFilter();
+  const { view } = useFilterLayout();
+  const dispatch = useFilterDispatch();
 
   return (
     <div className="view-btns">
       <button
         type="button"
-        className={`view-btn${state.view === 'grid' ? ' active' : ''}`}
+        className={`view-btn${view === 'grid' ? ' active' : ''}`}
         onClick={() => dispatch({ type: 'SET_VIEW', payload: 'grid' })}
         aria-label="Grid view"
-        aria-pressed={state.view === 'grid'}
+        aria-pressed={view === 'grid'}
       >
         <GridIcon />
       </button>
       <button
         type="button"
-        className={`view-btn${state.view === 'list' ? ' active' : ''}`}
+        className={`view-btn${view === 'list' ? ' active' : ''}`}
         onClick={() => dispatch({ type: 'SET_VIEW', payload: 'list' })}
         aria-label="List view"
-        aria-pressed={state.view === 'list'}
+        aria-pressed={view === 'list'}
       >
         <ListIcon />
       </button>

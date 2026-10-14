@@ -8,14 +8,15 @@ import CollectionToggle from './CollectionToggle';
 import ViewToggle from './ViewToggle';
 import NoResults from './NoResults';
 import AdminPanel from './AdminPanel';
-import { useFilter } from '../context/useFilter';
+import { useFilterResults } from '../context/useFilter';
+import { useFilteredWishlist } from '../context/useFilteredWishlist';
 import { useAuth } from '../context/useAuth';
 import { useWishlistItems } from '../context/useWishlistItems';
 import { useWishlistVotes } from '../hooks/useWishlistVotes';
 import { useKeepSectionInView } from '../hooks/useKeepSectionInView';
 import { useIsPhone } from '../hooks/useIsPhone';
 import { useCopyLink } from '../hooks/useCopyLink';
-import { filterWishlist, groupItems, isGrouped, type WishlistGroup } from '../utils/filterGames';
+import { groupItems, isGrouped, type WishlistGroup } from '../utils/filterGames';
 import { buildShareUrl } from '../utils/filterUrl';
 import { initialFilterState } from '../data/initialFilterState';
 import { focusTarget } from '../client/focus';
@@ -40,10 +41,9 @@ function goToSuggest() {
  * refetches on a toggle; only the visible section carries the anchor id.
  */
 export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
-  const { state } = useFilter();
   const { items, loaded } = useWishlistItems();
   const isPhone = useIsPhone();
-  const filtered = useMemo(() => filterWishlist(items, state), [items, state]);
+  const filtered = useFilteredWishlist();
   const sectionRef = useRef<HTMLElement>(null);
   useKeepSectionInView(sectionRef, !hidden);
   // The Share link's copy, with the wishlist's own URL: /?c=want, none of
@@ -92,7 +92,7 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
 }
 
 function WishlistBody({ items, filtered, isPhone }: { items: WishlistItem[]; filtered: WishlistItem[]; isPhone: boolean }) {
-  const { state } = useFilter();
+  const { state } = useFilterResults();
   const { admin } = useAuth();
   const ids = useMemo(() => items.map((w) => w.id), [items]);
   const { counts, myVotes, toggle, loaded } = useWishlistVotes(ids);
@@ -136,7 +136,7 @@ function WishlistBody({ items, filtered, isPhone }: { items: WishlistItem[]; fil
             headingLevel={grouped ? 4 : 3}
             voteCount={counts[item.id] ?? 0}
             voted={myVotes.has(item.id)}
-            onVote={() => toggle(item.id)}
+            onVote={toggle}
             disabled={!loaded}
           />
         ))}

@@ -1,5 +1,5 @@
-import type { FilterState, Game, SubGameKind } from '../data/types';
-import { fitsTable, isDeck, tableFiltered } from './filterGames';
+import type { Game, SubGameKind } from '../data/types';
+import { fitsTable, isDeck, tableFiltered, type TableFilter } from './filterGames';
 
 export interface Rulebook {
   /** The rulebook's slug, or undefined for the game's own rulebook. */
@@ -118,7 +118,7 @@ export function citedPageParam(search: string): number | null {
  * that fits, the first in the data's order. A deck keeps its overview, which
  * lists every game in it.
  */
-export function rulesPathFor(game: Game, state: FilterState): string {
+export function rulesPathFor(game: Game, state: TableFilter): string {
   const subs = game.subgames ?? [];
   if (!tableFiltered(state) || isDeck(subs) || fitsTable(game, state)) return rulebookPath(game.slug);
   return rulebookPath(game.slug, subs.find((s) => s.rules && fitsTable(s, state))?.slug);

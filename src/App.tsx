@@ -5,7 +5,7 @@ import { FilterProvider } from './context/FilterContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { AuthProvider } from './context/AuthContext';
 import { useStickyOffset } from './hooks/useStickyOffset';
-import { useFilter } from './context/useFilter';
+import { useFilterLayout } from './context/useFilter';
 import { useIsPhone } from './hooks/useIsPhone';
 import Hero from './components/Hero';
 import FilterBar from './components/FilterBar/FilterBar';
@@ -19,7 +19,8 @@ export function HomePage() {
   // Measured here, not inside FilterBar, so ActiveTags counts toward the offset.
   const stickyRef = useRef<HTMLDivElement>(null);
   useStickyOffset(stickyRef);
-  const { state } = useFilter();
+  // Only the Own/Want choice, so a filter change doesn't redraw the page.
+  const { collection } = useFilterLayout();
   // On a phone the active tags repeat what the Filters button counts, so
   // they scroll away with the page rather than taking a sticky row.
   const isPhone = useIsPhone();
@@ -32,15 +33,15 @@ export function HomePage() {
       <WishlistProvider>
         <title>The Game Room</title>
         <div className="clip-wrap">
-          <Hero want={state.collection === 'want'} />
+          <Hero want={collection === 'want'} />
           <div className="sticky-header" ref={stickyRef} data-sticky-header>
             <FilterBar />
             {!isPhone && <ActiveTags />}
           </div>
           {isPhone && <ActiveTags />}
           <main className="main">
-            <GameCollection hidden={state.collection !== 'own'} />
-            <Wishlist hidden={state.collection !== 'want'} />
+            <GameCollection hidden={collection !== 'own'} />
+            <Wishlist hidden={collection !== 'want'} />
           </main>
         </div>
       </WishlistProvider>

@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import type { Game } from '../data/types';
-import { useFilter } from '../context/useFilter';
+import { useItemFilter } from '../context/useFilter';
 import { FROM_LIST } from '../utils/fromList';
 import { rulesPathFor } from '../utils/rulebooks';
 import { rulesURL } from '../utils/urls';
@@ -17,13 +17,13 @@ import ExternalLink from './ExternalLink';
  * rulebook searches for one.
  */
 export default function RulesLink({ game, className }: { game: Game; className: string }) {
-  const { state } = useFilter();
+  const filter = useItemFilter();
   const label = `Rules for ${game.name}`;
   const content = <><AiRulesIcon /> Rules</>;
   return game.rules ? (
     <Link
       className={className}
-      to={rulesPathFor(game, state)}
+      to={rulesPathFor(game, filter)}
       state={FROM_LIST}
       aria-label={label}
       title={label}

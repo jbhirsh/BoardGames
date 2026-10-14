@@ -1,5 +1,5 @@
-import type { FilterState, Game, GameWithSubgames, SubGame, SubGameKind } from '../data/types';
-import { fitsTable, isDeck, tableFiltered } from './filterGames';
+import type { Game, GameWithSubgames, SubGame, SubGameKind } from '../data/types';
+import { fitsTable, isDeck, tableFiltered, type TableFilter } from './filterGames';
 
 /** Whether a game holds others, as the add-ons tag and list need it to. */
 export function hasSubgames(game: Game): game is GameWithSubgames {
@@ -40,12 +40,12 @@ export function subgameTitle(subs: SubGame[]): string {
  * The games inside a game that fit the players and time filters, in the
  * data's order; with neither filter on, all of them.
  */
-export function fittingSubgames(subs: SubGame[], state: FilterState): SubGame[] {
+export function fittingSubgames(subs: SubGame[], state: TableFilter): SubGame[] {
   return tableFiltered(state) ? subs.filter((s) => fitsTable(s, state)) : subs;
 }
 
 /** What the card's button says: how many games are inside, or how many fit. */
-export function subgameLabel(subs: SubGame[], state: FilterState): string {
+export function subgameLabel(subs: SubGame[], state: TableFilter): string {
   if (!tableFiltered(state)) return `+${subs.length} ${subgameNoun(subs, subs.length)}`;
   const fit = fittingSubgames(subs, state).length;
   return `${fit} of ${subs.length} ${subgameNoun(subs, subs.length)} fit`;
