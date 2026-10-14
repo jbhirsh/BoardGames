@@ -245,7 +245,10 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   rows and score page all read), `wordChecker.ts` (the game the word
   checker is for, which its card, row and rules page link to and whose
   box art the checker's page wears) and `types.ts` support it. No database on the read path — the collection is a
-  compiled-in constant. `Game` and `WishlistItem` both extend `Filterable`
+  compiled-in constant. A game's long write-up, `detail` (a card's More,
+  an open row), is a list of `DetailSection`s, a heading over a paragraph
+  of plain text, never HTML; `GameDetail` draws it, one `.detail-section`
+  each, on a card, a row and an add-on's More. `Game` and `WishlistItem` both extend `Filterable`
   (name, desc, min/max players, mins, duration bucket, keywords). The filter
   pipeline (`utils/filterGames.ts`) is generic over it: `filterItems` with
   `filterGames` and `filterWishlist` wrappers that decide their own grouping.

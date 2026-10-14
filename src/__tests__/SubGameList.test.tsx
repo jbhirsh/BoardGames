@@ -112,7 +112,7 @@ describe('SubGameList', () => {
       subgames: [{
         ...addonGame.subgames![0],
         desc: 'Every piece doubled, and a sea to sail.',
-        detail: '<div class="detail-section"><h3>What It Adds</h3><p>Ships and a harbour.</p></div>',
+        detail: [{ heading: 'What It Adds', body: 'Ships and a harbour.' }],
       }],
     };
 

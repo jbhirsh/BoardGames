@@ -15,7 +15,7 @@ export const quickGame: Game = {
   kw: ['card-game', 'family'],
   short: 'A quick card game.',
   desc: 'A fast-paced card game for the whole family.',
-  detail: '<div class="detail-section"><h3>How to Play</h3><p>Play cards fast.</p></div>',
+  detail: [{ heading: 'How to Play', body: 'Play cards fast.' }],
   yt: 'how to play quick game',
   awards: [],
 };
@@ -35,7 +35,7 @@ export const mediumGame: Game = {
   kw: ['strategy', 'classic'],
   short: 'A medium strategy game.',
   desc: 'A classic strategy game with moderate playtime.',
-  detail: '<div class="detail-section"><h3>Strategy</h3><p>Think hard.</p></div>',
+  detail: [{ heading: 'Strategy', body: 'Think hard.' }],
   yt: 'how to play medium game',
   awards: [],
 };
@@ -55,7 +55,7 @@ export const longGame: Game = {
   kw: ['cooperative', 'thematic'],
   short: 'A long cooperative game.',
   desc: 'An epic cooperative adventure lasting hours.',
-  detail: '<div class="detail-section"><h3>Adventure</h3><p>Work together.</p></div>',
+  detail: [{ heading: 'Adventure', body: 'Work together.' }],
   yt: 'how to play long game',
   awards: [],
 };
@@ -75,7 +75,7 @@ export const bananagramsGame: Game = {
   kw: ['word', 'family', 'quick-play'],
   short: 'A fast word game.',
   desc: 'Race to build your own crossword grid.',
-  detail: '<div class="detail-section"><h3>How to Play</h3><p>Build words fast.</p></div>',
+  detail: [{ heading: 'How to Play', body: 'Build words fast.' }],
   yt: 'how to play bananagrams',
   awards: [],
 };
@@ -95,7 +95,7 @@ export const sevenWondersGame: Game = {
   kw: ['strategy', 'card-game'],
   short: 'A card drafting civilization game.',
   desc: 'Draft cards to build your ancient civilization.',
-  detail: '<div class="detail-section"><h3>Strategy</h3><p>Draft wisely.</p></div>',
+  detail: [{ heading: 'Strategy', body: 'Draft wisely.' }],
   yt: 'how to play 7 wonders',
   awards: [],
 };

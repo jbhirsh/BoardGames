@@ -8,6 +8,7 @@ import AwardsBadge, { AwardsSection } from './AwardsBadge';
 import SubGameList from './SubGameList';
 import DifficultyMeta from './DifficultyMeta';
 import GameActions from './GameActions';
+import GameDetail from './GameDetail';
 import Popover from './Popover';
 import { fittingSubgames, subgameLabel } from '../utils/subgames';
 import { gameAnchor } from '../utils/heroCovers';
@@ -74,7 +75,7 @@ export default function GameCard({ game }: Props) {
         </p>
         {moreOpen && (
           <div className="card-detail" id={moreId}>
-            <div className="detail-section" dangerouslySetInnerHTML={{ __html: game.detail }} />
+            <GameDetail sections={game.detail} />
             <AwardsSection awards={game.awards} />
           </div>
         )}

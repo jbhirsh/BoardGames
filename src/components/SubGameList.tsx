@@ -9,6 +9,7 @@ import { YouTubeIcon, AiRulesIcon, UserIcon, ClockIcon } from './Icons';
 import AwardsBadge from './AwardsBadge';
 import ExternalLink from './ExternalLink';
 import DifficultyMeta from './DifficultyMeta';
+import GameDetail from './GameDetail';
 import { FROM_LIST } from '../utils/fromList';
 
 interface Props {
@@ -69,7 +70,7 @@ function SubGameRow({ parent, sub }: { parent: string; sub: SubGame }) {
             <div id={moreId} className="sub-more" hidden={!open}>
               {open && sub.desc && <p className="sub-desc">{sub.desc}</p>}
               {open && sub.detail && (
-                <div className="sub-detail" dangerouslySetInnerHTML={{ __html: sub.detail }} />
+                <div className="sub-detail"><GameDetail sections={sub.detail} /></div>
               )}
             </div>
           </>
