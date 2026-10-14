@@ -13,8 +13,10 @@ import ExternalLink from './ExternalLink';
  * the name starts with the word on the button (WCAG 2.5.3, label in name):
  * "Rules for Catan". The tooltip says the same, so no browser reads a
  * bare "Rules" after it as a description. The click stops at the link, so
- * the row it sits under doesn't toggle too. A game without a bundled
- * rulebook searches for one.
+ * the row it sits under doesn't toggle too. It carries FROM_LIST, so the
+ * rules page's Back returns to the list as it was left, and goes to the tab
+ * the filters point to (rulesPathFor). A game without a bundled rulebook
+ * searches for one.
  */
 export default function RulesLink({ game, className }: { game: Game; className: string }) {
   const filter = useItemFilter();

@@ -13,7 +13,14 @@ interface Props {
   disabled: boolean;
 }
 
-/** The wishlist as the collection's table, with a vote column. */
+/**
+ * The wishlist as the collection's table (GamesTableHead, GroupedRows),
+ * with a vote column and an expanded row for the full blurb, awards, owner
+ * controls and links; a collapsed row shows the blurb's first sentence
+ * (shortDesc) where a collection row has its hand-written short line. Its
+ * rows link only to other sites, in new tabs, so the open row is plain
+ * local state rather than the history entry's (useOpenRow).
+ */
 export default function WishlistListView({ groups, counts, myVotes, onVote, disabled }: Props) {
   const [openRow, setOpenRow] = useState<string | null>(null);
   // One toggle for every row, so the rows a change leaves alone stay as drawn.

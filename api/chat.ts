@@ -7,6 +7,25 @@ import { initSentry, reportError } from './_lib/sentry.js';
 
 initSentry();
 
+// The AI rules assistant. POST { slug, message, history, parts }: reads
+// rules-text/<slug>.txt plus the `parts` the rules page names
+// (rules-text/<slug>.<part>.txt: every game in a deck, or just the add-on on
+// screen, since an expansion's rules on top of the base game's crowd out the
+// answer), then the names alone of the game's other rulebooks, so an answer
+// can point to the tab that covers a question (_lib/rulesAssistant.ts, which
+// the eval harness calls too). Sends that and the recent history to Gemini
+// and streams the reply back as plain text. The rules text reaches the
+// function through vercel.json's includeFiles.
+//
+// It validates the slug and each part (SLUG_RE, since they pick a file),
+// the message's length, the history's length and total size, and caps
+// Gemini's output tokens and time. Per-IP rate limited, and capped at
+// CHAT_DAILY_LIMIT questions a day across every caller, checked last so
+// per-IP refusals and bad requests don't spend it. It is the only paid API,
+// so that cap alone fails closed. It bounds requests, not cost: a budget
+// alert on the Gemini project (an owner action in Google Cloud billing,
+// outside the code) is the backstop.
+
 // SLUG_RE constrains the slug before it reaches a filesystem path in
 // loadRulesText, so it can't traverse out of rules-text/.
 

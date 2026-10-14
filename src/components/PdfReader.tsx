@@ -17,6 +17,17 @@ import { heldDocument, openDocument, readerOpens, sharedWorker, textOf as readTe
 // laid over it, which makes it selectable and searchable, and lets a
 // citation open it at its page with the passage it cites marked. This
 // module is loaded only when it is needed.
+//
+// Each page is a canvas under its text layer, drawn at the column's width
+// (the rules page's, 912px at most) and the screen's pixel ratio, followed
+// so browser zoom redraws it sharp, and only near the screen; the search
+// marks its matches in place. Pages draw through one queue
+// (pdfjs/renderQueue.ts), the most visible first. pdf.js's modern build
+// runs with the few newer methods it calls polyfilled (pdfjs/polyfills.ts,
+// loaded first here and in its worker, pdfjs/worker.ts); its image decoders
+// and fonts are served from /pdfjs/ (vite.config.ts). The shared worker,
+// the rulebooks kept open and the warming of a cited page in another tab's
+// rulebook are pdfjs/documents.ts's.
 
 // Pages within this distance of the screen are drawn; further ones give
 // their canvas back, which keeps a 50-page rulebook within a phone's memory.

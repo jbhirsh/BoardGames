@@ -39,6 +39,15 @@ function goToSuggest() {
  * count already filtered so a shared URL never flashes the full total.
  * Stays mounted while the collection is showing (just hidden) so nothing
  * refetches on a toggle; only the visible section carries the anchor id.
+ *
+ * It wears the collection's clothes (WishlistCard, WishlistListView) and
+ * adds what a list to vote on needs: a "Most votes" sort (`votes`, the
+ * wishlist's alone; the filter orders it A→Z and this puts the most voted
+ * first, and the other list, or a s=votes link without c=want, falls back
+ * to the default sort), a line under the heading saying what a vote does,
+ * and on the heading's line Share wishlist (/?c=want, through useCopyLink)
+ * and Suggest a game, which jumps to the form at the bottom. On a phone the
+ * two split a line of their own, like Own/Want under them.
  */
 export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
   const { items, loaded } = useWishlistItems();

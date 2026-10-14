@@ -208,6 +208,23 @@ function measureDigitNudge(): number {
   return digitNudge({ height: box.height, baseline: mark.bottom - box.top, capHeight: mark.height });
 }
 
+/**
+ * /score/:slug: the score pad for a game in data/scoreCalculators.ts
+ * (currently 7 Wonders); any other slug gets the not-found page. One player
+ * at a time, passed round the table, then Results, a sheet like the printed
+ * pad: a row per category and a column per player, the category column
+ * pinned while a phone scrolls it sideways. The game in progress is kept in
+ * localStorage, so it survives a reload.
+ *
+ * Each box carries its unit inside it (ScoreInput), VP for the pad's points
+ * and coins for Treasury, given to screen readers as its description. The
+ * science boxes show none, since their icons say which symbol: the Science
+ * line says "symbols" once beside its "= N VP", as Treasury's line does its
+ * own, both always shown, "= 0 VP" included. The boxes open a phone's
+ * number pad, so military's minus comes from its ± button. While the page
+ * is open it holds a screen wake lock (useWakeLock), so a phone on the
+ * table doesn't lock between turns.
+ */
 export default function ScoreCalculatorPage() {
   const { slug } = useParams<{ slug: string }>();
   const game = GAMES.find(g => g.slug === slug && SCORE_CALCULATORS.has(g.slug));

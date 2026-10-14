@@ -147,6 +147,18 @@ const ANSWER_COMPONENTS: Components = { a: AnswerLink };
  * whether it is saved on this device, without which the offline notice
  * doesn't either: 'asking' while the page asks again, which holds back a
  * notice about to appear until it can be said whole.
+ *
+ * When the assistant can't answer at all (Unavailable), an info Notice on a
+ * strip above the box says why, not a red error in the conversation. The
+ * strip is the one live region for it, kept in the panel while empty, so
+ * its Notice passes live={false}. Offline (useOnline), Send, the starters
+ * and an error's Retry are off and described by it, and focus on one of
+ * them moves to the box. A request that finds no network though the
+ * browser says online (fetch or the stream's read rejecting with a
+ * TypeError before any bytes) says the same, with Retry, unreported; any
+ * other error, a TypeError of our own included, goes to Sentry. The daily
+ * cap says the assistant is resting for today. Every other failure keeps
+ * the red error and Retry (#198).
  */
 export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFor, citeLinks, isCitation = NO_CITATIONS, onCite, onAnswer, starters = [], rulebookFailed = false, rulebookSaved = false }: {
   slug: string;

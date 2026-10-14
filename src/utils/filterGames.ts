@@ -2,6 +2,14 @@ import type { BaseSort, ColumnSort, Game, FilterState, Filterable, GroupId, Sort
 import { GROUP_ORDER, KW, TIME_BUDGETS, WISHLIST_TYPE_ORDER } from '../data/keywords';
 import { anyFilterOn } from './filterState';
 
+// The filter pipeline, generic over Filterable so one pipeline serves the
+// collection and the wishlist: filterItems, with filterGames and
+// filterWishlist deciding their own grouping, then groupItems to split the
+// result under its headings. The players and time filters keep a game when
+// it fits on its own or one of the games inside it fits both (a deck only
+// by its games, since it is never played on its own), and search matches
+// their names too.
+
 /**
  * Apply the filter bar to any Filterable list. `groupIndex` orders items for
  * the "group" sort; each list decides what its groups are.
@@ -91,7 +99,11 @@ export type WishlistGroup = ItemGroup<WishlistItem, WishlistType>;
 /**
  * Splits a list into its groups in `order`, each keeping the list's own
  * order (so a column sort on top of the group sort orders within each
- * group), and leaves out the groups with nothing in them.
+ * group), and leaves out the groups with nothing in them. The views render
+ * the groups they are handed and never group a list themselves: the
+ * collection's come from groupGames, served ready-made as `gameGroups` by
+ * the filter context; the wishlist (Wishlist.tsx) groups by type. Both
+ * tables draw them with GroupedRows.
  */
 export function groupItems<T, K extends string>(list: T[], order: readonly K[], keyOf: (item: T) => K): ItemGroup<T, K>[] {
   return order

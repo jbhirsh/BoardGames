@@ -9,6 +9,15 @@ import { useIsPhone } from '../../hooks/useIsPhone';
 
 type OpenDD = 'duration' | 'players' | 'keywords' | 'sort' | null;
 
+/**
+ * The sticky filter bar both lists share. Its choices are drawn once
+ * (FilterOptions.tsx) for two homes: dropdown pills on a wide screen, and
+ * at phone width (520px and under, useIsPhone) a "Filters · N" button
+ * beside the search that opens a bottom sheet (FilterSheet), so the bar
+ * stays one row; there the active tags scroll away with the page (App.tsx).
+ * The single-choice dropdowns are radio groups (RadioOptions); players run
+ * 1 to 10+.
+ */
 export default function FilterBar() {
   const [openDD, setOpenDD] = useState<OpenDD>(null);
   const isPhone = useIsPhone();

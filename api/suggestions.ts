@@ -13,6 +13,44 @@ export type { Mail, Mailer } from './_lib/mail.js';
 
 initSentry();
 
+// Friends' game suggestions, approved by the owner by email or on the site.
+//
+// POST validates a suggestion, stores it as `pending`, then emails the owner
+// (Resend) approve and deny links carrying a per-suggestion token: stored
+// first, so the emailed links always resolve. A send that fails (or passes
+// its timeout) takes the record off the active list and marks it `unsent`,
+// so the suggester can retry; its links keep working, since a timeout can
+// follow a real delivery, it still shows in the owner's queue, and
+// approving it returns it to the active list. With no Resend configuration
+// it answers 503 rather than store a suggestion the owner would never see.
+//
+// GET ?action=approve|deny&id&token checks the token and renders a
+// confirmation page whose form POSTs { decision, id, token }: a bare GET
+// never changes anything, because mail link-scanners follow every URL. A
+// bad link, on either step, gets a standalone page with its 400, 404 or
+// 403, not JSON. Plain GET lists the approved suggestions, which the
+// wishlist shows under "Suggested by friends".
+//
+// A signed-in owner (auth.ts) can also work the list from the site: GET
+// ?action=pending lists the queue, POST { decision, id } without a token
+// decides one, POST { action: 'add', game, name, note?, type? } puts a game
+// straight on the wishlist (approved, `source: 'owner'`), PATCH { id, game?,
+// note?, details? } edits how an entry reads, and DELETE { id } takes it off
+// (status `removed`, the hash kept, the lists forgetting it). Every owner
+// mutation must be a JSON request (isJsonRequest, the CSRF layer behind the
+// session cookie's SameSite=Lax).
+//
+// Redis keeps one hash per suggestion and the id lists below, read through
+// getRawRedis() so a game called "null" stays that. A decision first claims
+// the record (decide), so a double-submitted form, or the email link and the
+// site at once, decides it once; its writes go through one MULTI/EXEC, and a
+// push removes the id first, so no list holds it twice. On approval (or an owner's add) the game is looked up on
+// BoardGameGeek (_lib/bgg.ts) for players, time, a two-sentence
+// description, year, keywords and box art, stored as `details` so the entry
+// renders and filters like any other; a miss, an outage or no token still
+// approves, with details empty. handleSuggestions() takes { redis, mailer,
+// baseUrl, lookup, admin } so tests pass spies.
+
 // Same display-name shape as the client's utils/displayName.ts. It and the
 // bounds below are mirrored by the client's forms (src/data/suggestionLimits.ts),
 // which tests keep in step.

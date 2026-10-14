@@ -55,7 +55,8 @@ const MAX_STRAY_LETTERS = 0.06;
  */
 const MIN_DICTIONARY_RATIO = 0.75;
 
-// Checked by hand; keep this list short. A file leaves it once it passes.
+// Checked by hand; keep these lists short, with a reason for each file. A
+// file leaves its list once it passes.
 const FEW_WORDS_OK: Record<string, string> = {
   // The publisher's how-to-play web page printed to five pages, mostly
   // photos: 369 words, and every rule is there.

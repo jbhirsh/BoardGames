@@ -10,7 +10,9 @@ const ICONS: Record<NoticeTone, () => ReactNode> = { info: InfoIcon, warning: Wa
  * --info-, --warn- and --danger- tokens in App.css) with an icon, so colour
  * is never the only signal, and an optional action. Announced politely, or
  * at once for an error; `live` false leaves that to a live region around
- * it, which would otherwise announce it a second time.
+ * it, which would otherwise announce it a second time. Use it rather than
+ * a one-off coloured box: noticeTokens.test.ts holds its tokens to 4.5:1 in
+ * both themes.
  */
 export default function Notice({ tone, children, action, live = true }: {
   tone: NoticeTone;

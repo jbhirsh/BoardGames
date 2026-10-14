@@ -8,9 +8,12 @@ import { openRowFrom, withOpenRow } from '../utils/openRow';
  * (a `replace` to the same URL that leaves the scroll alone), so Back from
  * a page one of its links opened finds the same row open. It is open from
  * the first render, so ScrollRestoration measures the page at its full
- * height and lands where it was left. The toggle keeps its identity across
- * filter changes (each one moves the URL), so the rows it is handed to can
- * skip a redraw.
+ * height and lands where it was left; a row inserted open never runs its
+ * slide-open transition, so the offset lands on its actions again. The
+ * filter URL sync's own replaces carry the entry's state over, and a fresh
+ * visit to / opens no row. The toggle keeps its identity across filter
+ * changes (each one moves the URL), so the rows it is handed to can skip a
+ * redraw.
  */
 export function useOpenRow(): [string | null, (row: string) => void] {
   const location = useLocation();
