@@ -6,7 +6,7 @@ import { getRawRedis } from './_lib/redis.js';
 import { failWith500, initSentry } from './_lib/sentry.js';
 import { lookupGame, type GameDetails } from './_lib/bgg.js';
 import { SLUG_RE, isSuggestionId } from './_lib/slug.js';
-import { baseUrl, button, escapeHtml, page, resendMailer, type Mail, type Mailer } from './_lib/mail.js';
+import { baseUrl, button, escapeHtml, mailLayout, page, resendMailer, type Mail, type Mailer } from './_lib/mail.js';
 import { isAdmin, isJsonRequest, type Headers } from './_lib/session.js';
 
 export type { Mail, Mailer } from './_lib/mail.js';
@@ -273,17 +273,13 @@ function decisionPage(title: string, body: string): string {
 
 function approvalMail(s: Suggestion, approveUrl: string, denyUrl: string): Mail {
   const note = s.note ? `<p style="margin:0 0 16px;color:#6E6E73">“${escapeHtml(s.note)}”</p>` : '';
-  const btn = button;
   return {
     subject: `Game suggestion: ${s.game} (from ${s.name})`,
-    html: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#1D1D1F">
-<h2 style="margin:0 0 6px">${escapeHtml(s.game)}</h2>
+    html: mailLayout(`<h2 style="margin:0 0 6px">${escapeHtml(s.game)}</h2>
 <p style="margin:0 0 16px;color:#6E6E73">Suggested by <strong>${escapeHtml(s.name)}</strong></p>
 ${note}
 <p style="margin:0 0 20px">Approve it to add it to the wishlist, or deny it to hide it. Either link asks you to confirm.</p>
-${btn(approveUrl, 'Approve', '#0071E3')}${btn(denyUrl, 'Deny', '#6E6E73')}
-<p style="margin:24px 0 0;font-size:12px;color:#86868B">Only someone with this email can use these links.</p>
-</div>`,
+${button(approveUrl, 'Approve', '#0071E3')}${button(denyUrl, 'Deny', '#6E6E73')}`, 'Only someone with this email can use these links.'),
   };
 }
 
@@ -427,6 +423,31 @@ async function settledStatus(redis: SuggestionsRedis, id: string): Promise<strin
 const alreadyPage = (game: string, status: string) =>
   decisionPage(`Already ${status}`, `${escapeHtml(game)} was ${status} earlier. Nothing changed.`);
 
+const NAME_ERROR = 'name must be 1–30 letters, digits, spaces or basic punctuation';
+const NOTE_ERROR = `note must be at most ${NOTE_MAX} characters`;
+
+/** The trimmed display name, or null when it doesn't fit NAME_RE; anything but a string fails. */
+function checkName(v: unknown): string | null {
+  const name = typeof v === 'string' ? v.trim() : '';
+  return NAME_RE.test(name) ? name : null;
+}
+
+/**
+ * The note with its whitespace collapsed, or null when it is too long or
+ * holds control characters; anything but a string reads as no note.
+ */
+function cleanNote(v: unknown): string | null {
+  const note = typeof v === 'string' ? v.trim().replace(/\s+/g, ' ') : '';
+  return note.length > NOTE_MAX || /[\p{C}]/u.test(note) ? null : note;
+}
+
+/** A fresh suggestion id and the token its emailed links carry. */
+function mintIds(deps: SuggestionsDeps): { id: string; token: string } {
+  const id = (deps.randomId ?? (() => `sug-${randomBytes(6).toString('hex')}`))();
+  const token = (deps.randomToken ?? (() => randomBytes(24).toString('base64url')))();
+  return { id, token };
+}
+
 function validateGame(v: unknown): { ok: true; game: string } | { ok: false; error: string } {
   const game = typeof v === 'string' ? v.trim().replace(/\s+/g, ' ') : '';
   if (game.length < GAME_MIN || game.length > GAME_MAX || /[\p{C}]/u.test(game)) {
@@ -531,14 +552,10 @@ export async function handleSuggestions(
         if (!(await requireAdmin(deps, req, res))) return res;
         const g = validateGame(body.game);
         if (!g.ok) return res.status(400).json({ error: g.error });
-        const name = typeof body.name === 'string' ? body.name.trim() : '';
-        if (!NAME_RE.test(name)) {
-          return res.status(400).json({ error: 'name must be 1–30 letters, digits, spaces or basic punctuation' });
-        }
-        const note = typeof body.note === 'string' ? body.note.trim().replace(/\s+/g, ' ') : '';
-        if (note.length > NOTE_MAX || /[\p{C}]/u.test(note)) {
-          return res.status(400).json({ error: `note must be at most ${NOTE_MAX} characters` });
-        }
+        const name = checkName(body.name);
+        if (name === null) return res.status(400).json({ error: NAME_ERROR });
+        const note = cleanNote(body.note);
+        if (note === null) return res.status(400).json({ error: NOTE_ERROR });
         if (body.type !== undefined && !isWishlistType(body.type)) {
           return res.status(400).json({ error: 'unknown wishlist type' });
         }
@@ -546,8 +563,7 @@ export async function handleSuggestions(
         const dup = active.find((s) => normalize(s.game) === normalize(g.game));
         if (dup) return res.status(409).json({ error: `${dup.game} is already on the list` });
 
-        const id = (deps.randomId ?? (() => `sug-${randomBytes(6).toString('hex')}`))();
-        const token = (deps.randomToken ?? (() => randomBytes(24).toString('base64url')))();
+        const { id, token } = mintIds(deps);
         const at = now();
         const item: Suggestion = { id, game: g.game, name, note, status: 'approved', createdAt: at, decidedAt: at, source: 'owner' };
         await redis.multi()
@@ -571,14 +587,10 @@ export async function handleSuggestions(
       const g = validateGame(body.game);
       if (!g.ok) return res.status(400).json({ error: g.error });
       const game = g.game;
-      const name = typeof body.name === 'string' ? body.name.trim() : '';
-      const note = typeof body.note === 'string' ? body.note.trim().replace(/\s+/g, ' ') : '';
-      if (!NAME_RE.test(name)) {
-        return res.status(400).json({ error: 'name must be 1–30 letters, digits, spaces or basic punctuation' });
-      }
-      if (note.length > NOTE_MAX || /[\p{C}]/u.test(note)) {
-        return res.status(400).json({ error: `note must be at most ${NOTE_MAX} characters` });
-      }
+      const name = checkName(body.name);
+      if (name === null) return res.status(400).json({ error: NAME_ERROR });
+      const note = cleanNote(body.note);
+      if (note === null) return res.status(400).json({ error: NOTE_ERROR });
 
       // Read-then-write: two different people suggesting the same game in the
       // same instant can both get through. Accepted; the owner just sees two
@@ -593,8 +605,7 @@ export async function handleSuggestions(
         });
       }
 
-      const id = (deps.randomId ?? (() => `sug-${randomBytes(6).toString('hex')}`))();
-      const token = (deps.randomToken ?? (() => randomBytes(24).toString('base64url')))();
+      const { id, token } = mintIds(deps);
       const item: Suggestion = { id, game, name, note, status: 'pending', createdAt: now(), source: 'friend' };
       const link = (action: string) =>
         `${deps.baseUrl()}/api/suggestions?action=${action}&id=${encodeURIComponent(id)}&token=${encodeURIComponent(token)}`;
@@ -637,10 +648,10 @@ export async function handleSuggestions(
         fields.game = g.game;
       }
       if (body.note !== undefined) {
-        const note = typeof body.note === 'string' ? body.note.trim().replace(/\s+/g, ' ') : null;
-        if (note === null || note.length > NOTE_MAX || /[\p{C}]/u.test(note)) {
-          return res.status(400).json({ error: `note must be at most ${NOTE_MAX} characters` });
-        }
+        // Unlike a new entry's, an edit's note must be text: null or a number
+        // is a bad request, not a way to clear it.
+        const note = typeof body.note === 'string' ? cleanNote(body.note) : null;
+        if (note === null) return res.status(400).json({ error: NOTE_ERROR });
         fields.note = note;
       }
       if (body.details !== undefined) {

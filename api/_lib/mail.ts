@@ -61,5 +61,17 @@ export function page(title: string, body: string): string {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${escapeHtml(title)}</title><style>${PAGE_STYLE}</style></head><body><main><h1>${escapeHtml(title)}</h1>${body}</main></body></html>`;
 }
 
+/**
+ * The shell both emails share: a narrow column in the app's type and colours,
+ * closed by a small grey footnote. Inline styles only, since many mail clients
+ * ignore a <style> block.
+ */
+export function mailLayout(body: string, footnote: string): string {
+  return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#1D1D1F">
+${body}
+<p style="margin:24px 0 0;font-size:12px;color:#86868B">${footnote}</p>
+</div>`;
+}
+
 export const button = (href: string, label: string, bg: string) =>
   `<a href="${href}" style="display:inline-block;padding:12px 22px;margin:0 6px 8px;border-radius:10px;background:${bg};color:#fff;text-decoration:none;font-weight:600">${label}</a>`;
