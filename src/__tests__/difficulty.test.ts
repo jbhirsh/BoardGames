@@ -29,7 +29,7 @@ describe('weightLabel', () => {
 describe('difficultyOf', () => {
   const sub = (weight?: number): SubGame => ({
     name: 'S', slug: 's', kind: 'card-game', players: '2', min: 2, max: 2, dur: '5 min', mins: 5,
-    cat: 'quick', short: '', yt: '', weight,
+    short: '', yt: '', weight,
   });
 
   it('labels a game by its own weight', () => {

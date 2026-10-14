@@ -249,7 +249,7 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   an open row), is a list of `DetailSection`s, a heading over a paragraph
   of plain text, never HTML; `GameDetail` draws it, one `.detail-section`
   each, on a card, a row and an add-on's More. `Game` and `WishlistItem` both extend `Filterable`
-  (name, desc, min/max players, mins, duration bucket, keywords). The filter
+  (name, desc, min/max players, mins, keywords). The filter
   pipeline (`utils/filterGames.ts`) is generic over it: `filterItems` with
   `filterGames` and `filterWishlist` wrappers that decide their own grouping.
   `groupItems` then splits a filtered list under its headings: the views
@@ -261,15 +261,18 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   The time filter is a budget (`FilterState.duration`: up to 15, 30 or 60
   minutes, `d=15|30|60` in the URL; an old `d=quick|medium|long` link opens
   at the budget that keeps its games): a game fits by its own `mins`, quick
-  ones included. `cat` (Quick, Medium, Long) no longer filters; it names a
-  time pill without a label and breaks ties in the time sorts. The players
+  ones included. Its Quick, Medium or Long bucket is no longer typed in or
+  filtered on: `durationCategory` (`utils/duration.ts`) works it out from
+  `mins` to colour a list row's time pill. The players
   dropdown offers 1 to 10+. Both dropdowns are radio groups
   (`FilterBar/RadioOptions.tsx`): one Tab stop, arrows to move, Enter to pick.
   A game can hold `subgames` (`SubGame`, kind `expansion`, `extension`,
   `version` or `card-game`): Catan's, Dominion's and One Night's add-ons,
   Ticket to Ride - Europe as a version, the games the Card Deck plays. Each has its
   own players, time, video and usually a rulebook at
-  `/rules/<parent>.<sub>.pdf`. The players and time filters keep a parent
+  `/rules/<parent>.<sub>.pdf`; `games.ts` fills in every rulebook path,
+  and a game's box art (`/images/<slug>.webp` unless its entry names
+  another), from the slugs. The players and time filters keep a parent
   when it fits on its own or one of its games fits both (a deck only by its
   games, since it is never played on its own), and search matches their
   names. The card's "+N games" button ("k of N games fit" under a filter),
@@ -423,7 +426,7 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   names, so the swap barely moves a line;
   `index.html` preloads the roman file. Body text is the system font.
 - **`utils/`** — pure helpers (`filterGames.ts`, `pickRandom.ts`, `filterUrl.ts`, `heroCovers.ts`,
-  `urls.ts`, `openRow.ts`, `shortDesc.ts`, `subgames.ts`, `rulebooks.ts`, `pdfSearch.ts`,
+  `urls.ts`, `openRow.ts`, `shortDesc.ts`, `subgames.ts`, `rulebooks.ts`, `pdfSearch.ts`, `duration.ts`,
   `citations.ts`, the rulebooks an assistant answer names and the pages it
   cites, as links; `citeMatch.ts`, the passage of a page a citation points to; `fileSize.ts`,
   `sevenWonders.ts`, the score pad's arithmetic: science, standings with

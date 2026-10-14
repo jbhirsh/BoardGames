@@ -8,13 +8,14 @@ import { parseGoldenSet } from '../../eval/grading';
 /**
  * Data-integrity guard for the games ↔ assets linkage.
  *
- * Each game references three files purely by convention — the `rules` PDF and
- * `img` the rules page renders, and `rules-text/<slug>.txt` the chat API reads
- * (via loadRulesText). Nothing else fails when one is missing: tsc, lint, and
- * the component suite all pass, then the /rules/:slug page shows a broken link
- * and the chat assistant throws ENOENT in production. This test turns that
- * silent runtime break into a red check when a game is added, removed, or its
- * slug renamed without its assets following.
+ * Each game's slug names three files — the `rules` PDF and `img` the rules
+ * page renders (games.ts fills both in from it), and `rules-text/<slug>.txt`
+ * the chat API reads (via loadRulesText). Nothing else fails when one is
+ * missing: tsc, lint, and the component suite all pass, then the /rules/:slug
+ * page shows a broken link and the chat assistant throws ENOENT in
+ * production. This test turns that silent runtime break into a red check
+ * when a game is added, removed, or its slug renamed without its assets
+ * following.
  *
  * Paths resolve from process.cwd() (repo root), matching how the chat API and
  * rulesAssistant.test.ts locate rules-text at runtime.
@@ -60,9 +61,10 @@ describe('games ↔ assets integrity', () => {
   );
 
   // A game inside another one keeps its rulebook beside the parent's as
-  // <parent>.<slug>.pdf, and its text as <parent>.<slug>.txt: the chat API
-  // reads every rules-text/<parent>.*.txt along with the parent's own, so a
-  // sub-game rulebook under any other name would never reach the assistant.
+  // <parent>.<slug>.pdf (games.ts names it so), and its text as
+  // <parent>.<slug>.txt: the chat API reads every rules-text/<parent>.*.txt
+  // along with the parent's own, so a sub-game rulebook under any other name
+  // would never reach the assistant.
   const withRules = GAMES.flatMap((g) => [
     ...(g.moreRules ?? []).map((r) => [`${g.slug}.${r.slug}`, r.pdf] as const),
     ...(g.subgames ?? []).filter((s) => s.rules).flatMap((s) => [

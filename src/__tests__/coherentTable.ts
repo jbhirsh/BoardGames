@@ -1,11 +1,10 @@
 import { expect } from 'vitest';
-import type { DurationCategory } from '../data/types';
 
 /**
  * The filter fields every table carries, for the data tests. A game, a game
  * inside one and a wishlist entry each state players and time twice, once
  * as text for the card (`players`, `dur`) and once as numbers for the
- * filters (`min`, `max`, `mins`, `cat`), and nothing else notices when the
+ * filters (`min`, `max`, `mins`), and nothing else notices when the
  * two drift: the card says one thing while the players or time filter does
  * another.
  */
@@ -15,7 +14,6 @@ interface Table {
   max: number;
   dur: string;
   mins: number;
-  cat: DurationCategory;
 }
 
 export const numbers = (s: string) => (s.match(/\d+/g) ?? []).map(Number);

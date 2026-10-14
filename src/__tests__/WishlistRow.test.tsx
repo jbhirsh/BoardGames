@@ -17,7 +17,6 @@ const testItem: WishlistItem = {
   max: 8,
   dur: '20 min',
   mins: 20,
-  cat: 'medium',
   kw: ['party', 'bluffing'],
   awards: [],
 };

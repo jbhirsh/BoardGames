@@ -33,7 +33,6 @@ export default function WishlistRow({ item, voteCount, voted, onVote, disabled, 
         <TableRowCells
           name={item.name}
           players={item.players}
-          cat={item.cat}
           dur={item.dur}
           mins={item.mins}
           short={shortDesc(item.desc)}

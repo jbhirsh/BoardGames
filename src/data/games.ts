@@ -1,11 +1,32 @@
-import type { Game } from './types';
+import type { ExtraRulebook, Game, SubGame } from './types';
 import { GAME_WEIGHTS } from './gameWeights';
+
+// A game's box art and rulebooks live at paths its slugs name, so the
+// entries below leave them out and withPaths fills them in: the box art at
+// /images/<slug>.webp unless an entry says otherwise, and every rulebook at
+// /rules/<slug>.pdf, or /rules/<game>.<slug>.pdf for one inside the game.
+// Rulebooks take no other path: the chat API finds a rulebook's text by
+// the same names (rules-text/<slug>.txt and rules-text/<game>.<slug>.txt).
+type ExtraRulebookEntry = Omit<ExtraRulebook, 'pdf'>;
+
+interface SubGameEntry extends Omit<SubGame, 'rules' | 'moreRules'> {
+  /** False when no rulebook is bundled (the rules came in the box). */
+  rules?: false;
+  moreRules?: ExtraRulebookEntry[];
+}
+
+interface GameEntry extends Omit<Game, 'img' | 'rules' | 'moreRules' | 'subgames'> {
+  /** Box art kept anywhere but /images/<slug>.webp. */
+  img?: string;
+  moreRules?: ExtraRulebookEntry[];
+  subgames?: SubGameEntry[];
+}
 
 // `awards` lists confirmed wins from recognised award bodies only (same rule
 // as wishlist.ts); nominations, recommended lists and toy-industry awards
 // are not counted.
-const ENTRIES: Game[] = [
-  { name:"One Night Werewolf",       slug:"one-night-werewolf",    img:"/images/one-night-werewolf.webp",    rules:"/rules/one-night-werewolf.pdf",    players:"3–10", min:3,  max:10, dur:"10 min",    mins:10,  cat:"quick",  group:'social', bgg:147949,
+const ENTRIES: GameEntry[] = [
+  { name:"One Night Werewolf",       slug:"one-night-werewolf",    players:"3–10", min:3,  max:10, dur:"10 min",    mins:10,  group:'social', bgg:147949,
     kw:['social','deduction','bluffing','party','quick-play'],
     short:"Hidden roles, one frantic vote, ten minutes — then play again.",
     desc:"Everyone gets a secret role — Werewolf, Villager, Seer, Troublemaker. Close your eyes while the night phase plays out via the free app, then argue about who the werewolves are. One vote, one elimination, ten minutes. Then play again immediately.",
@@ -17,18 +38,18 @@ const ENTRIES: Game[] = [
     yt:"how to play One Night Ultimate Werewolf tutorial",
     awards:[{ name:"Dice Tower Best Party Game", year:2013 }],
     subgames:[
-      { name:"Daybreak", slug:"daybreak", kind:'expansion', players:"3–7", min:3, max:7, dur:"10 min", mins:10, cat:"quick",
+      { name:"Daybreak", slug:"daybreak", kind:'expansion', players:"3–7", min:3, max:7, dur:"10 min", mins:10,
         short:"New roles (Alpha Wolf, Witch, Curator) for One Night — plays standalone or combined.",
-        yt:"how to play One Night Ultimate Daybreak tutorial", rules:"/rules/one-night-werewolf.daybreak.pdf",
+        yt:"how to play One Night Ultimate Daybreak tutorial",
         desc:"Expansion to One Night Werewolf with powerful new roles: Alpha Wolf, Curator, Witch, and more. Plays standalone or mixed via the app. Adds complexity while keeping the lightning-fast 10-minute runtime.",
         detail:[
           { heading:"New Roles", body:`Daybreak introduces roles that fundamentally change the wolf team's dynamics. The Alpha Wolf can convert a Villager into a Werewolf during the night. The Witch swaps her own card with any other card on the table. The Curator assigns an artifact to another player — a bonus or curse they can't reveal.` },
           { heading:"Standalone or Mixed", body:`Daybreak works perfectly as a standalone game, but its real power is in combination. The companion app lets you freely mix roles from Werewolf, Daybreak, and Vampire, building custom game configurations from a roster of 40+ roles. You can tune the balance for your exact group each session.` },
           { heading:"Learning Curve", body:`The expanded role set adds a layer of plausible deniability that experienced players will love — "I'm the Alpha Wolf, so I swapped myself to Villager." Bluffing becomes multilayered. Best introduced to groups who already have a few Werewolf games under their belt.` },
         ] },
-      { name:"Vampire", slug:"vampire", kind:'expansion', players:"3–10", min:3, max:10, dur:"10 min", mins:10, cat:"quick",
+      { name:"Vampire", slug:"vampire", kind:'expansion', players:"3–10", min:3, max:10, dur:"10 min", mins:10,
         short:"The One Night formula goes gothic — mix with Werewolf via the app for huge games.",
-        yt:"how to play One Night Ultimate Vampire tutorial", rules:"/rules/one-night-werewolf.vampire.pdf",
+        yt:"how to play One Night Ultimate Vampire tutorial",
         desc:"The One Night formula goes gothic — Vampires, Renfield, Priest, and more. Mixes seamlessly with Werewolf and Daybreak via the companion app for massive combined sessions.",
         detail:[
           { heading:"The Vampire Team", body:`Vampire introduces a third faction alongside Villagers and Werewolves. The Vampire team wins if a Villager — not a Werewolf — is voted out. The Renfield is a human who secretly sides with the Vampires. The Priest can mark a player as protected against vampiric conversion.` },
@@ -36,7 +57,7 @@ const ENTRIES: Game[] = [
           { heading:"Big Group Potential", body:`Vampire supports up to 10 players, and the app scales perfectly. Combined with Werewolf and Daybreak roles, you can run sessions with 15+ role cards in the mix for massive groups — making it the ideal party-of-party game when the whole room wants in.` },
         ] },
     ] },
-  { name:"Suspicion",                slug:"suspicion",             img:"/images/suspicion.webp",             rules:"/rules/suspicion.pdf",             players:"2–6",  min:2,  max:6,  dur:"30–60 min", mins:60,  cat:"medium", group:'social', bgg:204886,
+  { name:"Suspicion",                slug:"suspicion",             players:"2–6",  min:2,  max:6,  dur:"30–60 min", mins:60,  group:'social', bgg:204886,
     kw:['deduction','family'],
     short:"You're a disguised jewel thief — deduce who everyone else is before they deduce you.",
     desc:"You're a jewel thief disguised as a party guest — and so is everyone else. Everyone controls the same characters, but only you know which disguise is yours. Deduce theirs before they deduce yours.",
@@ -47,7 +68,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play Suspicion board game tutorial",
     awards:[] },
-  { name:"Analyze Me",               slug:"analyze-me",            img:"/images/analyze-me.webp",            rules:"/rules/analyze-me.pdf",                                 players:"3–10", min:3,  max:10, dur:"30–60 min", mins:60,  cat:"medium", group:'social', bgg:92302,
+  { name:"Analyze Me",               slug:"analyze-me",            players:"3–10", min:3,  max:10, dur:"30–60 min", mins:60,  group:'social', bgg:92302,
     kw:['party','social','deduction'],
     short:"Answer revealing questions anonymously; the group guesses who wrote what.",
     desc:"Players answer revealing questions and the group guesses who wrote what. Sparks genuine conversation and surprising self-revelations. A brilliant icebreaker for people who think they already know each other.",
@@ -58,7 +79,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play Analyze Me party game",
     awards:[] },
-  { name:"Love Letter",              slug:"love-letter",           img:"/images/love-letter.webp",           rules:"/rules/love-letter.pdf",           players:"2–6",  min:2,  max:6,  dur:"20 min",    mins:20,  cat:"medium",   group:'social', bgg:277085,
+  { name:"Love Letter",              slug:"love-letter",           players:"2–6",  min:2,  max:6,  dur:"20 min",    mins:20,  group:'social', bgg:277085,
     kw:['card-game','deduction','bluffing','quick-play','portable'],
     short:"Hold one card, draw one, play one — be the last suitor standing and get your letter to the Princess.",
     desc:"Twenty-one cards, one card in hand. Draw one, play one: Guards guess a rival's card, Priests peek, Barons compare, and the last suitor standing gets a letter to the Princess. First to enough favor tokens wins. Twenty minutes, two to six players, and it fits in a pocket.",
@@ -69,7 +90,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play Love Letter card game tutorial",
     awards:[{ name:"Japan Boardgame Prize Voters' Selection", year:2012 },{ name:"Dice Tower Best Party Game", year:2012 },{ name:"Dice Tower Best Family Game", year:2012 },{ name:"Origins Award Best Traditional Card Game", year:2013 },{ name:"Golden Geek Best Card Game", year:2013 },{ name:"Golden Geek Best Party Game", year:2013 },{ name:"Golden Geek Best Family Game", year:2013 },{ name:"Golden Geek Most Innovative Game", year:2013 },{ name:"Guldbrikken Best Family Game", year:2014 }] },
-  { name:"Codenames",                slug:"codenames",             img:"/images/codenames.webp",             rules:"/rules/codenames.pdf",             players:"3–8",  min:3,  max:8,  dur:"15–30 min", mins:30,  cat:"medium", group:'word', bgg:178900,
+  { name:"Codenames",                slug:"codenames",             players:"3–8",  min:3,  max:8,  dur:"15–30 min", mins:30,  group:'word', bgg:178900,
     kw:['word','party','team','deduction'],
     short:"One-word clues to link multiple agents — without touching the assassin.",
     desc:"Two spymasters give one-word clues to guide their teams to the right words on a 5×5 grid — without landing on the assassin. Connecting multiple words with one clue while avoiding enemies is deceptively hard. Possibly the best party game ever made.",
@@ -80,7 +101,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play Codenames board game tutorial",
     awards:[{ name:"Spiel des Jahres", year:2016 },{ name:"Origins Award Game of the Year", year:2016 },{ name:"Origins Award Best Family Game", year:2016 },{ name:"Golden Geek Best Party Game", year:2016 },{ name:"Golden Geek Best Family Game", year:2016 },{ name:"Dice Tower Best Party Game", year:2016 },{ name:"Dice Tower Best Family Game", year:2016 },{ name:"UK Games Expo Best Party Game", year:2016 },{ name:"Guldbrikken Best Adult Game", year:2016 },{ name:"Japan Boardgame Prize Voters' Selection", year:2016 },{ name:"MinD-Spielepreis Short Games", year:2017 },{ name:"Cardboard Republic Socializer Laurel", year:2015 }] },
-  { name:"Bananagrams",              slug:"bananagrams",           img:"/images/bananagrams.webp",           rules:"/rules/bananagrams.pdf",           players:"2–8",  min:2,  max:8,  dur:"15 min",    mins:15,  cat:"quick",  group:'word', bgg:27225,
+  { name:"Bananagrams",              slug:"bananagrams",           players:"2–8",  min:2,  max:8,  dur:"15 min",    mins:15,  group:'word', bgg:27225,
     kw:['word','quick-play','portable','family'],
     short:"Real-time race to build your own personal crossword — no board needed.",
     desc:"Race to build your own crossword grid from letter tiles faster than everyone else. No turns, completely real-time. Fast, frantic, and perfectly portable — just a banana-shaped bag of tiles.",
@@ -91,7 +112,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play Bananagrams tutorial rules",
     awards:[] },
-  { name:"Taboo",                    slug:"taboo",                 img:"/images/taboo.webp",                 rules:"/rules/taboo.pdf",                 players:"4–10", min:4,  max:10, dur:"20–60 min", mins:60,  cat:"medium", group:'word', bgg:1111,
+  { name:"Taboo",                    slug:"taboo",                 players:"4–10", min:4,  max:10, dur:"20–60 min", mins:60,  group:'word', bgg:1111,
     kw:['word','party','team'],
     short:"Describe the word without using the five most obvious clues — get buzzed if you slip.",
     desc:"Get your team to say the target word without using the five most obvious clue words on the card. The opposing team watches for violations. Fast, frantic, and revealing about how differently people's minds connect ideas.",
@@ -102,7 +123,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play Taboo card game tutorial rules",
     awards:[{ name:"Mensa Select", year:1990 }] },
-  { name:"Poetry for Neanderthals",  slug:"poetry-for-neanderthals", img:"/images/poetry-for-neanderthals.webp", rules:"/rules/poetry-for-neanderthals.pdf", players:"2+",   min:2,  max:99, dur:"15 min",    mins:15,  cat:"quick",  group:'word', bgg:312786,
+  { name:"Poetry for Neanderthals",  slug:"poetry-for-neanderthals", players:"2+",   min:2,  max:99, dur:"15 min",    mins:15,  group:'word', bgg:312786,
     kw:['word','party','quick-play','portable','team'],
     short:"Give clues in one-syllable words only — or face the inflatable club.",
     desc:"Give clues using only one-syllable words — use a longer word and get bonked with an inflatable club. Like Taboo with a caveman rulebook. Surprisingly hard and consistently hilarious.",
@@ -113,7 +134,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play Poetry for Neanderthals tutorial",
     awards:[] },
-  { name:"Exploding Kittens",        slug:"exploding-kittens",     img:"/images/exploding-kittens.webp",     rules:"/rules/exploding-kittens.pdf",     players:"2–5",  min:2,  max:5,  dur:"15 min",    mins:15,  cat:"quick",  group:'party', bgg:172225,
+  { name:"Exploding Kittens",        slug:"exploding-kittens",     players:"2–5",  min:2,  max:5,  dur:"15 min",    mins:15,  group:'party', bgg:172225,
     kw:['card-game','party','quick-play','portable'],
     short:"Draw cards until someone explodes — unless they Defuse it. Absurdist, fast, chaotic.",
     desc:"Draw cards until someone draws an Exploding Kitten — they're out unless they Defuse it. Play Skip, Attack, See the Future, and Shuffle to redirect danger toward rivals. Fast, chaotic, funny.",
@@ -124,7 +145,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play Exploding Kittens card game tutorial",
     awards:[] },
-  { name:"Taco vs Burrito",          slug:"taco-vs-burrito",       img:"/images/taco-vs-burrito.webp",       rules:"/rules/taco-vs-burrito.pdf",                                 players:"2–4",  min:2,  max:4,  dur:"15 min",    mins:15,  cat:"quick",  group:'party', bgg:249816,
+  { name:"Taco vs Burrito",          slug:"taco-vs-burrito",       players:"2–4",  min:2,  max:4,  dur:"15 min",    mins:15,  group:'party', bgg:249816,
     kw:['card-game','family','quick-play','portable'],
     short:"Stack ingredients to build the wildest food — then sabotage everyone else's. Kid-invented.",
     desc:"Build the most outrageous taco or burrito by stacking ingredient cards, then sabotage opponents with action cards. Invented by a 7-year-old. Accessible to kids but fast enough for adults.",
@@ -135,7 +156,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play Taco vs Burrito card game tutorial",
     awards:[] },
-  { name:"Taco Goat Cheese Pizza",   slug:"taco-goat-cheese-pizza", img:"/images/taco-goat-cheese-pizza.webp", rules:"/rules/taco-goat-cheese-pizza.pdf",                                 players:"3–8",  min:3,  max:8,  dur:"15 min",    mins:15,  cat:"quick",  group:'party', bgg:253664,
+  { name:"Taco Goat Cheese Pizza",   slug:"taco-goat-cheese-pizza", players:"3–8",  min:3,  max:8,  dur:"15 min",    mins:15,  group:'party', bgg:253664,
     kw:['card-game','party','quick-play','portable','active'],
     short:"Recite the sequence — slap when the card matches. Louder and faster than it sounds.",
     desc:"Flip cards while reciting the sequence — but when a card matches your current word, slap the pile instead. Faster and louder than it sounds. Gets the whole table shouting and second-guessing themselves.",
@@ -146,7 +167,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play Taco Goat Cheese Pizza card game tutorial",
     awards:[] },
-  { name:"Throw Throw Burrito",      slug:"throw-throw-burrito",   img:"/images/throw-throw-burrito.webp",   rules:"/rules/throw-throw-burrito.pdf",   players:"2–6",  min:2,  max:6,  dur:"30 min",    mins:30,  cat:"medium", group:'party', bgg:274533,
+  { name:"Throw Throw Burrito",      slug:"throw-throw-burrito",   players:"2–6",  min:2,  max:6,  dur:"30 min",    mins:30,  group:'party', bgg:274533,
     kw:['card-game','party','active'],
     short:"Card-matching game that erupts into real-time foam burrito dodgeball. Stand up first.",
     desc:"A card-matching game that erupts into real-time dodgeball. Collect matching sets, but when a battle card appears grab a foam burrito and pelt someone. Expect screaming and furniture casualties.",
@@ -157,7 +178,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play Throw Throw Burrito tutorial",
     awards:[] },
-  { name:"Cards Against Humanity",   slug:"cards-against-humanity", img:"/images/cards-against-humanity.webp", rules:"/rules/cards-against-humanity.pdf", players:"4–20+",min:4,  max:99, dur:"30–90 min", mins:90,  cat:"long",   group:'party', bgg:50381,
+  { name:"Cards Against Humanity",   slug:"cards-against-humanity", players:"4–20+",min:4,  max:99, dur:"30–90 min", mins:90,  group:'party', bgg:50381,
     kw:['card-game','party','adult'],
     short:"Fill-in-the-blank with the most disturbing answer you can play. Know your crowd.",
     desc:"A black card poses a question or fill-in-the-blank. Everyone plays their funniest (or most disturbing) white card. The Card Czar picks the winner. Deliberately offensive — know your crowd.",
@@ -168,7 +189,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play Cards Against Humanity tutorial rules",
     awards:[] },
-  { name:"For the Girls",            slug:"for-the-girls",         img:"/images/for-the-girls.webp",         rules:"/rules/for-the-girls.pdf",                                 players:"3+",   min:3,  max:99, dur:"30–60 min", mins:60,  cat:"medium", group:'party', bgg:318632,
+  { name:"For the Girls",            slug:"for-the-girls",         players:"3+",   min:3,  max:99, dur:"30–60 min", mins:60,  group:'party', bgg:318632,
     kw:['party','adult','team'],
     short:"Rowdy challenges, dares, and questions across seven categories — perfect for girls' nights.",
     desc:"A rowdy party game designed for women with challenges, dares, and questions across seven categories. Teams work through fast-paced mini-games that escalate in outrageousness. Perfect for hen nights and birthdays.",
@@ -179,7 +200,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play For the Girls card game tutorial",
     awards:[] },
-  { name:"Cranium",                  slug:"cranium",               img:"/images/cranium.webp",               rules:"/rules/cranium.pdf",               players:"4+",   min:4,  max:99, dur:"1 hr",      mins:60,  cat:"medium",   group:'party', bgg:891,
+  { name:"Cranium",                  slug:"cranium",               players:"4+",   min:4,  max:99, dur:"1 hr",      mins:60,  group:'party', bgg:891,
     kw:['party','team','word','creative'],
     short:"Four skill types (sculpt, trivia, word, perform) — every personality gets a turn to shine.",
     desc:"A team game spanning Creative Cat (sculpt, draw), Data Head (trivia), Word Worm (spelling), and Star Performer (act, hum, whistle). Everyone gets a moment to shine across its four very different categories.",
@@ -190,7 +211,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play Cranium board game tutorial rules",
     awards:[] },
-  { name:"Uno",                      slug:"uno",                   img:"/images/uno.webp",                   rules:"/rules/uno.pdf",                   players:"2–10", min:2,  max:10, dur:"15–30 min", mins:30,  cat:"medium", group:'party', bgg:2223,
+  { name:"Uno",                      slug:"uno",                   players:"2–10", min:2,  max:10, dur:"15–30 min", mins:30,  group:'party', bgg:2223,
     kw:['card-game','family','portable','classic'],
     short:"Match colors and numbers; yell UNO; wreak havoc with Wild Draw Fours. Timeless.",
     desc:"Match colors or numbers to empty your hand. Play action cards — Skip, Reverse, Draw Two, Wild — to disrupt rivals at key moments. Shout 'UNO!' when down to one card. Timeless, universal, somehow always dramatic.",
@@ -201,7 +222,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play Uno card game rules tutorial",
     awards:[] },
-  { name:"Card Deck",                slug:"card-deck",             img:"/images/card-deck.webp",             rules:"/rules/card-deck.pdf",             players:"1–8",  min:1,  max:8,  dur:"5–45 min",  mins:45,  cat:"medium", group:'party',
+  { name:"Card Deck",                slug:"card-deck",             players:"1–8",  min:1,  max:8,  dur:"5–45 min",  mins:45,  group:'party',
     kw:['card-game','classic','family','team','portable'],
     short:"One standard deck, twelve games: Euchre, Spades, Hearts, Crazy Eights, Rummy and more.",
     desc:"A standard 52-card deck and twelve games it plays, each with its own rules sheet. Partnership trick-takers like Euchre and Spades, Hearts, Crazy Eights, Rummy and Golf, chaos like Spoons, Speed and Egyptian Ratscrew, President for a big table, and Klondike when it is just you.",
@@ -213,44 +234,44 @@ const ENTRIES: Game[] = [
     yt:"how to play Euchre card game tutorial",
     awards:[],
     subgames:[
-      { name:"Euchre", slug:"euchre", kind:'card-game', players:"4", min:4, max:4, dur:"30 min", mins:30, cat:"medium", bgg:6901,
+      { name:"Euchre", slug:"euchre", kind:'card-game', players:"4", min:4, max:4, dur:"30 min", mins:30, bgg:6901,
         short:"Partnership trick-taking with a 24-card deck and two jacks that outrank everything. First team to 10.",
-        yt:"how to play Euchre card game", rules:"/rules/card-deck.euchre.pdf" },
-      { name:"Spades", slug:"spades", kind:'card-game', players:"4", min:4, max:4, dur:"45 min", mins:45, cat:"medium", bgg:592,
+        yt:"how to play Euchre card game" },
+      { name:"Spades", slug:"spades", kind:'card-game', players:"4", min:4, max:4, dur:"45 min", mins:45, bgg:592,
         short:"Bid your tricks with your partner. Spades are always trump, and extra tricks come back to bite.",
-        yt:"how to play Spades card game", rules:"/rules/card-deck.spades.pdf" },
-      { name:"Hearts", slug:"hearts", kind:'card-game', players:"3–5", min:3, max:5, dur:"30 min", mins:30, cat:"medium", bgg:6887,
+        yt:"how to play Spades card game" },
+      { name:"Hearts", slug:"hearts", kind:'card-game', players:"3–5", min:3, max:5, dur:"30 min", mins:30, bgg:6887,
         short:"Dodge every heart and the queen of spades, or take them all and shoot the moon.",
-        yt:"how to play Hearts card game", rules:"/rules/card-deck.hearts.pdf" },
-      { name:"Crazy Eights", slug:"crazy-eights", kind:'card-game', players:"2–7", min:2, max:7, dur:"15 min", mins:15, cat:"quick", bgg:11017,
+        yt:"how to play Hearts card game" },
+      { name:"Crazy Eights", slug:"crazy-eights", kind:'card-game', players:"2–7", min:2, max:7, dur:"15 min", mins:15, bgg:11017,
         short:"Match the suit or rank, play an eight to change the suit, and be first to empty your hand.",
-        yt:"how to play Crazy Eights card game", rules:"/rules/card-deck.crazy-eights.pdf" },
-      { name:"Rummy", slug:"rummy", kind:'card-game', players:"2–6", min:2, max:6, dur:"30 min", mins:30, cat:"medium", bgg:15878,
+        yt:"how to play Crazy Eights card game" },
+      { name:"Rummy", slug:"rummy", kind:'card-game', players:"2–6", min:2, max:6, dur:"30 min", mins:30, bgg:15878,
         short:"Draw, discard, and lay down sets and runs. Gin Rummy, the two-player version, is on the same sheet.",
-        yt:"how to play Rummy card game", rules:"/rules/card-deck.rummy.pdf" },
-      { name:"President", slug:"president", kind:'card-game', players:"4–8", min:4, max:8, dur:"30 min", mins:30, cat:"medium",
+        yt:"how to play Rummy card game" },
+      { name:"President", slug:"president", kind:'card-game', players:"4–8", min:4, max:8, dur:"30 min", mins:30,
         short:"Shed your hand first to become President. Finish last and you hand over your best cards next time.",
-        yt:"how to play President card game", rules:"/rules/card-deck.president.pdf" },
-      { name:"Spoons", slug:"spoons", kind:'card-game', players:"3–8", min:3, max:8, dur:"10 min", mins:10, cat:"quick", bgg:1692,
+        yt:"how to play President card game" },
+      { name:"Spoons", slug:"spoons", kind:'card-game', players:"3–8", min:3, max:8, dur:"10 min", mins:10, bgg:1692,
         short:"Pass cards around the table until someone makes four of a kind, then everyone grabs for a spoon.",
-        yt:"how to play Spoons card game", rules:"/rules/card-deck.spoons.pdf" },
-      { name:"Egyptian Ratscrew", slug:"egyptian-ratscrew", kind:'card-game', players:"2–6", min:2, max:6, dur:"15 min", mins:15, cat:"quick", bgg:15712,
+        yt:"how to play Spoons card game" },
+      { name:"Egyptian Ratscrew", slug:"egyptian-ratscrew", kind:'card-game', players:"2–6", min:2, max:6, dur:"15 min", mins:15, bgg:15712,
         short:"Flip cards onto the pile and slap it on a double or a sandwich to win it.",
-        yt:"how to play Egyptian Ratscrew card game", rules:"/rules/card-deck.egyptian-ratscrew.pdf" },
-      { name:"Speed", slug:"speed", kind:'card-game', players:"2", min:2, max:2, dur:"5 min", mins:5, cat:"quick", bgg:300358,
+        yt:"how to play Egyptian Ratscrew card game" },
+      { name:"Speed", slug:"speed", kind:'card-game', players:"2", min:2, max:2, dur:"5 min", mins:5, bgg:300358,
         short:"Two players race to play up or down on the same two piles, no turns.",
-        yt:"how to play Speed card game", rules:"/rules/card-deck.speed.pdf" },
-      { name:"Golf", slug:"golf", kind:'card-game', players:"2–6", min:2, max:6, dur:"20 min", mins:20, cat:"medium", bgg:17521,
+        yt:"how to play Speed card game" },
+      { name:"Golf", slug:"golf", kind:'card-game', players:"2–6", min:2, max:6, dur:"20 min", mins:20, bgg:17521,
         short:"Six cards face down; swap in lower ones and have the lowest score after nine holes.",
-        yt:"how to play Golf card game", rules:"/rules/card-deck.golf.pdf" },
-      { name:"Go Fish", slug:"go-fish", kind:'card-game', players:"2–6", min:2, max:6, dur:"15 min", mins:15, cat:"quick", bgg:7682,
+        yt:"how to play Golf card game" },
+      { name:"Go Fish", slug:"go-fish", kind:'card-game', players:"2–6", min:2, max:6, dur:"15 min", mins:15, bgg:7682,
         short:"Ask for ranks, go fish when they don’t have it, and collect books of four.",
-        yt:"how to play Go Fish card game", rules:"/rules/card-deck.go-fish.pdf" },
-      { name:"Klondike Solitaire", slug:"klondike", kind:'card-game', players:"1", min:1, max:1, dur:"10 min", mins:10, cat:"quick", bgg:10400,
+        yt:"how to play Go Fish card game" },
+      { name:"Klondike Solitaire", slug:"klondike", kind:'card-game', players:"1", min:1, max:1, dur:"10 min", mins:10, bgg:10400,
         short:"The classic one-player solitaire: build down in alternating colors and up by suit.",
-        yt:"how to play Klondike Solitaire card game", rules:"/rules/card-deck.klondike.pdf" },
+        yt:"how to play Klondike Solitaire card game" },
     ] },
-  { name:"Far-Out Questions",        slug:"far-out-questions",     img:"/images/far-out-questions.webp",     rules:"/rules/far-out-questions.pdf",     players:"2+",   min:2,  max:99, dur:"15–30 min", mins:30,  cat:"medium", group:'party',
+  { name:"Far-Out Questions",        slug:"far-out-questions",     players:"2+",   min:2,  max:99, dur:"15–30 min", mins:30,  group:'party',
     kw:['social','party','portable'],
     short:"55 far-out questions for laughing together instead of talking about anything serious.",
     desc:"A conversation deck of 55 far-out questions like which cartoon world you would live in for a week or what you would uninvent. Draw one, read it out and answer. No points and no winner, made for two and good with friends.",
@@ -260,7 +281,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"date night conversation question cards for couples",
     awards:[] },
-  { name:"Truth or Dare Tower",      slug:"truth-or-dare-tower",   img:"/images/truth-or-dare-tower.webp",   rules:"/rules/truth-or-dare-tower.pdf",   players:"2+",   min:2,  max:99, dur:"15–30 min", mins:30,  cat:"medium", group:'party',
+  { name:"Truth or Dare Tower",      slug:"truth-or-dare-tower",   players:"2+",   min:2,  max:99, dur:"15–30 min", mins:30,  group:'party',
     kw:['party','active','social'],
     short:"The block-stacking tower game, with a truth or a dare printed on every block.",
     desc:"A date-night take on the classic tower-stacking game: pull a block, then answer the truth or do the dare printed on it before stacking it on top. Play as a couple, or with other couples if you dare. Whoever topples the tower loses.",
@@ -270,7 +291,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play truth or dare block stacking game",
     awards:[] },
-  { name:"These Cards Will Get You Drunk", slug:"these-cards-will-get-you-drunk", img:"/images/these-cards-will-get-you-drunk.webp", rules:"/rules/these-cards-will-get-you-drunk.pdf", players:"2+",   min:2,  max:99, dur:"30–60 min", mins:60,  cat:"medium", group:'party',
+  { name:"These Cards Will Get You Drunk", slug:"these-cards-will-get-you-drunk", players:"2+",   min:2,  max:99, dur:"30–60 min", mins:60,  group:'party',
     kw:['party','adult','card-game','social'],
     short:"A 100-card drinking game: draw a card, read it out, and do what it says. Ages 21+.",
     desc:"ASM Games’ drinking game for ages 21 and up: 100 cards that make you compete, vote on each other and screw your friends over. Take turns drawing and reading a card out loud, and follow it to see who drinks. No winners; play until the deck runs out.",
@@ -280,7 +301,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"These Cards Will Get You Drunk drinking game how to play",
     awards:[] },
-  { name:"Caroling Charades",        slug:"caroling-charades",     img:"/images/caroling-charades.webp",     rules:"/rules/caroling-charades.pdf",     players:"2–8",  min:2,  max:8,  dur:"20–30 min", mins:30,  cat:"medium", group:'party',
+  { name:"Caroling Charades",        slug:"caroling-charades",     players:"2–8",  min:2,  max:8,  dur:"20–30 min", mins:30,  group:'party',
     kw:['party','team','active','creative'],
     short:"Act out holiday carols against the clock — then play it again as a drawing game.",
     desc:"A holiday party game: each card names a carol or holiday song for your team to guess from charades. “If Taboo and Name That Tune had a baby,” for 2 to 8 players, and when you are done acting you can play it again as a drawing game.",
@@ -290,7 +311,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play charades game rules",
     awards:[] },
-  { name:"Azul",                     slug:"azul",                  img:"/images/azul.webp",                  rules:"/rules/azul.pdf",                  players:"2–4",  min:2,  max:4,  dur:"30–45 min", mins:45,  cat:"medium", group:'strat', bgg:230802,
+  { name:"Azul",                     slug:"azul",                  players:"2–4",  min:2,  max:4,  dur:"30–45 min", mins:45,  group:'strat', bgg:230802,
     kw:['strategy','abstract','family'],
     short:"Draft gorgeous tiles to complete your mosaic — incomplete rows incur penalties.",
     desc:"Draft beautiful glazed tiles from factory displays to complete rows on your board, then score them on a mosaic pattern. Every tile you take deprives opponents. Gorgeous components, deep strategy, clean rules.",
@@ -301,7 +322,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play Azul board game tutorial",
     awards:[{ name:"Spiel des Jahres", year:2018 },{ name:"Deutscher Spiele Preis", year:2018 },{ name:"As d'Or", year:2018 },{ name:"Golden Geek Best Family Game", year:2018 },{ name:"Dice Tower Best Family Game", year:2018 },{ name:"Origins Award Best Family Game", year:2018 },{ name:"Mensa Select", year:2018 },{ name:"Nederlandse Spellenprijs Family", year:2018 },{ name:"Guldbrikken Best Adult Game", year:2018 },{ name:"UK Games Expo Best Abstract Game", year:2019 },{ name:"UK Games Expo People's Choice Abstract Game", year:2019 },{ name:"MinD-Spielepreis Short Games", year:2019 },{ name:"Cardboard Republic Architect Laurel", year:2017 }] },
-  { name:"7 Wonders",                slug:"7-wonders",             img:"/images/7-wonders.webp",             rules:"/rules/7-wonders.pdf",             players:"2–7",  min:2,  max:7,  dur:"60 min",    mins:60,  cat:"medium",   group:'strat', bgg:68448,
+  { name:"7 Wonders",                slug:"7-wonders",             players:"2–7",  min:2,  max:7,  dur:"60 min",    mins:60,  group:'strat', bgg:68448,
     kw:['strategy','classic'],
     short:"Draft cards across three ages to build a wonder — plays in 60 min no matter the headcount.",
     desc:"Develop one of the ancient world's seven wonders across three ages by drafting cards. Pick one, pass your hand, repeat. Build military, science, commerce, and guild networks. Plays in 60 minutes regardless of player count.",
@@ -315,7 +336,7 @@ const ENTRIES: Game[] = [
   // Catan reads 3–6 because the 5–6 Player Extension is owned, but the filters
   // use the base game's own 3–4: five or six players means the extension's
   // longer game, which its sub-game entry carries.
-  { name:"Catan",                    slug:"catan",                 img:"/images/catan.webp",                 rules:"/rules/catan.pdf",                 players:"3–6",  min:3,  max:4,  dur:"60 min",    mins:60,  cat:"medium",   group:'strat', bgg:13,
+  { name:"Catan",                    slug:"catan",                 players:"3–6",  min:3,  max:4,  dur:"60 min",    mins:60,  group:'strat', bgg:13,
     kw:['strategy','negotiation','classic','family'],
     short:"Harvest resources, build settlements, trade ruthlessly — the game that started it all.",
     desc:"Settle the island of Catan by harvesting resources to build roads, settlements, and cities. Trade with others, deploy the robber to block rivals. First to 10 victory points wins. The game that brought modern board gaming to millions.",
@@ -327,18 +348,18 @@ const ENTRIES: Game[] = [
     yt:"how to play Catan Settlers of Catan tutorial",
     awards:[{ name:"Spiel des Jahres", year:1995 },{ name:"Deutscher Spiele Preis", year:1995 },{ name:"Origins Award Best Fantasy or Science Fiction Board Game", year:1997 }],
     subgames:[
-      { name:"5–6 Player Extension", slug:"5-6-player-extension", kind:'extension', players:"5–6", min:5, max:6, dur:"90–120 min", mins:120, cat:"long",
+      { name:"5–6 Player Extension", slug:"5-6-player-extension", kind:'extension', players:"5–6", min:5, max:6, dur:"90–120 min", mins:120,
         short:"Two more seats: a bigger island, pieces in two more colors, and paired turns so nobody waits long.",
-        yt:"how to play Catan 5-6 player extension", rules:"/rules/catan.5-6-player-extension.pdf",
+        yt:"how to play Catan 5-6 player extension",
         desc:"The extension that brings Catan to five or six players: eleven more terrain hexes and sea frames to enlarge the island, its own set of number tokens, extra resource and development cards, and pieces in two more colors. Paired turns keep the wait down. Requires the Catan base game.",
         detail:[
           { heading:"What’s Added", body:`Eleven more terrain hexes (a desert and two each of forest, hills, pasture, fields and mountains), a set of 28 number tokens used in place of the base game’s, extra resource and development cards, sea frames and harbors to enlarge the island, and settlements, cities and roads for two more players. You still need nearly everything from the base game.` },
           { heading:"Paired Turns", body:`The current rules pair players up: the player rolling the dice and the player three seats to their left both get to build on that turn, one after the other, and the second player may trade only with the bank. That replaces the special building phase from older printings. Everything else plays like Catan.` },
           { heading:"Packing Up", body:`The 5–6 hexes have a watermark in the lower left corner and the number tokens have dark brown letters on the back, so it is easy to separate them when you go back to three or four players.` },
         ] },
-      { name:"Cities & Knights", slug:"cities-and-knights", kind:'expansion', players:"3–4", min:3, max:4, dur:"90–150 min", mins:150, cat:"long",
+      { name:"Cities & Knights", slug:"cities-and-knights", kind:'expansion', players:"3–4", min:3, max:4, dur:"90–150 min", mins:150,
         short:"Knights, city improvements, commodities and a barbarian fleet heading for the island. Play to 13 points.",
-        yt:"how to play Catan Cities and Knights expansion", rules:"/rules/catan.cities-and-knights.pdf",
+        yt:"how to play Catan Cities and Knights expansion",
         desc:"Catan’s big expansion. Cities produce commodities — paper, cloth and coin — that buy city improvements, knights have to be raised to fight off a barbarian fleet that sails a little closer every turn, and progress cards replace development cards. First to 13 victory points wins. Requires the Catan base game.",
         detail:[
           { heading:"Commodities and City Improvements", body:`A city on forest, pasture or mountains produces paper, cloth or coin as well as resources. Spend commodities on city improvements in trade, politics and science; each level unlocks a benefit, and the first player to reach the fourth level of a track gets a metropolis.` },
@@ -346,7 +367,7 @@ const ENTRIES: Game[] = [
           { heading:"Progress Cards", body:`Development cards are replaced by 54 progress cards in three colors, drawn when the event die and red die line up with your city improvements. City walls let you hold more cards when a 7 is rolled. The first player to 13 victory points wins.` },
         ] },
     ] },
-  { name:"Dominion",                 slug:"dominion",              img:"/images/dominion.webp",              rules:"/rules/dominion.pdf",              players:"2–4",  min:2,  max:4,  dur:"30 min",    mins:30,  cat:"medium",   group:'strat', bgg:209418,
+  { name:"Dominion",                 slug:"dominion",              players:"2–4",  min:2,  max:4,  dur:"30 min",    mins:30,  group:'strat', bgg:209418,
     kw:['deck-building','strategy','card-game'],
     short:"The game that invented deck-building — a new set of ten Kingdom cards makes every game different.",
     desc:"The game that invented deck-building. Everyone starts with the same ten-card deck of Coppers and Estates and spends the game buying from ten Kingdom piles to build a better one. A different ten every game, 26 to choose from, and the most Victory points when the Provinces run out wins. Second Edition.",
@@ -358,9 +379,9 @@ const ENTRIES: Game[] = [
     yt:"how to play Dominion second edition board game tutorial",
     awards:[{ name:"Spiel des Jahres", year:2009 },{ name:"Deutscher Spiele Preis", year:2009 },{ name:"Mensa Select", year:2009 },{ name:"Golden Geek Game of the Year", year:2009 },{ name:"Golden Geek Best Card Game", year:2009 },{ name:"Dice Tower Game of the Year", year:2008 },{ name:"Dice Tower Best New Designer", year:2008 },{ name:"Dice Tower Best Small Publisher", year:2008 },{ name:"Origins Award Best Card Game", year:2009 }],
     subgames:[
-      { name:"Intrigue", slug:"intrigue", kind:'expansion', players:"2–4", min:2, max:4, dur:"30 min", mins:30, cat:"medium",
+      { name:"Intrigue", slug:"intrigue", kind:'expansion', players:"2–4", min:2, max:4, dur:"30 min", mins:30,
         short:"Dominion's first expansion: 26 Kingdom cards built on choices, attacks and cards that score. Needs the base game.",
-        yt:"how to play Dominion Intrigue second edition tutorial", rules:"/rules/dominion.intrigue.pdf",
+        yt:"how to play Dominion Intrigue second edition tutorial",
         desc:"Dominion's first expansion adds 26 Kingdom cards to mix with the base set: cards that offer a choice of benefits, attacks and a Reaction to answer them, and Actions and Treasures that also count as Victory points. Second Edition, which needs the base game for its Treasure and Victory piles.",
         detail:[
           { heading:"An Expansion, Not a Standalone", body:`The Second Edition of Intrigue is 26 new Kingdom cards and no basic cards: it needs the Copper, Silver, Gold, Estate, Duchy, Province and Curse piles from the Dominion base game (or a separate Base Cards set). Mix its cards into the randomiser with the base set's, or play a full ten from Intrigue on its own using the base game's basic cards. Turn structure, setup and the end condition are unchanged.` },
@@ -368,7 +389,7 @@ const ENTRIES: Game[] = [
           { heading:"What Changed in 2016", body:`The Second Edition retired Coppersmith, Great Hall, Saboteur, Scout, Secret Chamber and Tribute and added Courtier, Diplomat, Lurker, Mill, Patrol, Replace and Secret Passage. The first edition carried its own basic cards and could be played on its own; the Second Edition drops them. The bundled rules are Rio Grande's official Second Edition rulebook for Intrigue, with notes on every card in the box, followed by four typed pages that give the card costs and coin amounts the book prints only as pictures.` },
         ] },
     ] },
-  { name:"Ticket to Ride",             slug:"ticket-to-ride",        img:"/images/ticket-to-ride.webp",        rules:"/rules/ticket-to-ride.pdf",        players:"2–5",  min:2,  max:5,  dur:"30–60 min", mins:60,  cat:"medium", group:'strat', bgg:9209,
+  { name:"Ticket to Ride",             slug:"ticket-to-ride",        players:"2–5",  min:2,  max:5,  dur:"30–60 min", mins:60,  group:'strat', bgg:9209,
     kw:['strategy','family','classic'],
     short:"Claim train routes across America to complete secret destination tickets — the original classic.",
     desc:"Claim train routes across North America by collecting and playing matching coloured train cards. Complete secret destination tickets connecting distant cities for bonus points — but fail to connect and they count against you. The game that launched a franchise.",
@@ -380,9 +401,9 @@ const ENTRIES: Game[] = [
     yt:"how to play Ticket to Ride board game tutorial",
     awards:[{ name:"Spiel des Jahres", year:2004 },{ name:"Origins Award Best Board Game", year:2005 },{ name:"Japan Boardgame Prize Best Advanced Game", year:2004 },{ name:"As d'Or", year:2005 },{ name:"Japan Boardgame Prize Best Japanese Edition", year:2006 }],
     subgames:[
-      { name:"Europe", slug:"europe", kind:'version', players:"2–5", min:2, max:5, dur:"30–60 min", mins:60, cat:"medium", bgg:14996,
+      { name:"Europe", slug:"europe", kind:'version', players:"2–5", min:2, max:5, dur:"30–60 min", mins:60, bgg:14996,
         short:"Claim train routes across Europe to complete secret destination tickets.",
-        yt:"how to play Ticket to Ride Europe board game tutorial", rules:"/rules/ticket-to-ride.europe.pdf",
+        yt:"how to play Ticket to Ride Europe board game tutorial",
         awards:[{ name:"International Gamers Award Multiplayer", year:2005 }],
         desc:"Claim train routes across Europe by collecting and spending matching coloured cards. Complete secret destination tickets for big points. Block rivals before they finish. Tunnels, ferries, and stations add depth.",
         detail:[
@@ -391,7 +412,7 @@ const ENTRIES: Game[] = [
           { heading:"Why It Endures", body:`Ticket to Ride Europe won the Spiel des Jahres in 2005 and remains one of the most accessible gateway strategy games available. The 30-minute taught-to-playing time and near-zero luck in the final stages make it ideal for introducing non-gamers to strategic play. The blocking and route-racing tension escalates naturally over the first 45 minutes before the final scoring creates a satisfying, often dramatic conclusion.` },
         ] },
     ] },
-  { name:"Risk",                     slug:"risk",                  img:"/images/risk.webp",                  rules:"/rules/risk.pdf",                  players:"2–5",  min:2,  max:5,  dur:"1–8 hrs",   mins:480, cat:"long",   group:'strat', bgg:181,
+  { name:"Risk",                     slug:"risk",                  players:"2–5",  min:2,  max:5,  dur:"1–8 hrs",   mins:480, group:'strat', bgg:181,
     kw:['strategy','negotiation','classic'],
     short:"Global domination via dice, armies, and alliances you will absolutely betray.",
     desc:"The original game of global domination. Deploy armies, invade territories, forge alliances, and shatter them. Games can last all afternoon as empires rise and collapse. Legendary for ending friendships. Clear your calendar.",
@@ -402,7 +423,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play Risk board game tutorial rules",
     awards:[] },
-  { name:"Pandemic",                 slug:"pandemic",              img:"/images/pandemic.webp",              rules:"/rules/pandemic.pdf",              players:"2–4",  min:2,  max:4,  dur:"45 min",    mins:45,  cat:"medium", group:'coop', bgg:30549,
+  { name:"Pandemic",                 slug:"pandemic",              players:"2–4",  min:2,  max:4,  dur:"45 min",    mins:45,  group:'coop', bgg:30549,
     kw:['cooperative','strategy','thematic'],
     short:"Work together as disease specialists to cure four global outbreaks before time runs out.",
     desc:"Work together as specialists to cure four diseases spreading across the globe. Manage outbreaks, build research stations, discover cures before the deck runs out. Brutally difficult, deeply satisfying.",
@@ -413,7 +434,7 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play Pandemic board game tutorial Watch It Played",
     awards:[{ name:"Origins Award Best Board Game", year:2009 },{ name:"Golden Geek Best Family Game", year:2009 },{ name:"MinD-Spielepreis", year:2011 },{ name:"Guldbrikken Jury Prize", year:2015 }] },
-  { name:"Mysterium",                slug:"mysterium",             img:"/images/mysterium.webp",             rules:"/rules/mysterium.pdf",             players:"2–7",  min:2,  max:7,  dur:"45 min",    mins:45,  cat:"medium", group:'coop', bgg:181304,
+  { name:"Mysterium",                slug:"mysterium",             players:"2–7",  min:2,  max:7,  dur:"45 min",    mins:45,  group:'coop', bgg:181304,
     kw:['cooperative','deduction','thematic','creative'],
     short:"One player is a ghost sending surreal dream-card visions; everyone else solves the murder.",
     desc:"One player is a ghost communicating only through surreal illustrated vision cards. Everyone else decodes the visions to identify the killer, location, and weapon. Cooperative, creative, unlike anything else.",
@@ -424,9 +445,9 @@ const ENTRIES: Game[] = [
     ],
     yt:"how to play Mysterium board game tutorial",
     awards:[{ name:"As d'Or", year:2016 },{ name:"Golden Geek Best Artwork & Presentation", year:2016 },{ name:"Japan Boardgame Prize Voters' Selection", year:2015 }] },
-  { name:"Hogwarts Battle",          slug:"hogwarts-battle",       img:"/images/hogwarts-battle.webp",       rules:"/rules/hogwarts-battle.pdf",       players:"2–4",  min:2,  max:4,  dur:"30–60 min", mins:60,  cat:"medium", group:'coop', bgg:199042,
+  { name:"Hogwarts Battle",          slug:"hogwarts-battle",       players:"2–4",  min:2,  max:4,  dur:"30–60 min", mins:60,  group:'coop', bgg:199042,
     rulesLabel:"Game 1",
-    moreRules:[{ slug:"game-2", label:"Game 2", pdf:"/rules/hogwarts-battle.game-2.pdf" },{ slug:"game-3", label:"Game 3", pdf:"/rules/hogwarts-battle.game-3.pdf" },{ slug:"game-4", label:"Game 4", pdf:"/rules/hogwarts-battle.game-4.pdf" },{ slug:"game-5", label:"Game 5", pdf:"/rules/hogwarts-battle.game-5.pdf" },{ slug:"game-6", label:"Game 6", pdf:"/rules/hogwarts-battle.game-6.pdf" },{ slug:"game-7", label:"Game 7", pdf:"/rules/hogwarts-battle.game-7.pdf" }],
+    moreRules:[{ slug:"game-2", label:"Game 2" },{ slug:"game-3", label:"Game 3" },{ slug:"game-4", label:"Game 4" },{ slug:"game-5", label:"Game 5" },{ slug:"game-6", label:"Game 6" },{ slug:"game-7", label:"Game 7" }],
     houseRules:[
       { name:"Altered villain setup", text:"At the start of a game, reveal one more villain (or creature) than the game calls for. As a group, choose one of them to shuffle back into the Villain stack, above LORD VOLDEMORT when he waits at the bottom." },
       { name:"Split by cost", text:"Sort the HOGWARTS cards into two decks, one of cards costing 4 or less and one of cards costing 5 or more, and shuffle each. Deal three of the six face-up spaces from each deck, and refill an empty space from the deck it was dealt from." },
@@ -447,11 +468,11 @@ const ENTRIES: Game[] = [
     yt:"how to play Harry Potter Hogwarts Battle deck building tutorial",
     awards:[{ name:"Mensa Select", year:2017 }],
     subgames:[
-      { name:"The Monster Box of Monsters", slug:"monster-box-of-monsters", kind:'expansion', players:"2–4", min:2, max:4, dur:"30–60 min", mins:60, cat:"medium",
+      { name:"The Monster Box of Monsters", slug:"monster-box-of-monsters", kind:'expansion', players:"2–4", min:2, max:4, dur:"30–60 min", mins:60,
         short:"Adds Luna Lovegood as a fifth hero, creatures and encounters to face, and four more boxes that open in order.",
-        yt:"Hogwarts Battle Monster Box of Monsters expansion how to play", rules:"/rules/hogwarts-battle.monster-box-of-monsters.pdf",
+        yt:"Hogwarts Battle Monster Box of Monsters expansion how to play",
         rulesLabel:"Monster Box 1",
-        moreRules:[{ slug:"monster-box-2", label:"Monster Box 2", pdf:"/rules/hogwarts-battle.monster-box-2.pdf" },{ slug:"monster-box-3", label:"Monster Box 3", pdf:"/rules/hogwarts-battle.monster-box-3.pdf" },{ slug:"monster-box-4", label:"Monster Box 4", pdf:"/rules/hogwarts-battle.monster-box-4.pdf" }],
+        moreRules:[{ slug:"monster-box-2", label:"Monster Box 2" },{ slug:"monster-box-3", label:"Monster Box 3" },{ slug:"monster-box-4", label:"Monster Box 4" }],
         desc:"The first expansion for Hogwarts Battle, played over four boxes that open in order like the base game's seven. It adds Luna Lovegood as a hero you can choose (still two to four players), creatures alongside the villains, and an Encounter to complete in every game. Best played after Game 7.",
         detail:[
           { heading:"What It Adds", body:`Luna Lovegood with her own starting deck, new Hero cards for everyone, creatures that are shuffled in with the villains, three Encounters per box, Detention! cards that cost you 2 Health if you discard them, and new HOGWARTS cards. Box 2 adds the Creature Die, Box 3 adds a Patronus for each hero, and Box 4 brings a final LORD VOLDEMORT.` },
@@ -460,10 +481,31 @@ const ENTRIES: Game[] = [
     ] },
 ];
 
+const rulebookPdf = (key: string) => `/rules/${key}.pdf`;
+
+/** An entry with its box art and rulebook paths filled in from the slugs. */
+function withPaths({ img, moreRules, subgames, ...game }: GameEntry): Game {
+  const extras = (more: ExtraRulebookEntry[]): ExtraRulebook[] =>
+    more.map((r) => ({ ...r, pdf: rulebookPdf(`${game.slug}.${r.slug}`) }));
+  return {
+    ...game,
+    img: img ?? `/images/${game.slug}.webp`,
+    rules: rulebookPdf(game.slug),
+    ...(moreRules ? { moreRules: extras(moreRules) } : {}),
+    ...(subgames ? {
+      subgames: subgames.map(({ rules, moreRules: more, ...sub }): SubGame => ({
+        ...sub,
+        ...(rules === false ? {} : { rules: rulebookPdf(`${game.slug}.${sub.slug}`) }),
+        ...(more ? { moreRules: extras(more) } : {}),
+      })),
+    } : {}),
+  };
+}
+
 /** BoardGameGeek's weight for a game, or a game inside one, where BGG rates it. */
 function weighed<T extends { bgg?: number; weight?: number }>(t: T): T {
   const weight = t.bgg === undefined ? undefined : GAME_WEIGHTS[t.bgg];
   return weight == null ? t : { ...t, weight };
 }
 
-export const GAMES: Game[] = ENTRIES.map((g) => weighed(g.subgames ? { ...g, subgames: g.subgames.map(weighed) } : g));
+export const GAMES: Game[] = ENTRIES.map(withPaths).map((g) => weighed(g.subgames ? { ...g, subgames: g.subgames.map(weighed) } : g));

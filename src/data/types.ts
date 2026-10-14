@@ -54,7 +54,6 @@ export interface SubGame {
   max: number;
   dur: string;
   mins: number;
-  cat: DurationCategory;
   short: string;
   yt: string;
   /** As a game's (see Filterable). */
@@ -90,7 +89,6 @@ export interface Filterable {
   max: number;
   dur: string;
   mins: number;
-  cat: DurationCategory;
   kw: KeywordId[];
   /**
    * BoardGameGeek id. A game's difficulty is BGG's weight for it
@@ -111,7 +109,9 @@ export interface Filterable {
 
 export interface Game extends Filterable {
   slug: string;
+  /** Box art, /images/<slug>.webp unless its entry names another (games.ts fills both in). */
   img: string;
+  /** Its own rulebook, /rules/<slug>.pdf. */
   rules: string;
   /** The rules page's tab for `rules`; "Base game" (or "Overview" for a deck) when absent. */
   rulesLabel?: string;
