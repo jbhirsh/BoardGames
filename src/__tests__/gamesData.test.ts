@@ -3,6 +3,7 @@ import { GAMES } from '../data/games';
 import { GAME_WEIGHTS } from '../data/gameWeights';
 import { KW } from '../data/keywords';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
+import { WORD_CHECKER_GAME } from '../data/wordChecker';
 import type { Award } from '../data/types';
 import { durationCategory } from '../hooks/useSuggestions';
 import { isDeck } from '../utils/filterGames';
@@ -60,6 +61,10 @@ describe('games data', () => {
 
   it.each([...SCORE_CALCULATORS])('score calculator %s is a game in the collection', (slug) => {
     expect(GAMES.map((g) => g.slug)).toContain(slug);
+  });
+
+  it('the word checker\'s game is in the collection', () => {
+    expect(GAMES.map((g) => g.slug)).toContain(WORD_CHECKER_GAME);
   });
 
   const withHouseRules = GAMES.filter((g) => g.houseRules).map((g) => [g.slug, g.houseRules!] as const);

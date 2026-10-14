@@ -1,22 +1,17 @@
 import { useId, useState } from 'react';
-import { Link } from 'react-router';
 import type { Game, KeywordId } from '../data/types';
 import { isKeywordLit } from '../utils/keywordLit';
-import { SCORE_CALCULATORS } from '../data/scoreCalculators';
 import { useFilter } from '../context/useFilter';
-import { ytURL } from '../utils/urls';
 import { sortedKw } from '../utils/filterGames';
 import KeywordPill from './KeywordPill';
-import AwardsBadge, { AwardsList } from './AwardsBadge';
+import AwardsBadge, { AwardsSection } from './AwardsBadge';
 import SubGameList from './SubGameList';
 import DifficultyMeta from './DifficultyMeta';
-import RulesLink from './RulesLink';
-import ExternalLink from './ExternalLink';
+import GameActions from './GameActions';
 import Popover from './Popover';
-import { FROM_LIST } from '../utils/fromList';
 import { fittingSubgames, subgameLabel } from '../utils/subgames';
 import { gameAnchor } from '../utils/heroCovers';
-import { YouTubeIcon, UserIcon, ClockIcon, CalculatorIcon, SearchIcon } from './Icons';
+import { UserIcon, ClockIcon } from './Icons';
 
 interface Props {
   game: Game;
@@ -80,12 +75,7 @@ export default function GameCard({ game }: Props) {
         {moreOpen && (
           <div className="card-detail" id={moreId}>
             <div className="detail-section" dangerouslySetInnerHTML={{ __html: game.detail }} />
-            {game.awards.length > 0 && (
-              <div className="detail-section row-awards">
-                <h3>Awards</h3>
-                <AwardsList awards={game.awards} />
-              </div>
-            )}
+            <AwardsSection awards={game.awards} />
           </div>
         )}
       </div>
@@ -117,27 +107,7 @@ export default function GameCard({ game }: Props) {
             </Popover>
           )}
         </div>
-        <div className="card-foot-end">
-          <RulesLink game={game} className="rules-btn rules-btn--primary" />
-          {SCORE_CALCULATORS.has(game.slug) && (
-            <Link className="rules-btn" to={`/score/${game.slug}`} state={FROM_LIST} title="Score Calculator">
-              <CalculatorIcon /> Score
-            </Link>
-          )}
-          {game.slug === 'bananagrams' && (
-            <Link className="rules-btn" to="/word-checker" state={FROM_LIST} title="Word Checker">
-              <SearchIcon /> Word Checker
-            </Link>
-          )}
-          <ExternalLink
-            className="row-yt"
-            href={ytURL(game.yt)}
-            title="Watch Tutorial"
-            aria-label={`Watch ${game.name} tutorial on YouTube`}
-          >
-            <YouTubeIcon />
-          </ExternalLink>
-        </div>
+        <GameActions game={game} variant="card" />
       </div>
       {game.subgames && hasFitting && subsOpen && (
         <div className="sub-panel" id={subsId}>

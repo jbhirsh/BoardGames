@@ -17,6 +17,20 @@ export function AwardsList({ awards }: { awards: Award[] }) {
   );
 }
 
+/**
+ * The Awards section of an open card or list row: the wins in full, under a
+ * heading. Nothing for an entry with no wins.
+ */
+export function AwardsSection({ awards }: { awards: Award[] }) {
+  if (awards.length === 0) return null;
+  return (
+    <div className="detail-section row-awards">
+      <h3>Awards</h3>
+      <AwardsList awards={awards} />
+    </div>
+  );
+}
+
 function Trophy({ count }: { count: number }) {
   return (
     <>

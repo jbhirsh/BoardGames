@@ -1,5 +1,5 @@
 import type { WishlistItem } from '../data/types';
-import { AwardsList } from './AwardsBadge';
+import { AwardsSection } from './AwardsBadge';
 import WishlistLinks from './WishlistLinks';
 import VoteButton from './VoteButton';
 import ExpansionTag from './ExpansionTag';
@@ -61,12 +61,7 @@ export default function WishlistRow({ item, voteCount, voted, onVote, disabled, 
           <p>{item.desc}</p>
           {item.suggestedBy && <p className="row-credit">Suggested by {item.suggestedBy}</p>}
         </div>
-        {item.awards.length > 0 && (
-          <div className="detail-section row-awards">
-            <h3>Awards</h3>
-            <AwardsList awards={item.awards} />
-          </div>
-        )}
+        <AwardsSection awards={item.awards} />
         <AdminItemControls item={item} />
         <div className="row-expand-foot">
           <WishlistLinks item={item} />

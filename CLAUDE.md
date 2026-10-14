@@ -242,7 +242,9 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
 - **`data/`** — the static data layer. `games.ts` is the source of truth for
   the collection; `wishlist.ts`, `keywords.ts`, `initialFilterState.ts`,
   `scoreCalculators.ts` (the games with a score calculator, which the cards,
-  rows and score page all read) and `types.ts` support it. No database on the read path — the collection is a
+  rows and score page all read), `wordChecker.ts` (the game the word
+  checker is for, which its card, row and rules page link to and whose
+  box art the checker's page wears) and `types.ts` support it. No database on the read path — the collection is a
   compiled-in constant. `Game` and `WishlistItem` both extend `Filterable`
   (name, desc, min/max players, mins, duration bucket, keywords). The filter
   pipeline (`utils/filterGames.ts`) is generic over it: `filterItems` with
@@ -273,7 +275,9 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
   lists the games in full. A collapsed row carries only its chevron, on a
   desktop and on the narrow list alike: its Rules, Score or Word Checker
   and video close the expanded row, under the write-up, add-ons and
-  awards, on the right. Rules there and on a card is one `RulesLink`,
+  awards, on the right (`GameActions`, the bar a card's footer ends with
+  too, and `AwardsSection` the awards above it, as on an open card and a
+  wishlist row). Rules there and on a card is one `RulesLink`,
   named "Rules for <game>" (label in name) and marked as leaving the list
   so the rules page's Back returns to it. When the players and time filters admit a game
   only through an add-on with its own rulebook, its Rules link opens that
