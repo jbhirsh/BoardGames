@@ -2,7 +2,7 @@ import { useReducer, useMemo, type ReactNode } from 'react';
 import { useLocation } from 'react-router';
 import { filterReducer } from './filterReducer';
 import { GAMES } from '../data/games';
-import { filterGames } from '../utils/filterGames';
+import { filterGames, groupGames } from '../utils/filterGames';
 import { FilterContext } from './filterContextValue';
 import { searchParamsToFilter } from '../utils/filterUrl';
 import { useFilterUrlSync } from './useFilterUrlSync';
@@ -20,8 +20,12 @@ export function FilterProvider({ children }: { children: ReactNode }) {
   useFilterUrlSync(state, dispatch);
 
   const filteredGames = useMemo(() => filterGames(GAMES, state), [state]);
+  const gameGroups = useMemo(() => groupGames(filteredGames, state), [filteredGames, state]);
 
-  const value = useMemo(() => ({ state, dispatch, filteredGames }), [state, dispatch, filteredGames]);
+  const value = useMemo(
+    () => ({ state, dispatch, filteredGames, gameGroups }),
+    [state, dispatch, filteredGames, gameGroups],
+  );
 
   return (
     <FilterContext.Provider value={value}>

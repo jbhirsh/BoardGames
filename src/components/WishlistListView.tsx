@@ -1,14 +1,9 @@
-import { Fragment, useState } from 'react';
-import type { WishlistItem, WishlistType } from '../data/types';
+import { useState } from 'react';
 import { WISHLIST_TYPES } from '../data/keywords';
+import type { WishlistGroup } from '../utils/filterGames';
 import GamesTableHead from './GamesTableHead';
+import GroupedRows from './GroupedRows';
 import WishlistRow, { WISHLIST_COLUMNS } from './WishlistRow';
-
-export interface WishlistGroup {
-  /** null for the flat, ungrouped list. */
-  type: WishlistType | null;
-  items: WishlistItem[];
-}
 
 interface Props {
   groups: WishlistGroup[];
@@ -27,27 +22,23 @@ export default function WishlistListView({ groups, counts, myVotes, onVote, disa
       <table className="games-list">
         <GamesTableHead extra={<th className="col-vote"><span className="sr-only">Votes</span></th>} />
         <tbody>
-          {groups.map(({ type, items }) => (
-            <Fragment key={type ?? 'all'}>
-              {type && (
-                <tr className="list-group-row">
-                  <td colSpan={WISHLIST_COLUMNS}>{WISHLIST_TYPES[type]}</td>
-                </tr>
-              )}
-              {items.map((item) => (
-                <WishlistRow
-                  key={item.id}
-                  item={item}
-                  voteCount={counts[item.id] ?? 0}
-                  voted={myVotes.has(item.id)}
-                  onVote={() => onVote(item.id)}
-                  disabled={disabled}
-                  isOpen={openRow === item.id}
-                  onToggle={() => setOpenRow(openRow === item.id ? null : item.id)}
-                />
-              ))}
-            </Fragment>
-          ))}
+          <GroupedRows
+            groups={groups}
+            labels={WISHLIST_TYPES}
+            columns={WISHLIST_COLUMNS}
+            row={(item) => (
+              <WishlistRow
+                key={item.id}
+                item={item}
+                voteCount={counts[item.id] ?? 0}
+                voted={myVotes.has(item.id)}
+                onVote={() => onVote(item.id)}
+                disabled={disabled}
+                isOpen={openRow === item.id}
+                onToggle={() => setOpenRow(openRow === item.id ? null : item.id)}
+              />
+            )}
+          />
         </tbody>
       </table>
     </div>

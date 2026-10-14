@@ -15,7 +15,7 @@ import { useWishlistVotes } from '../hooks/useWishlistVotes';
 import { useKeepSectionInView } from '../hooks/useKeepSectionInView';
 import { useIsPhone } from '../hooks/useIsPhone';
 import { useCopyLink } from '../hooks/useCopyLink';
-import { filterWishlist, isGrouped } from '../utils/filterGames';
+import { filterWishlist, groupItems, isGrouped, type WishlistGroup } from '../utils/filterGames';
 import { buildShareUrl } from '../utils/filterUrl';
 import { initialFilterState } from '../data/initialFilterState';
 
@@ -112,25 +112,23 @@ function WishlistBody({ items, filtered, isPhone }: { items: WishlistItem[]; fil
   // but orders each by that column, as the collection's table does. Every
   // other sort is a flat list in that sort's order.
   const grouped = isGrouped(state);
-  const groups = useMemo(() => {
+  const groups = useMemo((): WishlistGroup[] => {
     // Most votes first; the filter left ties in name order.
     if (state.sort === 'votes') {
-      return [{ type: null, items: [...filtered].sort((a, b) => (orderCounts[b.id] ?? 0) - (orderCounts[a.id] ?? 0)) }];
+      return [{ key: null, items: [...filtered].sort((a, b) => (orderCounts[b.id] ?? 0) - (orderCounts[a.id] ?? 0)) }];
     }
-    if (!grouped) return [{ type: null, items: filtered }];
+    if (!grouped) return [{ key: null, items: filtered }];
     const ordered = state.sort === 'group'
       ? [...filtered].sort((a, b) => (orderCounts[b.id] ?? 0) - (orderCounts[a.id] ?? 0) || a.name.localeCompare(b.name))
       : filtered;
-    return WISHLIST_TYPE_ORDER
-      .map((type) => ({ type, items: ordered.filter((w) => w.type === type) }))
-      .filter((g) => g.items.length > 0);
+    return groupItems(ordered, WISHLIST_TYPE_ORDER, (w) => w.type);
   }, [filtered, grouped, state.sort, orderCounts]);
 
-  const renderGrid = () => groups.map(({ type, items: groupItems }) => (
-    <div className="wish-group" key={type ?? 'all'}>
-      {type && <h3 className="group-hd">{WISHLIST_TYPES[type]}</h3>}
+  const renderGrid = () => groups.map(({ key, items: entries }) => (
+    <div className="wish-group" key={key ?? 'all'}>
+      {key && <h3 className="group-hd">{WISHLIST_TYPES[key]}</h3>}
       <div className="games-grid wish-grid">
-        {groupItems.map((item) => (
+        {entries.map((item) => (
           <WishlistCard
             key={item.id}
             item={item}

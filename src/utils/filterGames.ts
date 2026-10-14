@@ -1,4 +1,4 @@
-import type { Game, FilterState, Filterable, SubGame, TimeBudget, WishlistItem } from '../data/types';
+import type { Game, FilterState, Filterable, GroupId, SubGame, TimeBudget, WishlistItem, WishlistType } from '../data/types';
 import { GROUP_ORDER, KW, TIME_BUDGETS, WISHLIST_TYPE_ORDER } from '../data/keywords';
 
 /**
@@ -70,6 +70,35 @@ export function filterGames(games: Game[], state: FilterState): Game[] {
 
 export function filterWishlist(items: WishlistItem[], state: FilterState): WishlistItem[] {
   return filterItems(items, state, (w) => WISHLIST_TYPE_ORDER.indexOf(w.type));
+}
+
+/** One heading's worth of a list; `key` is null for the flat, ungrouped list. */
+export interface ItemGroup<T, K extends string> {
+  key: K | null;
+  items: T[];
+}
+
+export type GameGroup = ItemGroup<Game, GroupId>;
+export type WishlistGroup = ItemGroup<WishlistItem, WishlistType>;
+
+/**
+ * Splits a list into its groups in `order`, each keeping the list's own
+ * order (so a column sort on top of the group sort orders within each
+ * group), and leaves out the groups with nothing in them.
+ */
+export function groupItems<T, K extends string>(list: T[], order: readonly K[], keyOf: (item: T) => K): ItemGroup<T, K>[] {
+  return order
+    .map((key) => ({ key, items: list.filter((item) => keyOf(item) === key) }))
+    .filter((g) => g.items.length > 0);
+}
+
+/**
+ * The filtered collection as both its views show it: under the group sort
+ * (chosen, or the base under a column sort) a group per kind of game, in
+ * the groups' order; under any other sort one flat list.
+ */
+export function groupGames(games: Game[], state: FilterState): GameGroup[] {
+  return isGrouped(state) ? groupItems(games, GROUP_ORDER, (g) => g.group) : [{ key: null, items: games }];
 }
 
 const CAT_ORDER = { quick: 0, medium: 1, long: 2 } as const;

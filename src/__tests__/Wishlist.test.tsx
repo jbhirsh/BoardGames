@@ -423,6 +423,18 @@ describe('Wishlist engagement', () => {
     expect(within(splendor).queryByText(/Expansion for/)).not.toBeInTheDocument();
   });
 
+  it('opens one row at a time in the list view, and closes it again', async () => {
+    mockVotes({});
+    renderWishlist('/?c=want&v=list');
+    const [first, second] = WISHLIST;
+    fireEvent.click(await screen.findByRole('button', { name: `Show details for ${first.name}` }));
+    expect(screen.getByRole('button', { name: `Hide details for ${first.name}` })).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.click(screen.getByRole('button', { name: `Show details for ${second.name}` }));
+    expect(screen.getByRole('button', { name: `Show details for ${first.name}` })).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(screen.getByRole('button', { name: `Hide details for ${second.name}` }));
+    expect(screen.getByRole('button', { name: `Show details for ${second.name}` })).toHaveAttribute('aria-expanded', 'false');
+  });
+
   it('marks an expansion in the list view too', async () => {
     mockVotes({});
     renderWishlist('/?c=want&v=list');

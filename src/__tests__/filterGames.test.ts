@@ -2,10 +2,11 @@ import { filterWishlist } from '../utils/filterGames';
 import { WISHLIST } from '../data/wishlist';
 import { GROUP_ORDER, WISHLIST_TYPE_ORDER } from '../data/keywords';
 import { describe, it, expect } from 'vitest';
-import { filterGames, sortItems, sortedKw, isGrouped, fitsTable, tableFiltered, budgetFor } from '../utils/filterGames';
+import { filterGames, sortItems, sortedKw, isGrouped, fitsTable, tableFiltered, budgetFor, groupGames, groupItems } from '../utils/filterGames';
+import { GAMES } from '../data/games';
 import { initialFilterState } from '../data/initialFilterState';
 import { testGames, quickGame, mediumGame, longGame } from './testData';
-import type { FilterState, Game, SubGame } from '../data/types';
+import type { FilterState, Game, SortMode, SubGame } from '../data/types';
 
 // The collection's sort: sortItems with the games' group order, as
 // filterGames applies it.
@@ -404,6 +405,89 @@ describe('isGrouped', () => {
     expect(isGrouped(makeState({ sort: 'name-asc', baseSort: 'group' }))).toBe(true);
     expect(isGrouped(makeState({ sort: 'group', baseSort: 'az' }))).toBe(true);
     expect(isGrouped(makeState({ sort: 'az', baseSort: 'az' }))).toBe(false);
+  });
+});
+
+describe('groupItems', () => {
+  const list = ['b2', 'a1', 'c1', 'a2', 'b1'];
+  const first = (s: string) => s[0];
+
+  it('splits a list into its groups in the given order, each in the list\'s own order', () => {
+    expect(groupItems(list, ['c', 'a', 'b'], first)).toEqual([
+      { key: 'c', items: ['c1'] },
+      { key: 'a', items: ['a1', 'a2'] },
+      { key: 'b', items: ['b2', 'b1'] },
+    ]);
+  });
+
+  it('leaves out a group with nothing in it', () => {
+    expect(groupItems(list, ['d', 'a', 'e'], first)).toEqual([{ key: 'a', items: ['a1', 'a2'] }]);
+    expect(groupItems([], ['a'], first)).toEqual([]);
+  });
+});
+
+describe('groupGames', () => {
+  // How GridView and ListView grouped the filtered games themselves before
+  // the filter did it for them: every group in GROUP_ORDER with a game
+  // showing, each in the filtered order, or the filtered list as it is.
+  function viewsGrouping(games: Game[], state: FilterState) {
+    if (!isGrouped(state)) return [{ key: null, items: games }];
+    return GROUP_ORDER
+      .filter((g) => games.some((gm) => gm.group === g))
+      .map((key) => ({ key, items: games.filter((g) => g.group === key) }));
+  }
+
+  const SORTS: SortMode[] = [
+    'az', 'group', 'quick', 'long', 'votes',
+    'name-asc', 'name-desc', 'dur-asc', 'dur-desc',
+    'players-asc', 'players-desc', 'weight-asc', 'weight-desc',
+  ];
+  const filters: Partial<FilterState>[] = [{}, { players: 4 }, { duration: 30 }, { search: 'pandemic' }, { search: 'zzzz' }];
+
+  it('groups every sort, on the group base or not, as the views did', () => {
+    for (const baseSort of ['az', 'group'] as SortMode[]) {
+      for (const sort of SORTS) {
+        for (const filter of filters) {
+          const state = makeState({ ...filter, sort, baseSort });
+          const games = filterGames(GAMES, state);
+          expect(groupGames(games, state), `${sort} on ${baseSort} ${JSON.stringify(filter)}`).toEqual(viewsGrouping(games, state));
+        }
+      }
+    }
+  });
+
+  it('heads each kind of game in the groups\' order, by name within', () => {
+    const state = makeState({ sort: 'group', baseSort: 'group' });
+    const groups = groupGames(filterGames(GAMES, state), state);
+    expect(groups.map((g) => g.key)).toEqual(GROUP_ORDER.filter((id) => GAMES.some((g) => g.group === id)));
+    for (const { key, items } of groups) {
+      expect(items.every((g) => g.group === key)).toBe(true);
+      expect(items.map((g) => g.name)).toEqual(items.map((g) => g.name).sort((a, b) => a.localeCompare(b)));
+    }
+    expect(groups.flatMap((g) => g.items)).toHaveLength(GAMES.length);
+  });
+
+  it('keeps the groups under a column sort, ordering each by the column', () => {
+    const state = makeState({ sort: 'players-desc', baseSort: 'group' });
+    const sorted = filterGames(GAMES, state);
+    for (const { key, items } of groupGames(sorted, state)) {
+      expect(items).toEqual(sorted.filter((g) => g.group === key));
+    }
+  });
+
+  it('is one flat list, the same array, under any other sort', () => {
+    const state = makeState({ sort: 'quick', baseSort: 'quick' });
+    const games = filterGames(GAMES, state);
+    const groups = groupGames(games, state);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].key).toBeNull();
+    expect(groups[0].items).toBe(games);
+  });
+
+  it('heads only the groups with a game showing', () => {
+    const state = makeState({ sort: 'group', baseSort: 'group', search: 'pandemic' });
+    expect(groupGames(filterGames(GAMES, state), state).map((g) => g.key)).toEqual(['coop']);
+    expect(groupGames([], state)).toEqual([]);
   });
 });
 
