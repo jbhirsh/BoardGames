@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { enforceRateLimit, getLimiter } from './_lib/rateLimit.js';
 import { getRedis } from './_lib/redis.js';
 import { failWith500, initSentry, reportError } from './_lib/sentry.js';
-import { baseUrl, button, escapeHtml, ownerEmail, page, resendMailer, type Mailer } from './_lib/mail.js';
+import { baseUrl, button, escapeHtml, mailLayout, ownerEmail, page, resendMailer, type Mailer } from './_lib/mail.js';
 import {
   ID_RE, SESSION_TTL_S, isAdmin, isJsonRequest, newId, sessionCookie, sessionIdFrom, sessionKey,
   type Headers, type SessionRedis,
@@ -52,12 +52,9 @@ const normalizeEmail = (s: string) => s.trim().toLowerCase();
 function signInMail(link: string) {
   return {
     subject: 'Sign in to The Game Room',
-    html: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#1D1D1F">
-<h2 style="margin:0 0 12px">Your sign-in link</h2>
+    html: mailLayout(`<h2 style="margin:0 0 12px">Your sign-in link</h2>
 <p style="margin:0 0 20px">Open this on the device you want to manage the wishlist from. It works once and expires in 15 minutes.</p>
-${button(link, 'Sign in', '#0071E3')}
-<p style="margin:24px 0 0;font-size:12px;color:#86868B">If you didn't ask for this, ignore it; nothing happens until the link is used.</p>
-</div>`,
+${button(link, 'Sign in', '#0071E3')}`, "If you didn't ask for this, ignore it; nothing happens until the link is used."),
   };
 }
 
