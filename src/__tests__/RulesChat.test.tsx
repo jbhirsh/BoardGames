@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import * as Sentry from '@sentry/react';
 import { MemoryRouter } from 'react-router';
-import RulesChatProvider, { RulesChatToggle, RulesChatPanel } from '../components/RulesChat';
+import RulesChatProvider, { HISTORY_SENT, RulesChatToggle, RulesChatPanel } from '../components/RulesChat';
 import { FROM_LIST } from '../utils/fromList';
 import { renderRouted } from './routed';
 
@@ -69,6 +69,24 @@ describe('RulesChat', () => {
     openPanel();
     expect(screen.getByText('Hi! Ask me anything about the rules for Cranium.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /close ai chat/i })).toBeInTheDocument();
+  });
+
+  it('sends only the last HISTORY_SENT messages of a long conversation', async () => {
+    let n = 0;
+    const fetchMock = vi.fn(async () => streamResponse([`Answer ${++n}.`]));
+    vi.stubGlobal('fetch', fetchMock);
+    setup();
+    openPanel();
+    for (let q = 1; q <= 5; q++) {
+      send(`Question ${q}?`);
+      expect(await screen.findByText(`Answer ${q}.`)).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByPlaceholderText('Ask a rules question...')).toBeEnabled());
+    }
+    // Four exchanges before the fifth question: eight messages, the newest kept.
+    const body = JSON.parse((fetchMock.mock.calls[4] as unknown as [string, RequestInit])[1].body as string);
+    expect(body.history).toHaveLength(HISTORY_SENT);
+    expect(body.history.at(-1)).toEqual({ role: 'model', content: 'Answer 4.' });
+    expect(body.history[0]).toEqual({ role: 'user', content: `Question ${5 - HISTORY_SENT / 2}?` });
   });
 
   it('disables Send while the input is empty', () => {

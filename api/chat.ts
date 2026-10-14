@@ -10,13 +10,17 @@ initSentry();
 // SLUG_RE constrains the slug before it reaches a filesystem path in
 // loadRulesText, so it can't traverse out of rules-text/.
 
+// The most earlier messages a question may bring. The rules chat sends
+// fewer (RulesChat's HISTORY_SENT), and a test keeps it within this.
+export const MAX_HISTORY = 10;
+
 // Cap total history content, not just entry count, so a caller can't smuggle
 // megabytes of prompt through it. Sized to fit a legitimate conversation:
-// history is capped at 10 entries and each model reply is bounded by the output
-// token cap (~4 chars/token), so a real multi-turn chat stays well under this
-// while bulk-stuffing is still blocked. (A flat 4000 would reject the message
-// right after one full-length answer got echoed back as history.)
-const MAX_HISTORY_CONTENT = RULES_ASSISTANT_MAX_OUTPUT_TOKENS * 10 * 4;
+// history is capped at MAX_HISTORY entries and each model reply is bounded by
+// the output token cap (~4 chars/token), so a real multi-turn chat stays well
+// under this while bulk-stuffing is still blocked. (A flat 4000 would reject
+// the message right after one full-length answer got echoed back as history.)
+const MAX_HISTORY_CONTENT = RULES_ASSISTANT_MAX_OUTPUT_TOKENS * MAX_HISTORY * 4;
 
 // The most rulebooks a request can add: the Card Deck sends all twelve of its
 // games' sheets.
@@ -112,8 +116,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // Validate history
-  if (history && (!Array.isArray(history) || history.length > 10)) {
-    return res.status(400).json({ error: 'history must be an array of 10 or fewer entries' });
+  if (history && (!Array.isArray(history) || history.length > MAX_HISTORY)) {
+    return res.status(400).json({ error: `history must be an array of ${MAX_HISTORY} or fewer entries` });
   }
 
   if (Array.isArray(history)) {
