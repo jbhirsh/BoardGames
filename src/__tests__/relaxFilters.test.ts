@@ -22,8 +22,11 @@ describe('activeFilters', () => {
     ]);
     expect(filters[0].without.duration).toBe('all');
     expect(filters[1].without.players).toBe(0);
-    expect([...filters[2].without.keywords]).toEqual(['party']);
+    expect(filters[2].without.keywords).toEqual(new Set(['party']));
     expect(filters[4].without.search).toBe('');
+    // Each change names its own field and nothing else, so dropping a filter
+    // can't carry a stale sort, view or list along with it.
+    expect(filters.map((f) => Object.keys(f.without))).toEqual([['duration'], ['players'], ['keywords'], ['keywords'], ['search']]);
     // The original is left alone.
     expect(state.keywords.size).toBe(2);
   });
@@ -38,6 +41,13 @@ describe('relaxations', () => {
     const state = at({ duration: 15, players: 4 });
     const counts = (s: FilterState) => (s.duration === 'all' ? 3 : s.players === 0 ? 7 : 0);
     expect(relaxations(state, counts).map((r) => [r.id, r.count])).toEqual([['players', 7], ['duration', 3]]);
+  });
+
+  it('counts each with the rest of the state kept', () => {
+    const state = at({ players: 4, search: 'azul', sort: 'group', baseSort: 'group', collection: 'want' });
+    const seen: FilterState[] = [];
+    relaxations(state, (s) => { seen.push(s); return 1; });
+    expect(seen).toEqual([{ ...state, players: 0 }, { ...state, search: '' }]);
   });
 
   it('is empty when no single filter is to blame', () => {

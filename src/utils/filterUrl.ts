@@ -5,7 +5,6 @@ import type {
   FilterState,
   KeywordId,
   KeywordMode,
-  SortMode,
   TimeBudget,
   ViewMode,
 } from '../data/types';
@@ -77,12 +76,7 @@ export function filterToSearchParams(state: FilterState): URLSearchParams {
   }
   if (state.keywordMode !== initial.keywordMode) params.set('m', state.keywordMode);
   if (filterOn(state, 'search')) params.set('q', state.search);
-  if (
-    state.baseSort !== initial.baseSort &&
-    (SORTS as readonly string[]).includes(state.baseSort)
-  ) {
-    params.set('s', state.baseSort);
-  }
+  if (state.baseSort !== initial.baseSort) params.set('s', state.baseSort);
   if (state.view !== initial.view) params.set('v', state.view);
   if (state.collection !== initial.collection) params.set('c', state.collection);
   return params;
@@ -123,8 +117,8 @@ export function searchParamsToFilter(params: URLSearchParams): FilterState {
   const search = params.get('q') ?? initialFilterState.search;
 
   const s = params.get('s');
-  const parsedSort: SortMode =
-    s && (SORTS as readonly string[]).includes(s) ? (s as BaseSort) : initialFilterState.sort;
+  const parsedSort: BaseSort =
+    s && (SORTS as readonly string[]).includes(s) ? (s as BaseSort) : initialFilterState.baseSort;
 
   const v = params.get('v');
   const view: ViewMode =
@@ -133,7 +127,7 @@ export function searchParamsToFilter(params: URLSearchParams): FilterState {
   const c = params.get('c');
   const collection: CollectionMode =
     c && (COLLECTIONS as readonly string[]).includes(c) ? (c as CollectionMode) : initialFilterState.collection;
-  const sort = sortAllowed(parsedSort, collection) ? parsedSort : initialFilterState.sort;
+  const sort = sortAllowed(parsedSort, collection) ? parsedSort : initialFilterState.baseSort;
 
   return {
     duration,

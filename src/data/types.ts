@@ -211,7 +211,8 @@ export interface FilterState {
   keywordMode: KeywordMode;
   search: string;
   sort: SortMode;
-  baseSort: SortMode;
+  /** The filter bar's sort, which a column sort sits on and Clear all returns to. */
+  baseSort: BaseSort;
   view: ViewMode;
   collection: CollectionMode;
 }

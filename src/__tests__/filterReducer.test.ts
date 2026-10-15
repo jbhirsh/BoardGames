@@ -39,12 +39,12 @@ describe('filterReducer', () => {
     expect(state.keywords.size).toBe(0);
   });
 
-  it('CLEAR_KEYWORDS removes all keywords', () => {
+  it('CLEAR_FILTERS on keywords removes all keywords', () => {
     const withKeywords: FilterState = {
       ...initialFilterState,
       keywords: new Set(['strategy', 'family'] as const),
     };
-    const state = filterReducer(withKeywords, { type: 'CLEAR_KEYWORDS' });
+    const state = filterReducer(withKeywords, { type: 'CLEAR_FILTERS', payload: ['keywords'] });
     expect(state.keywords.size).toBe(0);
   });
 
