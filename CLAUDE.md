@@ -169,6 +169,9 @@ before changing the module.
 - **Show UI changes in the PR.** A PR changing a component or stylesheet puts
   before/after visuals in its description: screenshots for looks, GIFs for
   motion, hosted on the `pr-screenshots` branch as the PR template shows.
+  GIFs show the pointer: record with `scripts/pr-gif.ts` (`showPointer`,
+  real `page.mouse` moves with pauses, `recordFrames`, `framesToGif`), host
+  on `pr-screenshots` and link by commit SHA.
   `PR visuals` (`.github/scripts/pr-visuals.mjs`) fails one with no picture
   unless "No visible UI change" is ticked; it can't see changes through
   `src/data`, `public/` or `index.html`, so show those too.
