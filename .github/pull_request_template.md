@@ -6,8 +6,11 @@
 UI changes need before/after visuals; the "PR visuals" check fails without
 them. Use screenshots for how things look, and a GIF (or a video dragged into
 this editor) for how things move or respond: a dropdown or dialog opening,
-an animation, scrolling, a multi-step flow. Put the images on the
-pr-screenshots branch (deploys are off there) and link them raw:
+an animation, scrolling, a multi-step flow. A GIF shows the pointer, so
+viewers see where it clicks and scrolls: record it with scripts/pr-gif.ts.
+Put the images on the pr-screenshots branch (deploys are off there) and
+link them raw; link a GIF by commit SHA (<sha> for pr-screenshots below)
+so a later push to the branch can't change what the PR shows:
 
 | Before (`main`) | After |
 |---|---|
