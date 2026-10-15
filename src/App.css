@@ -169,32 +169,44 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
    reel runs out to the screen's edges, where it fades, so covers glide in
    and out rather than being cut. The view's padding (taken back by its
    margins, which flow-root keeps inside the reel) is room for the covers'
-   shadows and their hover lift inside the clip. */
+   shadows and their hover lift inside the clip. The row can be grabbed
+   and dragged sideways: touch-action leaves a vertical swipe to scroll
+   the page and takes a sideways one for the drag. The covers keep the
+   pointer cursor, as they open their game on a click; the gaps and the
+   room round the row show the grab. */
 .hero-reel{
   --cover:104px;--cover-gap:18px;--cover-r:20px;--cover-shadow:0 8px 24px rgba(0,0,0,.12);--reel-fade:clamp(40px,12vw,200px);
   display:flow-root;position:relative;margin:0 calc(-1 * var(--gutter));
 }
 .hero-reel-view{
   overflow:hidden;overflow:clip;padding:12px 0 32px;margin:-12px 0 -32px;
+  cursor:grab;touch-action:pan-y;touch-action:pan-y pinch-zoom;-webkit-user-select:none;user-select:none;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 var(--reel-fade),#000 calc(100% - var(--reel-fade)),transparent);
   mask-image:linear-gradient(90deg,transparent,#000 var(--reel-fade),#000 calc(100% - var(--reel-fade)),transparent);
 }
 .hero-reel-track{position:relative;display:flex;width:max-content;animation:hero-reel var(--reel-lap,60s) linear infinite;will-change:transform;}
 @keyframes hero-reel{to{transform:translateX(-50%);}}
-/* Held still while pointed at (where a pointer can hover, so a tap on a
-   phone doesn't leave it stuck), while a cover has focus (not the pause
-   button, which keeps focus after a click), off screen, and when paused. */
+/* Held still while a cover is pointed at (below, where a pointer can
+   hover, so a tap on a phone doesn't leave it stuck), while pressed or
+   dragged, while a cover has focus (not the pause button, which keeps
+   focus after a click), off screen, and when paused. */
 .hero-reel.is-paused .hero-reel-track,
 .hero-reel.is-idle .hero-reel-track,
+.hero-reel.is-held .hero-reel-track,
 .hero-reel-view:focus-within .hero-reel-track{animation-play-state:paused;}
 .hero-reel-list{display:flex;gap:var(--cover-gap);padding-right:var(--cover-gap);list-style:none;margin:0;}
 .hero-reel-list li{flex:none;width:var(--cover);}
 .hero-reel-cover{display:block;width:100%;padding:0;border:none;background:none;border-radius:var(--cover-r);cursor:pointer;transition:transform .15s;}
 .hero-reel-cover:focus-visible{outline:2px solid var(--blue);outline-offset:3px;}
 .hero-reel-cover img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:cover;border-radius:var(--cover-r);box-shadow:var(--cover-shadow);}
+.hero-reel.is-dragging .hero-reel-view,.hero-reel.is-dragging .hero-reel-cover{cursor:grabbing;}
+/* Keyed on the cover's li, which doesn't lift: on the button itself, a
+   pointer at its bottom edge would lose it as it rose and drop it again,
+   flickering. The gaps between covers and the room round the row don't
+   count. */
 @media (hover:hover) and (pointer:fine){
-  .hero-reel:hover .hero-reel-track{animation-play-state:paused;}
-  .hero-reel-cover:hover{transform:translateY(-3px);}
+  .hero-reel-track:has(li:hover){animation-play-state:paused;}
+  .hero-reel-list li:hover .hero-reel-cover{transform:translateY(-3px);}
 }
 /* The pause button sits just under the row's right end, in the hero's
    bottom padding, clear of the covers and in line with the theme picker
@@ -210,7 +222,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 /* Less motion: the favourites stand still in a centred row, as the shelf
    did, shrinking to fit before they'd overflow. */
 .hero-reel--still{margin:0;}
-.hero-reel--still .hero-reel-view{-webkit-mask-image:none;mask-image:none;overflow:visible;padding:0;margin:0;}
+.hero-reel--still .hero-reel-view{-webkit-mask-image:none;mask-image:none;overflow:visible;padding:0;margin:0;cursor:auto;touch-action:auto;}
 .hero-reel--still .hero-reel-track{width:auto;animation:none;}
 .hero-reel--still .hero-reel-list{flex:1;justify-content:center;padding-right:0;}
 .hero-reel--still .hero-reel-list li{flex:0 1 var(--cover);min-width:0;}
