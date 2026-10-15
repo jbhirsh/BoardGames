@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
-import { act, render, screen, within, fireEvent } from '@testing-library/react';
+import { act, cleanup, render, screen, within, fireEvent } from '@testing-library/react';
 import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router';
 import App, { HomePage } from '../App';
 import CoverCarousel from '../components/CoverCarousel';
@@ -283,6 +283,135 @@ describe('CoverCarousel', () => {
     });
   });
 
+  describe('dragged sideways', () => {
+    // A lap of 72 s over a copy 1000px wide: 72 ms a pixel.
+    function setUp(time = 10000, renderIt = () => renderReel()) {
+      const { container } = renderIt();
+      const reel = container.querySelector<HTMLElement>('.hero-reel')!;
+      const view = container.querySelector<HTMLElement>('.hero-reel-view')!;
+      const track = container.querySelector<HTMLElement>('.hero-reel-track')!;
+      const anim = { currentTime: time as number | null, effect: { getComputedTiming: () => ({ duration: 72000 }) } };
+      track.getAnimations = () => [anim as unknown as Animation];
+      Object.defineProperty(track, 'scrollWidth', { value: 2000 });
+      const capture = vi.fn();
+      view.setPointerCapture = capture;
+      const cover = within(container).getByRole('button', { name: 'Show Azul in the list' });
+      const down = (clientX: number, init: PointerEventInit = {}) =>
+        fireEvent.pointerDown(cover, { pointerId: 1, isPrimary: true, button: 0, clientX, ...init });
+      const to = (clientX: number) => fireEvent.pointerMove(cover, { pointerId: 1, clientX });
+      const up = () => fireEvent.pointerUp(cover, { pointerId: 1 });
+      return { reel, view, anim, capture, cover, down, to, up };
+    }
+
+    it('winds the row with the pointer, a pixel right setting it a pixel right', () => {
+      const { anim, down, to } = setUp();
+      down(500);
+      to(600);
+      expect(anim.currentTime).toBeCloseTo(10000 - 100 * 72);
+      to(400);
+      expect(anim.currentTime).toBeCloseTo(10000 + 100 * 72);
+    });
+
+    it('comes round the loop past either end of a lap rather than jumping', () => {
+      const back = setUp(1000);
+      back.down(500);
+      back.to(550);
+      expect(back.anim.currentTime).toBeCloseTo(72000 - 2600);
+      cleanup();
+      const on = setUp(70000);
+      on.down(500);
+      on.to(450);
+      expect(on.anim.currentTime).toBeCloseTo(1600);
+    });
+
+    it('holds the row still from the press, and lets it glide on when let go', () => {
+      const { reel, capture, down, to, up } = setUp();
+      down(500);
+      expect(reel).toHaveClass('is-held');
+      expect(reel).not.toHaveClass('is-dragging');
+      to(503);
+      expect(capture).not.toHaveBeenCalled();
+      to(510);
+      expect(reel).toHaveClass('is-held');
+      expect(reel).toHaveClass('is-dragging');
+      expect(capture).toHaveBeenCalledWith(1);
+      up();
+      expect(reel).not.toHaveClass('is-held');
+      expect(reel).not.toHaveClass('is-dragging');
+    });
+
+    it('stays paused after a drag when its pause button is on', () => {
+      const { reel, anim, down, to, up } = setUp();
+      fireEvent.click(screen.getByRole('button', { name: 'Pause cover carousel' }));
+      down(500);
+      to(600);
+      up();
+      expect(anim.currentTime).toBeCloseTo(10000 - 100 * 72);
+      expect(reel).toHaveClass('is-paused');
+      expect(screen.getByRole('button', { name: 'Play cover carousel' })).toBeInTheDocument();
+    });
+
+    it('leaves a press that hardly moves alone', () => {
+      const { anim, down, to } = setUp();
+      down(500);
+      to(504);
+      to(496);
+      expect(anim.currentTime).toBe(10000);
+    });
+
+    it('ignores another pointer, another button, and moves with nothing pressed', () => {
+      const { reel, anim, down, to, cover } = setUp();
+      to(600);
+      expect(anim.currentTime).toBe(10000);
+      down(500, { button: 2 });
+      expect(reel).not.toHaveClass('is-held');
+      down(500, { ctrlKey: true });
+      expect(reel).not.toHaveClass('is-held');
+      down(500, { isPrimary: false });
+      expect(reel).not.toHaveClass('is-held');
+      down(500);
+      fireEvent.pointerMove(cover, { pointerId: 2, clientX: 600 });
+      fireEvent.pointerUp(cover, { pointerId: 2 });
+      expect(anim.currentTime).toBe(10000);
+      expect(reel).toHaveClass('is-held');
+    });
+
+    it('lets go of the focus the press gave its cover, which would hold the row', () => {
+      const { cover, down, to } = setUp();
+      down(500);
+      cover.focus();
+      to(520);
+      expect(cover).not.toHaveFocus();
+    });
+
+    it('lets go of the row when a press leaves it before dragging, or is taken by a scroll', () => {
+      const { reel, view, down, cover } = setUp();
+      down(500);
+      fireEvent.pointerLeave(view, { pointerId: 1 });
+      expect(reel).not.toHaveClass('is-held');
+      down(500);
+      fireEvent.pointerCancel(cover, { pointerId: 1 });
+      expect(reel).not.toHaveClass('is-held');
+    });
+
+    it('keeps a drag that strays off the row', () => {
+      const { reel, view, down, to } = setUp();
+      down(500);
+      to(600);
+      fireEvent.pointerLeave(view, { pointerId: 1 });
+      expect(reel).toHaveClass('is-dragging');
+    });
+
+    it('does nothing for people who ask for less motion', () => {
+      preferLessMotion();
+      const { reel, anim, down, to } = setUp();
+      down(500);
+      to(600);
+      expect(reel).not.toHaveClass('is-held');
+      expect(anim.currentTime).toBe(10000);
+    });
+  });
+
   it('leaves the row be when there is no animation to wind', () => {
     preferLessMotion();
     renderReel();
@@ -336,6 +465,58 @@ describe('a cover in the home page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Show Azul in the list' }));
     expect(router.state.location.search).toBe('?p=2');
     expect(screen.getByRole('button', { name: 'Show details for Azul' })).toHaveFocus();
+  });
+
+  describe('dragged', () => {
+    function setUp() {
+      renderHome();
+      const view = document.querySelector<HTMLElement>('.hero-reel-view')!;
+      const track = document.querySelector<HTMLElement>('.hero-reel-track')!;
+      const anim = { currentTime: 0, effect: { getComputedTiming: () => ({ duration: 72000 }) } };
+      track.getAnimations = () => [anim as unknown as Animation];
+      Object.defineProperty(track, 'scrollWidth', { value: 2000 });
+      view.setPointerCapture = vi.fn();
+      const cover = screen.getByRole('button', { name: 'Show Azul in the list' });
+      fireEvent.pointerDown(cover, { pointerId: 1, isPrimary: true, button: 0, clientX: 500 });
+      return cover;
+    }
+
+    it('doesn\'t open the game the drag let go over', () => {
+      const cover = setUp();
+      fireEvent.pointerMove(cover, { pointerId: 1, clientX: 540 });
+      fireEvent.pointerUp(cover, { pointerId: 1 });
+      expect(fireEvent.click(cover)).toBe(false);
+      expect(scrolled).not.toHaveBeenCalled();
+      // Only that click: the next one opens it.
+      fireEvent.click(cover);
+      expect(scrolled).toHaveBeenCalledWith(document.getElementById('game-azul'));
+    });
+
+    it('forgets the drag once its click has had its chance, so a later click from the keyboard opens', () => {
+      vi.useFakeTimers();
+      const cover = setUp();
+      fireEvent.pointerMove(cover, { pointerId: 1, clientX: 540 });
+      fireEvent.pointerUp(cover, { pointerId: 1 });
+      act(() => { vi.runOnlyPendingTimers(); });
+      fireEvent.click(cover);
+      expect(scrolled).toHaveBeenCalledWith(document.getElementById('game-azul'));
+    });
+
+    it('still opens the game on a press that hardly moved', () => {
+      const cover = setUp();
+      fireEvent.pointerMove(cover, { pointerId: 1, clientX: 503 });
+      fireEvent.pointerUp(cover, { pointerId: 1 });
+      fireEvent.click(cover);
+      expect(scrolled).toHaveBeenCalledWith(document.getElementById('game-azul'));
+    });
+
+    it('opens it after a drag taken over by the page\'s scroll', () => {
+      const cover = setUp();
+      fireEvent.pointerMove(cover, { pointerId: 1, clientX: 540 });
+      fireEvent.pointerCancel(cover, { pointerId: 1 });
+      fireEvent.click(cover);
+      expect(scrolled).toHaveBeenCalledWith(document.getElementById('game-azul'));
+    });
   });
 
   it('starts the ring over when the same cover is clicked again', () => {

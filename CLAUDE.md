@@ -78,8 +78,12 @@ no-op when `$CI` is set. CI re-runs everything on `ubuntu-latest`.
     row (a CSS transform on a doubled track, the copy `aria-hidden` and out
     of the Tab order, a lap of 2.4 s per cover, the ends faded). The row is
     one Tab stop after its pause button, the arrow keys, Home and End moving
-    between covers. It holds still on hover, while a cover has focus, off
-    screen or in a hidden tab, and from its pause button; under
+    between covers. It holds still while the pointer is on a cover (not
+    the gaps or the room round the row), while pressed, while a cover has
+    focus, off screen or in a hidden tab, and from its pause button. A
+    sideways drag (mouse or touch, Pointer Events) winds the animation's
+    `currentTime` with the pointer, and the click it ends with doesn't
+    open a game; a press that hardly moves still does. Under
     `prefers-reduced-motion` it is the list's first seven (the favourites,
     in Own mode; five on a phone) standing still with no button. A cover scrolls to its
     game's card or row (`id` `game-<slug>` / `wish-<id>`) and focuses its
