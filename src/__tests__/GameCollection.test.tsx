@@ -157,7 +157,7 @@ describe('GameCollection scroll on a change of filters', () => {
     act(() => send({ type: 'SET_PLAYERS', payload: 4 }));
     // A new state object with the same filters: nothing to put back.
     act(() => send({ type: 'SET_PLAYERS', payload: 4 }));
-    act(() => send({ type: 'CLEAR_KEYWORDS' }));
+    act(() => send({ type: 'CLEAR_FILTERS', payload: ['keywords'] }));
     act(() => send({ type: 'SET_VIEW', payload: 'grid' }));
     expect(scrollToSpy).toHaveBeenCalledTimes(1);
   });

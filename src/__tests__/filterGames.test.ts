@@ -6,7 +6,7 @@ import { filterGames, sortItems, sortedKw, isColumnSort, isGrouped, fitsTable, t
 import { GAMES } from '../data/games';
 import { initialFilterState } from '../data/initialFilterState';
 import { testGames, quickGame, mediumGame, longGame } from './testData';
-import type { FilterState, Filterable, Game, SortMode, SubGame } from '../data/types';
+import type { BaseSort, FilterState, Filterable, Game, SortMode, SubGame } from '../data/types';
 import { durationCategory } from '../utils/duration';
 
 // The collection's sort: sortItems with the games' group order, as
@@ -449,7 +449,7 @@ describe('groupGames', () => {
   const filters: Partial<FilterState>[] = [{}, { players: 4 }, { duration: 30 }, { search: 'pandemic' }, { search: 'zzzz' }];
 
   it('groups every sort, on the group base or not, as the views did', () => {
-    for (const baseSort of ['az', 'group'] as SortMode[]) {
+    for (const baseSort of ['az', 'group'] as BaseSort[]) {
       for (const sort of SORTS) {
         for (const filter of filters) {
           const state = makeState({ ...filter, sort, baseSort });

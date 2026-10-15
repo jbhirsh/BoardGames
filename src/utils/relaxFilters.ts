@@ -1,12 +1,16 @@
 import type { FilterState, KeywordId, KeywordMode } from '../data/types';
 import { DUR_LABELS, KW, playersLabel } from '../data/keywords';
-import { clearFilters, filterOn, withFilters } from './filterState';
+import { initialFilterState } from '../data/initialFilterState';
+import { filterOn, withFilters, type FilterPatch } from './filterState';
 
-/** One filter that's narrowing the list, and the state without it. */
+/**
+ * One filter that's narrowing the list, and the change that drops it: only
+ * the field it sits in, so SET_FILTERS leaves the sort, view and list alone.
+ */
 export interface ActiveFilter {
   id: 'duration' | 'players' | 'search' | `kw:${KeywordId}`;
   label: string;
-  without: FilterState;
+  without: FilterPatch;
 }
 
 /** The filters in play, in the order the filter bar shows them. */
@@ -14,19 +18,19 @@ export function activeFilters(state: FilterState): ActiveFilter[] {
   const out: ActiveFilter[] = [];
   if (filterOn(state, 'duration')) {
     // Lower case: it reads inside a sentence ("Filtering for up to 30 min").
-    out.push({ id: 'duration', label: DUR_LABELS[state.duration].toLowerCase(), without: clearFilters(state, ['duration']) });
+    out.push({ id: 'duration', label: DUR_LABELS[state.duration].toLowerCase(), without: { duration: initialFilterState.duration } });
   }
   if (filterOn(state, 'players')) {
-    out.push({ id: 'players', label: playersLabel(state.players), without: clearFilters(state, ['players']) });
+    out.push({ id: 'players', label: playersLabel(state.players), without: { players: initialFilterState.players } });
   }
   for (const k of state.keywords) {
     const keywords = new Set(state.keywords);
     keywords.delete(k);
-    out.push({ id: `kw:${k}`, label: KW[k], without: withFilters(state, { keywords }) });
+    out.push({ id: `kw:${k}`, label: KW[k], without: { keywords } });
   }
   // Blank space searches for nothing, so it isn't a filter to name or drop.
   if (state.search.trim()) {
-    out.push({ id: 'search', label: `“${state.search.trim()}”`, without: clearFilters(state, ['search']) });
+    out.push({ id: 'search', label: `“${state.search.trim()}”`, without: { search: initialFilterState.search } });
   }
   return out;
 }
@@ -39,7 +43,7 @@ export interface Relaxation extends ActiveFilter {
 /** The filters that, dropped alone, would bring results back, most first. */
 export function relaxations(state: FilterState, countWith: (s: FilterState) => number): Relaxation[] {
   return activeFilters(state)
-    .map((f) => ({ ...f, count: countWith(f.without) }))
+    .map((f) => ({ ...f, count: countWith(withFilters(state, f.without)) }))
     .filter((r) => r.count > 0)
     .sort((a, b) => b.count - a.count);
 }

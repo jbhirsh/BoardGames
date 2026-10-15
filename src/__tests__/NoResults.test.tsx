@@ -7,7 +7,12 @@ import { useFilter } from '../context/useFilter';
 
 function Probe() {
   const { state } = useFilter();
-  return <output>{`${state.collection}|${state.players}|${state.duration}|${state.search}`}</output>;
+  return (
+    <>
+      <output>{`${state.collection}|${state.players}|${state.duration}|${state.search}`}</output>
+      <span data-testid="sort">{`${state.sort}|${state.baseSort}|${state.view}`}</span>
+    </>
+  );
 }
 
 function renderAt(url: string, kind: 'games' | 'wishlist' = 'games') {
@@ -38,6 +43,13 @@ describe('NoResults', () => {
     expect(drop).toHaveTextContent(/^Drop up to 15 min → \d+ games?$/);
     fireEvent.click(drop);
     expect(screen.getByRole('status')).toHaveTextContent(/^own\|10\|all\|$/);
+  });
+
+  it('drops only the filter, keeping the sort and view', () => {
+    renderAt('/?p=10&d=15&s=group&v=grid');
+    fireEvent.click(screen.getByRole('button', { name: /^Drop up to 15 min, / }));
+    expect(screen.getByRole('status')).toHaveTextContent(/^own\|10\|all\|$/);
+    expect(screen.getByTestId('sort')).toHaveTextContent('group|group|grid');
   });
 
   it('hands focus to the section heading once the list comes back', async () => {

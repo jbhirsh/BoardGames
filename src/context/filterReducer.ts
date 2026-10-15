@@ -1,4 +1,4 @@
-import type { FilterState, DurationFilter, SortColumn, SortMode, ViewMode, KeywordId, KeywordMode, CollectionMode, ColumnSort } from '../data/types';
+import type { FilterState, DurationFilter, SortColumn, BaseSort, ViewMode, KeywordId, KeywordMode, CollectionMode, ColumnSort } from '../data/types';
 import { initialFilterState } from '../data/initialFilterState';
 import { clearFilters, sortAllowed, withFilters, type FilterField, type FilterPatch } from '../utils/filterState';
 
@@ -6,10 +6,9 @@ export type FilterAction =
   | { type: 'SET_DURATION'; payload: DurationFilter }
   | { type: 'SET_PLAYERS'; payload: number }
   | { type: 'TOGGLE_KEYWORD'; payload: KeywordId }
-  | { type: 'CLEAR_KEYWORDS' }
   | { type: 'SET_KEYWORD_MODE'; payload: KeywordMode }
   | { type: 'SET_SEARCH'; payload: string }
-  | { type: 'SET_SORT'; payload: SortMode }
+  | { type: 'SET_SORT'; payload: BaseSort }
   | { type: 'SET_COLUMN_SORT'; payload: SortColumn }
   | { type: 'SET_VIEW'; payload: ViewMode }
   | { type: 'SET_COLLECTION'; payload: CollectionMode }
@@ -33,8 +32,6 @@ export function filterReducer(state: FilterState, action: FilterAction): FilterS
       else next.add(action.payload);
       return { ...state, keywords: next };
     }
-    case 'CLEAR_KEYWORDS':
-      return clearFilters(state, ['keywords']);
     case 'SET_KEYWORD_MODE':
       return { ...state, keywordMode: action.payload };
     case 'SET_SEARCH':
@@ -53,7 +50,7 @@ export function filterReducer(state: FilterState, action: FilterAction): FilterS
       // wishlist's votes) to the default order, and a column sort (the
       // collection's difficulty) to the base sort it was on. A column sort
       // the list can do comes along, as it does for any base sort.
-      const baseSort = sortAllowed(state.baseSort, collection) ? state.baseSort : initialFilterState.sort;
+      const baseSort = sortAllowed(state.baseSort, collection) ? state.baseSort : initialFilterState.baseSort;
       const sort = sortAllowed(state.sort, collection) ? state.sort : baseSort;
       return { ...state, collection, sort, baseSort };
     }
