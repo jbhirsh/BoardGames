@@ -21,6 +21,10 @@ updates:
       time: "06:00"
       timezone: Etc/UTC
     open-pull-requests-limit: 5
+    # Wait a week before proposing a newly published version, so a malicious
+    # or broken release is usually yanked first. Security updates ignore it.
+    cooldown:
+      default-days: 7
     # `typescript` is an alias of @typescript/typescript6 (the 6.0 API that
     # typescript-eslint needs); a major bump would swap in TS 7, which has no
     # API, and break lint. The TS 7 compiler is @typescript/native.
