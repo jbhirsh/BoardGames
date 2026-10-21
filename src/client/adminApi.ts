@@ -9,10 +9,10 @@ export const GENERIC_ERROR = 'Something went wrong. Try again in a minute.';
 
 export type Outcome<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 
-/** One JSON request; a non-2xx answer or a network failure becomes a readable error. */
-export async function callJson<T>(url: string, method: string, body: unknown): Promise<Outcome<T>> {
+/** One JSON request; a non-2xx answer, a network failure or an abort becomes a readable error. */
+export async function callJson<T>(url: string, method: string, body: unknown, signal?: AbortSignal): Promise<Outcome<T>> {
   try {
-    const r = await fetch(url, { method, headers: JSON_HEADERS, body: JSON.stringify(body) });
+    const r = await fetch(url, { method, headers: JSON_HEADERS, body: JSON.stringify(body), ...(signal ? { signal } : {}) });
     const data = (await r.json().catch(() => ({}))) as T & { error?: string };
     if (!r.ok) return { ok: false, error: data.error ?? GENERIC_ERROR };
     return { ok: true, data };
@@ -21,7 +21,12 @@ export async function callJson<T>(url: string, method: string, body: unknown): P
   }
 }
 
-const call = <T,>(method: string, body: unknown) => callJson<T>('/api/suggestions', method, body);
+const call = <T,>(method: string, body: unknown, signal?: AbortSignal) => callJson<T>('/api/suggestions', method, body, signal);
+
+/** The parts of a preview an entry keeps: BGG's name for the match was for the owner to see. */
+const storedDetails = (d: PreviewDetails) => ({
+  bggId: d.bggId, year: d.year, min: d.min, max: d.max, mins: d.mins, desc: d.desc, kw: d.kw, img: d.img,
+});
 
 export interface PendingSuggestion {
   id: string;
@@ -42,16 +47,31 @@ export interface LookedUp {
   lookup?: LookupOutcome;
 }
 
-export const decideSuggestion = (id: string, decision: 'approve' | 'deny') =>
-  call<LookedUp>('POST', { decision, id });
+/**
+ * What the owner settled on before approving: a corrected name, and what the
+ * preview found for it (null for nothing). Leave `details` out when no
+ * preview came back, and the server looks the game up itself.
+ */
+export interface ApprovalChoice {
+  game?: string;
+  details?: PreviewDetails | null;
+}
+
+export const decideSuggestion = (id: string, decision: 'approve' | 'deny', { game, details }: ApprovalChoice = {}) =>
+  call<LookedUp>('POST', {
+    decision,
+    id,
+    ...(game !== undefined ? { game } : {}),
+    ...(details !== undefined ? { details: details && storedDetails(details) } : {}),
+  });
 
 export interface Preview {
   outcome: LookupOutcome;
   details?: PreviewDetails;
 }
 
-/** Looks a game up on BoardGameGeek without storing anything, for the add form to show. */
-export const previewGame = (game: string) => call<Preview>('POST', { action: 'preview', game });
+/** Looks a game up on BoardGameGeek without storing anything, for the add form and the queue to show. */
+export const previewGame = (game: string, signal?: AbortSignal) => call<Preview>('POST', { action: 'preview', game }, signal);
 
 export interface AddGameInput {
   game: string;
@@ -62,14 +82,8 @@ export interface AddGameInput {
   details: PreviewDetails | null;
 }
 
-export const addGame = ({ game, name, note, type, details }: AddGameInput) => {
-  // BGG's name for the match was for the owner to see; the entry keeps the typed one.
-  const stored = details && {
-    bggId: details.bggId, year: details.year, min: details.min, max: details.max,
-    mins: details.mins, desc: details.desc, kw: details.kw, img: details.img,
-  };
-  return call('POST', { action: 'add', game, name, note, ...(type ? { type } : {}), details: stored });
-};
+export const addGame = ({ game, name, note, type, details }: AddGameInput) =>
+  call('POST', { action: 'add', game, name, note, ...(type ? { type } : {}), details: details && storedDetails(details) });
 
 export interface EditGameInput {
   id: string;

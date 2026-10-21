@@ -145,10 +145,13 @@ describe('parseThing', () => {
     expect(thing('<playingtime value="16"/>').kw).toEqual([]);
   });
 
-  it('keeps the thumbnail URL only when it is an https link', () => {
+  it('keeps the thumbnail URL only when it is an https link on BGG\'s image CDN', () => {
     expect(parseThing(THING)?.img).toBe('https://cf.geekdo-images.com/x.jpg');
     expect(thing('<thumbnail> https://cf.geekdo-images.com/y.png </thumbnail>').img).toBe('https://cf.geekdo-images.com/y.png');
     expect(thing('<thumbnail>http://insecure.example/x.jpg</thumbnail>').img).toBeUndefined();
+    // Only BGG's image CDN, which is all an entry's box art may come from.
+    expect(thing('<thumbnail>https://evil.example/x.jpg</thumbnail>').img).toBeUndefined();
+    expect(thing('<thumbnail>https://cf.geekdo-images.com.evil.example/x.jpg</thumbnail>').img).toBeUndefined();
     expect(thing('<thumbnail>not a url</thumbnail>').img).toBeUndefined();
     expect(thing('').img).toBeUndefined();
   });

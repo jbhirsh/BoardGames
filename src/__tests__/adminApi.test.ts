@@ -65,4 +65,27 @@ describe('adminApi', () => {
     fetchSpy.mockResolvedValueOnce(jsonResponse({ item: { id: 'sug-1' } }));
     expect(await decideSuggestion('sug-1', 'approve')).toEqual({ ok: true, data: { item: { id: 'sug-1' } } });
   });
+
+  it('sends an approval\'s corrected name and previewed details only when there are some', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({ ok: true }));
+    await decideSuggestion('sug-1', 'approve', { details: ROOT });
+    await decideSuggestion('sug-1', 'approve', { game: 'Root', details: null });
+    await decideSuggestion('sug-1', 'approve', { game: 'Root' });
+    await decideSuggestion('sug-1', 'approve', {});
+    expect(fetchSpy.mock.calls.map(([, init]) => JSON.parse((init as RequestInit).body as string))).toEqual([
+      // As on an add, BGG's name for the match stays behind.
+      { decision: 'approve', id: 'sug-1', details: { bggId: 237182, year: 2018, min: 2, max: 4, mins: 90, desc: 'Woodland war.', kw: ['strategy'], img: 'https://cf.geekdo-images.com/root.jpg' } },
+      { decision: 'approve', id: 'sug-1', game: 'Root', details: null },
+      { decision: 'approve', id: 'sug-1', game: 'Root' },
+      { decision: 'approve', id: 'sug-1' },
+    ]);
+  });
+
+  it('passes a preview\'s abort signal to fetch, and reads an aborted one as a failure', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new DOMException('aborted', 'AbortError'));
+    const controller = new AbortController();
+    controller.abort();
+    expect(await previewGame('Root', controller.signal)).toEqual({ ok: false, error: 'Something went wrong. Try again in a minute.' });
+    expect((fetchSpy.mock.calls[0][1] as RequestInit).signal).toBe(controller.signal);
+  });
 });

@@ -9,6 +9,7 @@ vi.mock('../../api/_lib/sentry.js', async (importActual) => ({
 import {
   handleSuggestions,
   KEYWORD_IDS,
+  KEYWORD_LABELS,
   WISHLIST_SECTION_IDS,
   NAME_RE,
   GAME_MIN,
@@ -20,6 +21,7 @@ import {
   type SuggestionsDeps,
   type SuggestionsRedis,
   type SuggestionsResponse,
+  type SuggestionsRequest,
   type Mail,
 } from '../../api/suggestions';
 import { resendMailer } from '../../api/_lib/mail';
@@ -997,6 +999,7 @@ describe('handleSuggestions', () => {
         expect((await patch({ details: { kw: [42] } })).res.statusCode).toBe(400);
         expect((await patch({ details: { type: 'suggested' } })).res.body).toEqual({ error: 'unknown wishlist type' });
         expect((await patch({ details: 'nope' })).res.body).toEqual({ error: 'details must be an object' });
+        expect((await patch({ details: [{ mins: 60 }] })).res.body).toEqual({ error: 'details must be an object' });
         expect((await patch({ game: 'X' })).res.statusCode).toBe(400);
         expect((await patch({ note: 42 })).res.statusCode).toBe(400);
         expect((await patch({})).res.body).toEqual({ error: 'nothing to change' });
@@ -1069,6 +1072,7 @@ describe('handleSuggestions', () => {
 
     it('knows the same keyword ids and wishlist sections as the client', () => {
       expect([...KEYWORD_IDS].sort()).toEqual(Object.keys(KW).sort());
+      expect(KEYWORD_LABELS).toEqual(KW);
       expect([...WISHLIST_SECTION_IDS].sort()).toEqual([...WISHLIST_SECTIONS].sort());
     });
 
@@ -1285,9 +1289,13 @@ describe('handleSuggestions', () => {
         [{ ...PREVIEWED, bggId: '266192' }, 'bggId must be a positive whole number'],
         [{ ...PREVIEWED, year: 2019.5 }, 'year must be a whole number'],
         [{ ...PREVIEWED, year: 10_000 }, 'year must be a whole number'],
-        [{ ...PREVIEWED, img: 'http://insecure.example/x.jpg' }, 'img must be an https URL'],
-        [{ ...PREVIEWED, img: `https://cf.geekdo-images.com/${'x'.repeat(500)}` }, 'img must be an https URL'],
-        [{ ...PREVIEWED, img: 42 }, 'img must be an https URL'],
+        [{ ...PREVIEWED, img: 'http://insecure.example/x.jpg' }, 'img must be a BoardGameGeek image URL'],
+        [{ ...PREVIEWED, img: `https://cf.geekdo-images.com/${'x'.repeat(500)}` }, 'img must be a BoardGameGeek image URL'],
+        [{ ...PREVIEWED, img: 42 }, 'img must be a BoardGameGeek image URL'],
+        // Box art comes from BGG's image CDN only, never another https host.
+        [{ ...PREVIEWED, img: 'https://evil.example/x.jpg' }, 'img must be a BoardGameGeek image URL'],
+        [{ ...PREVIEWED, img: 'https://cf.geekdo-images.com.evil.example/x.jpg' }, 'img must be a BoardGameGeek image URL'],
+        [[PREVIEWED], 'details must be an object'],
       ] as const) {
         const { res, redis } = await add({ details });
         expect(res.statusCode, JSON.stringify(details).slice(0, 80)).toBe(400);
@@ -1300,6 +1308,310 @@ describe('handleSuggestions', () => {
       expect((await add({ details: { ...PREVIEWED, year: -2200 } })).stored).toMatchObject({ year: -2200 });
       const { stored } = await add({ details: { min: 2, max: 2, mins: 20, desc: '', kw: [] } });
       expect(stored).toEqual({ min: 2, max: 2, mins: 20, desc: '', kw: [] });
+    });
+  });
+
+  describe('approving with what the owner saw (a corrected name, previewed details)', () => {
+    const JSON_H = { 'content-type': 'application/json' };
+    const ARKHAM_FOUND = { bggId: 15987, name: 'Arkham Horror', year: 2005, min: 1, max: 8, mins: 240, desc: 'Investigate Arkham.', kw: ['cooperative', 'thematic'], img: 'https://cf.geekdo-images.com/ah.jpg' };
+    const ARKHAM = { bggId: 15987, year: 2005, min: 1, max: 8, mins: 240, desc: 'Investigate Arkham.', kw: ['cooperative', 'thematic'], img: 'https://cf.geekdo-images.com/ah.jpg' };
+    const misspelt = { ...pending, game: 'Arkham Horry', name: 'Robin', note: '' };
+    const other = { ...pending, id: 'sug-cccccc', game: 'Arkham Horror', status: 'approved', decidedAt: 10 };
+
+    function setup(seed: Record<string, unknown> = misspelt, extra: FakeRedisSeed['hashes'] = {}) {
+      const ids = ['sug-aaaaaa', ...Object.keys(extra).map((k) => k.replace('suggestions:', ''))];
+      const redis = makeRedis({ 'suggestions:sug-aaaaaa': seed, ...extra }, { 'suggestions:active': ids });
+      const lookup = vi.fn(async (name: string): Promise<LookupResult> => (name === 'Arkham Horror' ? found(ARKHAM_FOUND) : NO_MATCH));
+      return { redis, lookup };
+    }
+    const stored = (redis: ReturnType<typeof makeRedis>) => redis.hashes['suggestions:sug-aaaaaa'];
+    /** The one HSET the approval made, its details read back from their JSON. */
+    const oneWrite = (redis: ReturnType<typeof makeRedis>) => {
+      expect(redis.hset).toHaveBeenCalledTimes(1);
+      const [key, fields] = redis.hset.mock.calls[0];
+      expect(key).toBe('suggestions:sug-aaaaaa');
+      return { ...fields, details: JSON.parse(String(fields.details)) as unknown };
+    };
+    const untouched = (redis: ReturnType<typeof makeRedis>) => {
+      expect(stored(redis).status).toBe('pending');
+      expect(stored(redis).decidedAt).toBeUndefined();
+      expect(stored(redis).game).toBe('Arkham Horry');
+      expect(redis.lists['suggestions:approved']).toBeUndefined();
+    };
+
+    describe('from the site', () => {
+      const approve = async (body: Record<string, unknown>, ctx = setup()) => {
+        const res = makeRes();
+        await handleSuggestions(deps({ redis: ctx.redis, lookup: ctx.lookup, admin: async () => true }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', ...body }, headers: JSON_H }, res);
+        return { res, ...ctx };
+      };
+
+      it('stores the previewed details and the corrected name with the status, without looking it up again', async () => {
+        const { res, redis, lookup } = await approve({ game: '  Arkham   Horror ', details: { ...ARKHAM, name: 'BGG name', type: 'party' } });
+        expect(res.statusCode).toBe(200);
+        expect(lookup).not.toHaveBeenCalled();
+        // One write: the name, the details and the status land together.
+        expect(oneWrite(redis)).toEqual({ status: 'approved', decidedAt: 5000, game: 'Arkham Horror', details: ARKHAM });
+        expect(res.body).toEqual({ item: expect.objectContaining({ game: 'Arkham Horror', status: 'approved', details: ARKHAM }) });
+        expect(redis.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
+      });
+
+      it('approves with no details, and no lookup, when the preview found nothing', async () => {
+        const { res, redis, lookup } = await approve({ details: null });
+        expect(res.statusCode).toBe(200);
+        expect(lookup).not.toHaveBeenCalled();
+        expect(stored(redis)).toMatchObject({ status: 'approved', game: 'Arkham Horry' });
+        expect(stored(redis).details).toBeUndefined();
+        expect(JSON.parse(JSON.stringify(res.body))).not.toHaveProperty('lookup');
+      });
+
+      it('looks a corrected name up itself when no details came with it', async () => {
+        const { res, redis, lookup } = await approve({ game: 'Arkham Horror' });
+        expect(lookup).toHaveBeenCalledWith('Arkham Horror');
+        expect(res.body).toMatchObject({ item: { game: 'Arkham Horror', details: ARKHAM }, lookup: 'found' });
+        expect(stored(redis).game).toBe('Arkham Horror');
+      });
+
+      it('holds the details to an add\'s rules, and the name to an add\'s, storing nothing when they fail', async () => {
+        for (const [body, error] of [
+          [{ details: { ...ARKHAM, min: 5, max: 2 } }, 'players must be whole numbers from 1 to 99, min at most max'],
+          [{ details: { ...ARKHAM, img: 'http://insecure.example/x.jpg' } }, 'img must be a BoardGameGeek image URL'],
+          // JSON text is only how the emailed page's form sends them.
+          [{ details: JSON.stringify(ARKHAM) }, 'details must be an object'],
+          [{ details: [ARKHAM] }, 'details must be an object'],
+          [{ game: 'X' }, 'game must be 2–80 characters'],
+          [{ game: 42 }, 'game must be 2–80 characters'],
+        ] as const) {
+          const { res, redis, lookup } = await approve(body);
+          expect(res.statusCode, JSON.stringify(body)).toBe(400);
+          expect(res.body).toEqual({ error });
+          untouched(redis);
+          expect(lookup).not.toHaveBeenCalled();
+        }
+      });
+
+      it('refuses a correction onto a game another entry already lists', async () => {
+        const { res, redis } = await approve({ game: 'arkham horror', details: ARKHAM }, setup(misspelt, { 'suggestions:sug-cccccc': other }));
+        expect(res.statusCode).toBe(409);
+        expect(res.body).toEqual({ error: 'Arkham Horror is already on the list' });
+        untouched(redis);
+      });
+
+      it('lets a name be corrected to another spelling of itself', async () => {
+        const { res, redis } = await approve({ game: 'arkham horry', details: null });
+        expect(res.statusCode).toBe(200);
+        expect(stored(redis).game).toBe('arkham horry');
+      });
+
+      it('leaves a denial as it was, whatever else comes with it', async () => {
+        const { res, redis, lookup } = await approve({ decision: 'deny', game: 'X', details: 'nope' });
+        expect(res.statusCode).toBe(200);
+        expect(stored(redis)).toMatchObject({ status: 'denied', game: 'Arkham Horry' });
+        expect(lookup).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('from the emailed page', () => {
+      // A form post arrives as text fields, the details as JSON text; a JSON
+      // post to the same path is still read as before.
+      const approve = async (body: Record<string, unknown>, ctx = setup()) => {
+        const res = makeRes();
+        await handleSuggestions(deps({ redis: ctx.redis, lookup: ctx.lookup }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN, ...body } }, res);
+        return { res, html: String(res.body), ...ctx };
+      };
+
+      it('stores the posted details and name, from form fields or JSON, without looking it up again', async () => {
+        for (const details of [JSON.stringify(ARKHAM), ARKHAM]) {
+          const { res, html, redis, lookup } = await approve({ game: 'Arkham Horror', details });
+          expect(res.statusCode).toBe(200);
+          expect(lookup).not.toHaveBeenCalled();
+          expect(oneWrite(redis)).toEqual({ status: 'approved', decidedAt: 5000, game: 'Arkham Horror', details: ARKHAM });
+          expect(html).toContain('Arkham Horror is now on the wishlist, credited to Robin.</p>');
+        }
+      });
+
+      it('approves with no details when the page showed none, and says so', async () => {
+        const { res, html, redis, lookup } = await approve({ game: 'Arkham Horry', details: 'null' });
+        expect(res.statusCode).toBe(200);
+        expect(lookup).not.toHaveBeenCalled();
+        expect(stored(redis)).toMatchObject({ status: 'approved', game: 'Arkham Horry' });
+        expect(stored(redis).details).toBeUndefined();
+        expect(html).toContain('Arkham Horry is now on the wishlist, credited to Robin. It has no details yet: sign in on the site to fill them in with Edit.');
+      });
+
+      it('answers bad details or a bad name with a page and a 400, storing nothing', async () => {
+        for (const body of [{ details: '{oops' }, { details: '"text"' }, { details: JSON.stringify([ARKHAM]) }, { details: JSON.stringify({ ...ARKHAM, kw: ['nope'] }) }, { game: 'X' }, { game: ['Arkham', 'Horror'] }]) {
+          const { res, html, redis } = await approve(body);
+          expect(res.statusCode, JSON.stringify(body)).toBe(400);
+          expect(res.headers['Content-Type']).toBe('text/html; charset=utf-8');
+          expect(html).toContain('<h1>Not approved</h1>');
+          expect(html).toContain('Nothing changed');
+          untouched(redis);
+        }
+      });
+
+      it('refuses a correction onto a game already listed, with a page', async () => {
+        const { res, html, redis } = await approve({ game: 'Arkham Horror', details: 'null' }, setup(misspelt, { 'suggestions:sug-cccccc': other }));
+        expect(res.statusCode).toBe(409);
+        expect(html).toContain('<h1>Already on the list</h1>');
+        expect(html).toContain('Arkham Horror is already on the list. Nothing changed.');
+        untouched(redis);
+      });
+
+      it('checks the token before anything else', async () => {
+        const { res, redis } = await approve({ token: 'test-token-' + 'z'.repeat(21), details: '{oops' });
+        expect(res.statusCode).toBe(403);
+        untouched(redis);
+      });
+    });
+
+    describe('the confirmation page', () => {
+      const confirm = async (query: Record<string, unknown> = {}, ctx = setup()) => {
+        const res = makeRes();
+        await handleSuggestions(deps({ redis: ctx.redis, lookup: ctx.lookup }), { method: 'GET', query: { action: 'approve', id: 'sug-aaaaaa', token: TOKEN, ...query } as SuggestionsRequest['query'] }, res);
+        return { res, html: String(res.body), ...ctx };
+      };
+      const noWrites = (redis: ReturnType<typeof makeRedis>) => {
+        for (const write of [redis.hset, redis.hsetnx, redis.hdel, redis.lpush, redis.lrem, redis.multi]) expect(write).not.toHaveBeenCalled();
+      };
+      const unescape = (s: string) => s.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+      const field = (html: string, name: string) => {
+        const m = new RegExp(`<form method="post"[^]*?name="${name}" value="([^"]*)"`).exec(html);
+        return m ? unescape(m[1]) : undefined;
+      };
+
+      it('looks the friend\'s spelling up and shows what it found, posting it with the approval, without writing anything', async () => {
+        const ctx = setup({ ...misspelt, game: 'Arkham Horror' });
+        const { res, html, redis, lookup } = await confirm({}, ctx);
+        expect(res.statusCode).toBe(200);
+        expect(lookup).toHaveBeenCalledTimes(1);
+        expect(lookup).toHaveBeenCalledWith('Arkham Horror');
+        noWrites(redis);
+        expect(html).toContain('<h1>Approve Arkham Horror?</h1>');
+        expect(html).toContain('<img src="https://cf.geekdo-images.com/ah.jpg" alt="" width="64" height="64">');
+        expect(html).toContain('<p class="name">Arkham Horror (2005)</p>');
+        expect(html).toContain('<p>1–8 players · 240 min</p>');
+        expect(html).toContain('<p class="desc">Investigate Arkham.</p>');
+        expect(html).toContain('<ul class="kw" aria-label="Keywords"><li>Cooperative</li><li>Thematic</li></ul>');
+        expect(field(html, 'game')).toBe('Arkham Horror');
+        expect(JSON.parse(field(html, 'details')!)).toEqual(ARKHAM);
+      });
+
+      it('escapes everything the lookup and the friend wrote', async () => {
+        const nasty = { ...ARKHAM_FOUND, name: '<script>x</script>', desc: 'Say "hi" & <b>run</b>', img: 'https://cf.geekdo-images.com/a"onerror="x.jpg', kw: ['not-a-keyword<i>'] };
+        const ctx = setup({ ...misspelt, game: 'A&B <i>', name: 'Ro"bin', note: '<u>n</u>' });
+        ctx.lookup.mockResolvedValue(found(nasty));
+        const { html } = await confirm({}, ctx);
+        for (const raw of ['<script>', '<b>run', 'a"onerror', '<i>', '<u>', 'Ro"bin']) expect(html).not.toContain(raw);
+        expect(html).toContain('&lt;script&gt;x&lt;/script&gt;');
+        expect(html).toContain('Say &quot;hi&quot; &amp; &lt;b&gt;run&lt;/b&gt;');
+        expect(html).toContain('src="https://cf.geekdo-images.com/a&quot;onerror=&quot;x.jpg"');
+        expect(html).toContain('<li>not-a-keyword&lt;i&gt;</li>');
+        expect(html).toContain('value="A&amp;B &lt;i&gt;"');
+        // What the approval posts back is the lookup's own, intact once the form decodes it.
+        expect(JSON.parse(field(html, 'details')!).desc).toBe('Say "hi" & <b>run</b>');
+      });
+
+      it('says why it found nothing, and posts no details for it', async () => {
+        for (const [result, text] of [
+          [NO_MATCH, 'BoardGameGeek had no match for “Arkham Horry”.'],
+          [{ outcome: 'no-token' }, "“Arkham Horry” couldn't be looked up: BGG_API_TOKEN isn't set."],
+          [{ outcome: 'refused', status: 401 }, "“Arkham Horry” couldn't be looked up: BoardGameGeek refused the request (check BGG_API_TOKEN)."],
+        ] as const) {
+          const ctx = setup();
+          ctx.lookup.mockResolvedValue(result as LookupResult);
+          const { html, redis } = await confirm({}, ctx);
+          expect(html).toContain(`<p class="miss">${text} Approving adds it without details`);
+          expect(html).not.toContain('class="preview"');
+          expect(field(html, 'details')).toBe('null');
+          noWrites(redis);
+        }
+      });
+
+      it('leaves the details out after an outage, so the approval tries the lookup again', async () => {
+        const ctx = setup();
+        ctx.lookup.mockResolvedValue({ outcome: 'unavailable' });
+        const { html } = await confirm({}, ctx);
+        expect(html).toContain("<p class=\"miss\">BoardGameGeek didn't answer for “Arkham Horry”. Approving tries again");
+        expect(html).not.toContain('name="details"');
+        expect(field(html, 'game')).toBe('Arkham Horry');
+      });
+
+      it('sends no referrer, so the box art request never carries the link\'s token', async () => {
+        const { html } = await confirm({ game: 'Arkham Horror' });
+        expect(html).toContain('<meta name="referrer" content="no-referrer">');
+        expect(html).toContain('<img src="https://cf.geekdo-images.com/');
+      });
+
+      it('looks a corrected name up when the page is opened again with it, and still writes nothing', async () => {
+        const { res, html, redis, lookup } = await confirm({ game: ' Arkham  Horror ' });
+        expect(res.statusCode).toBe(200);
+        expect(lookup).toHaveBeenCalledTimes(1);
+        expect(lookup).toHaveBeenCalledWith('Arkham Horror');
+        noWrites(redis);
+        expect(html).toContain('<h1>Approve Arkham Horror?</h1>');
+        expect(html).toContain('Suggested by Robin as “Arkham Horry”');
+        expect(html).toContain('<p class="desc">Investigate Arkham.</p>');
+        expect(field(html, 'game')).toBe('Arkham Horror');
+        expect(JSON.parse(field(html, 'details')!)).toEqual(ARKHAM);
+      });
+
+      it('corrects the name with a GET to this same page, keeping the link\'s id, token and action', async () => {
+        const { html } = await confirm();
+        const rename = /<form class="rename" method="get" action="\/api\/suggestions">(.*?)<\/form>/.exec(html)?.[1] ?? '';
+        expect(rename).toContain('<input type="hidden" name="action" value="approve">');
+        expect(rename).toContain('<input type="hidden" name="id" value="sug-aaaaaa">');
+        expect(rename).toContain(`<input type="hidden" name="token" value="${TOKEN}">`);
+        expect(rename).toContain(`<input id="game" name="game" value="Arkham Horry" required minlength="${GAME_MIN}" maxlength="${GAME_MAX}"`);
+        expect(rename).toContain('<label for="game">');
+      });
+
+      it('answers a bad name with a 400 page, looking nothing up', async () => {
+        for (const game of ['X', ['Arkham', 'Horror'], 'x'.repeat(GAME_MAX + 1)]) {
+          const { res, html, lookup, redis } = await confirm({ game });
+          expect(res.statusCode, JSON.stringify(game)).toBe(400);
+          expect(html).toContain('<h1>Name not recognised</h1>');
+          expect(lookup).not.toHaveBeenCalled();
+          noWrites(redis);
+        }
+      });
+
+      it('checks the link before looking anything up, and never looks up for a denial or a decided suggestion', async () => {
+        const bad = await confirm({ token: 'test-token-' + 'z'.repeat(21) });
+        expect(bad.res.statusCode).toBe(403);
+        expect(bad.lookup).not.toHaveBeenCalled();
+        const deny = await confirm({ action: 'deny', game: 'Arkham Horror' });
+        expect(deny.html).toContain('<h1>Deny Arkham Horry?</h1>');
+        expect(deny.html).not.toContain('name="game"');
+        expect(deny.lookup).not.toHaveBeenCalled();
+        const decided = await confirm({}, setup({ ...misspelt, status: 'approved', decidedAt: 10 }));
+        expect(decided.html).toContain('Already approved');
+        expect(decided.lookup).not.toHaveBeenCalled();
+      });
+
+      it('posts no details when no lookup is configured, so the approval looks it up as before', async () => {
+        const redis = makeRedis({ 'suggestions:sug-aaaaaa': misspelt });
+        const res = makeRes();
+        await handleSuggestions(deps({ redis, lookup: null }), { method: 'GET', query: { action: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, res);
+        const html = String(res.body);
+        expect(html).not.toContain('name="details"');
+        expect(html).not.toContain('class="preview"');
+        expect(html).not.toContain('class="miss"');
+        expect(field(html, 'game')).toBe('Arkham Horry');
+      });
+
+      it('approves exactly what it showed, once the form posts it back', async () => {
+        const ctx = setup();
+        const { html } = await confirm({ game: 'Arkham Horror' }, ctx);
+        const res = makeRes();
+        const body = { decision: field(html, 'decision'), id: field(html, 'id'), token: field(html, 'token'), game: field(html, 'game'), details: field(html, 'details') };
+        await handleSuggestions(deps({ redis: ctx.redis, lookup: ctx.lookup }), { method: 'POST', query: {}, body, headers: { 'content-type': 'application/x-www-form-urlencoded' } }, res);
+        expect(res.statusCode).toBe(200);
+        expect(ctx.lookup).toHaveBeenCalledTimes(1);
+        const approved = makeRes();
+        await handleSuggestions(deps({ redis: ctx.redis }), { method: 'GET', query: {} }, approved);
+        expect((approved.body as { items: unknown[] }).items).toEqual([expect.objectContaining({ id: 'sug-aaaaaa', game: 'Arkham Horror', status: 'approved', details: ARKHAM })]);
+      });
     });
   });
 });

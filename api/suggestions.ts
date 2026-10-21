@@ -4,7 +4,7 @@ import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { enforceRateLimit, getLimiter } from './_lib/rateLimit.js';
 import { getRawRedis } from './_lib/redis.js';
 import { failWith500, initSentry, reportError } from './_lib/sentry.js';
-import { MINS_MAX, PLAYERS_MAX, lookupGame, type LookupOutcome, type LookupResult } from './_lib/bgg.js';
+import { BGG_IMG_RE, MINS_MAX, PLAYERS_MAX, lookupGame, type LookupOutcome, type LookupResult } from './_lib/bgg.js';
 import { SLUG_RE, isSuggestionId } from './_lib/slug.js';
 import { baseUrl, button, escapeHtml, mailLayout, page, resendMailer, type Mail, type Mailer } from './_lib/mail.js';
 import { isAdmin, isJsonRequest, type Headers } from './_lib/session.js';
@@ -26,15 +26,21 @@ initSentry();
 //
 // GET ?action=approve|deny&id&token checks the token and renders a
 // confirmation page whose form POSTs { decision, id, token }: a bare GET
-// never changes anything, because mail link-scanners follow every URL. A
+// never changes anything, because mail link-scanners follow every URL. An
+// approve page first looks the game up (read-only, one lookup per render)
+// and shows what BoardGameGeek has, or why it has nothing, with a field to
+// correct a misspelt name: that form GETs the same page with `&game=`, and
+// the approve form posts the name and the previewed details (JSON text,
+// "null" for none, left out when BGG didn't answer) with the decision. A
 // bad link, on either step, gets a standalone page with its 400, 404 or
 // 403, not JSON. Plain GET lists the approved suggestions, which the
 // wishlist shows under "Suggested by friends".
 //
 // A signed-in owner (auth.ts) can also work the list from the site: GET
-// ?action=pending lists the queue, POST { decision, id } without a token
-// decides one, POST { action: 'preview', game } looks a game up without
-// storing anything ({ outcome, details? }, for the add form to show), POST
+// ?action=pending lists the queue, POST { decision, id, game?, details? }
+// without a token decides one, POST { action: 'preview', game } looks a
+// game up without storing anything ({ outcome, details? }, for the add form
+// and the queue to show), POST
 // { action: 'add', game, name, note?, type?, details? } puts a game
 // straight on the wishlist (approved, `source: 'owner'`; `details` are the
 // previewed ones, null for none, absent to look it up here), PATCH { id, game?,
@@ -42,6 +48,12 @@ initSentry();
 // (status `removed`, the hash kept, the lists forgetting it). Every owner
 // mutation, and the preview, must be a JSON request (isJsonRequest, the CSRF
 // layer behind the session cookie's SameSite=Lax).
+//
+// An approval, from either place, can carry what the owner saw before
+// deciding: `game`, a corrected name (validated as an add's, refused with a
+// 409 if another entry already lists it), and `details`, held to the same
+// rules as an add's and stored with the status change, null to approve
+// without any. Without `details` the game is looked up here, as before.
 //
 // Redis keeps one hash per suggestion and the id lists below, read through
 // getRawRedis() so a game called "null" stays that. A decision first claims
@@ -56,9 +68,9 @@ initSentry();
 // missing token can't pass for "no match". The owner hears it too: the
 // preview, the add and the on-site approval answer with the lookup's
 // outcome (found, no-match, no-token, refused, unavailable; `lookup` on the
-// add and the approval, absent when none ran), and the emailed approval's
-// page says what is missing. handleSuggestions() takes { redis, mailer,
-// baseUrl, lookup, admin } so tests pass spies.
+// add and the approval, absent when none ran), and the emailed confirmation
+// and approval pages say what is missing. handleSuggestions() takes
+// { redis, mailer, baseUrl, lookup, admin } so tests pass spies.
 
 // Same display-name shape as the client's utils/displayName.ts. It and the
 // bounds below are mirrored by the client's forms (src/data/suggestionLimits.ts),
@@ -102,6 +114,13 @@ export const KEYWORD_IDS = [
   'team', 'party', 'adult', 'active', 'creative', 'card-game', 'word', 'family', 'classic', 'thematic',
   'portable', 'quick-play',
 ] as const;
+/** What the client calls each keyword (KW's labels), for the emailed approval's preview. */
+export const KEYWORD_LABELS: Record<(typeof KEYWORD_IDS)[number], string> = {
+  social: 'Social', bluffing: 'Bluffing', deduction: 'Deduction', strategy: 'Strategy', negotiation: 'Negotiation',
+  abstract: 'Abstract', 'deck-building': 'Deck-Building', cooperative: 'Cooperative', team: 'Team', party: 'Party',
+  adult: 'Adult', active: 'Physical', creative: 'Creative', 'card-game': 'Card Game', word: 'Word', family: 'Family',
+  classic: 'Classic', thematic: 'Thematic', portable: 'Portable', 'quick-play': 'Quick Play',
+};
 export const DESC_MAX = 600;
 // Defined with the lookup, which caps BGG's numbers to them.
 export { MINS_MAX, PLAYERS_MAX };
@@ -252,7 +271,7 @@ function parseDetails(raw: string | undefined): SuggestionDetails | undefined {
  * Returns the merged details or the first problem.
  */
 function mergeDetails(current: SuggestionDetails | undefined, raw: unknown): { ok: true; details: SuggestionDetails } | { ok: false; error: string } {
-  if (!raw || typeof raw !== 'object') return { ok: false, error: 'details must be an object' };
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ok: false, error: 'details must be an object' };
   const d = raw as Record<string, unknown>;
   const base: SuggestionDetails = current ?? { min: 1, max: PLAYERS_MAX, mins: 0, desc: '', kw: [] };
   const int = (v: unknown, lo: number, hi: number, fallback: number): number | null =>
@@ -293,7 +312,7 @@ const IMG_MAX = 500;
  * comes from the add itself, so a `type` sent here is dropped unchecked.
  */
 function previewedDetails(raw: unknown): { ok: true; details: SuggestionDetails } | { ok: false; error: string } {
-  if (!raw || typeof raw !== 'object') return { ok: false, error: 'details must be an object' };
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ok: false, error: 'details must be an object' };
   const fields: Record<string, unknown> = { ...raw };
   delete fields.type;
   const merged = mergeDetails(undefined, fields);
@@ -305,10 +324,55 @@ function previewedDetails(raw: unknown): { ok: true; details: SuggestionDetails 
   if (year !== undefined && !(typeof year === 'number' && Number.isInteger(year) && Math.abs(year) <= 9999)) {
     return { ok: false, error: 'year must be a whole number' };
   }
-  if (img !== undefined && !(typeof img === 'string' && img.length <= IMG_MAX && /^https:\/\/\S+$/.test(img))) {
-    return { ok: false, error: 'img must be an https URL' };
+  if (img !== undefined && !(typeof img === 'string' && img.length <= IMG_MAX && BGG_IMG_RE.test(img))) {
+    return { ok: false, error: 'img must be a BoardGameGeek image URL' };
   }
   return { ok: true, details: { ...merged.details, type: undefined, bggId, year, img } };
+}
+
+/**
+ * What the owner settled on before approving: a corrected name, and the
+ * details previewed for it (null for none). Either absent keeps today's
+ * approval: the friend's name, looked up here.
+ */
+interface ApprovalChoice {
+  game?: string;
+  details?: SuggestionDetails | null;
+}
+
+/**
+ * Reads and checks an approval's `game` and `details` as an add's are,
+ * then refuses a rename onto a game another entry already lists. The
+ * emailed page's form can only send text, so there (`fromForm`) details
+ * arrive as JSON text and are parsed first.
+ */
+async function approvalChoice(
+  redis: SuggestionsRedis,
+  item: Suggestion,
+  body: Record<string, unknown>,
+  fromForm: boolean,
+): Promise<{ ok: true; choice: ApprovalChoice } | { ok: false; status: 400 | 409; error: string }> {
+  const choice: ApprovalChoice = {};
+  if (body.game !== undefined) {
+    const g = validateGame(body.game);
+    if (!g.ok) return { ok: false, status: 400, error: g.error };
+    if (g.game !== item.game) choice.game = g.game;
+  }
+  let raw = body.details;
+  if (fromForm && typeof raw === 'string') {
+    try { raw = JSON.parse(raw); } catch { return { ok: false, status: 400, error: 'details must be an object' }; }
+  }
+  if (raw === null) choice.details = null;
+  else if (raw !== undefined) {
+    const checked = previewedDetails(raw);
+    if (!checked.ok) return { ok: false, status: 400, error: checked.error };
+    choice.details = checked.details;
+  }
+  if (choice.game !== undefined) {
+    const dup = await listedAs(redis, choice.game, item.id);
+    if (dup) return { ok: false, status: 409, error: `${dup.game} is already on the list` };
+  }
+  return { ok: true, choice };
 }
 
 async function loadList(redis: SuggestionsRedis, key: string): Promise<Array<Suggestion & { token: string }>> {
@@ -322,23 +386,105 @@ async function loadList(redis: SuggestionsRedis, key: string): Promise<Array<Sug
   return hashes.map(parse).filter((s): s is Suggestion & { token: string } => s !== null);
 }
 
+/** The pending or approved entry, other than `exceptId`, already listing this game. */
+async function listedAs(redis: SuggestionsRedis, game: string, exceptId?: string): Promise<Suggestion | undefined> {
+  const active = await loadList(redis, ACTIVE_KEY);
+  return active.find((s) => s.id !== exceptId && normalize(s.game) === normalize(game));
+}
+
 const publicView = ({ id, game, name, note, status, createdAt, decidedAt, details, source }: Suggestion): Suggestion =>
   ({ id, game, name, note, status, createdAt, decidedAt, details, source });
+
+const playersText = (min: number, max: number) => (min === max ? `${min}` : max >= PLAYERS_MAX ? `${min}+` : `${min}–${max}`);
+
+// Why the confirmation page has no preview to show, for the name it looked up.
+const PREVIEW_MISSES: Record<Exclude<LookupOutcome, 'found'>, (game: string) => string> = {
+  'no-match': (game) => `BoardGameGeek had no match for “${game}”.`,
+  'no-token': (game) => `“${game}” couldn't be looked up: BGG_API_TOKEN isn't set.`,
+  refused: (game) => `“${game}” couldn't be looked up: BoardGameGeek refused the request (check BGG_API_TOKEN).`,
+  unavailable: (game) => `BoardGameGeek didn't answer for “${game}”.`,
+};
+
+// What approving from the page does about it: after an outage the approval
+// tries the lookup again; otherwise it adds the game without details.
+const missAdvice = (outcome: Exclude<LookupOutcome, 'found'>) => (outcome === 'unavailable'
+  ? 'Approving tries again, and adds it without details if BoardGameGeek still has nothing; or look it up again below.'
+  : 'Approving adds it without details, to fill in with Edit on the site; or correct the name below and look it up again.');
+
+const CONFIRM_STYLE = '.preview{display:flex;gap:12px;align-items:flex-start;text-align:left;margin:0 0 20px;padding:12px;border:1px solid #E5E5EA;border-radius:12px}.preview img{flex:none;width:64px;height:64px;object-fit:cover;border-radius:8px;background:#F5F5F7}.preview div{min-width:0}.preview p{margin:0 0 4px;font-size:14px}.preview .name{color:#1D1D1F;font-weight:600}.preview .desc{color:#1D1D1F}.kw{list-style:none;padding:0;margin:6px 0 0;display:flex;flex-wrap:wrap;gap:6px}.kw li{font-size:12px;color:#6E6E73;background:#F5F5F7;border-radius:20px;padding:2px 8px}.miss{text-align:left;font-size:14px;background:#FFF4E5;color:#6B4A00;border-radius:12px;padding:12px}.rename{margin-top:28px;text-align:left}.rename label{display:block;font-size:13px;color:#6E6E73;margin-bottom:6px}.rename div{display:flex;gap:8px}.rename input{flex:1;min-width:0;font:inherit;font-size:16px;padding:10px 12px;border:1px solid #D2D2D7;border-radius:10px}.rename button{background:#fff;color:#0071E3;border:1px solid #0071E3;padding:10px 16px}';
+
+/** What BoardGameGeek has for the name, or why it has nothing; every value escaped. */
+function previewBlock(game: string, result: LookupResult): string {
+  if (result.outcome !== 'found') {
+    return `<p class="miss">${PREVIEW_MISSES[result.outcome](escapeHtml(game))} ${missAdvice(result.outcome)}</p>`;
+  }
+  const d = result.details;
+  const facts = [`${playersText(d.min, d.max)} ${d.max === 1 ? 'player' : 'players'}`];
+  if (d.mins > 0) facts.push(`${d.mins} min`);
+  const kw = d.kw.map((k) => `<li>${escapeHtml(KEYWORD_LABELS[k as keyof typeof KEYWORD_LABELS] ?? k)}</li>`).join('');
+  return '<div class="preview">' +
+    (d.img ? `<img src="${escapeHtml(d.img)}" alt="" width="64" height="64">` : '') +
+    `<div><p class="name">${escapeHtml(d.name)}${d.year !== undefined ? ` (${escapeHtml(String(d.year))})` : ''}</p>` +
+    `<p>${escapeHtml(facts.join(' · '))}</p>` +
+    (d.desc ? `<p class="desc">${escapeHtml(d.desc)}</p>` : '') +
+    (kw ? `<ul class="kw" aria-label="Keywords">${kw}</ul>` : '') +
+    '</div></div>';
+}
+
+/**
+ * The details an approval from this page stores: what the preview showed,
+ * minus BGG's name for the match, which was for the owner to see. "null"
+ * when it found nothing, so approving saves no details rather than looking
+ * the game up again; none at all when BGG didn't answer, so the approval
+ * tries the lookup again.
+ */
+function detailsField(result: LookupResult): string | null {
+  if (result.outcome === 'unavailable') return null;
+  if (result.outcome !== 'found') return 'null';
+  const { bggId, year, min, max, mins, desc, kw, img } = result.details;
+  return JSON.stringify({ bggId, year, min, max, mins, desc, kw, img });
+}
+
+const hidden = (name: string, value: string) => `<input type="hidden" name="${name}" value="${escapeHtml(value)}">`;
 
 /**
  * Confirmation step between the emailed link and the decision. A bare GET
  * must not change state: mail link-scanners and preview fetchers follow every
  * URL in a message, so the flip only happens on the POST this form submits.
  */
-function confirmPage(s: Suggestion, action: 'approve' | 'deny', token: string): string {
-  const verb = action === 'approve' ? 'Approve' : 'Deny';
-  const color = action === 'approve' ? '#0071E3' : '#6E6E73';
+function denyPage(s: Suggestion, token: string): string {
   return page(
-    `${verb} ${s.game}?`,
+    `Deny ${s.game}?`,
     `<p>Suggested by ${escapeHtml(s.name)}${s.note ? `: “${escapeHtml(s.note)}”` : ''}</p>` +
-    `<form method="post" action="/api/suggestions">` +
-    `<input type="hidden" name="decision" value="${action}"><input type="hidden" name="id" value="${escapeHtml(s.id)}"><input type="hidden" name="token" value="${escapeHtml(token)}">` +
-    `<button type="submit" style="background:${color}">${verb}</button></form>`,
+    `<form method="post" action="/api/suggestions">${hidden('decision', 'deny')}${hidden('id', s.id)}${hidden('token', token)}` +
+    `<button type="submit" style="background:#6E6E73">Deny</button></form>`,
+  );
+}
+
+/**
+ * An approval's confirmation step: what the lookup for `game` (the friend's
+ * spelling, or the owner's correction) found, posted with the decision so
+ * the approval stores exactly that. With no lookup configured (null), or
+ * none answering, it posts no details, and the approval looks the game up
+ * as before. Still a GET that changes nothing, correcting the name
+ * included.
+ */
+function approvePage(s: Suggestion, token: string, game: string, result: LookupResult | null): string {
+  const renamed = game !== s.game;
+  const details = result && detailsField(result);
+  return page(
+    `Approve ${game}?`,
+    `<p>Suggested by ${escapeHtml(s.name)}${renamed ? ` as “${escapeHtml(s.game)}”` : ''}${s.note ? `: “${escapeHtml(s.note)}”` : ''}</p>` +
+    (result ? previewBlock(game, result) : '') +
+    `<form method="post" action="/api/suggestions">${hidden('decision', 'approve')}${hidden('id', s.id)}${hidden('token', token)}${hidden('game', game)}` +
+    (details !== null ? hidden('details', details) : '') +
+    `<button type="submit" style="background:#0071E3">Approve</button></form>` +
+    // A GET to this same page, so a corrected name is only looked up, never stored.
+    `<form class="rename" method="get" action="/api/suggestions">${hidden('action', 'approve')}${hidden('id', s.id)}${hidden('token', token)}` +
+    `<label for="game">Wrong game? Correct the name and look it up again.</label>` +
+    `<div><input id="game" name="game" value="${escapeHtml(game)}" required minlength="${GAME_MIN}" maxlength="${GAME_MAX}" autocomplete="off">` +
+    `<button type="submit">Look up</button></div></form>`,
+    CONFIRM_STYLE,
   );
 }
 
@@ -470,8 +616,10 @@ async function enrich(deps: SuggestionsDeps, item: Suggestion, extra: Partial<Su
  * see it so (a double-clicked confirm form, or the email link and the site at
  * once), so the first claims it and the other gets null: only one flips the
  * status, touches the lists and runs the lookup, whose outcome it returns.
+ * An approval's `choice` (a corrected name, previewed details) lands in the
+ * same write as the status; with details chosen, nothing is looked up.
  */
-async function decide(deps: SuggestionsDeps, item: Suggestion, wanted: 'approved' | 'denied', now: () => number): Promise<{ lookup?: LookupOutcome } | null> {
+async function decide(deps: SuggestionsDeps, item: Suggestion, wanted: 'approved' | 'denied', now: () => number, choice: ApprovalChoice = {}): Promise<{ lookup?: LookupOutcome } | null> {
   const { redis } = deps;
   const key = itemKey(item.id);
   const at = now();
@@ -488,7 +636,12 @@ async function decide(deps: SuggestionsDeps, item: Suggestion, wanted: 'approved
     if (!(await redis.hsetnx(key, `takeover:${current.decidedAt}`, at))) return null;
     await redis.hset(key, { decidedAt: at });
   }
-  const tx = redis.multi().hset(key, { status: wanted, decidedAt: at });
+  const tx = redis.multi().hset(key, {
+    status: wanted,
+    decidedAt: at,
+    ...(choice.game !== undefined ? { game: choice.game } : {}),
+    ...(choice.details ? { details: JSON.stringify(choice.details) } : {}),
+  });
   if (item.status === 'unsent') tx.lrem(UNSENT_KEY, 0, item.id);
   if (wanted === 'approved') {
     // Each push removes the id first, so a list can never hold it twice.
@@ -506,7 +659,8 @@ async function decide(deps: SuggestionsDeps, item: Suggestion, wanted: 'approved
     await redis.hdel(key, 'decidedAt');
     throw err;
   }
-  return wanted === 'approved' ? { lookup: await enrich(deps, item) } : {};
+  if (wanted === 'denied' || choice.details !== undefined) return {};
+  return { lookup: await enrich(deps, { ...item, game: choice.game ?? item.game }) };
 }
 
 /** What a request that lost the claim reports: the winner's status, once it has landed. */
@@ -603,7 +757,17 @@ export async function handleSuggestions(
       if (!decidable(item.status)) {
         return res.status(200).send(alreadyPage(item.game, item.status));
       }
-      return res.status(200).send(confirmPage(item, action, req.query.token as string));
+      const token = req.query.token as string;
+      if (action === 'deny') return res.status(200).send(denyPage(item, token));
+      // The owner correcting a misspelt name: looked up and shown, still
+      // nothing stored until the approve form is posted.
+      let game = item.game;
+      if (req.query.game !== undefined) {
+        const g = validateGame(req.query.game);
+        if (!g.ok) return res.status(400).send(decisionPage('Name not recognised', `Nothing was looked up: the ${escapeHtml(g.error)}. Go back and try again.`));
+        game = g.game;
+      }
+      return res.status(200).send(approvePage(item, token, game, await lookUp(deps, game)));
     }
 
     if (req.method === 'POST') {
@@ -625,7 +789,13 @@ export async function handleSuggestions(
           if (!decidable(item.status)) {
             return res.status(409).json({ error: `${item.game} was already ${item.status}` });
           }
-          const decided = await decide(deps, item, wanted, now);
+          let choice: ApprovalChoice = {};
+          if (wanted === 'approved') {
+            const checked = await approvalChoice(redis, item, body, false);
+            if (!checked.ok) return res.status(checked.status).json({ error: checked.error });
+            choice = checked.choice;
+          }
+          const decided = await decide(deps, item, wanted, now, choice);
           if (!decided) {
             return res.status(409).json({ error: `${item.game} was already ${await settledStatus(redis, item.id)}` });
           }
@@ -640,15 +810,27 @@ export async function handleSuggestions(
         if (!decidable(item.status)) {
           return res.status(200).send(alreadyPage(item.game, item.status));
         }
-        const decided = await decide(deps, item, wanted, now);
+        let choice: ApprovalChoice = {};
+        if (wanted === 'approved') {
+          const checked = await approvalChoice(redis, item, body, true);
+          if (!checked.ok) {
+            return res.status(checked.status).send(checked.status === 409
+              ? decisionPage('Already on the list', `${escapeHtml(checked.error)}. Nothing changed.`)
+              : decisionPage('Not approved', `Nothing changed: the ${escapeHtml(checked.error)}. Open the link from the email again.`));
+          }
+          choice = checked.choice;
+        }
+        const decided = await decide(deps, item, wanted, now, choice);
         if (!decided) {
           return res.status(200).send(alreadyPage(item.game, await settledStatus(redis, item.id)));
         }
-        const note = decided.lookup && decided.lookup !== 'found' ? ` ${LOOKUP_NOTES[decided.lookup]}` : '';
+        let note = '';
+        if (decided.lookup && decided.lookup !== 'found') note = ` ${LOOKUP_NOTES[decided.lookup]}`;
+        else if (choice.details === null) note = ' It has no details yet: sign in on the site to fill them in with Edit.';
         return res.status(200).send(decisionPage(
           wanted === 'approved' ? 'Approved' : 'Denied',
           wanted === 'approved'
-            ? `${escapeHtml(item.game)} is now on the wishlist, credited to ${escapeHtml(item.name)}.${note}`
+            ? `${escapeHtml(choice.game ?? item.game)} is now on the wishlist, credited to ${escapeHtml(item.name)}.${note}`
             : `${escapeHtml(item.game)} won't appear on the wishlist.`,
         ));
       }
@@ -689,8 +871,7 @@ export async function handleSuggestions(
         } else if (previewed && extra.type) {
           details = { min: 1, max: PLAYERS_MAX, mins: 0, desc: '', kw: [] };
         }
-        const active = await loadList(redis, ACTIVE_KEY);
-        const dup = active.find((s) => normalize(s.game) === normalize(g.game));
+        const dup = await listedAs(redis, g.game);
         if (dup) return res.status(409).json({ error: `${dup.game} is already on the list` });
 
         const { id, token } = mintIds(deps);

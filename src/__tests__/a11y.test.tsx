@@ -155,10 +155,20 @@ describe('accessibility', () => {
 
   it('home page (wishlist, signed in as the owner) has no axe violations', async () => {
     const json = (body: unknown) => ({ ok: true, json: async () => body }) as unknown as Response;
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
       const url = String(input);
       if (url.startsWith('/api/auth')) return json({ admin: true });
-      if (url.startsWith('/api/suggestions?action=pending')) return json({ items: [{ id: 'sug-p', game: 'Ark Nova', name: 'Sam', note: 'Zoo building' }] });
+      if (url.startsWith('/api/suggestions?action=pending')) return json({ items: [
+        { id: 'sug-p', game: 'Ark Nova', name: 'Sam', note: 'Zoo building' },
+        { id: 'sug-m', game: 'Arkham Horry', name: 'Robin', note: '' },
+      ] });
+      // The queue looks each one up: a preview card for one row, a miss notice for the other.
+      const body = init?.method === 'POST' ? (JSON.parse(String(init.body)) as { action?: string; game?: string }) : {};
+      if (body.action === 'preview') {
+        return json(body.game === 'Ark Nova'
+          ? { outcome: 'found', details: { bggId: 342942, name: 'Ark Nova', year: 2021, min: 1, max: 4, mins: 150, desc: 'Plan and build a modern zoo.', kw: ['strategy'], img: 'https://cf.geekdo-images.com/ark.jpg' } }
+          : { outcome: 'no-match' });
+      }
       if (url.startsWith('/api/suggestions')) return json({ items: [
         { id: 'sug-r', game: 'Root', name: 'Alex', note: '', details: { min: 2, max: 4, mins: 90, desc: 'Woodland war.', kw: ['strategy'] } },
         // Duplicates a compiled entry, so it renders in the owner tools
@@ -175,6 +185,8 @@ describe('accessibility', () => {
       // Role queries over the full page are slow in jsdom; give them room.
       const slow = { timeout: OWNER_TIMEOUT_MS / 3 };
       await screen.findByRole('button', { name: 'Approve Ark Nova' }, slow);
+      await screen.findByText('Plan and build a modern zoo.', undefined, slow);
+      await screen.findByText(/had no match for “Arkham Horry”/, undefined, slow);
       // The per-entry edit form is the densest admin control; scan it open.
       fireEvent.click(await screen.findByRole('button', { name: 'Edit Root' }, slow));
       await screen.findByRole('form', { name: 'Edit Root' }, slow);

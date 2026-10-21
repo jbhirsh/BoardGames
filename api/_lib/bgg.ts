@@ -27,6 +27,12 @@ export interface GameDetails {
 export const PLAYERS_MAX = 99;
 /** The longest playing time an entry can list, in minutes. */
 export const MINS_MAX = 600;
+/**
+ * Box art an entry can show: BGG's image CDN only. The lookup keeps no
+ * other thumbnail, and details the owner sends back are held to it, so the
+ * site and the emailed pages never load an image from anywhere else.
+ */
+export const BGG_IMG_RE = /^https:\/\/cf\.geekdo-images\.com\/\S+$/;
 
 export type FetchLike = (url: string, init?: { signal?: AbortSignal; headers?: Record<string, string> }) => Promise<{ status: number; text(): Promise<string> }>;
 
@@ -101,7 +107,7 @@ export function parseThing(xml: string): GameDetails | null {
   const year = num('yearpublished') || undefined;
   const descRaw = /<description>([\s\S]*?)<\/description>/.exec(xml)?.[1] ?? '';
   const thumb = decodeEntities(/<thumbnail>\s*([^<]*?)\s*<\/thumbnail>/.exec(xml)?.[1] ?? '');
-  const img = /^https:\/\/\S+$/.test(thumb) ? thumb : undefined;
+  const img = BGG_IMG_RE.test(thumb) ? thumb : undefined;
 
   const kw = new Set<string>();
   for (const tag of xml.match(/<rank\b[^>]*>/g) ?? []) {
