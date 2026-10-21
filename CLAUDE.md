@@ -220,4 +220,4 @@ secrets belong in tracked source.
 | `SUGGESTIONS_TO` | serverless (`api/_lib/mail.ts`) | address that receives approve/deny emails; the only address that can sign in as the owner |
 | `SUGGESTIONS_FROM` | serverless (optional) | sender; defaults to `The Game Room <onboarding@resend.dev>` |
 | `APP_URL` | serverless (optional) | origin for the emailed links; defaults to the Vercel production URL |
-| `BGG_API_TOKEN` | serverless (`api/suggestions.ts`) | BoardGameGeek XML API token; without it approvals go through with no details or art |
+| `BGG_API_TOKEN` | serverless (`api/suggestions.ts`) | BoardGameGeek XML API token; unset (BGG isn't called) or refused, approvals still go through with no details or art, and Sentry gets an error naming the variable |
