@@ -142,36 +142,68 @@ export function pickSearchId(xml: string, wanted: string): number | null {
 
 const RETRY_MS = 1500;
 
+/**
+ * Why a lookup came back the way it did, so the owner hears about a miss
+ * instead of finding an empty card: `no-match` (BGG answered, nothing fits
+ * the name), `no-token` (BGG_API_TOKEN unset, so BGG was never called),
+ * `refused` (BGG answered 401 or 403 to the token) and `unavailable` (an
+ * error status, a network failure, or 202s until the budget ran out).
+ */
+export type LookupResult =
+  | { outcome: 'found'; details: GameDetails }
+  | { outcome: 'no-match' }
+  | { outcome: 'no-token' }
+  | { outcome: 'refused'; status: number }
+  | { outcome: 'unavailable'; cause?: unknown };
+
+export type LookupOutcome = LookupResult['outcome'];
+
+type Fetched = { ok: true; body: string } | { ok: false; result: Extract<LookupResult, { outcome: 'refused' | 'unavailable' }> };
+
 /** One GET within the overall deadline. BGG answers 202 while it queues a request; one short retry covers it. */
-async function get(fetchLike: FetchLike, url: string, deadline: number, token?: string): Promise<string | null> {
+async function get(fetchLike: FetchLike, url: string, deadline: number, token: string): Promise<Fetched> {
+  const unavailable = (cause?: unknown): Fetched => ({ ok: false, result: { outcome: 'unavailable', ...(cause === undefined ? {} : { cause }) } });
   for (let attempt = 0; attempt < 2; attempt++) {
     const remaining = deadline - Date.now();
-    if (remaining <= 0) return null;
-    const r = await fetchLike(url, { signal: AbortSignal.timeout(remaining), ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}) });
-    if (r.status === 200) return r.text();
-    if (r.status !== 202 || deadline - Date.now() <= RETRY_MS) return null;
+    if (remaining <= 0) return unavailable();
+    let r: Awaited<ReturnType<FetchLike>>;
+    try {
+      r = await fetchLike(url, { signal: AbortSignal.timeout(remaining), headers: { Authorization: `Bearer ${token}` } });
+    } catch (err) {
+      // A network failure, or the timeout signal firing.
+      return unavailable(err);
+    }
+    if (r.status === 200) return { ok: true, body: await r.text() };
+    if (r.status === 401 || r.status === 403) return { ok: false, result: { outcome: 'refused', status: r.status } };
+    if (r.status !== 202 || deadline - Date.now() <= RETRY_MS) return unavailable();
     await new Promise((resolve) => setTimeout(resolve, RETRY_MS));
   }
-  return null;
+  return unavailable();
 }
 
 /**
  * Look a game up by name within `budgetMs` overall (the caller runs inside a
- * serverless function with its own limit). Returns null when BGG has no
- * confident match, errors, or runs out of time. Without `token` BGG answers
- * 401, which reads as "no match" here: the app keeps working, just without
- * details.
+ * serverless function with its own limit), saying why when it finds
+ * nothing. BGG answers 401 to a request without a token, so with none set
+ * this returns `no-token` without calling it at all.
  */
-export async function lookupGame(name: string, fetchLike: FetchLike = fetch, budgetMs = 6000, token?: string): Promise<GameDetails | null> {
+export async function lookupGame(name: string, token: string | undefined, fetchLike: FetchLike = fetch, budgetMs = 6000): Promise<LookupResult> {
+  if (!token) return { outcome: 'no-token' };
   const deadline = Date.now() + budgetMs;
   const q = encodeURIComponent(name);
   const exact = await get(fetchLike, `${BASE}/search?type=boardgame,boardgameexpansion&exact=1&query=${q}`, deadline, token);
-  let id = exact ? pickSearchId(exact, name) : null;
+  if (!exact.ok && exact.result.outcome === 'refused') return exact.result;
+  let id = exact.ok ? pickSearchId(exact.body, name) : null;
   if (id === null) {
+    // The loose search also catches what a failed exact search would have,
+    // so its answer decides between "no match" and "BGG didn't answer".
     const loose = await get(fetchLike, `${BASE}/search?type=boardgame,boardgameexpansion&query=${q}`, deadline, token);
-    id = loose ? pickSearchId(loose, name) : null;
+    if (!loose.ok) return loose.result;
+    id = pickSearchId(loose.body, name);
   }
-  if (id === null) return null;
+  if (id === null) return { outcome: 'no-match' };
   const thing = await get(fetchLike, `${BASE}/thing?id=${id}&stats=1`, deadline, token);
-  return thing ? parseThing(thing) : null;
+  if (!thing.ok) return thing.result;
+  const details = parseThing(thing.body);
+  return details ? { outcome: 'found', details } : { outcome: 'no-match' };
 }

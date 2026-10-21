@@ -180,6 +180,8 @@ describe('pickSearchId', () => {
 
 describe('lookupGame', () => {
   const respond = (status: number, body = '') => Promise.resolve({ status, text: async () => body });
+  // Deliberately low-entropy so secret scanners don't mistake it for a key.
+  const TOKEN = 'bgg-test-token';
 
   it('searches exactly, then fetches the thing, with a timeout signal on every request', async () => {
     const calls: string[] = [];
@@ -190,8 +192,9 @@ describe('lookupGame', () => {
       if (url.includes('/search?')) return respond(200, SEARCH);
       return respond(200, THING);
     });
-    const d = await lookupGame('Wingspan', fetchLike);
-    expect(d?.bggId).toBe(266192);
+    const r = await lookupGame('Wingspan', TOKEN, fetchLike);
+    expect(r.outcome).toBe('found');
+    expect(r.outcome === 'found' && r.details.bggId).toBe(266192);
     expect(calls[0]).toContain('exact=1&query=Wingspan');
     expect(calls[1]).toContain('/thing?id=266192&stats=1');
     expect(signals.every((s) => s instanceof AbortSignal)).toBe(true);
@@ -203,30 +206,30 @@ describe('lookupGame', () => {
     const bodies = ['', '<items total="0"></items>', SEARCH, THING];
     let i = 0;
     const fetchLike: FetchLike = vi.fn(async () => { const r = respond(statuses[i], bodies[i]); i++; return r; });
-    const p = lookupGame('WINGSPAN', fetchLike);
+    const p = lookupGame('WINGSPAN', TOKEN, fetchLike);
     await vi.runAllTimersAsync();
-    const d = await p;
+    const r = await p;
     vi.useRealTimers();
-    expect(d?.name).toBe('Wingspan');
+    expect(r.outcome === 'found' && r.details.name).toBe('Wingspan');
     expect(fetchLike).toHaveBeenCalledTimes(4);
   });
 
-  it('gives up once the time budget is spent instead of retrying', async () => {
+  it('gives up once the time budget is spent instead of retrying, as BGG not answering', async () => {
     const fetchLike: FetchLike = vi.fn(async () => respond(202));
-    expect(await lookupGame('Wingspan', fetchLike, 1000)).toBeNull();
+    expect(await lookupGame('Wingspan', TOKEN, fetchLike, 1000)).toEqual({ outcome: 'unavailable' });
     // Exact search 202 with < RETRY_MS left means no retry, then the loose search also 202s once.
     expect(fetchLike).toHaveBeenCalledTimes(2);
   });
 
-  it('retries a persistent 202 exactly once per request when time allows', async () => {
+  it('retries a persistent 202 exactly once per request when time allows, then says BGG did not answer', async () => {
     vi.useFakeTimers();
     const calls: string[] = [];
     const fetchLike: FetchLike = vi.fn(async (url: string) => { calls.push(url); return respond(202); });
-    const p = lookupGame('Wingspan', fetchLike, 60_000);
+    const p = lookupGame('Wingspan', TOKEN, fetchLike, 60_000);
     await vi.runAllTimersAsync();
-    const d = await p;
+    const r = await p;
     vi.useRealTimers();
-    expect(d).toBeNull();
+    expect(r).toEqual({ outcome: 'unavailable' });
     expect(calls.filter((u) => u.includes('exact=1'))).toHaveLength(2);
     expect(calls.filter((u) => !u.includes('exact=1'))).toHaveLength(2);
   });
@@ -234,9 +237,9 @@ describe('lookupGame', () => {
   it('does not fetch at all when the budget is already exhausted', async () => {
     vi.useFakeTimers();
     const fetchLike: FetchLike = vi.fn(async () => respond(202));
-    const d = await lookupGame('Wingspan', fetchLike, 0);
+    const r = await lookupGame('Wingspan', TOKEN, fetchLike, 0);
     vi.useRealTimers();
-    expect(d).toBeNull();
+    expect(r).toEqual({ outcome: 'unavailable' });
     expect(fetchLike).not.toHaveBeenCalled();
   });
 
@@ -244,45 +247,84 @@ describe('lookupGame', () => {
     vi.useFakeTimers();
     const start = Date.now();
     const fetchLike: FetchLike = vi.fn(async () => respond(202));
-    const p = lookupGame('Wingspan', fetchLike, 1500);
+    const p = lookupGame('Wingspan', TOKEN, fetchLike, 1500);
     await vi.runAllTimersAsync();
-    const d = await p;
+    const r = await p;
     const elapsed = Date.now() - start;
     vi.useRealTimers();
-    expect(d).toBeNull();
+    expect(r).toEqual({ outcome: 'unavailable' });
     expect(elapsed).toBe(0);
     expect(fetchLike).toHaveBeenCalledTimes(2);
   });
 
-  it('sends the API token as a bearer header on every request, and no header without one', async () => {
+  it('sends the API token as a bearer header on every request', async () => {
     const inits: Array<{ headers?: Record<string, string> } | undefined> = [];
     const fetchLike: FetchLike = vi.fn(async (url: string, init?: { headers?: Record<string, string> }) => {
       inits.push(init);
       return respond(200, url.includes('/thing?') ? THING : SEARCH);
     });
-    await lookupGame('Wingspan', fetchLike, 6000, 'bgg-test-token');
+    await lookupGame('Wingspan', TOKEN, fetchLike, 6000);
     expect(inits).toHaveLength(2);
-    for (const init of inits) expect(init?.headers).toEqual({ Authorization: 'Bearer bgg-test-token' });
-
-    inits.length = 0;
-    await lookupGame('Wingspan', fetchLike);
-    expect(inits.every((init) => init?.headers === undefined)).toBe(true);
+    for (const init of inits) expect(init?.headers).toEqual({ Authorization: `Bearer ${TOKEN}` });
   });
 
-  it('does not retry a non-202 error', async () => {
+  it('does not call BGG at all without a token, and says so', async () => {
+    for (const token of [undefined, '']) {
+      const fetchLike: FetchLike = vi.fn(async () => respond(200, SEARCH));
+      expect(await lookupGame('Wingspan', token, fetchLike)).toEqual({ outcome: 'no-token' });
+      expect(fetchLike).not.toHaveBeenCalled();
+    }
+  });
+
+  it.each([401, 403])('reports a %i as the token refused, without retrying or searching again', async (status) => {
+    const fetchLike: FetchLike = vi.fn(async () => respond(status));
+    expect(await lookupGame('Wingspan', TOKEN, fetchLike)).toEqual({ outcome: 'refused', status });
+    expect(fetchLike).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports a refusal from the loose search or the thing request too', async () => {
+    const loose: FetchLike = vi.fn(async (url: string) => (url.includes('exact=1') ? respond(200, '<items total="0"></items>') : respond(401)));
+    expect(await lookupGame('Wingspan', TOKEN, loose)).toEqual({ outcome: 'refused', status: 401 });
+    const thing: FetchLike = vi.fn(async (url: string) => (url.includes('/thing?') ? respond(403) : respond(200, SEARCH)));
+    expect(await lookupGame('Wingspan', TOKEN, thing)).toEqual({ outcome: 'refused', status: 403 });
+  });
+
+  it('does not retry a non-202 error, and reports it as BGG not answering', async () => {
     vi.useFakeTimers();
     const fetchLike: FetchLike = vi.fn(async () => respond(500));
-    const p = lookupGame('x', fetchLike);
+    const p = lookupGame('x', TOKEN, fetchLike);
     await vi.runAllTimersAsync();
-    const d = await p;
+    const r = await p;
     vi.useRealTimers();
-    expect(d).toBeNull();
+    expect(r).toEqual({ outcome: 'unavailable' });
     expect(fetchLike).toHaveBeenCalledTimes(2);
   });
 
-  it('returns null when BGG errors or nothing matches the typed name', async () => {
-    expect(await lookupGame('x', vi.fn(async () => respond(500)))).toBeNull();
-    expect(await lookupGame('x', vi.fn(async () => respond(200, '<items total="0"></items>')))).toBeNull();
-    expect(await lookupGame('Wingspan Oceania', vi.fn(async () => respond(200, SEARCH)))).toBeNull();
+  it('turns a network failure or a timeout into unavailable, keeping the cause', async () => {
+    const down = new TypeError('fetch failed');
+    const r = await lookupGame('Wingspan', TOKEN, vi.fn(async () => { throw down; }));
+    expect(r).toEqual({ outcome: 'unavailable', cause: down });
+    const thingFails: FetchLike = vi.fn(async (url: string) => {
+      if (url.includes('/thing?')) throw new DOMException('timed out', 'TimeoutError');
+      return respond(200, SEARCH);
+    });
+    expect((await lookupGame('Wingspan', TOKEN, thingFails)).outcome).toBe('unavailable');
+  });
+
+  it('decides on the loose search when the exact one fails', async () => {
+    const fetchLike: FetchLike = vi.fn(async (url: string) => (url.includes('exact=1') ? respond(500) : respond(200, '<items total="0"></items>')));
+    expect(await lookupGame('Wingspan', TOKEN, fetchLike)).toEqual({ outcome: 'no-match' });
+  });
+
+  it('says no match when nothing matches the typed name or the thing has no item', async () => {
+    expect(await lookupGame('x', TOKEN, vi.fn(async () => respond(200, '<items total="0"></items>')))).toEqual({ outcome: 'no-match' });
+    expect(await lookupGame('Wingspan Oceania', TOKEN, vi.fn(async () => respond(200, SEARCH)))).toEqual({ outcome: 'no-match' });
+    const empty: FetchLike = vi.fn(async (url: string) => respond(200, url.includes('/thing?') ? '<items></items>' : SEARCH));
+    expect(await lookupGame('Wingspan', TOKEN, empty)).toEqual({ outcome: 'no-match' });
+  });
+
+  it('says BGG did not answer when the thing request errors', async () => {
+    const fetchLike: FetchLike = vi.fn(async (url: string) => respond(url.includes('/thing?') ? 503 : 200, SEARCH));
+    expect(await lookupGame('Wingspan', TOKEN, fetchLike)).toEqual({ outcome: 'unavailable' });
   });
 });

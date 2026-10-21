@@ -3,8 +3,8 @@ import * as Sentry from '@sentry/node';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { enforceRateLimit, getLimiter } from './_lib/rateLimit.js';
 import { getRawRedis } from './_lib/redis.js';
-import { failWith500, initSentry } from './_lib/sentry.js';
-import { lookupGame, type GameDetails } from './_lib/bgg.js';
+import { failWith500, initSentry, reportError } from './_lib/sentry.js';
+import { lookupGame, type LookupResult } from './_lib/bgg.js';
 import { SLUG_RE, isSuggestionId } from './_lib/slug.js';
 import { baseUrl, button, escapeHtml, mailLayout, page, resendMailer, type Mail, type Mailer } from './_lib/mail.js';
 import { isAdmin, isJsonRequest, type Headers } from './_lib/session.js';
@@ -48,7 +48,9 @@ initSentry();
 // BoardGameGeek (_lib/bgg.ts) for players, time, a two-sentence
 // description, year, keywords and box art, stored as `details` so the entry
 // renders and filters like any other; a miss, an outage or no token still
-// approves, with details empty. handleSuggestions() takes { redis, mailer,
+// approves, with details empty. With no BGG_API_TOKEN, BGG isn't called at
+// all, and that or BGG refusing the token goes to Sentry as an error, so a
+// missing token can't pass for "no match". handleSuggestions() takes { redis, mailer,
 // baseUrl, lookup, admin } so tests pass spies.
 
 // Same display-name shape as the client's utils/displayName.ts. It and the
@@ -171,8 +173,8 @@ export interface SuggestionsResponse {
 
 export interface SuggestionsDeps {
   redis: SuggestionsRedis;
-  /** Fills in players, time, description and keywords on approval; null skips enrichment. */
-  lookup?: ((name: string) => Promise<GameDetails | null>) | null;
+  /** Fills in players, time, description and keywords on approval, or says why not; null skips enrichment. */
+  lookup?: ((name: string) => Promise<LookupResult>) | null;
   /** null when email isn't configured: suggestions are then refused, never lost silently. */
   mailer: Mailer | null;
   /** Absolute origin the emailed links point at; only consulted when sending. */
@@ -385,23 +387,43 @@ async function loadItem(redis: SuggestionsRedis, id: unknown, res: SuggestionsRe
 }
 
 /**
+ * Run the BoardGameGeek lookup; never throws. A missing or refused token is
+ * the owner's to fix and would otherwise read as "no match" on every game,
+ * so it goes to Sentry as an error naming BGG_API_TOKEN (never its value).
+ * A failure with an exception behind it (network, timeout, a throwing
+ * lookup) is captured too; a plain miss is not an error.
+ */
+async function lookUp(deps: SuggestionsDeps, game: string): Promise<LookupResult | null> {
+  if (!deps.lookup) return null;
+  let result: LookupResult;
+  try {
+    result = await deps.lookup(game);
+  } catch (err) {
+    result = { outcome: 'unavailable', cause: err };
+  }
+  if (result.outcome === 'no-token') {
+    await reportError('suggestions: BoardGameGeek lookup skipped', new Error('BGG_API_TOKEN is not set, so BoardGameGeek lookups are skipped and new wishlist games get no details'));
+  } else if (result.outcome === 'refused') {
+    await reportError('suggestions: BoardGameGeek lookup refused', new Error(`BoardGameGeek refused BGG_API_TOKEN (HTTP ${result.status}), so new wishlist games get no details`));
+  } else if (result.outcome === 'unavailable' && result.cause !== undefined) {
+    Sentry.captureException(result.cause);
+    console.error('suggestions: BoardGameGeek lookup failed', result.cause);
+  }
+  return result;
+}
+
+/**
  * Fill in players, time, description and keywords from BoardGameGeek so the
  * card looks like every other wishlist entry. Callers list the game first,
  * so a slow lookup can never strand it off the list. Best effort: a miss or
  * an outage leaves the details as they are.
  */
 async function enrich(deps: SuggestionsDeps, item: Suggestion, extra: Partial<SuggestionDetails> = {}): Promise<void> {
+  const result = await lookUp(deps, item.game);
   let details: SuggestionDetails | undefined;
-  if (deps.lookup) {
-    try {
-      const found = await deps.lookup(item.game);
-      if (found) {
-        details = { bggId: found.bggId, year: found.year, img: found.img, min: found.min, max: found.max, mins: found.mins, desc: found.desc, kw: found.kw };
-      }
-    } catch (err) {
-      Sentry.captureException(err);
-      console.error('suggestions: BoardGameGeek lookup failed', err);
-    }
+  if (result?.outcome === 'found') {
+    const found = result.details;
+    details = { bggId: found.bggId, year: found.year, img: found.img, min: found.min, max: found.max, mins: found.mins, desc: found.desc, kw: found.kw };
   }
   if (!details && extra.type) details = { min: 1, max: PLAYERS_MAX, mins: 0, desc: '', kw: [] };
   if (details) await deps.redis.hset(itemKey(item.id), { details: JSON.stringify({ ...details, ...extra }) });
@@ -745,7 +767,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     redis,
     mailer: resendMailer(),
     baseUrl,
-    lookup: (name) => lookupGame(name, fetch, 6000, process.env.BGG_API_TOKEN),
+    lookup: (name) => lookupGame(name, process.env.BGG_API_TOKEN, fetch, 6000),
     admin: (r) => isAdmin(redis, r.headers ?? {}),
   }, req, res);
 }

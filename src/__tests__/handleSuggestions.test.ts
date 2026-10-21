@@ -1,4 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
+
+// The lookup's token reports go through reportError; spied here so a test
+// can see them without a Sentry client, while failWith500 keeps its own.
+vi.mock('../../api/_lib/sentry.js', async (importActual) => ({
+  ...(await importActual<typeof import('../../api/_lib/sentry')>()),
+  reportError: vi.fn(async () => {}),
+}));
 import {
   handleSuggestions,
   KEYWORD_IDS,
@@ -16,9 +23,11 @@ import {
   type Mail,
 } from '../../api/suggestions';
 import { resendMailer } from '../../api/_lib/mail';
+import { reportError } from '../../api/_lib/sentry';
 import { KW, WISHLIST_SECTIONS } from '../data/keywords';
 import * as clientLimits from '../data/suggestionLimits';
 import { fakeRedis, type FakeRedisSeed } from './helpers/fakeRedis';
+import type { GameDetails, LookupResult } from '../../api/_lib/bgg';
 
 function makeRes() {
   const res = {
@@ -55,6 +64,9 @@ function deps(over: Partial<SuggestionsDeps> = {}): SuggestionsDeps & { sent: Ma
     ...over,
   };
 }
+
+const found = (details: GameDetails): LookupResult => ({ outcome: 'found', details });
+const NO_MATCH: LookupResult = { outcome: 'no-match' };
 
 const valid = { game: 'Cascadia', name: 'Sam', note: 'Calm and quick' };
 const BELL = String.fromCharCode(7);
@@ -213,7 +225,7 @@ describe('handleSuggestions', () => {
 
     it('approving looks the game up and stores its details; the public list returns them', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
-      const lookup = vi.fn(async () => ({ bggId: 266192, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'] }));
+      const lookup = vi.fn(async () => found({ bggId: 266192, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'] }));
       await handleSuggestions(deps({ redis, lookup }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, makeRes());
       expect(lookup).toHaveBeenCalledWith('Wingspan');
       const res = makeRes();
@@ -225,13 +237,13 @@ describe('handleSuggestions', () => {
     it('lists the game as approved before the lookup runs, so a hung lookup cannot strand it', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
       let listedWhenLookedUp: string[] | undefined;
-      const lookup = vi.fn(async () => { listedWhenLookedUp = [...(redis.lists['suggestions:approved'] ?? [])]; return null; });
+      const lookup = vi.fn(async () => { listedWhenLookedUp = [...(redis.lists['suggestions:approved'] ?? [])]; return NO_MATCH; });
       await handleSuggestions(deps({ redis, lookup }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, makeRes());
       expect(listedWhenLookedUp).toEqual(['sug-aaaaaa']);
     });
 
     it('still approves when the lookup finds nothing or throws', async () => {
-      for (const lookup of [vi.fn(async () => null), vi.fn(async () => { throw new Error('bgg down'); })]) {
+      for (const lookup of [vi.fn(async () => NO_MATCH), vi.fn(async () => { throw new Error('bgg down'); })]) {
         const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
         const res = makeRes();
         await handleSuggestions(deps({ redis, lookup }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, res);
@@ -253,7 +265,7 @@ describe('handleSuggestions', () => {
 
     it('approves once when the same approval arrives twice at the same moment', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
-      const lookup = vi.fn(async () => ({ bggId: 266192, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'] }));
+      const lookup = vi.fn(async () => found({ bggId: 266192, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'] }));
       const owner = { ...deps({ redis, lookup }), admin: async () => true };
       const byEmail = makeRes();
       const bySite = makeRes();
@@ -317,7 +329,7 @@ describe('handleSuggestions', () => {
 
     it('lets only one of two requests take over the same abandoned claim', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': { ...pending, decidedAt: 1000 } }, { 'suggestions:active': ['sug-aaaaaa'] });
-      const lookup = vi.fn(async () => null);
+      const lookup = vi.fn(async () => NO_MATCH);
       const late = deps({ redis, lookup, now: () => 1000 + 60_000 });
       const [a, b] = [makeRes(), makeRes()];
       await Promise.all([
@@ -844,7 +856,7 @@ describe('handleSuggestions', () => {
 
       it('approves with enrichment, box art included, and answers JSON, not a page', async () => {
         const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
-        const lookup = vi.fn(async () => ({ bggId: 1, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'], img: 'https://cf.geekdo-images.com/w.jpg' }));
+        const lookup = vi.fn(async () => found({ bggId: 1, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'], img: 'https://cf.geekdo-images.com/w.jpg' }));
         const res = makeRes();
         await handleSuggestions(asOwner({ redis, lookup }), decideReq({ decision: 'approve', id: 'sug-aaaaaa' }), res);
         expect(res.statusCode).toBe(200);
@@ -893,7 +905,7 @@ describe('handleSuggestions', () => {
       });
 
       it('stores it approved, credited to the owner, listed and enriched, with the chosen section', async () => {
-        const lookup = vi.fn(async () => ({ bggId: 7, name: 'Cascadia', year: 2021, min: 1, max: 4, mins: 45, desc: 'Tile laying.', kw: ['family'] }));
+        const lookup = vi.fn(async () => found({ bggId: 7, name: 'Cascadia', year: 2021, min: 1, max: 4, mins: 45, desc: 'Tile laying.', kw: ['family'] }));
         const d = asOwner({ lookup });
         const res = await add({ type: 'strategy', note: 'Calm' }, d);
         expect(res.statusCode).toBe(201);
@@ -908,9 +920,9 @@ describe('handleSuggestions', () => {
       });
 
       it('keeps the chosen section even when BoardGameGeek has nothing, and no details otherwise', async () => {
-        const typed = await add({ type: 'party' }, asOwner({ lookup: async () => null }));
+        const typed = await add({ type: 'party' }, asOwner({ lookup: async () => NO_MATCH }));
         expect(typed.body).toMatchObject({ item: { details: { min: 1, max: 99, mins: 0, desc: '', kw: [], type: 'party' } } });
-        const untyped = await add({}, asOwner({ lookup: async () => null }));
+        const untyped = await add({}, asOwner({ lookup: async () => NO_MATCH }));
         expect((untyped.body as { item: { details?: unknown } }).item.details).toBeUndefined();
       });
 
@@ -1078,6 +1090,37 @@ describe('handleSuggestions', () => {
       const items = (res.body as { items: Array<Record<string, unknown>> }).items;
       expect(items.map((i) => i.id)).toEqual(['sug-typed']);
       expect(items[0]).toMatchObject({ source: 'owner', details: { type: 'party' } });
+    });
+  });
+
+  describe('BoardGameGeek token problems', () => {
+    const JSON_H = { 'content-type': 'application/json' };
+    const addReq = { method: 'POST', query: {}, body: { action: 'add', game: 'Magical Athlete', name: 'Jess' }, headers: JSON_H };
+    const reported = () => vi.mocked(reportError).mock.calls.map(([label, err]) => ({ label, message: (err as Error).message }));
+
+    it('reports a missing token to Sentry by name, and still adds the game', async () => {
+      vi.mocked(reportError).mockClear();
+      const res = makeRes();
+      await handleSuggestions(deps({ admin: async () => true, lookup: async () => ({ outcome: 'no-token' }) }), addReq, res);
+      expect(res.statusCode).toBe(201);
+      expect(reported()).toEqual([{ label: 'suggestions: BoardGameGeek lookup skipped', message: expect.stringContaining('BGG_API_TOKEN is not set') }]);
+    });
+
+    it.each([401, 403])('reports a token BGG refused with %i, and still approves', async (status) => {
+      vi.mocked(reportError).mockClear();
+      const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
+      const res = makeRes();
+      await handleSuggestions(deps({ redis, lookup: async () => ({ outcome: 'refused', status }) }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, res);
+      expect(String(res.body)).toContain('is now on the wishlist');
+      expect(reported()).toEqual([{ label: 'suggestions: BoardGameGeek lookup refused', message: expect.stringContaining(`BoardGameGeek refused BGG_API_TOKEN (HTTP ${status})`) }]);
+    });
+
+    it('does not report a plain miss or an outage as a token problem', async () => {
+      vi.mocked(reportError).mockClear();
+      for (const result of [NO_MATCH, { outcome: 'unavailable' } as const]) {
+        await handleSuggestions(deps({ admin: async () => true, lookup: async () => result }), addReq, makeRes());
+      }
+      expect(reportError).not.toHaveBeenCalled();
     });
   });
 });
