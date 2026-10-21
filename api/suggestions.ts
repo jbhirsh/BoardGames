@@ -4,7 +4,7 @@ import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { enforceRateLimit, getLimiter } from './_lib/rateLimit.js';
 import { getRawRedis } from './_lib/redis.js';
 import { failWith500, initSentry, reportError } from './_lib/sentry.js';
-import { lookupGame, type LookupResult } from './_lib/bgg.js';
+import { MINS_MAX, PLAYERS_MAX, lookupGame, type LookupOutcome, type LookupResult } from './_lib/bgg.js';
 import { SLUG_RE, isSuggestionId } from './_lib/slug.js';
 import { baseUrl, button, escapeHtml, mailLayout, page, resendMailer, type Mail, type Mailer } from './_lib/mail.js';
 import { isAdmin, isJsonRequest, type Headers } from './_lib/session.js';
@@ -33,12 +33,15 @@ initSentry();
 //
 // A signed-in owner (auth.ts) can also work the list from the site: GET
 // ?action=pending lists the queue, POST { decision, id } without a token
-// decides one, POST { action: 'add', game, name, note?, type? } puts a game
-// straight on the wishlist (approved, `source: 'owner'`), PATCH { id, game?,
+// decides one, POST { action: 'preview', game } looks a game up without
+// storing anything ({ outcome, details? }, for the add form to show), POST
+// { action: 'add', game, name, note?, type?, details? } puts a game
+// straight on the wishlist (approved, `source: 'owner'`; `details` are the
+// previewed ones, null for none, absent to look it up here), PATCH { id, game?,
 // note?, details? } edits how an entry reads, and DELETE { id } takes it off
 // (status `removed`, the hash kept, the lists forgetting it). Every owner
-// mutation must be a JSON request (isJsonRequest, the CSRF layer behind the
-// session cookie's SameSite=Lax).
+// mutation, and the preview, must be a JSON request (isJsonRequest, the CSRF
+// layer behind the session cookie's SameSite=Lax).
 //
 // Redis keeps one hash per suggestion and the id lists below, read through
 // getRawRedis() so a game called "null" stays that. A decision first claims
@@ -50,7 +53,11 @@ initSentry();
 // renders and filters like any other; a miss, an outage or no token still
 // approves, with details empty. With no BGG_API_TOKEN, BGG isn't called at
 // all, and that or BGG refusing the token goes to Sentry as an error, so a
-// missing token can't pass for "no match". handleSuggestions() takes { redis, mailer,
+// missing token can't pass for "no match". The owner hears it too: the
+// preview, the add and the on-site approval answer with the lookup's
+// outcome (found, no-match, no-token, refused, unavailable; `lookup` on the
+// add and the approval, absent when none ran), and the emailed approval's
+// page says what is missing. handleSuggestions() takes { redis, mailer,
 // baseUrl, lookup, admin } so tests pass spies.
 
 // Same display-name shape as the client's utils/displayName.ts. It and the
@@ -96,8 +103,8 @@ export const KEYWORD_IDS = [
   'portable', 'quick-play',
 ] as const;
 export const DESC_MAX = 600;
-export const MINS_MAX = 600;
-export const PLAYERS_MAX = 99;
+// Defined with the lookup, which caps BGG's numbers to them.
+export { MINS_MAX, PLAYERS_MAX };
 const KW_MAX = 20;
 
 /** Details filled in from BoardGameGeek on approval, editable by the owner. */
@@ -276,6 +283,34 @@ function mergeDetails(current: SuggestionDetails | undefined, raw: unknown): { o
   return { ok: true, details: { bggId: base.bggId, year: base.year, img: base.img, min, max, mins, desc, kw, type } };
 }
 
+const IMG_MAX = 500;
+
+/**
+ * Details the owner previewed on the add form, sent back with the add so the
+ * game isn't looked up twice. Only the owner can send them, so where they
+ * came from is trusted, but they are held to an edit's rules, and the fields
+ * an edit can't set (BGG id, year, box art) to their own shapes. The section
+ * comes from the add itself, so a `type` sent here is dropped unchecked.
+ */
+function previewedDetails(raw: unknown): { ok: true; details: SuggestionDetails } | { ok: false; error: string } {
+  if (!raw || typeof raw !== 'object') return { ok: false, error: 'details must be an object' };
+  const fields: Record<string, unknown> = { ...raw };
+  delete fields.type;
+  const merged = mergeDetails(undefined, fields);
+  if (!merged.ok) return merged;
+  const { bggId, year, img } = fields;
+  if (bggId !== undefined && !(typeof bggId === 'number' && Number.isInteger(bggId) && bggId > 0)) {
+    return { ok: false, error: 'bggId must be a positive whole number' };
+  }
+  if (year !== undefined && !(typeof year === 'number' && Number.isInteger(year) && Math.abs(year) <= 9999)) {
+    return { ok: false, error: 'year must be a whole number' };
+  }
+  if (img !== undefined && !(typeof img === 'string' && img.length <= IMG_MAX && /^https:\/\/\S+$/.test(img))) {
+    return { ok: false, error: 'img must be an https URL' };
+  }
+  return { ok: true, details: { ...merged.details, type: undefined, bggId, year, img } };
+}
+
 async function loadList(redis: SuggestionsRedis, key: string): Promise<Array<Suggestion & { token: string }>> {
   // Writes never list an id twice; deduping here keeps a stray repeat from
   // showing a game twice all the same.
@@ -418,7 +453,7 @@ async function lookUp(deps: SuggestionsDeps, game: string): Promise<LookupResult
  * so a slow lookup can never strand it off the list. Best effort: a miss or
  * an outage leaves the details as they are.
  */
-async function enrich(deps: SuggestionsDeps, item: Suggestion, extra: Partial<SuggestionDetails> = {}): Promise<void> {
+async function enrich(deps: SuggestionsDeps, item: Suggestion, extra: Partial<SuggestionDetails> = {}): Promise<LookupOutcome | undefined> {
   const result = await lookUp(deps, item.game);
   let details: SuggestionDetails | undefined;
   if (result?.outcome === 'found') {
@@ -427,15 +462,16 @@ async function enrich(deps: SuggestionsDeps, item: Suggestion, extra: Partial<Su
   }
   if (!details && extra.type) details = { min: 1, max: PLAYERS_MAX, mins: 0, desc: '', kw: [] };
   if (details) await deps.redis.hset(itemKey(item.id), { details: JSON.stringify({ ...details, ...extra }) });
+  return result?.outcome;
 }
 
 /**
  * Flip a suggestion the caller has seen as decidable. Two requests can both
  * see it so (a double-clicked confirm form, or the email link and the site at
- * once), so the first claims it and the other gets false: only one flips the
- * status, touches the lists and runs the lookup.
+ * once), so the first claims it and the other gets null: only one flips the
+ * status, touches the lists and runs the lookup, whose outcome it returns.
  */
-async function decide(deps: SuggestionsDeps, item: Suggestion, wanted: 'approved' | 'denied', now: () => number): Promise<boolean> {
+async function decide(deps: SuggestionsDeps, item: Suggestion, wanted: 'approved' | 'denied', now: () => number): Promise<{ lookup?: LookupOutcome } | null> {
   const { redis } = deps;
   const key = itemKey(item.id);
   const at = now();
@@ -446,10 +482,10 @@ async function decide(deps: SuggestionsDeps, item: Suggestion, wanted: 'approved
     // and write, or giving it back failed) would block the record for good,
     // so one that is still undecided a minute on is abandoned: take it over.
     const current = parse(await redis.hgetall(key));
-    if (!current?.decidedAt || !decidable(current.status) || at - current.decidedAt < STALE_CLAIM_MS) return false;
+    if (!current?.decidedAt || !decidable(current.status) || at - current.decidedAt < STALE_CLAIM_MS) return null;
     // Two requests can find the same abandoned claim, so taking it over is a
     // claim of its own: HSETNX on a field named for that claim lets one win.
-    if (!(await redis.hsetnx(key, `takeover:${current.decidedAt}`, at))) return false;
+    if (!(await redis.hsetnx(key, `takeover:${current.decidedAt}`, at))) return null;
     await redis.hset(key, { decidedAt: at });
   }
   const tx = redis.multi().hset(key, { status: wanted, decidedAt: at });
@@ -470,8 +506,7 @@ async function decide(deps: SuggestionsDeps, item: Suggestion, wanted: 'approved
     await redis.hdel(key, 'decidedAt');
     throw err;
   }
-  if (wanted === 'approved') await enrich(deps, item);
-  return true;
+  return wanted === 'approved' ? { lookup: await enrich(deps, item) } : {};
 }
 
 /** What a request that lost the claim reports: the winner's status, once it has landed. */
@@ -479,6 +514,15 @@ async function settledStatus(redis: SuggestionsRedis, id: string): Promise<strin
   const current = parse(await redis.hgetall(itemKey(id)));
   return current && !decidable(current.status) ? current.status : 'decided';
 }
+
+// What the approval page adds when the lookup filled nothing in, so the
+// owner hears about it where they approved rather than from an empty card.
+const LOOKUP_NOTES: Record<Exclude<LookupOutcome, 'found'>, string> = {
+  'no-match': 'BoardGameGeek had no match for it, so it has no players, time or description yet: sign in on the site to fill them in with Edit.',
+  'no-token': "It couldn't be looked up on BoardGameGeek because BGG_API_TOKEN isn't set, so it has no details yet: sign in on the site to fill them in with Edit.",
+  refused: 'BoardGameGeek refused the request (check BGG_API_TOKEN), so it has no details yet: sign in on the site to fill them in with Edit.',
+  unavailable: "BoardGameGeek didn't answer, so it has no details yet: sign in on the site to fill them in with Edit.",
+};
 
 const alreadyPage = (game: string, status: string) =>
   decisionPage(`Already ${status}`, `${escapeHtml(game)} was ${status} earlier. Nothing changed.`);
@@ -581,11 +625,12 @@ export async function handleSuggestions(
           if (!decidable(item.status)) {
             return res.status(409).json({ error: `${item.game} was already ${item.status}` });
           }
-          if (!(await decide(deps, item, wanted, now))) {
+          const decided = await decide(deps, item, wanted, now);
+          if (!decided) {
             return res.status(409).json({ error: `${item.game} was already ${await settledStatus(redis, item.id)}` });
           }
           const updated = parse(await redis.hgetall(itemKey(item.id)));
-          return res.status(200).json({ item: updated ? publicView(updated) : null });
+          return res.status(200).json({ item: updated ? publicView(updated) : null, ...decided });
         }
 
         const item = await authorise(redis, body.id, body.token, res);
@@ -595,19 +640,34 @@ export async function handleSuggestions(
         if (!decidable(item.status)) {
           return res.status(200).send(alreadyPage(item.game, item.status));
         }
-        if (!(await decide(deps, item, wanted, now))) {
+        const decided = await decide(deps, item, wanted, now);
+        if (!decided) {
           return res.status(200).send(alreadyPage(item.game, await settledStatus(redis, item.id)));
         }
+        const note = decided.lookup && decided.lookup !== 'found' ? ` ${LOOKUP_NOTES[decided.lookup]}` : '';
         return res.status(200).send(decisionPage(
           wanted === 'approved' ? 'Approved' : 'Denied',
           wanted === 'approved'
-            ? `${escapeHtml(item.game)} is now on the wishlist, credited to ${escapeHtml(item.name)}.`
+            ? `${escapeHtml(item.game)} is now on the wishlist, credited to ${escapeHtml(item.name)}.${note}`
             : `${escapeHtml(item.game)} won't appear on the wishlist.`,
         ));
       }
 
+      // The owner looking a game up before adding it, so the add form can
+      // show what BoardGameGeek has, or why it has nothing. Writes nothing.
+      if (body.action === 'preview') {
+        if (!(await requireAdmin(deps, req, res))) return res;
+        const g = validateGame(body.game);
+        if (!g.ok) return res.status(400).json({ error: g.error });
+        const result = await lookUp(deps, g.game);
+        if (result?.outcome === 'found') return res.status(200).json({ outcome: 'found', details: result.details });
+        return res.status(200).json({ outcome: result?.outcome ?? 'unavailable' });
+      }
+
       // The owner adding a game straight to the wishlist: stored approved,
-      // no email, enriched the same way an approved suggestion is.
+      // no email. Details previewed on the form come with it (null when the
+      // owner adds it without any); without them it is looked up the same
+      // way an approved suggestion is.
       if (body.action === 'add') {
         if (!(await requireAdmin(deps, req, res))) return res;
         const g = validateGame(body.game);
@@ -619,6 +679,16 @@ export async function handleSuggestions(
         if (body.type !== undefined && !isWishlistType(body.type)) {
           return res.status(400).json({ error: 'unknown wishlist type' });
         }
+        const extra: Partial<SuggestionDetails> = body.type !== undefined ? { type: body.type } : {};
+        const previewed = body.details !== undefined;
+        let details: SuggestionDetails | undefined;
+        if (previewed && body.details !== null) {
+          const checked = previewedDetails(body.details);
+          if (!checked.ok) return res.status(400).json({ error: checked.error });
+          details = checked.details;
+        } else if (previewed && extra.type) {
+          details = { min: 1, max: PLAYERS_MAX, mins: 0, desc: '', kw: [] };
+        }
         const active = await loadList(redis, ACTIVE_KEY);
         const dup = active.find((s) => normalize(s.game) === normalize(g.game));
         if (dup) return res.status(409).json({ error: `${dup.game} is already on the list` });
@@ -627,13 +697,16 @@ export async function handleSuggestions(
         const at = now();
         const item: Suggestion = { id, game: g.game, name, note, status: 'approved', createdAt: at, decidedAt: at, source: 'owner' };
         await redis.multi()
-          .hset(itemKey(id), { id, game: g.game, name, note, status: 'approved', createdAt: at, decidedAt: at, source: 'owner', token })
+          .hset(itemKey(id), {
+            id, game: g.game, name, note, status: 'approved', createdAt: at, decidedAt: at, source: 'owner', token,
+            ...(details ? { details: JSON.stringify({ ...details, ...extra }) } : {}),
+          })
           .lpush(ACTIVE_KEY, id)
           .lpush(APPROVED_KEY, id)
           .exec();
-        await enrich(deps, item, body.type !== undefined ? { type: body.type } : {});
+        const lookup = previewed ? undefined : await enrich(deps, item, extra);
         const stored = parse(await redis.hgetall(itemKey(id)));
-        return res.status(201).json({ item: stored ? publicView(stored) : publicView(item) });
+        return res.status(201).json({ item: stored ? publicView(stored) : publicView(item), lookup });
       }
 
       if (body.action !== undefined) {

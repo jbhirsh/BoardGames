@@ -1,9 +1,14 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { addGame, callJson, decideSuggestion, editGame, fetchPending, removeGame } from '../client/adminApi';
+import { addGame, callJson, decideSuggestion, editGame, fetchPending, previewGame, removeGame } from '../client/adminApi';
 
 function jsonResponse(body: unknown, ok = true): Response {
   return { ok, json: async () => body } as unknown as Response;
 }
+
+const ROOT = {
+  bggId: 237182, name: 'Root: A Game of Woodland Might and Right', year: 2018, min: 2, max: 4, mins: 90,
+  desc: 'Woodland war.', kw: ['strategy'], img: 'https://cf.geekdo-images.com/root.jpg',
+};
 
 describe('adminApi', () => {
   afterEach(() => vi.restoreAllMocks());
@@ -21,15 +26,20 @@ describe('adminApi', () => {
   it('sends every mutation as JSON with the shape the API expects', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({ ok: true }));
     await decideSuggestion('sug-1', 'deny');
-    await addGame({ game: 'Root', name: 'Jess', note: '', type: 'strategy' });
-    await addGame({ game: 'Root', name: 'Jess', note: '', type: null });
+    await previewGame('Root');
+    await addGame({ game: 'Root', name: 'Jess', note: '', type: 'strategy', details: null });
+    await addGame({ game: 'Root', name: 'Jess', note: '', type: null, details: ROOT });
     await editGame({ id: 'sug-1', game: 'Root', details: { min: 2, max: 4, mins: 60, desc: 'War.', kw: ['strategy'], type: null } });
     await removeGame('sug-1');
     const calls = fetchSpy.mock.calls.map(([url, init]) => [url, (init as RequestInit).method, JSON.parse((init as RequestInit).body as string)]);
     expect(calls).toEqual([
       ['/api/suggestions', 'POST', { decision: 'deny', id: 'sug-1' }],
-      ['/api/suggestions', 'POST', { action: 'add', game: 'Root', name: 'Jess', note: '', type: 'strategy' }],
-      ['/api/suggestions', 'POST', { action: 'add', game: 'Root', name: 'Jess', note: '' }],
+      ['/api/suggestions', 'POST', { action: 'preview', game: 'Root' }],
+      ['/api/suggestions', 'POST', { action: 'add', game: 'Root', name: 'Jess', note: '', type: 'strategy', details: null }],
+      // BGG's name for the match stays behind: the entry keeps the typed one.
+      ['/api/suggestions', 'POST', { action: 'add', game: 'Root', name: 'Jess', note: '', details: {
+        bggId: 237182, year: 2018, min: 2, max: 4, mins: 90, desc: 'Woodland war.', kw: ['strategy'], img: 'https://cf.geekdo-images.com/root.jpg',
+      } }],
       ['/api/suggestions', 'PATCH', { id: 'sug-1', game: 'Root', details: { min: 2, max: 4, mins: 60, desc: 'War.', kw: ['strategy'], type: null } }],
       ['/api/suggestions', 'DELETE', { id: 'sug-1' }],
     ]);

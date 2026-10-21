@@ -27,7 +27,7 @@ import { reportError } from '../../api/_lib/sentry';
 import { KW, WISHLIST_SECTIONS } from '../data/keywords';
 import * as clientLimits from '../data/suggestionLimits';
 import { fakeRedis, type FakeRedisSeed } from './helpers/fakeRedis';
-import type { GameDetails, LookupResult } from '../../api/_lib/bgg';
+import { parseThing, type GameDetails, type LookupResult } from '../../api/_lib/bgg';
 
 function makeRes() {
   const res = {
@@ -1121,6 +1121,185 @@ describe('handleSuggestions', () => {
         await handleSuggestions(deps({ admin: async () => true, lookup: async () => result }), addReq, makeRes());
       }
       expect(reportError).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('telling the owner how the lookup went', () => {
+    const JSON_H = { 'content-type': 'application/json' };
+    const WINGSPAN = { bggId: 266192, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'] };
+    const approveBySite = async (lookup: SuggestionsDeps['lookup'], decision = 'approve') => {
+      const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
+      const res = makeRes();
+      await handleSuggestions(deps({ redis, lookup, admin: async () => true }), { method: 'POST', query: {}, body: { decision, id: 'sug-aaaaaa' }, headers: JSON_H }, res);
+      return res.body as { item: unknown; lookup?: string };
+    };
+    const approveByEmail = async (lookup: SuggestionsDeps['lookup']) => {
+      const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
+      const res = makeRes();
+      await handleSuggestions(deps({ redis, lookup }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, res);
+      return String(res.body);
+    };
+
+    it('answers an add with the outcome beside the item', async () => {
+      for (const [result, outcome] of [[found(WINGSPAN), 'found'], [NO_MATCH, 'no-match'], [{ outcome: 'unavailable' }, 'unavailable']] as const) {
+        const res = makeRes();
+        await handleSuggestions(deps({ admin: async () => true, lookup: async () => result }), { method: 'POST', query: {}, body: { action: 'add', game: 'Wingspan', name: 'Jess' }, headers: JSON_H }, res);
+        expect(res.statusCode).toBe(201);
+        expect(res.body).toMatchObject({ item: { game: 'Wingspan' }, lookup: outcome });
+      }
+    });
+
+    it('leaves the outcome out when no lookup ran', async () => {
+      const res = makeRes();
+      await handleSuggestions(deps({ admin: async () => true, lookup: null }), { method: 'POST', query: {}, body: { action: 'add', game: 'Wingspan', name: 'Jess' }, headers: JSON_H }, res);
+      expect(JSON.parse(JSON.stringify(res.body))).not.toHaveProperty('lookup');
+    });
+
+    it('answers an on-site approval with the outcome, and a denial without one', async () => {
+      expect(await approveBySite(async () => ({ outcome: 'refused', status: 401 }))).toMatchObject({ item: { status: 'approved' }, lookup: 'refused' });
+      expect(await approveBySite(async () => found(WINGSPAN))).toMatchObject({ lookup: 'found' });
+      const denied = await approveBySite(async () => found(WINGSPAN), 'deny');
+      expect(denied).toMatchObject({ item: { status: 'denied' } });
+      expect(denied).not.toHaveProperty('lookup');
+    });
+
+    it('says on the emailed approval\'s page what the lookup could not fill in', async () => {
+      expect(await approveByEmail(async () => NO_MATCH)).toContain('BoardGameGeek had no match for it');
+      expect(await approveByEmail(async () => ({ outcome: 'no-token' }))).toContain("BGG_API_TOKEN isn't set");
+      expect(await approveByEmail(async () => ({ outcome: 'refused', status: 403 }))).toContain('BoardGameGeek refused the request (check BGG_API_TOKEN)');
+      expect(await approveByEmail(async () => ({ outcome: 'unavailable' }))).toContain("BoardGameGeek didn't answer");
+      const quiet = await approveByEmail(async () => found(WINGSPAN));
+      expect(quiet).toContain('is now on the wishlist, credited to Alex.</p>');
+      expect(quiet).not.toContain('BoardGameGeek');
+    });
+  });
+
+  describe('POST action=preview (looking a game up before adding it)', () => {
+    const JSON_H = { 'content-type': 'application/json' };
+    const WINGSPAN = { bggId: 266192, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'], img: 'https://cf.geekdo-images.com/w.jpg' };
+    const preview = async (lookup: SuggestionsDeps['lookup'], body: Record<string, unknown> = { action: 'preview', game: 'Wingspan' }, over: Partial<SuggestionsDeps> = {}) => {
+      const d = deps({ admin: async () => true, lookup, ...over });
+      const res = makeRes();
+      await handleSuggestions(d, { method: 'POST', query: {}, body, headers: JSON_H }, res);
+      return { res, redis: d.redis as ReturnType<typeof makeRedis> };
+    };
+
+    it('answers what BoardGameGeek found, and stores nothing', async () => {
+      const lookup = vi.fn(async () => found(WINGSPAN));
+      const { res, redis } = await preview(lookup, { action: 'preview', game: '  Wingspan ' });
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual({ outcome: 'found', details: WINGSPAN });
+      expect(lookup).toHaveBeenCalledWith('Wingspan');
+      expect(redis.hashes).toEqual({});
+      expect(redis.lists).toEqual({});
+    });
+
+    it('answers why it found nothing, with no details and never the cause', async () => {
+      expect((await preview(async () => NO_MATCH)).res.body).toEqual({ outcome: 'no-match' });
+      expect((await preview(async () => ({ outcome: 'refused', status: 401 }))).res.body).toEqual({ outcome: 'refused' });
+      expect((await preview(async () => ({ outcome: 'unavailable', cause: new Error('socket hang up') }))).res.body).toEqual({ outcome: 'unavailable' });
+      expect((await preview(async () => { throw new Error('bgg down'); })).res.body).toEqual({ outcome: 'unavailable' });
+      expect((await preview(null)).res.body).toEqual({ outcome: 'unavailable' });
+    });
+
+    it('reports a missing token to Sentry here too', async () => {
+      vi.mocked(reportError).mockClear();
+      expect((await preview(async () => ({ outcome: 'no-token' }))).res.body).toEqual({ outcome: 'no-token' });
+      expect(vi.mocked(reportError).mock.calls.map(([, err]) => (err as Error).message)).toEqual([expect.stringContaining('BGG_API_TOKEN')]);
+    });
+
+    it('is owner-only, JSON-only, and validates the name before looking anything up', async () => {
+      const lookup = vi.fn(async () => found(WINGSPAN));
+      expect((await preview(lookup, undefined, { admin: async () => false })).res.statusCode).toBe(403);
+      const form = makeRes();
+      await handleSuggestions(deps({ admin: async () => true, lookup }), { method: 'POST', query: {}, body: { action: 'preview', game: 'Wingspan' }, headers: { 'content-type': 'application/x-www-form-urlencoded' } }, form);
+      expect(form.statusCode).toBe(403);
+      const bad = await preview(lookup, { action: 'preview', game: 'X' });
+      expect(bad.res.statusCode).toBe(400);
+      expect(bad.res.body).toEqual({ error: 'game must be 2–80 characters' });
+      expect(lookup).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('POST action=add with previewed details', () => {
+    const JSON_H = { 'content-type': 'application/json' };
+    const PREVIEWED = { bggId: 266192, year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'], img: 'https://cf.geekdo-images.com/w.jpg' };
+    const add = async (body: Record<string, unknown>) => {
+      const lookup = vi.fn(async () => NO_MATCH);
+      const d = deps({ admin: async () => true, lookup });
+      const res = makeRes();
+      await handleSuggestions(d, { method: 'POST', query: {}, body: { action: 'add', game: 'Wingspan', name: 'Jess', ...body }, headers: JSON_H }, res);
+      const redis = d.redis as ReturnType<typeof makeRedis>;
+      const raw = redis.hashes['suggestions:sug-bbbbbb']?.details;
+      return { res, lookup, redis, stored: raw === undefined ? undefined : JSON.parse(String(raw)) as Record<string, unknown> };
+    };
+
+    it('stores them with the section, without looking the game up again', async () => {
+      const { res, lookup, stored, redis } = await add({ details: { ...PREVIEWED, type: 'party' }, type: 'strategy' });
+      expect(res.statusCode).toBe(201);
+      expect(lookup).not.toHaveBeenCalled();
+      expect(stored).toEqual({ ...PREVIEWED, type: 'strategy' });
+      expect(res.body).toMatchObject({ item: { status: 'approved', details: { ...PREVIEWED, type: 'strategy' } } });
+      expect(res.body).not.toHaveProperty('lookup', expect.anything());
+      expect(redis.lists['suggestions:approved']).toEqual(['sug-bbbbbb']);
+    });
+
+    it('takes a section only from the add, never from the details', async () => {
+      expect((await add({ details: { ...PREVIEWED, type: 'party' } })).stored).toEqual(PREVIEWED);
+    });
+
+    it('drops a section it does not know from the details instead of refusing the add', async () => {
+      const { res, stored } = await add({ details: { ...PREVIEWED, type: 'no-such-section' }, type: 'party' });
+      expect(res.statusCode).toBe(201);
+      expect(stored).toEqual({ ...PREVIEWED, type: 'party' });
+    });
+
+    it('adds what a preview answered for a BGG entry past the bounds (999 players, 720 minutes, a soft hyphen)', async () => {
+      const crowd = parseThing('<items><item type="boardgame" id="7"><name type="primary" value="Crowd"/><description>Every&#173;one plays.</description><minplayers value="3"/><maxplayers value="999"/><playingtime value="720"/></item></items>')!;
+      const previewed = makeRes();
+      await handleSuggestions(deps({ admin: async () => true, lookup: async () => found(crowd) }), { method: 'POST', query: {}, body: { action: 'preview', game: 'Crowd' }, headers: JSON_H }, previewed);
+      // Sent back as the client sends it: through JSON, as the add's details.
+      const { details } = JSON.parse(JSON.stringify(previewed.body)) as { details: Record<string, unknown> };
+      const { res, stored } = await add({ details });
+      expect(res.statusCode).toBe(201);
+      expect(stored).toEqual({ bggId: 7, min: 3, max: PLAYERS_MAX, mins: MINS_MAX, desc: 'Everyone plays.', kw: [] });
+    });
+
+    it('adds without details when the owner chose to, keeping the section', async () => {
+      const typed = await add({ details: null, type: 'party' });
+      expect(typed.lookup).not.toHaveBeenCalled();
+      expect(typed.stored).toEqual({ min: 1, max: 99, mins: 0, desc: '', kw: [], type: 'party' });
+      const bare = await add({ details: null });
+      expect(bare.lookup).not.toHaveBeenCalled();
+      expect(bare.stored).toBeUndefined();
+      expect(bare.res.statusCode).toBe(201);
+    });
+
+    it('holds previewed details to an edit\'s rules and stores nothing when they fail', async () => {
+      for (const [details, error] of [
+        ['nope', 'details must be an object'],
+        [{ ...PREVIEWED, min: 5, max: 2 }, 'players must be whole numbers from 1 to 99, min at most max'],
+        [{ ...PREVIEWED, kw: ['not-a-real-keyword'] }, 'keywords must be a short list of keyword ids'],
+        [{ ...PREVIEWED, desc: 'x'.repeat(601) }, 'description must be at most 600 characters'],
+        [{ ...PREVIEWED, bggId: 0 }, 'bggId must be a positive whole number'],
+        [{ ...PREVIEWED, bggId: '266192' }, 'bggId must be a positive whole number'],
+        [{ ...PREVIEWED, year: 2019.5 }, 'year must be a whole number'],
+        [{ ...PREVIEWED, year: 10_000 }, 'year must be a whole number'],
+        [{ ...PREVIEWED, img: 'http://insecure.example/x.jpg' }, 'img must be an https URL'],
+        [{ ...PREVIEWED, img: `https://cf.geekdo-images.com/${'x'.repeat(500)}` }, 'img must be an https URL'],
+        [{ ...PREVIEWED, img: 42 }, 'img must be an https URL'],
+      ] as const) {
+        const { res, redis } = await add({ details });
+        expect(res.statusCode, JSON.stringify(details).slice(0, 80)).toBe(400);
+        expect(res.body).toEqual({ error });
+        expect(redis.hashes).toEqual({});
+      }
+    });
+
+    it('accepts a game BGG dates before the common era, and details without the optional fields', async () => {
+      expect((await add({ details: { ...PREVIEWED, year: -2200 } })).stored).toMatchObject({ year: -2200 });
+      const { stored } = await add({ details: { min: 2, max: 2, mins: 20, desc: '', kw: [] } });
+      expect(stored).toEqual({ min: 2, max: 2, mins: 20, desc: '', kw: [] });
     });
   });
 });

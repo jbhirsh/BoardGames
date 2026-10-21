@@ -1,12 +1,14 @@
 import { useEffect, useId, useState, type FormEvent } from 'react';
-import { WISHLIST_SECTIONS, WISHLIST_TYPES } from '../data/keywords';
+import { KW, WISHLIST_SECTIONS, WISHLIST_TYPES } from '../data/keywords';
 import { GAME_MAX, GAME_MIN, NAME_MAX, NOTE_MAX } from '../data/suggestionLimits';
 import { getDisplayName, setDisplayName } from '../client/displayName';
 import { useWishlistItems } from '../context/useWishlistItems';
 import { alreadyListed } from '../utils/alreadyListed';
 import { isValidDisplayName, NAME_HINT } from '../utils/displayName';
-import { addGame, decideSuggestion, fetchPending, type PendingSuggestion } from '../client/adminApi';
+import { lookupNotice, type LookupOutcome, type PreviewDetails } from '../utils/lookupNotice';
+import { addGame, decideSuggestion, fetchPending, previewGame, type PendingSuggestion } from '../client/adminApi';
 import AdminItemControls from './AdminItemControls';
+import Notice from './Notice';
 
 type Queue = { kind: 'loading' } | { kind: 'ready'; items: PendingSuggestion[] } | { kind: 'error' };
 
@@ -16,6 +18,9 @@ function PendingQueue() {
   const [queue, setQueue] = useState<Queue>({ kind: 'loading' });
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // An approval whose BoardGameGeek lookup filled nothing in, said here
+  // since the row it came from is gone.
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -31,6 +36,7 @@ function PendingQueue() {
     if (busy) return;
     setBusy(item.id);
     setError(null);
+    setNotice(null);
     const result = await decideSuggestion(item.id, decision);
     setBusy(null);
     if (!result.ok) {
@@ -38,7 +44,10 @@ function PendingQueue() {
       return;
     }
     setQueue((q) => (q.kind === 'ready' ? { kind: 'ready', items: q.items.filter((i) => i.id !== item.id) } : q));
-    if (decision === 'approve') reload();
+    if (decision === 'approve') {
+      setNotice(lookupNotice(result.data.lookup, item.game, 'approved'));
+      reload();
+    }
   };
 
   return (
@@ -67,14 +76,53 @@ function PendingQueue() {
           ))}
         </ul>
       )}
+      {/* The queue is a live region already, so the notice doesn't announce itself too. */}
+      {notice && <Notice tone="warning" live={false}>{notice}</Notice>}
       {error && <p className="admin-error" role="alert">{error}</p>}
     </div>
   );
 }
 
-type AddStatus = { kind: 'idle' } | { kind: 'sending' } | { kind: 'added'; game: string } | { kind: 'error'; message: string };
+type AddStatus = { kind: 'idle' } | { kind: 'busy' } | { kind: 'added'; game: string } | { kind: 'error'; message: string };
 
-/** Adds a game straight to the wishlist, enriched from BoardGameGeek like an approved suggestion. */
+/** A lookup's answer, kept for the name it was made for: typing another name sets it aside. */
+interface Looked {
+  game: string;
+  outcome: LookupOutcome;
+  details?: PreviewDetails;
+}
+
+const playersText = (min: number, max: number) => (min === max ? `${min}` : max >= 99 ? `${min}+` : `${min}–${max}`);
+
+/** What BoardGameGeek has for the typed name, shown before anything is stored. */
+function PreviewCard({ details }: { details: PreviewDetails }) {
+  const facts = [`${playersText(details.min, details.max)} ${details.max === 1 ? 'player' : 'players'}`];
+  if (details.mins > 0) facts.push(`${details.mins} min`);
+  return (
+    <div className="admin-preview">
+      {details.img && <img className="admin-preview-art" src={details.img} alt="" width={64} height={64} />}
+      <div className="admin-preview-main">
+        <p className="admin-preview-name">
+          {details.name}{details.year !== undefined && <span className="admin-muted"> ({details.year})</span>}
+        </p>
+        <p className="admin-muted">{facts.join(' · ')}</p>
+        {details.desc && <p className="admin-preview-desc">{details.desc}</p>}
+        {details.kw.length > 0 && (
+          <ul className="admin-preview-kw" aria-label="Keywords">
+            {details.kw.map((k) => <li key={k}>{KW[k as keyof typeof KW] ?? k}</li>)}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Adds a game straight to the wishlist. The first press looks the name up
+ * on BoardGameGeek and shows what it found (or a notice saying why it found
+ * nothing) before anything is stored; the next adds it with those details,
+ * or without any, to fill in with Edit.
+ */
 function AddGameForm() {
   const { reload } = useWishlistItems();
   const [game, setGame] = useState('');
@@ -82,11 +130,30 @@ function AddGameForm() {
   const [note, setNote] = useState('');
   const [type, setType] = useState<string>('strategy');
   const [status, setStatus] = useState<AddStatus>({ kind: 'idle' });
+  const [looked, setLooked] = useState<Looked | null>(null);
+  const [lookingUp, setLookingUp] = useState(false);
   const uid = useId();
+
+  const typed = game.trim();
+  const current = looked?.game === typed ? looked : null;
+  const busy = status.kind === 'busy';
+
+  const lookUp = async () => {
+    setStatus({ kind: 'busy' });
+    setLookingUp(true);
+    const result = await previewGame(typed);
+    setLookingUp(false);
+    if (!result.ok) {
+      setStatus({ kind: 'error', message: result.error });
+      return;
+    }
+    setLooked({ game: typed, outcome: result.data.outcome, details: result.data.details });
+    setStatus({ kind: 'idle' });
+  };
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (status.kind === 'sending') return;
+    if (busy) return;
     const trimmedName = name.trim();
     if (!isValidDisplayName(trimmedName)) {
       setStatus({ kind: 'error', message: NAME_HINT });
@@ -99,18 +166,29 @@ function AddGameForm() {
       setStatus({ kind: 'error', message: known });
       return;
     }
-    setStatus({ kind: 'sending' });
-    const result = await addGame({ game: game.trim(), name: trimmedName, note: note.trim(), type: type || null });
+    if (!current) {
+      await lookUp();
+      return;
+    }
+    setStatus({ kind: 'busy' });
+    const result = await addGame({ game: typed, name: trimmedName, note: note.trim(), type: type || null, details: current.details ?? null });
     if (!result.ok) {
       setStatus({ kind: 'error', message: result.error });
       return;
     }
     setDisplayName(trimmedName);
-    setStatus({ kind: 'added', game: game.trim() });
+    setStatus({ kind: 'added', game: typed });
     setGame('');
     setNote('');
+    setLooked(null);
     reload();
   };
+
+  const found = current?.details;
+  const notice = current && !found ? lookupNotice(current.outcome, current.game, 'preview') : null;
+  let label = 'Look up';
+  if (busy) label = lookingUp ? 'Looking up…' : 'Adding…';
+  else if (current) label = found ? 'Add to wishlist' : 'Add anyway';
 
   return (
     <form className="admin-add" onSubmit={onSubmit} aria-labelledby={`${uid}-title`}>
@@ -128,10 +206,16 @@ function AddGameForm() {
         <label className="suggest-label" htmlFor={`${uid}-note`}>Note <span className="suggest-opt">(optional)</span></label>
         <input id={`${uid}-note`} className="suggest-input" value={note} onChange={(e) => setNote(e.target.value)} maxLength={NOTE_MAX} placeholder="Shows on the card in quotes" />
       </div>
+      {/* One live region for the lookup's answer, so the notice in it doesn't announce itself twice. */}
+      <div aria-live="polite">
+        {found && <PreviewCard details={found} />}
+        {notice && <Notice tone="warning" live={false}>{notice}</Notice>}
+      </div>
       <div className="suggest-actions">
-        <button type="submit" className="suggest-btn" disabled={status.kind === 'sending'}>
-          {status.kind === 'sending' ? 'Adding…' : 'Add to wishlist'}
-        </button>
+        <button type="submit" className="suggest-btn" disabled={busy}>{label}</button>
+        {current && !found && (
+          <button type="button" className="admin-btn admin-btn--ghost" disabled={busy} onClick={() => void lookUp()}>Look up again</button>
+        )}
         <span className="suggest-status" role="status" aria-live="polite">
           {status.kind === 'added' && `${status.game} is on the wishlist.`}
           {status.kind === 'error' && status.message}
