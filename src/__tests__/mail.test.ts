@@ -62,6 +62,9 @@ describe('mail helpers', () => {
     expect(html).toContain('<title>&lt;Title&gt;</title>');
     expect(html).toContain('<h1>&lt;Title&gt;</h1><p>body</p>');
     expect(html).toContain('name="robots" content="noindex"');
+    // The pages' URLs carry emailed tokens; nothing they load may see them.
+    expect(html).toContain('<meta name="referrer" content="no-referrer">');
+    expect(page('T', '', '.x{color:red}')).toContain('.x{color:red}</style>');
     expect(button('https://x', 'Go', '#000')).toContain('href="https://x"');
   });
 });
