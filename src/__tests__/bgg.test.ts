@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { parseThing, pickSearchId, summarise, lookupGame, type FetchLike } from '../../api/_lib/bgg';
+import { MINS_MAX, PLAYERS_MAX, parseThing, pickSearchId, summarise, lookupGame, type FetchLike } from '../../api/_lib/bgg';
 
 const THING = `<?xml version="1.0" encoding="utf-8"?>
 <items termsofuse="https://boardgamegeek.com/xmlapi/termsofuse">
@@ -61,9 +61,15 @@ describe('summarise', () => {
 
   it('decodes multi-digit hex entities and code points up to U+10FFFF, leaving larger ones raw', () => {
     expect(summarise('It&#x2019;s fun.')).toBe('It\u2019s fun.');
-    expect(summarise('a&#x10FFFF;b')).toBe('a\u{10FFFF}b');
+    expect(summarise('a&#x1F3B2;b')).toBe('a\u{1F3B2}b');
+    // U+10FFFF and U+0000 decode, then go as control characters.
+    expect(summarise('a&#x10FFFF;b')).toBe('ab');
     expect(summarise('a&#x110000;b')).toBe('a&#x110000;b');
-    expect(summarise('a&#0;b')).toBe('a\u0000b');
+    expect(summarise('a&#0;b')).toBe('ab');
+  });
+
+  it('drops control and format characters an edit would refuse, keeping newlines as spaces', () => {
+    expect(summarise('Co&#173;operative\u200d play.&#10;Zero\u200bwidth.')).toBe('Cooperative play. Zerowidth.');
   });
 
   it('strips multi-character tags, collapses runs of whitespace and trims the ends', () => {
@@ -111,6 +117,16 @@ describe('parseThing', () => {
   });
 
   const thing = (inner: string) => parseThing(`<items><item type="boardgame" id="7">${inner}</item></items>`)!;
+
+  it('caps players and minutes at what an entry can hold, so an add of the preview passes', () => {
+    const d = parseThing('<items><item type="boardgame" id="7"><name type="primary" value="Crowd"/><description>Every&#173;one plays.</description><minplayers value="3"/><maxplayers value="100"/><playingtime value="720"/></item></items>')!;
+    expect(d).toMatchObject({ min: 3, max: PLAYERS_MAX, mins: MINS_MAX, desc: 'Everyone plays.' });
+    // A minimum past the cap comes down with it, so min never exceeds max.
+    expect(thing('<minplayers value="150"/><maxplayers value="999"/>')).toMatchObject({ min: PLAYERS_MAX, max: PLAYERS_MAX });
+    expect(thing(`<maxplaytime value="${MINS_MAX + 1}"/>`).mins).toBe(MINS_MAX);
+    expect(thing(`<playingtime value="${MINS_MAX}"/>`).mins).toBe(MINS_MAX);
+    expect(thing(`<maxplayers value="${PLAYERS_MAX}"/>`).max).toBe(PLAYERS_MAX);
+  });
 
   it('ignores unranked ranks and rank tags missing an attribute', () => {
     expect(thing('<rank type="family" name="strategygames" value="Not Ranked"/>').kw).toEqual([]);

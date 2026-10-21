@@ -2,6 +2,8 @@
 // server's CSRF check requires, and every failure resolves to a message the
 // form can show rather than throwing into React.
 
+import type { LookupOutcome, PreviewDetails } from '../utils/lookupNotice';
+
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 export const GENERIC_ERROR = 'Something went wrong. Try again in a minute.';
 
@@ -35,18 +37,39 @@ export async function fetchPending(signal?: AbortSignal): Promise<PendingSuggest
   return Array.isArray(data.items) ? data.items : [];
 }
 
+/** What an approval answers besides the item: how its BoardGameGeek lookup went. */
+export interface LookedUp {
+  lookup?: LookupOutcome;
+}
+
 export const decideSuggestion = (id: string, decision: 'approve' | 'deny') =>
-  call('POST', { decision, id });
+  call<LookedUp>('POST', { decision, id });
+
+export interface Preview {
+  outcome: LookupOutcome;
+  details?: PreviewDetails;
+}
+
+/** Looks a game up on BoardGameGeek without storing anything, for the add form to show. */
+export const previewGame = (game: string) => call<Preview>('POST', { action: 'preview', game });
 
 export interface AddGameInput {
   game: string;
   name: string;
   note: string;
   type: string | null;
+  /** What the preview found, or null to add it without details. */
+  details: PreviewDetails | null;
 }
 
-export const addGame = ({ game, name, note, type }: AddGameInput) =>
-  call('POST', { action: 'add', game, name, note, ...(type ? { type } : {}) });
+export const addGame = ({ game, name, note, type, details }: AddGameInput) => {
+  // BGG's name for the match was for the owner to see; the entry keeps the typed one.
+  const stored = details && {
+    bggId: details.bggId, year: details.year, min: details.min, max: details.max,
+    mins: details.mins, desc: details.desc, kw: details.kw, img: details.img,
+  };
+  return call('POST', { action: 'add', game, name, note, ...(type ? { type } : {}), details: stored });
+};
 
 export interface EditGameInput {
   id: string;

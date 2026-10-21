@@ -19,6 +19,15 @@ export interface GameDetails {
   img?: string;
 }
 
+// The bounds an entry's details are held to. They live here, not in
+// suggestions.ts (which imports this module), so a lookup produces details
+// an owner edit would also accept: a preview the owner adds is checked
+// against them.
+/** The most players an entry can list (BGG has party games at 100 and more). */
+export const PLAYERS_MAX = 99;
+/** The longest playing time an entry can list, in minutes. */
+export const MINS_MAX = 600;
+
 export type FetchLike = (url: string, init?: { signal?: AbortSignal; headers?: Record<string, string> }) => Promise<{ status: number; text(): Promise<string> }>;
 
 const BASE = 'https://boardgamegeek.com/xmlapi2';
@@ -45,7 +54,10 @@ const attr = (tag: string, name: string): string | undefined =>
 
 /** The first two sentences of BGG's often-long description, capped at `max` characters. */
 export function summarise(raw: string, max = 240): string {
-  const text = decodeEntities(raw).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  // Control and format characters (a soft hyphen from &#173;, zero-width
+  // joiners) go, as an edit would refuse them; newlines and tabs are left
+  // for the whitespace collapse, so the words either side stay apart.
+  const text = decodeEntities(raw).replace(/<[^>]+>/g, ' ').replace(/(?!\s)\p{C}/gu, '').replace(/\s+/g, ' ').trim();
   if (!text) return '';
   // Split after sentence punctuation followed by whitespace, so decimals
   // like "2.0" stay whole and a trailing unpunctuated sentence is kept.
@@ -80,9 +92,12 @@ export function parseThing(xml: string): GameDetails | null {
     return m ? Number(m[1]) : undefined;
   };
   // BGG writes value="0" for fields it doesn't know, so 0 means unset.
-  const min = num('minplayers') || 1;
-  const max = Math.max(min, num('maxplayers') || min);
-  const playing = num('playingtime') || num('maxplaytime') || num('minplaytime') || 0;
+  // It also lists some party games for 999 players and some campaigns at
+  // 720 minutes or more, past what an entry holds, so those are capped.
+  const lo = num('minplayers') || 1;
+  const max = Math.min(PLAYERS_MAX, Math.max(lo, num('maxplayers') || lo));
+  const min = Math.min(lo, max);
+  const playing = Math.min(MINS_MAX, num('playingtime') || num('maxplaytime') || num('minplaytime') || 0);
   const year = num('yearpublished') || undefined;
   const descRaw = /<description>([\s\S]*?)<\/description>/.exec(xml)?.[1] ?? '';
   const thumb = decodeEntities(/<thumbnail>\s*([^<]*?)\s*<\/thumbnail>/.exec(xml)?.[1] ?? '');

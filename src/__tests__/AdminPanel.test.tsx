@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import AdminPanel from '../components/AdminPanel';
 import { AuthContext } from '../context/authContextValue';
 import { WishlistContext } from '../context/wishlistContextValue';
@@ -16,10 +16,20 @@ const PENDING = [
   { id: 'sug-2', game: 'Ark Nova', name: 'Sam', note: '' },
 ];
 
-function mockApi(pending: unknown = { items: PENDING }, mutation: Response = jsonResponse({ item: {} })) {
+const FARAWAY = {
+  bggId: 385761, name: 'Faraway', year: 2023, min: 2, max: 6, mins: 30,
+  desc: 'Explore Alula backwards.', kw: ['card-game', 'quick-play'], img: 'https://cf.geekdo-images.com/faraway.jpg',
+};
+
+function mockApi(
+  pending: unknown = { items: PENDING },
+  mutation: Response = jsonResponse({ item: {} }),
+  preview: Response = jsonResponse({ outcome: 'found', details: FARAWAY }),
+) {
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
     const url = String(input);
     if (url.startsWith('/api/suggestions?action=pending')) return pending instanceof Error ? Promise.reject(pending) : jsonResponse(pending);
+    if (init?.method === 'POST' && (JSON.parse(String(init.body)) as { action?: string }).action === 'preview') return preview;
     if (init?.method === 'POST') return mutation;
     return jsonResponse({});
   });
@@ -100,7 +110,7 @@ describe('AdminPanel', () => {
     expect(within(form).getByLabelText(/Note/)).toHaveAttribute('maxlength', String(NOTE_MAX));
   });
 
-  it('adds a game with the chosen section, remembers the name and reloads', async () => {
+  it('looks a game up first, shows what BoardGameGeek has, then adds it with those details', async () => {
     localStorage.setItem('gameroom:name', 'Jess H');
     const spy = mockApi({ items: [] });
     const reload = renderPanel();
@@ -110,18 +120,33 @@ describe('AdminPanel', () => {
     fireEvent.change(within(form).getByLabelText('Game'), { target: { value: ' Faraway ' } });
     fireEvent.change(within(form).getByLabelText('Section'), { target: { value: 'heavy' } });
     fireEvent.change(within(form).getByLabelText(/Note/), { target: { value: 'Card drafting' } });
+    fireEvent.click(within(form).getByRole('button', { name: 'Look up' }));
+
+    expect(await within(form).findByText('Explore Alula backwards.')).toBeInTheDocument();
+    expect(within(form).getByText('(2023)')).toBeInTheDocument();
+    expect(within(form).getByText('2–6 players · 30 min')).toBeInTheDocument();
+    expect(within(within(form).getByRole('list', { name: 'Keywords' })).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Card Game', 'Quick Play']);
+    expect(within(form).getByRole('presentation')).toHaveAttribute('src', FARAWAY.img);
+    expect(reload).not.toHaveBeenCalled();
+
     fireEvent.click(within(form).getByRole('button', { name: 'Add to wishlist' }));
     await waitFor(() => expect(within(form).getByRole('status')).toHaveTextContent('Faraway is on the wishlist.'));
-    expect(postBodies(spy)).toEqual([{ action: 'add', game: 'Faraway', name: 'Jess H', note: 'Card drafting', type: 'heavy' }]);
+    const stored = { bggId: 385761, year: 2023, min: 2, max: 6, mins: 30, desc: 'Explore Alula backwards.', kw: ['card-game', 'quick-play'], img: FARAWAY.img };
+    expect(postBodies(spy)).toEqual([
+      { action: 'preview', game: 'Faraway' },
+      { action: 'add', game: 'Faraway', name: 'Jess H', note: 'Card drafting', type: 'heavy', details: stored },
+    ]);
     expect(reload).toHaveBeenCalledTimes(1);
     expect(within(form).getByLabelText('Game')).toHaveValue('');
+    expect(within(form).queryByText('Explore Alula backwards.')).not.toBeInTheDocument();
+    expect(within(form).getByRole('button', { name: 'Look up' })).toBeInTheDocument();
   });
 
   it('can file a game under the friends section, and refuses a bad name before posting', async () => {
     const spy = mockApi({ items: [] });
     renderPanel();
     const form = await screen.findByRole('form', { name: 'Add a game' });
-    fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Root' } });
+    fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Faraway' } });
     fireEvent.change(within(form).getByLabelText('Section'), { target: { value: '' } });
     fireEvent.change(within(form).getByLabelText('Added by'), { target: { value: '!!' } });
     fireEvent.submit(form);
@@ -130,7 +155,87 @@ describe('AdminPanel', () => {
 
     fireEvent.change(within(form).getByLabelText('Added by'), { target: { value: 'Jess' } });
     fireEvent.submit(form);
-    await waitFor(() => expect(postBodies(spy)).toEqual([{ action: 'add', game: 'Root', name: 'Jess', note: '' }]));
+    await within(form).findByRole('button', { name: 'Add to wishlist' });
+    fireEvent.submit(form);
+    await waitFor(() => expect(postBodies(spy)).toHaveLength(2));
+    expect(postBodies(spy)[1]).toMatchObject({ action: 'add', game: 'Faraway', name: 'Jess', note: '' });
+    expect(postBodies(spy)[1]).not.toHaveProperty('type');
+  });
+
+  it('says on the form why BoardGameGeek found nothing, and can add the game anyway without details', async () => {
+    const spy = mockApi({ items: [] }, jsonResponse({ item: {} }), jsonResponse({ outcome: 'no-match' }));
+    const reload = renderPanel();
+    const form = await screen.findByRole('form', { name: 'Add a game' });
+    fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Magical Athlete' } });
+    fireEvent.click(within(form).getByRole('button', { name: 'Look up' }));
+    const notice = await within(form).findByText(/^BoardGameGeek had no match for “Magical Athlete”\. Check the name/);
+    expect(notice.closest('.notice')).toHaveClass('notice-warning');
+    // The lookup's area is the live region, so the notice carries no role of its own.
+    expect(notice.closest('.notice')).not.toHaveAttribute('role');
+    expect(reload).not.toHaveBeenCalled();
+
+    fireEvent.click(within(form).getByRole('button', { name: 'Add anyway' }));
+    await waitFor(() => expect(within(form).getByRole('status')).toHaveTextContent('Magical Athlete is on the wishlist.'));
+    expect(postBodies(spy)[1]).toEqual({ action: 'add', game: 'Magical Athlete', name: 'Jess', note: '', type: 'strategy', details: null });
+    expect(within(form).queryByText(/had no match/)).not.toBeInTheDocument();
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('looks up again on request, and sets an answer aside once the name changes', async () => {
+    const spy = mockApi({ items: [] }, jsonResponse({ item: {} }), jsonResponse({ outcome: 'unavailable' }));
+    renderPanel();
+    const form = await screen.findByRole('form', { name: 'Add a game' });
+    fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Magical Athlete' } });
+    fireEvent.click(within(form).getByRole('button', { name: 'Look up' }));
+    expect(await within(form).findByText(/^BoardGameGeek didn't answer for “Magical Athlete”/)).toBeInTheDocument();
+    fireEvent.click(within(form).getByRole('button', { name: 'Look up again' }));
+    await waitFor(() => expect(postBodies(spy)).toEqual([{ action: 'preview', game: 'Magical Athlete' }, { action: 'preview', game: 'Magical Athlete' }]));
+    await within(form).findByRole('button', { name: 'Add anyway' });
+
+    fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Magical Athletes' } });
+    expect(within(form).queryByText(/didn't answer/)).not.toBeInTheDocument();
+    expect(within(form).queryByRole('button', { name: 'Look up again' })).not.toBeInTheDocument();
+    expect(within(form).getByRole('button', { name: 'Look up' })).toBeInTheDocument();
+  });
+
+  it('names a missing or refused token on the form', async () => {
+    mockApi({ items: [] }, jsonResponse({ item: {} }), jsonResponse({ outcome: 'no-token' }));
+    renderPanel();
+    let form = await screen.findByRole('form', { name: 'Add a game' });
+    fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Magical Athlete' } });
+    fireEvent.click(within(form).getByRole('button', { name: 'Look up' }));
+    expect(await within(form).findByText(/the BoardGameGeek token \(BGG_API_TOKEN\) is missing/)).toBeInTheDocument();
+    vi.restoreAllMocks();
+    cleanup();
+
+    mockApi({ items: [] }, jsonResponse({ item: {} }), jsonResponse({ outcome: 'refused' }));
+    renderPanel();
+    form = await screen.findByRole('form', { name: 'Add a game' });
+    fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Magical Athlete' } });
+    fireEvent.click(within(form).getByRole('button', { name: 'Look up' }));
+    expect(await within(form).findByText(/BoardGameGeek refused the request \(check BGG_API_TOKEN\)/)).toBeInTheDocument();
+  });
+
+  it('shows the server reason when the lookup itself fails, and stores nothing', async () => {
+    const spy = mockApi({ items: [] }, jsonResponse({ item: {} }), jsonResponse({ error: 'owner sign-in required' }, false));
+    renderPanel();
+    const form = await screen.findByRole('form', { name: 'Add a game' });
+    fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Faraway' } });
+    fireEvent.click(within(form).getByRole('button', { name: 'Look up' }));
+    await waitFor(() => expect(within(form).getByRole('status')).toHaveTextContent('owner sign-in required'));
+    expect(within(form).getByRole('button', { name: 'Look up' })).toBeEnabled();
+    expect(postBodies(spy)).toEqual([{ action: 'preview', game: 'Faraway' }]);
+  });
+
+  it('says one player, and leaves out an unknown time', async () => {
+    mockApi({ items: [] }, jsonResponse({ item: {} }), jsonResponse({ outcome: 'found', details: { ...FARAWAY, min: 1, max: 1, mins: 0, year: undefined, img: undefined, kw: [], desc: '' } }));
+    renderPanel();
+    const form = await screen.findByRole('form', { name: 'Add a game' });
+    fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Faraway' } });
+    fireEvent.click(within(form).getByRole('button', { name: 'Look up' }));
+    expect(await within(form).findByText('1 player')).toBeInTheDocument();
+    expect(within(form).queryByRole('presentation')).not.toBeInTheDocument();
+    expect(within(form).queryByRole('list', { name: 'Keywords' })).not.toBeInTheDocument();
   });
 
   it('shows the server reason when adding fails', async () => {
@@ -138,6 +243,8 @@ describe('AdminPanel', () => {
     renderPanel();
     const form = await screen.findByRole('form', { name: 'Add a game' });
     fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Root' } });
+    fireEvent.submit(form);
+    await within(form).findByRole('button', { name: 'Add to wishlist' });
     fireEvent.submit(form);
     await waitFor(() => expect(within(form).getByRole('status')).toHaveTextContent('Root is already on the list'));
   });
@@ -175,5 +282,16 @@ describe('AdminPanel', () => {
     renderPanel();
     expect(await screen.findByText('Nothing waiting.')).toBeInTheDocument();
     expect(screen.queryByText('Already on the wishlist')).not.toBeInTheDocument();
+  });
+
+  it('says when an approved suggestion got no details, and clears it on the next decision', async () => {
+    mockApi({ items: PENDING }, jsonResponse({ item: {}, lookup: 'unavailable' }));
+    renderPanel();
+    fireEvent.click(await screen.findByRole('button', { name: 'Approve Root' }));
+    const notice = await screen.findByText(/^Approved, but BoardGameGeek didn't answer for “Root”/);
+    // The queue is the live region, so the notice itself carries no role.
+    expect(notice.closest('.notice')).not.toHaveAttribute('role');
+    fireEvent.click(screen.getByRole('button', { name: 'Deny Ark Nova' }));
+    await waitFor(() => expect(screen.queryByText(/^Approved, but/)).not.toBeInTheDocument());
   });
 });
