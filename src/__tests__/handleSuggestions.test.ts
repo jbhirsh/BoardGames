@@ -993,7 +993,7 @@ describe('handleSuggestions', () => {
         expect((await patch({ details: { min: 5, max: 2 } })).res.body).toEqual({ error: 'players must be whole numbers from 1 to 99, min at most max' });
         expect((await patch({ details: { mins: 601 } })).res.body).toEqual({ error: 'minutes must be a whole number from 0 to 600' });
         expect((await patch({ details: { min: 1.5 } })).res.statusCode).toBe(400);
-        expect((await patch({ details: { desc: 'x'.repeat(601) } })).res.statusCode).toBe(400);
+        expect((await patch({ details: { desc: 'x'.repeat(DESC_MAX + 1) } })).res.statusCode).toBe(400);
         expect((await patch({ details: { kw: ['Not Valid'] } })).res.body).toEqual({ error: 'keywords must be a short list of keyword ids' });
         expect((await patch({ details: { kw: ['not-a-real-keyword'] } })).res.statusCode).toBe(400);
         expect((await patch({ details: { kw: [42] } })).res.statusCode).toBe(400);
@@ -1284,7 +1284,7 @@ describe('handleSuggestions', () => {
         ['nope', 'details must be an object'],
         [{ ...PREVIEWED, min: 5, max: 2 }, 'players must be whole numbers from 1 to 99, min at most max'],
         [{ ...PREVIEWED, kw: ['not-a-real-keyword'] }, 'keywords must be a short list of keyword ids'],
-        [{ ...PREVIEWED, desc: 'x'.repeat(601) }, 'description must be at most 600 characters'],
+        [{ ...PREVIEWED, desc: 'x'.repeat(DESC_MAX + 1) }, `description must be at most ${DESC_MAX} characters`],
         [{ ...PREVIEWED, bggId: 0 }, 'bggId must be a positive whole number'],
         [{ ...PREVIEWED, bggId: '266192' }, 'bggId must be a positive whole number'],
         [{ ...PREVIEWED, year: 2019.5 }, 'year must be a whole number'],

@@ -10,8 +10,8 @@ export const GAME_MAX = 80;
 export const NAME_MAX = 30;
 /** The note shown on the card in quotes, in characters. */
 export const NOTE_MAX = 200;
-/** The owner's description of a game, in characters. */
-export const DESC_MAX = 600;
+/** A game's description, the owner's or BGG's whole one, in characters. */
+export const DESC_MAX = 5000;
 /** The most players the owner can set. */
 export const PLAYERS_MAX = 99;
 /** The longest playing time the owner can set, in minutes. */
