@@ -101,7 +101,11 @@ test('games on their way are listed under the collection, never picked', async (
   await expect(comingSoon).toBeVisible();
   for (const game of COMING_SOON) {
     await expect(page.getByRole('heading', { level: 3, name: game.name })).toBeVisible();
-    await expect(page.getByText(`Arriving ${game.arriving}`, { exact: true })).toBeVisible();
+  }
+  // Each date tags every game due then.
+  for (const when of new Set(COMING_SOON.map((g) => g.arriving))) {
+    const due = COMING_SOON.filter((g) => g.arriving === when).length;
+    await expect(page.getByText(`Arriving ${when}`, { exact: true })).toHaveCount(due);
   }
 
   // Searched for, it still shows below, but the collection (and so the

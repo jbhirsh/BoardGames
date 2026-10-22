@@ -14,7 +14,8 @@ export interface Rulebook {
 }
 
 /**
- * Every rulebook a game's rules page can show: its own first, then its
+ * Every rulebook a game's rules page can show: its own first (where it has
+ * one: a game on its way may not yet), then its
  * further rulebooks (moreRules), then each game inside it that has a bundled
  * rulebook, followed by that game's own further rulebooks. A deck's own sheet
  * is an overview of its games; anything else's is the base game, unless the
@@ -23,7 +24,7 @@ export interface Rulebook {
 export function rulebooks(game: Game): Rulebook[] {
   const subs = game.subgames ?? [];
   return [
-    { label: game.rulesLabel ?? (isDeck(subs) ? 'Overview' : 'Base game'), name: game.name, short: game.short, pdf: game.rules },
+    ...(game.rules ? [{ label: game.rulesLabel ?? (isDeck(subs) ? 'Overview' : 'Base game'), name: game.name, short: game.short, pdf: game.rules }] : []),
     ...(game.moreRules ?? []).map((r) => ({
       part: r.slug, label: r.label, name: `${game.name}: ${r.label}`, short: game.short, pdf: r.pdf,
     })),

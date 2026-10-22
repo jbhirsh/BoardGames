@@ -11,6 +11,12 @@ const sub = (over: Partial<SubGame>): SubGame => ({
 });
 
 describe('rulebooks', () => {
+  it('leaves out the game\'s own tab while it has no rulebook', () => {
+    const noBook = { ...quickGame, rules: undefined };
+    expect(rulebooks(noBook).map((b) => b.label)).toEqual([]);
+    expect(rulebooks(quickGame).map((b) => b.label)).toEqual(['Base game']);
+  });
+
   it('is just the game\'s own rulebook when nothing is inside it', () => {
     expect(rulebooks(quickGame)).toEqual([
       { label: 'Base game', name: 'Quick Game', short: 'A quick card game.', pdf: '/rules/quick-game.pdf' },

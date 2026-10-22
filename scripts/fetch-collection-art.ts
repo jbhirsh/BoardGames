@@ -59,6 +59,7 @@ const COVERS: Record<string, Entry> = {
   codenames: { image: 8907965, focus: 0.1 },
   cranium: { keep: 'BGG lacks the 25th anniversary edition; its box front, flattened from a product photo' },
   dominion: { image: 3187001 },
+  'dungeon-crawler-carl-rpg-starter-set': { image: 9629120, box: [0, 0, 0.775, 1], fit: true, pad: '#ffffff' }, // an RPG, so no BGG game id: RPGGeek's box shot, cut to its front, kept whole
   'dungeon-crawler-carl-unstoppable': { image: 9745791, focus: 0 }, // a tall cover: keep the series title along the top
   'exploding-kittens': { image: 2691976, fit: true }, // a wide box
   'far-out-questions': { keep: 'not on BoardGameGeek; the publisher\'s flat cover art' },

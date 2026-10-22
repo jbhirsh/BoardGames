@@ -6,6 +6,7 @@ import { FROM_LIST } from '../utils/fromList';
 import { renderRouted } from './routed';
 import { PROBE_MS, type SaveState } from '../pdfjs/saved';
 import { stubMatchMedia } from './helpers/stubMatchMedia';
+import { ALL_GAMES } from '../data/games';
 
 // pdf.js needs a real browser; PdfReader.test.tsx covers the reader itself.
 // This one says it has failed when a test sets `reader.fails`, and throws
@@ -56,6 +57,13 @@ describe('RulesPage', () => {
     // must render the not-found view, and only an unknown slug.
     renderAt('/rules/does-not-exist');
     expect(screen.getByText('Game not found')).toBeInTheDocument();
+  });
+
+  it('says there is no rulebook yet for a game on its way without one, rather than redirecting', () => {
+    const game = ALL_GAMES.find((g) => !g.rules)!;
+    renderAt(`/rules/${game.slug}`);
+    expect(screen.getByText('No rulebook yet')).toBeInTheDocument();
+    expect(screen.getByText(`We don't have the rulebook for ${game.name} yet. It will be here once we do.`)).toBeInTheDocument();
   });
 
   it('renders the game for a known slug and no Word Checker button for non-word games', () => {

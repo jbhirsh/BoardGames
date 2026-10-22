@@ -117,8 +117,12 @@ export interface Filterable {
 export interface Game extends Filterable, TableInfo {
   /** Box art, /images/<slug>.webp unless its entry names another (games.ts fills both in). */
   img: string;
-  /** Its own rulebook, /rules/<slug>.pdf. */
-  rules: string;
+  /**
+   * Its own rulebook, /rules/<slug>.pdf. Only a game on its way (`arriving`)
+   * may have none yet, and its Rules link searches the web instead
+   * (gamesAssets.test.ts holds every game on the shelf to a PDF).
+   */
+  rules?: string;
   /**
    * The ways we play it differently from the printed rules, listed above the
    * rulebook on every tab of its rules page (an add-on's tabs included, since

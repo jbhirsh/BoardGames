@@ -26,6 +26,8 @@ interface SubGameEntry extends Omit<SubGame, 'rules' | 'moreRules'> {
 interface GameEntry extends Omit<Game, 'img' | 'rules' | 'moreRules' | 'subgames'> {
   /** Box art kept anywhere but /images/<slug>.webp. */
   img?: string;
+  /** False while no rulebook is bundled, for a game on its way only. */
+  rules?: false;
   moreRules?: ExtraRulebookEntry[];
   subgames?: SubGameEntry[];
 }
@@ -499,6 +501,17 @@ const ENTRIES: GameEntry[] = [
     ],
     yt:"how to play Dungeon Crawler Carl Unstoppable",
     awards:[] },
+  { name:"Dungeon Crawler Carl RPG: Starter Set", slug:"dungeon-crawler-carl-rpg-starter-set", players:"2+", min:2, max:99, dur:"2–4 hrs", mins:240, group:'coop', rules:false,
+    arriving:"December 2",
+    kw:['cooperative','thematic','creative'],
+    short:"The tabletop roleplaying game of the World Dungeon: tutorial floors 1 and 2, a ready-to-play one-shot, and a game master's toolkit.",
+    desc:"Renegade's roleplaying game of Matt Dinniman's Dungeon Crawler Carl novels. One player runs the game while the rest team up as crawlers, as Carl, Donut and the Meadow Lark crew or characters of their own, to fight mobs and bosses on the World Dungeon's tutorial floors 1 and 2.",
+    detail:[
+      { heading:"In the Box", body:`Rules for Survival, which teaches the rules; Characters & Customization, for building your own crawler; the Game Master's Campaign Toolkit, with locations, mobs, bosses and loot boxes; and Atlas: Tutorial Floors, the books' lore for floors 1 and 2. There are two versions each of six pre-generated characters (Carl, Donut, Brandon, Chris, Imani and Yolanda), 12 blank character sheets, 5 map posters with 10 battle locations, 41 tokens and a set of dice.` },
+      { heading:"Getting Started", body:`The box has Par for the Course, a ready-to-play scenario; an easy-to-run one-shot; and the full details for running tutorial floors 1 and 2 as a campaign. That campaign carries on into the separate Core Rulebook, which covers floors 3 to 5.` },
+    ],
+    yt:"Dungeon Crawler Carl RPG Starter Set",
+    awards:[] },
   { name:"Arkham Horror: Remastered", slug:"arkham-horror-remastered", players:"1–8", min:1, max:8, dur:"120–240 min", mins:240, group:'coop', bgg:480156,
     arriving:"December 2027",
     kw:['cooperative','thematic','strategy'],
@@ -525,13 +538,13 @@ const ENTRIES: GameEntry[] = [
 const rulebookPdf = (key: string) => `/rules/${key}.pdf`;
 
 /** An entry with its box art and rulebook paths filled in from the slugs. */
-function withPaths({ img, moreRules, subgames, ...game }: GameEntry): Game {
+function withPaths({ img, rules, moreRules, subgames, ...game }: GameEntry): Game {
   const extras = (more: ExtraRulebookEntry[]): ExtraRulebook[] =>
     more.map((r) => ({ ...r, pdf: rulebookPdf(`${game.slug}.${r.slug}`) }));
   return {
     ...game,
     img: img ?? `/images/${game.slug}.webp`,
-    rules: rulebookPdf(game.slug),
+    ...(rules === false ? {} : { rules: rulebookPdf(game.slug) }),
     ...(moreRules ? { moreRules: extras(moreRules) } : {}),
     ...(subgames ? {
       subgames: subgames.map(({ rules, moreRules: more, ...sub }): SubGame => ({
