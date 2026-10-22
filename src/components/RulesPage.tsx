@@ -213,6 +213,11 @@ export default function RulesPage() {
   if (!game) {
     return <NotFoundPage title="Game not found" message="We don't have a rulebook at this address. Pick a game from the collection to read its rules." />;
   }
+  // A game on its way may have no rulebook yet; sending it to its own first
+  // tab, as below, would only come back here.
+  if (books.length === 0) {
+    return <NotFoundPage title="No rulebook yet" message={`We don't have the rulebook for ${game.name} yet. It will be here once we do.`} />;
+  }
 
   // An unknown tab goes to the game's own rulebook rather than a not-found
   // page: the game is real, only the tab is wrong.

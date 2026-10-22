@@ -43,14 +43,24 @@ describe('games ↔ assets integrity', () => {
   it.each(ALL_GAMES.map((g) => [g.slug, g] as const))(
     'game "%s" has its rules PDF, image, and rules-text',
     (slug, game) => {
+      const img = join(PUBLIC, game.img);
+      expect(existsSync(img), `missing image: ${game.img}`).toBe(true);
+
+      // Only a game still on its way may come without a rulebook yet.
+      if (!game.rules) {
+        expect(game.arriving, `${slug} is on the shelf without a rulebook`).toBeTruthy();
+        // Further rulebooks need the game's own first tab to hang off, or its
+        // rules page would match no tab and send itself back to the same URL.
+        expect(game.moreRules ?? [], `${slug} has further rulebooks but none of its own`).toEqual([]);
+        expect((game.subgames ?? []).filter((s) => s.rules), `${slug} has add-on rulebooks but none of its own`).toEqual([]);
+        expect(existsSync(join(RULES_TEXT_DIR, `${slug}.txt`)), `rules-text/${slug}.txt without a rulebook`).toBe(false);
+        return;
+      }
       // `rules`/`img` are absolute-from-web-root ("/rules/x.pdf"); join maps
       // them under public/ (a leading slash in a later join arg is treated as
       // a separator, not a reset to the filesystem root).
       const pdf = join(PUBLIC, game.rules);
       expect(existsSync(pdf), `missing rules PDF: ${game.rules}`).toBe(true);
-
-      const img = join(PUBLIC, game.img);
-      expect(existsSync(img), `missing image: ${game.img}`).toBe(true);
 
       const text = join(RULES_TEXT_DIR, `${slug}.txt`);
       expect(existsSync(text), `missing rules-text/${slug}.txt`).toBe(true);
