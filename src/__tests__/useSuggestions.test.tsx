@@ -46,8 +46,12 @@ describe('suggestionToItem', () => {
     expect(suggestionToItem({ id: 's', game: 'G', name: 'Jess', note: '', source: 'owner' }).desc).toBe('Jess added this one.');
   });
 
-  it('falls back to a credit line when there is no note', () => {
-    expect(suggestionToItem({ id: 'sug-1', game: 'Root', name: 'Alex', note: '' }).desc).toBe('Alex thinks we should try this one.');
+  it("leaves a friend's name out of the text, which \"Suggested by\" already shows", () => {
+    const details = { min: 1, max: 4, mins: 60, desc: 'Woodland war.', kw: [], type: 'suggested' };
+    expect(suggestionToItem({ id: 'sug-1', game: 'Root', name: 'Alex', note: '', details })).toMatchObject({ desc: 'Woodland war.', suggestedBy: 'Alex' });
+    expect(suggestionToItem({ id: 'sug-1', game: 'Root', name: 'Alex', note: 'So good', details }).desc).toBe('Woodland war. “So good”');
+    // No BGG match and no note: a neutral line, not the friend's name again.
+    expect(suggestionToItem({ id: 'sug-1', game: 'Root', name: 'Alex', note: '' }).desc).toBe('No description yet.');
   });
 });
 

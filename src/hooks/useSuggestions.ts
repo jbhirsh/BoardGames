@@ -37,15 +37,15 @@ function playersLabel(min: number, max: number): string {
 export function suggestionToItem(s: ApprovedSuggestion): StoredWishlistItem {
   const d = s.details;
   const owner = s.source === 'owner';
-  // A friend's pick is credited; the owner's own addition just reads as an
-  // entry, unless there is nothing else to say about it yet.
-  const credit = s.note ? `“${s.note}”` : owner ? '' : `${s.name} thinks we should try this one.`;
+  // A friend's note shows, quoted. Their name doesn't go in the text: the
+  // card and row already say "Suggested by" them under it.
+  const credit = s.note ? `“${s.note}”` : '';
   const blurb = d?.desc ?? '';
   const known = !!d && d.mins > 0;
   return {
     id: s.id,
     name: s.game,
-    desc: [blurb, credit].filter(Boolean).join(' ') || `${s.name} added this one.`,
+    desc: [blurb, credit].filter(Boolean).join(' ') || (owner ? `${s.name} added this one.` : 'No description yet.'),
     blurb,
     yt: `how to play ${s.game} board game`,
     players: d ? playersLabel(d.min, d.max) : '',
