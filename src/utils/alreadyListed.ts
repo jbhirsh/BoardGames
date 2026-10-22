@@ -1,4 +1,4 @@
-import { GAMES } from '../data/games';
+import { ALL_GAMES } from '../data/games';
 import { WISHLIST } from '../data/wishlist';
 import { normalizeName } from './normalizeName';
 
@@ -11,7 +11,7 @@ import { normalizeName } from './normalizeName';
 export function alreadyListed(game: string): string | null {
   const key = normalizeName(game);
   if (!key) return null;
-  const owned = GAMES.find((g) => normalizeName(g.name) === key);
+  const owned = ALL_GAMES.find((g) => normalizeName(g.name) === key);
   if (owned) return `We already own ${owned.name}.`;
   const wanted = WISHLIST.find((w) => normalizeName(w.name) === key);
   if (wanted) return `${wanted.name} is already on the wishlist.`;

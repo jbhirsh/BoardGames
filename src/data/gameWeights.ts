@@ -30,15 +30,17 @@ export const GAME_WEIGHTS: Record<number, number | null> = {
   172225: 1.08, // Exploding Kittens
   178900: 1.25, // Codenames
   181304: 1.89, // Mysterium
-  199042: 2.09, // Hogwarts Battle
+  199042: 2.08, // Hogwarts Battle
   204886: 1.82, // Suspicion
   209418: 2.18, // Dominion
   230802: 1.77, // Azul
   249816: 1, // Taco vs Burrito
   253664: 1.03, // Taco Goat Cheese Pizza
-  274533: 1.09, // Throw Throw Burrito
+  274533: 1.1, // Throw Throw Burrito
   277085: 1.13, // Love Letter
   300358: 1, // Speed
   312786: 1.11, // Poetry for Neanderthals
   318632: 1, // For the Girls
+  459928: 2.67, // Dungeon Crawler Carl: Unstoppable
+  480156: null, // Arkham Horror: Remastered
 };

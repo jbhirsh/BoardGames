@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
-import { GAMES } from '../data/games';
+import { ALL_GAMES } from '../data/games';
 import { SLUG_RE } from '../../api/_lib/slug';
 import { parseGoldenSet } from '../../eval/grading';
 
@@ -26,21 +26,21 @@ const RULES_TEXT_DIR = join(process.cwd(), 'rules-text');
 
 describe('games ↔ assets integrity', () => {
   it('has no duplicate slugs', () => {
-    const slugs = GAMES.map((g) => g.slug);
+    const slugs = ALL_GAMES.map((g) => g.slug);
     expect(new Set(slugs).size).toBe(slugs.length);
   });
 
   // The slug becomes a filesystem path in the chat API (rules-text/<slug>.txt)
   // and a Redis key elsewhere, so it must satisfy the shared boundary regex or
   // the API rejects it with a 400 even when the file exists.
-  it.each(GAMES.map((g) => [g.slug] as const))(
+  it.each(ALL_GAMES.map((g) => [g.slug] as const))(
     'slug "%s" matches the chat/votes slug shape',
     (slug) => {
       expect(slug).toMatch(SLUG_RE);
     },
   );
 
-  it.each(GAMES.map((g) => [g.slug, g] as const))(
+  it.each(ALL_GAMES.map((g) => [g.slug, g] as const))(
     'game "%s" has its rules PDF, image, and rules-text',
     (slug, game) => {
       // `rules`/`img` are absolute-from-web-root ("/rules/x.pdf"); join maps
@@ -65,7 +65,7 @@ describe('games ↔ assets integrity', () => {
   // <parent>.<slug>.txt: the chat API reads every rules-text/<parent>.*.txt
   // along with the parent's own, so a sub-game rulebook under any other name
   // would never reach the assistant.
-  const withRules = GAMES.flatMap((g) => [
+  const withRules = ALL_GAMES.flatMap((g) => [
     ...(g.moreRules ?? []).map((r) => [`${g.slug}.${r.slug}`, r.pdf] as const),
     ...(g.subgames ?? []).filter((s) => s.rules).flatMap((s) => [
       [`${g.slug}.${s.slug}`, s.rules!] as const,
@@ -75,7 +75,7 @@ describe('games ↔ assets integrity', () => {
 
   // Its further rulebooks and the games inside it share one set of tabs and
   // one rules-text namespace, so their slugs must not collide.
-  it.each(GAMES.filter((g) => g.subgames || g.moreRules).map((g) => [g.slug, g] as const))(
+  it.each(ALL_GAMES.filter((g) => g.subgames || g.moreRules).map((g) => [g.slug, g] as const))(
     'game "%s" names each extra rulebook and game inside it once, in the slug shape',
     (_slug, game) => {
       const subs = game.subgames ?? [];
@@ -100,7 +100,7 @@ describe('games ↔ assets integrity', () => {
   // which also carries decorative art), so every file there must map to a
   // current slug — this catches a renamed slug that left its old files behind.
   it('has no orphaned rule PDFs or rules-text files', () => {
-    const slugs = new Set([...GAMES.map((g) => g.slug), ...withRules.map(([key]) => key)]);
+    const slugs = new Set([...ALL_GAMES.map((g) => g.slug), ...withRules.map(([key]) => key)]);
 
     const orphanPdfs = readdirSync(RULES_DIR)
       .filter((f) => f.endsWith('.pdf'))

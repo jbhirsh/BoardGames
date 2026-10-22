@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { rulebooks, rulebookPath, citedPageParam, chatParts, chatScope, rulesPathFor, starterQuestions } from '../utils/rulebooks';
 import { initialFilterState } from '../data/initialFilterState';
-import { GAMES } from '../data/games';
+import { ALL_GAMES } from '../data/games';
 import { quickGame } from './testData';
 import type { Game, SubGame } from '../data/types';
 
@@ -169,8 +169,8 @@ describe('chatScope', () => {
 });
 
 describe('rulesPathFor', () => {
-  const catan = GAMES.find((g) => g.slug === 'catan')!;
-  const deck = GAMES.find((g) => g.slug === 'card-deck')!;
+  const catan = ALL_GAMES.find((g) => g.slug === 'catan')!;
+  const deck = ALL_GAMES.find((g) => g.slug === 'card-deck')!;
   const at = (players: number) => ({ ...initialFilterState, players });
 
   it('opens the add-on a game fits the filters through, not its base game', () => {
@@ -197,7 +197,7 @@ describe('rulesPathFor', () => {
 });
 
 describe('starterQuestions', () => {
-  const game = (slug: string) => GAMES.find((g) => g.slug === slug)!;
+  const game = (slug: string) => ALL_GAMES.find((g) => g.slug === slug)!;
 
   it('asks setup, turn and win for a game\'s own rulebook, at a table it seats', () => {
     const wonders = game('7-wonders');

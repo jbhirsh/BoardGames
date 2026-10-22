@@ -1,0 +1,1642 @@
+[Page 1]
+RULEBOOK
+
+[Page 2]
+2
+SAFETY WARNING: The Borant Corporation kindly requests that you follow the instructions on the
+“Welcome, Crawler!” handout provided to all crawlers before you read any further. In addition, there
+have been reports of some crawlers using pages torn from this document to circumvent the “one roll of
+toilet paper per floor” policy. Use of this product as bathroom tissue is strictly prohibited.
+This version of Unstoppable is set in the 18-floor World Dungeon of the Dungeon Crawler Carl novel.
+Fight your way through mobs and bosses as Carl or his talking cat. Play solo or bring along a friend for a
+co-op crawl!
+With this card-crafting system, each card is a sleeve with swappable parts. You’ll craft and customize
+your cards as you play! The power curve in this “momentum builder” gives you a fighting chance against
+the threats you’ll face.
+Explore a single floor of the World Dungeon each time you play. This box contains the first three floors.
+In true roguelite fashion, however, only a few benefits that you purchase with XP will carry over to the
+next floor!
+The goal of the game is to survive one floor of the World Dungeon each time you play, eventually
+reaching the stairs and exiting to the next floor.
+Each floor is different and has its own method for going down the stairs. Pay attention to the specifics
+of the floor to see what a successful exit requires.
+But don’t forget that the other part of the goal is survival! The World Dungeon is practically bursting at
+the seams with threats and danger.
+• You win the game if… all players successfully go down the stairs.
+• You lose the game if… your health or your teammate’s health is reduced to zero.
+• You lose the game if… the danger level reaches .
+INTRODUCTION
+GAME OBJECTIVE
+
+[Page 3]
+3
+COMPONENTS
+0
+0Smush
+TACTIC - CARL
+2
+Unite: If X is 5+, defeat a
+non-boss threat.
+(Unite: X is the number of different
+stat symbols on cards in hand or
+in play.)Illustration: Humble Squid Creatives
+ALLY - DONUT
+Mongo
+Fledgling Menace
+Tough
+:
+1
+Level +
+: 1
+Level +
+: 1 0
+1Illustration: Luciano Fleitas
+0
+2Goddamnit, Donut!
+TACTIC - CARL
+2 2
+Unite: If X is 5+, .
+(Unite: X is the number of different
+stat symbols on cards in hand or
+in play.)Illustration: Humble Squid Creatives
+Carl
+Unbroken. Unstoppable.Illustration: Luciano Fleitas
+Princess Donut
+GC, BWR, NW, the Queen Anne ChonkIllustration: Luciano Fleitas
+ALLY - DESPERADO
+Bomo and The Sledge
+Rockin’ Bodyguards
+When Played:
+Discard any number of tactics
+from your hand and from play.
+This card costs that much
+less .
+: 4 4 5
+4Illustration: William O’Brien
+ALLY
+Zev
+Assistant Communication Representative
+: 2 to each player.
+2
+1Illustration: Biagio D’AlessandroIllustration: Cold Castle Studios
+1
+0
+TACTIC
+While this card is in play,
+all players ignore keywords on
+active threats.
+Spell 2: 1
+(Spell 2: You may spend 2
+to do this.)
+Torch
+ALLY
+Mordecai
+Knows Everything
+1
+2
+: Spell 1: 1 to
+each player
+(Spell 1: You may spend 1
+to do this.)Illustration: Ksenia KozhevnikovaIllustration: Ksenia Kozhevnikova
+3
+2
+TACTIC
+You may discard 1 card from your
+hand. If you do, this card costs
+0 .
+2 2 2
+PugilismIllustration: Humble Squid Creatives
+0
+1
+TACTIC - STARTING
+2
+New Achievement!
+0
+1
+1
+Strike
+TACTIC - STARTINGIllustration: Luciano Belmont
+3
+UPGRADE - ALLY
+Xistera
+1
+When
+Exhausted:
+1Illustration: Riccardo Rullo
+2
+Add the
+top card of
+the Level 1
+or 2 deck to
+your hand.
+UPGRADE - TACTIC
+Dungeon Book
+of the Floor ClubIllustration: Riccardo Rullo
+Carl’s Jug O’ Boom 4
+When
+Played:
+2 1
+1
+UPGRADE - TACTIC/ALLYIllustration: Riccardo Rullo
+Danger Dingo
+1
+When Defeated:
+ADDITIONAL
+1Illustration:
+Peejay Catacutan
+STARTINGChilly Goat
+2Illustration:
+Firat Solhan
+STARTINGGoblin
+1Illustration:
+Fares Maese
+Juicer NEIGHBORHOOD BOSSIllustration: Luciano Fleitas
+When Defeated:
+4 4
+1
+1ST FLOOR
+Krakaren Clone NEIGHBORHOOD BOSS
+: If you have 6+ Active Threats,
+make this an Active Threat.Illustration: MJ Pajaron
+When Defeated:
+7
+2
+2ND FLOOR
+Ball of Swine BOROUGH BOSS
+: This threat deals 1 to each
+player during the Threat Phase.Illustration: MJ Pajaron
+When Defeated:
+6 7
+1
+1ST FLOOR
+2
+Brindle Grub 2ND FLOOR
+2Illustration:
+Fares Maese
+When this comes into play,
+if it is deal it 2 .
+3
+Mold Lion 3RD FLOOR
+3
+1
+When Defeated:Illustration:
+MJ Pajaron
+1
+Bad Llama 1ST FLOOR
+1
+When Defeated:
+3Illustration:
+MJ Pajaron
+2x Portrait Cards
+100x Core Cards
+3rd Floor Campaign Mode
+0
+0
+1
+1
+2
+2
+3 3 4 4 4 5 5
+1 :1 :
+When you level up, if you have 0 or 1 quests in front of you,
+you may start Part 1 of a new quest.
+1 :
+2
+Campaign Mode
+2nd Floor
+During Threat Refill, refill to a number of non-
+threats equal to 3 + the current Danger.
+During Threat Refill, if there are 2+ active Brindle Grubs
+(including Swarming ones), overlay all but one of them with
+an active Brindled Vespa Boss.
+When you level-up to level 4, place a “The Stairs” card as the
+bottom card of your deck after shuffling.
+0
+1
+1
+1
+2
+2
+2
+3
+3 3 4 4 4 5 5
+1 :
+1 :1 :
+1 :
+0
+Arcade Mode
+1st Floor
+0
+0
+1
+1
+1
+2
+2
+2
+3
+3 3 4 4 5 5 5
+When you level-up to level 2 and level 3, shuffle a random
+neighborhood boss into your deck.
+When you level-up to level 4, shuffle a random borough
+boss into your deck and place the Stairs card as the bottom
+card of your deck after shuffling.
+You cannot go down the stairs without defeating at least 1
+neighborhood boss and borough boss per player.
+1 :
+1 :
+1 :
+1 :
+6x Floor Mats
+Stairs
+Starting
+Boss - Floor 1
+X
+X
+X
+X
+X
+Deal X damage.
+Take X damage tokens from the supply
+and place it on an active threat or an
+on-deck threat. All damage from an icon
+must be dealt to the same threat.
+Gain X gold.
+Take X gold tokens from the supply and
+place them on your player mat.
+Gain X action points.
+Place X action point discs on your player
+mat. You can’t have more than 6 action
+points saved up.
+Gain X health.
+Move your health marker up X spaces.
+You can’t have more than 10 health.
+Gain X mana.
+Move your mana marker up X spaces.
+You can’t have more than 10 mana.
+Tough
+If a tough Ally would be discarded from play and it
+has no damage on it, instead deal it 1 damage. This
+works to avoid discarding an undamaged Ally from
+Sacrifice or from leveling up.
+Unite
+Unite effects refer to an “X” value. The value of X
+is equal to the number of different stat symbols
+present among the cards in your hand and/or in play,
+including the card the unite effect appears on.
+Spell
+Spell effects refer to an “X” value. These effects
+require you to spend X mana to trigger. If you do not
+have X mana available to spend, then you cannot
+trigger the Spell effect. Some cards have multiple
+Spell effects, which you can trigger and resolve
+separately by paying their mana costs.
+Stat Symbols
+Focus
+Focus effects refer to an “X” value. The value of X is
+equal to the number of cards with the symbol listed
+after the focus in your hand and/or in play, including
+the card the focus effect appears on.
+Core Card Icons & Keywords
+Train 1 level.
+Advance your small level disc 1 level,
+from its current level to the next level.
+You can’t train above level 6.
+Eliminate 1 card.
+Choose a core card in your hand, in your
+discard pile, or in play. Remove that card
+from the game.
+Exhaust Ally.
+Exhaust the card and turn it sideways to
+use its effect. It can’t be used again until
+it becomes refreshed.
+Refresh Ally.
+Choose an Ally and refresh it. Turn it
+vertically to indicate it can be used again.
+If this effect is on an ally, it cannot
+refresh itself.
+Refresh the Market.
+Choose any number of upgrades in the
+market to put on the bottom of the Market
+deck, then deal out new upgrades to refill
+it to 6.
+Strength Intelligence Dexterity Constitution Charisma
+120x Card Sleeves 20x Card Dividers 30x Campaign Sheets 2x Reference Sheets
+16x Gold Tokens 30x Damage Tokens 2x Mana and 2x
+Health Markers
+1x Danger
+Marker
+12x Action Point Discs 4x Level Discs
+6x Starting Character Cards
+36x Upgrade Cards17x Boss Cards
+2x Stairs Cards 8x Races 8x Classes
+17x Quest Cards
+2x Dual-Layered Player Mats
+16x Starting Core Cards 22x Starting Threat Cards 54x Threat Cards
+Class: Prizefighter
+: Lose 2 . Each Strike you play
+this turn deals 2 (instead of 1 ).
+Flip this card back over when you level up.
+Class: Compensated Anarchist
+You have 1 additional symbol.
+Each time you a card, gain 2 .
+Class: Former Child Actor
+During setup, draw 1 additional class card
+to use. Each time you level up, discard the
+additional class card and draw a new one.
+QUEST - VILE BLASPHEMY
+Part 2:
+Bearer of the Forbidden Oak
+Apparently, the Oak Fell is some sort of
+tree-worshipper antichrist, and now almost
+no one here will give you fair prices. They call
+you all sorts of names: the Great Beast Who
+Yearns to Unravel the Heavens and Kill All
+the Gods, the Devourer of All That Is Holy,
+the Death Upon Us All, They Who End. You just
+call them assholes.
+While this card is in play, all upgrades
+you buy cost 1 more.
+To : One player spends 5 or 6 .
+3
+QUEST - THE SHOW MUST GO ON
+Part 1:
+Discover an Ancient Circus
+You’ve discovered the remnants of an ancient
+circus, enduring centuries after the toxic cloud
+that devastated the Over City. But instead
+of joy and laughter and cotton candy, it now
+delivers pain and fear. Their cotton candy is
+probably really gross by now, too. Find out
+why this circus still exists and put an end to
+its reign of terror.
+To : Defeat 2 on-deck threats in
+a single turn.
+3
+Part 3
+Boss Bale 
+QUEST THE SHOW MUST GO ON
+HEATHER
+When Defeated
+Players may use gan
+effects to nstead deal that much
+to ths threat, gnorng
+
+Iustraton
+Dego Lafuente López
+Race: DromedarianIllustration:
+Damien Mammoliti
+Race: CatIllustration:
+Damien MammolitiRace: Igneous
+12
+11Illustration:
+Andrew ClarkIllustration:
+Caio Cacau
+The Stairs (NOT A THREAT)
+During setup, set this card aside
+near the floor mat.
+When this card is the top card of
+your deck, put it in play.
+While this card is in play, if there
+are no active boss threats and you
+have met all floor requirements,
+you may go down the stairs.Illustration:
+Caio Cacau
+The Stairs (NOT A THREAT)
+During setup, set this card aside
+near the floor mat.
+When this card is the top card of
+your deck, put it in play.
+While this card is in play, if there
+are no active boss threats and you
+have met all floor requirements,
+you may go down the stairs.
+Party Name
+Race
+Strke
+Strke
+Strke
+Strke
+Strke
+Strke
+New Achevement
+Rest
+Character Card A
+Character Card B
+Character Card C
+
+Strke
+Strke
+Strke
+Strke
+Strke
+Strke
+New Achevement
+Rest
+Character Card A
+Character Card B
+Character Card C
+
+Class
+Startng
+Health
+Startng
+Mana
+Startng
+Gold
+Race
+Crawler Crawler
+Class
+Startng
+Health
+Startng
+Mana
+Startng
+Gold
+Campagn Score
+(Spendable XP)
+Player 1 Player 2
+Dfficulty
+Player 1 — Deck Lst Player 2 — Deck Lst
+Sgnature Card (level 1)
+Sgnature Card (level 2)
+Sgnature Card (level 1)
+Sgnature Card (level 2)
+CAMPAIGN SHEET SIDE A
+Floor Score
+1st 2nd 3rd 4th 5th 6th 7th 8th 9th
+Defeats
+(-3/defeat)
+Record your deck l st and update t aer each sess on If you el m nate a card, cross t out If you upgrade a card, wr te the name of the upgrade next to
+t If you add a card, wr te ts name n one of the blanks
+http://www.renegadegamestudios.com/learn-dcc-unstoppable
+
+[Page 4]
+4
+This game features two different play modes: campaign mode and arcade mode.
+Campaign mode involves several linked sessions as you crawl the floors one at a time, and certain
+choices persist from one game to the next. Arcade mode, on the other hand, lets you crawl a single floor
+in a standalone session.
+The intention is for new players to experience campaign mode first. The main portion of this rulebook therefore
+treats campaign mode as the default. The changes for arcade mode can be found later on (see p. 22).
+Note: This section presents the game setup in several smaller stages. Campaign setup is only required for the
+first game of a new campaign, while supply setup, crawler setup, and floor setup must be done every time.
+PLAY MODES
+GAME SETUP
+You’ll use a campaign sheet to track information from
+session to session. Some of these details will change
+over time, so fill it out with pencil instead of pen.
+1. Party Name: Write a name for your adventuring
+party here.
+2. Crawler Name: Write the name of your chosen
+crawler here.
+3. Race & Class: Skip this section entirely for now.
+You’ll fill in these details after you complete Floor 2.
+4. Deck List: Write the names of your 3 Starting Character
+cards here. The 8 common cards are also listed here.
+Leave the section for signature cards blank for now.
+Gather the 11 cards that make up your starting deck:
+6x Strike, 1x New Achievement!, 1x Rest, and your chosen crawler’s 3x Starting Character cards.
+Now you’re ready to tackle Floor 1!
+Campaign Setup
+Party Name
+Race
+Strke
+Strke
+Strke
+Strke
+Strke
+Strke
+New Achevement
+Rest
+Character Card A
+Character Card B
+Character Card C
+
+Strke
+Strke
+Strke
+Strke
+Strke
+Strke
+New Achevement
+Rest
+Character Card A
+Character Card B
+Character Card C
+
+Class
+Startng
+Health
+Startng
+Mana
+Startng
+Gold
+Race
+Crawler Crawler
+Class
+Startng
+Health
+Startng
+Mana
+Startng
+Gold
+Campagn Score
+(Spendable XP)
+Player 1 Player 2
+Dfficulty
+Player 1 — Deck Lst Player 2 — Deck Lst
+Sgnature Card (level 1)
+Sgnature Card (level 2)
+Sgnature Card (level 1)
+Sgnature Card (level 2)
+CAMPAIGN SHEET SIDE A
+Floor Score
+1st 2nd 3rd 4th 5th 6th 7th 8th 9th
+Defeats
+(-3/defeat)
+Record your deck l st and update t aer each sess on If you el m nate a card, cross t out If you upgrade a card, wr te the name of the upgrade next to
+t If you add a card, wr te ts name n one of the blanks
+1
+2
+3
+4
+
+[Page 5]
+5
+1. Floor Mat: Find the floor mat that matches the current floor and is labeled for Arcade/Campaign
+Mode in the top right corner. This has the Setup instructions for this floor. Place it on the table.
+It will be referenced later.
+2. Dungeon Deck: Find either the boss cards (Floors 1–2) or quest cards (Floor 3) for the current
+floor. Set these cards next to the floor mat for now.
+3. Threat Deck: Find the threat cards for the current floor and the additional threat cards. Shuffle
+both sets separately, then stack them, with the additional threats at the bottom. Place this threat
+deck next to the core decks, threat side down.
+4. Floor Mat Setup: Read and follow the floor specific Setup directions on the floor mat from step 1.
+5. Flip Floor Mat: Turn the floor mat from step 1 to the other side. This should say “Campaign Mode”
+in the top corner and have a Danger Level track.
+6. Danger Marker: Find the danger marker. Place it on the topmost space of the danger track on the
+floor mat.
+7. Difficulty Level: Choose a difficulty level: NORMAL, HARD, or EXPERT. For a near-impossible
+challenge, there is also UNBEATABLE difficulty. This will determine how quickly the danger
+marker advances during play.
+8. The Stairs: Place 1 stairs card per player next to the floor mat.
+9. Floor Mat Achievements: Find the other Floor Mat for the current floor. Place it on the table
+with the Campaign Mode side face up, showing the list of possible Achievements for this floor.
+Familiarize yourself with these achievements before playing and try to earn them!
+B - Floor Setup
+1. Core Decks: Divide the 100 unsleeved core cards into 6 decks by level number, shown in the bottom
+right corner. Shuffle each deck individually. Place these decks in a face-up row on the table,
+arranged left to right in ascending order.
+2. Upgrade Deck: Shuffle the 36 unsleeved upgrade cards into a single deck. Place this deck face down
+on the table. Reveal the top 6 cards of the deck and place them in a face-up row next to the deck.
+Note: These cards have 2 different cutouts, but they should still be shuffled together.
+3. Token Supply: Create a supply with the gold tokens and damage tokens, sorted by type and
+denomination.
+A - Supply Setup
+
+[Page 6]
+6
+1. Player Mat: Take a player mat and place it in front of you. Use either color; the layout is mirrored,
+but they are identical otherwise.
+2. Health & Mana: Take a health marker (red) and a mana marker (purple). Set them in their default
+starting positions on your player mat: “10” on the health track and “2” on the mana track .
+3. Gold: Take 3 gold tokens worth 1 gold each from the supply. Place them in the designated
+space on your player mat.
+4. Portrait: Find the card with the portrait of your chosen crawler. Place it in the designated space
+on your player mat.
+5. Race & Class: Find the cards for your chosen race and class. Place them along the top edge of
+your player mat. Follow any extra setup listed on your race and adjust your starting resources to
+match the values listed there.
+Note: These cards are only used in arcade mode and after a certain point in campaign mode.
+6. Starting Deck: Gather your initial 11-card deck. Shuffle the deck and place it in the designated
+space on your player mat, threat side up.
+Note: Always check the contents against the current deck list on the campaign sheet.
+7. Starting Hand: Draw 3 cards from your deck. Hold these cards in your hand so that you are
+viewing the core side, not the threat side.
+8. Battlefield: Take 3 cards from your deck. Place these cards in a row next to your deck, threat side up.
+Note: Keep adding this way until 3 non-Fast active threats are on the battlefield and 1 is visible
+on top of your deck.
+9. Action Point Discs: Find the 6 action point discs of your chosen player color.
+Place them off to the side of your player mat.
+10.Level Discs: Find the 2 level discs of your chosen player color. Stack them together
+above the level-1 core deck.
+C - Crawler Setup
+
+[Page 7]
+7
+C - Crawler Setup B - Floor Setup
+A - Supply Setup
+C2
+C1 B5 B8
+B6
+B3
+C8C7
+C4
+C5
+C10
+C9
+C3
+B2
+A1
+A2
+A3
+
+[Page 8]
+8
+CARD ANATOMY
+There are 3 main card types: cores, threats, and
+upgrades. Each sleeved “card” that you craft during
+play consists of 1 core, 1 threat, and up to 2 upgrades.
+1. Cost: How many action points
+must be spent to play the card.
+Remove action point discs from
+your player mat when spent.
+2. Stat: Which of the main stats the card is affiliated
+with. Many game effects and keywords are linked
+to these different stat symbols.
+3. Subtype: Whether the card is a tactic or an ally.
+Tactics are discarded after use, while allies remain
+in play. Some cards have additional subtypes.
+4. Effects: What the card does when played or
+used. Some cards have a single effect, while
+others have multiple effects.
+5. Level: Which core deck the card comes from (1–6).
+Character cards and starting cards count as level-0
+core cards.
+Cores make up the front side of sleeved
+cards. They represent the powers,
+resources, and support available to you.
+Core Cards (122x)Illustration: Nathanael James
+TACTIC
+1
+1Royal Tantrum
+1 2 1
+1
+2
+5
+3
+4
+Threats make up the back side of sleeved
+cards. They represent the strange monsters
+and deadly foes that you will face on the
+field of battle.
+Threat Cards (93x)
+1. Attack: How much damage the threat deals to you
+each turn while it remains in play on the battlefield.
+2. Defense: A value that is added to the threat’s
+attack value to determine its health. You must deal
+damage to a threat equal to its health to defeat it.
+3. Bonus: A one-time bonus that you gain when you
+defeat the threat. Not all threats have a bonus.
+4. Keyword: A keyword that links to an ability the
+threat has. Not all threats have a keyword.
+5. Looming: Some boss threats are Looming.
+Looming threats do not engage unless attacked.
+See page 27.
+Scatterer 1ST FLOOR 1
+2
+When Defeated:
+1Illustration:
+Eugenio Frosali
+Hoarder NEIGHBORHOOD BOSSIllustration: MJ Pajaron
+When Defeated:
+3 4
+1
+1ST FLOOR
+2
+5
+1
+3 4
+
+[Page 9]
+9
+1. Cost: The amount of gold required to buy the
+upgrade. Return gold tokens from your player
+mat to the supply when spent.
+2. Modifiers: How the stats, effects, or attributes
+of a card will change once it has the upgrade.
+Each card can have 1 upgrade per cutout. Each card
+can have 1 upgrade per cutout, which come in two
+varieties: top or bottom.
+a. Modifier added to the core side.
+b. Modifier added to the threat side.
+3. Requirement: The subtype of card required.
+Some upgrades can only be added to a tactic or
+an ally, while others can be added to either.
+4. Discount: A potential reduction in the cost of the
+upgrade. The discount applies when it is added
+to a card with a specific stat.
+1. Part: Quests have 2 to 4 parts, each represented
+by a card that must be resolved in sequential order.
+2. While Active: Some quests have ongoing
+abilities while in play.
+3. Requirement: What must be done to complete
+this part of the quest.
+4. Boss Battle: Some quests include Boss Battles.
+These enter play as a Looming threat.
+Upgrades are sleeved between cores and
+threats. They typically add modifiers to
+both the core side and the threat side.
+Upgrade Cards (36x)
+Quest Cards (17x)
+Enchanted War Gauntlet
+of the Exalted Grull 6
+1
+UPGRADE - TACTIC/ALLY
+When
+Played:
+6
+Costs 2 less if added to a
+Strength card.Illustration: Riccardo Rullo
+1
+2a
+2b
+3
+4
+Part 3
+Boss Bale 
+QUEST VILE BLASPHEMY
+DISPENSER
+When Defeated:
+Your other actve threats ganIustraton
+Dego Lafuente López
+5
+QUEST - VILE BLASPHEMY
+Part 2:
+Bearer of the Forbidden Oak
+Apparently, the Oak Fell is some sort of
+tree-worshipper antichrist, and now almost
+no one here will give you fair prices. They call
+you all sorts of names: the Great Beast Who
+Yearns to Unravel the Heavens and Kill All
+the Gods, the Devourer of All That Is Holy,
+the Death Upon Us All, They Who End. You just
+call them assholes.
+While this card is in play, all upgrades
+you buy cost 1 more.
+To : One player spends 5 or 6 .
+3
+QUEST - VILE BLASPHEMY
+Part 1:
+Apito Education Center Outreach Division
+The City Elf NPCs glare at you as you approach.
+“Disgusting, vile blasphemer!” One of them
+spits on the ground. “Eat moss and die, apostate.”
+It becomes increasingly clear that they are
+going to attack and cannot be charmed.
+While this card is in play, refill to 4
+non- threats during the
+Threat Phase.
+To : One player deals this card 4 .
+3
+1
+2
+3
+4
+
+[Page 10]
+10
+The game takes place over a series of turns.
+Each turn is broken into 5 phases that are performed in order:
+A. Upkeep Phase
+B. Draft Phase
+C. Main Phase
+D. Threat Phase
+E. Cleanup Phase
+This sequence repeats until you win or lose.
+TURN SEQUENCE
+1. Races – Resources: New values for your starting gold, health, and mana. These values replace the
+default values.
+2. Races – Extra Setup: Additional steps to carry out during setup.
+3. Classes – Abilities: Beneficial effects with text descriptions. Some classes have a single ability,
+while others have multiple.
+Races and classes are used for arcade mode and after the first two floors in campaign mode.
+Races (8x)
+Class: Compensated Anarchist
+You have 1 additional symbol.
+Each time you a card, gain 2 .
+Classes (8x)
+3234Ca3m3p4i3gnCCn 4CS3etuSETUP:
+(Draft from the Level 2 deck on the
+first turn.)
+Race: Primal
+8
+2
+3
+1
+2
+
+[Page 11]
+11
+The Upkeep Phase is when you carry out various upkeep steps:
+1. Gain 1 mana by moving the marker up 1 space on your mana track. If the marker is already at
+the top of the track, skip this step. Note: You gain 1 mana even on the very first turn of the game.
+2. Place 3 action point discs in the designated space on your player mat. Those action points are
+available to be spent in the Main Phase.
+3. Refresh all exhausted ally cards in play by rotating them back upright. Those ally cards are
+available to be exhausted in the Main Phase.
+4. Resolve all active effects that trigger during the Upkeep Phase.
+The Draft Phase is when you draft a new card and add it to your hand based on the current position of
+your level discs:
+Large Level Disc Small Level Disc
+1. Find the core deck where your small level disc is located.
+2. Draw the top 3 cards of that core deck. Keep 1 of those cards and return the
+other 2 to the bottom of the same deck (in any order).
+3. Take the top card of the threat deck, without viewing the threat side,
+and put your chosen core card into the same sleeve.
+4. Add the newly drafted card to your hand with the core side facing you.
+5. Reset your small level disc back to where your large level
+disc is located and stack them together again.
+Note: With 2 players, the process for choosing cards in the Drafting
+Phase is slightly different. See 2-PLAYER MODE for further details (p. 20).
+A. Upkeep Phase
+B. Draft PhaseYou should only look at the
+threat side of a card when it is
+revealed from your deck. Better
+to keep the mystery alive.
+
+[Page 12]
+12
+The Main Phase is when you can perform various
+actions such as use spells, play cards, exhaust
+allies, and buy upgrades.
+You may take these actions any number of times,
+and in any order, as long as you have the cards,
+gold, mana, and action points required to do so.
+The phase ends when you cannot, or choose not
+to, take any more actions.
+Each action must be resolved fully before you
+can take another.
+Using Spells
+To use a spell, you must spend mana equal to its cost. Move the marker down that many spaces on
+your mana track.
+You have access to 2 basic spells, for which the costs and effects are listed directly on your player mat
+for ease of reference.
+4 : 1 – Spend 4 mana. Deal 1 damage to a threat.
+3 : 1 – Spend 3 mana. Choose a player to gain 1 health.
+Other spells become available as you play cards. The costs and effects of these non-basic spells are
+listed on the cards themselves.
+C. Main Phase
+Repeatable Effects —
+No Infinite Loops
+Some interactions allow you to
+repeat certain card effects. However,
+if you resolve the same effect of the
+same card for the 4th time in a single
+turn, you must then eliminate
+that card. Return that card to the box.The Naga keep patching my exploits.
+I will make them pay.
+
+[Page 13]
+13
+Playing Cards
+To play a card from hand, you must spend action points equal to its cost. Remove that many action
+point discs from your player mat.
+When you play a card, put it in front of you, core side up, and resolve its effects. Some cards have a
+single effect, while others have multiple.
+If the card has any upgrades, those may add further effects that trigger when played.
+You may resolve the effects, including those from upgrades, in any order. Effects that you cannot
+resolve, or choose not to, are forfeited.
+Allies are cards with repeatable effects. Once
+played, an ally card remains in play until the
+next time you level up and is then discarded.
+Ally Cards
+Tactics are cards with one-time effects. Once
+played, a tactic card remains in play until the
+Cleanup Phase of the same turn and is then
+discarded.
+Tactic CardsIllustration: Mirco Paganessi
+1
+1
+TACTIC - SHOW
+2
+Now Get Out There
+and Kill, Kill, Kill!
+ALLY
+Mordecai
+Knows Everything
+1
+2
+: Spell 1: 1 to
+each player
+(Spell 1: You may spend 1
+to do this.)Illustration: Ksenia Kozhevnikova
+Exhausting Allies
+To exhaust an ally in play, rotate the card 90 degrees
+clockwise. Exhausting an ally is separate from playing it.
+You may only exhaust allies that are in play.
+When you exhaust an ally, resolve the effects that follow the
+exhaust ability ( ). Most allies have only 1 exhaust ability,
+but some have multiple. For an ally with multiple exhaust
+abilities, you must choose only 1 to activate.
+ALLY - DONUT
+Mongo
+Fledgling Menace
+Tough
+:
+1
+Level +: 1
+Level +: 1 0
+1Illustration: Luciano Fleitas
+ALLY - DONUT
+Mongo
+Fledgling Menace
+Tough
+:
+1
+Level +: 1
+Level +: 1 0
+1Illustration: Luciano Fleitas
+
+[Page 14]
+14
+If the card has any upgrades, those may add further effects that trigger when exhausted.
+You may resolve the effects, including those from upgrades, in any order. Effects that you cannot
+resolve, or choose not to, are forfeited.
+Once an ally is exhausted (rotated sideways), it cannot be exhausted again until it is refreshed
+(rotated upright). Allies refresh automatically during the Cleanup Phase, and certain card effects can
+refresh allies, too.
+Buying Upgrades
+To buy an upgrade, you must spend gold
+equal to its cost. Return that amount of gold
+from your player mat to the supply.
+Add the upgrade to any tactic card or ally
+card in your hand or in play by sliding it
+into the center of the sleeve between core
+and threat. Each card can receive up to 2
+upgrades—1 for the top slot and 1 for the
+bottom slot.
+Some upgrades have a requirement of either a
+tactic card or an ally card.
+Once you have sleeved the upgrade, refill the
+empty slot in the market with another upgrade revealed from the upgrade deck.
+Defeating Threats
+You can deal damage to the threats in play with various effects.
+When you deal damage to a threat, place damage tokens on the threat
+card accordingly. Damage dealt to threats persists between turns.
+The health value of a threat is not printed on the card as a stat, but is simply the sum of its attack
+and defense values. When a threat has been dealt damage equal to or greater than this sum,
+you have defeated it.I acquired a new piece
+of gear today that charges the air with
+static electricity. Suddenly, half of the mobs
+have some way to splash water on me. Every
+time I get stronger, so do my enemies.Be strong
+before you fight.
+An unprepared crawler
+is a dead crawler.
+
+[Page 15]
+15
+Many threats have a bonus that triggers when
+defeated. These bonuses are optional—with the
+exception of mandatory “flip” effects on certain
+boss threats—and resolve immediately. They often
+provide resources or other benefits.
+After resolving any “when defeated” bonus, draw
+the defeated threat and add it to your hand. Flip the
+card over and rotate it so that you are viewing the
+core side.
+Defeating threats is the primary way to draw
+new cards!
+This Neighborhood boss from the floor-1 deck,
+Juicer, has stats of 4 attack and 4 defense.
+This means that Juicer has a health value of 8.
+Once Juicer has been dealt at least 8 damage,
+tracked as a cumulative total, it is defeated.
+Juicer NEIGHBORHOOD BOSSIllustration: Luciano Fleitas
+When Defeated:
+4 4
+1
+1ST FLOOR
+4 + 4 = 8You have to pay attention to the
+threat around the corner. You won’t
+make it if you aren’t planning ahead.
+On-Deck Threats
+The top card of your deck is known
+as the “on-deck threat.”
+You can deal damage to this threat
+while it is still on top of your deck,
+but it cannot attack you in return
+until it has entered the battlefield.
+Pay attention, though, because
+threat keywords like Taunt (see p. 27)
+and Terror (see p. 27) apply even
+when the threat is still on deck.
+Resolving Events
+An event is a mandatory
+game effect.
+There are three main types
+of events: when a keyword is
+activated, when a threat is
+defeated, and when your crawler
+levels up.
+When an event is triggered, you
+must resolve it immediately,
+even if doing so interrupts the
+resolution of another effect. After
+resolving the event, continue
+with the resolution of the effect
+that triggered it.
+
+[Page 16]
+16
+The Threat Phase is when you take damage from the active threats.
+All threat cards oriented horizontally on the
+battlefield are “active threats.” This does not
+include the top card of your deck, which is the
+“on-deck threat,” or cards oriented vertically,
+which are “looming threats.” It is possible for
+there to be no active threats.
+The amount of damage dealt by each active threat
+is equal to its attack value. If the card has upgrades
+on it, any attack value present on the threat side of
+those upgrades is added to the threat’s attack value.
+Some threats have a variable attack value that is
+dependent on the danger level. This variable, which
+ranges from 0–5, is indicated by the position of the
+danger marker on the danger track, located on the
+floor mat.
+For each damage you take, move the health marker down 1 space on your
+health track. If the health marker reaches zero, you lose immediately!
+Note: Each active threat always deals damage equal to its attack value. The damage the enemy
+has taken does not reduce the damage it deals you.
+D. Threat Phase
+This Goblin is a starting threat and has a
+variable attack value of 1 + .
+Based on the position of the danger marker,
+the current danger level for this game is 2.
+So the Goblin deals you 3 damage total.
+STARTINGGoblin
+1Illustration:
+Fares Maese
+1 + = 3Best defense is
+a good offense. They can’t
+hurt you if they’re dead.
+
+[Page 17]
+17
+The Cleanup Phase is when you carry out various cleanup steps:
+1. Discard all tactic cards from play. Put them in your discard pile.
+2. Remove all remaining action point discs from your player mat. Unspent action points cannot be
+saved for later.
+3. Add new threats to the battlefield, one at a time, until 3 non-Fast active threats are on the
+battlefield and 1 is visible on top of your deck.
+• To add a new threat to the battlefield, move the threat from the top of your deck to the battlefield.
+The threat that is now revealed on top of your deck becomes the new on-deck threat. Any damage
+on the on-deck threat remains as it enters play.
+• If your deck empties before the battlefield has been refilled, level up immediately, then resume
+adding new threats.
+4. Advance the danger marker 1 space on the danger track on the floor mat. If the danger marker
+reaches , you lose immediately!
+E. Cleanup Phase
+Every floor mat has its own unique danger track. The movement
+of the danger marker on this track reflects the increasing danger
+level. Many spaces on the track are uneventful, but other spaces
+have associated rules or effects.
+Skipped Spaces
+Some color-coded spaces are skipped as the danger marker
+advances. Which spaces to skip is determined by the
+difficulty level chosen during Floor Setup (p. 5).
+• NORMAL – Skip all spaces with a green border.
+• HARD – Skip all spaces with a yellow border.
+• EXPERT – Skip all spaces with a red border.
+• UNBEATABLE – Same as EXPERT. Each time you
+level up to levels 3–6, advance the danger marker by 1.
+DANGER TRACK
+Arcade Mode
+1st Floor
+0
+0
+1
+1
+1
+2
+2
+2
+3
+3 3 4 4 5 5 5
+When you level-up to level 2 and level 3, shuffle a random
+neighborhood boss into your deck.
+When you level-up to level 4, shuffle a random borough
+boss into your deck and place the Stairs card as the bottom
+card of your deck after shuffling.
+You cannot go down the stairs without defeating at least 1
+neighborhood boss and borough boss per player.
+1 :
+1 :
+1 :
+1 :
+
+[Page 18]
+18
+You get to level up each time your deck is empty. This is an event, so the game pauses temporarily while
+you complete the process.
+When you level up, there are 5 steps you must resolve, in order. These steps are listed in detail on your player mat.
+If you are playing on the UNBEATABLE difficulty and you are leveling up to levels 3-6, advance the danger
+marker one space.
+LEVELING UP
+Effect Spaces
+Some spaces have triggered effects that occur when the danger marker reaches them. Resolving these
+effects is always optional.
+• 1 : – Spend 1 gold to eliminate 1 card from your hand, your discard pile, or your play area.
+Set that card aside; it will not be used again in this game. Note: With 2 players, each player
+may do this separately.
+• – Move any number of upgrades from the market to the bottom of the deck. Refill the
+market from the top of the deck until it has 6 upgrades again. Note: With 2 players, this effect
+can still only be resolved once.
+When a color-coded effect space on the danger track is skipped due to difficulty level, the optional
+effect does not trigger.
+Leveling Up — Cleanup Phase
+You get to level up in the Cleanup
+Phase if your deck is empty and a
+new threat must be added to the
+battlefield.
+Before you can add a new threat,
+you must complete the process of
+leveling up, which will result in a
+reshuffle.
+Resume the process until 3 non-Fast
+active threats are on the battlefield
+and 1 is visible on top of your deck.
+Leveling Up — Main Phase
+You get to level up in the Main Phase
+if your deck is empty and there are
+no active threats on the battlefield.
+If this occurs due to a card effect,
+interrupt that card’s effects to level
+up, then resume the resolution of
+that card’s effects.
+All effects of the card that was
+interrupted still resolve after,
+even if that card has now been
+removed from play.
+
+[Page 19]
+19
+Once the game is over, you’ll record the details on the campaign sheet and prepare for the next game in
+the campaign.
+Completing Achievements
+Review the list of achievements on the back side of the floor mat. For each achievement you just
+completed, record the name on the blank spaces on the back of the campaign sheet. Each achievement
+can only be completed once (even with 2 players).
+Each achievement is worth the listed XP. Tally up the XP you earned for completed achievements.
+Record it in the “floor score” box for the current floor, then increase your “XP” box accordingly.
+You earn the XP for completed achievements even if defeated.
+Recording Success or Defeat
+If you successfully completed the floor, congratulations!
+Tally up the XP you earned for defeated bosses and completed quests. Increase your floor score and
+your “XP” box accordingly. Gain the completion reward for the current floor.
+If you were defeated by the floor, better luck next time!
+Add 1 mark in the “defeats” box for the current floor. This will count against your final campaign score (-3),
+but it does not affect your XP total. You do not earn XP for bosses or quests when defeated by the floor.
+Purchasing Benefits
+You may now spend XP to purchase permanent benefits from the list on the campaign sheet. These
+benefits, once purchased, apply for the rest of the campaign.
+Each benefit has a listed XP cost. To purchase a benefit, subtract its cost from the total in the “XP” box,
+then rewrite your new total in that box. Do not alter the XP total recorded in the “floor score” box.
+Some benefits have a limited number available, indicated by a number of circles. This number varies for
+1 or 2 players. When you purchase one, fill one circle. If all circles have been filled, you cannot purchase
+that benefit again.
+CAMPAIGN PROGRESS
+
+[Page 20]
+20
+In the 2-player mode, one player controls Carl and the other controls Princess Donut. You must work
+together to survive the floor.
+You each have your own deck system to manage, just like in the
+solo mode, but you now have the ability to deal damage to threats
+on your teammate’s battlefield, too. This means that you can help
+each other draw cards! You win if both players go down the stairs.
+2-PLAYER MODE
+Resetting the Game
+For your next session, you will move on to the next floor, if you were successful, or attempt the same floor again,
+if you were defeated. Before you can do so, you have to reset all of the game materials back to their default state.
+1. Retrieve all cards that were eliminated from play.
+2. Remove all upgrades from sleeves and return them to the upgrade deck.
+3. Reset your starting deck to match what is listed on the campaign sheet. This may have just
+changed if you purchased certain benefits.
+4. Remove all other cores from sleeves, then return the unsleeved cores to the core decks and the
+sleeved threats to the floor decks.
+5. Discard all gold tokens and damage tokens to the supply.
+Finishing the Campaign
+Once you have completed every floor, you have finished the campaign! To calculate your final campaign score,
+add up all of your individual floor scores, then reduce that total by 3 for each defeat you suffered along the way.
+Add in the following XP based on your chosen difficulty:
+• 1 XP for NORMAL difficulty
+• 5 XP for HARD difficulty
+• 10 XP for EXPERT difficulty
+• 20 XP for UNBEATABLE difficulty
+This core box contains the first 3 floors. As more floors are released, the length of your campaigns will increase.
+When discussing your final campaign scores with fellow players, include the number of floors to
+provide context for how much suffering your crawlers endured.They’ve begun to let
+us form parties, but it’s not enough
+to simply fight alongside one another.
+Without teamwork, we are nothing.
+
+[Page 21]
+21
+Observe the following changes to the turn sequence:
+• Upkeep Phase: The players complete this phase simultaneously.
+• Draft Phase: The players each simultaneously reveal a set of 2 cards from the deck with their
+own small level disc. Each player then picks 1 card to keep. The other cards are returned to the
+bottom of those decks.
+• One card must be picked from each set. If Carl picks from Princess Donut’s set, then
+Princess Donut must pick from Carl’s set. It’s useful to discuss the options before
+deciding who should have which card.
+• If one player has an effect that increases the quantity of cards they get to reveal or keep,
+it applies to them only—not their teammate. They may choose from either set when
+picking extra cards to keep.Iustraton Humble Squd Creatves
+1
+1
+TACTIC
+Lose 1 , then 2 1 
+Sc ’Em, MongoIustraton Humble Squd Creatves
+1
+1
+TACTIC
+Lose 1 , then 2 1 
+Sc ’Em, MongoIustraton Nathanael James
+1
+3
+TACTIC
+If you have lost ths turn,
+ths costs 2 less
+4
+Explosves Handlng
+ALLY
+L Na
+Mstress of Chans
+ Dscard any number of cards
+from your hand For every card
+dscarded ths way, 1 1
+2
+0Iustraton Wam O’BrenIustraton Nathanael James
+2
+1
+TACTIC
+Bare Knuckle
+2 1Iustraton Humble Squd Creatves1
+1
+TACTIC
+Lose 1 “ioWqCi2 i 1 m
+un,i!”d“ivtCbt.Iustraton Nathanael James 1
+3
+TACTIC
+If you have lost ths turn,
+ths costs 2 less
+4
+Explosves Handlng
+ALLY
+L Na
+Mstress of Chans
+ Dscard any number of cards
+from your hand For every card
+dscarded ths way, 1 1
+2
+0Iustraton Wam O’BrenIustraton Nathanael James2
+1
+TACTIC
+Bare Knuckle
+2 iiii 1
+• Main Phase: The players may take actions in any order, as long as each action is resolved
+fully before either player takes another. It might be useful for the players to take alternating
+actions, but this is not required.
+• Threat Phase: The players complete this phase simultaneously. Each player is only dealt
+damage by the threats on their own battlefield.
+• Cleanup Phase: The players complete this phase simultaneously. The danger marker only
+advances 1 space total.
+At the start of the campaign, fill out the campaign sheet for both crawlers. Before each game, the supply setup
+and floor setup remain the same, but each player performs crawler setup individually for their own crawler.
+2-Player Mode — Game Setup
+2-Player Mode — Turn Sequence
+
+[Page 22]
+22
+• The players may target each other’s threats with damage and other effects. This applies to
+active, looming, and on-deck threats. For example, when Princess Donut plays Strike for 1
+damage, she can target one of Carl’s threats.
+• The Taunt keyword only applies to the battlefield with the Taunt threat. For example, if Carl has
+a Taunt threat but Princess Donut does not, both of them can target threats on Princess Donut’s
+battlefield without restriction.
+• A defeated threat is added to the hand of the player whose battlefield it came from. For example,
+if Carl defeats one of Princess Donut’s threats, Princess Donut adds the card to her hand, even though
+she did not defeat it.
+• Any “when defeated” bonus of a threat goes to the player who defeats the threat. For example, even
+if Carl takes a threat down to 1 health, Princess Donut gets the bonus if she deals the killing blow.
+• Some effects say to choose a player or state that both players gain a benefit. Otherwise,
+effects apply only to the owning player. For example, when Princess Donut plays Loyal Family,
+Carl cannot gain the X gold or mana.
+Most of the necessary changes for arcade mode occur during setup:
+• Skip campaign setup entirely. Leave the campaign sheets in the box.
+• Choose your crawler’s race and class now. To do this, draw 3 races and choose 1, then draw
+3 classes and choose 1. Note: You may instead choose the preset race/class pair listed on the
+back of your portrait card.
+• Choose which floor to attempt. You may choose any floor, regardless of which floors you have
+attempted or completed in previous sessions. There are two floor mats for each floor. Find the
+floor mat that matches your chosen floor and is labeled for Arcade/Campaign Mode in the top
+right corner. This has the Setup instructions for this floor. Follow these setup instructions,
+then return this floor mat to the box. Place the other floor mat for this floor on the table,
+Arcade Mode side up. This floor mat should have a danger track.
+2-Player Mode — Clarifications
+Arcade Mode — Gameplay
+You can try arcade mode for one-off game sessions! This mode of play removes campaign ramifications and
+adds in some elements that would otherwise only become available after a certain point in campaign mode.
+ARCADE MODE
+
+[Page 23]
+23
+If you wish to assess the quality of a victory achieved in arcade mode, use these rules to determine your
+final score.
+• Difficulty Level – Score XP based on your chosen difficulty level:
+• 1 XP for NORMAL difficulty
+• 5 XP for HARD difficulty
+• 10 XP for EXPERT difficulty
+• 20 XP for UNBEATABLE difficulty
+• Time Left – Score 1 XP for each space left on the danger track.
+• Bosses & Quests – Score XP for any bosses you defeated or quests you completed, just like
+you would in campaign mode.
+• Achievements – Score XP for any achievements you completed for the current floor, just like
+you would in campaign mode. You can also complete each of the following achievements once:
+• (1 XP) Stranger Danger: End with 6+ different stat symbols in your deck.
+• (1 XP) Dungeonpreneur: End with upgrades worth 50+ total gold in your deck.
+• (2 XP) Not My First Rodeo: End with no level-1 or level-2 cards in your deck.
+• (2 XP) Lazarus: Survive an instance of 6+ damage from a threat.
+• (3 XP) Unstoppable: After you go down the stairs, level up twice more before the turn is
+over. You may go past level 6. On UNBEATABLE difficulty, these extra level-ups can
+still trigger a loss.
+Your total XP × 100 = your final score!
+Arcade Mode — Scoring
+• Gather the 11 cards that make up your starting deck: 6x Strike, 1x New Achievement!, 1x Rest,
+and your crawler’s 3x Starting Character cards.
+In arcade mode, some floors have alternate win conditions or additional requirements for a successful
+crawl. Read the floor mat carefully!
+
+[Page 24]
+24
+If you have the original Unstoppable, you can combine the sets—not by shuffling the cards from both sets
+together indiscriminately, but by pitting the heroes from one set against the challenges from the other set.
+COMBINING WITH OTHER PRODUCTS
+1. Choose a challenge to face. This can be one of the Unstoppable bosses or one of the Dungeon
+Crawler Carl floors (in arcade mode only). Follow the instructions for how to set up the threat
+deck on the mat for your chosen boss or floor.
+2. Choose a hero to play. This can be one of the Unstoppable characters or one of the Dungeon
+Crawler Carl crawlers. Use the starting deck and portrait card for your chosen hero and a player
+mat from the same set.
+3. Populate the supply with the core decks and upgrade deck from the set that matches your chosen hero.
+Note: Playing Unstoppable characters against Dungeon Crawler Carl floors is a tough challenge! You’ll
+have to step up your game to survive the World Dungeon.
+Dungeon Crawler Carl Crawlers × Unstoppable Bosses:
+• When an effect would cause you to gain or spend armor, adjust your mana instead.
+• Do not reset your mana to zero during the Cleanup Phase.
+Unstoppable Characters × Dungeon Crawler Carl Floors:
+• You cannot gain a race or class.
+• When an effect would cause you to gain or spend mana, adjust your armor instead.
+• Gain 2 armor (instead of 1 mana) during the Upkeep Phase. Reset your armor to zero during the
+Cleanup Phase.
+Matchup Selections
+Matchup Clarifications
+
+[Page 25]
+25
+Many cards use effect icons as shorthand for important game effects. These effect icons are explained
+in detail below.
+ICON GLOSSARY
+Core Icons
+X
+Deal X damage.
+Choose a threat to target. If +X damage
+meets or exceeds the threat’s health
+value, defeat it. Otherwise, take X damage
+tokens from the supply and place them on
+it. All damage from each instance of this
+effect must be dealt to a single threat.
+Level X+
+If Level X or higher...
+Check the position of your large level
+disc. Resolve the effect that follows this
+text only if your large level disc is at
+Level X or higher.
+X
+Gain X gold.
+Take gold tokens with a total value of X
+gold from the supply. Place them in the
+designated space on your player mat.
+If the supply runs out, use any suitable
+substitute.
+Exhaust this ally.
+Rotate this card sideways to exhaust
+it. Resolve the effect that follows the
+exhaust icon. If this card has multiple
+exhaust icons, you must choose only 1 to
+activate. This ally cannot be exhausted
+again until it is refreshed.
+X
+Gain X action points.
+Place X action point discs on your player
+mat. You cannot have more than 6 action
+points. If you gain action points when at
+the maximum, nothing happens.
+Refresh an ally.
+Choose an ally to target. Rotate that card
+upright to refresh it. An ally with this effect
+cannot refresh itself unless specified
+otherwise.
+X
+Gain X health.
+Move the health marker up X spaces on
+your health track. You cannot have more
+than 10 health. If you gain health when
+at the maximum, nothing happens.
+Refresh the market.
+Move any number of upgrades from the
+market to the bottom of the deck. Refill the
+market from the top of the deck until it has
+6 upgrades again.
+X
+Gain X mana.
+Move the mana marker up X spaces on
+your mana track. You cannot have more
+than 10 mana. If you gain mana when at
+the maximum, nothing happens.
+Flip this card over.
+When the listed condition is met, flip this
+card over and resolve the effects on the
+reverse side. Mandatory flip effects often
+occur when a boss threat is defeated.
+Train 1 level.
+Advance your small level disc by 1, moving
+it to the core deck of the next level. If your
+small level disc is already at the 6th level,
+nothing happens.
+
+[Page 26]
+26
+Threat Icons
+Stat Symbols
+Attack Value
+This value is how much damage the threat deals
+to you while active. The health value of each
+threat is the sum of its attack and defense values.
+Danger Attack
+This variable adds the danger level to the threat’s
+attack value. The danger level is tracked on the
+floor mat with the danger marker.
+Defense Value
+This value is how much extra damage the threat
+can survive. The health value of each threat is
+the sum of its attack and defense values.
+Danger Defense
+This variable adds the danger level to the threat’s
+defense value. The danger level is tracked on the
+floor mat with the danger marker.
+Strength Intelligence Dexterity Constitution Charisma
+Core Keywords
+Many cards have important game effects that are represented by keywords. These keywords are
+explained in detail below.
+KEYWORD GUIDE
+Focus
+Focus effects use an “X” value. The value of X is equal to
+the number of cards with a specific listed stat symbol in
+your hand and/or in play, including this card itself. Some
+Focus effects scale with the value of X, while others
+simply need X to meet a certain threshold to trigger.
+Example: Make Stuff Go Boom is a level-1 tactic
+card with the effect “Focus 3+: 3 .” If you
+have 3 or more Strength cards in your hand and/or
+in play, including this card itself, the effect deals
+3 damage.
+Spell
+Spell effects use an “X” value. These effects require you
+to spend X mana to trigger. If you do not have X mana
+available to spend, then you cannot trigger the Spell effect.
+Some cards have multiple Spell effects, which you can
+trigger and resolve separately by paying their mana costs.
+Example: Magic Missile is a starting tactic card
+with 3 different Spell effects: Spend 1 mana for 1
+damage, spend 2 mana for 2 damage, and spend 3
+mana for 3 damage. You may trigger any or all of
+these effects individually.
+Tough
+Tough effects give allies a passive ability. If a Tough ally
+would be discarded from play when it has no damage,
+it takes 1 damage instead and remains in play. This is a
+way to avoid having to discard an ally from play when
+you level up or when you defeat a Sacrifice threat.
+Example: Chris Andrews is a level-1 ally card with
+Tough. If he is in play when you level up, he takes
+1 damage instead. If he stays in play until the next
+time you level up, he will be discarded from play
+then because he has damage.
+Unite
+Unite effects use an “X” value. The value of X is equal to
+the number of unique stat symbols present among the
+cards in your hand and/or in play, including this card itself.
+Some Unite effects scale with the value of X, while others
+simply need X to meet a certain threshold to trigger.
+Example: Team-Up Attack is a level-2 tactic card
+with a Unite effect to deal X damage. This card is
+a Strength card. If you also have Dexterity and
+Charisma cards in your hand and/or in play, the
+effect deals 3 damage.I’ve noticed many of my gear upgrades affect my
+stats. New skills aren’t the only path to power
+in this gods-forsaken place.
+
+[Page 27]
+27
+Threat Keywords
+Fast threats overrun the battlefield with speed.
+Fast threats do not count toward the limit of 3 active threats on the battlefield. When you
+add new threats to the battlefield, you must keep adding threats until 3 non-Fast active
+threats are on the battlefield and 1 is visible on top of your deck.
+LOOMING
+Looming threats do not engage unless attacked.
+Looming threats enter play rotated vertically. While a threat is Looming, it does not count
+as an active threat on the battlefield. When you deal damage to a Looming threat, it rotates
+back horizontally and loses the Looming keyword. Some threats have effects that are only
+active while the threat is Looming.
+RETALIATE
+Retaliate threats fight back as they are struck.
+When you target a Retaliate threat with an effect that deals damage, it deals you 1 damage
+back. The Retaliate effect triggers with each separate damage effect targeting the threat,
+even if those effects come from the same card.
+SACRIFICE
+Sacrifice threats deplete your resources.
+When you defeat a Sacrifice threat, you must discard 1 card from hand or 1 ally from play.
+If you have no cards in hand, you must discard 1 ally from play, and vice versa. If you have
+neither, ignore the Sacrifice effect. In 2-player mode, the Sacrifice effect applies to whoever
+defeated the threat, even if it was not their own threat.
+Taunt threats command your attention.
+When a Taunt threat is on the battlefield or on top of your deck, you must target it with all
+effects that deal damage, unless stated otherwise. If there are multiple Taunt threats in
+play, you may target any of them. This restriction does not apply to non-damage effects.
+Terror threats drain your steely resolve.
+When you target a Terror threat with an effect that deals damage, you lose 1 action point
+(unless you have none available). The Terror effect triggers with each separate damage
+effect targeting the threat, even if those effects come from the same card.
+Note: It is possible for a threat to have multiple instances of the same keyword, once the card has
+received an upgrade or two, but duplicate keywords do not stack!I have found area-of-effect
+spells that do not target, such as “Deal
+damage to all active threats,” often evade
+the worst of the Dungeon’s defenses.
+
+[Page 28]
+CREDITS
+Game Designer: John D Clair
+Developers: John Brieger, Bryan “Duckie” Lue, Brian McKay
+Senior Producer, Board & Card Games: Dan Bojanowski
+Art Director: Sarah Robinson
+Box Cover Illustrator: Caio Cacau
+Illustrators: Humble Squid Creatives, Cold Castle Studios,
+Caio Cacau, Peejay Catacutan, Andrew Clark, Biagio D’Alessandro,
+Luciano Fleitas, Eugenio Frosali, Kent Hamilton, Rudi Indra A,
+Nathanael James, Ksenia Kozhevnikova, Diego LaFuente López,
+Mayra Luna, Fares Maese, Damien Mammoliti, Von Milano,
+Andrea Tentori Montalto, William O’Brien, Mirco Paganessi,
+MJ Pajaron, Max Roche, Riccardo Rullo, Firat Solhan,
+& Lanna Souvanny
+Graphic Designer: Cold Castle Studios
+Editor: Dustin Schwartz
+Production Artist: Noelle Lopez
+Special Thanks: Gamelandia Palo Alto and the many, many
+playtesters who made this game possible. Glurp glurp!
+RENEGADE GAME STUDIOS
+DUNGEON CRAWLER CARL
+UNSTOPPABLE
+President & Publisher: Scott Gaeta
+Finance Controller: Robyn Gaeta
+Vice President of Operations: Leisha Cummins
+Vice President Sales: Andrew Lupp
+Senior Producer, Board & Card Games: Dan Bojanowski
+Producer, RPGs: Kevin Schluter
+Associate Producer, Board & Card Games: Kane Klenko
+Associate Producer, Heroscape: Lee Houff
+Associate Producer, RPGs: Ben Heisler
+Director of Visual Design: Anita Osburn
+Creative Director, Games: Jeanne Torres
+Creative Director, RPGs: Sarah Robinson
+Senior Game Designer: Matt Hyra
+Game Designers: Dan Blanchett, Christopher Chung, & Sarah Rowan
+Lead Developer, World of Darkness: Juhana Pettersson
+Playtest Coordinator: Marcus E. Burchers
+Marketing Manager: Jordan Gaeta
+E-Commerce Manager: Nick Medinger
+Event Manager: Sara Erickson
+Organized Play Manager: Trevor McGregor
+Project Manager: Rachel Del Rio
+Customer Service Manager: Jenni Janikowski
+Finance & Sales Coordinator: Madeline Minervini
+Creative Production: Noelle Lopez & Gordon Tucker
+Customer Service: Bethany Bauthues
+Marketing Assistant: Anais Morgan
+Sales Assistant: Sophia Gambill
+Author and Creator: Matt Dinniman
+Licensing Team: Matt Dinniman, Meredyth Dinniman,
+and Angela Gavino who all helped make this game possible.
+This game is based on the Dungeon Crawler Carl book series.
+The core box covers Book 1 (Dungeon Crawler Carl) and Book 2
+(Carl’s Doomsday Scenario) in the series. We hope to see you
+on future floors, crawler!
+For additional information or support, please visit us online: www.renegadegames.com
+/PlayRGS /renegadegamestudios.com @Renegade_Game_Studios /RenegadeGameStudios
+© 2026 Renegade Game Studios. © and ™ Matt Dinniman, LLC.

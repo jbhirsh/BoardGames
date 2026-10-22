@@ -7,11 +7,14 @@ import CollectionToggle from './CollectionToggle';
 import GridView from './GridView';
 import ListView from './ListView';
 import RandomPicker from './RandomPicker';
+import ComingSoon from './ComingSoon';
 
 /**
- * The "We own" view. Stays mounted while the wishlist is showing (just
- * hidden) so its expanded row survives a toggle; only
- * the visible section carries the `collection` anchor id.
+ * The "We own" view, with what's on its way listed under it (ComingSoon, a
+ * section of its own, so nothing that reads the collection reads those).
+ * Stays mounted while the wishlist is showing (just hidden) so its expanded
+ * row survives a toggle; only the visible section carries the `collection`
+ * anchor id.
  */
 export default function GameCollection({ hidden = false }: { hidden?: boolean }) {
   const { state, filteredGames } = useFilterResults();
@@ -22,18 +25,21 @@ export default function GameCollection({ hidden = false }: { hidden?: boolean })
   useKeepSectionInView(sectionRef, !hidden);
 
   return (
-    <section id={hidden ? undefined : 'collection'} ref={sectionRef} hidden={hidden}>
-      <div className="sec-hd">
-        <h2 className="sec-title" tabIndex={-1} data-focus-target="title">Our Collection</h2>
-        <span className="sec-count">{filteredGames.length} {filteredGames.length === 1 ? 'game' : 'games'}</span>
-        {/* On the heading's line, beside the count it picks from. */}
-        <RandomPicker />
-        <div className="sec-switch">
-          <CollectionToggle />
-          {!isPhone && <ViewToggle />}
+    <>
+      <section id={hidden ? undefined : 'collection'} ref={sectionRef} hidden={hidden}>
+        <div className="sec-hd">
+          <h2 className="sec-title" tabIndex={-1} data-focus-target="title">Our Collection</h2>
+          <span className="sec-count">{filteredGames.length} {filteredGames.length === 1 ? 'game' : 'games'}</span>
+          {/* On the heading's line, beside the count it picks from. */}
+          <RandomPicker />
+          <div className="sec-switch">
+            <CollectionToggle />
+            {!isPhone && <ViewToggle />}
+          </div>
         </div>
-      </div>
-      {isPhone || state.view === 'grid' ? <GridView /> : <ListView />}
-    </section>
+        {isPhone || state.view === 'grid' ? <GridView /> : <ListView />}
+      </section>
+      <ComingSoon hidden={hidden} />
+    </>
   );
 }

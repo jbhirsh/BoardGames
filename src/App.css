@@ -451,7 +451,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .group-hd:first-child{margin-top:0;padding-top:4px;}
 
 /* ══ GRID VIEW ═════════════════════════════════════════════ */
-.games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;}
+/* Coming Soon, under the collection, headed like a group. */
+.coming-soon{margin-top:28px;}
+/* Coming Soon's cards lay out as the collection's grid, under a name of their own. */
+.games-grid,.soon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;}
 
 /* Each card spans four rows of the grid and shares them with the cards
    beside it (subgrid), so heads, descriptions and footers line up across a
@@ -489,8 +492,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .cmeta{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text3);}
 .cmeta svg{flex-shrink:0;}
 .card-kw{padding:8px var(--corner-clear) 0 0;display:flex;flex-wrap:wrap;gap:4px;align-items:flex-start;}
-/* An expansion's base game, a label rather than a control. */
-.card-expands{padding:8px var(--corner-clear) 0 0;}
+/* An expansion's base game, or when a game on its way is due: labels, not controls. */
+.card-expands,.card-arriving{padding:8px var(--corner-clear) 0 0;}
 .card-head.no-art .card-expands{padding-right:0;}
 .expands-tag{display:inline-block;font-size:11.5px;font-weight:600;line-height:1.5;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:999px;padding:1px 8px;}
 .expands-owned{color:var(--dark);}
@@ -504,9 +507,9 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 /* An open card spans the row. The grid keeps its order (no dense packing),
    so the cards still read and tab in the order they appear; the row the
    card left can end short. */
-.games-grid > .game-card.card-open{grid-column:1 / -1;}
+.games-grid > .game-card.card-open,.soon-grid > .game-card.card-open{grid-column:1 / -1;}
 /* With the full row to fill, an open card lays its games out side by side. */
-.games-grid > .game-card.card-open > .sub-panel .sub-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));align-items:start;}
+.games-grid > .game-card.card-open > .sub-panel .sub-list,.soon-grid > .game-card.card-open > .sub-panel .sub-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));align-items:start;}
 .card-desc{font-size:13px;line-height:1.68;color:var(--text2);}
 .card-more{display:inline;padding:0;font-size:inherit;line-height:inherit;font-weight:600;color:var(--blue);background:none;border:none;cursor:pointer;font-family:inherit;white-space:nowrap;}
 .card-more:hover{text-decoration:underline;}

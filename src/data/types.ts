@@ -128,6 +128,14 @@ export interface Game extends Filterable, TableInfo {
   group: GroupId;
   detail: DetailSection[];
   awards: Award[];
+  /**
+   * When a game we've bought hasn't come yet, when it's due ("December 2",
+   * "December 2027"). Such a game is listed under Coming Soon, below the
+   * collection, and stays out of the collection itself: its count, filters,
+   * covers and the random pick (games.ts splits them). Delete the field when
+   * it arrives.
+   */
+  arriving?: string;
 }
 
 /** A game with games inside it, as the add-ons tag and list take it. */

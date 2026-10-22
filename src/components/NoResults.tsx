@@ -1,7 +1,7 @@
 import { useFilter } from '../context/useFilter';
 import { useWishlistItems } from '../context/useWishlistItems';
 import { useFilteredWishlist } from '../context/useFilteredWishlist';
-import { GAMES } from '../data/games';
+import { COMING_SOON, GAMES } from '../data/games';
 import { filterGames, filterWishlist } from '../utils/filterGames';
 import { activeFilters, listFilters, relaxations } from '../utils/relaxFilters';
 import { focusSection } from '../client/focus';
@@ -34,10 +34,14 @@ export default function NoResults({ kind }: Props) {
   const options = relaxations(state, count).slice(0, 3);
   const otherCount = kind === 'games' ? filteredWishlist.length : filteredGames.length;
   const noun = kind === 'games' ? 'games' : 'wishlist games';
+  // Games on their way are listed under the collection, filters and all:
+  // when only those match, say so rather than seem to contradict them.
+  const arriving = kind === 'games' ? filterGames(COMING_SOON, state).length : 0;
 
   return (
     <div className="no-results">
       <p>No {noun} match your filters.</p>
+      {arriving > 0 && <p className="no-results-which">{plural(arriving)} on the way {fit(arriving)}, under Coming Soon below.</p>}
       {filters.length > 0 && <p className="no-results-which">Filtering for {listFilters(filters, state.keywordMode)}.</p>}
       {options.length > 0 && (
         <ul className="no-results-options" aria-label="Loosen the filters">

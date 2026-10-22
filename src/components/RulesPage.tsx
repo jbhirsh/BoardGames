@@ -1,6 +1,6 @@
 import { Component, lazy, Suspense, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useParams, useLocation, useNavigate, Link, Navigate } from 'react-router';
-import { GAMES } from '../data/games';
+import { ALL_GAMES } from '../data/games';
 import { rulebooks, rulebookPath, chatParts, chatScope, citedPageParam, starterQuestions } from '../utils/rulebooks';
 import { citationsIn, citedPage, linkCitations, mentionedRulebooks } from '../utils/citations';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
@@ -159,7 +159,7 @@ export default function RulesPage() {
   // location's key tells one tap from the next, so a second tap on the same
   // citation, after scrolling away, still jumps.
   const citedAt = citedPageParam(search);
-  const game = GAMES.find(g => g.slug === slug);
+  const game = ALL_GAMES.find(g => g.slug === slug);
   const [wordCheckerOpen, setWordCheckerOpen] = useState(false);
   // The rulebook that couldn't be shown, and whether that was for want of a
   // network (outOfReach): undefined until that is known. Forgotten when the
