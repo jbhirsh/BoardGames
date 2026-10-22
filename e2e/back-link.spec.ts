@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { test, expect } from './fixtures';
 
 /** Every game row in the visible list carries a "Show (or Hide) details for <name>" toggle. */
@@ -17,6 +17,16 @@ async function noteScrolling(page: Page) {
 const scrolledThrough = (page: Page) =>
   page.evaluate(() => (window as unknown as { scrolledThrough: number[] }).scrolledThrough);
 
+/**
+ * Waits for an opened row to finish growing (its panel eases open over a
+ * third of a second). An offset read before then is taken while the row's
+ * Rules is still moving, and Playwright's click, which waits for its target
+ * to be still, may scroll the page again before the page is left, so the
+ * list comes back somewhere else.
+ */
+const opened = (inPanel: Locator) =>
+  expect.poll(() => inPanel.evaluate((el) => el.closest('.row-expand-inner')!.getAnimations().length)).toBe(0);
+
 test('Back from a rules page returns to the filtered list where it was left', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Players', exact: true }).click();
@@ -31,6 +41,7 @@ test('Back from a rules page returns to the filtered list where it was left', as
   // Scrolled by hand until its add-on's link shows with the game still in
   // view, as a visitor would, so the click needn't scroll the page itself.
   const intrigue = page.getByRole('link', { name: 'Intrigue rules' });
+  await opened(intrigue);
   await page.mouse.wheel(0, 200);
   await expect(intrigue).toBeInViewport();
   await expect(dominion).toBeInViewport();
@@ -102,6 +113,7 @@ test('the open row\'s Rules, at the end of its write-up on the right, opens the 
   // filled one, after the write-up and over on the right.
   const panel = page.getByRole('cell').filter({ has: page.getByRole('link', { name: 'Watch Pandemic tutorial on YouTube' }) });
   const rules = panel.getByRole('link', { name: 'Rules for Pandemic' });
+  await opened(rules);
   await rules.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
   await expect(rules).toBeInViewport();
   const lastHeading = await panel.getByRole('heading', { name: 'Difficulty and Legacy' }).boundingBox();
@@ -132,6 +144,7 @@ test('the open row comes back open, its Rules in view, by the browser\'s Back an
   await expect(toggle).toHaveAttribute('aria-expanded', 'true');
   // Down to the end of the open row, where its Rules sits.
   const rules = page.getByRole('link', { name: 'Rules for Catan' });
+  await opened(rules);
   await rules.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
   await expect(rules).toBeInViewport();
   const left = await scrollY(page);
