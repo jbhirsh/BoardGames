@@ -33,7 +33,9 @@ export function filterItems<T extends Filterable>(
 
   if (state.search) {
     const q = state.search.toLowerCase().trim();
+    // A friend's suggestion is also found by who suggested it.
     list = list.filter(g => g.name.toLowerCase().includes(q) || g.desc.toLowerCase().includes(q)
+      || ('suggestedBy' in g && typeof g.suggestedBy === 'string' && g.suggestedBy.toLowerCase().includes(q))
       || (g.subgames ?? []).some(s => s.name.toLowerCase().includes(q)));
   }
 

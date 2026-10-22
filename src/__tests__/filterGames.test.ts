@@ -325,6 +325,12 @@ describe('filterWishlist', () => {
     expect(quick.map((w) => w.id)).toContain('sug-x');
   });
 
+  it("finds a friend's suggestion by who suggested it", () => {
+    const fromAlex = { ...WISHLIST[0], id: 'sug-a', name: 'Mystery', desc: 'A puzzle.', suggestedBy: 'Alex' };
+    const found = filterWishlist([...WISHLIST, fromAlex], { ...initialFilterState, keywords: new Set(), search: 'alex' });
+    expect(found.map((w) => w.id)).toEqual(['sug-a']);
+  });
+
   it('groups by wishlist type under the group sort', () => {
     const grouped = filterWishlist(WISHLIST, { ...initialFilterState, keywords: new Set(), sort: 'group', baseSort: 'group' });
     const order = grouped.map((w) => WISHLIST_TYPE_ORDER.indexOf(w.type));
