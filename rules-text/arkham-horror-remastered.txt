@@ -1,0 +1,4684 @@
+[Page 1]
+RulebookWORK IN PROGRESS
+
+[Page 2]
+2
+OVERVIEW
+For eons, the Ancient Ones have lain dormant, leaving
+humankind to carry on its existence in blissful ignorance.
+But the Ancient Ones have begun to stir in their slumber, and
+doom now comes to Arkham.
+In Arkham Horror: Remastered, 1–8 players take on the roles
+of investigators seeking to prevent the cataclysmic awakening
+of an Ancient One. The rising eldritch influence causes tears
+in reality, opening gates to Other Worlds and allowing
+unspeakable abominations to cross into Arkham.
+To save their world, investigators must close all such gates
+into the city, or permanently seal enough gates to prevent the
+Ancient One’s arrival on Earth. Should they fail to do so, they
+will engage in one final battle against the arisen Ancient
+One, with the fate of humanity hanging in the balance.
+Woods
+Historical Society
+UPTOWN
+SOUTHSIDE
+FRENCH HILL
+RIVERTOWN
+Science Building
+Dissection
+As an encounter, spend 5 toughness
+worth of monster trophies or 1 gate
+trophy to gain 2 clues.
+Schoffner’s General Store
+Shop
+As an encounter, draw 3 common
+items; you may purchase 1 of them
+and discard the rest.
+River Docks
+Shady Character
+As an encounter, spend 5 toughness
+worth of monster trophies or 1 gate
+trophy to gain $5.
+Ma’s Boarding House
+Recruit
+As an encounter, spend 10 toughness
+worth of monster trophies, 2 gate
+trophies, or 5 toughness worth of
+monster trophies and 1 gate trophy
+to search the ally deck and gain
+any 1 ally from it.
+MISKATONIC
+UNIVERSTIY
+MERCHANT
+DISTRICT
+EASTTOWN
+JAIL
+DOWNTOWN
+NORTHSIDE
+The Witch House
+Graveyard
+Library
+The Unnamable
+Unvisited Isle
+Train Station
+Velma’s Diner
+Black Cave
+Independence Square
+Hibb’s Roadhouse
+Arkham Advertiser
+T
+h
+e
+D
+r
+e
+a
+m
+l
+a
+n
+D
+s
+P
+l
+a
+T
+e
+a
+u
+o
+f
+l
+e
+n
+g
+r
+'
+l
+y
+e
+h
+g
+r
+e
+a
+T
+h
+a
+l
+l
+o
+f
+C
+e
+l
+e
+a
+n
+o
+C
+i
+T
+y
+o
+f
+T
+h
+e
+g
+r
+e
+a
+T
+r
+a
+C
+e
+a
+b
+y
+s
+s
+a
+n
+o
+T
+h
+e
+r
+D
+i
+m
+e
+n
+s
+i
+o
+n
+y
+u
+g
+g
+o
+T
+h
+l
+o
+s
+T
+i
+n
+T
+i
+m
+e
+a
+n
+D
+s
+P
+a
+C
+e
+ARKHAM
+OUTSKIRTS SKY
+Police Station
+Deputize
+As an encounter, spend 10 toughness
+worth of monster trophies, 2 gate
+trophies, or 5 toughness worth of
+monster trophies and 1 gate trophy
+to become the Deputy of Arkham.
+Movement: When you are
+no longer delayed, move to
+the police station.
+Schoffner’s
+General Store
+Curiositie
+Shoppe
+Ye Olde
+Magick Shoppe
+Remove
+Monster Limit
+South Church
+Blessing
+As an encounter, spend 5 toughness
+worth of monster trophies or 1 gate
+trophy to choose 1 investigator in any
+space to become Blessed.
+Ye Olde Magick Shoppe
+Magic Lessons
+As an encounter, spend $5 to draw
+2 spells; choose 1 to gain and
+discard the other.
+Silver Twilight Lodge
+Inner Sanctum
+When you would resolve an encounter
+here, if you have a Silver Twilight
+Membership, instead resolve an Inner
+Sanctum encounter.
+Administration
+Classes
+As an encounter, spend $8 to
+draw 2 skills; choose 1 to gain
+and discard the other.
+Bank of Arkham
+Bank Loan
+As an encounter, if you do not have a
+Bank Loan, gain one.
+Curiositie Shoppe
+Shop
+As an encounter, draw 3 unique items;
+you may purchase 1 of them and
+discard the rest.
+St. Mary’s Hospital
+Medical Care
+As an encounter, you may either
+recover 1 stamina or spend $2 to
+recover all of your stamina.
+Arkham Asylum
+Psychiatric Care
+As an encounter, either recover
+1 sanity or spend $2 to recover all
+of your sanity.
+1 Game Board
+8 Ancient One Sheets
+
+ - 1 +1
+Endless
+Ia! Ia! Cthulhu Fthagn!
+Ph’nglui mglw’nfah
+Cthulhu R’lyeh
+wgah’nagl fhtagn!
+Worshippers—Cultists
+Nyarlathotep has innumerable
+cults all over the world.
+A THOUSAND MASKS
+Setup: Add all of the Mask monsters
+to the monster bag.
+nyarlathotep
+1 Ancient One
+Dashboard
+16 Investigator
+Sheets
+8 Investigator
+Dashboards
+1
+2
+3
+4
+6
+5
+4
+3
+5
+4
+3
+25
+4
+3
+2
+6
+5
+4
+33
+2
+1
+0
+S
+P
+E
+E
+D
+S
+N
+E
+A
+K
+F
+I
+G
+H
+T
+W
+I
+L
+L
+L
+O
+R
+E
+L
+U
+C
+K
+F
+O
+C
+U
+S
+1
+You can look at the bottom card of
+the common item, unique item, or
+spell deck.
+When you gain a random common
+item, unique item, or spell, you may
+draw from either the top or bottom
+of the deck; this ability can be used
+during setup.
+Scrounge
+the Drifter
+“Ashcan” PeteWORK IN PROGRESS
+
+[Page 3]
+3
+COMPONENT LIST
+67 Mythos Cards 8 Reference
+Cards
+63 Arkham
+Location Cards 49 Other World
+Cards 4 Player Count
+Cards
+44 Common
+Item Cards 39 Unique
+Item Cards 40 Spell
+Cards 20 Skill
+Cards 11 Ally
+Cards
+8 Blessed/Cursed
+Cards
+8 Retainer
+Cards 3 Deputy
+Role Cards 3 Magical
+Effect
+Cards
+8 Bank Loan
+Cards
+8 STL
+Membership
+Cards
+5 Dice
+Retainer Silver Twilight Lodge
+Membership Bank Loan
+
+When you roll dice, only
+results of 6 count as successes.
+When you would become
+Blessed, instead discard this card.
+Upkeep: Roll 1 die; on
+a result of 1, discard
+this card.
+Deputy of Arkham Sun's Favor
+
+When you roll dice, results
+of 4, 5, and 6 count as successes.
+When you would become
+Cursed, instead discard this card.
+Upkeep: Roll 1 die; on
+a result of 1, discard
+this card.
+MERCHANT DISTRICT
+NORTHSIDE
+UPTOWN
+4
+4
+1
+7
+7
+Number of Players
+Monster
+Limit
+Monsters
+Drawn
+Outskirts
+Limit
+O
+p
+e
+n
+G
+a
+t
+e
+L
+im
+i
+t
+Monsters
+Normal: No special rules
+Stationary: Doesn’t move
+Fast: Moves twice
+Special: Resolve back of token
+Flying: Moves to nearest investigator
+in street, or moves to/from Sky
+Aquatic: If on aquatic space, moves to
+investigator on aquatic space
+Stalker: If adjacent investigator in
+street or unstable location, moves there
+Ambush: Attacked investigator can’t flee
+X Resistance: 1/2 bonus from type (round up)
+X Immunity: No bonus from type
+Nightmarish X: Lose x sanity if horror passed
+Overwhelming X: Lose x stamina if combat passed
+Endless: Cannot claim as a trophy
+Elusive: Successful evade to engage
+
+-3c
+Vampire
+Undead
+Physical Resistance
+It was a beast born in the grave.
+It stretched its hands toward
+us and curled its lips, drawn
+to the blood in our veins.
+2
+ 
+ 
+
+-3+0
+DIMENSIONAL
+SYMBOL HORROR
+RATING
+COMBAT
+RATING
+TOUGHNESS
+COMBAT
+DAMAGE
+HORROR
+DAMAGE
+AWARENESS
+1 Lead Investigator
+Token
+16 Gate Tokens
+
+-3
++
+r
+’
+l
+y
+e
+h 60 Monster
+Tokens-3
+
+c
+24 Elder Sign
+Tokens/ Counters 6 Activity
+Tokens 3 Explored
+Tokens
+48 Clue
+Tokens 1 Terror
+Token 56 Money Tokens6 Closed
+Tokens
+16 Investigator
+Stands
+1 Doom Cube 1 Hit Tracker
+Cube
+1 Turn
+Tracker Cube 1 Player
+Count Cube
+1 Monster Bag
+16 Maximum
+Cubes 24 Attribute
+Cubes 8 Stamina
+Cubes 8 Sanity
+CubesWORK IN PROGRESS
+
+[Page 4]
+4
+SETUP
+To set up the game, resolve the following steps:
+1. Set Up Game Board
+Place the game board in the center of the play area. Place
+the terror token on the “0” space of the terror track.
+2. Place Starting Clues
+Place 1 clue on each unstable location; unstable locations
+are indicated by a red diamond.
+3. Create General Supplies
+Create general supplies out of the game’s tokens and dice
+and place them near the game board.
+4. Create Card Decks
+Gather each type of card and place them in decks near the
+game board.
+5. Create Monster Supply
+Gather all of the monster tokens and separate out all of the
+Mask monsters. Place the rest of the monster tokens into a
+bowl, bag, or cup to create the monster supply.
+6. Create Gate Stack
+Shuffle the gate tokens facedown to
+create the gate stack.
+7. Determine Ancient One
+Randomly select an Ancient One
+sheet and place it next to the game board. Alterrnatively,
+players may agree to choose which Ancient One they are
+going to fight. It is recommended that new players play
+against Azathoth for their first game.
+8. Set up Ancient One Dashboard
+Slide the Ancient One sheet into
+the Ancient One dashboard with
+the gameplay side of the Ancient
+One faceup; this is the side that
+has the abilities on the righthand
+side of the sheet. Place the green
+doom cube on the “0” notch of the
+doom track. Resolve any Ancient
+One-specific setup instructions.
+Set the turn tracker, hit tracker, and player count cubes
+aside; these are used during the final battle.
+9. Determine Lead Investigator
+Choose one player to take the lead
+investigator token. Players can select
+the lead investigator randomly, or select
+the player that has the most experience
+playing the game.
+10. Determine Investigators
+The lead investigator deals each player a random
+investigator sheet. Alternatively, players may agree to
+choose which investigator they are going to play.
+Lead Investigator
+TokenH HILL
+IVERTOWN
+N
+JAIL
+Black Cave
+T
+h
+e
+D
+r
+e
+a
+m
+l
+a
+n
+D
+s
+g r
+e
+a
+T
+h
+a
+l
+l
+o
+f
+C
+e
+l
+e
+a
+n
+o
+C
+i
+T
+y
+o f
+T h e g r e
+a
+T
+r
+a
+C
+e
+y u
+g
+g
+o
+T
+h
+Police Station
+Deputize
+As an encounter, spend 10 toughness
+worth of monster trophies, 2 gate
+trophies, or 5 toughness worth of
+monster trophies and 1 gate trophy
+to become the Deputy of Arkham.
+Movement: When you are
+no longer delayed, move to
+the police station.
+Schoffner’s
+General Store
+Curiositie
+Shoppe
+Ye Olde
+Magick Shoppe
+Remove
+Monster Limit
+Terror Token
+
+ - 1 +1
+Endless
+Ia! Ia! Cthulhu Fthagn!
+Ph’nglui mglw’nfah
+Cthulhu R’lyeh
+wgah’nagl fhtagn!
+Worshippers—Cultists
+Nyarlathotep has innumerable
+cults all over the world.
+A THOUSAND MASKS
+Setup: Add all of the Mask monsters
+to the monster bag.
+nyarlathotepHistorical Society
+TOWN
+SOUTHSIDE
+FRENCH HILL
+RIVERTOWN
+Schoffner’s General Store
+Shop
+As an encounter, draw 3 common
+items; you may purchase 1 of them
+and discard the rest.
+ISKATONIC
+NIVERSTIY
+MERCHANT
+DISTRICT
+The Witch House
+Graveyard
+y
+Unvisited Isle
+Black Cave
+Silver Twilight Lodge
+Inner Sanctum
+When you would resolve an encounter
+here, if you have a Silver Twilight
+Membership, instead resolve an Inner
+Sanctum encounter.
+Unstable Location Clue Token
+
+ - 1 +1
+Endless
+Ia! Ia! Cthulhu Fthagn!
+Ph’nglui mglw’nfah
+Cthulhu R’lyeh
+wgah’nagl fhtagn!
+Worshippers—Cultists
+Nyarlathotep has innumerable
+cults all over the world.
+A THOUSAND MASKS
+Setup: Add all of the Mask monsters
+to the monster bag.
+nyarlathotep
+Doom
+Cube
+Setup
+Monster Bag
+Monster Tokens
+Mask Monster
+Tokens-3
+
+co 
+-2
+^ -1
+-3#-3
+
+cWORK IN PROGRESS
+
+[Page 5]
+5
+11. Gain Fixed Possessions
+Each player gains the possessions listed under the “Fixed
+Possessions” header on the back of their investigator sheet,
+searching the relevant decks for specific cards. Then,
+shuffle all decks that contain randomized cards.
+12. Gain Random Possessions
+Each player draws cards from the decks indicated under
+the “Random Possessions” header on the back of their
+investigator sheet and gains them; if an investigator has an
+ability that can be used during setup, they can use it here.
+13. Place Investigators
+Each player finds the investigator stand that matches
+their investigator and places it on the game board location
+listed under the “Home” header on the back of their
+investigator sheet.
+14. Set Up Investigator Dashboards
+Each player slides their investigator
+sheet into their investigator dashboard.
+They place their sanity and stamina
+cubes into the starting notches of the
+sanity and stamina track, respectively.
+These notches are also indicated by a
+diamond shape in their background.
+Place the black maximum sanity and
+maximum stamina cubes one notch
+above the sanity and stamina cubes. If
+an investigator begins the game with
+a card that increases their maximum
+sanity or stamina, make additional
+adjustments the initial setup.
+Each player determines their starting attributes by placing
+one attribute cube into a notch of their choice in each of
+the three attribute columns. Each cube determines the
+value of the attribute to its left and its right, with higher
+numbers indicating a greater number of dice rolled—and
+thus a greater chance of success—and lower numbers
+indicated a lesser number of dice rolled.
+15. Resolve Starting Mythos Card
+The lead investigator draws the top
+card of the mythos deck and resolves it
+as detailed in the “Phase IV: Mythos”
+section on page 21; if the drawn
+Mythos card has the Rumor trait or there
+is not a gate pictured in its upper-left
+corner, discard it and draw again.
+16. Begin The Game
+The players are now ready to begin the
+game.
+Mythos Card
+1
+2
+3
+4
+6
+5
+4
+3
+5
+4
+3
+25
+4
+3
+2
+6
+5
+4
+33
+2
+1
+0
+S
+P
+E
+E
+D
+S
+N
+E
+A
+K
+F
+I
+G
+H
+T
+W
+I
+L
+L
+L
+O
+R
+E
+L
+U
+C
+K
+F
+O
+C
+U
+S
+1
+You can look at the bottom card of
+the common item, unique item, or
+spell deck.
+When you gain a random common
+item, unique item, or spell, you may
+draw from either the top or bottom
+of the deck; this ability can be used
+during setup.
+Scrounge
+the Drifter
+“Ashcan” Pete
+Investigator Sheet Back11x3x3
+x1x1 x1x1
+x1x1
+FIXED
+POSSESSIONS
+RANDOM
+POSSESSIONS
+HOME
+Duke
+THE STORY SO FAR…
+When you’ve lived on the streets as long as
+Pete has, you see things. Things that would
+drive braver men screaming into the night.
+But you also learn to be quiet, to stay hidden,
+and to play stupid if all else fails. It also helps
+to have a good dog, like Duke, to scare away
+the meaner elements of the street.
+Unfortunately, this time, Pete can’t hide,
+and there’s nothing Duke can do to protect
+him. His nightmares have been growing
+steadily worse over the last month, driving
+him all the way here...to Arkham. Even
+the whiskey isn’t helping much anymore.
+Soon, he won’t be able to sleep at all. Still,
+there are always opportunities for a man who knows how to stay
+quiet...as long as he isn’t too picky.
+River Docks
+the Drifter
+“Ashcan” Pete
+1
+2
+3
+4
+6
+5
+4
+3
+5
+4
+3
+25
+4
+3
+2
+6
+5
+4
+33
+2
+1
+0
+S
+P
+E
+E
+D
+S
+N
+E
+A
+K
+F
+I
+G
+H
+T
+W
+I
+L
+L
+L
+O
+R
+E
+L
+U
+C
+K
+F
+O
+C
+U
+S
+1
+You can look at the bottom card of
+the common item, unique item, or
+spell deck.
+When you gain a random common
+item, unique item, or spell, you may
+draw from either the top or bottom
+of the deck; this ability can be used
+during setup.
+Scrounge
+the Drifter
+“Ashcan” Pete
+Max
+Sanity
+Cube
+Sanity
+Cube
+Max
+Stamina
+Cube
+Attribute Cubes
+Stamina
+CubeWORK IN PROGRESS
+
+[Page 6]
+6
+WINNING THE GAME
+The central goal of Arkham Horror is to win the game by
+defeating the Ancient One. This can be done in one of three
+different ways, as follows; don’t worry if you don’t understand
+them now, just keep these in mind as you read the rules.
+Close All Gates
+If at any point, both of the following conditions are met, the
+investigators immediately win the game.
+• All gates on the game board
+are closed.
+• The investigators have
+a number of unspent
+gate trophies equal to or
+greater than the number of
+investigators.
+Because a variety of game effects can spawn gates , and
+because gates typically require multiple turns to close, this can
+be a difficult method of winning the game early on. However,
+it becomes easier to achieve as more elder sign tokens are
+placed on the board. Elder sign tokens prevent gates from
+spawning in their spaces, which makes life easier for everyone.
+Seal Six Gates
+If at any point there are six elder sign tokens
+on the board, the investigators immediately
+win the game. An elder sign token is placed
+when an investigator closes a gate and then,
+optionally, spends clues to seal it.
+Win the Final Battle
+If none of the previous conditions are met, and the Ancient
+One awakens, the last chance for the investigators to win the
+game is to emerge victorious from the final battle. More than
+likely, if the investigators are forced to face the Ancient One in
+battle, they will die.
+Gate Token
+
+-3
++
+r
+’
+l
+y
+e
+h
+Elder Sign
+Tokens
+x6x6WORK IN PROGRESS
+
+[Page 7]
+7
+THE ANCIENT ONE
+The Ancient One is an agent of the Mythos, and the primary
+antagonist in a game of Arkham Horror. It is a horrific
+creature that defies the logic of reality, slumbering in the earth
+until it can awaken and bring its full power to bear against
+humanity.
+Persistent Effects
+Even while the Ancient One stirs in its slumber, it has an effect
+on the game. The front of the Ancient One sheet contains
+all of the instructions needed to resolve the Ancient One’s
+persistent effects.
+Doom
+As the game progresses, gates and other game effects will
+cause doom to advance. For each point that doom advances,
+move the doom cube one notch to the right. Doom serves as
+the game's timer, and the investigators have until the doom
+track is full to close or seal the requisite number of gates and
+win the game. If the doom cube advances to the final space of
+the doom track, the Ancient One awakens, and play proceeds to
+the final battle (see “The Final Battle” on page 29).
+Open Gates
+The Ancient One can also awaken if too many gates are open
+at once. Investigators must keep this in mind as they play
+the game and do their best to keep the number of open gates
+under control.
+The Ancient One awakens, and play proceeds to the final battle
+(see “The Final Battle” on page 29) if the following open
+gate thresholds are met:
+Investigators The Ancient One Awakens at:
+1–2 8 open gates
+3–4 7 open gates
+5–6 6 open gates
+7–8 5 open gates
+Worshipper Monsters
+Each Ancient One has its own worshippers. Worshipper
+monsters gain special strength, often increasing the monster’s
+toughness, combat damage, or other abilities.
+An Ancient One’s worshipper monsters are shown on its sheet.
+If a worshipper monster is drawn, use the printed token back
+on the Ancient One sheet when in combat with that monster
+instead of the token itself.
+-2
+ 
+ 
+1 +1
+Ia! Ia! Cthulhu Fthagn!
+Ph’nglui mglw’nfah
+Cthulhu R’lyeh wgah’nagl
+fhtagn!
+Worshippers—Cultists
+Cthulhu’s worshippers often have the Innsmouth
+Look, a sign of monstrous ancestry.
+DREAMS OF MADNESS
+While Cthulhu stirs in his slumber,
+each investigator’s maximum sanity
+and maximum stamina are reduced
+by 1.
+Cthulhu
+Doom
+Track
+Doom
+Cube
+Persistent
+Effect
+Worshipper
+MonsterWORK IN PROGRESS
+
+[Page 8]
+8
+CORE CONCEPTS
+The following concepts are central to understanding the rules
+of the game.
+Investigators
+During setup, each player sets up an investigator in their play
+area. Each investigator is represented by a standee on the
+game board, a sheet that shows their abilities, and a dashboard
+that tracks their sanity, stamina, and attributes. From here
+on, and on all game components, players are referred to as
+investigators.
+Lead Investigator
+The investigator that took the lead investigator token during
+setup is the lead investigator. During each upkeep
+phase, a different player will become the lead investigator for
+that game round. The lead investigator has three main
+responsibilities.
+1. Goes First in Player Order
+The lead investigator token is first in turn order.
+2 Resolves General Game Effects
+General game effects that are not specific to an investigator
+are resolved by the lead investigator.
+3. Breaks Ties
+When a game effect specifies a target and there is a tie (for
+example “the investigator that has the highest current
+stamina”), and the players as a group cannot agree, the
+lead investigator chooses. Likewise, when multiple general
+game effects are resolved in the same timing window, the
+lead investigaor chooses which order they are resolved in.
+Turn Order
+Turn order is the order in which investigators resolve game
+effects. When an effect is resolved in turn order, begin with
+the lead investigator and proceed clockwise. Most phases in
+a game round are resolved in turn order. Additionally, when
+resolving a global game effect (such as “Each investigator loses
+1 stamina”), that effect is resolved in turn order.
+Investigator Sheet and Dashboard
+An investigator’s sheet and dashboard detail their sanity,
+stamina, attributes, focus, and investigator abilities.
+Sanity and Stamina
+An investigators sanity and stamina are tracked by blue and
+red cubes, respectively, and their initial values are set during
+setup. When an investigator loses sanity or stamina, they
+move the respective cube down a number of notches equal to
+the amount lost.
+When an investigator’s sanity is reduced to 0, that investigator
+is driven insane. When an investigator’s stamina is reduced
+to 0, that investigator is knocked unconscious. If an
+investigator’s sanity and stamina are both reduced to 0
+simultaneously, that investigator is devoured.
+When an investigator recovers sanity or stamina, they
+move the respective cube up a number of notches equal to the
+amount recovered.
+Maximum Sanity and Stamina
+Investigators have a default maximum sanity and stamina.
+During setup, black cubes are placed to indicated the point
+at which the maximums would be surpassed. An investigator
+cannot recover sanity or stamina beyond their maximums.
+Certain game effects can increase or decrease an investigator’s
+maximum values. Maximums can be increased by no more
+than 3 beyond an investigator's initial value. Investigators
+do not automatically recover sanity or stamina when their
+maximums are increased unless otherwise specified.
+If an investigator’s maximum sanity or stamina is lowered to
+a value below their current sanity or stamina, their current
+sanity or stamina is lowered to match that maximum. If an
+investigator’s maximum stanity or stamina is reduced to 0,
+that investigator is devoured.
+Lead Investigator
+Token0
+1
+2
+3
+3
+2
+1
+0
+4
+3
+2
+16
+5
+4
+3
+4
+3
+2
+15
+4
+3
+2
+S
+P
+E
+E
+D
+S
+N
+E
+A
+K
+F
+I
+G
+H
+T
+W
+I
+L
+L
+L
+O
+R
+E
+L
+U
+C
+K
+F
+O
+C
+U
+S
+1
+When you would lose stamina, reduce
+that loss by 1.
+Strong Body
+the Gangster
+Michael McGlen
+Black
+Cube
+Max
+Stamina
+Current
+Stamina
+A black cube on 8 stamina indicates that an
+investigator’s maximum stamina is 7.WORK IN PROGRESS
+
+[Page 9]
+9
+Attributes
+An investigator’s attributes each represent a different
+physical or mental characteristic, which determines how many
+dice are rolled when that characterstic is tested. Attribute
+cubes are are placed during setup and indicate the current
+values of each attribute pair.
+Each attribute is tied to another attribute as follows:
+• Speed  and Sneak 
+• Fight  and Will 
+• Lore  and Luck 
+Each investigator has a different ranges for their attributes.
+While the initial positions of the attribute cubes are decided
+during setup, an investigator can spend focus during the
+upkeep phase to adjust their attributes as the game progresses.
+Many items, allies, and other cards can increase or decrease
+an investigator’s attributes. Sometimes, these modifiers are
+constantly active. Other times, they are are only applied when
+specific conditions are met. These modifiers affect the value of
+an attribute but do not move the attribute cube.
+Focus
+An investigator’s focus value represents their ability to fine-
+tune their attributes, as detailed in the "Focus Attributes"
+section on page 13. On rare occasions, focus can be spent
+on other game effects.
+Investigator Abilities
+Each investigator has one or more abilities, as detailed on the
+right-hand side of their investigator sheet. These abilities are
+extremely varied and represent the core of what makes each
+investigator unique.
+2
+3
+4
+5
+4
+3
+2
+1
+5
+4
+3
+23
+2
+1
+0
+3
+2
+1
+04
+3
+2
+1
+S
+P
+E
+E
+D
+S
+N
+E
+A
+K
+F
+I
+G
+H
+T
+W
+I
+L
+L
+L
+O
+R
+E
+L
+U
+C
+K
+F
+O
+C
+U
+S
+2
+Encounter: When you draw an Other
+World encounter, draw 1 additional
+encounter, then choose 1 to discard.
+Psychic Sensitivity
+the Author
+Gloria Goldberg
+Abilities
+Focus Value
+Attributes
+StaminaSanity2
+3
+4
+5
+4
+3
+2
+1
+5
+4
+3
+23
+2
+1
+0
+3
+2
+1
+04
+3
+2
+1
+S
+P
+E
+E
+D
+S
+N
+E
+A
+K
+F
+I
+G
+H
+T
+W
+I
+L
+L
+L
+O
+R
+E
+L
+U
+C
+K
+F
+O
+C
+U
+S
+2
+Encounter: When you draw an Other
+World encounter, draw 1 additional
+encounter, then choose 1 to discard.
+Psychic Sensitivity
+the Author
+Gloria Goldberg
+There is an inverse relationship
+between each pair of attributes.
+For example, the higher an
+investigator's speed, the lower
+their sneak will be.WORK IN PROGRESS
+
+[Page 10]
+10
+Checks
+Many effects require the investigators to make checks. A
+check is a method of determining success or failure, and is
+based on an attribute of the investigator making the check.
+To make a check, an investigator rolls a number of dice equal
+to the value of the attribute being checked.
+Many checks have positive or negative modifiers. A modifier
+indicates how many dice to add or subtract to the check.
+If an investigator would roll 0 dice on a check, after applying
+modifiers, dice are not rolled and the check is an automatic
+failure.
+Unless stated otherwise, when making a check, each die
+result of 5 or 6 is considered a success. For most checks, if an
+investigator rolls at least one success, they pass the check. If
+an investigator does not roll any successes on a check, they fail
+the check. The effect that instructs an investigator to make the
+check will also tell them what to do when they pass or fail.
+Investigators can also spend clues to roll additional dice on
+checks. See “Clues” on page 25.
+Difficult Checks
+Some checks require more than 1 success. If a check requires
+more than 1 success, the number of successes required is
+indicated in a green diamond following the check.
+Advanced Checks
+There are five types of advanced checks:
+• Evasion checks ()
+• Combat checks ()
+• Horror checks ()
+• Spell checks ()
+• Gate checks (/)
+Each of these checks is derived from an attribute and counts
+as a check of that attribute's type, but can also be modified by
+effects that support that advanced check specifically. Standard
+attribute checks, however, do not gain bonuses from effects
+that grant bonuses to advanced checks.
+Each advanced check has a special effect and will be covered
+in a later section.
+7 
+Item
++6  during combat checks
+Physical Weapon
+Tommy GunSt. Mary’s Hospital
+You sneak a peek at the medical records for a
+recent admission who was involved in a cult
+ritual  +0 . If you pass, you learn something
+about the cult’s methods; gain 1 clue.
+Miriam Beecher, the shopkeeper, peers closely at
+your face, then screams, “They’ve marked you!
+Get out! Get out!” and throws you out.
+Unsettling. Move to the street and lose 1 sanity.
+You meet an old wise man in the grove who
+offers to share his wisdom with you. You may
+become delayed to accept  –2 . If you pass, you
+may gain 1 skill, gain 2 spells, or gain 4 clues. If
+you fail, nothing happens.
+Ye Olde Magick Shoppe
+WoodsRiver Docks
+A horrific stench draws your attention to the
+body of some bizarre marine creature, rotting on
+the edge of the docks. As you move towards it,
+an uneasy feeling grows in the pit of your
+stomach, as though you are meddling with
+something best left alone  –1 . If you pass, lose
+1 sanity. If you fail, lose 2 sanity. Whether you
+pass or fail, if you are not driven insane, you find
+something clutched in its webbed hands; gain 1
+unique item.
+As you start to climb back into your canoe and
+row to shore, you see a huge, shadowy shape
+disturb the water near the island. Waves of
+intense dread grip you  –1 . If you fail, become
+Cursed.
+The ceiling beam suddenly buckles  –1 . If
+you pass, move to the street. If you fail, lose 2
+stamina.
+Unvisited Isle
+The Unnamable1
+2
+3
+4
+6
+5
+4
+3
+3
+2
+1
+05
+4
+3
+2
+5
+4
+3
+2
+A
+K
+F
+I
+G
+H
+T
+W
+I
+L
+L
+L
+O
+R
+E
+L
+U
+C
+K
+F
+O C
+U
+S
+3
+When you spend clues to add dice
+to a check, add 1 additional die per
+clue spent.
+Hunches
+the Private Eye
+Joe Diamond1
+2
+3
+4
+6
+5
+4
+3
+3
+2
+1
+05
+4
+3
+2
+5
+4
+3
+26
+5
+4
+3
+S
+P
+E
+E
+D
+S
+N
+E
+A
+K
+F
+I
+G
+H
+T
+W
+I
+L
+L
+L
+O
+R
+E
+L
+U
+C
+K
+F O
+C
+U
+S
+3
+When you spend clues to add dice
+to a check, add 1 additional die per
+clue spent.
+Hunches
+the Private Eye
+Joe DiamondCiTy Of The GReaT RaCe
+Glancing behind you, you see that the beasts are
+still chasing you  –1 . If you fail, you are lost in
+time and space.
+The stone face reveals to you one of the deepest
+secrets of the Dreamlands  –12 . If you pass,
+gain 4 clues. If you fail, the sight claims your last
+shred of sanity; lose sanity equal to your
+maximum sanity.
+Suddenly you notice something that you had
+previously missed. Gain 1 clue.
+The DReamlanDs
+OTheR
+Difficult Check
+x5x5
+x4x4
+The Tommy Gun, for example, provides a fight () bonus
+usable only during a combat check, which is an advanced
+fight () check. This bonus is not applied during a standard
+fight () check.
+An investigator has 5 speed  and they are instructed to
+make a speed –1 check, so they roll 4 dice.
+An investigator has 5 lore  and they are instructed to
+make a lore  check, so they roll 5 dice.WORK IN PROGRESS
+
+[Page 11]
+11
+Die Rolls
+Sometimes, an investigator may be instructed to roll or more
+dice to resolve a game effect. These die rolls are not checks
+and do not receive bonues from effects that only affect checks.
+Results of 5 or 6 when rolling dice are successes, if applicable.
+Otherwise, the game will instruct you how to interpret the die
+roll and resolve its outcome.
+Ready and Exhausted
+Cards in an investigators play area can be ready (faceup) or
+exhausted (facedown). All cards enter play ready, however,
+using their effects may exhaust them. When an effect intructs
+an investigator to exhaust a card, they turn it facedown;
+it cannot be used again until it is readied, which typically
+happens during the upkeep phase.
+Discarding, Searching, and Shuffling
+When a card is discarded, it is placed on the bottom of its
+corresponding deck; if not playing with any expansions,
+when a location card is discarded, its corresponding deck
+is also shuffled. When a token is discarded, it is returned to
+its corresponding supply and, if applicable, that supply is
+randomized.
+When an effect instructs an investigator to search a deck, the
+deck is always shuffled afterward.
+Gaining Cards
+When an investigator is instructed to gain a specific card
+by name (for example, “Search the common item deck for
+Whiskey and gain it.”) they search the indicated deck for
+that item, add it to their play area, then shuffle the deck. If
+the specified card does not belong to a randomized deck (for
+example, a Retainer or Bank Loan), the deck does not need
+to be shuffled after the card is gained. If a specified card is not
+available, it is not gained, and no replacement is drawn in its
+place.
+When an investigator is instructed to gain a card from a
+specific deck, but name of the card is not specified (for
+example, “Gain 1 common item”), the investigator draws the
+top card of the indicated deck and gains it. Since the deck was
+not searched, it is not shuffled afterward.
+Loss Vs Cost
+During the game, investigators will be instructed to suffer
+losses and pay costs. Although the end result is similar, the
+underlying mechanics are different. A loss can often be
+reduced by cards, investigator abilities, or other game effects.
+A cost is paid voluntarily, and its amount cannot be reduced or
+mitigated unless specified.
+Return to The Box
+When a game component is returned to the box, it cannot be
+used for the remainder of the game, unless specified.
+Counters
+Counters are tokens used to track game effects.
+They are taken from the supply when placed and
+returned to the supply when discarded. Counters
+are most commonly placed on cards. Some cards
+instruct investigators to add counters to them,
+while others enter play with counters already on
+them. The specific rules governing counters are
+explained on each component that uses them.
+Adjacency
+Two spaces are adjacent when they are connected by a solid
+white or colored line. Two investigators and/or monsters are
+adjacent when they are in adjacent spaces. Two neighborhoods
+are adjacent when a space in one neighborhood is adjacent to a
+space in the other neighborhood. Spaces connected by means
+other than solid white or colored lines are not adjacent.
+Counter
+TokenHistorical S
+UPTOWN
+SOUTHSIDE
+FRENCH HIL
+RIVERT
+Science Building
+Dissection
+As an encounter, spend 5 toughness
+worth of monster trophies or 1 gate
+trophy to gain 2 clues.
+Schoffner’s General Store
+Shop
+As an encounter, draw 3 common
+items; you may purchase 1 of them
+and discard the rest.
+River Docks
+Shady Character
+As an encounter, spend 5 toughness
+worth of monster trophies or 1 gate
+trophy to gain $5.
+MISKATONIC
+UNIVERSTIY
+MERCHANT
+DISTRICT
+EASTTOWNDOWNTOWN
+NORTHSIDE
+The Witch House
+Graveyard
+Library
+The Unnamable
+Unvisited Isle
+Train Station
+Velma’s Diner
+Independence Square
+Arkham Advertiser
+Administration
+Classes
+As an encounter, spend $8 to
+draw 2 skills; choose 1 to gain
+and discard the other.
+Bank of Arkham
+Bank Loan
+As an encounter, if you do not have a
+Bank Loan, gain one.
+Curiositie Shoppe
+Shop
+As an encounter, draw 3 unique items;
+you may purchase 1 of them and
+discard the rest.
+St. Mary’s Hospital
+Medical Care
+As an encounter, you may either
+recover 1 stamina or spend $2 to
+recover all of your stamina.
+As an encounter, either recover
+1 sanity or spend $2 to recover all
+of your sanity.
+When you roll dice, results
+of 4, 5, and 6 count as successes.
+When you would become
+Cursed, instead discard this card.
+Upkeep: Roll 1 die; on
+a result of 1, discard
+this card.
+Die Roll
+–2 1
+Item
+When you would lose
+stamina, you may cast this spell
+to reduce that loss to 0.
+When the Ancient One awakens,
+discard this card.
+Magical Spell
+Flesh Ward
+Ready ExhaustedWORK IN PROGRESS
+
+[Page 12]
+12
+THE GAME ROUND
+Arkham Horror is played over a series of game rounds. During
+each round, investigators will resolve four phases:
+1. Upkeep: Investigators perform game maintenance
+steps such as readying exhausted cards and focusing
+their attributes.
+2. Movement: Investigators move around the board, fight
+monsters, and trade items with one another.
+3. Encounter: Investigators resolve encounters, use
+location abilities, and close or seal gates.
+4. Mythos: A Mythos card is drawn. Gates and monsters
+can spawn, clues can be placed on the board, and
+environments or rumors can come into play.
+Each phase is covered in detail in the following sections.
+Phase I: Upkeep
+During the upkeep phase, investigators perform the following
+steps in order.
+1. Pass Lead Investigator
+The investigator that has the lead investigator token passes
+the token to the investigator on their left. That investigator
+is now the lead investigator. This step is not resolved
+during the game's first upkeep phase.
+2. Ready Exhausted Cards
+Investigators ready each of their exhausted cards.
+“Upkeep:” effects related to readying exhausted cards are
+resolved during this step.
+3. Gain Focus
+Investigators gain focus equal to the focus value on their
+investigator sheet. Focus is normally spent during step 5
+to focus an investigator's attributes, but occasionally it can
+also be spent to resolve various upkeep effects. Unspent
+focus does not carry over to the next game round.
+4. Resolve Upkeep Effects
+Some components have upkeep effects. These
+components are indicated by a red upkeep symbol,
+and each has the word “Upkeep:” follow by an
+effect. Some upkeep effects have additional timing
+or conditional restrictions, which are indicated by the
+effect itself. Each upkeep effect is resolved only once per
+upkeep phase, unless otherwise indicated. Upkeep effects
+can be found both on components in an investigator’s play
+area and on those in the general play area. They are
+resolved in the following order:
+4a. Investigator Upkeep
+Each investigator resolves
+the upkeep effects of
+cards in their play area.
+4b. Game Upkeep
+The lead investigator resolves upkeep effects on general
+components, such as Mythos cards, in an order of their
+choosing.
+
+Upkeep
+Symbol8
+
+Item
+Upkeep: You may exhaust
+this card to recover 1 sanity
+or 1 stamina.
+When the Ancient One awakens,
+discard this card.
+Healing Stone
+Investigator Upkeep
+Effect on a Unique Card
+Game Upkeep Effect on
+a Mythos Card\ ^
+*
+#
+
+Ongoing Effect: Cultists, Witches, Warlocks,
+and High Priests have their toughness increased
+by 2.
+Upkeep: Place 1 clue on this card; if there
+are already 5 clues on this card, reveal the
+top card of the mythos deck and spawn its
+corresponding gate instead.
+Encounter Phase: Any investigator In the French
+Hill streets may discard 3 spells to return this card
+to the box; each investigator gains 2 clues.
+Fail: If there are 5 clues on this card, place it next
+to the Ancient One sheet. Continue resolving its
+upkeep effect each round; it does not occupy the
+Rumor slot and cannot be returned to the box.
+The Great Ritual
+Rumor
+French Hill Streets
+GraveyardWORK IN PROGRESS
+
+[Page 13]
+13
+5. Focus Attributes
+Each investigator can spend focus to adjust their
+attributes. For each point of focus an investigator spends,
+they may focus a pair of attributes by moving an attribute
+cube one notch up or down in its column. This will cause
+one attribute to increase, and its opposing attribute to
+decrease.
+By focusing attributes, investigators can improve an
+attribute they plan to use during the upcoming phases,
+giving them a higher chance of success on checks that
+use that attribute. Investigators can spend their focus
+however they wish. They may focus multiple attributes
+once or they may focus the same attribute multiple
+times, in any combination, so long as the total number of
+notches moved does not exceed their focus. Investigators
+who do not wish to focus their attributes are not required
+to spend all (or any) of their focus.1
+2
+3
+4
+6
+5
+4
+3
+3
+2
+1
+05
+4
+3
+2
+5
+4
+3
+26
+5
+4
+3
+S
+P
+E
+E
+D
+S
+N
+E
+A
+K
+F
+I
+G
+H
+T
+W
+I
+L
+L
+L
+O
+R
+E
+L
+U
+C
+K
+F O
+C
+U
+S
+3
+When you spend clues to add dice
+to a check, add 1 additional die per
+clue spent.
+Hunches
+the Private Eye
+Joe Diamond
+The investigator spends all of their focus to focus their left
+and right attribute cubes, with the aim of improving their
+speed () and their luck (), sacrificing equal amounts of
+sneak () and lore ().WORK IN PROGRESS
+
+[Page 14]
+14
+Phase II: Movement
+During the movement phase, investigators move around the
+game board in turn order. An investigator's movement is
+determined by what kind of space they are in.
+If an investigator begins their movement in a city space,
+they resolve city space movement. If they begin their turn
+in an other world space, they resolve other world
+movement. If they begin their turn delayed or lost in time and
+space, they resolve those effects instead (see page 17).
+City Spaces
+The city of Arkham consists of nine neighborhoods, each
+comprising 2-3 locations that share a border color connected
+to a street space. Locations and street spaces are both types
+of city spaces, and make up the majority of the spaces on the
+game board. Investigators will often spend most of their time
+in these spaces.
+Street Spaces
+Street spaces are labeled with the name of the neighborhood,
+have no corresponding encounters, and are often teeming with
+monsters. Investigators who end their movement in the streets
+often leave themselves vulnerable to attack by flying monsters
+from the Sky (see page 22).
+Stable Locations
+Stable locations represent various businesses and
+municipal locales within Arkham. They have
+encounters, often have location abilities, and their
+encounters are generally—but not always—safer.
+Additionally, gates do not open at stable locations.
+Unstable Locations
+Unstable locations look similar to stable locations, but are
+marked with a red diamond beneath their art. Unstable
+locations have clues placed on them during setup that
+investigators can later pick up. Clues often spawn at unstable
+locations. Unstable locations have dangerous encounters
+that often offer rarer rewards than those of stable locations.
+Additionally, gates can open at unstable locations.
+Location Rewards
+Each location has two reward icons on it. Black reward icons
+indicate a reward that is guaranteed by resolving its location
+ability. White reward icons indicate a reward often available
+from encounters at that location.
+Street Space
+Unstable Location
+White
+Reward
+Icon
+Black
+Reward
+Icon
+Stable LocationWORK IN PROGRESS
+
+[Page 15]
+15
+City Space Movement
+At the start of an investigator's movement, if they are in a
+city space, they gain a number of movement points equal
+to their speed. Investigators can spend those movement
+points to move along the solid lines that connect city spaces,
+with each point spent allowing the investigator to move a
+distance of 1 space. While spending movement points to move
+between spaces makes up the core of city space movement,
+investigators can also use movement effects, evade and
+encounter monsters, and pick up clues.
+Movement Effects
+Some items and other components can only be used during
+the movement phase. These components are indicated by
+the word “Movement:” followed by an effect. Effects that
+modify an investigator's movement points must be resolved
+when an investigator gains their movement points. Other
+“Movement:” effects, including those that spend movement
+points, can be resolved at any time during an investigator’s
+turn during the movement phase before their movement ends.
+Evading Monsters
+When an investgator tries to move out of a space that contains
+one or more monsters, they must make an evasion check
+against each monster in that space, in an order of their choice.
+An evasion check is an advanced sneak ()check, modified
+by the awareness value on the front of the monster token.
+If an investigator passes an evasion check against each
+monster in the space they are attempting to leave, they can
+continue spending movement points to move.
+If an investigator fails an evasion check against a monster,
+they do not move out of its space, they lose all of their
+remaining movement points, and their movement ends.
+Then, the monster attacks; the investigator loses stamina
+equal to the combat damage () on the back of the monster
+token, and the investigator is engaged with that monster.
+Ending Movement
+When an investigator has no further movement points or
+“Movement:”effects to resolve, if a game effect instructs an
+investigator to end their movement, or if they are engaged
+by a monster, their movement ends. When an investigator's
+movement ends, they lose any remaining movement points
+and cannot resolve any further “Movement:” effects.
+When an investigator’s movement ends, they must engage or
+evade (see “Evading Monsters” above) each monster in their
+space, one at a time in an order of their choice, that they did
+not already evade or engage during their movement.
+Clues
+When an investigator ends their movement in a
+space that contains 1 or more clues, they may gain
+any number of those those clues. Clues can be used
+by investigators to seal gates and to roll more dice
+during checks (see "Clues" on page 25).
+Open Gates
+When an investigator ends their movement in a space that
+contains an open gate, after they have defeated or evaded each
+monster in that space, they move to the first space of the other
+world that matches that gate.4
+Item
+Movement: You may exhaust
+this card to gain 2 additional
+movement points.
+Motorcycle
+Movement Effect
+Clue
+TokenWoods
+Historical Society
+UPTOWN
+SOUTHSIDE
+FRENCH HILL
+RIVERTOWN
+Science Building
+Dissection
+As an encounter, spend 5 toughness
+worth of monster trophies or 1 gate
+trophy to gain 2 clues.
+Schoffner’s General Store
+Shop
+As an encounter, draw 3 common
+items; you may purchase 1 of them
+and discard the rest.
+River Docks
+Shady Character
+As an encounter, spend 5 toughness
+worth of monster trophies or 1 gate
+trophy to gain $5.
+Ma’s Boarding House
+Recruit
+As an encounter, spend 10 toughness
+worth of monster trophies, 2 gate
+trophies, or 5 toughness worth of
+monster trophies and 1 gate trophy
+to search the ally deck and gain
+any 1 ally from it.
+MISKATONIC
+UNIVERSTIY
+MERCHANT
+DISTRICT
+EASTTOWN
+JAIL
+DOWNTOWN
+NORTHSIDE
+The Witch House
+Graveyard
+Library
+The Unnamable
+Unvisited Isle
+Train Station
+Velma’s Diner
+Black Cave
+Independence Square
+Hibb’s Roadhouse
+Arkham Advertiser
+T
+h
+e
+D
+r
+e
+a
+m
+l
+a
+n
+D
+s
+P
+l
+a
+T
+e
+a
+u
+o
+f
+l
+e
+n
+g
+r
+'
+l
+y
+e
+h
+g
+r
+e
+a
+T
+h
+a
+l
+l
+o
+f
+C
+e
+l
+e
+a
+n
+o
+C
+i
+T
+y
+o
+f
+T
+h
+e
+g
+r
+e
+a
+T
+r
+aCe
+a
+b
+y
+s
+s
+a
+n
+o
+T
+h
+e
+r
+D
+i
+m
+e
+n
+sion
+y
+u
+g
+g
+o
+T
+h
+ARKHAM
+Police Station
+Deputize
+As an encounter, spend 10 toughness
+worth of monster trophies, 2 gate
+trophies, or 5 toughness worth of
+monster trophies and 1 gate trophy
+to become the Deputy of Arkham.
+Movement: When you are
+no longer delayed, move to
+the police station.
+Schoffner’s
+General Store
+Curiositie
+Shoppe
+Ye Olde
+Magick Shoppe
+Remove
+Monster Limit
+South Church
+Blessing
+As an encounter, spend 5 toughness
+worth of monster trophies or 1 gate
+trophy to choose 1 investigator in any
+space to become Blessed.
+Ye Olde Magick Shoppe
+Magic Lessons
+As an encounter, spend $5 to draw
+2 spells; choose 1 to gain and
+discard the other.
+Silver Twilight Lodge
+Inner Sanctum
+When you would resolve an encounter
+here, if you have a Silver Twilight
+Membership, instead resolve an Inner
+Sanctum encounter.
+Administration
+Classes
+As an encounter, spend $8 to
+draw 2 skills; choose 1 to gain
+and discard the other.
+Bank of Arkham
+Bank Loan
+As an encounter, if you do not have a
+Bank Loan, gain one.
+Curiositie Shoppe
+Shop
+As an encounter, draw 3 unique items;
+you may purchase 1 of them and
+discard the rest.
+St. Mary’s Hospital
+Medical Care
+As an encounter, you may either
+recover 1 stamina or spend $2 to
+recover all of your stamina.
+Arkham Asylum
+Psychiatric Care
+As an encounter, either recover
+1 sanity or spend $2 to recover all
+of your sanity.-2
+
+
+o
+y
+u
+G
+G
+o
+t
+h
+x3x3
+An investigator that has a sneak () of 6 rolls 3 dice on an
+evasion check against a monster that has an awareness of -3.1
+2
+3
+4
+6
+5
+4
+3
+5
+4
+3
+25
+4
+3
+2
+6
+5
+4
+33
+2
+1
+0
+S
+P
+E
+E
+D
+S
+N
+E
+A
+K
+F
+I
+G
+H
+T
+W
+I
+L
+L
+L
+O
+R
+E
+L
+U
+C
+K
+F O
+C
+U
+S
+1
+You can look at the bottom card of
+the common item, unique item, or
+spell deck.
+When you gain a random common
+item, unique item, or spell, you may
+draw from either the top or bottom
+of the deck; this ability can be used
+during setup.
+Scrounge
+the Drifter
+“Ashcan” Pete
+-3#
+Awareness
+ValueWORK IN PROGRESS
+
+[Page 16]
+16
+Other World Spaces
+Other Worlds are depicted alongside one edge of the game
+board. Investigators can access these Other Worlds by moving
+through corresponding gates that can open inside Arkham.
+Each Other World is divided into two spaces—a first space
+and a second space. When an investigator first enters an Other
+World, they are placed in its first space. Later, they will move to
+its second space, and from there, they can return to Arkham.
+Each Other World is associated with 2-4 colored icons. Each
+icon represents a type of encounter that is likely (but not
+guaranteed) to be had at that Other World. Red encounters
+commonly threaten an investigator's stamina, whereas yellow
+encounters are likely to threaten their sanity. Blue encounters
+regularly put an investigator's possessions at risk, and green
+encounters offer respite and safety for an investigator passing
+through the Other World.
+Monsters cannot move into or be placed on Other World
+spaces, and monsters that appear during Other World
+encounters never persist beyond the encounter itself.
+Other World Movement
+At the start of an investigators movement, if they are in an
+Other World space, they do not gain movement points, and
+cannot resolve "Movement:" effects that grant or spend
+movement points. An investigator that starts their movement
+in the first space of an Other World moves to the second space
+of the Other World; if they were already in the second space of
+the Other World, they return from the other world
+instead.
+Returning From Other Worlds
+When an investigator moves from the second space of an
+Other World back to Arkham, or when a game effect instructs
+them to return from an other world, they move to any open
+gate that matches their current Other World and place an
+explored token beneath their investigator standee with it’s
+safe side faceup.
+When an investigator would return from the other world, but
+there is no open gate that matches their current Other World,
+they are instead lost in time and space; they move to Lost in
+Time and Space and are delayed.
+Explored Token
+An investigator that has an explored token beneath their
+standee is not automatically drawn through the open gate
+in their space. This allows them to attempt to close the gate
+during the encounter phase (see "Closing Gates" on page
+20).
+While the safe side of the explore token is faceup, that
+investigator is not required to evade or engage monsters in
+their space unless they choose to. During the next round's
+upkeep phase, however, the investigator must flip the explored
+token in their space to its danger side; that investigator is
+still is not drawn through the gate, but does have to evade
+or engage each monster in their space during the movement
+phase.
+If an investigator on an explored token leaves the space with
+the gate for any reason, they discard the explored token.
+Safe Side Danger SideHistorical Society
+UPTOWN
+SOUTHSIDE
+FRENCH HILL
+RIVERTOWN
+Schoffner’s General Store
+Shop
+As an encounter, draw 3 common
+items; you may purchase 1 of them
+and discard the rest.
+s
+er
+toughness
+s or 1 gate
+5.
+Ma’s Boarding House
+Recruit
+As an encounter, spend 10 toughness
+worth of monster trophies, 2 gate
+trophies, or 5 toughness worth of
+monster trophies and 1 gate trophy
+to search the ally deck and gain
+any 1 ally from it.
+MISKATONIC
+UNIVERSTIY
+MERCHANT
+DISTRICT
+EASTTOWN
+JAIL
+DOWNTOWN
+NORTHSIDE
+The Witch House
+Graveyard
+Library
+Unnamable
+Unvisited Isle
+Train Station
+Velma’s Diner
+Black Cave
+T
+h
+e
+D
+r
+e
+a
+m
+l
+a
+n
+D
+s
+g
+r
+e
+a
+T
+h
+a
+l
+l
+o
+f
+C
+e
+l
+e
+a
+n
+o
+C
+i
+T
+y
+o
+f
+T
+h
+e
+g
+r
+e
+a
+T
+r
+a
+C
+e
+a
+b
+y
+s
+s
+a
+n
+o
+T
+h
+e
+r
+D
+i
+m
+e
+n
+sion
+y
+u
+g
+g
+o
+T
+h
+ARKHAM
+Police Station
+Deputize
+As an encounter, spend 10 toughness
+worth of monster trophies, 2 gate
+trophies, or 5 toughness worth of
+monster trophies and 1 gate trophy
+to become the Deputy of Arkham.
+Movement: When you are
+no longer delayed, move to
+the police station.
+Schoffner’s
+General Store
+Curiositie
+Shoppe
+Ye Olde
+Magick Shoppe
+Remove
+Monster Limit
+South Church
+Blessing
+As an encounter, spend 5 toughness
+worth of monster trophies or 1 gate
+trophy to choose 1 investigator in any
+space to become Blessed.
+Ye Olde Magick Shoppe
+Magic Lessons
+As an encounter, spend $5 to draw
+2 spells; choose 1 to gain and
+discard the other.
+Silver Twilight Lodge
+Inner Sanctum
+When you would resolve an encounter
+here, if you have a Silver Twilight
+Membership, instead resolve an Inner
+Sanctum encounter.
+o
+n-2
+
+
+o
+y
+u
+G
+G
+o
+t
+h-3
+
+c
+Explored
+Token
+Blue Green Yellow RedWORK IN PROGRESS
+
+[Page 17]
+17
+Delayed Investigators
+Some game effects instruct an investigator to become delayed,
+which hinders their ability to move. When an investigator is
+delayed, they place their investigator standee on its side.
+If an investigator is delayed at the start their movement,
+regardless of what type of space they are in, they return their
+investigator standee to its upright position; they are no longer
+delayed, but their movement ends.
+If an investigator stands up from being delayed in the Arkham
+Jail Cell, they also move to the Police Station.
+Lost in Time and Space
+Some game effects instruct an investigator to become lost
+in time and sapce, which traps them in the space between
+realities. When an investigator is lost in time and space, they
+move to Lost in Time and Space and become delayed.
+If an investigator in Lost in Time and Space at the start their
+movement is not delayed, they move to a city space of their
+choice, then resolve their movement as normal; investigators
+in Lost in Time and Space that are delayed return their
+investigator to its upright position and end their movement.
+Trading Possessions
+If at any point during the movement phase, two ore more
+investigators are in the same space as one another, they can
+freely exchange money and cards with the “Item” tag. Cards
+that do not have the "Item" tag cannot be traded.
+Silver Twilight Lodge
+Membership
+Cannot Be TradedCan Be TradedWORK IN PROGRESS
+
+[Page 18]
+18
+Engaging Monsters in Combat
+Monsters are an important presence in every game of Arkham
+Horror, and investigators will often have to deal with them—
+whether because monsters block a street the investigator
+needs to cross, stand on a gate they need to go through, or
+simply because they move into an investigator’s space.
+An investigator becomes engaged with a monster in their
+space when they fail an evasion check, when instructed a
+specific game effect, or simply by choosing to engage it. An
+investigator cannot become engaged with a monster in a
+different space.
+When an investigator becomes engaged with a monster, they
+flip the monster token to its back side and enter combat. To
+resolve a combat, perform the following steps in order:
+1. Horror Check
+First, the investigator attempts to hold on to their sanity by
+making a horror check against the monster. A horror
+check is an advanced will () check, modified by the
+monster's horror rating. If the investigator fails, they
+lose sanity equal to the monster's horror damage ().
+Whether they pass or fail, if they are not driven insane
+(see "Defeated" on page 23) by losing all of their sanity,
+they move on to step 2.
+Investigators do not make horror checks against monsters
+that have a dash in place of a horror rating.
+2. Fight or Flee
+The investigator then chooses whether to fight the monster
+or flee.
+• If the investigator chooses to fight the monster, they
+make a combat check against the monster. A combat
+check is an advanced fight () check, modified by the
+monster's combat rating.
+Additionally, when an investigator makes a combat
+check, they may choose up to two hands worth of items
+(as indicated in the lower-right corner of an item) to use
+in the combat. Items not occupying a hand do not grant
+fight () bonuses to the investigator, though their other
+effects can still be used.
+To pass a combat check, an investigator must roll a
+number of successes equal to or greater than the monster’s
+toughness. If they pass, combat ends; they defeat the
+monster and claim its token as a monster trophy.
+• If the investigator choose to flee from the monster,
+they make an evasion check. An evasion check is an
+advanced sneak ()check, modified by the awareness
+value on the front of the monster token. If they pass, the
+investigator successfully flees and is no longer engaged
+with that monster.
+If the investigator fails to defeat or evade the monster, they
+move on to step 3
+The investigator compares their will () of 2 to the
+monster's horror rating of -3. Unfortunately for them, that
+puts their total number of dice for the check at -1. Since
+dice can't go negative, that means they roll no dice. They
+automatically fail the horror check and lose 2 sanity from
+the monster's horror damage.1
+2
+3
+4
+5
+4
+3
+2
+4
+3
+2
+15
+4
+3
+2
+3
+2
+1
+03
+2
+1
+0
+S
+P
+E
+ED
+S
+N
+E
+AK
+F
+I
+G
+H
+T
+W
+I
+L
+L
+L
+O
+R
+E
+L
+U
+C
+K
+F
+O
+C
+U
+S
+2
+Encounter: When you draw a location
+encounter, draw 1 additional encounter,
+then choose 1 to discard.
+Hometown Advantage
+the Photographer
+Darrell SimmonsTh
+ 
+ +0-3
+Horror
+Rating
+Horror
+Damage x0x0
+With 4 fight () and +3 fight () from the .38 Revolver,
+this investigator's total fight () is 7. After the monster's
+combat rating (+0) is applied, they roll 7 dice. However, they
+rollonly 1 success—bad luck!1
+2
+3
+4
+5
+4
+3
+2
+4
+3
+2
+15
+4
+3
+2
+3
+2
+1
+03
+2
+1
+0
+S
+P
+E
+E
+D
+S
+N
+E
+A
+K
+F
+I
+G
+H
+T
+W
+I
+L
+L
+L
+O
+R
+E
+L
+U
+C
+K
+F
+O
+C
+U
+S
+2
+Encounter: When you draw a location
+encounter, draw 1 additional encounter,
+then choose 1 to discard.
+Hometown Advantage
+the Photographer
+Darrell Simmons4 
+Item
++3  during combat checks
+Physical Weapon
+.38 RevolverTh
+ 
+ +0-3
+Combat
+Rating
+x7x7WORK IN PROGRESS
+
+[Page 19]
+19
+3. Take Damage
+If the investigator fails a combat or evasion check against
+a monster they are engaged with, they lose stamina equal
+to the monster's combat damage (). If they are not
+knocked unconscious (see "Defeated" on page 23) by
+losing all of their stamina, they move on to step 4.
+4. Next Combat Round
+If the monster was not defeated or evaded, the investigator
+returns to step 2 and repeats the steps of combat until either
+the investigator or monster is victorious.
+Phase III: Encounter
+During the encounter phase, each investigator resolves an
+encounter, in turn order. Encounters vary greatly, but often
+instruct an investigator to make a check, offering rewards
+for success and penalties for failure. Some encounters
+offer a choice. If an investigator “may” do something in an
+encounter, it is optional, and the investigator can choose not
+to participate.
+The type of encounter an investigator resolves is based on
+their current space:
+Streets
+An investigator in a street space does not resolve an encounter
+during the encounter phase unless a specific game effect instructs
+them to do so.
+Locations
+An investigator in a location that does not have an open gate
+draws an location encounter from the deck that matches their
+current neighborhood. Then, they read and resolve the
+encounter that corresponds to their location.
+Location Ability
+Some locations have a location ability, often beginning
+with the phrase “As an encounter...”. An investigator in a
+location that has a location ability may choose to resolve
+that location ability instead of drawing an encounter. An
+investigator cannot, however, forego an encounter in order to
+use a location ability that they cannot fully resolve.
+Arkham Asylum
+The guards of the sanitarium are aware that there
+is an intruder  –1 . If you pass, you escape;
+move to the street. If you fail, you are arrested.
+“This is a stick-up, see? Nobody move!” Three
+men armed with tommy guns rob the bank
+while you’re standing in line  –1 ; you can use
+Weapons as if this were a combat check. If you
+fail, they rob you; discard all of your money.
+A shadow falls across you from no apparent
+source and you shiver with more than just cold
+ –1 . If you fail, lose 1 stamina and 1 sanity.
+Bank of Arkham
+Independence Square
+DOWNTOWN
+Location
+Abililty
+Since the monster has a toughness of 2,
+a single success is not enough to defeat
+it, and the combat check fails, causing
+the investigator to lose 1 stamina from
+combat damage. Worse, the investigator
+discards their .38 Revolver due to the
+monsters special ability, which means
+they only have 4 fight () for the next
+combat round.
+4 
+Item
++3  during combat checks
+Physical Weapon
+.38 Revolver
+Combat
+Damagen
+ 
+ +0-3
+Toughness1
+2
+3
+4
+5
+4
+3
+2
+4
+3
+2
+15
+4
+3
+2
+3
+2
+1
+03
+2
+1
+0
+S
+P
+E
+E
+D
+S
+N
+E
+A
+K
+F
+I
+G
+H
+T
+W
+I
+L
+L
+L
+O
+R
+E
+L
+U
+C
+K
+F O
+C
+U
+S
+2
+then choose 1 to discard.
+Luckily, even with only 4 dice,
+the investigator manages to roll
+3 succcesses—enough to cover
+the monster's 2 toughness and
+1 extra for good measure! The
+monster is defeated and the
+investigator claims it as a trophy.2
+ 
+ +0-3
+ToughnessWORK IN PROGRESS
+
+[Page 20]
+20
+Closing Gates
+An investigator that has an explored token in a location that
+has an open gate does not resolve a location encounter or
+location ability. Instead, they make a gate check to attempt
+to close the gate. A gate check is an advanced fight () or
+lore ()check—investigator's choice—adjusted by the gate
+check modifier on the gate that is to be closed.
+If the investigator passes the check, the gate is closed and the
+investigator claims it as a trophy. Additionally, each monster
+on the game board that has the same dimension symbol
+(#, *, +, <, [, \, ^, c, o) as the closed gate is discarded
+and returned to the monster supply.
+If the investigator fails the gate check, the gate is not closed.
+The investigator can attempt another gate check during the
+next encounter phase, provided that they do not leave the
+space with the gate, as that would cause the explored token to
+be dicarded.
+Sealing Gates
+When an investigator closes a gate, they may
+optionally choose to seal the gate. To
+seal a gate, an investigator spends 5 clues to
+place an elder sign token in that gate’s
+space. Gates cannot open in a space that
+contains an elder sign token.
+Other World
+An investigators in an Other World space draws an Other
+World encounter. Other World encounters are color-coded.
+If the drawn card does not match any of the colors associated
+with the investigator's current Other World, they discard
+that card and draw another one, repeating this process until a
+matching Other World encounter is drawn.
+Then, if their current Other World matches one of the
+encounter headers on the drawn Other World card, they
+resolve that encounter. Otherwise, they resolve the encounter
+under the “Other” header.
+Returning from Other Worlds
+Other World encounters might instruct an investigator to
+return from the other world, see "Returning from Other
+Worlds" on page 16.
+“A Monster Appears!”
+When an encounter informs an investigator that a monster
+appears, they draw a monster from the supply and must either
+evade or engage it (see “Evading Monsters” and “Engaging
+Monsters in Combat” on pages 15 and 18). This monster
+does not count against the monster limit.
+If a monster that appears during an encounter is defeated, it is
+claimed as a trophy as normal. If it is evaded, or if it defeats the
+investigator, it is discarded; it does not remain on the board.
+Spawning Gates
+When an encounter instructs an investigator to spawn a gate
+in their space, they follow all of the rules for spawning a gate as
+detailed in the “Spawn Gate” section on page 21.
+
+-3
++r ’ l
+y
+e
+h
+Gate Check
+Modifier
+Dimension
+Symbol-2
+
+
+o
+y u
+G
+G
+o
+t
+h-2
+
+
+o
+y
+u
+G
+G
+o
+t
+h-3
+
+co 
+-2
+After Jenny Barnes closes the gate to Yuggoth, the Mi-Go,
+which shares the gate's o dimension symbol, is discarded.
+The Cultist, however, with its c symbol, is unaffected.
+Gate Trophy
+Clue Tokens
+x5x5
+R’lyeh
+A horrible visage captures your gaze  +0 .
+If you fail, you can’t look away; lose 1 stamina
+and become delayed.
+You walk along the edge of what is real  +0 .
+If you fail, you struggle to free yourself as you
+stumble into a spider’s web; lose 2 sanity and
+become delayed.
+Suddenly, the things you’ve seen make sense!
+Gain 1 clue.
+The DReamlanDs
+OTheRThe DReamlanDs
+You come across a quaint villiage  –1 . If you
+pass, then, waving goodbye, the happy villagers
+bestow a gift upon you; gain 1 common item.
+You have only a moment alone to slip something
+into your pocket  –2 . If you pass, you find a
+book small enough to carry; search the unique
+item deck and gain the first Tome you find.
+You find a quiet spot to rest and recuperate;
+recover 1 stamina.
+CeleanO
+OTheR
+R’lyeh
+You walk upon a precarious rock path –1 .
+If you fail, you slip and slide down a barnacled
+surface, slashing your skin to ribbons; lose 3
+stamina.
+You come to a fork in the path –1 . If you fail,
+you are faced with an enormous mountain with
+a strange symbol carved into it, as if by the claw
+of a gigantic creature. The world swims around
+you; and you lose 3 sanity.
+The obsidian door refuses to open –1 . If
+you fail, you struggle to get through it; become
+delayed.
+abyss
+OTheR
+abyss
+The caverns split +1 . Resolve based on the
+number of successes:
+0–1) Move to the Black Cave.
+2) Move to The Dreamlands.
+3+) You enter a dark temple –1 . If you
+pass, gain 1 unique item.
+The huge book opens noiselessly at your
+approach. You may read it and attempt to defeat
+its guardian –12 . If you pass, draw 3 spells
+and choose 2 of them to keep. If you fail, lose 2
+stamina.
+A monster appears!
+CeleanO
+OTheRabyss
+The caverns split  +1 . Resolve based on the
+number of successes:
+0–1) Move to the Black Cave.
+2) Move to The Dreamlands.
+3+) You enter a dark temple  –1 . If you
+pass, gain 1 unique item.
+The huge book opens noiselessly at your
+approach. You may read it and attempt to defeat
+its guardian  –12 . If you pass, draw 3 spells
+and choose 2 of them to keep. If you fail, lose 2
+stamina.
+A monster appears!
+CeleanO
+OTheR
+Based on its icons, Yuggoth encounters are either blue or
+yellow. For the Other World encounter shown, since there is
+no Yuggoth header, the "Other" encounter is resolved.WORK IN PROGRESS
+
+[Page 21]
+21
+Phase IV: Mythos
+During the Mythos phase, the lead investigator draws a card
+from the Mythos deck and resolves its effects in order, top to
+bottom, left to right.
+1. Spawn Gate
+If a location is indicated in the upper-left corner of the Mythos
+card, and there is not already a gate or an elder sign in that
+space, spawn 1 gate there by following these steps in order:
+1. Draw a gate from the top of the gate stack and place it
+faceup in the indicated space.
+2. Discard each clue from that space.
+3. Advance doom by 1.
+4. Each investigator in the gate’s space is drawn
+through the gate. They move to the first space of the
+corresponding Other World and are delayed.
+5. Spawn monsters in the gate’s space based on player
+count (1 monster for 1-4 players, 2 monsters for 5-8
+players). If a monster would spawn, but the monster
+limit has already been reached, that monster is placed
+in the Outskirts instead (refer to the corresponding
+sections on page 28 for a full explanation of the
+monster limit and the Outskirts).
+If there is an elder sign token in the indicated location, do not
+spawn a gate; the seal prevents a gate from spawning.
+If there is already an open gate in the indicated location,
+do not resolve any of the the above steps; instead, resolve a
+monster surge.
+If the Mythos card does not indicate a location, instead resolve
+whatever instructions are in its place.
+Monster Surge
+To resolve a monster surge, draw a number of monsters
+equal to the number of players or the number of open gates,
+whichever is greater, without looking at them. Place one
+monster on each space that has an open gate. If any monsters
+remain to be placed, they are placed one at a time on the open
+gates, starting with the surging gate and distributing them as
+evenly as possible among all open gates. If the monster limit
+is reached, each remaining monster is placed in the Outskirts.
+(see "Outskirts" on page 28).
+2. Place Clues
+Place 1 clue in each spaces indicated by clue icons in the
+upper right of the Mythos card; if the indicated space has a
+gate in it, do not place that clue.
+If a clue is placed in a space with an investigator, that
+investigator gains the clue; if there are two or more
+investigators in the space, they choose which investigator
+gains the clue.
+If the Mythos card indicates other tokens in this section—
+such as activity and closed tokens—place those tokens in
+the indicated spaces. If an activity token is placed on the
+board, place a second copy of that activity token on this
+Mythos card as a reminder.c +
+All monsters in the streets are defeated.
+FEDS RAID ARKHAM!
+Headline
+Hibb’s Roadhouse
+Black Cave
+YOUR DAILY NEWS SOURCE SERVING ARKHAM, KINGSPORT, AND THE MISKATONIC RIVER VALLEY
+The Arkham AdvertiserWEATHER FORECAST –
+Today. Partly Cloudy, high 60.
+Tomorrow. Sunny, high 70.
+LOREM IPSUM DOLOR SITSPORTING NEWS –
+Red Sox send off
+Brooklyn Dodgers 3–1
+CONSECTETUR ADIPISCING ELIT
+Sum idebit ut omni nonsendis
+reiciisquias as vidi oditiumet
+re cor alis adia quam, ipsam,
+conecate perumque dolupta
+idendit, sam, conse nonsequati te
+ne perum dolorero beationet aut
+molorestrum volorum fuga. Et
+autet faccupt aerchicatur?
+Dolores sendaep ratem.
+Nam expereh enisit, tem nos
+sinimi, eossim quo to estinul
+luptatemodis et ate pore, init
+doloreptata nus ero veleni non
+endis et opti dolor aut porum
+latur maximodi dis iumquas
+sa imus a cus maximin everi
+ommolore que corepel escius
+aut archill uptatquam sapidisquo
+inctet litiisq uaeperio tempos
+repudae. Ut mos si blatiamAn
+a tum, serfeciam poressicem ia
+med menest videa omnihilis
+vivivilius, Catquon ihicupimus
+conscres ina rem.
+Ectorem etrum sum ia
+intisquam, unum ocave, essa dius
+confecuppli, cupplic re, etem,
+in treterio consus aus clatuium
+horis convehem ublium ete,
+cam ius? Patui sim te ad conest
+praelin gulviris eo, que morarei
+tuis atus conferi, Catidius dem
+esi cur. C. Si igilia vem nequem
+audet? que cribefena, caedic vid
+condacciena, sedo, adeto tam ut
+vera quam inprori fuit, ne inti
+intelic aediente es, num orae
+isum publis, quam mo avere
+conere ductora tilicastatum
+furaete, satraedea dea quidi,
+consupiocum ta viri praescem
+imilicae consusque consum eger
+intemnocules acciam tuidepo
+nesces hocciemedes fores!
+Nos potarena, mo cre terei
+pliust effre pere cero ensta teri
+inte vatia consis conduci conem
+vis, niusus atudescies hocciam
+furarebat pere pliu spimihilis
+nonsisse fatrora tiquam pos tum
+que diciemus vis. Opon nervid
+inum noculla renatium perbis
+avo, omnentem abunum pubit
+averum te praescri, noctam aude
+tessend eliusus omnestam puli
+preserfin int? Silis suliem inatum
+cum publius vis? Etro, Cato
+etripiemus nihilicibus, sentere
+inuntea publis moditilint fin
+diem inculvit.
+It vo, C. Sp. Grae horsultum
+intereorae horunteatra dem ad
+sidela autem qua porus num,
+popubli caetratus atus auc
+tellabus ati simperte avensultus
+bone horum hocurem,
+stortem peridius intifex mores
+Catiliura? Iquemunum per los
+audamdinem stimortum sa
+Sentium publiciam, unterecon
+ad comnena tilicaetraed diis
+sensum dii caesta, Patra rescepos
+seres artem conte noverma
+chuciemquis es! Seri spimus M.
+Uc me int. Opientem tus. Ficatro
+ximena, tu is sentiam us cur
+pres consuliumum mo ellabus
+ad ficeri sciac re quo vivivit; ete
+mernimuro, nonsimant, utus,
+di pulocup ioculoctum henatil
+terobusa reis re potimih icaecta
+re movente ntiderentis.
+Idium publibemque vit;
+Castum mur. Graciam num
+adhum intimen antenem remo
+Catussicia clegiti onfiritis,
+ommovis. Sp. Graedienarim iaeto
+es? Avessulvis te cemumuro, ne
+nicae tem idius publi sis hiliam
+deorae, tuidem dum tes virtis
+pre in vid Catus dicomnorei
+por patudacteres Ahaedo, vit.
+Grae condemnite factuit; nius
+fit, pubis bontem iae patum
+susquam, clabem se tem
+lissidemorum derei publissigit.
+Sa manum tarit, diis et L.
+Ecepsediem ut que nos etoratem,
+ignatra tustert essenti urnunte
+rcepora vocaet virtero rtemus.
+Ignonih icavere ssestia?
+Nosse in tus patiaedin sendius
+huis inatum siliam in det inestist
+aut patus egitabus, nostrae
+conster mistra, caet, queror
+patus loctum isse fachuitas
+es! Serum hosultuit virmium
+des bonsus simorum aurorus
+facchuidis? Latiam tame ces!
+Si ingultorat vid in tem verum
+sitante atumedo, ublintios ca
+inum, maximulicam mihicuterim
+antius, averfesid fenit; hosteli
+ciestra ccitus pro us con sulisse
+intrunu sultum cre ad coniamq
+uernihil hos pesideo, ut nos
+atant, poptem iam medo, nocus
+Catilis consus lostiam ac terei
+imus andam signaturori, crit,
+vir quitant ilicie pericati, cupio
+ete, facis. Patinena, comnost?
+Patquem re viti, sus, Cas
+estimortem in senihil hilienat,
+C. Simo viveristrae pore es, nem,
+nonsupicem sente quidientiam
+quondumIgnatillabus dientem
+inti sulium con tem ia intebus
+cula nonsuperipio etraveribus,
+nos in ta Satilnesum rei ses
+re, compris ussiliena, poptis
+consimaio et, quituspio Cupio
+uternum siliur poenihi licturit
+pos Maetiachuit L. Nos obsenti
+ssenica stabem patqua re,
+mortur ina ors mus alinterimul
+consus, confeconsum opon
+resi consuspere, nit. Sp. Gra re
+aperviv iviverudam ignatus, et
+quo abusciocus horuncerum
+quam hoctum intissuam.
+Cupim pero ius oricati, dem
+incepero ad aurissendam inaturei
+publintiam.
+Spawn
+Gate1 Place
+Clues
+Activate
+Monsters
+Resolve
+Mythos
+Effect
+2
+3
+4
+
+-
+3
++
+r
+’
+l
+y
+e
+h4
+4
+1
+7
+7
+Number of Players
+Monster
+Limit
+Monsters
+Drawn
+Outskirts
+Limit
+O
+p
+e
+n
+G
+a
+t
+e
+L
+i
+m
+i
+t
+Monsters Spawned
+Per GateWORK IN PROGRESS
+
+[Page 22]
+22
+3. Activate Monsters
+Activate each monster that has a dimension symbol (#,
+*, +, <, [, \, ^, c, o) that matches an symbol on
+the Mythos card's monster activation bar, following the
+activation rules for its monster type.
+Monster Types
+Each monster type has a unique behavior when activated.
+A monster’s type is indicated by the color and pattern of its
+border. Monsters that don't move when they activate can
+still be moved by other game effects.
+Black Border—Normal: Normal monsters
+move 1 space along the indicated movement path.
+Yellow Border—Stationary: Stationary
+monsters have no activation effect.
+Red Border—Fast: Fast monsters move 2
+spaces along the indicated movement path; if they move
+into a space with an investigator, they stop moving.
+Orange Border—Special: Special monsters
+do not move when they activate. Instead, resolve the
+activation effects on the back of their monster tokens.
+Blue Border—Flying: If a flying monster is in
+a city space when it activates, it moves to an investigator
+in an adjacent space; if there are none, it moves to the Sky
+instead. If a flying monster is in the Sky when it activates,
+it moves to an investigator in any street space; if there
+are none, it remains in the Sky. When there are multiple
+investigators that a flying monster could move to, it favors
+the investigator that has the lowest sneak ().
+Moving Monsters
+When an activated monster moves, it moves is based on
+which side of the activation bar its symbol appears on.
+Monsters that have a symbol that matches a symbol on
+white side of the activation bar move along the white
+movement paths, following the white arrows. Monsters
+that have a symbol that matches a symbol on the black
+side of the activation bar move along the black movement
+paths, following the black arrows.
+If a monster is in a space with investigator when it activates,
+it does not move. If a monster moves into a space with an
+investigator, there is no immediate effect; that investigator
+will, however, likely have to evade or engage that monster
+during the next movement phase.
+4. Resolve Mythos Effect
+Resolve the main text of the drawn Mythos card. There are
+three main types of Mythos cards:
+Headlines
+Headlines have one-time
+effects. They are resolved and
+then the card is discarded,
+unless otherwise indicated.
+Environments
+Environments have persistent
+effects. After resolving
+the card, place it near the
+Mythos deck as a reminder
+that its effects are active.
+Environments only affect
+investigators in city spaces.
+There can only be one
+Environment in play at a time;
+if an Environment is drawn
+and there is already one in
+play, discard the previous one.
+Rumors
+Rumors have persistent
+effects. After resolving the
+card, place it near the Mythos
+deck as a reminder that its
+effects are active.
+Rumor effects persist until the Rumor is passed or failed.
+Each Rumor has its own rules and conditions, as indicated
+by its text, and often have upkeep effects. Ignoring a
+Rumor will often lead to its failure and spell doom for the
+investigators—successfully passing them, however, can
+yield powerful rewards.
+There can only be one Rumor in play at a time; if a Rumor
+is drawn and there is already one in play, resolve its other
+instructions normally, but discard it without resolving its
+Mythos effect.
+End of Round
+After the Mythos phase is resolved, the round ends, and play
+moves to the next round, beginning with the upkeep phase.c
++
+All monsters in the streets are defeated.
+FEDS RAID ARKHAM!
+Headline
+Hibb’s Roadhouse
+Black Cave
+YOUR DAILY NEWS SOURCE SERVING ARKHAM, KINGSPORT, AND THE MISKATONIC RIVER VALLEY
+The Arkham AdvertiserWEATHER FORECAST –
+Today. Partly Cloudy, high 60.
+Tomorrow. Sunny, high 70.
+LOREM IPSUM DOLOR SITSPORTING NEWS –
+Red Sox send off
+Brooklyn Dodgers 3–1
+CONSECTETUR ADIPISCING ELIT
+Sum idebit ut omni nonsendis
+reiciisquias as vidi oditiumet
+re cor alis adia quam, ipsam,
+conecate perumque dolupta
+idendit, sam, conse nonsequati te
+ne perum dolorero beationet aut
+molorestrum volorum fuga. Et
+autet faccupt aerchicatur?
+Dolores sendaep ratem.
+Nam expereh enisit, tem nos
+sinimi, eossim quo to estinul
+luptatemodis et ate pore, init
+doloreptata nus ero veleni non
+endis et opti dolor aut porum
+latur maximodi dis iumquas
+sa imus a cus maximin everi
+ommolore que corepel escius
+aut archill uptatquam sapidisquo
+inctet litiisq uaeperio tempos
+repudae. Ut mos si blatiamAn
+a tum, serfeciam poressicem ia
+med menest videa omnihilis
+vivivilius, Catquon ihicupimus
+conscres ina rem.
+Ectorem etrum sum ia
+intisquam, unum ocave, essa dius
+confecuppli, cupplic re, etem,
+in treterio consus aus clatuium
+horis convehem ublium ete,
+cam ius? Patui sim te ad conest
+praelin gulviris eo, que morarei
+tuis atus conferi, Catidius dem
+esi cur. C. Si igilia vem nequem
+audet? que cribefena, caedic vid
+condacciena, sedo, adeto tam ut
+vera quam inprori fuit, ne inti
+intelic aediente es, num orae
+isum publis, quam mo avere
+conere ductora tilicastatum
+furaete, satraedea dea quidi,
+consupiocum ta viri praescem
+imilicae consusque consum eger
+intemnocules acciam tuidepo
+nesces hocciemedes fores!
+Nos potarena, mo cre terei
+pliust effre pere cero ensta teri
+inte vatia consis conduci conem
+vis, niusus atudescies hocciam
+furarebat pere pliu spimihilis
+nonsisse fatrora tiquam pos tum
+que diciemus vis. Opon nervid
+inum noculla renatium perbis
+avo, omnentem abunum pubit
+averum te praescri, noctam aude
+tessend eliusus omnestam puli
+preserfin int? Silis suliem inatum
+cum publius vis? Etro, Cato
+etripiemus nihilicibus, sentere
+inuntea publis moditilint fin
+diem inculvit.
+It vo, C. Sp. Grae horsultum
+intereorae horunteatra dem ad
+sidela autem qua porus num,
+popubli caetratus atus auc
+tellabus ati simperte avensultus
+bone horum hocurem,
+stortem peridius intifex mores
+Catiliura? Iquemunum per los
+audamdinem stimortum sa
+Sentium publiciam, unterecon
+ad comnena tilicaetraed diis
+sensum dii caesta, Patra rescepos
+seres artem conte noverma
+chuciemquis es! Seri spimus M.
+Uc me int. Opientem tus. Ficatro
+ximena, tu is sentiam us cur
+pres consuliumum mo ellabus
+ad ficeri sciac re quo vivivit; ete
+mernimuro, nonsimant, utus,
+di pulocup ioculoctum henatil
+terobusa reis re potimih icaecta
+re movente ntiderentis.
+Idium publibemque vit;
+Castum mur. Graciam num
+adhum intimen antenem remo
+Catussicia clegiti onfiritis,
+ommovis. Sp. Graedienarim iaeto
+es? Avessulvis te cemumuro, ne
+nicae tem idius publi sis hiliam
+deorae, tuidem dum tes virtis
+pre in vid Catus dicomnorei
+por patudacteres Ahaedo, vit.
+Grae condemnite factuit; nius
+fit, pubis bontem iae patum
+susquam, clabem se tem
+lissidemorum derei publissigit.
+Sa manum tarit, diis et L.
+Ecepsediem ut que nos etoratem,
+ignatra tustert essenti urnunte
+rcepora vocaet virtero rtemus.
+Ignonih icavere ssestia?
+Nosse in tus patiaedin sendius
+huis inatum siliam in det inestist
+aut patus egitabus, nostrae
+conster mistra, caet, queror
+patus loctum isse fachuitas
+es! Serum hosultuit virmium
+des bonsus simorum aurorus
+facchuidis? Latiam tame ces!
+Si ingultorat vid in tem verum
+sitante atumedo, ublintios ca
+inum, maximulicam mihicuterim
+antius, averfesid fenit; hosteli
+ciestra ccitus pro us con sulisse
+intrunu sultum cre ad coniamq
+uernihil hos pesideo, ut nos
+atant, poptem iam medo, nocus
+Catilis consus lostiam ac terei
+imus andam signaturori, crit,
+vir quitant ilicie pericati, cupio
+ete, facis. Patinena, comnost?
+Patquem re viti, sus, Cas
+estimortem in senihil hilienat,
+C. Simo viveristrae pore es, nem,
+nonsupicem sente quidientiam
+quondumIgnatillabus dientem
+inti sulium con tem ia intebus
+cula nonsuperipio etraveribus,
+nos in ta Satilnesum rei ses
+re, compris ussiliena, poptis
+consimaio et, quituspio Cupio
+uternum siliur poenihi licturit
+pos Maetiachuit L. Nos obsenti
+ssenica stabem patqua re,
+mortur ina ors mus alinterimul
+consus, confeconsum opon
+resi consuspere, nit. Sp. Gra re
+aperviv iviverudam ignatus, et
+quo abusciocus horuncerum
+quam hoctum intissuam.
+Cupim pero ius oricati, dem
+incepero ad aurissendam inaturei
+publintiam.+
+c
+-1 +1
+Investigators in city spaces have:
+If the Haunter in Darkness is in play, it
+is defeated. If the Haunter in Darkness
+would appear, spawn another monster
+instead.
+Sunny and Clear
+Environment (Weather)
+Hibb’s Roadhouse
+Black Cave[
+<
+o
+-1 +1
+Investigators in city spaces have:
+Blackest Night
+Environment (Mystic)
+Hibb’s Roadhouse
+Black Cave[
+<
+o
+When an investigator ends their movement
+in the Uptown streets, they draw 2 unique
+items; they may purchase any number of
+those items and discard the rest.
+Thflamaeormde
+Environment (Urban)
+Black Cave
+Uptown Streets
+The Witch House\
+^
+*
+#
+
+Upkeep: Roll 1 die; on a result of
+1 or 2, advance terror by 1.
+Any investigator in the Rivertown
+Streets may discard 2 gate trophies to return
+this card to the box; each investigator gains
+1 spell.
+Fail: If terror reaches 10, return this card to
+the box; each investigator becomes Cursed.
+Disturbing the Dead
+Rumor
+Rivertown Streets
+Black Cavec
++
+All monsters in the streets are defeated.
+FEDS RAID ARKHAM!
+Headline
+Hibb’s Roadhouse
+Black Cave
+YOUR DAILY NEWS SOURCE SERVING ARKHAM, KINGSPORT, AND THE MISKATONIC RIVER VALLEY
+The Arkham AdvertiserWEATHER FORECAST –
+Today. Partly Cloudy, high 60.
+Tomorrow. Sunny, high 70.
+LOREM IPSUM DOLOR SITSPORTING NEWS –
+Red Sox send off
+Brooklyn Dodgers 3–1
+CONSECTETUR ADIPISCING ELIT
+Sum idebit ut omni nonsendis
+reiciisquias as vidi oditiumet
+re cor alis adia quam, ipsam,
+conecate perumque dolupta
+idendit, sam, conse nonsequati te
+ne perum dolorero beationet aut
+molorestrum volorum fuga. Et
+autet faccupt aerchicatur?
+Dolores sendaep ratem.
+Nam expereh enisit, tem nos
+sinimi, eossim quo to estinul
+luptatemodis et ate pore, init
+doloreptata nus ero veleni non
+endis et opti dolor aut porum
+latur maximodi dis iumquas
+sa imus a cus maximin everi
+ommolore que corepel escius
+aut archill uptatquam sapidisquo
+inctet litiisq uaeperio tempos
+repudae. Ut mos si blatiamAn
+a tum, serfeciam poressicem ia
+med menest videa omnihilis
+vivivilius, Catquon ihicupimus
+conscres ina rem.
+Ectorem etrum sum ia
+intisquam, unum ocave, essa dius
+confecuppli, cupplic re, etem,
+in treterio consus aus clatuium
+horis convehem ublium ete,
+cam ius? Patui sim te ad conest
+praelin gulviris eo, que morarei
+intelic aediente es, num orae
+isum publis, quam mo avere
+conere ductora tilicastatum
+furaete, satraedea dea quidi,
+consupiocum ta viri praescem
+imilicae consusque consum eger
+intemnocules acciam tuidepo
+nesces hocciemedes fores!
+Nos potarena, mo cre terei
+pliust effre pere cero ensta teri
+inte vatia consis conduci conem
+vis, niusus atudescies hocciam
+furarebat pere pliu spimihilis
+nonsisse fatrora tiquam pos tum
+que diciemus vis. Opon nervid
+inum noculla renatium perbis
+avo, omnentem abunum pubit
+averum te praescri, noctam aude
+tessend eliusus omnestam puli
+preserfin int? Silis suliem inatum
+cum publius vis? Etro, Cato
+etripiemus nihilicibus, sentere
+inuntea publis moditilint fin
+diem inculvit.
+It vo, C. Sp. Grae horsultum
+intereorae horunteatra dem ad
+sidela autem qua porus num,
+popubli caetratus atus auc
+tellabus ati simperte avensultus
+bone horum hocurem,
+sensum dii caesta, Patra rescepos
+seres artem conte noverma
+chuciemquis es! Seri spimus M.
+Uc me int. Opientem tus. Ficatro
+ximena, tu is sentiam us cur
+pres consuliumum mo ellabus
+ad ficeri sciac re quo vivivit; ete
+mernimuro, nonsimant, utus,
+di pulocup ioculoctum henatil
+terobusa reis re potimih icaecta
+re movente ntiderentis.
+Idium publibemque vit;
+Castum mur. Graciam num
+adhum intimen antenem remo
+Catussicia clegiti onfiritis,
+ommovis. Sp. Graedienarim iaeto
+es? Avessulvis te cemumuro, ne
+nicae tem idius publi sis hiliam
+deorae, tuidem dum tes virtis
+pre in vid Catus dicomnorei
+por patudacteres Ahaedo, vit.
+Grae condemnite factuit; nius
+fit, pubis bontem iae patum
+susquam, clabem se tem
+lissidemorum derei publissigit.
+Sa manum tarit, diis et L.
+Ecepsediem ut que nos etoratem,
+ignatra tustert essenti urnunte
+rcepora vocaet virtero rtemus.
+Ignonih icavere ssestia?
+Nosse in tus patiaedin sendius
+des bonsus simorum aurorus
+facchuidis? Latiam tame ces!
+Si ingultorat vid in tem verum
+sitante atumedo, ublintios ca
+inum, maximulicam mihicuterim
+antius, averfesid fenit; hosteli
+ciestra ccitus pro us con sulisse
+intrunu sultum cre ad coniamq
+uernihil hos pesideo, ut nos
+atant, poptem iam medo, nocus
+Catilis consus lostiam ac terei
+imus andam signaturori, crit,
+vir quitant ilicie pericati, cupio
+ete, facis. Patinena, comnost?
+Patquem re viti, sus, Cas
+estimortem in senihil hilienat,
+C. Simo viveristrae pore es, nem,
+nonsupicem sente quidientiam
+quondumIgnatillabus dientem
+inti sulium con tem ia intebus
+cula nonsuperipio etraveribus,
+nos in ta Satilnesum rei ses
+re, compris ussiliena, poptis
+consimaio et, quituspio Cupio
+uternum siliur poenihi licturit
+pos Maetiachuit L. Nos obsenti
+ssenica stabem patqua re,
+mortur ina ors mus alinterimul
+consus, confeconsum opon
+resi consuspere, nit. Sp. Gra re
+aperviv iviverudam ignatus, et
+quo abusciocus horuncerumHistorical Society
+UPTOWN
+SOUTHSIDE
+FRENCH HILL
+RIVERTOWN
+ilding
+on
+nd 5 toughness
+phies or 1 gate
+2 clues.
+Schoffner’s General Store
+Shop
+As an encounter, draw 3 common
+items; you may purchase 1 of them
+and discard the rest.
+River Docks
+Shady Character
+As an encounter, spend 5 toughness
+worth of monster trophies or 1 gate
+trophy to gain $5.
+Ma’s Boarding House
+Recruit
+MISKATONIC
+UNIVERSTIY
+MERCHANT
+DISTRICT
+EASTTOWN
+JAIL
+DOWNTOWN
+NORTHSIDE
+The Witch House
+Graveyard
+Library
+The Unnamable
+Unvisited Isle
+Train Station
+Velma’s Diner
+Black Cave
+Independence Square
+Arkham Advertiser
+P
+l
+a
+T
+e
+a
+C
+i
+T
+a
+b
+y
+s
+s
+nsio
+n
+Police Station
+Deputize
+As an encounter, spend 10 toughness
+worth of monster trophies, 2 gate
+trophies, or 5 toughness worth of
+monster trophies and 1 gate trophy
+to become the Deputy of Arkham.
+Movement: When you are
+no longer delayed, move to
+the police station.
+Schoffner’s
+General Store
+Curiositie
+Shoppe
+Ye Olde
+Magick Shoppe
+Remove
+Monster Limit
+Silver Twilight Lodge
+Inner Sanctum
+When you would resolve an encounter
+here, if you have a Silver Twilight
+Membership, instead resolve an Inner
+Sanctum encounter.
+Administration
+Classes
+an encounter, spend $8 to
+w 2 skills; choose 1 to gain
+and discard the other.
+Bank of Arkham
+Bank Loan
+As an encounter, if you do not have a
+Bank Loan, gain one.
+iositie Shoppe
+Shop
+unter, draw 3 unique items;
+y purchase 1 of them and
+discard the rest.
+’s Hospital
+cal Care
+r, you may either
+na or spend $2 to
+f your stamina.-3
+
+c-3
+
+c
+Dimension
+Symbol
+The c symbol on the Cultist matches the c symbol on the
+Mythos card's white activation bar, so it moves along the white
+movement path, from Southside Streets to Uptown Streets.WORK IN PROGRESS
+
+[Page 23]
+23
+THE INVESTIGATORS
+The investigators are a group of unique characters who
+have banded together to face the Mythos. Game effects and
+components that affect the investigators—both bad and
+good—are explained in detail in the following sections.
+Negative Statuses
+Unfortunately, many terrible things can befall an investigator as
+they adventure in Arkham. These awful events are as follows:
+Drawn Into The Other World
+If at any point outside of the
+movement phase an investigator
+suddenly finds themselves in
+a space that contains a gate,
+they are drawn into the other
+world; they move to the first
+space of the Other World that
+corresponds to the gate and
+become delayed.
+Delayed
+When an investigator becomes
+delayed, they place their
+investigator standee on its side.
+That investigator effectively loses
+their next movement phase.
+If an investigator is delayed
+at the start their movement,
+regardless of what type of space
+they are in, they return their
+investigator standee to its upright position;
+they are no longer delayed, but their movement ends.
+Lost in Time and Space
+Some game effects instruct an
+investigator to become lost in
+time and sapce, which traps them
+in the space between realities.
+When an investigator is lost in
+time and space, they move to
+Lost in Time and Space and
+become delayed.
+If an investigator in Lost in
+Time and Space at the start their
+movement is not delayed, they move to a city space of their
+choice, then resolve their movement as normal; investigators
+in Lost in Time and Space that are delayed return their
+investigator to its upright position and end their movement.
+Defeated (Insane or Unconscious)
+When an investigator’s sanity or stamina
+reach zero, they are driven insane or knocked
+unconscious, respectively, and are defeated.
+When an investigator is defeated, they perform
+the following steps:
+• They discard half of their clues, rounded down.
+• They discard half of their items, rounded down.
+• They discard their Retainer, if they have one.
+Then, they resolve additional steps based on their current
+space and whether they are insane or unconscious.
+• If they were driven insane in a city space, they recover
+1 sanity move to Arkham Asylum; they do not resolve
+any further encounters during this round.
+• If they were knocked unconscious in a city space, they
+recover 1 stamina and move to St. Mary’s Hospital; they
+do not resolve any further encounters during this round.
+• If they were defeated in an Other World, they recover 1
+sanity if they were driven insane or recover 1 stamina if
+they were knocked unconscious. Then, they are lost in time
+and space.
+Devoured
+When an investigator's sanity and stamina reach zero at the
+same time, they are devoured. Game effects can also cause
+an investigator to become devoured. Devoured investigators
+perform the following steps:
+1. They discard all of their cards, money, clues, and any
+tokens other than monster and gate trophies, which
+they keep for their next investigator.
+2. They shuffle their investigator into the unused
+investigators.
+3. If the final battle is not active, they replace their
+investigator with a new investigator drawn according to
+the selection rules established during setup. Then, they
+follow standard setup rules for their new investigator,
+but do not yet place their standee on the board.
+4. At the start of the next upkeep, they place their
+investigator into play on their starting space, resuming
+play as normal. If an investigator is devoured during
+the round in which the Ancient One awakens, their
+replacement still enters play at the beginning of the first
+ready step of the final battle (see page 29).5
+4
+2
+15
+4
+1
+03
+2WORK IN PROGRESS
+
+[Page 24]
+24
+Arrested
+Some effects can cause an investigator to be arrested. When an
+investigator is arrested, they perform the following steps:
+1. The investigator discards half of their money,
+rounded down.
+2. The investigator moves to the Arkham Jail Cell and
+become delayed.
+Investigators in the Jail Cell do not resolve encounters
+during the encounter phase. When an investigator that was
+delayed in the Jail Cell returns their investigator standee to
+its upright position, they move to the Police Station and end
+their movement; they can have an encounter there during the
+encounter phase.
+Items, Money, and More
+As the game progresses, an investigator’s play area will be
+filled with a variety of cards, most of them beneficial, that can
+help them fight back against the Mythos.
+Money
+Money can be spent when prompted during
+encounters, or when resolving location
+abilities such as those at the Curiositie
+Shoppe or St. Mary’s Hospital, to gain
+a variety of benefits. An investigator can
+trade money with other investigators in
+their space during the movement phase.
+Items
+Cards with the item tag provide a
+myriad of benefits to the investigator
+who owns them. Common items,
+unique items, and spells are all types
+of items. An investigator can trade
+items with other investigators in
+their space during the movement
+phase. Some items have a cost to use, or become exhausted
+upon use. Exhausted items do not provide any benefits to
+the investigator that owns them, but are typically readied
+during the next upkeep phase. Some items have traits, such
+as Physical, or Tome. Traits have no inherent effect but are
+frequently referenced by other game effects.
+Counters
+Some cards enter play with counters already on them, as
+indicated by the counters icon and a number. When a card
+that has a counters icon and a number enters play, place the
+indicated number of counters on the card. The card's text itself
+will indicate how the counters are used. When an item with
+counters no longer has any counters on it, discard it.
+Money Tokens
+Items3 3
+Item
+When you would lose
+stamina, you may discard any
+number of counters from this
+card to reduce that loss by an
+equal amount.
+Enchanted Jewelry
+Counter
+Tokens
+x3x3WORK IN PROGRESS
+
+[Page 25]
+25
+Concealed Items
+An item with the Concealed cannot be discarded by a game
+effect. However, if an investigator is instructed to discard
+an item in order to resolve a game effect, they can choose to
+discard an item with the Concealed ability.
+Additionally, when an investigator discards items as a result
+of being defeated, they can count a Concealed item toward
+the number of items they must discard; the Concealed item,
+however, is not discarded.
+Allies
+Allies represent unique characters who can join
+investigators in their battle against the forces of
+the Mythos. When an ally joins an investigator,
+they often provide an immediate one-time
+benefit. While they remain with that investigator,
+they can also provide lasting effects, such as
+bonuses to attributes. Allies are not items.
+Skills
+Skills represent an investigator’s specialized
+training, expertise, or natural aptitude. When an
+investigator gains a skill, they gain a permanent
+passive effect, such as a bonus to an attribute or to
+a specific type of check. Skills are not items.
+Clues
+Clues are a vital resource available to the
+investigators. They typically spawn during the
+Mythos phase and can be picked up when an
+investigator ends their movement in the clue's space.
+Game effects—such as spending 5 clues to seal a
+gate (see "Closing Gates" on page 20)—often
+require an investigator to spend clues. These effects
+will instruct the investigators on how the clues are used.
+Additionally, after rolling dice during a check, an investigator
+can spend 1 clue to roll 1 additional die. They can repeat this
+process until they are satisfied with the results or until they run
+out of clues. Each spent clue adds 1 die even if the investigator
+would normally roll 0 dice on a check. Clues cannot be spent
+to add dice to die rolls that are not checks.
+Special Cards
+During the game, investigators might be
+instructed to gain a special card, such as a
+Retainer, Bank Loan, Silver Twilight Lodge
+Membership, Blessed, or Cursed. These cards
+represent particular circumstances, privileges,
+or obligations that can alter the way investigators
+interact with the game. An investigator cannot
+have more than one copy of each special card.
+Special cards do not need to be shuffled.
+Role Cards
+Roles represent special positions an investigator
+can hold which grant them useful abilities. When
+an investigator gains a role card, they take also
+gain all cards associated with that role.
+Only one investigator can hold each role at a
+time. If an investigator is instructed to gain a role
+already held by another investigator, they do not
+gain that role or any of its associated cards.
+Allies
+Skills
+Clue
+Token
+Retainer
+Special Card
+Retainer
+Deputy Role
+Card
+Deputy of Arkham
+An investigator has 2 items and is instructed to
+discard half (1) of them. They choose to “discard” the
+Concealed item and keep the other, allowing them
+to keep both items.
+3 
+Item
+Concealed
++2  during combat checks
+Physical Weapon
+.18 Derringer
++1 1
+Item
+Upkeep: You may cast this
+spell to invoke arcane healing;
+you or another investigator in
+your space recovers 1 stamina
+for each success.
+Magical Spell
+Heal
+
+This investigator would normally roll no dice on this
+check, as their lore () is too low to exceed the check's
+negative modifier. However, they spend clues, one at a time,
+in an attempt to pass the check. On the third clue,
+they succeed!St. Mary’s Hospital
+You sneak a peek at the medical records for a
+recent admission who was involved in a cult
+ritual  +0 . If you pass, you learn something
+about the cult’s methods; gain 1 clue.
+Miriam Beecher, the shopkeeper, peers closely at
+your face, then screams, “They’ve marked you!
+Get out! Get out!” and throws you out.
+Unsettling. Move to the street and lose 1 sanity.
+You meet an old wise man in the grove who
+offers to share his wisdom with you. You may
+become delayed to accept  –2 . If you pass, you
+may gain 1 skill, gain 2 spells, or gain 4 clues. If
+you fail, nothing happens.
+Ye Olde Magick Shoppe
+Woods0
+1
+2
+3
+3
+2
+1
+0
+4
+3
+2
+16
+5
+4
+3
+4
+3
+2
+15
+4
+3
+2
+S
+P
+E
+E
+D
+S
+N
+E
+A
+K
+F
+I
+G
+H
+T
+W
+I
+L
+L
+L
+O
+R
+E
+L
+U
+C
+K
+F
+O
+C
+U
+S
+1
+When you would lose stamina, reduce
+that loss by 1.
+Strong Body
+the Gangster
+Michael McGlenWORK IN PROGRESS
+
+[Page 26]
+26
+Casting Spells
+Spells represent magical knowledge investigators
+can use to produce a variety of powerful effects.
+Unlike other items, however, spells must be
+successfully cast before their effects can be
+resolved.
+To cast a spell, an investigator must first pay its
+sanity cost, indicated on the right-hand side of the spell.
+If paying this cost does not drive the investigator insane, they
+an then make a spell check. A spell check is an advanced
+lore () check, modified by the spell's casting modifier,
+indicated on the left-hand side of the spell. If they pass, they
+resolve the spell’s effect. Whether the investigator passes or
+fails the spell check, the spell is exhausted, and any hands
+used to cast the spell during combat remain occupied.
+Ritual Spells
+Ritual spells are powerful, one-time use magicks. After a
+Ritual spell is successfully cast and its effect is resolved,
+discard it.
+Magical Effects
+Some spells instruct investigators to gain a specific magical
+effect card when the spell is successfully cast.
+All copies of each magical effect are identical; they do not
+need to be shuffled. An investigator cannot have more than
+one copy of each magical effect.
+A magical effect is a representation of a spell’s lingering
+effect that remains active even while the spell is exhausted.
+Unless otherwise noted, magical effects are discarded at the
+start of the upkeep phase; they are also discarded if their
+corresponding spells are discarded, traded away, or otherwise
+lost for any reason.
+Hands During Combat
+Each item that grants fight () bonuses during combat has
+a hand icon in its lower-right corner—either a 1-hand icon or
+a 2-hand icon. When an investigator makes a combat check,
+they choose up to two total hands worth of items to use during
+the check. Items that have hand icons which are not being
+used do not grant fight () bonuses, though other effects on
+those items can still be used. Items that do not require hands
+are not restricted; any number can be used.
+Investigators can choose different weapons for each combat
+check, even within the same combat. While most bonuses
+only affect the combat check being made, some have a longer
+duration, such as “until the end of this combat”. Items with a
+fixed duration occupy the indicated number of hands across
+multiple rounds of combat, until either their duration expires
+or until the investigator chooses to use a different item.
+Gate and Monster Trophies
+An investigator can spend monster and gate trophies collected
+during the game to pay for specific effects, such as location
+abilities. Monster trophies typically have worth assigned to
+them based off of their toughness values. Unspent trophies
+are worth points when scoring at the end of the game.
+An investigators claims a monster token as a trophy when they
+defeat that monster or when they are instructed to by an effect;
+they do not gain the trophy when a monster is discarded.
+An investigator claims a gate token as a trophywhen they close
+a gate, or when they are instructed to by an effect; they do not
+gain the trophy when a gate is discarded.
+Tokens that have Endless are not claimed as trophies.
+Spell Card–2 1
+Item
+When you would lose
+stamina, you may cast this spell
+to reduce that loss to 0.
+When the Ancient One awakens,
+discard this card.
+Magical Spell
+Flesh Ward
+Casting
+Modifier Sanity
+Cost4 
+Item
++8  during a combat check;
+after the combat check, discard
+this card.
+Physical Weapon
+Dynamite5 
+Item
++4  during combat checks
+Physical Weapon
+.45 Automatic3 
+Item
++3  during combat checks
+against Undead monsters
++1  during horror checks
+Magical Weapon
+Cross
+oror
+An investigator has three weapons—one 2-handed weapon and
+two 1-handed weapons. For any given combat check, they can
+use either the top weapon or the bottom pair, but not all three.
+
+Magical Effect
+Upkeep: At the start of
+Upkeep, discard this card.
+Sun's Favor
++1
+Sun's Favor
+magical effect cardWORK IN PROGRESS
+
+[Page 27]
+27
+THE MONSTERS
+Each monster in Arkham Horror has a monster type that
+determines what it does when it activates (see “Monster
+Types” on page 22). In addition, some monsters have one or
+more monster abilities, which are detailed below.
+Ambush
+While an investigator is engaged with a monster that has
+Ambush, they cannot flee from it. Combat continues until
+either the monster or the investigator is defeated.
+Endless
+When an investigator passes a combat check against a monster
+that has Endless, they do not claim it as a trophy; when it is
+defeated it is discarded.
+Physical and Magical Resistance
+When an investigator makes a combat check against a monster
+that has Physical or Magical Resistance, the investigator's
+Physical or Magical items, respectively, provide only half of
+their normal fight () bonus, rounded up.
+Physical and Magical Immunity
+When an investigator makes a combat check against a monster
+that has Physical or Magical Immunity, the investigator's
+Physical or Magical items, respectively, do not provide their
+normal fight () bonus.
+Nightmarish X
+When an investigator passes a horror check against a monster
+that has Nightmarish, they lose X sanity, where X is that
+monster’s Nightmarish value.
+Overwhelming X
+When an investigator passes a combat check against a
+monster that has Overwhelming, they lose X stamina, where
+X is that monster’s Overwhelming value.
+Undead
+The Undead ability has no inherent mechanical effect, but can
+be referenced by other game effects.
+Mask Monsters
+Mask monsters are added to the monster supply only
+when Nyarlathotep is the Ancient One. They can be
+identified by the presence of a mask icon on the front
+of the monster token.
+Empty Monster Supply
+If a monster would be drawn, but the monster supply is empty,
+the Ancient One awakens.
+Mask
+IconWORK IN PROGRESS
+
+[Page 28]
+28
+THE GAME BOARD
+The game board represents the city of Arkham and tracks
+many key elements and locations. Understanding it is vital to
+fending off the Mythos.
+The Outskirts
+There is a maximum number of monsters that can be placed in
+Arkham at any given time. This is called the monster limit,
+and is equal to the number of investigators plus three. When
+a monster would be placed on the game board, if the number
+of monsters across all city spaces and the Sky is already at the
+limit, that monster is placed in the Outskirts instead.
+The Outskirts is not a city space. Monsters do not move to
+or from the Outskirts. There is also a maxiumum number of
+monster that can be in the Outskirts at any given time. This
+is called the outskirts limit, and is based on the number of
+investigators, as follows:
+Investigators Limit
+1 7
+2 6
+3 5
+4 4
+5 3
+6 2
+7 1
+8 0
+When a monster would be placed in the Outskirts, if the
+number of monsters in the Outskirts is already at the limit,
+advance terror by 1 (see "The Terror Track" on page 28).
+Then, discard that monster and each monster in the Outskirts.
+The Sky
+Flying monsters can move to and from the Sky. Monsters in
+the Sky count against the monster limit. Investigators cannot
+move to or be placed in the Sky unless specified. The Sky is not
+a city space.
+The Terror Track
+Terror is the measure of growing panic spreading across
+Arkham. Monsters overrunning the Outskirts and many
+other game effects can cause terror to advance. When that
+happens, resolve the following steps in order:
+1. Move the terror token one space forward along the
+terror track.
+2. Return the top card of the ally deck to the game box;
+that ally has left town and is no longer available.
+When terror advances multiple times at once or directly to a
+set number, resolve each individual increase separately.
+When terror advances to certain thresholds, additional effects
+are triggered, and certain locations can close:
+• When terror reaches 3, close Schoffner’s General Store.
+• When terror reaches 6, close the Curiositie Shoppe.
+• When terror reaches 9, close Ye Olde Magick Shoppe.
+• When terror reaches 10, Arkham is overrun. Monsters
+are no longer placed in the Outskirts; instead, when
+there are a number of monsters in Arkham equal to twice
+the monster limit, the Ancient One awakens.
+When a location is closed, the lead investigator places a closed
+token on it. Then, each investigator and monster in that space
+moves to the street. Investigator and monster cannot move
+to or be placed on a closed location; if an investigator or
+monster would be placed on a closed location and there is no
+alternative, place them in its connected street space instead.
+If terror would advance and it has already reached 10, advance
+doom by 1 instead.Historical Society
+UPTOWN
+SOUTHSIDE
+FRENCH HILL
+RIVERTOWN
+Schoffner’s General Store
+Shop
+As an encounter, draw 3 common
+items; you may purchase 1 of them
+and discard the rest.
+MISKATONIC
+UNIVERSTIY
+MERCHANT
+DISTRICT
+The Witch House
+Graveyard
+brary
+Black Cave
+C i T
+y
+o
+f
+T
+h
+e
+g
+r
+e
+a
+T
+r
+a
+C
+e
+a b y s s
+y
+u
+g
+g
+o
+T
+h
+Schoffner’s
+General Store
+Silver Twilight Lodge
+Inner Sanctum
+When you would resolve an encounter
+here, if you have a Silver Twilight
+Membership, instead resolve an Inner
+Sanctum encounter.
+Closed
+Token
+Terror advances to 3,
+closing Schoffner's General
+Store and returning 1 ally
+to the box.WORK IN PROGRESS
+
+[Page 29]
+29
+THE FINAL BATTLE
+When all else fails and the Ancient One awakens, the
+investigators have one last chance to win: confronting and
+defeating the Ancient One in a final, desperate battle. The
+Ancient One can awaken when any of the following occur:
+• Doom advances to the final notch of the doom track.
+• There are too many open gates, based on player count
+(see "Open Gates" on page page 7).
+• Terror has reached 10 and the number of monsters on
+the board is twice the monster limit.
+• A game effect says that the Ancient One awakens.
+• A gate or monster would spawn but there are none in
+their respective supplies.
+When the ancient one awakens, resolve the following steps:
+1. Each investigators in Lost in Time and Space is
+devoured; they do not take part in the final battle.
+2. Discard each Environment, Rumor, and other persistent
+Mythos card from play.
+3. Discard each Retainer and Bank Loan.
+4. Discard each item that
+is discarded when the
+Ancient One awakens.
+5. Flip the Ancient One sheet and Ancient One dashboard
+to their final battle sides.
+6. Advance doom to the final notch of the doom track, if it
+was not already.
+7. Set the turn tracker and hit tracker cubes to 0 (the
+leftmost notches). Place the black player count cube on
+the hit track one slot to the right of the game's player
+count—the cube is not used in an eight-player game.
+8. Resolve the Ancient One’s “Start of Battle” ability, if it
+has one.
+Then, the final battle begins.
+–3
+START OF BATTLE
+Each investigator must stand strong
+against the elements  +1 . If they
+fail, they lose 2 stamina.
+This check’s modifier is decreased
+by 1 for each round that has passed.
+ATTACK
+For each item that each investigator
+has, they roll 1 die; on a failure, they
+discard that item.
+None
+silenus
+Doom Track
+Combat
+Rating
+Ancient One
+Attack
+Start of Battle
+Ability
+Hit Track
+Turn Track8
+
+Upkeep: You may exhaust
+this card to recover 1 sanity
+or 1 stamina.
+When the Ancient One awakens,
+discard this card.
+
+ 
+3
+- +1
+Ia! Ia! Cthulhu Fthagn!
+Ph’nglui mglw’nfah
+Cthulhu R’lyeh wgah’nagl
+fhtagn!
+Worshippers—Cultists
+Silenus’s worshippers gain supernatural
+resistance to cold.
+THE DEATH OF STARS
+While Silenus stirs in its slumber,
+at the end of the Mythos Phase,
+each investigator in a street space
+loses 1 stamina.
+After a Weather Mythos card is
+resolved, it is discarded instead of
+becoming the active environment.
+silenus
+–3
+START OF BATTLE
+Each investigator must stand strong
+against the elements  +1 . If they
+fail, they lose 2 stamina.
+This check’s modifier is decreased
+by 1 for each round that has passed.
+ATTACK
+For each item that each investigator
+has, they roll 1 die; on a failure, they
+discard that item.
+None
+silenusWORK IN PROGRESS
+
+[Page 30]
+30
+To defeat the Ancient One, the investigators must retreat
+doom to 0 before they are all are devoured. When the
+investigators deal a number of hits equal to the number of
+investigators in the game, including those who have already
+been devoured, retreat doom by 1. Resolve each final battle
+round as follows, repeating the sequence until either the
+Ancient One is defeated or all investigators are devoured:
+1. Ready Step
+The lead investigator token passes clockwise. Each
+investigator readies their exhausted cards, resolve abilities,
+and focuses attributes as if it were the upkeep phase.
+Investigators can trade with one another during this step.
+2. The Investigators Attack
+In turn order, each investigator makes a combat check
+against the Ancient One, modified by the Ancient One’s
+combat rating. Each success on a combat check counts
+as 1 hit against the Ancient One. For each hit, advance the
+hit track by 1. When the hit track cube reaches the notch
+that corresponds to the number of investigators, reset
+the hit track to 0 and retreat doom by 1. Then, continue
+advancing the hit track for any remaining hits.
+A sizeable hit! Out of her 10 dice, 6 were successes, thanks
+to being Blessed, and 3 of them provided additional hits
+thanks to the Shotgun's, for a total of 9 hits.
+Since she is playing a 4-investigator game, 4 hits are needed
+to reduce doom by 1. Once the hit track reaches 4 hits, she
+returns the hit tracker cube to 0 and retreats doom by 1.
+She still has 5 hits left from her initial total of 9. Once again,
+she advaces the track to 4 (the investigator count), returns
+the hit tracker cube to 0, and retreats doom by 1.
+There is still 1 remaining hit. Sister Mary advances the hit
+tracker to 1, and concludes her attack. The single remaining
+hit isn't enough to retreat doom, but the hit isn't lost—it
+remains until it can be used by the next combat check.
+x2x2x2
+x6x6–3
+NoneAncient One
+Combat Rating
+3
+4
+5
+6
+4
+3
+2
+1
+3
+2
+1
+03
+2
+1
+0
+3
+2
+1
+04
+3
+2
+1
+S
+P
+E
+E
+D
+S
+N
+E
+A
+K
+F
+I
+G
+H
+T
+W
+I
+L
+L
+L
+O
+R
+E
+L
+U
+C
+K
+F
+O
+C
+U
+S
+1
+When you would become lost in time
+and space, instead: if you were driven
+insane, move to Arkham Asylum; if
+you were knocked unconscious, move to
+St. Mary’s Hospital; otherwise, return
+to South Church.
+Guardian Angel
+the Nun
+Sister Mary
+x10x10
+Sister Mary goes all in. Normally, she would get 4 dice—her base
+fight ()of 3, reduced by Silenus's combat rating of –3, increased
+by +4 from the Shotgun—but she is also spending 6 clues.
+
+When you roll dice, results
+of 4, 5, and 6 count as successes.
+When you would become
+Cursed, instead discard this card.
+Upkeep: Roll 1 die; on
+a result of 1, discard
+this card.6 
+Item
++4  during combat checks;
+each result of 6 counts as
+2 successes.
+Physical Weapon
+Shotgun–3
+START OF BATTLE
+Each investigator must stand strong
+against the elements  +1 . If they
+fail, they lose 2 stamina.
+This check’s modifier is decreased
+by 1 for each round that has passed.
+ATTACK
+For each item that each investigator
+has, they roll 1 die; on a failure, they
+discard that item.
+None
+silenus–3
+START OF BATTLE
+Each investigator must stand strong
+against the elements  +1 . If they
+fail, they lose 2 stamina.
+This check’s modifier is decreased
+by 1 for each round that has passed.
+ATTACK
+For each item that each investigator
+has, they roll 1 die; on a failure, they
+discard that item.
+None
+silenus–3
+START OF BATTLE
+Each investigator must stand strong
+against the elements  +1 . If they
+fail, they lose 2 stamina.
+This check’s modifier is decreased
+by 1 for each round that has passed.
+ATTACK
+For each item that each investigator
+has, they roll 1 die; on a failure, they
+discard that item.
+None
+silenusWORK IN PROGRESS
+
+[Page 31]
+31
+3. The Ancient One Attacks
+The Ancient One resolves its attack, as described on the
+Ancinet One’s sheet. Then, advance the turn track by 1.
+If at any point during the final battle an investigator is
+defeated, they are devoured, and they are not replaced.
+If each investigator is devoured, the investigators lose the
+game. Arkham is lost.
+If doom is retreated to 0, the investigators win the game!
+Arkham is saved, and the Mythos is driven back…for now.
+SCORING
+If the investigators win the game, the game can be scored.
+Before scoring, the investigator who has the most unspent
+gate trophies is awarded the honorary title of First Citizen of
+Arkham; if there is a tie, the title goes to the investigator who
+has the most unspent monster trophies.
+A game’s base score is equal to the Ancient One’s highest
+printed doom value minus the terror value at the end of the
+game. Then, apply the following modifiers:
+• +1 for each unspent gate trophy
+• +1 for every 3 unspent monster trophies, as a group
+• +1 per surviving investigator
+• –1 for each investigator that was replaced
+• –1 for each unpaid Bank Loan
+• –1 for each Elder Sign unique item used–3
+START OF BATTLE
+Each investigator must stand strong
+against the elements  +1 . If they
+fail, they lose 2 stamina.
+This check’s modifier is decreased
+by 1 for each round that has passed.
+ATTACK
+For each item that each investigator
+has, they roll 1 die; on a failure, they
+discard that item.
+None
+silenus
+The turn track has advanced twice since the final battle
+started, and now sits on the 3rd space of the track, indicating
+it is the third round of the final battle. As such, the modifier
+for Silenus' attack is –1.WORK IN PROGRESS

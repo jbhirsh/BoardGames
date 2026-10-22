@@ -59,6 +59,7 @@ function GameCard({ game }: Props) {
           </span>
           <DifficultyMeta item={game} />
         </div>
+        {game.arriving && <p className="card-arriving"><span className="expands-tag">Arriving {game.arriving}</span></p>}
         <div className="card-kw">
           {sortedKw(game.kw).map((kw) => (
             <KeywordPill

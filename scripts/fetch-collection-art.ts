@@ -49,6 +49,7 @@ type Entry = Cover | { keep: string };
 const COVERS: Record<string, Entry> = {
   '7-wonders': { image: 7416519, box: [0.036, 0.032, 0.928, 0.936] }, // second edition, inside its printed frame
   'analyze-me': { keep: 'BGG only has the 2011 tin; this edition\'s box front, flattened from a product photo' },
+  'arkham-horror-remastered': { image: 9861848 },
   azul: { image: 6973671 },
   bananagrams: { image: 480795, box: [0.515, 0.13, 0.475, 0.85], focus: 0 }, // no box: the front of the pouch's tag
   'card-deck': { image: 1128756, box: [0.08, 0.025, 0.84, 0.93], focus: 0 }, // a generic deck: a Bicycle tuck box's front
@@ -58,6 +59,7 @@ const COVERS: Record<string, Entry> = {
   codenames: { image: 8907965, focus: 0.1 },
   cranium: { keep: 'BGG lacks the 25th anniversary edition; its box front, flattened from a product photo' },
   dominion: { image: 3187001 },
+  'dungeon-crawler-carl-unstoppable': { image: 9745791, focus: 0 }, // a tall cover: keep the series title along the top
   'exploding-kittens': { image: 2691976, fit: true }, // a wide box
   'far-out-questions': { keep: 'not on BoardGameGeek; the publisher\'s flat cover art' },
   'for-the-girls': { keep: 'BGG only has the German edition; the English box front, flattened from a product photo' },

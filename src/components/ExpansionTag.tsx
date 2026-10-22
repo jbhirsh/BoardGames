@@ -1,6 +1,6 @@
-import { GAMES } from '../data/games';
+import { ALL_GAMES } from '../data/games';
 
-const OWNED = new Set(GAMES.map((g) => g.name));
+const OWNED = new Set(ALL_GAMES.map((g) => g.name));
 
 /**
  * Marks a wishlist entry that adds to another game, so nobody votes for it

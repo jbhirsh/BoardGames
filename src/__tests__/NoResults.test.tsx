@@ -34,6 +34,20 @@ describe('NoResults', () => {
     expect(screen.getByText('Filtering for up to 15 min and 10 players.')).toBeInTheDocument();
   });
 
+  it('points to the games on their way when only those match', () => {
+    renderAt('/?q=unstoppable');
+    expect(screen.getByText('No games match your filters.')).toBeInTheDocument();
+    expect(screen.getByText('1 game on the way fits, under Coming Soon below.')).toBeInTheDocument();
+  });
+
+  it('says nothing of games on the way when none match, or for the wishlist', () => {
+    const { unmount } = renderAt('/?p=10&d=15');
+    expect(screen.queryByText(/on the way/)).not.toBeInTheDocument();
+    unmount();
+    renderAt('/?c=want&q=unstoppable', 'wishlist');
+    expect(screen.queryByText(/on the way/)).not.toBeInTheDocument();
+  });
+
   it('offers to drop a filter that would bring games back, and drops it', () => {
     renderAt('/?p=10&d=15');
     const options = screen.getAllByRole('button', { name: /^Drop / });

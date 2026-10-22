@@ -1,4 +1,4 @@
-import { GAMES } from '../src/data/games';
+import { COMING_SOON, GAMES } from '../src/data/games';
 import { WISHLIST } from '../src/data/wishlist';
 import { test, expect, SUGGESTION } from './fixtures';
 
@@ -93,6 +93,24 @@ test('the random picker picks a game from the filtered list', async ({ page }) =
   await dialog.getByRole('button', { name: 'View rules' }).click();
   await expect(page).toHaveURL(/\/rules\/azul$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Azul' })).toBeVisible();
+});
+
+test('games on their way are listed under the collection, never picked', async ({ page }) => {
+  await page.goto('/');
+  const comingSoon = page.getByRole('heading', { level: 2, name: 'Coming Soon' });
+  await expect(comingSoon).toBeVisible();
+  for (const game of COMING_SOON) {
+    await expect(page.getByRole('heading', { level: 3, name: game.name })).toBeVisible();
+    await expect(page.getByText(`Arriving ${game.arriving}`, { exact: true })).toBeVisible();
+  }
+
+  // Searched for, it still shows below, but the collection (and so the
+  // random pick) has nothing to choose from.
+  await page.getByPlaceholder('Search games...').fill('Unstoppable');
+  await expect(page.getByRole('button', { name: rowToggles })).toHaveCount(0);
+  await expect(page.getByText('1 game on the way fits, under Coming Soon below.')).toBeVisible();
+  await expect(page.getByRole('heading', { level: 3, name: 'Dungeon Crawler Carl: Unstoppable' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Pick for us' })).toBeDisabled();
 });
 
 test("opening a card's games on the grid gives it a row of its own and keeps the order", async ({ page }) => {

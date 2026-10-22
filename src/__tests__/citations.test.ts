@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { citationsIn, citedPage, linkCitations, mentionedRulebooks } from '../utils/citations';
 import { rulebooks, type Rulebook } from '../utils/rulebooks';
-import { GAMES } from '../data/games';
+import { ALL_GAMES } from '../data/games';
 import { quickGame } from './testData';
 import type { Game, SubGame } from '../data/types';
 
@@ -11,7 +11,7 @@ const sub = (over: Partial<SubGame>): SubGame => ({
 });
 
 describe('mentionedRulebooks', () => {
-  const catan = GAMES.find((g) => g.slug === 'catan')!;
+  const catan = ALL_GAMES.find((g) => g.slug === 'catan')!;
   const [base, ext, ck] = rulebooks(catan);
 
   it('finds the tabs an answer names, however the name is written', () => {
@@ -50,9 +50,9 @@ describe('mentionedRulebooks', () => {
 });
 
 describe('linkCitations', () => {
-  const game = (slug: string) => GAMES.find((g) => g.slug === slug)!;
+  const game = (slug: string) => ALL_GAMES.find((g) => g.slug === slug)!;
   const book = (slug: string, label: string) => rulebooks(game(slug)).find((b) => b.label === label)!;
-  const gameOf = (b: Rulebook) => GAMES.find((g) => rulebooks(g).some((r) => r.pdf === b.pdf))!;
+  const gameOf = (b: Rulebook) => ALL_GAMES.find((g) => rulebooks(g).some((r) => r.pdf === b.pdf))!;
   /**
    * A citation link as linkCitations writes it. Given its text (which then
    * names the rulebook), just that; else "p. N", with a title for its
@@ -169,7 +169,7 @@ describe('linkCitations', () => {
 });
 
 describe('citationsIn', () => {
-  const catan = GAMES.find((g) => g.slug === 'catan')!;
+  const catan = ALL_GAMES.find((g) => g.slug === 'catan')!;
   const [base, knights] = ['Base game', 'Cities & Knights'].map((label) => rulebooks(catan).find((b) => b.label === label)!);
 
   it('lists the rulebook and page each citation opens, once each, in the order cited', () => {
@@ -188,7 +188,7 @@ describe('citationsIn', () => {
 });
 
 describe('citedPage', () => {
-  const catan = GAMES.find((g) => g.slug === 'catan')!;
+  const catan = ALL_GAMES.find((g) => g.slug === 'catan')!;
   const [base, , ck] = rulebooks(catan);
 
   it('finds the game\'s rulebook and the page a citation link opens', () => {

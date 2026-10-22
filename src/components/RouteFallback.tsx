@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useParams } from 'react-router';
-import { GAMES } from '../data/games';
+import { ALL_GAMES } from '../data/games';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
 import { WORD_CHECKER_GAME } from '../data/wordChecker';
 import { rulebooks } from '../utils/rulebooks';
@@ -43,7 +43,7 @@ export default function RouteFallback({ title = 'The Game Room', desc = 'Loading
  */
 export function RulesFallback() {
   const { slug, part } = useParams<{ slug: string; part?: string }>();
-  const game = GAMES.find((g) => g.slug === slug);
+  const game = ALL_GAMES.find((g) => g.slug === slug);
   const book = game && rulebooks(game).find((b) => b.part === part);
   if (!game || !book) return <RouteFallback />;
   return (

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent, type CSSProperties } from 'react';
 import { useParams } from 'react-router';
-import { GAMES } from '../data/games';
+import { ALL_GAMES } from '../data/games';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
 import { digitNudge } from '../utils/digitNudge';
 import { breakdown, ordinal, scienceScore, standings, tieBreaks, treasuryScore, type Breakdown, type Tally } from '../utils/sevenWonders';
@@ -227,7 +227,7 @@ function measureDigitNudge(): number {
  */
 export default function ScoreCalculatorPage() {
   const { slug } = useParams<{ slug: string }>();
-  const game = GAMES.find(g => g.slug === slug && SCORE_CALCULATORS.has(g.slug));
+  const game = ALL_GAMES.find(g => g.slug === slug && SCORE_CALCULATORS.has(g.slug));
   const [initial] = useState(loadGame);
   const [players, setPlayers] = useState<PlayerScores[]>(initial.players);
   const [activePlayer, setActivePlayer] = useState(initial.active);

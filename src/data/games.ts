@@ -4,7 +4,10 @@ import { GAME_WEIGHTS } from './gameWeights';
 // The collection, and the source of truth for it: a compiled-in constant,
 // with no database on the read path. The rest of src/data supports it (the
 // wishlist, keywords, the initial filter state, which games have a score
-// calculator or the word checker, the types).
+// calculator or the word checker, the types). A game bought but not yet
+// here carries `arriving` and is exported apart, as COMING_SOON, so the
+// collection's list, filters and random pick (GAMES) never include it;
+// ALL_GAMES holds both, for looking a game up.
 //
 // A game's box art and rulebooks live at paths its slugs name, so the
 // entries below leave them out and withPaths fills them in: the box art at
@@ -484,6 +487,39 @@ const ENTRIES: GameEntry[] = [
           { heading:"How It Plays", body:`Turns keep the usual four steps, with the current Encounter checked after the Dark Arts events. Some creatures are defeated with Influence instead of Attack, and only one Influence can go on each creature per turn. Cards can now be banished, removed from your deck for good, and the Encounter must be completed before LORD VOLDEMORT can be attacked.` },
         ] },
     ] },
+  { name:"Dungeon Crawler Carl: Unstoppable", slug:"dungeon-crawler-carl-unstoppable", players:"1–2", min:1, max:2, dur:"45–75 min", mins:75, group:'coop', bgg:459928,
+    arriving:"December 2",
+    kw:['cooperative','deck-building','thematic'],
+    short:"Crawl one floor of the World Dungeon as Carl or Princess Donut, crafting your cards as you go.",
+    desc:"A solo or two-player co-op deck-builder set in the World Dungeon from the Dungeon Crawler Carl novels. Play as Carl or Princess Donut, fight mobs and bosses, slot upgrades into your cards, and reach the stairs before the danger track runs out or the threats get you.",
+    detail:[
+      { heading:"Card Crafting", body:`Every card is a sleeve with swappable parts. Gold buys upgrades from a market, and each one slides into a card in your hand or in play, up to two per card. Each turn you also draft a new card, a core you choose sleeved with the next threat, and defeating a threat on the battlefield is the main way to draw cards.` },
+      { heading:"A Floor a Game", body:`Each game is one floor of the World Dungeon, and this box holds the first three. Every floor has its own way down the stairs, from beating a neighbourhood and borough boss to finishing a quest. Each time your deck runs out you level up, and every turn ends with the danger marker moving along the floor's danger track. You win when every crawler goes down the stairs; you lose if anyone's health hits zero or the danger track reaches its end.` },
+      { heading:"Solo or Co-op", body:`Solo, you run one crawler; with two, each player runs their own deck as in the solo game, but you can damage the threats on each other's battlefield, and the danger marker moves once a turn for you both. In true roguelite fashion, only a few benefits bought with XP carry over to the next floor, so each floor is a fresh climb. Built on John D. Clair's Unstoppable system.` },
+    ],
+    yt:"how to play Dungeon Crawler Carl Unstoppable",
+    awards:[] },
+  { name:"Arkham Horror: Remastered", slug:"arkham-horror-remastered", players:"1–8", min:1, max:8, dur:"120–240 min", mins:240, group:'coop', bgg:480156,
+    arriving:"December 2027",
+    kw:['cooperative','thematic','strategy'],
+    short:"Investigators roam 1920s Arkham, closing gates to Other Worlds before an Ancient One wakes.",
+    desc:"Fantasy Flight's remaster of the 2005 Arkham Horror, with new art, components and rules: investigators roam 1920s Arkham, gathering clues, fighting monsters and closing gates to Other Worlds before the doom track fills and an Ancient One awakens.",
+    detail:[
+      { heading:"The Goal", body:`Gates to Other Worlds open around Arkham, each one advancing doom and loosing monsters into the streets. The investigators win by closing every open gate once they hold enough gate trophies, by sealing six gates with elder signs, or, failing both, by defeating the Ancient One in a final battle when it wakes. It wakes when the doom track fills or too many gates are open at once.` },
+      { heading:"A Round", body:`Each round runs through upkeep, movement, encounters and the Mythos phase. In upkeep investigators adjust their attributes with focus; they then move around Arkham, fighting or evading monsters; at their location or in an Other World they draw an encounter; and the lead investigator draws a Mythos card that opens a gate, moves monsters and sets rumours and environments in play. Checks roll dice equal to an attribute, with every 5 or 6 a success.` },
+      { heading:"Investigators", body:`Each investigator has a sheet and dashboard holding their sanity, stamina, attributes, focus and abilities. At zero sanity they are driven insane, and at zero stamina knocked unconscious. Over the game they gather skills, allies, items and spells. The rulebook here is a work-in-progress edition from the campaign; the final one comes with the game.` },
+    ],
+    yt:"how to play Arkham Horror Remastered Cardboard Crash Course",
+    awards:[],
+    subgames:[
+      { name:"Dunwich Horror", slug:"dunwich-horror", kind:'expansion', players:"1–8", min:1, max:8, dur:"120–240 min", mins:240, rules:false,
+        short:"The big-box expansion that takes the investigators to the village of Dunwich.",
+        yt:"Arkham Horror Dunwich Horror expansion how to play",
+        desc:"The remastered Dunwich Horror expansion, which takes the investigators beyond Arkham to the village of Dunwich. Its rulebook isn't published yet; this will fill in when it is.",
+        detail:[
+          { heading:"What It Adds", body:`The village of Dunwich, beyond Arkham, to play alongside the base game. Fantasy Flight hasn't published its rulebook yet, so the details follow when the box arrives.` },
+        ] },
+    ] },
 ];
 
 const rulebookPdf = (key: string) => `/rules/${key}.pdf`;
@@ -520,4 +556,11 @@ function weighed<T extends { bgg?: number; weight?: number }>(t: T): T {
   return weight == null ? t : { ...t, weight };
 }
 
-export const GAMES: Game[] = ENTRIES.map(withPaths).map((g) => weighed(g.subgames ? { ...g, subgames: g.subgames.map(weighed) } : g));
+/** Every game we own, on the shelf or on its way: what a slug or a name is looked up in. */
+export const ALL_GAMES: Game[] = ENTRIES.map(withPaths).map((g) => weighed(g.subgames ? { ...g, subgames: g.subgames.map(weighed) } : g));
+
+/** The collection on the shelf: what the page lists, filters, counts and picks from. */
+export const GAMES: Game[] = ALL_GAMES.filter((g) => !g.arriving);
+
+/** Bought but not here yet (`arriving`): listed under the collection, never picked. */
+export const COMING_SOON: Game[] = ALL_GAMES.filter((g) => g.arriving);

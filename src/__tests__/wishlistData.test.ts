@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { WISHLIST } from '../data/wishlist';
-import { GAMES } from '../data/games';
+import { ALL_GAMES } from '../data/games';
 import { KW } from '../data/keywords';
 import { normalizeName } from '../utils/normalizeName';
 import { expectCoherentTable } from './coherentTable';
@@ -26,7 +26,7 @@ describe('wishlist data', () => {
   });
 
   it('names, for every expansion, a base game in the collection or on the wishlist', () => {
-    const known = new Set([...GAMES, ...WISHLIST].map((g) => g.name));
+    const known = new Set([...ALL_GAMES, ...WISHLIST].map((g) => g.name));
     const expansions = WISHLIST.filter((w) => w.expands);
     expect(expansions.map((w) => w.id)).toEqual(
       expect.arrayContaining(['catan-seafarers', 'dominion-seaside', 'dominion-prosperity', 'wyrmspan-dragon-academy']),

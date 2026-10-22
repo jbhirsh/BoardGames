@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { GAMES } from '../data/games';
+import { ALL_GAMES } from '../data/games';
 import { GAME_WEIGHTS } from '../data/gameWeights';
 import { KW } from '../data/keywords';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
@@ -37,7 +37,7 @@ function expectRealAwards(awards: Award[] | undefined, label: string) {
 }
 
 describe('games data', () => {
-  it.each(GAMES.map((g) => [g.slug, g] as const))('%s has coherent filter fields', (slug, g) => {
+  it.each(ALL_GAMES.map((g) => [g.slug, g] as const))('%s has coherent filter fields', (slug, g) => {
     expectCoherentTable(g, slug);
 
     // The card shows the box's whole range, so a top count above `max` must
@@ -58,10 +58,10 @@ describe('games data', () => {
   });
 
   it.each([...SCORE_CALCULATORS])('score calculator %s is a game in the collection', (slug) => {
-    expect(GAMES.map((g) => g.slug)).toContain(slug);
+    expect(ALL_GAMES.map((g) => g.slug)).toContain(slug);
   });
 
-  const writeUps = GAMES.flatMap((g) => [
+  const writeUps = ALL_GAMES.flatMap((g) => [
     [g.slug, g.detail] as const,
     ...(g.subgames ?? []).filter((sub) => sub.detail).map((sub) => [`${g.slug}.${sub.slug}`, sub.detail!] as const),
   ]);
@@ -79,10 +79,10 @@ describe('games data', () => {
   });
 
   it('the word checker\'s game is in the collection', () => {
-    expect(GAMES.map((g) => g.slug)).toContain(WORD_CHECKER_GAME);
+    expect(ALL_GAMES.map((g) => g.slug)).toContain(WORD_CHECKER_GAME);
   });
 
-  const withHouseRules = GAMES.filter((g) => g.houseRules).map((g) => [g.slug, g.houseRules!] as const);
+  const withHouseRules = ALL_GAMES.filter((g) => g.houseRules).map((g) => [g.slug, g.houseRules!] as const);
 
   it.each(withHouseRules)('%s has named, written house rules', (_slug, rules) => {
     expect(rules.length).toBeGreaterThan(0);
@@ -90,11 +90,11 @@ describe('games data', () => {
     for (const r of rules) for (const text of [r.name, r.text]) expect(text.trim()).not.toBe('');
   });
 
-  const subgames = GAMES.flatMap((g) => (g.subgames ?? []).map((s) => [`${g.slug}/${s.slug}`, s] as const));
+  const subgames = ALL_GAMES.flatMap((g) => (g.subgames ?? []).map((s) => [`${g.slug}/${s.slug}`, s] as const));
 
   // One id names one game: a copied id would give a game another's weight.
   it('gives each BoardGameGeek id to one game', () => {
-    const ids = GAMES.flatMap((g) => [g, ...(g.subgames ?? [])]).flatMap((t) => (t.bgg === undefined ? [] : [t.bgg]));
+    const ids = ALL_GAMES.flatMap((g) => [g, ...(g.subgames ?? [])]).flatMap((t) => (t.bgg === undefined ? [] : [t.bgg]));
     expect(ids.length).toBeGreaterThan(0);
     for (const id of ids) expect(Number.isInteger(id) && id > 0, `bgg ${id}`).toBe(true);
     expect(new Set(ids).size).toBe(ids.length);
