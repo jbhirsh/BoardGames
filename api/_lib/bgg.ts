@@ -27,6 +27,8 @@ export interface GameDetails {
 export const PLAYERS_MAX = 99;
 /** The longest playing time an entry can list, in minutes. */
 export const MINS_MAX = 600;
+/** The longest description kept or saved, in characters; BGG's are rarely longer. */
+export const DESC_MAX = 5000;
 /**
  * Box art an entry can show: BGG's image CDN only. The lookup keeps no
  * other thumbnail, and details the owner sends back are held to it, so the
@@ -46,31 +48,80 @@ function decodeEntities(s: string): string {
 
 const codePoint = (n: number, raw: string) => (n >= 0 && n <= 0x10ffff ? String.fromCodePoint(n) : raw);
 
+// The named entities BGG's descriptions use: typographic punctuation and
+// symbols here, accented letters by DIACRITIC below. Any other name is left
+// as written.
+const NAMED: Record<string, string> = {
+  amp: '&', quot: '"', apos: "'", lt: '<', gt: '>', nbsp: ' ',
+  mdash: '—', ndash: '–', hellip: '…', bull: '•', middot: '·',
+  lsquo: '‘', rsquo: '’', sbquo: '‚', ldquo: '“', rdquo: '”', bdquo: '„', laquo: '«', raquo: '»',
+  prime: '′', Prime: '″', iexcl: '¡', iquest: '¿', shy: '\u00ad',
+  trade: '™', copy: '©', reg: '®', deg: '°', times: '×', divide: '÷', plusmn: '±', minus: '−',
+  frac12: '½', frac14: '¼', frac34: '¾', sup2: '²', sup3: '³', euro: '€', pound: '£', cent: '¢', sect: '§',
+  aelig: 'æ', AElig: 'Æ', oelig: 'œ', OElig: 'Œ', oslash: 'ø', Oslash: 'Ø', szlig: 'ß', eth: 'ð', ETH: 'Ð', thorn: 'þ', THORN: 'Þ',
+};
+
+// `&eacute;` is "e" plus a combining acute accent, composed into "é".
+const DIACRITIC: Record<string, string> = {
+  grave: '\u0300', acute: '\u0301', circ: '\u0302', tilde: '\u0303', uml: '\u0308', ring: '\u030a', cedil: '\u0327', caron: '\u030c',
+};
+
+function named(raw: string, name: string): string {
+  if (Object.hasOwn(NAMED, name)) return NAMED[name];
+  const m = /^([a-zA-Z])([a-z]+)$/.exec(name);
+  const mark = m && Object.hasOwn(DIACRITIC, m[2]) ? DIACRITIC[m[2]] : undefined;
+  const composed = m && mark ? (m[1] + mark).normalize('NFC') : '';
+  return composed.length === 1 ? composed : raw;
+}
+
+// One pass, so `&amp;rsquo;` becomes `&rsquo;` here and `’` on the next.
 function decodeOnce(s: string): string {
   return s
     .replace(/&#(\d+);/g, (raw, n) => codePoint(Number(n), raw))
     .replace(/&#x([0-9a-f]+);/gi, (raw, h) => codePoint(parseInt(h, 16), raw))
-    .replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-    .replace(/&mdash;/g, '—').replace(/&ndash;/g, '–').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
+    .replace(/&([a-zA-Z][a-zA-Z0-9]*);/g, named);
 }
 
 // Anchored on whitespace so `name=` never matches inside `friendlyname=`.
 const attr = (tag: string, name: string): string | undefined =>
   new RegExp(`(?:^|\\s)${name}="([^"]*)"`).exec(tag)?.[1];
 
-/** The first two sentences of BGG's often-long description, capped at `max` characters. */
-export function summarise(raw: string, max = 240): string {
+// Repeated until nothing changes, so removing one tag can't leave another
+// (`<scr<b>ipt>`) behind.
+function stripTags(s: string): string {
+  let previous: string;
+  do {
+    previous = s;
+    s = s.replace(/<[^>]*>/g, '');
+  } while (s !== previous);
+  return s;
+}
+
+/**
+ * BGG's whole description as plain text: entities decoded, markup and
+ * control characters gone, whitespace collapsed. Only one longer than `max`
+ * is shortened, to the whole sentences that fit (or, failing that, cut on a
+ * word with an ellipsis).
+ */
+export function cleanDescription(raw: string, max = DESC_MAX): string {
   // Control and format characters (a soft hyphen from &#173;, zero-width
   // joiners) go, as an edit would refuse them; newlines and tabs are left
   // for the whitespace collapse, so the words either side stay apart.
-  const text = decodeEntities(raw).replace(/<[^>]+>/g, ' ').replace(/(?!\s)\p{C}/gu, '').replace(/\s+/g, ' ').trim();
-  if (!text) return '';
+  // A block tag (a line break, paragraph or list item) parts the words
+  // either side; an inline one (BGG italicises titles) goes without a trace,
+  // so "<i>Inkwell</i>," doesn't become "Inkwell ,".
+  const text = stripTags(decodeEntities(raw).replace(/<\/?(?:br|p|div|li|ul|ol|h[1-6])\b[^>]*>/gi, ' '))
+    .replace(/(?!\s)\p{C}/gu, '').replace(/\s+/g, ' ').trim();
+  if (text.length <= max) return text;
   // Split after sentence punctuation followed by whitespace, so decimals
-  // like "2.0" stay whole and a trailing unpunctuated sentence is kept.
-  const sentences = text.split(/(?<=[.!?])\s+/);
-  let out = sentences.slice(0, 2).join(' ').trim();
-  if (out.length > max) out = out.slice(0, max - 1).replace(/\s+\S*$/, '') + '…';
-  return out;
+  // like "2.0" stay whole.
+  let out = '';
+  for (const sentence of text.split(/(?<=[.!?])\s+/)) {
+    const next = out ? `${out} ${sentence}` : sentence;
+    if (next.length > max) break;
+    out = next;
+  }
+  return out || text.slice(0, max - 1).replace(/\s+\S*$/, '') + '…';
 }
 
 // BGG label -> app keyword id. Ranks come from <rank name="…">, categories and
@@ -131,7 +182,7 @@ export function parseThing(xml: string): GameDetails | null {
     min,
     max,
     mins: playing,
-    desc: summarise(descRaw),
+    desc: cleanDescription(descRaw),
     kw: [...kw],
     img,
   };

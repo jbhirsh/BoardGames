@@ -4,7 +4,7 @@ import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { enforceRateLimit, getLimiter } from './_lib/rateLimit.js';
 import { getRawRedis } from './_lib/redis.js';
 import { failWith500, initSentry, reportError } from './_lib/sentry.js';
-import { BGG_IMG_RE, MINS_MAX, PLAYERS_MAX, lookupGame, type LookupOutcome, type LookupResult } from './_lib/bgg.js';
+import { BGG_IMG_RE, DESC_MAX, MINS_MAX, PLAYERS_MAX, lookupGame, type LookupOutcome, type LookupResult } from './_lib/bgg.js';
 import { SLUG_RE, isSuggestionId } from './_lib/slug.js';
 import { baseUrl, button, escapeHtml, mailLayout, page, resendMailer, type Mail, type Mailer } from './_lib/mail.js';
 import { isAdmin, isJsonRequest, type Headers } from './_lib/session.js';
@@ -60,8 +60,8 @@ initSentry();
 // the record (decide), so a double-submitted form, or the email link and the
 // site at once, decides it once; its writes go through one MULTI/EXEC, and a
 // push removes the id first, so no list holds it twice. On approval (or an owner's add) the game is looked up on
-// BoardGameGeek (_lib/bgg.ts) for players, time, a two-sentence
-// description, year, keywords and box art, stored as `details` so the entry
+// BoardGameGeek (_lib/bgg.ts) for players, time, the whole description,
+// year, keywords and box art, stored as `details` so the entry
 // renders and filters like any other; a miss, an outage or no token still
 // approves, with details empty. With no BGG_API_TOKEN, BGG isn't called at
 // all, and that or BGG refusing the token goes to Sentry as an error, so a
@@ -121,9 +121,8 @@ export const KEYWORD_LABELS: Record<(typeof KEYWORD_IDS)[number], string> = {
   adult: 'Adult', active: 'Physical', creative: 'Creative', 'card-game': 'Card Game', word: 'Word', family: 'Family',
   classic: 'Classic', thematic: 'Thematic', portable: 'Portable', 'quick-play': 'Quick Play',
 };
-export const DESC_MAX = 600;
-// Defined with the lookup, which caps BGG's numbers to them.
-export { MINS_MAX, PLAYERS_MAX };
+// Defined with the lookup, which caps BGG's numbers and text to them.
+export { DESC_MAX, MINS_MAX, PLAYERS_MAX };
 const KW_MAX = 20;
 
 /** Details filled in from BoardGameGeek on approval, editable by the owner. */
@@ -411,7 +410,7 @@ const missAdvice = (outcome: Exclude<LookupOutcome, 'found'>) => (outcome === 'u
   ? 'Approving tries again, and adds it without details if BoardGameGeek still has nothing; or look it up again below.'
   : 'Approving adds it without details, to fill in with Edit on the site; or correct the name below and look it up again.');
 
-const CONFIRM_STYLE = '.preview{display:flex;gap:12px;align-items:flex-start;text-align:left;margin:0 0 20px;padding:12px;border:1px solid #E5E5EA;border-radius:12px}.preview img{flex:none;width:64px;height:64px;object-fit:cover;border-radius:8px;background:#F5F5F7}.preview div{min-width:0}.preview p{margin:0 0 4px;font-size:14px}.preview .name{color:#1D1D1F;font-weight:600}.preview .desc{color:#1D1D1F}.kw{list-style:none;padding:0;margin:6px 0 0;display:flex;flex-wrap:wrap;gap:6px}.kw li{font-size:12px;color:#6E6E73;background:#F5F5F7;border-radius:20px;padding:2px 8px}.miss{text-align:left;font-size:14px;background:#FFF4E5;color:#6B4A00;border-radius:12px;padding:12px}.rename{margin-top:28px;text-align:left}.rename label{display:block;font-size:13px;color:#6E6E73;margin-bottom:6px}.rename div{display:flex;gap:8px}.rename input{flex:1;min-width:0;font:inherit;font-size:16px;padding:10px 12px;border:1px solid #D2D2D7;border-radius:10px}.rename button{background:#fff;color:#0071E3;border:1px solid #0071E3;padding:10px 16px}';
+const CONFIRM_STYLE = '.preview{display:flex;gap:12px;align-items:flex-start;text-align:left;margin:0 0 20px;padding:12px;border:1px solid #E5E5EA;border-radius:12px}.preview img{flex:none;width:64px;height:64px;object-fit:cover;border-radius:8px;background:#F5F5F7}.preview div{min-width:0}.preview p{margin:0 0 4px;font-size:14px}.preview .name{color:#1D1D1F;font-weight:600}.preview .desc{color:#1D1D1F;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}.kw{list-style:none;padding:0;margin:6px 0 0;display:flex;flex-wrap:wrap;gap:6px}.kw li{font-size:12px;color:#6E6E73;background:#F5F5F7;border-radius:20px;padding:2px 8px}.miss{text-align:left;font-size:14px;background:#FFF4E5;color:#6B4A00;border-radius:12px;padding:12px}.rename{margin-top:28px;text-align:left}.rename label{display:block;font-size:13px;color:#6E6E73;margin-bottom:6px}.rename div{display:flex;gap:8px}.rename input{flex:1;min-width:0;font:inherit;font-size:16px;padding:10px 12px;border:1px solid #D2D2D7;border-radius:10px}.rename button{background:#fff;color:#0071E3;border:1px solid #0071E3;padding:10px 16px}';
 
 /** What BoardGameGeek has for the name, or why it has nothing; every value escaped. */
 function previewBlock(game: string, result: LookupResult): string {

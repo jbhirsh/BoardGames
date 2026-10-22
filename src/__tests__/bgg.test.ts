@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { MINS_MAX, PLAYERS_MAX, parseThing, pickSearchId, summarise, lookupGame, type FetchLike } from '../../api/_lib/bgg';
+import { DESC_MAX, MINS_MAX, PLAYERS_MAX, cleanDescription, parseThing, pickSearchId, lookupGame, type FetchLike } from '../../api/_lib/bgg';
 
 const THING = `<?xml version="1.0" encoding="utf-8"?>
 <items termsofuse="https://boardgamegeek.com/xmlapi/termsofuse">
@@ -35,55 +35,81 @@ const SEARCH = `<items total="3" termsofuse="x">
   <item type="boardgame" id="300000"><name type="primary" value="Wingspan Asia"/><yearpublished value="2022"/></item>
 </items>`;
 
-describe('summarise', () => {
-  it('decodes entities, strips markup, and keeps the first sentences under the cap', () => {
-    const out = summarise('First one.&#10;&#10;Second &amp;mdash; here! Third goes on and on and on.', 60);
-    expect(out).toBe('First one. Second — here!');
+describe('cleanDescription', () => {
+  it('keeps the whole description, decoding entities and joining paragraphs', () => {
+    expect(cleanDescription('First one.&#10;&#10;Second &amp;mdash; here! Third goes on and on and on.'))
+      .toBe('First one. Second — here! Third goes on and on and on.');
+  });
+
+  it('caps at DESC_MAX by default', () => {
+    expect(cleanDescription('word '.repeat(2000)).length).toBeLessThanOrEqual(DESC_MAX);
   });
 
   it('keeps decimals whole and a trailing unpunctuated sentence', () => {
-    expect(summarise('Version 2.0 of the classic game. It plays in about 1.5 hours')).toBe('Version 2.0 of the classic game. It plays in about 1.5 hours');
+    expect(cleanDescription('Version 2.0 of the classic game. It plays in about 1.5 hours')).toBe('Version 2.0 of the classic game. It plays in about 1.5 hours');
   });
 
   it('leaves an out-of-range numeric entity as written instead of throwing', () => {
-    expect(summarise('&#9999999; boom')).toBe('&#9999999; boom');
+    expect(cleanDescription('&#9999999; boom')).toBe('&#9999999; boom');
+  });
+
+  it('shortens an over-long description to the whole sentences that fit, never cutting one', () => {
+    const first = 'Skull & Roses is the quintessence of bluffing.';
+    expect(cleanDescription(`${first} Each player plays a face-down card, then bids on how many to flip.`, 60)).toBe(first);
+  });
+
+  it('decodes named entities, double-encoded as BGG sends them, and composes accented letters', () => {
+    expect(cleanDescription('Your card&amp;rsquo;s colour isn&amp;rsquo;t set&amp;hellip; &amp;ldquo;Caf&amp;eacute;&amp;rdquo; &amp;Uuml;ber.'))
+      .toBe('Your card\u2019s colour isn\u2019t set\u2026 \u201cCaf\u00e9\u201d \u00dcber.');
+    // Unknown names, and letter-plus-mark pairs that don't compose, stay as written.
+    expect(cleanDescription('&bogus; &qacute; &eacutex;')).toBe('&bogus; &qacute; &eacutex;');
   });
 
   it('truncates a single very long sentence on a word boundary', () => {
-    const out = summarise('word '.repeat(80), 50);
+    const out = cleanDescription('word '.repeat(80), 50);
     expect(out.length).toBeLessThanOrEqual(50);
     expect(out.endsWith('…')).toBe(true);
   });
 
   it('returns empty for empty input', () => {
-    expect(summarise('')).toBe('');
+    expect(cleanDescription('')).toBe('');
   });
 
   it('decodes multi-digit hex entities and code points up to U+10FFFF, leaving larger ones raw', () => {
-    expect(summarise('It&#x2019;s fun.')).toBe('It\u2019s fun.');
-    expect(summarise('a&#x1F3B2;b')).toBe('a\u{1F3B2}b');
+    expect(cleanDescription('It&#x2019;s fun.')).toBe('It\u2019s fun.');
+    expect(cleanDescription('a&#x1F3B2;b')).toBe('a\u{1F3B2}b');
     // U+10FFFF and U+0000 decode, then go as control characters.
-    expect(summarise('a&#x10FFFF;b')).toBe('ab');
-    expect(summarise('a&#x110000;b')).toBe('a&#x110000;b');
-    expect(summarise('a&#0;b')).toBe('ab');
+    expect(cleanDescription('a&#x10FFFF;b')).toBe('ab');
+    expect(cleanDescription('a&#x110000;b')).toBe('a&#x110000;b');
+    expect(cleanDescription('a&#0;b')).toBe('ab');
   });
 
   it('drops control and format characters an edit would refuse, keeping newlines as spaces', () => {
-    expect(summarise('Co&#173;operative\u200d play.&#10;Zero\u200bwidth.')).toBe('Cooperative play. Zerowidth.');
+    expect(cleanDescription('Co&#173;operative\u200d play.&#10;Zero\u200bwidth.')).toBe('Cooperative play. Zerowidth.');
   });
 
   it('strips multi-character tags, collapses runs of whitespace and trims the ends', () => {
-    expect(summarise('  Hello<br />big   <em>bold</em> world.  ')).toBe('Hello big bold world.');
+    expect(cleanDescription('  Hello<br />big   <em>bold</em> world.  ')).toBe('Hello big bold world.');
   });
 
-  it('keeps exactly two sentences', () => {
-    expect(summarise('One. Two! Three? Four.')).toBe('One. Two!');
+  it('drops inline tags without leaving a space, and parts words at block tags', () => {
+    expect(cleanDescription('In &lt;i&gt;Inkwell&lt;/i&gt;, ink.&lt;br/&gt;&lt;br/&gt;Next&lt;p&gt;line&lt;/p&gt;'))
+      .toBe('In Inkwell, ink. Next line');
+  });
+
+  it('leaves no tag behind when removing one would form another', () => {
+    for (const raw of ['a&lt;scr&lt;b&gt;ipt&gt;b', '&lt;&lt;b&gt;script&gt;x', '&lt;i&lt;i&gt;&gt;x']) expect(cleanDescription(raw)).not.toContain('<');
+  });
+
+  it('keeps every sentence that fits', () => {
+    expect(cleanDescription('One. Two! Three? Four.')).toBe('One. Two! Three? Four.');
+    expect(cleanDescription('One. Two! Three? Four.', 15)).toBe('One. Two!');
   });
 
   it('does not truncate at exactly max, but cuts on a word boundary with an ellipsis above it', () => {
-    expect(summarise('aaaa bbbb', 9)).toBe('aaaa bbbb');
-    expect(summarise('aaaa bbbb', 8)).toBe('aaaa…');
-    expect(summarise('aaaa bbbb cccc', 10)).toBe('aaaa…');
+    expect(cleanDescription('aaaa bbbb', 9)).toBe('aaaa bbbb');
+    expect(cleanDescription('aaaa bbbb', 8)).toBe('aaaa…');
+    expect(cleanDescription('aaaa bbbb cccc', 10)).toBe('aaaa…');
   });
 });
 
@@ -92,6 +118,7 @@ describe('parseThing', () => {
     const d = parseThing(THING)!;
     expect(d).toMatchObject({ bggId: 266192, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70 });
     expect(d.desc.startsWith('Wingspan is a competitive')).toBe(true);
+    expect(d.desc.endsWith('These habitats focus on several key aspects of growth.')).toBe(true);
     expect(d.desc).toContain('bird enthusiasts—researchers');
     expect(d.kw.sort()).toEqual(['card-game', 'deck-building', 'family', 'strategy']);
   });
