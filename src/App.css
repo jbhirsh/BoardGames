@@ -1683,8 +1683,7 @@ body {
 }
 /* With the full row to fill, an open card lays its write-up out in columns
    of a comfortable line length, as many as the row holds (one on a phone),
-   rather than one column with the rest of the row left empty; its games go
-   side by side. */
+   rather than one column with the rest of the row left empty. */
 .games-grid > .game-card.card-open .card-detail,
 .soon-grid > .game-card.card-open .card-detail {
   max-width: none;
@@ -1693,12 +1692,6 @@ body {
 }
 .card-detail :is(.detail-section, .row-awards) {
   break-inside: avoid;
-}
-.games-grid > .game-card.card-open > .sub-panel .sub-list,
-.soon-grid > .game-card.card-open > .sub-panel .sub-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  align-items: start;
 }
 .card-desc {
   font-size: 13px;
@@ -2329,15 +2322,19 @@ table.games-list thead tr th.sort-desc .sort-icon {
   padding: 8px;
   margin-bottom: 14px;
 }
+/* Side by side, filling the row, where there's room for two (an open card
+   or list row on a wider screen), one above another where there isn't (a
+   phone, a closed card). */
 .sub-list {
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 6px 10px;
+  align-items: start;
 }
-/* Phone first: the name with the links beside it, and everything else the
-   row's full width under them, so the write-up isn't squeezed into a
-   column beside the links. Wider, the links take a column of their own. */
+/* The name with the links beside it, and everything else the row's full
+   width under them, so the write-up isn't squeezed into a column beside
+   the links. */
 .sub-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -2362,20 +2359,6 @@ table.games-list thead tr th.sort-desc .sort-icon {
 }
 .sub-main > .sub-more-btn {
   justify-self: start;
-}
-@media (min-width: 521px) {
-  .sub-row {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-  }
-  .sub-main {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
 }
 .sub-name {
   display: flex;
@@ -2674,13 +2657,16 @@ table.games-list thead tr th.sort-desc .sort-icon {
   color: var(--text3);
   margin-left: 4px;
 }
+/* In an open card or row, the wins sit side by side where there's room. */
 .row-awards .awards-list {
   margin-top: 6px;
-  max-width: 520px;
   padding: 8px 10px;
   border-radius: 8px;
   background: var(--surface);
   border: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 3px 24px;
 }
 .awards-list li {
   overflow-wrap: anywhere;

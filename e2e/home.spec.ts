@@ -235,3 +235,43 @@ test('the list sorts by difficulty from its column header', async ({ page }) => 
   const lightest = [...GAMES].sort((a, b) => sortWeight(a, 1) - sortWeight(b, 1) || a.name.localeCompare(b.name))[0];
   await expect(page.getByRole('row').nth(1)).toContainText(lightest.name);
 });
+
+test('on a wider screen, add-ons sit side by side, each name starting its row, in the list and on a card', async ({
+  page,
+}) => {
+  const sideBySide = async () => {
+    const items = page.getByRole('list', { name: 'One Night Werewolf expansions' }).getByRole('listitem');
+    const [daybreak, vampire] = [items.filter({ hasText: 'Daybreak' }), items.filter({ hasText: 'Vampire' })];
+    const name = (await daybreak
+      .getByText(/^Daybreak/)
+      .first()
+      .boundingBox())!;
+    const pitch = (await daybreak.getByText(/^New roles/).boundingBox())!;
+    expect(Math.abs(name.x - pitch.x)).toBeLessThanOrEqual(1);
+    // The write-up runs under the buttons, the row's full width.
+    const watch = (await daybreak.getByRole('link', { name: /Watch Daybreak/ }).boundingBox())!;
+    expect(pitch.y).toBeGreaterThan(watch.y + watch.height - 1);
+    const [a, b] = [(await daybreak.boundingBox())!, (await vampire.boundingBox())!];
+    expect(b.y).toBe(a.y);
+    expect(b.x).toBeGreaterThan(a.x + a.width);
+  };
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Show details for One Night Werewolf' }).click();
+  await sideBySide();
+
+  await page.goto('/?v=grid');
+  await page.getByRole('button', { name: /^One Night Werewolf: \+2/ }).click();
+  await sideBySide();
+});
+
+test("on a wider screen, an open game's awards sit side by side", async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Show details for Ticket to Ride' }).click();
+  const wins = page
+    .getByRole('row')
+    .filter({ has: page.getByRole('heading', { name: 'Awards' }) })
+    .getByRole('listitem');
+  const [first, second] = [(await wins.nth(0).boundingBox())!, (await wins.nth(1).boundingBox())!];
+  expect(second.y).toBe(first.y);
+  expect(second.x).toBeGreaterThan(first.x + first.width);
+});
