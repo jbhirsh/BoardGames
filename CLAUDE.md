@@ -58,7 +58,8 @@ Each module's header comment or JSDoc says what it does and why; read it
 before changing the module.
 
 - **`src/main.tsx`** — entry and routes (listed in its header); **`App.tsx`**
-  the layout shell and `HomePage`; `instrument.ts` Sentry.
+  the layout shell and `HomePage`; `instrument.ts` Sentry's SDK, fetched once
+  the page is up by `client/sentry.ts`.
 - **`src/data/`** — `games.ts`, the collection's source of truth (compiled
   in, no database on the read path); `types.ts` its shapes.
 - **`src/context/`** — the filter store (`FilterContext.tsx`,
@@ -76,9 +77,10 @@ before changing the module.
   `rules-text/`), `game-weights`, `wishlist-art`, `collection-art`;
   **`eval/`** the assistant's eval; **`vite.config.ts`** the build.
 - **External services** — Gemini (`api/chat.ts`), Upstash Redis
-  (`api/_lib/redis.ts`), Resend (`api/_lib/mail.ts`), Sentry (`src/instrument.ts`,
-  `api/_lib/sentry.ts`), BoardGameGeek (`api/_lib/bgg.ts`, the art and weight
-  scripts), Wiktionary (`src/client/dictionary.ts`).
+  (`api/_lib/redis.ts`), Resend (`api/_lib/mail.ts`), Sentry
+  (`src/client/sentry.ts`, `src/instrument.ts`, `api/_lib/sentry.ts`),
+  BoardGameGeek (`api/_lib/bgg.ts`, the art and weight scripts), Wiktionary
+  (`src/client/dictionary.ts`).
 
 ## Invariants and gotchas
 
@@ -102,6 +104,9 @@ before changing the module.
   cross-site form can't send without a preflight.
 - **Emailed links never change state on a GET**: mail scanners follow every
   URL, so approve/deny and sign-in links open a page whose form POSTs.
+- **Report errors through `src/client/sentry.ts`, never `@sentry/react`**:
+  it queues what comes before the SDK loads, after the first paint. A static
+  import of Sentry puts it back in every visit's bundle, and fails the build.
 - **The chat's daily cap fails closed** (the only paid API); every other
   rate limiter fails open.
 - **The service worker is blocked in e2e** (`serviceWorkers: 'block'`), as
@@ -216,7 +221,7 @@ secrets belong in tracked source.
 
 | Variable | Where | Purpose |
 | --- | --- | --- |
-| `VITE_SENTRY_DSN` | client (`src/instrument.ts`) | Sentry browser DSN (must be `VITE_`-prefixed to reach the browser) |
+| `VITE_SENTRY_DSN` | client (`src/client/sentry.ts`, `src/instrument.ts`) | Sentry browser DSN (must be `VITE_`-prefixed to reach the browser) |
 | `SENTRY_DSN` | serverless (`api/_lib/sentry.ts`, every endpoint) | Sentry Node DSN |
 | `GEMINI_API_KEY` | serverless (`api/chat.ts`) | Google Gemini key (server-only) |
 | `KV_REST_API_URL` | serverless (`api/_lib/redis.ts`, every endpoint) | Upstash Redis REST URL |

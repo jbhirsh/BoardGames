@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import * as Sentry from '@sentry/react';
+import * as Sentry from '../client/sentry';
 import WordChecker from '../components/WordChecker';
 import { loadWordList } from '../client/wordList';
 
-vi.mock('@sentry/react', () => ({
+vi.mock('../client/sentry', () => ({
   captureMessage: vi.fn(),
 }));
 

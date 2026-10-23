@@ -1,5 +1,11 @@
+// Sentry's SDK, set up when this module loads. Nothing imports it
+// statically: src/client/sentry.ts fetches it once the page is up, so it
+// builds into a chunk of its own, and reports through the two functions
+// below, sending what was reported before it came.
 import * as Sentry from "@sentry/react";
 import type { ErrorEvent } from "@sentry/react";
+
+export { captureException, captureMessage } from "@sentry/react";
 
 type Replay = ReturnType<typeof import("./sentryReplay").replayIntegration>;
 

@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
-import * as Sentry from '@sentry/react';
+import * as Sentry from '../client/sentry';
 import NotFoundPage, { RouteError } from '../components/NotFoundPage';
 import { RELOAD_KEY } from '../utils/chunkReload';
 
-vi.mock('@sentry/react', () => ({ captureException: vi.fn() }));
+vi.mock('../client/sentry', () => ({ captureException: vi.fn() }));
 
 function Boom(): never {
   throw new Error('render failed');

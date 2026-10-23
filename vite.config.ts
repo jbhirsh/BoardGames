@@ -54,11 +54,14 @@ const PRECACHE_PUBLIC: Record<string, (file: string) => boolean> = {
   fonts: (file) => file.endsWith('.woff2'),
 }
 
-// Session replay's chunk (src/instrument.ts fetches it after an error), left
-// out of the precache so an install doesn't fetch what most visits never run.
-// Once fetched, the service worker keeps it like any later chunk; offline it
-// fails to load, and replay could not upload then anyway.
+// Session replay's chunk (src/instrument.ts, itself fetched once the page is
+// up, fetches it after an error), left out of the precache so an install
+// doesn't fetch what most visits never run. Once fetched, the service worker
+// keeps it like any later chunk; offline it fails to load, and replay could
+// not upload then anyway. The rest of Sentry's SDK is saved at install like
+// any chunk; that it stays out of the entry is checked below.
 const NOT_PRECACHED = [fileURLToPath(new URL('./src/sentryReplay.ts', import.meta.url))]
+const SENTRY_CODE = /[\\/]node_modules[\\/](@sentry|@sentry-internal)[\\/]/
 const REPLAY_CODE = /[\\/]node_modules[\\/](@sentry[\\/]replay|@sentry-internal[\\/]replay|@sentry-internal[\\/]rrweb|rrweb)[\\/-]/
 
 // The service worker (src/sw/sw.ts), bundled to /sw.js with the files it
@@ -105,6 +108,23 @@ function serviceWorker(): Plugin {
         const leaked = Object.entries(file.modules)
           .filter(([id, module]) => REPLAY_CODE.test(id) && module.renderedLength > 0).map(([id]) => id)
         if (leaked.length) throw new Error(`session replay's code is in ${name}: ${leaked.join(', ')}`)
+      }
+      // Nor is any of Sentry in what every visit downloads, the entry and the
+      // chunks it imports: src/client/sentry.ts fetches it once the page is up.
+      const upFront = new Set<string>()
+      const visit = (name: string) => {
+        const file = bundle[name]
+        if (upFront.has(name) || file?.type !== 'chunk') return
+        upFront.add(name)
+        file.imports.forEach(visit)
+      }
+      for (const [name, file] of Object.entries(bundle)) if (file.type === 'chunk' && file.isEntry && name !== 'sw.js') visit(name)
+      for (const name of upFront) {
+        const file = bundle[name]
+        if (file.type !== 'chunk') continue
+        const sentry = Object.entries(file.modules)
+          .filter(([id, module]) => SENTRY_CODE.test(id) && module.renderedLength > 0).map(([id]) => id)
+        if (sentry.length) throw new Error(`Sentry's SDK is in ${name}, which every visit downloads: ${sentry.slice(0, 3).join(', ')}`)
       }
       const files = new Map<string, string | Uint8Array>()
       const reader = new Map<string, string | Uint8Array>()

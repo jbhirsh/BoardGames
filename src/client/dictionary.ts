@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/react';
+import * as Sentry from './sentry';
 import { isMissingPage, readDefinitions } from '../utils/wiktionary';
 import type { Meaning } from '../utils/wiktionary';
 
