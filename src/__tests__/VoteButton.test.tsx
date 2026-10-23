@@ -68,4 +68,15 @@ describe('VoteButton', () => {
     fireEvent.click(btn);
     expect(onClick).not.toHaveBeenCalled();
   });
+
+  it('shows only the heart and the count when compact, keeping the full name', () => {
+    const { rerender } = render(
+      <VoteButton compact itemName="Splendor" voteCount={0} voted={false} onClick={() => {}} />,
+    );
+    const btn = screen.getByRole('button', { name: 'Vote for Splendor (0 votes)' });
+    expect(btn).toHaveTextContent(/^♡$/);
+    expect(btn).toHaveClass('vote-btn--compact');
+    rerender(<VoteButton compact itemName="Splendor" voteCount={4} voted onClick={() => {}} />);
+    expect(screen.getByRole('button', { name: 'Voted for Splendor (4 votes)' })).toHaveTextContent(/^♥4$/);
+  });
 });

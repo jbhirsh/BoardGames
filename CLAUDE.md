@@ -36,6 +36,7 @@ npm run test:mutation                   # StrykerJS, full run (mutation.yml call
 # `vite preview` on port 4174, and drives it with every /api call stubbed
 npm run test:e2e
 npx playwright test e2e/home.spec.ts    # one spec file
+npx playwright test --project=phone     # the phone project (e2e/phone.spec.ts, a Pixel 7)
 npx playwright test --project=visual-chromium   # one engine's screenshots
 npx playwright show-report              # open the last HTML report
 
@@ -138,6 +139,12 @@ before changing the module.
 
 ## Conventions
 
+- **Phone first.** Design a change for a phone (390px) before widening it:
+  44px touch targets, the main actions in reach of a thumb, as much on a
+  screen as reads well. Styles for what only a phone renders need no media
+  query; new rules that differ by width start from the phone's and add
+  `min-width` breakpoints (the older `max-width` blocks convert when next
+  touched). Show a UI change at phone size in the PR first.
 - **TypeScript strict everywhere.** One solution of configs, each extending
   `tsconfig.base.json` (the shared strict options): `tsconfig.{app,api,node,
   eval,sw,e2e}.json` for `src` (DOM), `api` (Node), `vite.config.ts`, `eval`,
@@ -175,6 +182,9 @@ before changing the module.
   label, placeholder or text, never CSS (`playwright/no-raw-locators`); wait
   with web-first assertions, never a timer. A spec may import `src/data`,
   nothing else from the app. Add a test here for a new user-facing flow.
+  The site is designed phone first: `e2e/phone.spec.ts` runs on its own
+  Playwright project, a Pixel 7, and every other spec on a desktop; a
+  phone flow's test goes there.
 - **Visual regression is part of e2e** (`e2e/visual.ts`, `visual*.spec.ts`):
   screenshots against baselines, the core pages in Chromium, Firefox and
   WebKit on a desktop and on phones, every state in both themes in desktop
@@ -210,8 +220,9 @@ before changing the module.
   motion, hosted on the `pr-screenshots` branch as the PR template shows.
   GIFs show the pointer and key presses: record them with `npm run pr-gif`
   (`scripts/record-pr-gif.ts`), from a scenario of real `page.mouse` moves
-  with steps and pauses like `scripts/pr-gif-example.ts`; `--publish` hosts
-  them on `pr-screenshots` and prints the table, linked by commit SHA.
+  with steps and pauses like `scripts/pr-gif-example.ts`, in a phone's
+  window unless the scenario names another; `--publish` hosts them on
+  `pr-screenshots` and prints the table, linked by commit SHA.
   `PR visuals` (`.github/scripts/pr-visuals.mjs`) fails one with no picture
   unless "No visible UI change" is ticked; it can't see changes through
   `src/data`, `public/` or `index.html`, so show those too.

@@ -42,6 +42,8 @@ test("a deck's Hearts is scored hand by hand from its rules page, to the end", a
 test("Uno's Score button opens its pad, and the first to 500 wins", async ({ page }) => {
   await page.goto('/');
   await page.getByPlaceholder('Search games...').fill('Uno');
+  // A phone lists a line a game; Score is in the line, opened.
+  await page.getByRole('button', { name: 'Show details for Uno' }).click();
   await page.getByRole('link', { name: 'Score', exact: true }).click();
   await expect(page).toHaveURL(/\/score\/uno$/);
   const out = page.getByRole('group', { name: 'Who went out?' });

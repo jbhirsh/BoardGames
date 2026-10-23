@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { difficultyOf, weightLabel, weightWord } from '../utils/difficulty';
+import { difficultyOf, difficultyWord, weightLabel, weightWord } from '../utils/difficulty';
 import type { SubGame } from '../data/types';
 
 describe('weightWord', () => {
@@ -60,5 +60,30 @@ describe('difficultyOf', () => {
   it('is nothing when BoardGameGeek rates none of it', () => {
     expect(difficultyOf({})).toBeNull();
     expect(difficultyOf({ subgames: [sub()] })).toBeNull();
+  });
+});
+
+describe('difficultyWord', () => {
+  const sub = (weight?: number): SubGame => ({
+    name: 'S',
+    slug: 's',
+    kind: 'card-game',
+    players: '2',
+    min: 2,
+    max: 2,
+    dur: '5 min',
+    mins: 5,
+    short: '',
+    yt: '',
+    weight,
+  });
+
+  it('keeps the word and drops the number, for a game and for a deck', () => {
+    expect(difficultyWord({ weight: 2.28 })).toBe('Medium');
+    expect(difficultyWord({ subgames: [sub(1), sub(2.4)] })).toBe('Light–Medium');
+  });
+
+  it('is null where there is no weight to describe', () => {
+    expect(difficultyWord({})).toBeNull();
   });
 });

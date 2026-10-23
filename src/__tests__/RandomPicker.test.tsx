@@ -47,12 +47,12 @@ function RulesStub() {
   return <div data-from-list={String(cameFromList(location.state))}>rules page</div>;
 }
 
-function renderPicker() {
+function renderPicker(picker = <RandomPicker />) {
   return render(
     <MemoryRouter>
       <FilterProvider>
         <FilterBar />
-        <RandomPicker />
+        {picker}
         <Routes>
           <Route path="/rules/:slug" element={<RulesStub />} />
           <Route path="*" element={null} />
@@ -428,5 +428,18 @@ describe('RandomPicker picks something playable', () => {
     }
     // The pick after the list runs out isn't the last one shown.
     expect(shown[total]).not.toBe(shown[total - 1]);
+  });
+});
+
+describe('RandomPicker in the phone bar', () => {
+  it("carries the dice and the bar's size, and hides while the wishlist shows", () => {
+    const { unmount } = renderPicker(<RandomPicker variant="bar" />);
+    const button = screen.getByRole('button', { name: 'Pick for us' });
+    expect(button).toHaveClass('pick-btn', 'phone-action');
+    expect(button.querySelector('svg')).not.toBeNull();
+    unmount();
+    const { container } = renderPicker(<RandomPicker variant="bar" hidden />);
+    expect(screen.queryByRole('button', { name: 'Pick for us' })).not.toBeInTheDocument();
+    expect(container.querySelector('.phone-action')).toHaveAttribute('hidden');
   });
 });

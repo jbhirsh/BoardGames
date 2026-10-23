@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { act, render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import GameCollection from '../components/GameCollection';
 import FilterBar from '../components/FilterBar/FilterBar';
@@ -194,12 +194,29 @@ describe('GameCollection on a phone', () => {
   });
   afterEach(() => vi.unstubAllGlobals());
 
-  it('shows cards whatever the saved view, with no view toggle', () => {
+  it('lists a line a game for the list view, cards for the grid, and offers both', () => {
     renderWithFilter();
-    expect(document.querySelector('.games-grid .game-card')).not.toBeNull();
     expect(document.querySelector('table.games-list')).toBeNull();
-    expect(screen.queryByRole('button', { name: 'List view' })).not.toBeInTheDocument();
+    expect(document.querySelector('.games-grid')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Show details for Azul' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 3, name: 'Azul' }).closest('.line')).not.toBeNull();
+
+    // One switch, named for where it goes.
     expect(screen.queryByRole('button', { name: 'Grid view' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Show as cards' }));
+    expect(document.querySelector('.games-grid .game-card')).not.toBeNull();
+    expect(document.querySelector('.lines')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Show as rows' }));
+    expect(document.querySelector('.lines')).not.toBeNull();
+  });
+
+  it('keeps the heading to its title, count and view toggle: Pick for us and Own/Want are in the bar along the bottom', () => {
+    renderWithFilter();
+    const header = document.querySelector('.sec-hd') as HTMLElement;
+    expect(header).toHaveTextContent(/games/);
+    expect(screen.queryByRole('button', { name: 'Pick for us' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'We want' })).not.toBeInTheDocument();
+    expect(within(header).getByRole('button', { name: 'Show as cards' })).toBeInTheDocument();
   });
 });
 

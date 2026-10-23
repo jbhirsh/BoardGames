@@ -12,6 +12,7 @@ import FilterBar from './components/FilterBar/FilterBar';
 import ActiveTags from './components/ActiveTags';
 import GameCollection from './components/GameCollection';
 import Wishlist from './components/Wishlist';
+import PhoneNav from './components/PhoneNav';
 import InstantRouteScroll from './components/InstantRouteScroll';
 import { Analytics } from '@vercel/analytics/react';
 
@@ -25,9 +26,10 @@ export function HomePage() {
   // they scroll away with the page rather than taking a sticky row.
   const isPhone = useIsPhone();
 
-  // Both sections stay mounted and the Own/Want toggle hides one, so a
-  // toggle never refetches. The session check lives here rather than in
-  // App: only this page and /sign-in read it.
+  // Both sections stay mounted and the Own/Want toggle (on a phone, the
+  // bar along the bottom) hides one, so a toggle never refetches. The
+  // session check lives here rather than in App: only this page and
+  // /sign-in read it.
   return (
     <AuthProvider>
       <WishlistProvider>
@@ -43,6 +45,8 @@ export function HomePage() {
             <GameCollection hidden={collection !== 'own'} />
             <Wishlist hidden={collection !== 'want'} />
           </main>
+          {/* Last, so its sticky bottom holds it on screen down the page. */}
+          {isPhone && <PhoneNav />}
         </div>
       </WishlistProvider>
     </AuthProvider>

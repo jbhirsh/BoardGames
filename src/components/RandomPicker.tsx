@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { flushSync } from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
 import { useNavigate } from 'react-router';
 import { useFilterResults } from '../context/useFilter';
 import type { FilterState, Game } from '../data/types';
@@ -12,6 +12,7 @@ import Backdrop from './Backdrop';
 import { FROM_LIST } from '../utils/fromList';
 import { useDialogFocus } from '../hooks/useDialogFocus';
 import { useScrollLock } from '../hooks/useScrollLock';
+import { DiceIcon } from './Icons';
 
 const SPIN_MS = 1400;
 const TICK_MS = 75;
@@ -29,7 +30,21 @@ function whyLine(state: FilterState, poolSize: number): string {
   return `Fits ${fits} · ${ofPool}`;
 }
 
-export default function RandomPicker() {
+/**
+ * Pick for us: spins through the games the filters leave and settles on one
+ * not offered yet this session, in a dialog that opens its rules. Its button
+ * ends the collection's heading line, or, on a phone, sits in the middle of
+ * the bar along the bottom (`variant="bar"`, PhoneNav), which keeps it
+ * mounted but `hidden` while the wishlist shows, so a pick after the toggle
+ * still doesn't repeat itself.
+ */
+export default function RandomPicker({
+  variant = 'header',
+  hidden = false,
+}: {
+  variant?: 'header' | 'bar';
+  hidden?: boolean;
+}) {
   const { state, filteredGames } = useFilterResults();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -137,79 +152,86 @@ export default function RandomPicker() {
       <button
         ref={triggerRef}
         type="button"
-        className="pick-btn"
+        className={variant === 'bar' ? 'pick-btn phone-action' : 'pick-btn'}
         onClick={pick}
         disabled={disabled}
+        hidden={hidden}
         title={disabled ? 'No games match your filters' : undefined}
       >
+        {variant === 'bar' && <DiceIcon />}
         Pick for us
       </button>
       <span className="sr-only" aria-live="polite" aria-atomic="true">
         {liveMessage}
       </span>
 
-      {open && current && (
-        <div className="pick-modal">
-          <Backdrop onClick={close} />
-          <div
-            ref={cardRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={spinning ? 'pick-eyebrow' : undefined}
-            aria-label={spinning ? undefined : `Tonight, play — ${spokenName}`}
-            aria-busy={spinning}
-            tabIndex={-1}
-            className={`pick-card${spinning ? ' spinning' : ''}`}
-          >
-            <div id="pick-eyebrow" className="pick-eyebrow">
-              {spinning ? 'Spinning…' : 'Tonight, play'}
-            </div>
-            <img src={current.img} alt="" className="pick-img" />
-            <div className="pick-name">{spinning ? current.name : playName}</div>
-            {!spinning && sub && (
-              <div className="pick-with">
-                {sub.kind === 'card-game' ? `Played with the ${current.name}` : `with the ${sub.name}`}
+      {/* On the page itself, out of the phone bar, whose sticky stacking
+          and backdrop blur would hold a fixed dialog inside the bar. */}
+      {open &&
+        current &&
+        createPortal(
+          <div className="pick-modal">
+            <Backdrop onClick={close} />
+            <div
+              ref={cardRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={spinning ? 'pick-eyebrow' : undefined}
+              aria-label={spinning ? undefined : `Tonight, play — ${spokenName}`}
+              aria-busy={spinning}
+              tabIndex={-1}
+              className={`pick-card${spinning ? ' spinning' : ''}`}
+            >
+              <div id="pick-eyebrow" className="pick-eyebrow">
+                {spinning ? 'Spinning…' : 'Tonight, play'}
               </div>
-            )}
-            <div className="pick-meta">
-              <span>{shown!.players === '1' ? '1 player' : `${shown!.players} players`}</span>
-              <span aria-hidden="true">•</span>
-              <span>{shown!.dur}</span>
-            </div>
-            {!spinning && shown && result && (
-              <>
-                <p className="pick-short">{shown.short}</p>
-                <p className="pick-why">{result.why}</p>
-              </>
-            )}
-            {!spinning && (
-              <div className="pick-actions">
-                <button type="button" className="pick-secondary" onClick={pick}>
-                  Pick again
-                </button>
-                <button
-                  type="button"
-                  className="pick-primary"
-                  onClick={() => {
-                    const to = rulebookPath(current.slug, sub?.rules ? sub.slug : undefined);
-                    // Closed at once, before leaving: the scroll lock's
-                    // cleanup puts the list back at its offset, and the
-                    // router saves that offset for Back as the navigation
-                    // starts. Still pinned, the page would read as 0.
-                    flushSync(close);
-                    navigate(to, { state: FROM_LIST });
-                  }}
-                >
-                  View rules
-                </button>
+              <img src={current.img} alt="" className="pick-img" />
+              <div className="pick-name">{spinning ? current.name : playName}</div>
+              {!spinning && sub && (
+                <div className="pick-with">
+                  {sub.kind === 'card-game' ? `Played with the ${current.name}` : `with the ${sub.name}`}
+                </div>
+              )}
+              <div className="pick-meta">
+                <span>{shown!.players === '1' ? '1 player' : `${shown!.players} players`}</span>
+                <span aria-hidden="true">•</span>
+                <span>{shown!.dur}</span>
               </div>
-            )}
-            <button type="button" className="pick-close" onClick={close} aria-label="Close">
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
+              {!spinning && shown && result && (
+                <>
+                  <p className="pick-short">{shown.short}</p>
+                  <p className="pick-why">{result.why}</p>
+                </>
+              )}
+              {!spinning && (
+                <div className="pick-actions">
+                  <button type="button" className="pick-secondary" onClick={pick}>
+                    Pick again
+                  </button>
+                  <button
+                    type="button"
+                    className="pick-primary"
+                    onClick={() => {
+                      const to = rulebookPath(current.slug, sub?.rules ? sub.slug : undefined);
+                      // Closed at once, before leaving: the scroll lock's
+                      // cleanup puts the list back at its offset, and the
+                      // router saves that offset for Back as the navigation
+                      // starts. Still pinned, the page would read as 0.
+                      flushSync(close);
+                      navigate(to, { state: FROM_LIST });
+                    }}
+                  >
+                    View rules
+                  </button>
+                </div>
+              )}
+              <button type="button" className="pick-close" onClick={close} aria-label="Close">
+                ✕
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

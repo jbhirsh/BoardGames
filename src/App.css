@@ -615,7 +615,8 @@ body {
 .game-card.jump-arrive {
   animation: card-arrive 1.4s ease-out 0.6s backwards;
 }
-.game-row.jump-arrive td {
+.game-row.jump-arrive td,
+.line.jump-arrive .line-main {
   animation: row-arrive 1.4s ease-out 0.6s backwards;
 }
 
@@ -1140,7 +1141,8 @@ body {
   top: -0.25em;
 }
 /* The switches get a line of their own under the heading, at the right:
-   Own/Want, then the view toggle (hidden on a phone). */
+   Own/Want, then the view toggle (on a phone, the view toggle alone, at
+   the heading line's end). */
 .sec-switch {
   flex-basis: 100%;
   display: flex;
@@ -4376,6 +4378,33 @@ a.rules-chat-toggle {
     padding: 0 11px;
   }
 
+  /* 44px touch targets for the page's own controls: the search and
+     Filters, and the heading's icon buttons (.icon-btn). The theme picker
+     keeps its small pill, each option taking taps 7px above and below it
+     (as far as the gap to the next allows either side), and the reel's
+     pause button its small circle, taking taps 10px around it. */
+  .theme-opt {
+    position: relative;
+  }
+  .theme-opt::after {
+    content: "";
+    position: absolute;
+    inset: -7px -1px;
+  }
+  .fb-search-input {
+    height: 44px;
+  }
+  .filterbar .dd-btn.fb-filters {
+    height: 44px;
+    padding: 0 14px;
+  }
+  .hero-reel-toggle::before {
+    content: "";
+    position: absolute;
+    inset: -10px;
+    border-radius: 50%;
+  }
+
   .suggest-fields {
     grid-template-columns: 1fr;
   }
@@ -4429,33 +4458,38 @@ a.rules-chat-toggle {
     max-height: min(250px, 40svh);
   }
 
+  /* One line from 360px: the title, its count and the view toggle at the
+     right end, Pick for us and Own/Want having gone to the bar along the
+     bottom. Narrower, the toggle wraps under it, still at the right. */
   .sec-hd {
-    padding: 14px 0 0;
+    padding: 6px 0 0;
+    column-gap: 10px;
     row-gap: 10px;
     margin-bottom: 16px;
+  }
+  .sec-title {
+    font-size: 22px;
+  }
+  .sec-count {
+    white-space: nowrap;
+  }
+  .sec-switch {
+    flex-basis: auto;
+    margin-left: auto;
+    gap: 2px;
+    margin-right: -10px;
+  }
+  /* The title and its count centred on the toggle beside them, rather than
+     sharing a baseline that leaves them riding high of it. */
+  .sec-hd > :is(.sec-title, .sec-count) {
+    align-self: center;
+  }
+  .sec-hd > .sec-count {
+    top: 0;
   }
   .wish-purpose {
     margin: -4px 0 16px;
     font-size: 14px;
-  }
-  /* Share wishlist and Suggest a game take a line of their own, two equal
-     halves as tall as the Own/Want toggle under them, rather than wrapping
-     to the right with the line's left half empty. */
-  .sec-hd > .sec-actions {
-    flex-basis: 100%;
-    margin-left: 0;
-  }
-  .sec-actions > :is(.share-btn, .pick-btn) {
-    flex: 1 1 50%;
-    justify-content: center;
-    height: 34px;
-  }
-  /* Own/Want spans the width under the title, two equal halves. */
-  .sec-switch .coll-toggle {
-    flex: 1;
-  }
-  .sec-switch .coll-btn {
-    flex: 1;
   }
   .hero {
     padding: 16px var(--gutter) 24px;
@@ -4478,13 +4512,15 @@ a.rules-chat-toggle {
     margin: -8px 0 -20px;
   }
   /* Room under the row for its pause button. */
-  .hero:has(.hero-reel-toggle) {
-    padding-bottom: 42px;
-  }
+  /* The pause button sits over the row's right end, rather than on a line
+     of its own under it. */
   .hero-reel-toggle {
-    top: calc(100% + 10px);
-    width: 24px;
-    height: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    opacity: 1;
+    box-shadow: var(--shadow-md);
   }
   .hero-reel--still li:nth-child(n + 6) {
     display: none;
@@ -4577,6 +4613,272 @@ a.rules-chat-toggle {
   /* On top of the word checker, nowhere near the home indicator. */
   .word-checker-panel .rules-chat-input {
     padding-bottom: 10px;
+  }
+}
+
+/* ══ PHONE BAR AND LINES ═══════════════════════════════════ */
+/* Written phone first: PhoneNav and the phone's list render only on a
+   phone (useIsPhone), so these need no media query. */
+
+/* The bar along the bottom (PhoneNav). Sticky, the page's last element, so
+   it rides the bottom of the screen and the page's end scrolls clear of it.
+   We own and We want take equal sides and the list's action the middle;
+   every button is centred in the bar's height, the padding the same above
+   and below them. (The inset under that is 0 until index.html's viewport
+   takes viewport-fit=cover; then it keeps the bar off the home indicator.)
+   Whatever takes focus scrolls clear of it. */
+.phone-nav {
+  position: sticky;
+  bottom: 0;
+  z-index: 150;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 8px var(--gutter) calc(8px + env(safe-area-inset-bottom, 0px));
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid var(--border);
+}
+html:has(.phone-nav) {
+  scroll-padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+}
+.phone-tab {
+  height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: var(--text2);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+.phone-tab[aria-pressed="true"] {
+  color: var(--blue);
+}
+.phone-tab:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.phone-nav-mid {
+  display: flex;
+  justify-content: center;
+}
+.pick-btn.phone-action {
+  height: 48px;
+  padding: 0 20px;
+  gap: 8px;
+  border-radius: 14px;
+  font-size: 15px;
+  box-shadow: 0 4px 14px rgba(var(--blue-rgb), 0.3);
+}
+.pick-btn.phone-action[hidden] {
+  display: none;
+}
+/* The on-screen keyboard leaves no room for it while a text field has
+   focus. Hidden rather than gone, so the page keeps its length and doesn't
+   jump as the keyboard opens. */
+body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .phone-nav {
+  visibility: hidden;
+}
+
+/* The phone heading's icon buttons (ViewFlip, the wishlist's Share): quiet,
+   44px, the glyph alone until a copy says "Copied" beside its tick. */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: var(--text2);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
+.icon-btn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.icon-btn-note {
+  color: var(--ok-fg);
+}
+
+/* A phone's list (PhoneListView, the wishlist's): a line a game in one
+   rounded box, each line opening in place (PhoneLine). */
+.lines {
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.line + .line {
+  border-top: 1px solid var(--border);
+}
+.line {
+  scroll-margin-top: calc(var(--thead-top, 91px) + 16px);
+}
+.line-main {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
+  padding: 10px 4px 10px 12px;
+}
+/* The chevron's tap area covers the line; the action sits above it. */
+.line-toggle::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.line-main > :is(.line-action, .vote-btn) {
+  position: relative;
+  z-index: 1;
+}
+.line-art {
+  display: block;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  object-fit: contain;
+  border: 1px solid var(--border);
+  background: var(--art-matte);
+  filter: var(--art-dim);
+}
+.line-art--none {
+  background: var(--bg2);
+  filter: none;
+}
+.line-text {
+  flex: 1;
+  min-width: 0;
+}
+.line-name {
+  font-family: "Playfair Display", "Playfair Fallback", "Playfair Fallback Noto", serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.2px;
+  color: var(--dark);
+  overflow-wrap: anywhere;
+}
+.line-meta {
+  margin-top: 3px;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--text2);
+}
+.rules-btn.line-action {
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border-color: var(--border2);
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 600;
+}
+/* Only the word on a line, which has no room to spare for the name and its players and time. */
+.rules-btn.line-action svg {
+  display: none;
+}
+/* Wide enough for "♥ 12", so a vote landing doesn't narrow the name. */
+.line .vote-btn--compact {
+  min-width: 3.6em;
+  height: 44px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+.line-toggle {
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+}
+.line.open .row-chevron {
+  transform: rotate(180deg);
+  color: var(--blue);
+}
+.line-detail {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.line.open .line-detail {
+  grid-template-rows: 1fr;
+}
+.line-detail-clip {
+  min-height: 0;
+  overflow: hidden;
+}
+.line-detail-inner {
+  padding: 2px 14px 14px;
+}
+.line-desc {
+  margin-bottom: 10px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text2);
+}
+.line-detail-inner .card-kw {
+  padding: 0;
+  margin-bottom: 14px;
+}
+.line-detail-inner .card-expands {
+  padding: 0;
+  margin-bottom: 10px;
+}
+.line-detail-inner .card-credit {
+  margin: 0 0 10px;
+}
+.line-detail-inner .row-expand-foot :is(.rules-btn, .row-yt, .wish-yt, .wish-amz, .wish-track) {
+  height: 44px;
+  min-width: 44px;
+  border-radius: 10px;
+}
+/* The narrowest phones (320px): smaller art and gaps leave a name room on
+   its line, and a plainer middle button leaves We own and We want theirs. */
+@media (max-width: 359px) {
+  .line-main {
+    gap: 8px;
+    padding-left: 10px;
+  }
+  .line-art {
+    width: 44px;
+    height: 44px;
+  }
+  .rules-btn.line-action {
+    padding: 0 10px;
+  }
+  .pick-btn.phone-action {
+    padding: 0 14px;
+    font-size: 14px;
+  }
+  .pick-btn.phone-action svg {
+    display: none;
   }
 }
 

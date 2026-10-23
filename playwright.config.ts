@@ -10,6 +10,8 @@ const CI = !!process.env.CI;
 // phone-only states on phones.
 const VISUAL = /visual(-full|-desktop|-phone)?\.spec\.ts$/;
 const CORE = /visual(-desktop)?\.spec\.ts$/;
+// The phone project's own spec, e2e/phone.spec.ts (not visual-phone.spec.ts).
+const PHONE = /(^|[\\/])phone\.spec\.ts$/;
 const DESKTOP = { viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' } as const;
 // For machines whose preinstalled Chromium doesn't match this Playwright
 // release; CI installs the matching browsers instead.
@@ -49,8 +51,17 @@ export default defineConfig({
   expect: {
     toHaveScreenshot: { maxDiffPixelRatio: 0.01, animations: 'disabled', caret: 'hide' },
   },
+  // The site is designed phone first, so a phone is a project of its own:
+  // e2e/phone.spec.ts runs on a Pixel 7 (412 by 839, touch, a mobile
+  // viewport), every other spec on a desktop. A spec there may still set a
+  // phone's width for a check beside its desktop one.
   projects: [
-    { name: 'chromium', testIgnore: VISUAL, use: { ...devices['Desktop Chrome'], launchOptions: chromiumLaunch } },
+    {
+      name: 'chromium',
+      testIgnore: [VISUAL, PHONE],
+      use: { ...devices['Desktop Chrome'], launchOptions: chromiumLaunch },
+    },
+    { name: 'phone', testMatch: PHONE, use: { ...devices['Pixel 7'], launchOptions: chromiumLaunch } },
     // The visual suite, in all three engines and on phones (the free
     // stand-in for a cross-browser screenshot service). Reduced motion holds
     // the hero's row of covers still.

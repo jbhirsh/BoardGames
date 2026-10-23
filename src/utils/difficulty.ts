@@ -37,3 +37,11 @@ export function difficultyOf(item: Pick<Filterable, 'weight' | 'subgames'>): str
   const [lo, hi] = [shown(Math.min(...weights)), shown(Math.max(...weights))];
   return `${range(weightWord(lo), weightWord(hi))} · ${range(lo.toFixed(1), hi.toFixed(1))}`;
 }
+
+/**
+ * Just the word of difficultyOf, "Medium" or a deck's "Light–Medium", for a
+ * phone's line, which has no room for the number.
+ */
+export function difficultyWord(item: Pick<Filterable, 'weight' | 'subgames'>): string | null {
+  return difficultyOf(item)?.split(' · ')[0] ?? null;
+}

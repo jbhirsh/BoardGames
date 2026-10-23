@@ -256,15 +256,61 @@ describe('Wishlist', () => {
     expect(container.querySelector('.table-wrap')).toBeInTheDocument();
   });
 
-  it('shows cards on a phone even with the list view chosen, and no view toggle', async () => {
+  it('lists a line an entry on a phone, and cards for the grid', async () => {
     stubMatchMedia(true);
     try {
       mockVotes({});
       renderWishlist('/?c=want');
       await screen.findByText(WISHLIST[0].name);
-      expect(document.querySelector('.wish-grid .wish-card')).not.toBeNull();
       expect(document.querySelector('table.games-list')).toBeNull();
-      expect(screen.queryByRole('button', { name: 'List view' })).not.toBeInTheDocument();
+      expect(document.querySelector('.lines [data-testid="wishlist-item"]')).not.toBeNull();
+      fireEvent.click(screen.getByRole('button', { name: 'Show as cards' }));
+      expect(document.querySelector('.wish-grid .wish-card')).not.toBeNull();
+      expect(document.querySelector('.lines')).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('on a phone, puts Share in the heading as an icon, and leaves Suggest to the bar', async () => {
+    stubMatchMedia(true);
+    try {
+      mockVotes({});
+      renderWishlist('/?c=want');
+      const share = await screen.findByRole('button', { name: 'Share wishlist' });
+      expect(share.closest('.sec-hd')).not.toBeNull();
+      expect(share).toHaveTextContent('');
+      // Before the rows-or-cards switch.
+      expect(share.nextElementSibling).toBe(screen.getByRole('button', { name: 'Show as cards' }));
+      expect(screen.queryByRole('button', { name: 'Suggest a game' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'We own' })).not.toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("votes from a phone's line without opening it, and opens it to show the rest", async () => {
+    stubMatchMedia(true);
+    try {
+      const fetchSpy = mockVotes({});
+      renderWishlist('/?c=want');
+      const item = WISHLIST[0];
+      await screen.findByText(item.name);
+      const vote = await screen.findByRole('button', { name: `Vote for ${item.name} (0 votes)` });
+      await waitFor(() => expect(vote).toBeEnabled());
+      fireEvent.click(vote);
+      await waitFor(() =>
+        expect(fetchSpy).toHaveBeenCalledWith('/api/votes', expect.objectContaining({ method: 'POST' })),
+      );
+      const toggle = screen.getByRole('button', { name: `Show details for ${item.name}` });
+      expect(toggle).toHaveAttribute('aria-expanded', 'false');
+      fireEvent.click(toggle);
+      expect(screen.getByRole('button', { name: `Hide details for ${item.name}` })).toHaveAttribute(
+        'aria-expanded',
+        'true',
+      );
+      fireEvent.click(screen.getByRole('button', { name: `Hide details for ${item.name}` }));
+      expect(screen.getByRole('button', { name: `Show details for ${item.name}` })).toBeInTheDocument();
     } finally {
       vi.unstubAllGlobals();
     }
@@ -407,8 +453,11 @@ describe('Wishlist engagement', () => {
   it('sorts by most votes, ties in name order, as one flat list', async () => {
     mockVotes({ splendor: 3, wingspan: 5, 'lost-cities': 3 });
     renderWishlist('/?c=want&s=votes&v=grid');
+    // Polled in Wingspan's own card: a role query over all 39 takes up to
+    // half a second, and on a loaded machine the 3 s wait fitted too few.
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Vote for Wingspan (5 votes)' })).toBeInTheDocument();
+      const card = document.querySelector<HTMLElement>('[data-item-id="wingspan"]');
+      expect(card && within(card).getByRole('button', { name: 'Vote for Wingspan (5 votes)' })).toBeInTheDocument();
     });
     const ids = Array.from(document.querySelectorAll('[data-item-id]')).map((el) => el.getAttribute('data-item-id'));
     expect(ids.slice(0, 3)).toEqual(['wingspan', 'lost-cities', 'splendor']);
@@ -552,6 +601,20 @@ describe('Wishlist engagement', () => {
       await waitFor(() => expect(share).toHaveTextContent('Copied!'));
       expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/?c=want`);
       expect(screen.getByText('Link copied to clipboard')).toBeInTheDocument();
+    });
+
+    it('on a phone, turns its icon to a tick and "Copied"', async () => {
+      stubMatchMedia(true);
+      try {
+        mockVotes({});
+        renderWishlist('/?c=want');
+        const share = await screen.findByRole('button', { name: 'Share wishlist' });
+        fireEvent.click(share);
+        await waitFor(() => expect(share).toHaveTextContent('Copied'));
+        expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/?c=want`);
+      } finally {
+        vi.unstubAllGlobals();
+      }
     });
 
     it('stays quiet when the clipboard refuses', async () => {

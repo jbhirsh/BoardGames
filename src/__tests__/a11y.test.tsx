@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router';
 import { axe } from 'vitest-axe';
@@ -389,5 +389,42 @@ describe('accessibility', () => {
       }
     },
     TIMEOUT_MS,
+  );
+});
+
+// Each list on its own: the whole page twice over runs past a minute under
+// coverage. The stub comes off in afterEach, which runs even if a test
+// times out, so a slow one can't leave the next on a phone.
+describe('accessibility on a phone', () => {
+  beforeEach(() => {
+    stubMatchMedia(true);
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  const renderHome = (url: string) => {
+    const router = createMemoryRouter([{ element: <App />, children: [{ path: '/', element: <HomePage /> }] }], {
+      initialEntries: [url],
+    });
+    return render(<RouterProvider router={router} />);
+  };
+
+  it(
+    'the collection, with the bar and a line open, has no axe violations',
+    async () => {
+      const { container } = renderHome('/');
+      fireEvent.click(screen.getByRole('button', { name: 'Show details for Catan' }));
+      expect(await axe(container, axeOptions)).toHaveNoViolations();
+    },
+    OWNER_TIMEOUT_MS,
+  );
+
+  it(
+    'the wishlist, with the bar and a line open, has no axe violations',
+    async () => {
+      const { container } = renderHome('/?c=want');
+      fireEvent.click(await screen.findByRole('button', { name: `Show details for ${WISHLIST[0].name}` }));
+      expect(await axe(container, axeOptions)).toHaveNoViolations();
+    },
+    OWNER_TIMEOUT_MS,
   );
 });

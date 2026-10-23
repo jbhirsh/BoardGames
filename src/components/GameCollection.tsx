@@ -3,9 +3,11 @@ import { useFilterResults } from '../context/useFilter';
 import { useKeepSectionInView } from '../hooks/useKeepSectionInView';
 import { useIsPhone } from '../hooks/useIsPhone';
 import ViewToggle from './ViewToggle';
+import ViewFlip from './ViewFlip';
 import CollectionToggle from './CollectionToggle';
 import GridView from './GridView';
 import ListView from './ListView';
+import PhoneListView from './PhoneListView';
 import RandomPicker from './RandomPicker';
 import ComingSoon from './ComingSoon';
 
@@ -18,8 +20,10 @@ import ComingSoon from './ComingSoon';
  */
 export default function GameCollection({ hidden = false }: { hidden?: boolean }) {
   const { state, filteredGames } = useFilterResults();
-  // Phones get the cards only: the table has too few columns to be useful
-  // there, and a card's More holds what an expanded row would.
+  // A phone's list is its own (PhoneListView, a line a game): the table has
+  // too few columns to be useful there. Its Pick for us and Own/Want move to
+  // the bar along the bottom (PhoneNav), leaving the heading one line, with
+  // a quiet rows-or-cards switch at its end (ViewFlip).
   const isPhone = useIsPhone();
   const sectionRef = useRef<HTMLElement>(null);
   useKeepSectionInView(sectionRef, !hidden);
@@ -35,13 +39,13 @@ export default function GameCollection({ hidden = false }: { hidden?: boolean })
             {filteredGames.length} {filteredGames.length === 1 ? 'game' : 'games'}
           </span>
           {/* On the heading's line, beside the count it picks from. */}
-          <RandomPicker />
+          {!isPhone && <RandomPicker />}
           <div className="sec-switch">
-            <CollectionToggle />
-            {!isPhone && <ViewToggle />}
+            {!isPhone && <CollectionToggle />}
+            {isPhone ? <ViewFlip /> : <ViewToggle />}
           </div>
         </div>
-        {isPhone || state.view === 'grid' ? <GridView /> : <ListView />}
+        {state.view === 'grid' ? <GridView /> : isPhone ? <PhoneListView /> : <ListView />}
       </section>
       <ComingSoon hidden={hidden} />
     </>
