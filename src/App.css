@@ -1776,14 +1776,23 @@ body {
   border-bottom: none;
 }
 
-/* col: name */
+/* col: name. A name may wrap, so a long one ("SETI: Search for
+   Extraterrestrial Intelligence") can't hold the table wider than its box,
+   where the clipped corners cut off the columns past it. Above 900px the
+   column asks for 260px, so the usual name keeps to one line; under it the
+   fixed layout gives the name what the other columns leave. */
 .col-name {
   font-family: "Playfair Display", "Playfair Fallback", "Playfair Fallback Noto", serif;
   font-size: 15px;
   font-weight: 700;
   line-height: 1.2;
-  white-space: nowrap;
+  text-wrap: balance;
   color: var(--dark);
+}
+@media (min-width: 901px) {
+  .games-list th.col-name-h {
+    width: 260px;
+  }
 }
 .col-name-wrap {
   display: flex;
@@ -4309,7 +4318,6 @@ a.rules-chat-toggle {
     table-layout: fixed;
   }
   .col-name {
-    white-space: normal;
     font-size: 13.5px;
   }
   /* Under table-layout:fixed the header row sets the widths: the name
@@ -4389,10 +4397,9 @@ a.rules-chat-toggle {
     padding-right: 14px;
   }
 
-  /* name wraps, with the subtitle under it a size smaller */
+  /* the name, with the subtitle under it a size smaller */
   .col-name {
     font-size: 13.5px;
-    white-space: normal;
   }
   .mobile-short {
     font-size: 11.5px;
