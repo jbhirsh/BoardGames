@@ -144,26 +144,57 @@ test('the bar steps aside while the keyboard is up for the search', async ({ pag
   await expect(bar(page)).toBeVisible();
 });
 
-test('the controls on the page are at least 44px each way, or take taps beyond their small look', async ({ page }) => {
+/**
+ * How far a control takes taps each way: its own box, and the invisible
+ * area a smaller one carries around it (App.css). Probes out from its
+ * centre, a pixel at a time, for the element a tap there would reach.
+ */
+const tapArea = (control: Locator) =>
+  control.evaluate((el: Element) => {
+    const r = el.getBoundingClientRect();
+    const [cx, cy] = [r.x + r.width / 2, r.y + r.height / 2];
+    const hits = (x: number, y: number) => {
+      const at = document.elementFromPoint(x, y);
+      return at !== null && el.contains(at);
+    };
+    const reach = (dx: number, dy: number) => {
+      let d = 0;
+      while (d < 40 && hits(cx + dx * (d + 1), cy + dy * (d + 1))) d++;
+      return d;
+    };
+    return { width: reach(-1, 0) + reach(1, 0) + 1, height: reach(0, -1) + reach(0, 1) + 1 };
+  });
+
+const takesTaps44 = async (controls: Locator[]) => {
+  for (const control of controls) {
+    await control.scrollIntoViewIfNeeded();
+    const area = await tapArea(control);
+    const name = await control.evaluate((el: Element) => el.getAttribute('aria-label') ?? el.textContent ?? '');
+    expect(area.height, name).toBeGreaterThanOrEqual(44);
+    expect(area.width, name).toBeGreaterThanOrEqual(44);
+  }
+};
+
+test('the controls on the page take taps 44px each way, a small one beyond its look', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Show details for Azul' }).click();
-  const controls: Locator[] = [
-    page.getByPlaceholder('Search games...'),
-    page.getByRole('button', { name: /^Filters/ }),
+  // The search keeps iOS's own search field's 36px: a text field can't
+  // carry a tap area beyond its box.
+  expect((await page.getByPlaceholder('Search games...').boundingBox())!.height).toBeGreaterThanOrEqual(36);
+  const filters = page.getByRole('button', { name: /^Filters/ });
+  expect((await filters.boundingBox())!.height).toBeLessThan(44);
+  await takesTaps44([
+    filters,
     page.getByRole('button', { name: 'Show as cards' }),
     page.getByRole('button', { name: 'Hide details for Azul' }),
     page.getByRole('link', { name: 'Rules for Azul' }),
+    page.getByRole('link', { name: /Watch Azul tutorial/ }),
     ...(await bar(page).getByRole('button').filter({ visible: true }).all()),
-  ];
-  for (const control of controls) {
-    const box = (await control.boundingBox())!;
-    const name = await control.evaluate((el: Element) => el.getAttribute('aria-label') ?? el.textContent ?? '');
-    expect(box.height, name).toBeGreaterThanOrEqual(44);
-    expect(box.width, name).toBeGreaterThanOrEqual(44);
-  }
+  ]);
   // The theme picker keeps its small pill, and each option takes a tap
   // just under it.
   const dark = page.getByRole('radio', { name: 'Dark' });
+  await dark.scrollIntoViewIfNeeded();
   const option = (await dark.boundingBox())!;
   await page.mouse.click(option.x + option.width / 2, option.y + option.height + 5);
   await expect(dark).toHaveAttribute('aria-checked', 'true');
@@ -176,6 +207,24 @@ test('the controls on the page are at least 44px each way, or take taps beyond t
   expect(box.y + box.height).toBeLessThan(row.y + row.height);
   await page.mouse.click(box.x - 8, box.y + box.height / 2);
   await expect(page.getByRole('button', { name: /^Play/ })).toBeVisible();
+});
+
+test("a score pad's and the rules page's small controls take taps 44px each way", async ({ page }) => {
+  // Each page loads after its placeholder, whose Back link it replaces.
+  await page.goto('/score/7-wonders');
+  await expect(page.getByRole('button', { name: 'Results' })).toBeVisible();
+  await takesTaps44([
+    page.getByRole('link', { name: /Back to The Game Room/ }),
+    page.getByRole('button', { name: 'Player 1' }),
+    page.getByRole('button', { name: 'Add player' }),
+    page.getByRole('button', { name: 'Results' }),
+  ]);
+  await page.goto('/rules/azul');
+  await expect(page.getByPlaceholder('Search the rulebook')).toBeVisible();
+  await takesTaps44([
+    page.getByRole('link', { name: /Back to The Game Room/ }),
+    page.getByRole('button', { name: /AI Rules Assistant/ }),
+  ]);
 });
 
 test('a wishlist line votes from where it sits, without opening', async ({ page }) => {
