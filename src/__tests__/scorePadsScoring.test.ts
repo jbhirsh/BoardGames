@@ -45,6 +45,11 @@ describe('tieNotes', () => {
     expect(tieNotes(['Ana', 'Ben'], shown([5, 5]), [5, 5], [])).toEqual(['Ana and Ben tie on 5 points, so they share 1st place.']);
   });
 
+  it('ends an unsettled tie as the game asks', () => {
+    expect(tieNotes(['Ana', 'Ben'], shown([5, 5]), [5, 5], [], (place) => `so they share ${place}, unless one of them had fewer turns`))
+      .toEqual(['Ana and Ben tie on 5 points, so they share 1st, unless one of them had fewer turns.']);
+  });
+
   it('lists ties from the top', () => {
     expect(tieNotes(['A', 'B', 'C', 'D'], shown([1, 9, 1, 9]), [1, 9, 1, 9], []).map((n) => n.slice(0, 7))).toEqual(['B and D', 'A and C']);
   });

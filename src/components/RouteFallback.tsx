@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useParams } from 'react-router';
 import { ALL_GAMES } from '../data/games';
-import { scorePadPath } from '../data/scoreCalculators';
+import { scorePadLink } from '../data/scoreCalculators';
 import { WORD_CHECKER_GAME } from '../data/wordChecker';
 import { rulebooks } from '../utils/rulebooks';
 import PageHeader from './PageHeader';
@@ -49,7 +49,7 @@ export function RulesFallback() {
   return (
     <RouteFallback title={game.name} desc={book.short}>
       <button type="button" className="rules-chat-toggle" disabled><AiRulesIcon size={16} />AI Rules Assistant</button>
-      {(scorePadPath(game.slug, book.part) ?? scorePadPath(game.slug)) && <span className="rules-chat-toggle"><CalculatorIcon /> Score calculator</span>}
+      {scorePadLink(game.slug, book.part) && <span className="rules-chat-toggle"><CalculatorIcon /> Score calculator</span>}
       {game.slug === WORD_CHECKER_GAME && <button type="button" className="rules-chat-toggle" disabled>Word Checker</button>}
     </RouteFallback>
   );

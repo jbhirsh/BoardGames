@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router';
 import { useSavedState } from '../hooks/useSavedState';
 import {
   LONGEST_BONUS, ROUTE_LENGTHS, ROUTE_POINTS, STATION_POINTS, STATIONS, ttrBreakdown, ttrTieBreaks,
@@ -27,7 +28,8 @@ const MAPS: Record<TtrMap, { name: string; longest: string }> = {
 };
 
 function blank() {
-  return { routes: Object.fromEntries(LENGTHS.map(l => [l, ''])), tickets: [], longest: false, stations: '' };
+  // Every player starts with all three stations, and most build few.
+  return { routes: Object.fromEntries(LENGTHS.map(l => [l, ''])), tickets: [], longest: false, stations: String(STATIONS) };
 }
 
 function valid(r: Record<string, unknown>): boolean {
@@ -48,7 +50,7 @@ function tally(p: TtrPlayer): TtrTally {
 }
 
 function hasScores(p: TtrPlayer): boolean {
-  return LENGTHS.some(l => num(p.routes[l]) > 0) || p.tickets.some(t => num(t.points) > 0) || p.longest || num(p.stations) > 0;
+  return LENGTHS.some(l => num(p.routes[l]) > 0) || p.tickets.some(t => num(t.points) > 0) || p.longest || p.stations !== String(STATIONS);
 }
 
 const pts = (n: number) => `${n} ${Math.abs(n) === 1 ? 'point' : 'points'}`;
@@ -171,14 +173,18 @@ function Results({ map, players }: { map: TtrMap; players: TtrPlayer[] }) {
 
 /**
  * Ticket to Ride's pad, for the map the table played (the US or Europe,
- * kept with the game). Each player counts their routes by length, the pad
+ * kept with the game; ?map=europe opens on Europe's). Each player counts their routes by length, the pad
  * turning them into points by the Route Scoring Table, adds each ticket
  * they kept as completed or missed, ticks the longest path bonus (every
  * player tied for it does), and in Europe counts the stations they never
  * built. Results ranks the table with the rulebook's tie-breaks.
  */
 export default function TicketToRidePad() {
-  const [map, setMap] = useSavedState<TtrMap>('gameroom:score:ticket-to-ride:map', 'usa', (v) => (v === 'usa' || v === 'europe' ? v : null));
+  const isMap = (v: unknown): v is TtrMap => v === 'usa' || v === 'europe';
+  // ?map=europe, from Europe's rules tab, opens on that map.
+  const [search] = useSearchParams();
+  const asked = search.get('map');
+  const [map, setMap] = useSavedState<TtrMap>('gameroom:score:ticket-to-ride:map', 'usa', (v) => (isMap(v) ? v : null), isMap(asked) ? asked : null);
   return (
     <PlayerScorePad<TtrPlayer>
       storageKey="gameroom:score:ticket-to-ride"

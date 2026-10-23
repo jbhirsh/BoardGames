@@ -265,7 +265,8 @@ describe('accessibility', () => {
       spades: [{ game: 'spades', bids: [3, 3, 3, 0], tricks: [4, 3, 3, 3] }],
       euchre: [{ game: 'euchre', makers: 1, tricks: 4, alone: false }],
     }[game];
-    const names = game === 'euchre' ? ['Us', 'Them'] : game === 'spades' ? ['A', 'B', 'C', 'D'] : game === 'hearts' ? ['A', 'B', 'C'] : ['A', 'B'];
+    // Uno's first name cleared: its seat still names every box and button.
+    const names = game === 'euchre' ? ['Us', 'Them'] : game === 'spades' ? ['A', 'B', 'C', 'D'] : game === 'hearts' ? ['A', 'B', 'C'] : game === 'uno' ? ['', 'B'] : ['A', 'B'];
     localStorage.setItem(`gameroom:score:${game}`, JSON.stringify({ names, rounds }));
     try {
       const router = createMemoryRouter([{ path: '/score/:slug/:part?', element: <ScoreCalculatorPage /> }], { initialEntries: [`/score/${pad}`] });

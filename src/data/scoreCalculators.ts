@@ -96,7 +96,7 @@ export const CARD_GAMES: Record<CardGameId, CardGameRules> = {
     maxPlayers: 4,
     goal: { to: 500, low: false },
     round: 'Hand',
-    rule: 'A partnership that makes its contract (both bids added) scores 10 a trick bid and 1 a trick over (a bag); short of it, it loses 10 a trick bid. Every 10 bags costs 100. A bid of 0 is nil: 100 if you take no tricks, minus 100 if you take any. A nil bidder\'s tricks don\'t count toward the partner\'s bid; they count as bags. First partnership to 500 wins.',
+    rule: 'A partnership that makes its contract (both bids added) scores 10 a trick bid and 1 a trick over (a bag); short of it, it loses 10 a trick bid. Every 10 bags costs 100. A bid of 0 is nil: 100 if you take no tricks, minus 100 if you take any. A nil bidder\'s tricks don\'t count toward the partner\'s bid; they score nothing but count as the partnership\'s bags. First partnership to 500 wins.',
   },
   euchre: {
     name: 'Euchre',
@@ -136,6 +136,22 @@ export function scorePadFor(slug: string, part?: string): ScorePad | undefined {
 /** Where a game's pad is, or a game inside one's; null when it has none. */
 export function scorePadPath(slug: string, part?: string): string | null {
   return PADS.has(key(slug, part)) ? `/score/${key(slug, part)}` : null;
+}
+
+/**
+ * A rulebook tab whose game's pad opens set for it: Europe's tab opens
+ * Ticket to Ride's on the Europe map.
+ */
+const TAB_CHOICES: Readonly<Record<string, string>> = { 'ticket-to-ride/europe': '?map=europe' };
+
+/**
+ * Where a rules tab's Score link goes: the pad of the game the tab is for
+ * (a deck's Hearts), else its game's pad, set for the tab where it can be
+ * (TAB_CHOICES); null when there is neither.
+ */
+export function scorePadLink(slug: string, part?: string): string | null {
+  const game = scorePadPath(slug);
+  return scorePadPath(slug, part) ?? (game && `${game}${TAB_CHOICES[key(slug, part)] ?? ''}`);
 }
 
 /** Every pad's path after /score/, for the tests that check each is a real game. */

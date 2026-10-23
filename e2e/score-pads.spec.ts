@@ -94,7 +94,8 @@ test('Ticket to Ride scores each player\'s routes and tickets on the map played'
   await page.getByRole('button', { name: 'See results' }).click();
   const sheet = page.getByRole('table', { name: 'Scores by category' });
   const row = (name: string) => sheet.getByRole('row').filter({ has: page.getByRole('rowheader', { name, exact: true }) });
-  await expect(row('Total').getByRole('cell')).toHaveText(['67', '40']);
+  // Player 2's three stations, never built, are 12 more.
+  await expect(row('Total').getByRole('cell')).toHaveText(['67', '52']);
   await expect(row('Place').getByRole('cell')).toHaveText(['1st', '2nd']);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
 });

@@ -36,7 +36,9 @@ export default function ScoreCalculatorPage() {
       {pad.kind === 'seven-wonders' && <SevenWondersPad />}
       {pad.kind === 'ticket-to-ride' && <TicketToRidePad />}
       {pad.kind === 'dominion' && <DominionPad />}
-      {pad.kind === 'rounds' && <RoundScorePad game={pad.game} />}
+      {/* Keyed: Back from Golf to Hearts is the same route, and must not
+          carry Golf's table (and save it as Hearts'). */}
+      {pad.kind === 'rounds' && <RoundScorePad key={pad.game} game={pad.game} />}
     </ScorePadFrame>
   );
 }

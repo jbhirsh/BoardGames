@@ -168,10 +168,13 @@ export default function RoundScorePad({ game }: { game: CardGameId }) {
     titleRef.current?.focus({ preventScroll: true });
   }, [editing]);
 
+  // A name cleared in its box still needs one wherever it labels a box or
+  // a button: its seat's.
+  const shown = names.map((n, i) => n.trim() || (game === 'euchre' ? `Team ${i + 1}` : `Player ${i + 1}`));
   const columns = rules.teams ? 2 : names.length;
   const columnNames = game === 'spades'
-    ? [`${names[0]} & ${names[2]}`, `${names[1]} & ${names[3]}`]
-    : names;
+    ? [`${shown[0]} & ${shown[2]}`, `${shown[1]} & ${shown[3]}`]
+    : shown;
   const { points, totals, bags } = scoreRounds(rounds, columns);
   const result = outcome(rules.goal, totals, rounds.length);
   const roundName = (i: number) => `${rules.round} ${i + 1}`;
@@ -182,7 +185,7 @@ export default function RoundScorePad({ game }: { game: CardGameId }) {
   const heartsSoFar = game === 'hearts' && draft.moon === null && draft.boxes.some(b => b === '')
     ? draft.boxes.reduce((sum, b) => sum + num(b), 0)
     : null;
-  const issue = typeof made === 'string' || (heartsSoFar !== null && heartsSoFar <= HEARTS_HAND) ? null : roundIssue(made);
+  const issue = typeof made === 'string' || (heartsSoFar !== null && heartsSoFar < HEARTS_HAND) ? null : roundIssue(made);
   const preview = typeof made === 'string' ? null : scoreRounds([made], columns).points[0];
 
   const setBox = (field: 'boxes' | 'bids' | 'tricks', i: number, text: string) =>
@@ -255,7 +258,7 @@ export default function RoundScorePad({ game }: { game: CardGameId }) {
       <details className="sc-setup rp-players" open={rounds.length === 0 || undefined}>
         <summary className="sc-setup-title">
           {game === 'euchre' ? 'Partnerships' : 'Players'}
-          <span className="sc-vp-note">{names.join(', ')}</span>
+          <span className="sc-vp-note">{shown.join(', ')}</span>
         </summary>
         {game === 'spades' && <p className="sc-hint">Partners sit opposite: players 1 and 3 against 2 and 4.</p>}
         <div className="rp-names">
@@ -264,7 +267,7 @@ export default function RoundScorePad({ game }: { game: CardGameId }) {
               <label className="sr-only" htmlFor={`rp-name-${i}`}>{game === 'euchre' ? `Partnership ${i + 1}` : `Player ${i + 1}`} name</label>
               <input id={`rp-name-${i}`} className="sc-input sc-name-input" type="text" value={name} onChange={(e) => rename(i, e.target.value)} />
               {rounds.length === 0 && names.length > rules.minPlayers && !rules.teams && (
-                <button type="button" className="sc-remove" aria-label={`Remove ${name}`} onClick={() => removePlayer(i)}>&times;</button>
+                <button type="button" className="sc-remove" aria-label={`Remove ${shown[i]}`} onClick={() => removePlayer(i)}>&times;</button>
               )}
             </div>
           ))}
@@ -302,7 +305,7 @@ export default function RoundScorePad({ game }: { game: CardGameId }) {
         <div className="sc-form">
           {(game === 'uno' || game === 'rummy') && (
             <>
-              <Choice label="Who went out?" options={names.map((n, i) => ({ value: i, name: n }))} value={draft.out} onChange={(out) => setDraft(d => ({ ...d, out }))} />
+              <Choice label="Who went out?" options={shown.map((n, i) => ({ value: i, name: n }))} value={draft.out} onChange={(out) => setDraft(d => ({ ...d, out }))} />
               {draft.out !== null && (
                 <>
                   <p className="sc-hint">
@@ -310,7 +313,7 @@ export default function RoundScorePad({ game }: { game: CardGameId }) {
                       ? 'number cards their face value, Draw Two, Reverse and Skip 20, Wilds 50.'
                       : 'face cards 10, aces 1, the rest their face value.'}
                   </p>
-                  {names.map((n, i) => i !== draft.out && (
+                  {shown.map((n, i) => i !== draft.out && (
                     <div key={i} className="sc-row">
                       <label className="sc-label" htmlFor={`rp-box-${i}`}>{n}</label>
                       <ScoreInput id={`rp-box-${i}`} unit="pts" value={draft.boxes[i]} onChange={(e) => setBox('boxes', i, cleanInput(e.target.value, false, 999))} />
@@ -325,22 +328,22 @@ export default function RoundScorePad({ game }: { game: CardGameId }) {
             <>
               <Choice
                 label="Did anyone shoot the moon?"
-                options={[{ value: -1, name: 'No' }, ...names.map((n, i) => ({ value: i, name: n }))]}
+                options={[{ value: -1, name: 'No' }, ...shown.map((n, i) => ({ value: i, name: n }))]}
                 value={draft.moon ?? -1}
                 onChange={(m) => setDraft(d => ({ ...d, moon: m === -1 ? null : m }))}
               />
               {draft.moon === null
-                ? names.map((n, i) => (
+                ? shown.map((n, i) => (
                   <div key={i} className="sc-row">
                     <label className="sc-label" htmlFor={`rp-box-${i}`}>{n}</label>
                     <ScoreInput id={`rp-box-${i}`} unit="pts" value={draft.boxes[i]} onChange={(e) => setBox('boxes', i, cleanInput(e.target.value, false, HEARTS_HAND))} />
                   </div>
                 ))
-                : <p className="sc-hint">{names[draft.moon]} scores 0 and everyone else {HEARTS_HAND}.</p>}
+                : <p className="sc-hint">{shown[draft.moon]} scores 0 and everyone else {HEARTS_HAND}.</p>}
             </>
           )}
 
-          {game === 'golf' && names.map((n, i) => (
+          {game === 'golf' && shown.map((n, i) => (
             <div key={i} className="sc-row">
               <label className="sc-label" htmlFor={`rp-box-${i}`}>{n}</label>
               <div className="sc-input-wrap">
@@ -359,7 +362,7 @@ export default function RoundScorePad({ game }: { game: CardGameId }) {
                   <span className="rp-col-head">Bid</span>
                   <span className="rp-col-head">Tricks</span>
                 </div>
-                {names.map((n, i) => (
+                {shown.map((n, i) => (
                   <div key={i} className="rp-spades-row">
                     <span className="sc-label">{n}</span>
                     <ScoreInput id={`rp-bid-${i}`} label={`${n} bid`} value={draft.bids[i]} onChange={(e) => setBox('bids', i, cleanInput(e.target.value, false, SPADES_TRICKS))} />
@@ -372,7 +375,7 @@ export default function RoundScorePad({ game }: { game: CardGameId }) {
 
           {game === 'euchre' && (
             <>
-              <Choice label="Who chose trump?" options={names.map((n, i) => ({ value: i as 0 | 1, name: n }))} value={draft.makers} onChange={(makers) => setDraft(d => ({ ...d, makers }))} />
+              <Choice label="Who chose trump?" options={shown.map((n, i) => ({ value: i as 0 | 1, name: n }))} value={draft.makers} onChange={(makers) => setDraft(d => ({ ...d, makers }))} />
               <Choice
                 label="Tricks they took"
                 options={Array.from({ length: EUCHRE_TRICKS + 1 }, (_, t) => ({ value: t, name: String(t) }))}
