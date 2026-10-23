@@ -65,6 +65,16 @@ export default defineConfig({
       testMatch: /visual(-phone)?\.spec\.ts$/,
       use: { ...devices['Pixel 7'], reducedMotion: 'reduce', launchOptions: chromiumLaunch },
     },
+    // The README's screenshots (e2e/readme.shots.ts), only when asked for.
+    ...(process.env.README_SHOTS
+      ? [
+          {
+            name: 'readme',
+            testMatch: /readme\.shots\.ts$/,
+            use: { ...devices['Desktop Chrome'], launchOptions: chromiumLaunch },
+          },
+        ]
+      : []),
     {
       name: 'visual-phone-webkit',
       testMatch: /visual(-phone)?\.spec\.ts$/,

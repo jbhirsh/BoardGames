@@ -52,3 +52,4 @@ blob-report
 # The weekly audit's reports (weekly-audit.yml), when run locally
 /jscpd-report
 /architecture
+/readme-shots

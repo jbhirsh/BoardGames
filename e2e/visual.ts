@@ -38,6 +38,14 @@ export async function prepare(page: Page, theme: Theme): Promise<void> {
  * never scrolls to) and the fonts in. The projects' reduced motion holds the hero's row still.
  */
 export async function shoot(page: Page, name: string, fullPage = false): Promise<void> {
+  await settle(page);
+  // Two shots in a row must match before one counts; a slow engine needs
+  // longer than the default 5 s to get there.
+  await expect(page).toHaveScreenshot(`${name}.png`, { fullPage, timeout: 15_000 });
+}
+
+/** Waits until the page has stopped changing on its own (see shoot), for any screenshot. */
+export async function settle(page: Page): Promise<void> {
   // The hero starts loading its later covers 1.5 s after it mounts
   // (WARM_MS in CoverCarousel); past that, nothing new starts on its own.
   await page.waitForFunction(() => performance.now() > 2_000);
@@ -46,9 +54,6 @@ export async function shoot(page: Page, name: string, fullPage = false): Promise
     await Promise.all([...document.images].map((img) => img.decode().catch(() => undefined)));
     await document.fonts.ready;
   });
-  // Two shots in a row must match before one counts; a slow engine needs
-  // longer than the default 5 s to get there.
-  await expect(page).toHaveScreenshot(`${name}.png`, { fullPage, timeout: 15_000 });
 }
 
 /** Waits until the rulebook's first page is drawn and its search is ready. */

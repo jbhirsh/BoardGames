@@ -239,6 +239,18 @@ deliberate copy (the dark theme's second block, the API's keyword labels)
 says why beside its `jscpd:ignore` marker, and an export only a command-line
 caller uses is tagged `@public`.
 
+**The README's screenshots refresh themselves** (`readme-screenshots.yml`):
+once a change that can alter the app's look reaches main (counted from the
+workflow's last finished run), Playwright takes them again
+(`e2e/readme.shots.ts`, the API stubbed) and the visibly changed ones (over
+0.5% of pixels) go to one PR from `bot/readme-screenshots`, the one branch a
+workflow pushes besides a PR's own, with auto-merge on; other pushes keep
+that PR rebased on main. Add the shot there when the README gains a picture. It needs a `BOT_PR_TOKEN`
+secret (a fine-grained token for this repository, Contents and Pull requests
+read and write): a PR the default Actions token opens starts no workflows, so
+its required checks never report. Without it the default token is used, which
+also needs "Allow GitHub Actions to create and approve pull requests" on.
+
 Every check but `PR visuals` is required (autofix skips that one too), so
 nothing merges until all report and arming auto-merge early is safe. A new PR workflow must be
 added to the required checks, or bot PRs merge without it; list a gating
