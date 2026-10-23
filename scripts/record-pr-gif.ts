@@ -111,7 +111,10 @@ function json(body: unknown) {
  * The app's API. Playwright tries the newest route first, so the catch-alls
  * go in first and a scenario's own routes, added after these, win.
  *   - Off this origin, only pictures load (the BoardGameGeek art), unless
- *     `fixtures`; anything else is aborted.
+ *     `fixtures`; anything else is aborted. They're fetched from Node rather
+ *     than by the browser: BoardGameGeek's image server answers headless
+ *     Chromium with a 400, where it serves Node the same request, and a
+ *     blank box isn't what the page shows.
  *   - The wishlist and its vote counts are read from the live site, unless
  *     `fixtures` (or the live site can't be reached, which it warns of):
  *     then nothing is on the wishlist and every count is 0.
@@ -122,8 +125,14 @@ async function stubApi(page: Page, origin: string, fixtures: boolean): Promise<v
   const read = (route: Parameters<Parameters<Page['route']>[1]>[0]) => route.request().method() === 'GET';
   await page.route(
     (url) => url.origin !== origin,
-    (route) =>
-      !fixtures && route.request().resourceType() === 'image' ? route.continue() : route.abort('blockedbyclient'),
+    async (route) => {
+      if (fixtures || route.request().resourceType() !== 'image') return route.abort('blockedbyclient');
+      try {
+        return await route.fulfill({ response: await route.fetch() });
+      } catch {
+        return route.abort('failed');
+      }
+    },
   );
   await page.route(
     (url) => url.origin === origin && url.pathname.startsWith('/api/'),
