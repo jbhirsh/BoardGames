@@ -1,5 +1,6 @@
 import { useRef, type KeyboardEvent, type ReactNode } from 'react';
 import { useTheme, type ThemeChoice } from '../hooks/useTheme';
+import { radioMove } from '../utils/radioMove';
 import { AutoThemeIcon, MoonIcon, SunIcon } from './Icons';
 
 const OPTIONS: { value: ThemeChoice; label: string; icon: ReactNode }[] = [
@@ -7,16 +8,6 @@ const OPTIONS: { value: ThemeChoice; label: string; icon: ReactNode }[] = [
   { value: 'light', label: 'Light', icon: <SunIcon /> },
   { value: 'dark', label: 'Dark', icon: <MoonIcon /> },
 ];
-
-// Where each key moves from option i of n.
-const MOVES: Record<string, (i: number, n: number) => number> = {
-  ArrowDown: (i, n) => (i + 1) % n,
-  ArrowRight: (i, n) => (i + 1) % n,
-  ArrowUp: (i, n) => (i - 1 + n) % n,
-  ArrowLeft: (i, n) => (i - 1 + n) % n,
-  Home: () => 0,
-  End: (_, n) => n - 1,
-};
 
 /**
  * Light, dark or the system's setting, remembered for the next visit. A
@@ -28,10 +19,9 @@ export default function ThemeToggle() {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>, from: number) => {
-    const move = MOVES[e.key];
-    if (!move) return;
+    const to = radioMove(e.key, from, OPTIONS.length);
+    if (to === null) return;
     e.preventDefault();
-    const to = move(from, OPTIONS.length);
     choose(OPTIONS[to].value);
     refs.current[to]?.focus();
   };
