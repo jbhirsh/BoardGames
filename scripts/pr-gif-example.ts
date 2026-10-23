@@ -8,22 +8,23 @@ import { click, drag, glide, type Scenario } from './pr-gif.ts';
 
 export default {
   path: '/',
-  // From the carousel's box, with room above and below for the pointer.
+  // From the carousel's box, the window's width, with room above and below for the pointer.
   clip: async (page) => {
     const box = (await page.getByRole('list', { name: 'Collection covers' }).boundingBox())!;
-    return { x: 0, y: Math.max(0, box.y - 45), width: 900, height: box.height + 165 };
+    return { x: 0, y: Math.max(0, box.y - 45), width: page.viewportSize()!.width, height: box.height + 165 };
   },
   ready: async (page) => {
     await page.getByRole('list', { name: 'Collection covers' }).waitFor();
   },
   play: async (page) => {
     const row = (await page.getByRole('list', { name: 'Collection covers' }).boundingBox())!;
+    const width = page.viewportSize()!.width;
     const y = row.y + row.height / 2;
     // Rest under the row, in shot but off the covers, which would hold it.
-    const rest = { x: 450, y: y + row.height / 2 + 30 };
+    const rest = { x: width / 2, y: y + row.height / 2 + 30 };
     await glide(page, rest);
     await page.waitForTimeout(1200);
-    await drag(page, { x: 300, y }, { x: 520, y });
+    await drag(page, { x: width * 0.25, y }, { x: width * 0.75, y });
     await glide(page, rest);
     await page.waitForTimeout(2500);
     // Into the search box, typed in (the label building up), and Tabbed out of.

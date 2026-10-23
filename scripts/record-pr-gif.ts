@@ -12,8 +12,11 @@
 // pr-gif/<name>/ (gitignored): before.gif and after.gif, or one
 // side-by-side.gif with --side-by-side.
 //   - --after-only skips the base, for UI that is new.
-//   - Width: each GIF is the scenario's width, or 700; a side-by-side one is
-//     1000. --width overrides either.
+//   - The window is the scenario's, or a phone's (390 × 844), as the site is
+//     designed phone first.
+//   - Width: each GIF is the scenario's width, or the window's up to 700; a
+//     side-by-side one is two of those, each up to 496. --width overrides
+//     either.
 //   - --fps caps the frame rate, 15 by default. A GIF over 5 MB, which a PR
 //     may not show, is warned of: fewer frames or a narrower GIF is the cure.
 //   - --keep keeps the work directory (the builds and frames) to look at.
@@ -40,7 +43,7 @@ import { basename, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium, type Browser, type Page } from '@playwright/test';
 import { framesToGif, recordFrames, showPointer, sideBySide, waitForPictures, type Scenario } from './pr-gif.ts';
-import { markdown, parseOptions, repoFromRemote, type Options } from './record-pr-gif-options.ts';
+import { PHONE, defaultWidth, markdown, parseOptions, repoFromRemote, type Options } from './record-pr-gif-options.ts';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const VITE = join(ROOT, 'node_modules', 'vite', 'bin', 'vite.js');
@@ -179,7 +182,7 @@ async function record(
   options: Options,
 ): Promise<void> {
   const context = await browser.newContext({
-    viewport: scenario.viewport ?? { width: 900, height: 560 },
+    viewport: scenario.viewport ?? PHONE,
     // Chrome's screencast sends frames at 1×, whatever the scale factor.
     deviceScaleFactor: 1,
     colorScheme: scenario.colorScheme ?? 'light',
@@ -318,11 +321,13 @@ async function main(): Promise<void> {
     const gifs: string[] = [];
     if (options.sideBySide) {
       gifs.push(join(out, 'side-by-side.gif'));
-      sideBySide(join(work, 'frames-before'), join(work, 'frames-after'), gifs[0], { width: options.width ?? 1000 });
+      const width = options.width ?? defaultWidth((scenario.viewport ?? PHONE).width, true);
+      sideBySide(join(work, 'frames-before'), join(work, 'frames-after'), gifs[0], { width });
     } else {
       for (const { side } of sides) {
         gifs.push(join(out, `${side}.gif`));
-        framesToGif(join(work, `frames-${side}`), gifs.at(-1)!, { width: options.width ?? scenario.width ?? 700 });
+        const width = options.width ?? scenario.width ?? defaultWidth((scenario.viewport ?? PHONE).width, false);
+        framesToGif(join(work, `frames-${side}`), gifs.at(-1)!, { width });
       }
     }
     for (const gif of gifs) {

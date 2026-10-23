@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { USAGE, markdown, parseOptions, repoFromRemote } from './record-pr-gif-options.ts';
+import { USAGE, defaultWidth, markdown, parseOptions, repoFromRemote } from './record-pr-gif-options.ts';
 
 describe('parseOptions', () => {
   it('takes a scenario, named after its file, with the defaults', () => {
@@ -100,5 +100,18 @@ describe('markdown', () => {
   it('shows a single GIF on its own, a side-by-side one wider', () => {
     expect(markdown({ ...at, gifs: ['after.gif'] })).toBe(`<img src="${raw}/after.gif" width="500">`);
     expect(markdown({ ...at, gifs: ['side-by-side.gif'] })).toBe(`<img src="${raw}/side-by-side.gif" width="800">`);
+  });
+});
+
+describe('defaultWidth', () => {
+  it("keeps a phone's frames at their size, and caps a wide window", () => {
+    expect(defaultWidth(390, false)).toBe(390);
+    expect(defaultWidth(900, false)).toBe(700);
+  });
+
+  it('puts two of them side by side, 8px apart, each in even pixels', () => {
+    expect(defaultWidth(390, true)).toBe(788);
+    expect(defaultWidth(375, true)).toBe(756);
+    expect(defaultWidth(900, true)).toBe(1000);
   });
 });
