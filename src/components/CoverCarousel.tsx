@@ -23,7 +23,7 @@ const DRAG_PX = 5;
 interface Press {
   id: number;
   x: number;
-  drag?: { anim: Animation; time: number; half: number; lap: number };
+  drag?: { anim: Animation; time: number; half: number; lap: number; dx: number };
 }
 
 /**
@@ -61,7 +61,10 @@ function jumpTo(anchor: string) {
  * has focus, while off screen or in a background tab, and for good with
  * its pause button (WCAG 2.2.2). The row can be dragged sideways, by
  * mouse or finger, to wind it back or on; let go, it glides on from
- * there. A press that hardly moves is still a click on its cover. For
+ * there, the way it was pulled: pulled right, it turns to glide right
+ * until pulled left again (or a switch between Own and Want starts the
+ * new row afresh). A press that hardly moves is still a click on its
+ * cover. For
  * people who ask for less motion it doesn't move at all: the list's first
  * STILL_COUNT covers (the favourites, in Own mode; App.css shows five on a
  * phone) stand in a still row, as the shelf did, and there is nothing to
@@ -161,10 +164,13 @@ export default function CoverCarousel({ want }: { want: boolean }) {
     if (p?.id !== e.pointerId) return;
     if (!p.drag) {
       if (Math.abs(e.clientX - p.x) < DRAG_PX) return;
+      // Missing for the frame between finishing, played backwards, and
+      // being wound round (turn, below): the next move starts the drag.
       const anim = trackRef.current!.getAnimations()[0];
+      if (!anim) return;
       const half = trackRef.current!.scrollWidth / 2;
       const lap = Number(anim.effect!.getComputedTiming().duration);
-      p.drag = { anim, time: Number(anim.currentTime), half, lap };
+      p.drag = { anim, time: Number(anim.currentTime), half, lap, dx: 0 };
       // Keep the drag when the pointer strays off the row, and let go of
       // the focus the press gave its cover, which would hold the row still
       // after the drag.
@@ -173,7 +179,8 @@ export default function CoverCarousel({ want }: { want: boolean }) {
       setDragging(true);
     }
     const { anim, time, half, lap } = p.drag;
-    const t = time - ((e.clientX - p.x) / half) * lap;
+    p.drag.dx = e.clientX - p.x;
+    const t = time - (p.drag.dx / half) * lap;
     // Wound past either end of a lap, it comes round to the same covers
     // in the other copy, so the loop never jumps.
     anim.currentTime = ((t % lap) + lap) % lap;
@@ -185,12 +192,26 @@ export default function CoverCarousel({ want }: { want: boolean }) {
     press.current = null;
     setHeld(false);
     setDragging(false);
-    if (!p.drag || e.type !== 'pointerup') return;
+    if (!p.drag) return;
+    turn(p.drag.anim, p.drag.dx);
+    if (e.type !== 'pointerup') return;
     // The click comes straight after the pointer's release, in the same
     // task; if it lands outside the row, the flag mustn't outlive it and
     // swallow the next click from the keyboard.
     dragged.current = true;
     setTimeout(() => { dragged.current = false; });
+  };
+
+  // Let go, the row glides on the way it was pulled. Played backwards, the
+  // animation would finish on reaching the start of its first lap: it
+  // comes round to the end of the lap instead, where the covers are the
+  // same, and carries on.
+  const turn = (anim: Animation, dx: number) => {
+    if (dx === 0) return;
+    anim.playbackRate = dx > 0 ? -1 : 1;
+    anim.onfinish = () => {
+      anim.currentTime = Number(anim.effect!.getComputedTiming().duration);
+    };
   };
 
   // A press that leaves the row before it has moved far enough to drag

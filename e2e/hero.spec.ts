@@ -121,6 +121,54 @@ test('the row drags sideways, and the drag doesn\'t open a game', async ({ page 
   await expect.poll(async () => (await cover.boundingBox())!.x).toBeLessThan(to.x - 1);
 });
 
+test('pulled right, the row turns to glide right, coming round its loop', async ({ page }) => {
+  await page.goto('/');
+  const row = track(page);
+  const at = (ms: number) => row.evaluate((el, t) => {
+    el.parentElement!.getAnimations()[0].currentTime = t;
+  }, ms);
+  // Between finishing and being wound round, the row has no animation for
+  // a frame: no time, which the poll waits out.
+  const time = () => row.evaluate((el) => Number(el.parentElement!.getAnimations()[0]?.currentTime));
+  const lap = await row.evaluate((el) => Number(el.parentElement!.getAnimations()[0].effect!.getComputedTiming().duration));
+  // The middle of the row, whatever is under it: pressed, the row holds.
+  const cover = (await row.getByRole('button').first().boundingBox())!;
+  const x = page.viewportSize()!.width / 2;
+  const y = cover.y + cover.height / 2;
+  // Pulls the row 150px from where it is wound to, and lets go of it
+  // with the pointer away. Wound well inside the lap, the row can't come
+  // round its loop while it is watched.
+  const pull = async (from: number, by: number) => {
+    await at(from);
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await expect.poll(() => atRest(row)).toBe(true);
+    const held = await slid(row);
+    await page.mouse.move(x + by, y, { steps: 10 });
+    expect(await slid(row)).toBeCloseTo(held + by, 0);
+    const left = await slid(row);
+    await page.mouse.up();
+    await page.mouse.move(0, 0);
+    await expect.poll(() => playState(row)).toBe('running');
+    return left;
+  };
+
+  const right = await pull(lap / 3, 150);
+  await expect.poll(() => slid(row)).toBeGreaterThan(right + 1);
+
+  // Played back to the start of its first lap, it comes round to the end
+  // of the lap and carries on, rather than finishing there.
+  await at(50);
+  await expect.poll(time).toBeGreaterThan(lap / 2);
+  expect(await playState(row)).toBe('running');
+  const after = await slid(row);
+  await expect.poll(() => slid(row)).toBeGreaterThan(after + 1);
+
+  // Pulled left again, it turns back.
+  const left = await pull(lap / 3, -150);
+  await expect.poll(() => slid(row)).toBeLessThan(left - 1);
+});
+
 test('a press on a cover that doesn\'t move still opens its game', async ({ page }) => {
   await page.goto('/');
   const row = track(page);
