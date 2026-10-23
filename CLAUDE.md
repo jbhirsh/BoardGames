@@ -139,10 +139,11 @@ before changing the module.
 
 ## Conventions
 
-- **Phone first.** Design a change for a phone (390px) before widening it:
-  44px touch targets, the main actions in reach of a thumb, as much on a
-  screen as reads well. Styles for what only a phone renders need no media
-  query; new rules that differ by width start from the phone's and add
+- **Phone first.** Design a change for a phone (390px) before widening
+  it: 44px touch targets (an invisible tap area around a smaller control
+  rather than a bigger box, App.css), the main actions in reach of a
+  thumb, as much on a screen as reads well. Styles for what only a phone
+  renders need no media query; new rules that differ by width start from the phone's and add
   `min-width` breakpoints (the older `max-width` blocks convert when next
   touched). Show a UI change at phone size in the PR first.
 - **TypeScript strict everywhere.** One solution of configs, each extending

@@ -4421,11 +4421,51 @@ a.rules-chat-toggle {
     padding: 0 11px;
   }
 
-  /* 44px touch targets for the page's own controls: the search and
-     Filters, and the heading's icon buttons (.icon-btn). The theme picker
-     keeps its small pill, each option taking taps 7px above and below it
-     (as far as the gap to the next allows either side), and the reel's
-     pause button its small circle, taking taps 10px around it. */
+  /* 44px touch targets that cost no room: a control keeps its size and
+     takes taps out to 44px each way through an invisible ::after centred on
+     it (no further where it's already bigger), so a fingertip that lands
+     beside a 32px button still presses it. The keyword, add-on and award
+     pills take 3px more around them (below), as far as the gap between
+     rows allows. A text field can't carry one: the search keeps its 36px,
+     the height of iOS's own search field. The theme picker's options take
+     taps 7px above and below their pill (as far as the gap to the next
+     allows either side), and the reel's pause button 10px around its
+     circle. */
+  :is(
+    .filterbar .dd-btn.fb-filters,
+    .icon-btn,
+    .line .vote-btn--compact,
+    :is(.card-foot, .row-expand-foot, .sub-links)
+      :is(.rules-btn, .vote-btn, .row-yt, .wish-yt, .wish-amz, .wish-track, .sub-link),
+    .back-link,
+    .rules-download,
+    .rules-chat-toggle,
+    .pdf-search-form button,
+    .sc-player-tab,
+    .sc-player-remove,
+    .sc-add-player,
+    .sc-summary-tab,
+    .sc-next,
+    .word-checker-panel .rules-chat-input button,
+    .signin-btn,
+    .suggest-btn
+  ) {
+    position: relative;
+    &::after {
+      content: "";
+      position: absolute;
+      inset: min(0px, calc(50% - 22px));
+    }
+  }
+  /* Room for the player tabs' taps: the strip scrolls sideways, which
+     clips what passes its edges, and a tab's frame clips its corners. */
+  .sc-player-strip {
+    padding-block: 4px;
+    margin-block: -4px;
+  }
+  .sc-player-tab-wrap {
+    overflow: visible;
+  }
   .theme-opt {
     position: relative;
   }
@@ -4433,13 +4473,6 @@ a.rules-chat-toggle {
     content: "";
     position: absolute;
     inset: -7px -1px;
-  }
-  .fb-search-input {
-    height: 44px;
-  }
-  .filterbar .dd-btn.fb-filters {
-    height: 44px;
-    padding: 0 14px;
   }
   .hero-reel-toggle::before {
     content: "";
@@ -4455,16 +4488,8 @@ a.rules-chat-toggle {
     padding: 18px 16px;
   }
 
-  /* 44px touch targets for the buttons under a card, an add-on's row and
-     an expanded row's actions, still one size and radius across them. */
-  :is(.card-foot, .row-expand-foot, .sub-links)
-    :is(.rules-btn, .vote-btn, .row-yt, .wish-yt, .wish-amz, .wish-track, .sub-link) {
-    height: 44px;
-    min-width: 44px;
-    border-radius: 10px;
-  }
-  /* Vote keeps room for "♥ Voted · 12" beside two 44px buttons and the
-     award count on a 320px card: a little less padding, a little less gap. */
+  /* Vote keeps room for "♥ Voted · 12" beside two buttons and the award
+     count on a 320px card: a little less padding, a little less gap. */
   :is(.card-foot, .row-expand-foot) .vote-btn {
     min-width: 8em;
     padding: 0 10px;
@@ -4514,7 +4539,7 @@ a.rules-chat-toggle {
     font-size: 22px;
   }
   .sec-switch {
-    gap: 2px;
+    gap: 4px;
     margin-right: -10px;
   }
   .wish-purpose {
@@ -4722,14 +4747,14 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
 }
 
 /* The phone heading's icon buttons (ViewFlip, the wishlist's Share): quiet,
-   44px, the glyph alone until a copy says "Copied" beside its tick. */
+   34px (taps reach 44px), the glyph alone until a copy says "Copied" beside its tick. */
 .icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  min-width: 44px;
-  height: 44px;
+  min-width: 34px;
+  height: 34px;
   padding: 0 10px;
   border: none;
   border-radius: 12px;
@@ -4823,9 +4848,8 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
 /* Wide enough for "♥ 12", so a vote landing doesn't narrow the name. */
 .line .vote-btn--compact {
   min-width: 3.6em;
-  height: 44px;
+  height: 34px;
   padding: 0 10px;
-  border-radius: 10px;
   font-size: 14px;
 }
 .line-toggle {
@@ -4870,11 +4894,6 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
 }
 .line-detail-inner .card-credit {
   margin: 0 0 10px;
-}
-.line-detail-inner .row-expand-foot :is(.rules-btn, .row-yt, .wish-yt, .wish-amz, .wish-track) {
-  height: 44px;
-  min-width: 44px;
-  border-radius: 10px;
 }
 /* The narrowest phones (320px): smaller art and gaps leave a name room on
    its line, and a plainer middle button leaves We own and We want theirs. */
