@@ -275,3 +275,21 @@ test("on a wider screen, an open game's awards sit side by side", async ({ page 
   expect(second.y).toBe(first.y);
   expect(second.x).toBeGreaterThan(first.x + first.width);
 });
+
+test("the list's table fits its box at the narrowest width of each layout, a long name wrapping", async ({ page }) => {
+  // 901px is the narrowest with the description and tags, 1081px with the
+  // collection's difficulty: past its box, the clipped corners cut off the
+  // columns at the end (the wishlist's votes, the chevron).
+  for (const width of [901, 1081]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const url of ['/', '/?c=want']) {
+      await page.goto(url);
+      const table = page.getByRole('table');
+      await expect(table.getByRole('row').nth(1)).toBeVisible();
+      const overflow = await table.evaluate((t) => t.getBoundingClientRect().width - t.parentElement!.clientWidth);
+      expect(overflow, `${url} at ${width}px`).toBeLessThanOrEqual(0);
+    }
+  }
+  const seti = page.getByText('SETI: Search for Extraterrestrial Intelligence', { exact: true });
+  expect((await seti.boundingBox())!.height).toBeGreaterThan(30);
+});
