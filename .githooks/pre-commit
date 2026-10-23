@@ -11,6 +11,11 @@
 set -e
 echo "▶ pre-commit: eslint"
 npx eslint . --cache --cache-location node_modules/.cache/eslint/
+echo "▶ pre-commit: prettier (staged files)"
+# Only what this commit touches: the whole tree is CI's check. Ignored and
+# unknown files (.prettierignore, images) are skipped.
+git diff --cached --name-only --diff-filter=ACMR -z \
+  | xargs -0 -r npx prettier --check --ignore-unknown --no-error-on-unmatched-pattern
 echo "▶ pre-commit: dependency-cruiser"
 npm run depcruise
 echo "▶ pre-commit: tsc"

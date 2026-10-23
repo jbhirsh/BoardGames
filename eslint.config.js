@@ -1,12 +1,13 @@
-import js from '@eslint/js'
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import jsxA11y from 'eslint-plugin-jsx-a11y-x'
-import tseslint from 'typescript-eslint'
-import playwright from 'eslint-plugin-playwright'
-import eslintComments from '@eslint-community/eslint-plugin-eslint-comments'
-import { defineConfig, globalIgnores } from 'eslint/config'
+import js from '@eslint/js';
+import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
+import jsxA11y from 'eslint-plugin-jsx-a11y-x';
+import tseslint from 'typescript-eslint';
+import playwright from 'eslint-plugin-playwright';
+import eslintComments from '@eslint-community/eslint-plugin-eslint-comments';
+import eslintConfigPrettier from 'eslint-config-prettier/flat';
+import { defineConfig, globalIgnores } from 'eslint/config';
 
 export default defineConfig([
   globalIgnores(['dist', 'coverage', '.stryker-tmp', 'reports', 'test-results', 'playwright-report', 'blob-report']),
@@ -42,11 +43,7 @@ export default defineConfig([
   {
     // Playwright end-to-end tests (`npm run test:e2e`).
     files: ['e2e/**/*.ts', 'playwright.config.ts'],
-    extends: [
-      js.configs.recommended,
-      tseslint.configs.recommended,
-      playwright.configs['flat/recommended'],
-    ],
+    extends: [js.configs.recommended, tseslint.configs.recommended, playwright.configs['flat/recommended']],
     languageOptions: {
       ecmaVersion: 2022,
       globals: globals.node,
@@ -87,4 +84,7 @@ export default defineConfig([
       'react-hooks/refs': 'off',
     },
   },
-])
+  // Last, so it switches off every rule above that only argues with
+  // Prettier's layout (npm run format); Prettier owns formatting.
+  eslintConfigPrettier,
+]);

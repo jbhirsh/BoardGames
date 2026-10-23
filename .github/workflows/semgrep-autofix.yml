@@ -121,6 +121,7 @@ jobs:
             Dependencies are already installed (`npm ci` ran before this
             step). Run, in order, and fix any regression before pushing:
               - `npm run lint`
+              - `npm run format:check` (`npm run format` rewrites what it flags)
               - `npm run depcruise` (skip if this script doesn't exist yet)
               - `npm run typecheck`
               - `npx vitest run --coverage`

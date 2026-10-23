@@ -55,6 +55,11 @@ jobs:
       - name: Lint (includes jsx-a11y static a11y checks)
         run: npm run lint
 
+      # Prettier owns layout (.prettierrc.json, .prettierignore); a file it
+      # would rewrite fails here. `npm run format` fixes it.
+      - name: Formatting (Prettier)
+        run: npm run format:check
+
       - name: Architecture rules (dependency-cruiser)
         run: npm run depcruise
 
