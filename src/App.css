@@ -1681,7 +1681,19 @@ body {
 .soon-grid > .game-card.card-open {
   grid-column: 1 / -1;
 }
-/* With the full row to fill, an open card lays its games out side by side. */
+/* With the full row to fill, an open card lays its write-up out in columns
+   of a comfortable line length, as many as the row holds (one on a phone),
+   rather than one column with the rest of the row left empty; its games go
+   side by side. */
+.games-grid > .game-card.card-open .card-detail,
+.soon-grid > .game-card.card-open .card-detail {
+  max-width: none;
+  columns: 36ch;
+  column-gap: 40px;
+}
+.card-detail :is(.detail-section, .row-awards) {
+  break-inside: avoid;
+}
 .games-grid > .game-card.card-open > .sub-panel .sub-list,
 .soon-grid > .game-card.card-open > .sub-panel .sub-list {
   display: grid;
