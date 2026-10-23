@@ -321,6 +321,24 @@ body {
   font-weight: 400;
   min-height: 100svh;
 }
+/* The page runs to the screen's edges (index.html's viewport-fit=cover),
+   so an installed app's bottom bar reaches under the home indicator and
+   pads itself clear of it (.phone-nav), as the filter sheet's buttons and
+   the rules chat's field do. The page keeps clear of a landscape phone's
+   notch at the sides and of anything over its top, where the pinned search
+   bar and the rulebook's search stop under a band in the page's colour.
+   Each inset is 0 where nothing is there, as on a desktop. */
+body {
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 250;
+  background: var(--bg);
+}
 .clip-wrap {
   overflow-x: clip;
 }
@@ -623,7 +641,7 @@ body {
 /* ══ STICKY HEADER WRAPPER ════════════════════════════════ */
 .sticky-header {
   position: sticky;
-  top: 0;
+  top: env(safe-area-inset-top, 0px);
   z-index: 200;
 }
 
@@ -717,7 +735,7 @@ body {
 .sheet-ft {
   display: flex;
   gap: 10px;
-  padding: 12px var(--gutter);
+  padding: 12px var(--gutter) calc(12px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--border);
 }
 .sheet-clear,
@@ -3223,7 +3241,7 @@ button.rules-save {
 /* The search stays in reach while the pages scroll under it. */
 .pdf-search {
   position: sticky;
-  top: 0;
+  top: env(safe-area-inset-top, 0px);
   z-index: 2;
   padding: 8px 0;
   margin-bottom: 8px;
