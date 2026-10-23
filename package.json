@@ -57,6 +57,7 @@
     "dependency-cruiser": "^18.6.0",
     "eslint": "^10.12.0",
     "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jsdoc": "^65.4.2",
     "eslint-plugin-jsx-a11y-x": "^0.2.0",
     "eslint-plugin-playwright": "^2.12.1",
     "eslint-plugin-react-hooks": "^7.1.1",
