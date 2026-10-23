@@ -175,6 +175,32 @@ const takesTaps44 = async (controls: Locator[]) => {
   }
 };
 
+test('the top of the page leaves room for four games: the title beside the theme picker, small covers under it', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const title = (await page.getByRole('heading', { level: 1 }).boundingBox())!;
+  const picker = (await page.getByRole('radio', { name: 'Dark' }).boundingBox())!;
+  expect(picker.y).toBeLessThan(title.y + title.height);
+  expect(picker.y + picker.height).toBeGreaterThan(title.y);
+  // The reel's pause button sits over the covers' row, keeps its small
+  // circle, and takes a tap beside it.
+  const pause = page.getByRole('button', { name: /^(Pause|Play)/ });
+  const box = (await pause.boundingBox())!;
+  const row = (await page.getByRole('list', { name: 'Collection covers' }).boundingBox())!;
+  expect(box.y).toBeGreaterThan(row.y);
+  expect(box.y + box.height).toBeLessThan(row.y + row.height);
+  await page.mouse.click(box.x - 8, box.y + box.height / 2);
+  await expect(page.getByRole('button', { name: /^Play/ })).toBeVisible();
+  // Under Safari's bars (the project's 681px window), the fourth line ends
+  // above the bar along the bottom.
+  const fourth = (await page
+    .getByRole('listitem')
+    .filter({ has: page.getByRole('heading', { level: 3, name: 'Bananagrams' }) })
+    .boundingBox())!;
+  expect(fourth.y + fourth.height).toBeLessThanOrEqual((await bar(page).boundingBox())!.y);
+});
+
 test('the controls on the page take taps 44px each way, a small one beyond its look', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Show details for Azul' }).click();
@@ -198,15 +224,6 @@ test('the controls on the page take taps 44px each way, a small one beyond its l
   const option = (await dark.boundingBox())!;
   await page.mouse.click(option.x + option.width / 2, option.y + option.height + 5);
   await expect(dark).toHaveAttribute('aria-checked', 'true');
-  // The reel's pause button sits over the covers' row, keeps its small
-  // circle, and takes a tap beside it.
-  const pause = page.getByRole('button', { name: /^(Pause|Play)/ });
-  const box = (await pause.boundingBox())!;
-  const row = (await page.getByRole('list', { name: 'Collection covers' }).boundingBox())!;
-  expect(box.y).toBeGreaterThan(row.y);
-  expect(box.y + box.height).toBeLessThan(row.y + row.height);
-  await page.mouse.click(box.x - 8, box.y + box.height / 2);
-  await expect(page.getByRole('button', { name: /^Play/ })).toBeVisible();
 });
 
 test("a score pad's and the rules page's small controls take taps 44px each way", async ({ page }) => {
