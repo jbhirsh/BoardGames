@@ -241,4 +241,18 @@ describe('accessibility', () => {
     expect(screen.getByRole('table', { name: 'Scores by category' })).toBeInTheDocument();
     expect(await axe(container, axeOptions)).toHaveNoViolations();
   }, TIMEOUT_MS);
+
+  it.each(['/score/ticket-to-ride', '/score/dominion'])('%s has no axe violations, form and results', async (path) => {
+    const router = createMemoryRouter([{ path: '/score/:slug/:part?', element: <ScoreCalculatorPage /> }], { initialEntries: [path] });
+    const { container } = render(<RouterProvider router={router} />);
+    if (path.endsWith('ticket-to-ride')) {
+      fireEvent.click(screen.getByRole('button', { name: 'Europe' }));
+      fireEvent.click(screen.getByRole('button', { name: '+ Add ticket' }));
+    } else {
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Gardens' }));
+    }
+    expect(await axe(container, axeOptions)).toHaveNoViolations();
+    fireEvent.click(screen.getByRole('button', { name: 'Results' }));
+    expect(await axe(container, axeOptions)).toHaveNoViolations();
+  }, TIMEOUT_MS);
 });

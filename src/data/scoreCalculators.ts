@@ -2,16 +2,24 @@
  * The score pads, at /score/<slug> for a game. Each pad is this data plus a
  * pure scoring module in src/utils:
  *   - 7 Wonders: a player at a time, then a sheet (utils/sevenWonders.ts).
+ *   - Ticket to Ride (the US map and Europe) and Dominion (with Intrigue):
+ *     the same, counting what's on the table at the end
+ *     (utils/ticketToRide.ts, utils/dominion.ts).
  * A new pad needs its scoring and a component too
  * (components/ScoreCalculatorPage.tsx picks one by `kind`).
  */
 
 /** Which pad a game has. */
-export type ScorePad = { kind: 'seven-wonders' };
+export type ScorePad =
+  | { kind: 'seven-wonders' }
+  | { kind: 'ticket-to-ride' }
+  | { kind: 'dominion' };
 
 /** Every pad, by its path after /score/. */
 const PADS: ReadonlyMap<string, ScorePad> = new Map<string, ScorePad>([
   ['7-wonders', { kind: 'seven-wonders' }],
+  ['ticket-to-ride', { kind: 'ticket-to-ride' }],
+  ['dominion', { kind: 'dominion' }],
 ]);
 
 const key = (slug: string, part?: string) => (part ? `${slug}/${part}` : slug);

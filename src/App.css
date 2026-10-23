@@ -1374,6 +1374,43 @@ select.suggest-input{appearance:auto;}
 .signin-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:6px;}
 .signin-link-btn{display:inline-flex;align-items:center;text-decoration:none;}
 
+/* ══ SCORE PADS ══════════════════════════════════════════════
+   What the pads past 7 Wonders add (ScoreCalculatorPage.tsx): the
+   table's own choices (a map, a Kingdom), groups of boxes, ticket rows,
+   and two-way choices. Written
+   for a phone first: every control is 44px, and wider screens only add
+   room. */
+.sc-setup{margin:0 0 12px;padding:14px 16px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);display:flex;flex-direction:column;gap:10px;min-width:0;}
+.sc-setup-title{margin:0;padding:0;font-family:inherit;font-size:14px;font-weight:600;color:var(--text);display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;}
+.sc-hint{font-size:13px;color:var(--text2);line-height:1.5;}
+.sc-group{margin:0;padding:0;border:0;display:flex;flex-direction:column;gap:12px;min-width:0;}
+.sc-group-title{padding:0;margin-bottom:2px;font-size:15px;font-weight:700;color:var(--text);}
+.sc-group + .sc-group,.sc-group + .sc-check,.sc-check + .sc-row{padding-top:14px;border-top:1px solid var(--border);}
+.sc-seg{display:flex;flex-wrap:wrap;gap:6px;}
+.sc-seg-btn{min-height:44px;min-width:44px;padding:0 14px;font:inherit;font-size:14px;font-weight:600;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;transition:color .15s,background .15s,border-color .15s;}
+.sc-seg-btn[aria-pressed="true"]{color:var(--blue);background:var(--blue-bg);border-color:rgba(var(--blue-rgb),0.4);}
+.sc-seg-btn:focus-visible,.sc-remove:focus-visible,.sc-add-row:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+.sc-ticket{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+.sc-ticket .sc-seg{flex:1;flex-wrap:nowrap;}
+.sc-ticket .sc-seg-btn{flex:1;padding:0 8px;}
+.sc-remove{width:44px;height:44px;flex:none;font-size:20px;color:var(--text2);background:transparent;border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;font-family:inherit;}
+.sc-add-row{align-self:flex-start;min-height:44px;padding:0 16px;font:inherit;font-size:14px;font-weight:600;color:var(--blue);background:transparent;border:1px dashed rgba(var(--blue-rgb),0.45);border-radius:var(--r-sm);cursor:pointer;}
+.sc-check{display:flex;align-items:center;gap:12px;min-height:44px;font-size:14px;font-weight:500;color:var(--text);cursor:pointer;}
+.sc-check > span{display:flex;flex-direction:column;}
+.sc-check .sc-vp-note{margin-left:0;}
+.sc-check input,.sc-chip input{width:22px;height:22px;flex:none;margin:0;accent-color:var(--blue-fill);}
+.sc-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.sc-chip{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;font-size:14px;font-weight:500;color:var(--text);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;}
+.sc-chip:has(input:checked){background:var(--blue-bg);border-color:rgba(var(--blue-rgb),0.4);}
+.sc-chip:has(input:focus-visible){outline:2px solid var(--blue);outline-offset:2px;}
+.sc-panel + .sc-panel{margin-top:12px;}
+.sc-input{min-height:44px;}
+.sc-field .sc-input{min-height:40px;}
+.sc-row > .sc-field,.sc-row > .sc-input{flex:none;}
+@media (min-width:600px){
+  .sc-ticket .sc-seg{flex:0 1 auto;}
+}
+
 /* Tap targets: small pills keep their look but answer to a 24px area
    (WCAG 2.5.8), so a thumb doesn't have to land on an 18px pill. */
 .kw-pill,.sub-tag,.awards-toggle,.row-dur{position:relative;}

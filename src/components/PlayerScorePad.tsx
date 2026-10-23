@@ -69,11 +69,15 @@ interface Props<P extends PadPlayer> {
   unit: string;
   /** The Results panel's contents. */
   results: (players: P[]) => ReactNode;
+  /** What the whole table shares, above the players (the map played, the Kingdom). */
+  setup?: ReactNode;
+  /** Called when a new game starts, for the pad to reset what `setup` holds. */
+  onNewGame?: () => void;
 }
 
 /**
  * A score pad scored a player at a time, its phone passed round the table:
- * 7 Wonders, and any pad like it. The players scroll sideways in one
+ * 7 Wonders, Ticket to Ride, Dominion. The players scroll sideways in one
  * strip, with Add and Results always at its end; each player's form opens
  * at their name, then the pad's boxes (`form`) and their total, then Next,
  * which hands on to the next player and after the last shows Results, the
@@ -84,7 +88,7 @@ interface Props<P extends PadPlayer> {
  * written.
  */
 export default function PlayerScorePad<P extends PadPlayer>({
-  storageKey, minPlayers, maxPlayers, blank, valid, hasScores, form, total, unit, results,
+  storageKey, minPlayers, maxPlayers, blank, valid, hasScores, form, total, unit, results, setup, onNewGame,
 }: Props<P>) {
   const [initial] = useState(() => loadGame(storageKey, minPlayers, maxPlayers, blank, valid));
   const [players, setPlayers] = useState<P[]>(initial.players);
@@ -137,6 +141,7 @@ export default function PlayerScorePad<P extends PadPlayer>({
     setPlayers(fresh.players);
     setActivePlayer(fresh.active);
     setShowSummary(false);
+    onNewGame?.();
   }
 
   // Passing the phone round the table: on to the next player, and after the
@@ -151,6 +156,7 @@ export default function PlayerScorePad<P extends PadPlayer>({
 
   return (
     <>
+      {setup}
       <div className="sc-player-tabs">
         <div className="sc-player-strip">
           {players.map((p, i) => (
