@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, type MockInstance } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import AdminItemControls from '../components/AdminItemControls';
 import { AuthContext } from '../context/authContextValue';
@@ -41,9 +41,10 @@ function renderControls(over: Partial<WishlistItem> = {}, admin = true) {
   return { reload, container };
 }
 
-const lastBody = (spy: ReturnType<typeof vi.spyOn>) => {
-  const call = spy.mock.calls[spy.mock.calls.length - 1] as unknown as [string, RequestInit];
-  return { method: call[1].method, body: JSON.parse(call[1].body as string) };
+const lastBody = (spy: MockInstance<typeof fetch>) => {
+  const init = spy.mock.calls[spy.mock.calls.length - 1][1];
+  const body: unknown = JSON.parse(init?.body as string);
+  return { method: init?.method, body };
 };
 
 describe('AdminItemControls', () => {

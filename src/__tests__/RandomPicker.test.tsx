@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import { MemoryRouter, Routes, Route, useParams, useLocation } from 'react-router';
+import { MemoryRouter, Routes, Route, useParams, useLocation, type Location } from 'react-router';
 import { GAMES } from '../data/games';
 import RandomPicker from '../components/RandomPicker';
 import { pickRandom } from '../utils/pickRandom';
@@ -43,7 +43,8 @@ describe('pickRandom', () => {
 
 /** Stands in for the rules page, showing the state it was reached with. */
 function RulesStub() {
-  return <div data-from-list={String(cameFromList(useLocation().state))}>rules page</div>;
+  const location: Location<unknown> = useLocation();
+  return <div data-from-list={String(cameFromList(location.state))}>rules page</div>;
 }
 
 function renderPicker() {
@@ -62,7 +63,7 @@ function renderPicker() {
 }
 
 describe('RandomPicker', () => {
-  let randomSpy: ReturnType<typeof vi.spyOn>;
+  let randomSpy: MockInstance<typeof Math.random>;
 
   beforeEach(() => {
     vi.useFakeTimers();

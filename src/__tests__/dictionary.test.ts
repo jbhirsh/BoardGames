@@ -18,7 +18,7 @@ async function load() {
 }
 
 const unreachableReports = () =>
-  captureMessage.mock.calls.filter(([message]) => message === 'word checker: dictionary unreachable');
+  captureMessage.mock.calls.filter(([message]: unknown[]) => message === 'word checker: dictionary unreachable');
 
 beforeEach(() => {
   vi.resetModules();
@@ -38,7 +38,10 @@ describe('lookUp', () => {
       found: true,
       meanings: [{ partOfSpeech: 'noun', definitions: [{ definition: 'A fruit.', example: undefined }] }],
     });
-    expect(fetchSpy).toHaveBeenCalledWith(`${BASE}qi`, expect.objectContaining({ signal: expect.any(AbortSignal) }));
+    expect(fetchSpy).toHaveBeenCalledWith(
+      `${BASE}qi`,
+      expect.objectContaining({ signal: expect.any(AbortSignal) as unknown }),
+    );
     expect(captureMessage).not.toHaveBeenCalled();
   });
 

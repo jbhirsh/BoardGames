@@ -93,7 +93,7 @@ function renderPanel(hidden: WishlistItem[] = []) {
 const postBodies = (spy: ReturnType<typeof mockApi>) =>
   spy.mock.calls
     .filter((c) => (c[1] as RequestInit | undefined)?.method === 'POST')
-    .map((c) => JSON.parse((c[1] as RequestInit).body as string));
+    .map((c) => JSON.parse((c[1] as RequestInit).body as string) as Record<string, unknown>);
 // The queue looks each suggestion up as it loads, so its decisions are picked out of the posts.
 const decisions = (spy: ReturnType<typeof mockApi>) => postBodies(spy).filter((b) => 'decision' in b);
 const nameBox = (suggester: string, game: string) =>

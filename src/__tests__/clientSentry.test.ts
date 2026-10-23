@@ -192,7 +192,7 @@ describe('client/sentry', () => {
     now.mockReturnValue(1_010_000);
     captureMessage('late');
     await settle();
-    expect(sdk.captureMessage.mock.calls.map(([message]) => message)).toEqual(
+    expect(sdk.captureMessage.mock.calls.map(([message]: unknown[]) => message)).toEqual(
       Array.from({ length: 20 }, (_, i) => `report ${i}`),
     );
   });

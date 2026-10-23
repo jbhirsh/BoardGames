@@ -146,11 +146,11 @@ describe('WishlistRow', () => {
 
   it('opens the links in a new window without an opener', () => {
     renderRow({ item: { ...testItem, asin: 'B0TESTASIN' }, isOpen: true });
-    const links = [
+    const links: [string | RegExp, unknown][] = [
       [/YouTube/, expect.stringContaining('youtube.com')],
       ['Buy Row Game on Amazon', 'https://www.amazon.com/dp/B0TESTASIN'],
       [/price history/, 'https://camelcamelcamel.com/product/B0TESTASIN'],
-    ] as const;
+    ];
     for (const [name, href] of links) {
       const link = screen.getByRole('link', { name });
       expect(link).toHaveAttribute('href', href);

@@ -40,26 +40,27 @@ function positive(flag: string, value: string | undefined): number | undefined {
 
 /** Reads the command line after the script's name. Throws, with the usage, on anything it can't use. */
 export function parseOptions(argv: string[]): Options {
-  let parsed;
-  try {
-    parsed = parseArgs({
-      args: argv,
-      allowPositionals: true,
-      options: {
-        name: { type: 'string' },
-        base: { type: 'string', default: 'origin/main' },
-        'after-only': { type: 'boolean', default: false },
-        'side-by-side': { type: 'boolean', default: false },
-        width: { type: 'string' },
-        fps: { type: 'string', default: '15' },
-        fixtures: { type: 'boolean', default: false },
-        keep: { type: 'boolean', default: false },
-        publish: { type: 'boolean', default: false },
-      },
-    });
-  } catch (error) {
-    throw new Error(`${(error as Error).message}\n${USAGE}`, { cause: error });
-  }
+  const parsed = (() => {
+    try {
+      return parseArgs({
+        args: argv,
+        allowPositionals: true,
+        options: {
+          name: { type: 'string' },
+          base: { type: 'string', default: 'origin/main' },
+          'after-only': { type: 'boolean', default: false },
+          'side-by-side': { type: 'boolean', default: false },
+          width: { type: 'string' },
+          fps: { type: 'string', default: '15' },
+          fixtures: { type: 'boolean', default: false },
+          keep: { type: 'boolean', default: false },
+          publish: { type: 'boolean', default: false },
+        },
+      });
+    } catch (error) {
+      throw new Error(`${(error as Error).message}\n${USAGE}`, { cause: error });
+    }
+  })();
   const { values, positionals } = parsed;
   if (positionals.length !== 1) throw new Error(`one scenario, please\n${USAGE}`);
   if (values['side-by-side'] && values['after-only'])

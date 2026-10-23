@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { act, render, screen, fireEvent, within } from '@testing-library/react';
-import { createMemoryRouter, MemoryRouter, Outlet, RouterProvider } from 'react-router';
+import { createMemoryRouter, MemoryRouter, Outlet, RouterProvider, type Location } from 'react-router';
 import BackLink from '../components/BackLink';
 import ListView from '../components/ListView';
 import { sortItems } from '../utils/filterGames';
@@ -8,6 +8,9 @@ import { FilterProvider } from '../context/FilterContext';
 import { useFilter } from '../context/useFilter';
 import { GAMES } from '../data/games';
 import { GROUPS } from '../data/keywords';
+
+/** The state the router's current history entry carries. */
+const entryState = (router: { state: { location: Location<unknown> } }): unknown => router.state.location.state;
 
 function renderListView() {
   return render(
@@ -247,19 +250,19 @@ describe('ListView open row through a round trip', () => {
     expect(router.state.historyAction).toBe('REPLACE');
     expect(router.state.location.pathname).toBe('/');
     expect(router.state.location.search).toBe('?p=4');
-    expect(router.state.location.state).toEqual({ openRow: 'Catan' });
+    expect(entryState(router)).toEqual({ openRow: 'Catan' });
 
     // Another row takes its place; closing it leaves none recorded.
     await act(async () => {
       fireEvent.click(toggleFor('Pandemic'));
     });
-    expect(router.state.location.state).toEqual({ openRow: 'Pandemic' });
+    expect(entryState(router)).toEqual({ openRow: 'Pandemic' });
     expect(toggleFor('Catan')).toHaveAttribute('aria-expanded', 'false');
     await act(async () => {
       fireEvent.click(toggleFor('Pandemic'));
     });
     expect(toggleFor('Pandemic')).toHaveAttribute('aria-expanded', 'false');
-    expect(router.state.location.state).toEqual({});
+    expect(entryState(router)).toEqual({});
   });
 
   it("brings the row back open after its Rules and the page's Back link", async () => {
@@ -309,7 +312,7 @@ describe('ListView open row through a round trip', () => {
       fireEvent.click(screen.getByRole('button', { name: '3 players' }));
     });
     expect(router.state.location.search).toBe('?p=3');
-    expect(router.state.location.state).toEqual({ openRow: 'Catan' });
+    expect(entryState(router)).toEqual({ openRow: 'Catan' });
 
     await act(async () => {
       fireEvent.click(screen.getByRole('link', { name: 'Rules for Catan' }));

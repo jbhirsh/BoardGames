@@ -199,8 +199,9 @@ export async function handleAuth(deps: AuthDeps, req: AuthRequest, res: AuthResp
 // Each link request sends an email, so it is bounded tightly per IP.
 const linkLimiter = getLimiter('auth', 5, 3600);
 
-function isLinkRequest(req: VercelRequest): boolean {
-  const body = req.body as Record<string, unknown> | undefined;
+function isLinkRequest(req: { method?: string; body?: unknown }): boolean {
+  const body: Record<string, unknown> | undefined =
+    typeof req.body === 'object' && req.body !== null ? { ...req.body } : undefined;
   return req.method === 'POST' && body?.action === undefined;
 }
 

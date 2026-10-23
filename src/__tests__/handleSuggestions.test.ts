@@ -30,6 +30,7 @@ import { KW, WISHLIST_SECTIONS } from '../data/keywords';
 import * as clientLimits from '../data/suggestionLimits';
 import { fakeRedis, type FakeRedisSeed } from './helpers/fakeRedis';
 import { parseThing, type GameDetails, type LookupResult } from '../../api/_lib/bgg';
+import { abortReason } from './helpers/abortReason';
 
 function makeRes() {
   const res = {
@@ -737,7 +738,7 @@ describe('handleSuggestions', () => {
         const hanging = vi.fn(
           (_url: string | URL | Request, init?: RequestInit) =>
             new Promise<Response>((_resolve, reject) => {
-              init?.signal?.addEventListener('abort', () => reject(init.signal?.reason));
+              init?.signal?.addEventListener('abort', () => reject(abortReason(init.signal)));
             }),
         );
         const redis = makeRedis();
@@ -1636,7 +1637,7 @@ describe('handleSuggestions', () => {
       expect(reported()).toEqual([
         {
           label: 'suggestions: BoardGameGeek lookup skipped',
-          message: expect.stringContaining('BGG_API_TOKEN is not set'),
+          message: expect.stringContaining('BGG_API_TOKEN is not set') as unknown,
         },
       ]);
     });
@@ -1654,7 +1655,7 @@ describe('handleSuggestions', () => {
       expect(reported()).toEqual([
         {
           label: 'suggestions: BoardGameGeek lookup refused',
-          message: expect.stringContaining(`BoardGameGeek refused BGG_API_TOKEN (HTTP ${status})`),
+          message: expect.stringContaining(`BoardGameGeek refused BGG_API_TOKEN (HTTP ${status})`) as unknown,
         },
       ]);
     });
@@ -2030,7 +2031,7 @@ describe('handleSuggestions', () => {
           details: ARKHAM,
         });
         expect(res.body).toEqual({
-          item: expect.objectContaining({ game: 'Arkham Horror', status: 'approved', details: ARKHAM }),
+          item: expect.objectContaining({ game: 'Arkham Horror', status: 'approved', details: ARKHAM }) as unknown,
         });
         expect(redis.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
       });
@@ -2232,7 +2233,7 @@ describe('handleSuggestions', () => {
         expect(html).toContain('<li>not-a-keyword&lt;i&gt;</li>');
         expect(html).toContain('value="A&amp;B &lt;i&gt;"');
         // What the approval posts back is the lookup's own, intact once the form decodes it.
-        expect(JSON.parse(field(html, 'details')!).desc).toBe('Say "hi" & <b>run</b>');
+        expect((JSON.parse(field(html, 'details')!) as { desc: string }).desc).toBe('Say "hi" & <b>run</b>');
       });
 
       it('says why it found nothing, and posts no details for it', async () => {

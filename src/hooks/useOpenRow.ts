@@ -1,5 +1,5 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router';
+import { useLocation, useNavigate, type Location } from 'react-router';
 import { openRowFrom, withOpenRow } from '../utils/openRow';
 
 /**
@@ -16,7 +16,7 @@ import { openRowFrom, withOpenRow } from '../utils/openRow';
  * redraw.
  */
 export function useOpenRow(): [string | null, (row: string) => void] {
-  const location = useLocation();
+  const location: Location<unknown> = useLocation();
   const navigate = useNavigate();
   const [openRow, setOpenRow] = useState(() => openRowFrom(location.state));
   // Kept up to date after each render, before anything can be clicked, so

@@ -6,6 +6,18 @@ import RulesChatProvider, { HISTORY_SENT, RulesChatToggle, RulesChatPanel } from
 import { FROM_LIST } from '../utils/fromList';
 import { renderRouted } from './routed';
 
+/** The body the chat posted to /api/chat on a fetch call. */
+interface ChatBody {
+  slug: string;
+  message: string;
+  history: { role: string; content: string }[];
+  parts?: string[];
+}
+function sentBody(fetchMock: { mock: { calls: unknown[][] } }, call: number): ChatBody {
+  const init = fetchMock.mock.calls[call][1] as RequestInit;
+  return JSON.parse(init.body as string) as ChatBody;
+}
+
 vi.mock('../client/sentry', () => ({
   captureMessage: vi.fn(),
   captureException: vi.fn(),
@@ -83,7 +95,7 @@ describe('RulesChat', () => {
       await waitFor(() => expect(screen.getByPlaceholderText('Ask a rules question...')).toBeEnabled());
     }
     // Four exchanges before the fifth question: eight messages, the newest kept.
-    const body = JSON.parse((fetchMock.mock.calls[4] as unknown as [string, RequestInit])[1].body as string);
+    const body = sentBody(fetchMock, 4);
     expect(body.history).toHaveLength(HISTORY_SENT);
     expect(body.history.at(-1)).toEqual({ role: 'model', content: 'Answer 4.' });
     expect(body.history[0]).toEqual({ role: 'user', content: `Question ${5 - HISTORY_SENT / 2}?` });
@@ -109,7 +121,7 @@ describe('RulesChat', () => {
     expect(screen.getByText('How many players?')).toBeInTheDocument();
     expect(await screen.findByText('4 or more players.')).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith('/api/chat', expect.objectContaining({ method: 'POST' }));
-    const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
+    const body = sentBody(fetchMock, 0);
     expect(body).toEqual({ slug: 'cranium', message: 'How many players?', history: [] });
     await waitFor(() => expect(screen.getByPlaceholderText('Ask a rules question...')).toBeEnabled());
   });
@@ -225,7 +237,7 @@ describe('RulesChat', () => {
     openPanel();
     send('How do knights work?');
     await screen.findByText('ok');
-    const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
+    const body = sentBody(fetchMock, 0);
     expect(body).toEqual({
       slug: 'cranium',
       message: 'How do knights work?',
@@ -472,7 +484,7 @@ describe('RulesChat', () => {
     fireEvent.click(screen.getByRole('button', { name: 'How do we set up for 4 players?' }));
 
     expect(await screen.findByText('Deal 7 each.')).toBeInTheDocument();
-    const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
+    const body = sentBody(fetchMock, 0);
     expect(body).toEqual({ slug: 'uno', message: 'How do we set up for 4 players?', history: [] });
     expect(screen.queryByRole('group', { name: 'Try asking' })).toBeNull();
     expect(panel).not.toHaveClass('rules-chat-panel-fresh');
@@ -577,7 +589,7 @@ describe('RulesChat', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.getAllByText('How many players?', { selector: '.rules-chat-bubble' })).toHaveLength(1);
     // The failed attempt never reaches the history sent with the retry.
-    const retryBody = JSON.parse(fetchMock.mock.calls[1][1].body);
+    const retryBody = sentBody(fetchMock, 1);
     expect(retryBody.history).toEqual([]);
     expect(retryBody.message).toBe('How many players?');
   });
@@ -1039,7 +1051,7 @@ describe("RulesChat when the assistant can't answer", () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(await screen.findByText('Seven cards each.')).toBeInTheDocument();
-    expect(JSON.parse(fetchMock.mock.calls[1][1].body).message).toBe('How many cards?');
+    expect(sentBody(fetchMock, 1).message).toBe('How many cards?');
     expect(statusRegion()).toBeEmptyDOMElement();
     expect(screen.getAllByText('How many cards?', { selector: '.rules-chat-bubble' })).toHaveLength(1);
   });

@@ -91,7 +91,7 @@ describe('getAnonId without storage', () => {
     const uuid = vi.spyOn(crypto, 'randomUUID');
     const id = freshGetAnonId();
     expect(id).toMatch(ANON_RE);
-    expect(uuid.mock.results.map((r) => r.value as string)).toContain(id);
+    expect(uuid.mock.results.map(({ value }: { value: unknown }) => value)).toContain(id);
     expect(freshGetAnonId()).toBe(id);
     expect(localStorage.getItem('wishlist:anonId')).toBeNull();
   });
@@ -158,7 +158,7 @@ describe('useWishlistVotes', () => {
     expect(result.current.myVotes.has('a')).toBe(false);
     expect(fetchSpy).toHaveBeenCalledWith(
       expect.stringContaining('/api/votes?ids=a%2Cb'),
-      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      expect.objectContaining({ signal: expect.any(AbortSignal) as unknown }),
     );
   });
 

@@ -90,9 +90,10 @@ self.addEventListener('activate', (event) => {
 // while this one waits, saying it saved a rulebook: this build's reader is
 // completed now, while there is a network (tellNewer).
 self.addEventListener('message', (event) => {
-  if (isReaderMessage(event.data)) return event.waitUntil(heal());
-  const [port] = event.ports;
-  if (port) event.waitUntil(saving.answer(event.data, (reply: SaveReply) => port.postMessage(reply)));
+  const { data, ports }: { data: unknown; ports: readonly MessagePort[] } = event;
+  if (isReaderMessage(data)) return event.waitUntil(heal());
+  const [port] = ports;
+  if (port) event.waitUntil(saving.answer(data, (reply: SaveReply) => port.postMessage(reply)));
 });
 
 self.addEventListener('fetch', (event) => {

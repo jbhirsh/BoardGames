@@ -37,8 +37,16 @@ async function* fakeStream(...texts: Array<string | undefined>) {
   }
 }
 
-function lastRequest() {
-  return mocks.generateContentStream.mock.calls.at(-1)?.[0];
+/** The parts of a Gemini request these tests read. */
+interface SentRequest {
+  model: string;
+  config: { abortSignal: AbortSignal; [setting: string]: unknown };
+  contents: { role?: string; parts: { text: string }[] }[];
+}
+
+function lastRequest(): SentRequest {
+  const [request]: unknown[] = mocks.generateContentStream.mock.calls.at(-1) ?? [];
+  return request as SentRequest;
 }
 
 beforeEach(() => {

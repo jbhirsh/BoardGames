@@ -39,14 +39,15 @@ let loading: Promise<void> | undefined;
 let failedAt = -Infinity;
 
 function onError(event: ErrorEvent): void {
-  const error: unknown = event.error ?? event.message;
+  const { error: thrown, message }: { error: unknown; message: string } = event;
+  const error = thrown ?? message;
   report((s) =>
     s.captureException(error, { mechanism: { handled: false, type: 'auto.browser.global_handlers.onerror' } }),
   );
 }
 
 function onRejection(event: PromiseRejectionEvent): void {
-  const reason: unknown = event.reason;
+  const { reason }: { reason: unknown } = event;
   report((s) =>
     s.captureException(reason, {
       mechanism: { handled: false, type: 'auto.browser.global_handlers.onunhandledrejection' },

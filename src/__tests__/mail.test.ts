@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { baseUrl, button, escapeHtml, ownerEmail, page, resendMailer } from '../../api/_lib/mail';
+import { abortReason } from './helpers/abortReason';
 
 const ENV = [
   'RESEND_API_KEY',
@@ -46,9 +47,10 @@ describe('mail helpers', () => {
     process.env.SUGGESTIONS_FROM = 'Me <me@example.com>';
     const failing = vi.fn(async () => ({ ok: false, status: 422 }) as Response);
     await expect(resendMailer(failing)!.send({ subject: 'Hi', html: '' })).rejects.toThrow('Resend responded 422');
-    expect(JSON.parse((failing.mock.calls[0] as unknown as [string, RequestInit])[1].body as string).from).toBe(
-      'Me <me@example.com>',
-    );
+    expect(
+      (JSON.parse((failing.mock.calls[0] as unknown as [string, RequestInit])[1].body as string) as { from: string })
+        .from,
+    ).toBe('Me <me@example.com>');
   });
 
   it('gives up on a Resend call that never answers', async () => {
@@ -57,7 +59,7 @@ describe('mail helpers', () => {
     const hanging = vi.fn(
       (_url: string | URL | Request, init?: RequestInit) =>
         new Promise<Response>((_resolve, reject) => {
-          init?.signal?.addEventListener('abort', () => reject(init.signal?.reason));
+          init?.signal?.addEventListener('abort', () => reject(abortReason(init.signal)));
         }),
     );
     await expect(resendMailer(hanging, 10)!.send({ subject: 'Hi', html: '' })).rejects.toThrow(/timed out|abort/i);

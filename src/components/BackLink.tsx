@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate, type Location } from 'react-router';
 import { cameFromList } from '../utils/fromList';
 
 /**
@@ -12,7 +12,8 @@ import { cameFromList } from '../utils/fromList';
  * link works.
  */
 export default function BackLink() {
-  const fromList = cameFromList(useLocation().state);
+  const location: Location<unknown> = useLocation();
+  const fromList = cameFromList(location.state);
   const navigate = useNavigate();
 
   return (

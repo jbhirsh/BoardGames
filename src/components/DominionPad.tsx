@@ -128,7 +128,9 @@ function Results({ kingdom, players }: { kingdom: ReadonlySet<KingdomCard>; play
  */
 export default function DominionPad() {
   const [kingdom, setKingdom] = useSavedState<KingdomCard[]>('gameroom:score:dominion:kingdom', [], (v) =>
-    Array.isArray(v) && v.every((c) => KINGDOM_KEYS.includes(c)) ? v : null,
+    Array.isArray(v) && v.every((c: unknown): c is KingdomCard => (KINGDOM_KEYS as readonly unknown[]).includes(c))
+      ? v
+      : null,
   );
   const inPlay = new Set(kingdom);
   const toggle = (card: KingdomCard, on: boolean) =>

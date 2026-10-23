@@ -9,7 +9,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from 'react';
-import { useParams, useLocation, useNavigate, Link, Navigate } from 'react-router';
+import { useParams, useLocation, useNavigate, Link, Navigate, type Location } from 'react-router';
 import { ALL_GAMES } from '../data/games';
 import { rulebooks, rulebookPath, chatParts, chatScope, citedPageParam, starterQuestions } from '../utils/rulebooks';
 import { citationsIn, citedPage, linkCitations, mentionedRulebooks } from '../utils/citations';
@@ -170,7 +170,7 @@ export default function RulesPage() {
   // than push: a game's rules page is one step in history however many tabs
   // are read, so Back (ours, or the browser's) lands where the visitor came
   // from. A citation's state also carries the words it closes (showCited).
-  const { state, search, key } = useLocation();
+  const { state, search, key }: Location<unknown> = useLocation();
   const arrival = cameFromList(state) ? FROM_LIST : undefined;
   const quote = (state as { quote?: unknown } | null)?.quote;
   const navigate = useNavigate();
