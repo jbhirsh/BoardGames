@@ -2313,21 +2313,47 @@ table.games-list thead tr th.sort-desc .sort-icon {
   flex-direction: column;
   gap: 6px;
 }
+/* Phone first: the name with the links beside it, and everything else the
+   row's full width under them, so the write-up isn't squeezed into a
+   column beside the links. Wider, the links take a column of their own. */
 .sub-row {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 10px;
+  row-gap: 3px;
+  align-items: start;
   padding: 9px 10px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
 }
 .sub-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+  display: contents;
+}
+.sub-main > * {
+  grid-column: 1 / -1;
+}
+.sub-main > .sub-name {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+}
+.sub-main > .sub-more-btn {
+  justify-self: start;
+}
+@media (min-width: 521px) {
+  .sub-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .sub-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
 }
 .sub-name {
   display: flex;
@@ -2392,6 +2418,8 @@ table.games-list thead tr th.sort-desc .sort-icon {
   display: flex;
   gap: 4px;
   flex-shrink: 0;
+  grid-column: 2;
+  grid-row: 1;
 }
 .sub-link {
   width: 32px;
