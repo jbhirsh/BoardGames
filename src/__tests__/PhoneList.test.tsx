@@ -34,7 +34,7 @@ describe('PhoneListView', () => {
     renderGames();
     const line = screen.getByRole('heading', { level: 3, name: 'Azul' }).closest('li')!;
     expect(line).toHaveAttribute('id', 'game-azul');
-    expect(within(line).getByText('2–4 · 30–45 min · Light')).toBeInTheDocument();
+    expect(line.querySelector('.line-meta')).toHaveTextContent('2–4 players · 30–45 min · Light');
     expect(line.querySelector('.line-detail')).toHaveAttribute('inert');
     expect(line.querySelector('.line-detail')).toContainElement(
       within(line).getByRole('link', { name: 'Rules for Azul' }),

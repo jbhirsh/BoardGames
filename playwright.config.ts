@@ -52,16 +52,22 @@ export default defineConfig({
     toHaveScreenshot: { maxDiffPixelRatio: 0.01, animations: 'disabled', caret: 'hide' },
   },
   // The site is designed phone first, so a phone is a project of its own:
-  // e2e/phone.spec.ts runs on a Pixel 7 (412 by 839, touch, a mobile
-  // viewport), every other spec on a desktop. A spec there may still set a
-  // phone's width for a check beside its desktop one.
+  // e2e/phone.spec.ts runs in the newest iPhone Pro's window (the 17 Pro's
+  // descriptor: 402 by 681 under Safari's bars, 3x, touch, which the 18 Pro
+  // keeps), in Chromium as CI's e2e suite is Chromium's, every other spec on
+  // a desktop. A spec there may still set a phone's width for a check beside
+  // its desktop one.
   projects: [
     {
       name: 'chromium',
       testIgnore: [VISUAL, PHONE],
       use: { ...devices['Desktop Chrome'], launchOptions: chromiumLaunch },
     },
-    { name: 'phone', testMatch: PHONE, use: { ...devices['Pixel 7'], launchOptions: chromiumLaunch } },
+    {
+      name: 'phone',
+      testMatch: PHONE,
+      use: { ...devices['iPhone 17 Pro'], browserName: 'chromium', launchOptions: chromiumLaunch },
+    },
     // The visual suite, in all three engines and on phones (the free
     // stand-in for a cross-browser screenshot service). Reduced motion holds
     // the hero's row of covers still.

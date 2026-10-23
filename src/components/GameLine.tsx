@@ -24,7 +24,8 @@ interface Props {
  * open, it shows what a desktop table's open row does (the write-up, the
  * games inside that fit the filters, the awards, then Rules and the other
  * actions), after its one-line pitch and tags, which the line has no room
- * for. Rules waits there rather than on the line, where thirty of it in a
+ * for. The count says "players" where the line has room for it on one
+ * line (App.css), as on an iPhone Pro. Rules waits there rather than on the line, where thirty of it in a
  * column read as one repeated word and took the room a name and its
  * players, time and weight need. Memoized: a filter change that leaves this
  * game as it was doesn't redraw it.
@@ -42,7 +43,16 @@ function GameLine({ game, isOpen, onToggle }: Props) {
       img={game.img}
       name={game.name}
       headingLevel={3}
-      meta={[game.players, game.dur, difficulty].filter(Boolean).join(' · ')}
+      meta={
+        <>
+          {game.players}
+          <span className="line-unit"> {game.players === '1' ? 'player' : 'players'}</span>
+          {[game.dur, difficulty]
+            .filter(Boolean)
+            .map((part) => ` · ${part}`)
+            .join('')}
+        </>
+      }
       isOpen={isOpen}
       onToggle={() => onToggle(game.name)}
     >

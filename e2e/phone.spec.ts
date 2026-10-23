@@ -4,8 +4,8 @@ import { GAMES } from '../src/data/games';
 import { WISHLIST } from '../src/data/wishlist';
 import { test, expect } from './fixtures';
 
-// The home page on a phone: this file runs on the "phone" project, a
-// Pixel 7 (playwright.config.ts).
+// The home page on a phone: this file runs on the "phone" project, the
+// newest iPhone Pro's window (playwright.config.ts).
 
 const axePath = createRequire(import.meta.url).resolve('axe-core/axe.min.js');
 

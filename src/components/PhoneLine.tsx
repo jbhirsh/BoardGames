@@ -9,7 +9,7 @@ interface Props {
   /** h4 under a group heading, h3 in a flat list, so heading levels never skip. */
   headingLevel: 3 | 4;
   /** Players, time and the like, one short line under the name. */
-  meta: string;
+  meta: ReactNode;
   /** A button beside the chevron: a wishlist entry's vote. */
   action?: ReactNode;
   isOpen: boolean;
