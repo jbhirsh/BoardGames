@@ -16,7 +16,8 @@
 //     the key has done its work (a Tab's focus, the scroll or animation it
 //     set off): under it, or over it if that would leave the recorded area
 //     (window.__prGifClip, set by recordFrames; the viewport otherwise), and
-//     inside that area either way. Characters typed one after another build
+//     inside that area either way. With nothing focused in shot, it sits at
+//     the bottom of the area, in the middle. Characters typed one after another build
 //     up into the text typed. The label fades 600 ms after the last key.
 //   - Pointer moves are kept on window.__prGifMoves, for recordFrames to
 //     tell when the pointer rested out of shot, and while recording, each
@@ -130,7 +131,11 @@ const start = () => {
       const area = window.__prGifClip || { x: 0, y: 0, width: innerWidth, height: innerHeight };
       const right = area.x + area.width, bottom = area.y + area.height;
       const focused = document.activeElement;
-      const box = focused && focused !== document.body ? focused.getBoundingClientRect() : null;
+      // What has focus, if any of it is in shot: one off it (scrolled away,
+      // or a stand-in on screen for it) would pin the label to an edge, far
+      // from anything the GIF shows.
+      const r = focused && focused !== document.body ? focused.getBoundingClientRect() : null;
+      const box = r && r.width > 0 && r.right > area.x && r.left < right && r.bottom > area.y && r.top < bottom ? r : null;
       const w = key.offsetWidth, h = key.offsetHeight;
       let x = box ? box.left + box.width / 2 - w / 2 : area.x + area.width / 2 - w / 2;
       let y = box ? box.bottom + 8 : bottom - h - 12;
