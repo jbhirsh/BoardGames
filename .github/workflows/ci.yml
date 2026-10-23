@@ -66,6 +66,29 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
+      # No `any` anywhere: every identifier in every tsconfig project has a
+      # type (type-coverage at 100%).
+      - name: Type coverage
+        run: npm run typecov
+
+      # Strict mode also counts an `any` inside a type argument (Promise<any>,
+      # a library's any[]). Shown in the run's summary, never gating.
+      - name: Strict type coverage (information only)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          {
+            echo '### Strict type coverage (information only)'
+            echo
+            echo '| Project | Typed identifiers |'
+            echo '| --- | --- |'
+            for p in app api node eval sw e2e; do
+              echo "| $p | $(npx type-coverage -p "tsconfig.$p.json" --strict | grep '%') |"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
       # The axe-core accessibility suite (src/__tests__/a11y.test.tsx) runs
       # here with the rest, not in a step of its own that would run it twice.
       - name: Unit tests with coverage
