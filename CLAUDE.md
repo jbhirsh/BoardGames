@@ -18,6 +18,7 @@ npm run dev          # Vite dev server (http://localhost:5173)
 npm run build        # npm run typecheck, then vite build -> dist/
 npm run typecheck    # TypeScript 7 `tsc -b` across the project refs
 npm run lint         # eslint . (flat config; includes jsx-a11y static checks)
+npm run format       # prettier --write . (format:check is CI's read-only check)
 npm run depcruise    # dependency-cruiser: layering rules (.dependency-cruiser.cjs)
 npm run preview      # serve the production build locally
 # `npm install` also runs `prepare`, pointing core.hooksPath at .githooks/
@@ -49,9 +50,9 @@ Node 24 is used in CI; run the unit tests under it before pushing when your
 local Node differs (`npx -y node@24 node_modules/vitest/vitest.mjs run`):
 some web APIs differ between versions (a jsdom `Blob` test passed on 22 and
 failed on 24). Git hooks in `.githooks/` run the checks locally:
-**pre-commit** eslint + dependency-cruiser + `tsc -b`; **pre-push** the
-tests the push can affect (its header says which) + the production build,
-leaving the coverage gate to CI. Both no-op when `$CI` is set.
+**pre-commit** eslint + Prettier on the staged files + dependency-cruiser +
+`tsc -b`; **pre-push** the tests the push can affect (its header says which)
++ the production build, leaving the coverage gate to CI. Both no-op when `$CI` is set.
 
 ## Architecture map
 
@@ -139,6 +140,9 @@ before changing the module.
   `tsconfig.base.json` (the shared strict options): `tsconfig.{app,api,node,
   eval,sw,e2e}.json` for `src` (DOM), `api` (Node), `vite.config.ts`, `eval`,
   `src/sw` (WebWorker) and `e2e`. `npm run build` runs `tsc -b` over all.
+- **Prettier owns layout** (`.prettierrc.json`); ESLint's layout rules are
+  off (`eslint-config-prettier`, last in the config). `.prettierignore` keeps
+  it off prose (`*.md`) and off what a script writes.
 - **No exact version pins.** Every dependency in `package.json` takes a range
   (`^`, `~`); the lockfile fixes what gets installed.
   `dependencyRanges.test.ts` fails on an exact version.
@@ -196,7 +200,7 @@ before changing the module.
 
 | Required check (workflow) | What it runs |
 | --- | --- |
-| `ci` (`ci.yml`) | commit messages, lint, depcruise, type-check, unit tests + coverage (axe suite included), build, `npm audit --omit=dev` (high+) |
+| `ci` (`ci.yml`) | commit messages, lint, Prettier, depcruise, type-check, unit tests + coverage (axe suite included), build, `npm audit --omit=dev` (high+) |
 | Claude Review (`claude-review.yml`) | AI review, in its own file: claude-code-action skips a PR that edits its workflow |
 | StrykerJS (`mutation.yml`) | incremental mutation testing of the files a PR touched, failing below `break` |
 | E2E Tests (Playwright) (`e2e.yml`) | the e2e suite; passing only on retry still fails |

@@ -1,0 +1,26 @@
+# Formatted by Prettier: code, styles, JSON, YAML and HTML. Left alone: what
+# a tool writes (re-running it would undo the formatting, or a test reads it
+# byte for byte), what people write as prose, and what isn't ours.
+
+# Prose: Prettier would re-pad every table and re-mark every list.
+*.md
+
+# Written by scripts: re-run them, never format by hand.
+package-lock.json
+src/data/gameWeights.ts
+src/data/wishlistArt.ts
+rules-text/
+eval/results.json
+src/__tests__/fixtures/
+
+# Not ours, or not source.
+patches/
+public/
+dist/
+coverage/
+reports/
+.stryker-tmp/
+test-results/
+playwright-report/
+blob-report/
+pr-gif/
