@@ -142,6 +142,11 @@
     color-scheme: dark;
   }
 }
+/* The toggle's dark theme repeats the system's: one sits in a media query,
+   the other on an attribute, and CSS has no way to share a block between
+   them. themeLayers.test.ts holds the two equal, so the duplicate-code
+   audit skips this copy. */
+/* jscpd:ignore-start */
 :root[data-theme="dark"] {
   --bg: #111113;
   --bg2: #242428;
@@ -187,6 +192,7 @@
   --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.6);
   color-scheme: dark;
 }
+/* jscpd:ignore-end */
 @media (max-width: 900px) {
   :root {
     --gutter: 24px;

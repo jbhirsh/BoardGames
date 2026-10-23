@@ -1,0 +1,181 @@
+# The weekly audit: checks that need the whole repository at once, too slow
+# or too noisy for every PR, on the shared Monday 06:00 UTC sweep slot.
+#
+#   - Dead code (knip.jsonc): files nothing reaches, exports nothing
+#     imports, dependencies nothing uses or uses unlisted.
+#   - Duplicated code (.jscpd.json): repeated blocks outside the tests.
+#   - Broken links (lychee): every link, image and #anchor in the markdown.
+#   - The architecture graph (dependency-cruiser): the whole import graph as
+#     an SVG and an HTML report, an artifact linked from the run's summary.
+#     Its rules gate every PR already (ci.yml); this is the picture.
+#
+# Each finding category keeps one issue labelled `weekly-audit`
+# (.github/scripts/tracking-issue.mjs): opened or rewritten while there are
+# findings, closed once a run comes back clean. The run itself stays green
+# unless a tool crashes; the issues are the alert. Not a PR workflow, so it
+# is no required check.
+name: Weekly audit
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+  issues: write
+
+# bash runs each step with -e and pipefail, so a crash on a pipe's left side
+# isn't swallowed.
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  dead-code:
+    name: Dead code (knip)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # knip exits 1 for findings and 2 when it fails.
+      - name: Run knip
+        id: knip
+        run: |
+          set +e
+          npx knip --reporter markdown > knip.md
+          code=$?
+          set -e
+          cat knip.md >> "$GITHUB_STEP_SUMMARY"
+          if [ "$code" -gt 1 ]; then exit "$code"; fi
+          echo "found=$([ "$code" -eq 1 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - name: Update the tracking issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          node .github/scripts/tracking-issue.mjs --title "Dead code (weekly audit)"
+          --found "${{ steps.knip.outputs.found }}" --report knip.md
+
+  duplicates:
+    name: Duplicated code (jscpd)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # .jscpd.json sets exit code 1 for clones; a run that wrote no report
+      # crashed.
+      - name: Run jscpd
+        id: jscpd
+        run: |
+          set +e
+          npx jscpd
+          code=$?
+          set -e
+          report=jscpd-report/jscpd-report.md
+          if [ ! -f "$report" ]; then
+            echo "::error::jscpd wrote no report (exit $code)."
+            exit 1
+          fi
+          cat "$report" >> "$GITHUB_STEP_SUMMARY"
+          echo "found=$([ "$code" -ne 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - name: Update the tracking issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          node .github/scripts/tracking-issue.mjs --title "Duplicated code (weekly audit)"
+          --found "${{ steps.jscpd.outputs.found }}" --report jscpd-report/jscpd-report.md
+
+  links:
+    name: Broken links (lychee)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      # Exit code 2 is broken links; anything else but 0 is lychee failing.
+      - name: Run lychee
+        id: lychee
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: >-
+            --no-progress --include-fragments --max-concurrency 8
+            --exclude-path node_modules --exclude-path dist './**/*.md'
+          format: markdown
+          output: lychee.md
+          fail: false
+          jobSummary: true
+        env:
+          # Authenticated, so github.com links aren't rate-limited.
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Read the verdict
+        id: verdict
+        env:
+          CODE: ${{ steps.lychee.outputs.exit_code }}
+        run: |
+          if [ "$CODE" != 0 ] && [ "$CODE" != 2 ]; then
+            echo "::error::lychee failed (exit $CODE)."
+            exit 1
+          fi
+          echo "found=$([ "$CODE" = 2 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - name: Update the tracking issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          node .github/scripts/tracking-issue.mjs --title "Broken links (weekly audit)"
+          --found "${{ steps.verdict.outputs.found }}" --report lychee.md
+
+  architecture:
+    name: Architecture graph (dependency-cruiser)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Install Graphviz
+        run: sudo apt-get update -q && sudo apt-get install -yq graphviz
+      # archi folds each folder into one node, the readable overview; the
+      # HTML report lists every module and dependency.
+      - name: Draw the graph
+        run: |
+          mkdir -p architecture
+          npx depcruise src api e2e --output-type archi | dot -T svg > architecture/architecture.svg
+          npx depcruise src api e2e --output-type dot | dot -T svg > architecture/modules.svg
+          npx depcruise src api e2e --output-type html > architecture/report.html
+      - name: Upload it
+        id: upload
+        uses: actions/upload-artifact@v7
+        with:
+          name: architecture
+          path: architecture/
+          retention-days: 30
+      - name: Link it from the summary
+        env:
+          URL: ${{ steps.upload.outputs.artifact-url }}
+        run: |
+          {
+            echo '### Architecture graph'
+            echo
+            echo "[Download the graph]($URL): architecture.svg (by folder), modules.svg (every module) and report.html."
+          } >> "$GITHUB_STEP_SUMMARY"

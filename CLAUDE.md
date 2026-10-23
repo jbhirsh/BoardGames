@@ -227,6 +227,18 @@ before changing the module.
 | Answer-Quality Eval (`eval.yml`) | the assistant against `eval/golden-set.json` |
 | Secret scan, `semgrep-cloud-platform/scan`, Vercel, API smoke test | secrets, static analysis, the deploy and its live API |
 
+**The weekly audit** (`weekly-audit.yml`, Mondays, not a PR check) runs knip
+(`knip.jsonc`: dead files, exports and dependencies), jscpd (`.jscpd.json`:
+duplicated code outside the tests, which repeat each case's setup on
+purpose) and lychee (broken links and anchors in the markdown), and draws
+dependency-cruiser's whole graph as an artifact. Each kind of finding keeps
+one issue labelled `weekly-audit` (`.github/scripts/tracking-issue.mjs`),
+rewritten each week and closed when clean. Each tool reports nothing
+today: keep it that way, fixing a finding rather than ignoring it; a
+deliberate copy (the dark theme's second block, the API's keyword labels)
+says why beside its `jscpd:ignore` marker, and an export only a command-line
+caller uses is tagged `@public`.
+
 Every check but `PR visuals` is required (autofix skips that one too), so
 nothing merges until all report and arming auto-merge early is safe. A new PR workflow must be
 added to the required checks, or bot PRs merge without it; list a gating

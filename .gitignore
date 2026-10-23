@@ -48,3 +48,7 @@ blob-report
 
 # GIFs recorded for PRs (npm run pr-gif)
 /pr-gif
+
+# The weekly audit's reports (weekly-audit.yml), when run locally
+/jscpd-report
+/architecture
