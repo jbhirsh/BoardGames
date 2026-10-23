@@ -35,9 +35,9 @@ export function spadesHand(bids: readonly number[], tricks: readonly number[]): 
   let taken = 0;
   bids.forEach((bid, seat) => {
     if (bid === 0) {
-      // Nil: scored alone, its tricks counting as bags.
+      // Nil: scored alone, 100 made or minus 100 failed. The sheet says no
+      // more; its tricks count as the partnership's bags but score nothing.
       points += tricks[seat] === 0 ? NIL : -NIL;
-      points += tricks[seat];
       bags += tricks[seat];
     } else {
       contract += bid;
@@ -136,6 +136,9 @@ export function outcome(goal: CardGameGoal, totals: readonly number[], rounds: n
  */
 export function roundIssue(round: Round): string | null {
   const sum = (list: readonly number[]) => list.reduce((a, b) => a + b, 0);
+  if (round.game === 'hearts' && round.moon === null && round.taken.includes(HEARTS_HAND) && sum(round.taken) === HEARTS_HAND) {
+    return 'One player took all 26: did they shoot the moon? Say who above, and everyone else scores 26 instead.';
+  }
   if (round.game === 'hearts' && round.moon === null && sum(round.taken) !== HEARTS_HAND) {
     return `These add up to ${sum(round.taken)}. A hand holds ${HEARTS_HAND}: 13 hearts and the queen of spades.`;
   }

@@ -3,7 +3,7 @@ import { useParams, useLocation, useNavigate, Link, Navigate } from 'react-route
 import { ALL_GAMES } from '../data/games';
 import { rulebooks, rulebookPath, chatParts, chatScope, citedPageParam, starterQuestions } from '../utils/rulebooks';
 import { citationsIn, citedPage, linkCitations, mentionedRulebooks } from '../utils/citations';
-import { scorePadPath } from '../data/scoreCalculators';
+import { scorePadLink } from '../data/scoreCalculators';
 import { WORD_CHECKER_GAME } from '../data/wordChecker';
 import { CalculatorIcon } from './Icons';
 import { shownKind } from '../utils/subgames';
@@ -230,8 +230,9 @@ export default function RulesPage() {
   const askedOn = (tab: string | undefined) => books.find((b) => (b.part ?? '') === tab)!;
 
   // The pad for this tab's game, a deck's Hearts having its own; else the
-  // game's, which every tab shares (Dominion's Intrigue scores on Dominion's).
-  const scorePath = scorePadPath(game.slug, book.part) ?? scorePadPath(game.slug);
+  // game's, which every tab shares (Dominion's Intrigue scores on Dominion's),
+  // set for the tab where it can be (Europe's map).
+  const scorePath = scorePadLink(game.slug, book.part);
 
   // This tab's rulebook, if it couldn't be shown (failure is only ever this
   // tab's): nothing said until it is known why, so one note doesn't give

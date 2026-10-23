@@ -91,6 +91,9 @@ describe('RulesPage', () => {
     const again = renderAt('/rules/dominion/intrigue');
     expect(screen.getByRole('link', { name: 'Score calculator' })).toHaveAttribute('href', '/score/dominion');
     again.unmount();
+    const europe = renderAt('/rules/ticket-to-ride/europe');
+    expect(screen.getByRole('link', { name: 'Score calculator' })).toHaveAttribute('href', '/score/ticket-to-ride?map=europe');
+    europe.unmount();
     renderAt('/rules/card-deck/spoons');
     expect(screen.queryByRole('link', { name: 'Score calculator' })).toBeNull();
   });

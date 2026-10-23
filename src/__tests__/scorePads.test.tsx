@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router';
+import { render, screen, fireEvent, within, act } from '@testing-library/react';
+import { MemoryRouter, Routes, Route, createMemoryRouter, RouterProvider } from 'react-router';
 import ScoreCalculatorPage from '../components/ScoreCalculatorPage';
 
 function renderPage(path: string) {
@@ -102,9 +102,10 @@ describe('Ticket to Ride', () => {
     click('Results');
     expect(cells('Routes')).toEqual(['7', '15']);
     expect(cells('Tickets missed')).toEqual(['0', '−3']);
-    expect(cells('Stations')).toEqual(['0', '4']);
-    expect(cells('Total')).toEqual(['12', '16']);
-    expect(cells('Place')).toEqual(['2nd', '1st']);
+    // Player 1 never touched their stations: all three kept.
+    expect(cells('Stations')).toEqual(['12', '4']);
+    expect(cells('Total')).toEqual(['24', '16']);
+    expect(cells('Place')).toEqual(['1st', '2nd']);
   });
 
   it('says how a tie on points was broken', () => {
@@ -118,10 +119,19 @@ describe('Ticket to Ride', () => {
     expect(cells('Place')).toEqual(['1st', '2nd']);
   });
 
-  it('crowns nobody before anyone has scored', () => {
+  it('crowns nobody before anyone has scored, Europe\'s kept stations aside', () => {
     renderPage('/score/ticket-to-ride');
+    click('Europe');
+    expect(box(/Stations kept/)).toHaveValue(3);
+    expect(screen.getByText('12 points')).toBeInTheDocument();
     click('Results');
     expect(cells('Place')).toEqual(['–', '–']);
+  });
+
+  it('opens on Europe from Europe\'s rules tab, whatever was played last', () => {
+    localStorage.setItem('gameroom:score:ticket-to-ride:map', '"usa"');
+    renderPage('/score/ticket-to-ride?map=europe');
+    expect(screen.getByRole('button', { name: 'Europe' })).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('starts fresh when a saved player isn\'t one it wrote, and ignores a map it doesn\'t know', () => {
@@ -169,8 +179,8 @@ describe('Dominion', () => {
     expect(cells('Nobles')).toEqual(['2', '0']);
     expect(cells('Curses')).toEqual(['0', '0']);
     expect(screen.queryByRole('rowheader', { name: 'Mill' })).not.toBeInTheDocument();
-    expect(screen.getByText('Player 1 and Player 2 tie on 2 VP, so they share 1st place.')).toBeInTheDocument();
-    expect(screen.getByText(/fewer turns/)).toBeInTheDocument();
+    expect(screen.getByText('Player 1 and Player 2 tie on 2 VP, so they share 1st place, unless one of them had fewer turns.')).toBeInTheDocument();
+    expect(screen.getByText(/^A tie on points goes to the player who had fewer turns/)).toBeInTheDocument();
   });
 
   it('clears the Kingdom with the scores on New game', () => {
@@ -253,6 +263,14 @@ describe('the round-by-round pad', () => {
     expect(screen.getByRole('status')).toHaveTextContent('First to 100; then the lowest score wins.');
   });
 
+  it('asks whether a hand all in one player\'s hands was a moon shot', () => {
+    renderPage('/score/card-deck/hearts');
+    type('Player 2', '26');
+    expect(screen.getByText(/One player took all 26: did they shoot the moon\?/)).toBeInTheDocument();
+    click('Player 2', group('Did anyone shoot the moon?'));
+    expect(screen.queryByText(/One player took all 26/)).not.toBeInTheDocument();
+  });
+
   it('ends Hearts when someone reaches 100, crowning the lowest', () => {
     localStorage.setItem('gameroom:score:hearts', JSON.stringify({
       names: ['Ana', 'Ben', 'Cy'],
@@ -300,6 +318,35 @@ describe('the round-by-round pad', () => {
     expect(screen.getByText('Hole 1 deleted.')).toBeInTheDocument();
   });
 
+  it('keeps a Golf hole between -99 and 99', () => {
+    renderPage('/score/card-deck/golf');
+    type('Player 1', '-999999');
+    type('Player 2', '999');
+    expect(box('Player 1')).toHaveValue(-99);
+    expect(box('Player 2')).toHaveValue(99);
+  });
+
+  it('labels a seat whose name was cleared by its number', () => {
+    renderPage('/score/uno');
+    fireEvent.change(screen.getByLabelText('Player 1 name'), { target: { value: ' ' } });
+    click('Player 2', group('Who went out?'));
+    expect(box('Player 1')).toBeInTheDocument();
+    expect(within(group('Who went out?')).getByRole('button', { name: 'Player 1' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Player 1 name')).toHaveValue(' ');
+  });
+
+  it('keeps each card game\'s table to itself when Back and Forward move between them', async () => {
+    localStorage.setItem('gameroom:score:hearts', JSON.stringify({ names: ['Ana', 'Ben', 'Cy'], rounds: [{ game: 'hearts', moon: null, taken: [26, 0, 0] }] }));
+    const router = createMemoryRouter([{ path: '/score/:slug/:part?', element: <ScoreCalculatorPage /> }], { initialEntries: ['/score/card-deck/hearts'] });
+    render(<RouterProvider router={router} />);
+    expect(screen.getByLabelText('Player 1 name')).toHaveValue('Ana');
+    await act(async () => { await router.navigate('/score/card-deck/golf'); });
+    expect(screen.getByLabelText('Player 1 name')).toHaveValue('Player 1');
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('gameroom:score:golf')!)).toEqual({ names: ['Player 1', 'Player 2'], rounds: [] });
+    expect(JSON.parse(localStorage.getItem('gameroom:score:hearts')!).names).toEqual(['Ana', 'Ben', 'Cy']);
+  });
+
   it('keeps a round when its deletion is declined', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(false);
     renderPage('/score/card-deck/golf');
@@ -331,13 +378,14 @@ describe('the round-by-round pad', () => {
     bids.forEach((b, i) => type(`Player ${i + 1} bid`, String(b)));
     tricks.forEach((t, i) => type(`Player ${i + 1} tricks`, String(t)));
     // Players 1 and 3 bid 5 and take 6: 51 and a bag. Player 2 bids 4 and
-    // takes 5 (41, a bag); player 4's nil fails (-100), its 2 tricks bags.
-    expect(screen.getByText('Player 1 & Player 3 +51 · Player 2 & Player 4 −57')).toBeInTheDocument();
+    // takes 5 (41, a bag); player 4's nil fails (-100), its 2 tricks bags
+    // that score nothing.
+    expect(screen.getByText('Player 1 & Player 3 +51 · Player 2 & Player 4 −59')).toBeInTheDocument();
     click('Add hand 1');
     const [us, them] = within(screen.getByRole('region', { name: 'Standings' })).getAllByRole('listitem');
     expect(within(us).getByText('51')).toBeInTheDocument();
     expect(within(us).getByText('1 bag')).toBeInTheDocument();
-    expect(within(them).getByText('−57')).toBeInTheDocument();
+    expect(within(them).getByText('−59')).toBeInTheDocument();
     expect(within(them).getByText('3 bags')).toBeInTheDocument();
   });
 

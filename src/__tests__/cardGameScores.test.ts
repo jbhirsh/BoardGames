@@ -64,8 +64,9 @@ describe('spadesHand', () => {
 
   it('scores a nil on its own, its partner\'s bid on its partner\'s tricks', () => {
     expect(spadesHand([0, 4], [0, 4])).toEqual({ points: 140, bags: 0 });
-    // A failed nil: -100, and its two tricks are bags, not help for the partner.
-    expect(spadesHand([0, 4], [2, 3])).toEqual({ points: -100 + 2 - 40, bags: 2 });
+    // A failed nil: -100 flat, its two tricks bags that score nothing and
+    // don't help the partner, who falls short.
+    expect(spadesHand([0, 4], [2, 3])).toEqual({ points: -100 - 40, bags: 2 });
   });
 });
 
@@ -102,6 +103,11 @@ describe('roundIssue', () => {
     expect(roundIssue({ game: 'hearts', moon: null, taken: [10, 5, 6, 0] })).toBe('These add up to 21. A hand holds 26: 13 hearts and the queen of spades.');
     expect(roundIssue({ game: 'hearts', moon: null, taken: [13, 13, 0] })).toBeNull();
     expect(roundIssue({ game: 'hearts', moon: 1, taken: [0, 0, 0] })).toBeNull();
+  });
+
+  it('asks whether a Hearts hand all in one player\'s hands was a moon shot', () => {
+    expect(roundIssue({ game: 'hearts', moon: null, taken: [0, 26, 0] })).toBe('One player took all 26: did they shoot the moon? Say who above, and everyone else scores 26 instead.');
+    expect(roundIssue({ game: 'hearts', moon: null, taken: [26, 5, 0] })).toMatch(/These add up to 31/);
   });
 
   it('says when a Spades hand\'s tricks don\'t add up to 13', () => {

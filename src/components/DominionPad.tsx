@@ -78,7 +78,8 @@ function Results({ kingdom, players }: { kingdom: ReadonlySet<KingdomCard>; play
         places={placed.map(p => (scored ? ordinal(p) : '–'))}
         won={placed.map(p => scored && p === 1)}
       />
-      {scored && tieNotes(players.map(p => p.name), totals.map(vp), totals, []).map(note => <p key={note} className="sc-tie-note">{note}</p>)}
+      {scored && tieNotes(players.map(p => p.name), totals.map(vp), totals, [], (place) => `so they share ${place} place, unless one of them had fewer turns`)
+        .map(note => <p key={note} className="sc-tie-note">{note}</p>)}
       <p className="sc-tie-rule">A tie on points goes to the player who had fewer turns; tied on turns too, they share the win.</p>
     </>
   );

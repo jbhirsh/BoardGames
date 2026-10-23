@@ -9,15 +9,15 @@ export function num(text: string): number {
 
 /**
  * Typed text to stored text: drops leading zeros ("07" -> "7"), allows a
- * sign only where `allowNeg`, floors anything else at 0, and caps it at
- * `max`. A number input reports a half-typed "-" as "", so that arrives
+ * sign only where `allowNeg` (down to -`max`), floors anything else at 0,
+ * and caps it at `max`. A number input reports a half-typed "-" as "", so that arrives
  * here as empty and the browser keeps showing the minus until the digit
  * follows.
  */
 export function cleanInput(text: string, allowNeg: boolean, max = Infinity): string {
   const n = parseInt(text, 10);
   if (isNaN(n)) return '';
-  return String(Math.min(max, allowNeg ? n : Math.max(0, n)));
+  return String(Math.min(max, Math.max(allowNeg ? -max : 0, n)));
 }
 
 /** A score as a sheet shows it, below zero with a true minus sign: "−8". */

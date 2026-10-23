@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ALL_GAMES } from '../data/games';
-import { CARD_GAMES, SCORE_CALCULATORS, SCORE_PAD_KEYS, scorePadFor, scorePadPath, type CardGameId } from '../data/scoreCalculators';
+import { CARD_GAMES, SCORE_CALCULATORS, SCORE_PAD_KEYS, scorePadFor, scorePadLink, scorePadPath, type CardGameId } from '../data/scoreCalculators';
 
 describe('the score pads', () => {
   it.each(SCORE_PAD_KEYS)('%s is a game in the collection, or a game inside one with its rulebook', (key) => {
@@ -17,6 +17,15 @@ describe('the score pads', () => {
     expect(scorePadPath('card-deck', 'spades')).toBe('/score/card-deck/spades');
     expect(scorePadPath('dominion')).toBe('/score/dominion');
     expect(scorePadPath('dominion', 'intrigue')).toBeNull();
+  });
+
+  it('links a rules tab to its own pad, else its game\'s, set for the tab where it can be', () => {
+    expect(scorePadLink('card-deck', 'hearts')).toBe('/score/card-deck/hearts');
+    expect(scorePadLink('ticket-to-ride', 'europe')).toBe('/score/ticket-to-ride?map=europe');
+    expect(scorePadLink('dominion', 'intrigue')).toBe('/score/dominion');
+    expect(scorePadLink('dominion')).toBe('/score/dominion');
+    expect(scorePadLink('card-deck', 'spoons')).toBeNull();
+    expect(scorePadLink('catan')).toBeNull();
   });
 
   it('lists only whole games for a card\'s Score button', () => {

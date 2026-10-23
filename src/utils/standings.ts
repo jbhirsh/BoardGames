@@ -39,13 +39,16 @@ export function ordinal(n: number): string {
 /**
  * One sentence for each total two or more players share, saying which
  * tie-break settled it, or that none did. `shown` is each total as the
- * sheet shows it ("98 points").
+ * sheet shows it ("98 points"); `shared` ends the sentence for a tie no
+ * tie-break here settles, given the place ("1st"), for a game that settles
+ * it on something the pad doesn't count.
  */
 export function tieNotes(
   players: readonly string[],
   shown: readonly string[],
   totals: readonly number[],
   breaks: readonly TieBreak[],
+  shared: (place: string) => string = (place) => `so they share ${place} place`,
 ): string[] {
   const placed = places(totals, breaks);
   const notes: string[] = [];
@@ -55,7 +58,7 @@ export function tieNotes(
     const who = names(tied.map((i) => players[i]));
     const settles = breaks.find((b) => tied.some((i) => b.values[i] !== b.values[tied[0]]));
     if (!settles) {
-      notes.push(`${who} tie on ${shown[tied[0]]}${breaks.length ? ' and every tie-break' : ''}, so they share ${ordinal(placed[tied[0]])} place.`);
+      notes.push(`${who} tie on ${shown[tied[0]]}${breaks.length ? ' and every tie-break' : ''}, ${shared(ordinal(placed[tied[0]]))}.`);
       continue;
     }
     const still = [...new Set(tied.map((i) => placed[i]))]
