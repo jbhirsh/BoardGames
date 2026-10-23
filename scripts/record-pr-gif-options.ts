@@ -83,6 +83,21 @@ export function parseOptions(argv: string[]): Options {
   };
 }
 
+/** The browser window a scenario gets unless it names one: a phone, as the site is designed phone first. */
+export const PHONE = { width: 390, height: 844 };
+
+/**
+ * A GIF's width when neither --width nor the scenario sets one: the window's
+ * own, so a phone's frames aren't blown up, but no more than 700; side by
+ * side, two of those (each at most 496) and the 8px between them.
+ */
+export function defaultWidth(viewportWidth: number, sideBySide: boolean): number {
+  if (!sideBySide) return Math.min(700, viewportWidth);
+  // sideBySide (pr-gif.ts) splits its width into two even halves.
+  const half = Math.floor(Math.min(496, viewportWidth) / 2) * 2;
+  return 2 * half + 8;
+}
+
 /**
  * The owner/repo of a GitHub remote, for the raw links: https (with or
  * without a token or `.git`), `git@github.com:`, `ssh://`, or an SSH host
