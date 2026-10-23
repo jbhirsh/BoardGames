@@ -42,8 +42,12 @@ test("a deck's Hearts is scored hand by hand from its rules page, to the end", a
 test("Uno's Score button opens its pad, and the first to 500 wins", async ({ page }) => {
   await page.goto('/');
   await page.getByPlaceholder('Search games...').fill('Uno');
-  // A phone lists a line a game; Score is in the line, opened.
+  // A phone lists a line a game; Score is in the line, opened. Each step
+  // waits for the last to land (the list down to Uno, the line open), so a
+  // tap never meets a list still changing under it.
+  await expect(page.getByRole('button', { name: /^Show details for / })).toHaveCount(1);
   await page.getByRole('button', { name: 'Show details for Uno' }).click();
+  await expect(page.getByRole('button', { name: 'Hide details for Uno' })).toHaveAttribute('aria-expanded', 'true');
   await page.getByRole('link', { name: 'Score', exact: true }).click();
   await expect(page).toHaveURL(/\/score\/uno$/);
   const out = page.getByRole('group', { name: 'Who went out?' });
