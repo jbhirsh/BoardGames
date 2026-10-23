@@ -1095,9 +1095,14 @@ body {
   margin: 0 auto;
   padding: 52px var(--gutter) 48px;
 }
+/* One line, its items centred on one another: the title and its count at
+   the start (.sec-name, taking the slack), then the list's actions and the
+   switches at the end. A line too narrow for them all wraps its end to a
+   line of its own, still at the right. */
 .sec-hd {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 14px;
   margin-bottom: 28px;
   flex-wrap: wrap;
@@ -1129,37 +1134,33 @@ body {
   letter-spacing: 1.5px;
   text-transform: uppercase;
 }
-/* The count shares the title's baseline, then rises so its capitals sit in
-   the middle of the title's lowercase letters, which is where the eye puts a
-   heading's centre (centring the boxes left it reading high). */
-.sec-hd > .sec-title,
-.sec-hd > .sec-count {
-  align-self: baseline;
+/* The title and its count share a baseline, as a caption does, and take
+   the line's slack, pushing the buttons to its end. */
+.sec-name {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-right: auto;
+  min-width: 0;
 }
-.sec-hd > .sec-count {
-  position: relative;
-  top: -0.25em;
+.sec-count {
+  white-space: nowrap;
 }
-/* The switches get a line of their own under the heading, at the right:
-   Own/Want, then the view toggle (on a phone, the view toggle alone, at
-   the heading line's end). */
+/* Own/Want, then the view toggle (on a phone, the heading's icon buttons),
+   after Pick for us or, on the wishlist, Share wishlist and Suggest a game,
+   all one height. */
 .sec-switch {
-  flex-basis: 100%;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 10px;
-}
-/* The picker ends the heading's line, flush with the view toggle below it;
-   on the wishlist, Share wishlist sits before Suggest a game. */
-.sec-hd > .pick-btn,
-.sec-hd > .sec-actions {
-  margin-left: auto;
 }
 .sec-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+.sec-hd :is(.pick-btn, .share-btn) {
+  height: 34px;
 }
 .share-btn {
   display: inline-grid;
@@ -4486,9 +4487,9 @@ a.rules-chat-toggle {
     max-height: min(250px, 40svh);
   }
 
-  /* One line from 360px: the title, its count and the view toggle at the
-     right end, Pick for us and Own/Want having gone to the bar along the
-     bottom. Narrower, the toggle wraps under it, still at the right. */
+  /* One line from 360px: the title, its count and the icon buttons at the
+     end, Pick for us and Own/Want having gone to the bar along the bottom.
+     Narrower, the buttons wrap under it, still at the right. */
   .sec-hd {
     padding: 6px 0 0;
     column-gap: 10px;
@@ -4498,22 +4499,9 @@ a.rules-chat-toggle {
   .sec-title {
     font-size: 22px;
   }
-  .sec-count {
-    white-space: nowrap;
-  }
   .sec-switch {
-    flex-basis: auto;
-    margin-left: auto;
     gap: 2px;
     margin-right: -10px;
-  }
-  /* The title and its count centred on the toggle beside them, rather than
-     sharing a baseline that leaves them riding high of it. */
-  .sec-hd > :is(.sec-title, .sec-count) {
-    align-self: center;
-  }
-  .sec-hd > .sec-count {
-    top: 0;
   }
   .wish-purpose {
     margin: -4px 0 16px;
