@@ -77,12 +77,14 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
   return (
     <section className="wishlist" id={hidden ? undefined : 'collection'} ref={sectionRef} hidden={hidden}>
       <div className="sec-hd">
-        <h2 className="sec-title" tabIndex={-1} data-focus-target="title">
-          Wishlist
-        </h2>
-        <span className="sec-count">
-          {filtered.length} {filtered.length === 1 ? 'game' : 'games'}
-        </span>
+        <div className="sec-name">
+          <h2 className="sec-title" tabIndex={-1} data-focus-target="title">
+            Wishlist
+          </h2>
+          <span className="sec-count">
+            {filtered.length} {filtered.length === 1 ? 'game' : 'games'}
+          </span>
+        </div>
         {/* The wishlist's counterpart to the collection's Pick for us, on
             the heading's line: the form sits below every entry. */}
         {loaded && !isPhone && (
