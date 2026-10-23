@@ -20,6 +20,11 @@ export function cleanInput(text: string, allowNeg: boolean, max = Infinity): str
   return String(Math.min(max, allowNeg ? n : Math.max(0, n)));
 }
 
+/** A score as a sheet shows it, below zero with a true minus sign: "−8". */
+export function showScore(n: number): string {
+  return n < 0 ? `\u2212${-n}` : String(n);
+}
+
 /** Whether saved text is what a box could hold: digits, maybe after a minus, or nothing. */
 export function isBoxText(v: unknown): v is string {
   return typeof v === 'string' && /^-?\d*$/.test(v);

@@ -262,7 +262,9 @@ describe('ListView open row through a round trip', () => {
   it('brings the row back open after its Score and the browser\'s Back', async () => {
     const router = renderListRoutes();
     await act(async () => { fireEvent.click(toggleFor('7 Wonders')); });
-    await act(async () => { fireEvent.click(screen.getByRole('link', { name: /Score/ })); });
+    // Other games have a pad too: this row's own.
+    const score = screen.getAllByRole('link', { name: /Score/ }).find((link) => link.getAttribute('href') === '/score/7-wonders')!;
+    await act(async () => { fireEvent.click(score); });
     expect(router.state.location.pathname).toBe('/score/7-wonders');
 
     await act(async () => { await router.navigate(-1); });

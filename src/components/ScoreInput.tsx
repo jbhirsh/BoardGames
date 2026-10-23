@@ -48,6 +48,45 @@ export default function ScoreInput({ id, unit, value, color, negative = false, d
   );
 }
 
+interface CountProps {
+  id: string;
+  label: string;
+  /** What one is worth, under the label: "6 VP each". */
+  worth: string;
+  /** What's counted, inside the box: "cards", "routes". */
+  unit: string;
+  value: string;
+  /** The row's points, beside the label: "= 24 VP". */
+  points: string;
+  onChange: (text: string) => void;
+}
+
+/**
+ * A row of a pad that counts things (cards, routes): the name, what one is
+ * worth and what they come to, then the box. The worth and points are out
+ * of the box's name and in its description, as 7 Wonders' Treasury has.
+ */
+export function CountRow({ id, label, worth, unit, value, points, onChange }: CountProps) {
+  return (
+    <div className="sc-row">
+      <label className="sc-label" htmlFor={id}>
+        <span className="sc-label-text">
+          {label}
+          <span className="sc-vp-note" id={`${id}-worth`} aria-hidden="true">{worth}</span>
+          <span className="sc-vp-note sc-vp-pts" id={`${id}-pts`} aria-hidden="true">{points}</span>
+        </span>
+      </label>
+      <ScoreInput
+        id={id}
+        unit={unit}
+        value={value}
+        describedBy={`${id}-worth ${id}-pts`}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  );
+}
+
 /** The ± beside a box that can go below zero, off until there's a number to flip. */
 export function SignButton({ label, value, onFlip }: { label: string; value: number; onFlip: () => void }) {
   return (
