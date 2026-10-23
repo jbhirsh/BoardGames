@@ -3,9 +3,11 @@ import type { WishlistItem } from '../data/types';
 import { WISHLIST_TYPES, WISHLIST_TYPE_ORDER } from '../data/keywords';
 import WishlistCard from './WishlistCard';
 import WishlistListView from './WishlistListView';
+import WishlistPhoneListView from './WishlistPhoneListView';
 import SuggestForm from './SuggestForm';
 import CollectionToggle from './CollectionToggle';
 import ViewToggle from './ViewToggle';
+import ViewFlip from './ViewFlip';
 import NoResults from './NoResults';
 import AdminPanel from './AdminPanel';
 import { useFilterResults } from '../context/useFilter';
@@ -19,17 +21,8 @@ import { useCopyLink } from '../hooks/useCopyLink';
 import { groupItems, isGrouped, type WishlistGroup } from '../utils/filterGames';
 import { buildShareUrl } from '../utils/filterUrl';
 import { initialFilterState } from '../data/initialFilterState';
-import { focusTarget } from '../client/focus';
-
-/**
- * Takes the reader to the suggestion form, ready to type the game. The
- * button that calls this shows only once the form has mounted.
- */
-function goToSuggest() {
-  const form = document.getElementById('suggest')!;
-  form.scrollIntoView({ block: 'start' });
-  focusTarget(form, 'field', { preventScroll: true });
-}
+import { goToSuggest } from '../client/suggest';
+import { DoneIcon, ShareIcon } from './Icons';
 
 /**
  * The "We want" view: the static wishlist plus approved friend suggestions,
@@ -47,7 +40,9 @@ function goToSuggest() {
  * to the default sort), a line under the heading saying what a vote does,
  * and on the heading's line Share wishlist (/?c=want, through useCopyLink)
  * and Suggest a game, which jumps to the form at the bottom. On a phone the
- * two split a line of their own, like Own/Want under them.
+ * heading's line ends in two quiet icon buttons, Share and the rows-or-cards
+ * switch (ViewFlip), and Suggest a game and Own/Want are in the bar along
+ * the bottom (PhoneNav).
  */
 export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
   const { items, loaded } = useWishlistItems();
@@ -58,6 +53,26 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
   // The Share link's copy, with the wishlist's own URL: /?c=want, none of
   // the filters, so a friend sees every entry.
   const { copied, copy } = useCopyLink();
+  const shareLink = () => copy(buildShareUrl({ ...initialFilterState, collection: 'want' }, window.location.origin));
+  // data-label sizes the button to its longer label, so "Copied!" doesn't
+  // shrink it (see .share-btn::before). On a phone, an icon, which turns to
+  // a tick and "Copied" for a moment.
+  const share = isPhone ? (
+    <button type="button" className="icon-btn" aria-label="Share wishlist" title="Share wishlist" onClick={shareLink}>
+      {copied ? (
+        <>
+          <DoneIcon />
+          <span className="icon-btn-note">Copied</span>
+        </>
+      ) : (
+        <ShareIcon />
+      )}
+    </button>
+  ) : (
+    <button type="button" className="share-btn" data-label="Share wishlist" onClick={shareLink}>
+      <span className="share-btn-label">{copied ? 'Copied!' : 'Share wishlist'}</span>
+    </button>
+  );
 
   return (
     <section className="wishlist" id={hidden ? undefined : 'collection'} ref={sectionRef} hidden={hidden}>
@@ -70,18 +85,9 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
         </span>
         {/* The wishlist's counterpart to the collection's Pick for us, on
             the heading's line: the form sits below every entry. */}
-        {loaded && (
+        {loaded && !isPhone && (
           <div className="sec-actions">
-            {/* data-label sizes the button to its longer label, so
-                "Copied!" doesn't shrink it (see .share-btn::before). */}
-            <button
-              type="button"
-              className="share-btn"
-              data-label="Share wishlist"
-              onClick={() => copy(buildShareUrl({ ...initialFilterState, collection: 'want' }, window.location.origin))}
-            >
-              <span className="share-btn-label">{copied ? 'Copied!' : 'Share wishlist'}</span>
-            </button>
+            {share}
             <button type="button" className="pick-btn" onClick={goToSuggest}>
               Suggest a game
             </button>
@@ -91,8 +97,9 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
           {copied ? 'Link copied to clipboard' : ''}
         </span>
         <div className="sec-switch">
-          <CollectionToggle />
-          {!isPhone && <ViewToggle />}
+          {!isPhone && <CollectionToggle />}
+          {loaded && isPhone && share}
+          {isPhone ? <ViewFlip /> : <ViewToggle />}
         </div>
       </div>
       {/* What a vote does, for the friend a shared link brought here. */}
@@ -172,10 +179,12 @@ function WishlistBody({
       {admin && <AdminPanel />}
       {filtered.length === 0 ? (
         <NoResults kind="wishlist" />
-      ) : state.view === 'list' && !isPhone ? (
-        <WishlistListView groups={groups} counts={counts} myVotes={myVotes} onVote={toggle} disabled={!loaded} />
-      ) : (
+      ) : state.view === 'grid' ? (
         renderGrid()
+      ) : isPhone ? (
+        <WishlistPhoneListView groups={groups} counts={counts} myVotes={myVotes} onVote={toggle} disabled={!loaded} />
+      ) : (
+        <WishlistListView groups={groups} counts={counts} myVotes={myVotes} onVote={toggle} disabled={!loaded} />
       )}
       <SuggestForm />
     </>

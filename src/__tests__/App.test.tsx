@@ -136,4 +136,42 @@ describe('App on a phone', () => {
     const { container } = renderApp('/?p=4');
     expect(container.querySelector('.sticky-header .atags')).not.toBeNull();
   });
+
+  it("puts Own/Want and the list's action in a bar at the end of the page", async () => {
+    stubMatchMedia(true);
+    const scrollIntoView = vi.fn();
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = scrollIntoView;
+    try {
+      const { container } = renderApp();
+      const bar = screen.getByRole('navigation', { name: 'Which games to show' });
+      expect(container.querySelector('.clip-wrap')!.lastElementChild).toBe(bar);
+      const own = within(bar).getByRole('button', { name: 'We own' });
+      const want = within(bar).getByRole('button', { name: 'We want' });
+      expect(own).toHaveAttribute('aria-pressed', 'true');
+      expect(within(bar).getByRole('button', { name: 'Pick for us' })).toBeVisible();
+      expect(within(bar).queryByRole('button', { name: 'Suggest a game' })).not.toBeInTheDocument();
+
+      fireEvent.click(want);
+      expect(want).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByText(/Our Collection/)).not.toBeVisible();
+      expect(within(bar).queryByRole('button', { name: 'Pick for us' })).not.toBeInTheDocument();
+      // The form it goes to comes with the wishlist's entries.
+      const suggest = within(bar).getByRole('button', { name: 'Suggest a game' });
+      await waitFor(() => expect(suggest).toBeEnabled());
+      fireEvent.click(suggest);
+      expect(scrollIntoView.mock.contexts[0]).toBe(screen.getByRole('form', { name: 'Suggest a game' }));
+      expect(screen.getByLabelText('Game')).toHaveFocus();
+
+      fireEvent.click(own);
+      expect(screen.getByText(/Our Collection/)).toBeVisible();
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
+  }, 15_000);
+
+  it('has no bar on a wider screen', () => {
+    renderApp();
+    expect(screen.queryByRole('navigation', { name: 'Which games to show' })).not.toBeInTheDocument();
+  });
 });

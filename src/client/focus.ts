@@ -6,8 +6,8 @@
 //
 // The names in use:
 //   title            a section's heading
-//   item             where a jump to one game lands: its card's name or
-//                    its row's toggle
+//   item             where a jump to one game lands: its card's name, or
+//                    the toggle of its row or of its line on a phone
 //   field            the first field of a form
 //   own-toggle,      the Own/Want toggle's buttons
 //   want-toggle
