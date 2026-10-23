@@ -5,12 +5,13 @@ import { useItemFilter } from '../context/useFilter';
 import { ytURL } from '../utils/urls';
 import { rulebookPath } from '../utils/rulebooks';
 import { fittingSubgames, shownKind, subgameNoun } from '../utils/subgames';
-import { YouTubeIcon, AiRulesIcon, UserIcon, ClockIcon } from './Icons';
+import { YouTubeIcon, AiRulesIcon, UserIcon, ClockIcon, CalculatorIcon } from './Icons';
 import AwardsBadge from './AwardsBadge';
 import ExternalLink from './ExternalLink';
 import DifficultyMeta from './DifficultyMeta';
 import GameDetail from './GameDetail';
 import { FROM_LIST } from '../utils/fromList';
+import { scorePadPath } from '../data/scoreCalculators';
 
 interface Props {
   game: GameWithSubgames;
@@ -18,8 +19,9 @@ interface Props {
 
 /**
  * The games inside a game (Catan's add-ons, the games a deck plays), each with
- * its own players, time, rules and video. Only the ones that fit the players
- * and time filters are listed.
+ * its own players, time, rules and video, and a score pad where it has one
+ * (a deck's Hearts). Only the ones that fit the players and time filters
+ * are listed.
  */
 export default function SubGameList({ game }: Props) {
   const filter = useItemFilter();
@@ -41,6 +43,7 @@ function SubGameRow({ parent, sub }: { parent: string; sub: SubGame }) {
   const moreId = useId();
   const kind = shownKind(sub.name, sub.kind);
   const hasMore = sub.desc !== undefined || sub.detail !== undefined;
+  const scorePath = scorePadPath(parent, sub.slug);
   return (
     <li className="sub-row">
       <div className="sub-main">
@@ -87,6 +90,18 @@ function SubGameRow({ parent, sub }: { parent: string; sub: SubGame }) {
             onClick={(e) => e.stopPropagation()}
           >
             <AiRulesIcon size={14} />
+          </Link>
+        )}
+        {scorePath && (
+          <Link
+            className="sub-link"
+            to={scorePath}
+            state={FROM_LIST}
+            aria-label={`${sub.name} score pad`}
+            title="Score"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <CalculatorIcon />
           </Link>
         )}
         <ExternalLink

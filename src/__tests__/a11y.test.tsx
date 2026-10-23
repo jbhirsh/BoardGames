@@ -255,4 +255,25 @@ describe('accessibility', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Results' }));
     expect(await axe(container, axeOptions)).toHaveNoViolations();
   }, TIMEOUT_MS);
+
+  it.each(['uno', 'card-deck/hearts', 'card-deck/golf', 'card-deck/spades', 'card-deck/euchre'])('the %s round pad has no axe violations, with a round in', async (pad) => {
+    const game = pad.split('/').at(-1)!;
+    const rounds = {
+      uno: [{ game: 'uno', out: 0, hands: [0, 12] }],
+      hearts: [{ game: 'hearts', moon: null, taken: [10, 10, 6] }],
+      golf: [{ game: 'golf', scores: [-2, 7] }],
+      spades: [{ game: 'spades', bids: [3, 3, 3, 0], tricks: [4, 3, 3, 3] }],
+      euchre: [{ game: 'euchre', makers: 1, tricks: 4, alone: false }],
+    }[game];
+    const names = game === 'euchre' ? ['Us', 'Them'] : game === 'spades' ? ['A', 'B', 'C', 'D'] : game === 'hearts' ? ['A', 'B', 'C'] : ['A', 'B'];
+    localStorage.setItem(`gameroom:score:${game}`, JSON.stringify({ names, rounds }));
+    try {
+      const router = createMemoryRouter([{ path: '/score/:slug/:part?', element: <ScoreCalculatorPage /> }], { initialEntries: [`/score/${pad}`] });
+      const { container } = render(<RouterProvider router={router} />);
+      expect(screen.getByRole('table')).toBeInTheDocument();
+      expect(await axe(container, axeOptions)).toHaveNoViolations();
+    } finally {
+      localStorage.clear();
+    }
+  }, TIMEOUT_MS);
 });

@@ -84,6 +84,17 @@ describe('RulesPage', () => {
     expect(screen.queryByRole('link', { name: 'Score calculator' })).toBeNull();
   });
 
+  it('links a deck\'s game to its own pad, and a game\'s other rulebooks to the game\'s', () => {
+    const { unmount } = renderAt('/rules/card-deck/hearts');
+    expect(screen.getByRole('link', { name: 'Score calculator' })).toHaveAttribute('href', '/score/card-deck/hearts');
+    unmount();
+    const again = renderAt('/rules/dominion/intrigue');
+    expect(screen.getByRole('link', { name: 'Score calculator' })).toHaveAttribute('href', '/score/dominion');
+    again.unmount();
+    renderAt('/rules/card-deck/spoons');
+    expect(screen.queryByRole('link', { name: 'Score calculator' })).toBeNull();
+  });
+
   it('offers starter questions shaped by the tab on screen', () => {
     renderAt('/rules/catan/5-6-player-extension');
     fireEvent.click(screen.getByRole('button', { name: /AI Rules Assistant/i }));

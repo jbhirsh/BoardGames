@@ -52,6 +52,11 @@ describe('RulesFallback', () => {
     expect(buttons()).toEqual(['AI Rules Assistant', ' Score calculator']);
   });
 
+  it('holds room for the score calculator\'s link on a deck\'s game with a pad of its own', () => {
+    render('/rules/card-deck/hearts');
+    expect(buttons()).toEqual(['AI Rules Assistant', ' Score calculator']);
+  });
+
   it('holds room for the word checker\'s button on Bananagrams', () => {
     render('/rules/bananagrams');
     expect(buttons()).toEqual(['AI Rules Assistant', 'Word Checker']);
