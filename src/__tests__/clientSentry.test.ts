@@ -4,7 +4,17 @@ const sdk = vi.hoisted(() => ({
   captureException: vi.fn(),
   captureMessage: vi.fn(),
 }));
-vi.mock('../instrument', () => sdk);
+// How often the SDK's module was fetched, failing or not.
+const fetched = vi.hoisted(() => ({ count: 0 }));
+const online = () => {
+  fetched.count++;
+  return sdk;
+};
+const offline = () => {
+  fetched.count++;
+  throw new Error('offline');
+};
+vi.mock('../instrument', () => online());
 
 const DSN = 'https://key@o1.ingest.sentry.io/1';
 const ONERROR = { mechanism: { handled: false, type: 'auto.browser.global_handlers.onerror' } };
@@ -46,7 +56,8 @@ describe('client/sentry', () => {
 
   afterEach(() => {
     for (const [type, listener] of added) window.removeEventListener(type, listener);
-    vi.doMock('../instrument', () => sdk);
+    vi.doMock('../instrument', online);
+    fetched.count = 0;
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();
     vi.restoreAllMocks();
@@ -54,16 +65,16 @@ describe('client/sentry', () => {
   });
 
   it('loads the SDK once the browser is idle, not before', async () => {
-    const { startSentry } = await fresh();
+    const { startSentry, captureMessage } = await fresh();
     startSentry(DSN);
     expect(window.requestIdleCallback).toHaveBeenCalledExactlyOnceWith(expect.any(Function), { timeout: 3000 });
     await settle();
-    // Nothing imported yet: a report would go straight through if it were.
-    rejected(new Error('early'));
-    expect(sdk.captureException).not.toHaveBeenCalled();
+    expect(fetched.count).toBe(0);
     idle!();
     await settle();
-    expect(sdk.captureException).toHaveBeenCalledExactlyOnceWith(new Error('early'), ONREJECTION);
+    // In: a report goes straight through.
+    captureMessage('after');
+    expect(sdk.captureMessage).toHaveBeenCalledExactlyOnceWith('after', undefined);
   });
 
   it('without requestIdleCallback, loads it a few seconds on', async () => {
@@ -129,18 +140,44 @@ describe('client/sentry', () => {
     expect(sdk.captureException).not.toHaveBeenCalled();
   });
 
-  it('keeps what was reported when the SDK fails to load, and tries again on the next report', async () => {
-    vi.doMock('../instrument', () => { throw new Error('offline') });
+  it('keeps what was reported when the SDK fails to load, and tries again on a report 10 s on, not sooner', async () => {
+    vi.doMock('../instrument', offline);
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
     const { startSentry, captureMessage } = await fresh();
     startSentry(DSN);
     captureMessage('first');
     await settle();
+    expect(fetched.count).toBe(1);
+
+    // An error repeating every frame fetches nothing more for a while.
+    vi.doMock('../instrument', online);
+    now.mockReturnValue(1_009_999);
+    for (let i = 0; i < 5; i++) uncaught(new Error('every frame'));
+    await settle();
+    expect(fetched.count).toBe(1);
     expect(sdk.captureMessage).not.toHaveBeenCalled();
 
-    vi.doMock('../instrument', () => sdk);
+    now.mockReturnValue(1_010_000);
     captureMessage('second');
     await settle();
+    expect(fetched.count).toBe(2);
     expect(sdk.captureMessage.mock.calls).toEqual([['first', undefined], ['second', undefined]]);
+    expect(sdk.captureException).toHaveBeenCalledTimes(5);
+  });
+
+  it('keeps the first 20 reports while the SDK is not in, and drops any after', async () => {
+    vi.doMock('../instrument', offline);
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    const { startSentry, captureMessage } = await fresh();
+    startSentry(DSN);
+    for (let i = 0; i < 25; i++) captureMessage(`report ${i}`);
+    await settle();
+
+    vi.doMock('../instrument', online);
+    now.mockReturnValue(1_010_000);
+    captureMessage('late');
+    await settle();
+    expect(sdk.captureMessage.mock.calls.map(([message]) => message)).toEqual(Array.from({ length: 20 }, (_, i) => `report ${i}`));
   });
 
   it('starts once, however often it is called', async () => {
