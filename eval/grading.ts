@@ -1,9 +1,9 @@
 // Pure grading and scorecard logic for the rules-assistant eval harness.
 // No I/O in this module — everything here is unit-tested from src/__tests__.
 
-export const MATCH_TYPES = ['exact', 'contains', 'regex', 'judge', 'citation'] as const;
+const MATCH_TYPES = ['exact', 'contains', 'regex', 'judge', 'citation'] as const;
 
-export type MatchType = (typeof MATCH_TYPES)[number];
+type MatchType = (typeof MATCH_TYPES)[number];
 
 export interface GoldenEntry {
   id: string;

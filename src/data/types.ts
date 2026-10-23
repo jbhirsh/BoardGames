@@ -38,7 +38,7 @@ export interface ExtraRulebook {
 }
 
 /** One of our table's changes to a game's printed rules. */
-export interface HouseRule {
+interface HouseRule {
   name: string;
   /** What to do, in plain text. */
   text: string;
@@ -57,7 +57,7 @@ export interface DetailSection {
  * What a game and a game inside one both carry: who and how long it plays
  * for, its line and video, its rulebooks, awards and write-up.
  */
-export interface TableInfo extends Pick<Filterable, 'name' | 'min' | 'max' | 'dur' | 'mins' | 'bgg' | 'weight'> {
+interface TableInfo extends Pick<Filterable, 'name' | 'min' | 'max' | 'dur' | 'mins' | 'bgg' | 'weight'> {
   /**
    * Names its rulebook: a game's is /rules/<slug>.pdf, and a game inside
    * one, whose slug is unique within the game, /rules/<game>.<slug>.pdf.
@@ -191,7 +191,7 @@ interface WishlistEntry extends Filterable {
 }
 
 /** An entry compiled in from wishlist.ts, edited in the source. */
-export interface CompiledWishlistItem extends WishlistEntry {
+interface CompiledWishlistItem extends WishlistEntry {
   source?: undefined;
 }
 

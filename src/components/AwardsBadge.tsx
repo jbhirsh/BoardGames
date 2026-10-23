@@ -7,7 +7,7 @@ function countLabel(awards: Award[]) {
 }
 
 /** The list of wins, one per line with the year. */
-export function AwardsList({ awards }: { awards: Award[] }) {
+function AwardsList({ awards }: { awards: Award[] }) {
   return (
     <ul className="awards-list">
       {awards.map((a) => (

@@ -21,7 +21,7 @@ export const STATION_POINTS = 4;
 export const STATIONS = 3;
 
 /** A Destination Ticket kept: its value, and whether its cities were joined. */
-export interface Ticket {
+interface Ticket {
   points: number;
   made: boolean;
 }

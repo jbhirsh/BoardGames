@@ -23,7 +23,7 @@ export const SUGGESTION = {
 } as const;
 
 /** Stored vote counts; `GET /api/votes` reports 0 for every other id it is asked about. */
-export const VOTE_COUNTS: Record<string, number> = { splendor: 3, [SUGGESTION.id]: 1 };
+const VOTE_COUNTS: Record<string, number> = { splendor: 3, [SUGGESTION.id]: 1 };
 
 /** The rules assistant's stubbed reply, in Markdown as the model writes it. */
 export const CHAT_ANSWER = 'Yes. **Every player** answers each question, then you vote.';

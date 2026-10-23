@@ -177,7 +177,7 @@ export async function saveRulebook(
  * (its Save for offline button). Answered on the MessagePort sent with it.
  */
 export const SAVE_MESSAGE = 'gameroom-rulebook';
-export interface SaveRequest {
+interface SaveRequest {
   type: typeof SAVE_MESSAGE;
   path: string;
   save: boolean;
@@ -200,9 +200,9 @@ export function isReaderMessage(message: unknown): boolean {
  * its own, on a small rulebook's first open, too): 'saved', 'full' when the
  * browser has no room left for the site, or 'failed'.
  */
-export type SaveState = 'saved' | 'unsaved' | 'saving' | SaveOutcome;
+type SaveState = 'saved' | 'unsaved' | 'saving' | SaveOutcome;
 /** How a save ends. */
-export type SaveOutcome = 'saved' | 'failed' | 'full';
+type SaveOutcome = 'saved' | 'failed' | 'full';
 export interface SaveReply {
   path: string;
   state: SaveState;

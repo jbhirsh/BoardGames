@@ -3,7 +3,7 @@
 // never sees a secret it could leak to scripts, and signing out is a delete.
 import { randomBytes } from 'node:crypto';
 
-export const SESSION_COOKIE = 'gr_session';
+const SESSION_COOKIE = 'gr_session';
 export const SESSION_TTL_S = 30 * 24 * 3600;
 export const ID_RE = /^[A-Za-z0-9_-]{20,64}$/;
 
