@@ -17,6 +17,7 @@ npm install          # install dependencies
 npm run dev          # Vite dev server (http://localhost:5173)
 npm run build        # npm run typecheck, then vite build -> dist/
 npm run typecheck    # TypeScript 7 `tsc -b` across the project refs
+npm run typecov      # type-coverage: every tsconfig project at 100%
 npm run lint         # eslint . (flat config; includes jsx-a11y static checks)
 npm run format       # prettier --write . (format:check is CI's read-only check)
 npm run depcruise    # dependency-cruiser: layering rules (.dependency-cruiser.cjs)
@@ -140,6 +141,11 @@ before changing the module.
   `tsconfig.base.json` (the shared strict options): `tsconfig.{app,api,node,
   eval,sw,e2e}.json` for `src` (DOM), `api` (Node), `vite.config.ts`, `eval`,
   `src/sw` (WebWorker) and `e2e`. `npm run build` runs `tsc -b` over all.
+- **No `any` anywhere.** `npm run typecov` holds every tsconfig project to
+  100% type coverage: an untyped `JSON.parse`, `res.json()`, `req.body`,
+  `Array.isArray` element or library field is typed where it's read (a
+  `: unknown` and a guard, or the shape it has), never ignored.
+  `npx type-coverage -p tsconfig.app.json --detail` lists what's untyped.
 - **Prettier owns layout** (`.prettierrc.json`); ESLint's layout rules are
   off (`eslint-config-prettier`, last in the config). `.prettierignore` keeps
   it off prose (`*.md`) and off what a script writes.
@@ -203,7 +209,7 @@ before changing the module.
 
 | Required check (workflow) | What it runs |
 | --- | --- |
-| `ci` (`ci.yml`) | commit messages, lint, Prettier, depcruise, type-check, unit tests + coverage (axe suite included), build, `npm audit --omit=dev` (high+) |
+| `ci` (`ci.yml`) | commit messages, lint, Prettier, depcruise, type-check, type coverage (100%), unit tests + coverage (axe suite included), build, `npm audit --omit=dev` (high+) |
 | Claude Review (`claude-review.yml`) | AI review, in its own file: claude-code-action skips a PR that edits its workflow |
 | StrykerJS (`mutation.yml`) | incremental mutation testing of the files a PR touched, failing below `break` |
 | E2E Tests (Playwright) (`e2e.yml`) | the e2e suite; passing only on retry still fails |
