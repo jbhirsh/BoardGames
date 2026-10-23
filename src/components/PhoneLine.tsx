@@ -10,8 +10,8 @@ interface Props {
   headingLevel: 3 | 4;
   /** Players, time and the like, one short line under the name. */
   meta: string;
-  /** The line's one button beside the chevron: a game's Rules, an entry's vote. */
-  action: ReactNode;
+  /** A button beside the chevron: a wishlist entry's vote. */
+  action?: ReactNode;
   isOpen: boolean;
   onToggle: () => void;
   /** What opening the line shows. */
@@ -22,12 +22,12 @@ interface Props {
 
 /**
  * One game on a phone's list (PhoneListView, and the wishlist's): its box
- * art, its name over a short line of players and time, its main action and
- * a chevron, in a 72px row (more where a long name wraps), so ten fit on a
+ * art, its name over a short line of players and time, a wishlist entry's
+ * vote, and a chevron, in a 72px row (more where a long name wraps), so ten fit on a
  * screen where three cards did.
- * A tap anywhere on the row but the action opens it to show the rest, as a
+ * A tap anywhere on the row but the vote opens it to show the rest, as a
  * desktop table's row does: the chevron is the one button that does it,
- * its tap area stretched over the row (App.css) with the action raised
+ * its tap area stretched over the row (App.css) with the vote raised
  * above it, so a screen reader or keyboard meets one control, named for the
  * game, where a jump to the game hands focus.
  * Closed, the rest is inert: nothing in it takes focus or is read out.

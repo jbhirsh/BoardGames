@@ -4776,13 +4776,13 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
   min-height: 72px;
   padding: 10px 4px 10px 12px;
 }
-/* The chevron's tap area covers the line; the action sits above it. */
+/* The chevron's tap area covers the line; a vote sits above it. */
 .line-toggle::after {
   content: "";
   position: absolute;
   inset: 0;
 }
-.line-main > :is(.line-action, .vote-btn) {
+.line-main > .vote-btn {
   position: relative;
   z-index: 1;
 }
@@ -4819,19 +4819,6 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
   font-size: 12.5px;
   line-height: 1.35;
   color: var(--text2);
-}
-.rules-btn.line-action {
-  height: 44px;
-  padding: 0 14px;
-  border-radius: 10px;
-  border-color: var(--border2);
-  color: var(--blue);
-  font-size: 13px;
-  font-weight: 600;
-}
-/* Only the word on a line, which has no room to spare for the name and its players and time. */
-.rules-btn.line-action svg {
-  display: none;
 }
 /* Wide enough for "♥ 12", so a vote landing doesn't narrow the name. */
 .line .vote-btn--compact {
@@ -4899,9 +4886,6 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
   .line-art {
     width: 44px;
     height: 44px;
-  }
-  .rules-btn.line-action {
-    padding: 0 10px;
   }
   .pick-btn.phone-action {
     padding: 0 14px;

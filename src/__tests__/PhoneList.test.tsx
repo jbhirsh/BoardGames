@@ -30,13 +30,15 @@ function renderWithFilter(ui: React.ReactNode) {
 }
 
 describe('PhoneListView', () => {
-  it('lists a line a game, its name over its players, time and difficulty word, with Rules beside it', () => {
+  it('lists a line a game, its name over its players, time and difficulty word, Rules waiting inside it', () => {
     renderGames();
     const line = screen.getByRole('heading', { level: 3, name: 'Azul' }).closest('li')!;
     expect(line).toHaveAttribute('id', 'game-azul');
     expect(within(line).getByText('2–4 · 30–45 min · Light')).toBeInTheDocument();
-    expect(within(line).getByRole('link', { name: 'Rules for Azul' })).toBeInTheDocument();
     expect(line.querySelector('.line-detail')).toHaveAttribute('inert');
+    expect(line.querySelector('.line-detail')).toContainElement(
+      within(line).getByRole('link', { name: 'Rules for Azul' }),
+    );
   });
 
   it('opens one line at a time, showing the pitch, tags, write-up, add-ons and actions', () => {
@@ -47,7 +49,6 @@ describe('PhoneListView', () => {
     expect(catan.querySelector('.line-detail')).not.toHaveAttribute('inert');
     expect(within(catan).getByRole('list', { name: /Catan/ })).toBeInTheDocument();
     expect(within(catan).getByRole('link', { name: /Watch Catan tutorial/ })).toBeInTheDocument();
-    // Rules is on the line, so the actions under it don't repeat it.
     expect(within(catan).getAllByRole('link', { name: 'Rules for Catan' })).toHaveLength(1);
 
     fireEvent.click(screen.getByRole('button', { name: 'Show details for Azul' }));

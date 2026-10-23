@@ -12,7 +12,7 @@ const axePath = createRequire(import.meta.url).resolve('axe-core/axe.min.js');
 /** The bar along the bottom of the screen. */
 const bar = (page: Page) => page.getByRole('navigation', { name: 'Which games to show' });
 
-test('the list is a line a game, which opens in place; its Rules opens the rules page and Back finds it open', async ({
+test('the list is a line a game, which opens in place; Rules inside opens the rules page and Back finds it open', async ({
   page,
 }) => {
   await page.goto('/');
@@ -94,20 +94,20 @@ test('the bar along the bottom stays on screen, its buttons centred in it, and s
 
 test('what takes focus scrolls clear of the bar', async ({ page }) => {
   await page.goto('/');
-  // Pandemic's Rules just above the screen's bottom edge, under the bar,
-  // and focus on the line before it: Tab moves on to the Rules.
-  const rules = page.getByRole('link', { name: 'Rules for Pandemic' });
-  await rules.evaluate((el) => {
+  // Pandemic's line just above the screen's bottom edge, under the bar,
+  // and focus on the line before it: Tab moves on to Pandemic's.
+  const next = page.getByRole('button', { name: 'Show details for Pandemic' });
+  await next.evaluate((el) => {
     window.scrollBy({ top: el.getBoundingClientRect().bottom - window.innerHeight + 20, behavior: 'instant' });
   });
   await page
     .getByRole('button', { name: 'Show details for One Night Werewolf' })
     .evaluate((el) => (el as HTMLElement).focus({ preventScroll: true }));
   await page.keyboard.press('Tab');
-  await expect(rules).toBeFocused();
+  await expect(next).toBeFocused();
   await expect
     .poll(async () => {
-      const box = (await rules.boundingBox())!;
+      const box = (await next.boundingBox())!;
       return box.y + box.height <= (await bar(page).boundingBox())!.y;
     })
     .toBe(true);
@@ -146,12 +146,13 @@ test('the bar steps aside while the keyboard is up for the search', async ({ pag
 
 test('the controls on the page are at least 44px each way, or take taps beyond their small look', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('button', { name: 'Show details for Azul' }).click();
   const controls: Locator[] = [
     page.getByPlaceholder('Search games...'),
     page.getByRole('button', { name: /^Filters/ }),
     page.getByRole('button', { name: 'Show as cards' }),
+    page.getByRole('button', { name: 'Hide details for Azul' }),
     page.getByRole('link', { name: 'Rules for Azul' }),
-    page.getByRole('button', { name: 'Show details for Azul' }),
     ...(await bar(page).getByRole('button').filter({ visible: true }).all()),
   ];
   for (const control of controls) {

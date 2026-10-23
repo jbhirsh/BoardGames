@@ -6,7 +6,6 @@ import { difficultyWord } from '../utils/difficulty';
 import { fittingSubgames, hasSubgames, subgameTitle } from '../utils/subgames';
 import { gameAnchor } from '../utils/heroCovers';
 import PhoneLine from './PhoneLine';
-import RulesLink from './RulesLink';
 import KeywordPill from './KeywordPill';
 import GameDetail from './GameDetail';
 import SubGameList from './SubGameList';
@@ -21,11 +20,14 @@ interface Props {
 }
 
 /**
- * A collection game on a phone's list: Rules on its line, and open, what a
- * desktop table's open row shows (the write-up, the games inside that fit
- * the filters, the awards and the other actions), after its one-line pitch
- * and tags, which the line has no room for. Memoized: a filter change that
- * leaves this game as it was doesn't redraw it.
+ * A collection game on a phone's list: the line itself only names it, and
+ * open, it shows what a desktop table's open row does (the write-up, the
+ * games inside that fit the filters, the awards, then Rules and the other
+ * actions), after its one-line pitch and tags, which the line has no room
+ * for. Rules waits there rather than on the line, where thirty of it in a
+ * column read as one repeated word and took the room a name and its
+ * players, time and weight need. Memoized: a filter change that leaves this
+ * game as it was doesn't redraw it.
  */
 export default memo(GameLine);
 
@@ -41,7 +43,6 @@ function GameLine({ game, isOpen, onToggle }: Props) {
       name={game.name}
       headingLevel={3}
       meta={[game.players, game.dur, difficulty].filter(Boolean).join(' · ')}
-      action={<RulesLink game={game} className="rules-btn line-action" />}
       isOpen={isOpen}
       onToggle={() => onToggle(game.name)}
     >
@@ -64,7 +65,7 @@ function GameLine({ game, isOpen, onToggle }: Props) {
         </div>
       )}
       <AwardsSection awards={game.awards} />
-      <GameActions game={game} variant="line" />
+      <GameActions game={game} variant="row" />
     </PhoneLine>
   );
 }

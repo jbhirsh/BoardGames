@@ -11,11 +11,8 @@ import { YouTubeIcon, CalculatorIcon, SearchIcon } from './Icons';
 
 interface Props {
   game: Game;
-  /**
-   * A card's footer, the foot of an open list row, or of an open line on a
-   * phone's list, which has Rules on the line itself so leaves it out here.
-   */
-  variant: 'card' | 'row' | 'line';
+  /** A card's footer, or the foot of an open list row or phone line. */
+  variant: 'card' | 'row';
 }
 
 // The click stops at the link, so nothing around the bar acts on it as well
@@ -24,9 +21,8 @@ interface Props {
 const stop = (e: MouseEvent) => e.stopPropagation();
 
 /**
- * A game's actions, the same on a card and on an open list row: Rules
- * filled (but on an open phone line, whose Rules is on the line), then the
- * game's own tools (its score calculator, the word
+ * A game's actions, the same on a card, an open list row and an open phone
+ * line: Rules filled, then the game's own tools (its score calculator, the word
  * checker) and its tutorial video. Only a card's carry tooltips. Rules is
  * the one filled button on a card or open row; the rest, like a wishlist
  * entry's cart and price history, share one quiet outline (the video's play
@@ -37,7 +33,7 @@ export default function GameActions({ game, variant }: Props) {
   const card = variant === 'card';
   return (
     <div className={card ? 'card-foot-end' : 'row-expand-foot'}>
-      {variant !== 'line' && <RulesLink game={game} className="rules-btn rules-btn--primary" />}
+      <RulesLink game={game} className="rules-btn rules-btn--primary" />
       {SCORE_CALCULATORS.has(game.slug) && (
         <Link
           className="rules-btn"
