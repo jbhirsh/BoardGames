@@ -34,6 +34,10 @@ npm run test:mutation                   # StrykerJS, full run (mutation.yml call
 npm run test:e2e
 npx playwright test e2e/home.spec.ts    # one spec file
 npx playwright show-report              # open the last HTML report
+
+# A PR's before/after GIFs: builds main and this tree, plays a scenario
+# (e.g. scripts/pr-gif-example.ts) against both, writes pr-gif/<name>/
+npm run pr-gif -- <scenario.ts> [--side-by-side] [--publish]
 ```
 
 `npm run test:e2e` needs a Chromium matching the installed `@playwright/test`
@@ -135,9 +139,10 @@ before changing the module.
   Coverage thresholds are enforced **per file at 80% lines** (`vite.config.ts`),
   so new reducer actions, filter utilities, and API handlers need their own
   tests. Tests must be pure logic or RTL — no real network, no real browser.
-  A CI helper's test sits beside it (`.github/scripts/*.test.mjs`), in the
-  same suite and gate. Shared fakes: `src/__tests__/helpers/` (`fakeRedis`,
-  with `raw` for the raw client; `stubMatchMedia`).
+  A CI helper's test sits beside it (`.github/scripts/*.test.mjs`), as a
+  script's does (`scripts/*.test.ts`, or here if it needs the DOM's types),
+  in the same suite and gate. Shared fakes: `src/__tests__/helpers/`
+  (`fakeRedis`, with `raw` for the raw client; `stubMatchMedia`).
 - **End-to-end tests live in `e2e/`** (Playwright, Chromium, the production
   build): a real browser, still no real network. `e2e/fixtures.ts` stubs
   every `/api/*` call, fails a test making an unstubbed one and aborts
@@ -169,9 +174,10 @@ before changing the module.
 - **Show UI changes in the PR.** A PR changing a component or stylesheet puts
   before/after visuals in its description: screenshots for looks, GIFs for
   motion, hosted on the `pr-screenshots` branch as the PR template shows.
-  GIFs show the pointer: record with `scripts/pr-gif.ts` (`showPointer`,
-  real `page.mouse` moves with pauses, `recordFrames`, `framesToGif`), host
-  on `pr-screenshots` and link by commit SHA.
+  GIFs show the pointer and key presses: record them with `npm run pr-gif`
+  (`scripts/record-pr-gif.ts`), from a scenario of real `page.mouse` moves
+  with steps and pauses like `scripts/pr-gif-example.ts`; `--publish` hosts
+  them on `pr-screenshots` and prints the table, linked by commit SHA.
   `PR visuals` (`.github/scripts/pr-visuals.mjs`) fails one with no picture
   unless "No visible UI change" is ticked; it can't see changes through
   `src/data`, `public/` or `index.html`, so show those too.

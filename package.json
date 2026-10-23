@@ -16,6 +16,7 @@
     "game-weights": "node scripts/fetch-game-weights.ts",
     "wishlist-art": "node scripts/fetch-wishlist-art.ts",
     "collection-art": "node scripts/fetch-collection-art.ts",
+    "pr-gif": "node scripts/record-pr-gif.ts",
     "rules-text": "node scripts/extract-rules-text.mjs",
     "rules-text-layer": "node scripts/add-text-layer.mjs",
     "test:mutation": "stryker run",

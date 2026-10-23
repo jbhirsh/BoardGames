@@ -45,3 +45,6 @@ reports
 test-results
 playwright-report
 blob-report
+
+# GIFs recorded for PRs (npm run pr-gif)
+/pr-gif
