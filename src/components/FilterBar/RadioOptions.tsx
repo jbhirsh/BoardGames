@@ -1,4 +1,5 @@
 import { useRef, type KeyboardEvent } from 'react';
+import { radioMove } from '../../utils/radioMove';
 
 interface Option<T> {
   value: T;
@@ -12,16 +13,6 @@ interface Props<T> {
   selected: T;
   onSelect: (value: T) => void;
 }
-
-// Where each key moves focus from option i of n.
-const MOVES: Record<string, (i: number, n: number) => number> = {
-  ArrowDown: (i, n) => (i + 1) % n,
-  ArrowRight: (i, n) => (i + 1) % n,
-  ArrowUp: (i, n) => (i - 1 + n) % n,
-  ArrowLeft: (i, n) => (i - 1 + n) % n,
-  Home: () => 0,
-  End: (_, n) => n - 1,
-};
 
 /**
  * A dropdown's single-choice options: a radio group, so assistive tech
@@ -37,10 +28,10 @@ export default function RadioOptions<T extends string | number>({ label, options
   const tabStop = chosen === -1 ? 0 : chosen;
 
   const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>, from: number) => {
-    const move = MOVES[e.key];
-    if (!move) return;
+    const to = radioMove(e.key, from, options.length);
+    if (to === null) return;
     e.preventDefault();
-    refs.current[move(from, options.length)]?.focus();
+    refs.current[to]?.focus();
   };
 
   return (
