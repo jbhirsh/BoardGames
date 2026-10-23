@@ -160,6 +160,9 @@ before changing the module.
   script's does (`scripts/*.test.ts`, or here if it needs the DOM's types),
   in the same suite and gate. Shared fakes: `src/__tests__/helpers/`
   (`fakeRedis`, with `raw` for the raw client; `stubMatchMedia`).
+  Property tests (`*.property.test.ts`, fast-check) state an invariant over
+  generated inputs, for pure code with one (share links, places, the
+  number boxes); a failure prints the seed and shrunk input to replay.
 - **End-to-end tests live in `e2e/`** (Playwright, Chromium, the production
   build): a real browser, still no real network. `e2e/fixtures.ts` stubs
   every `/api/*` call, fails a test making an unstubbed one and aborts
