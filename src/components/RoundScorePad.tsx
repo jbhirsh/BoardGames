@@ -121,11 +121,11 @@ function loadGame(game: CardGameId, rules: CardGameRules): Saved {
       !Array.isArray(names) ||
       names.length < counts[0] ||
       names.length > counts[1] ||
-      !names.every((n) => typeof n === 'string')
+      !names.every((n: unknown): n is string => typeof n === 'string')
     )
       return fresh;
     const players = game === 'euchre' ? 4 : names.length;
-    if (!Array.isArray(rounds) || !rounds.every((r) => isRound(game, players, r))) return fresh;
+    if (!Array.isArray(rounds) || !rounds.every((r: unknown): r is Round => isRound(game, players, r))) return fresh;
     return { names, rounds };
   } catch {
     return fresh;

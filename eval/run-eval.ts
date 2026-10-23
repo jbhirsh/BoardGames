@@ -131,7 +131,7 @@ main().then(
   (code) => {
     process.exitCode = code;
   },
-  (err) => {
+  (err: unknown) => {
     console.error(errorMessage(err));
     process.exitCode = 1;
   },

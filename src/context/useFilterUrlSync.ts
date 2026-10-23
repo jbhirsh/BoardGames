@@ -1,12 +1,12 @@
 import { useEffect, useRef, type Dispatch } from 'react';
-import { useLocation, useNavigate } from 'react-router';
+import { useLocation, useNavigate, type Location } from 'react-router';
 import { filterToSearchParams, searchParamsToFilter } from '../utils/filterUrl';
 import type { FilterAction } from './filterReducer';
 import type { FilterState } from '../data/types';
 
 /** Bidirectional URL ↔ state sync; the two effects must stay in this order because wroteUrlRef relies on state→URL firing first. */
 export function useFilterUrlSync(state: FilterState, dispatch: Dispatch<FilterAction>) {
-  const location = useLocation();
+  const location: Location<unknown> = useLocation();
   const navigate = useNavigate();
 
   // Written during render so effects always see the latest values without a declaration-order dependency.

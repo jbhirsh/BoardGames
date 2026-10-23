@@ -386,7 +386,11 @@ describe('the round-by-round pad', () => {
       names: ['Player 1', 'Player 2'],
       rounds: [],
     });
-    expect(JSON.parse(localStorage.getItem('gameroom:score:hearts')!).names).toEqual(['Ana', 'Ben', 'Cy']);
+    expect((JSON.parse(localStorage.getItem('gameroom:score:hearts')!) as { names: string[] }).names).toEqual([
+      'Ana',
+      'Ben',
+      'Cy',
+    ]);
   });
 
   it('keeps a round when its deletion is declined', () => {

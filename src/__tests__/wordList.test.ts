@@ -46,7 +46,10 @@ describe('loadWordList', () => {
     expect([...a!].sort()).toEqual(['cat', 'dog', 'qi', 'za']);
     expect(fetchSpy).toHaveBeenCalledTimes(2);
     for (const url of Object.keys(FILES)) {
-      expect(fetchSpy).toHaveBeenCalledWith(url, expect.objectContaining({ signal: expect.any(AbortSignal) }));
+      expect(fetchSpy).toHaveBeenCalledWith(
+        url,
+        expect.objectContaining({ signal: expect.any(AbortSignal) as unknown }),
+      );
     }
   });
 

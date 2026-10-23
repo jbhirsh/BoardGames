@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 
 vi.mock('@sentry/node', () => ({
   init: vi.fn(),
@@ -11,7 +11,7 @@ import { failWith500, initSentry, reportError } from '../../api/_lib/sentry';
 
 describe('api Sentry helpers', () => {
   const env = { ...process.env };
-  let consoleError: ReturnType<typeof vi.spyOn>;
+  let consoleError: MockInstance<typeof console.error>;
 
   beforeEach(() => {
     vi.clearAllMocks();

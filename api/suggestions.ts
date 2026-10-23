@@ -309,7 +309,7 @@ function parseDetails(raw: string | undefined): SuggestionDetails | undefined {
     max: n(d.max, 99),
     mins: n(d.mins, 0),
     desc: typeof d.desc === 'string' ? d.desc : '',
-    kw: Array.isArray(d.kw) ? d.kw.filter((k): k is string => typeof k === 'string') : [],
+    kw: Array.isArray(d.kw) ? d.kw.filter((k: unknown): k is string => typeof k === 'string') : [],
     type: isWishlistType(d.type) ? d.type : undefined,
     img: typeof d.img === 'string' && /^https:\/\/\S+$/.test(d.img) ? d.img : undefined,
   };
@@ -348,7 +348,7 @@ function mergeDetails(
     if (
       !Array.isArray(d.kw) ||
       d.kw.length > KW_MAX ||
-      !d.kw.every((k) => (KEYWORD_IDS as readonly unknown[]).includes(k))
+      !d.kw.every((k: unknown) => (KEYWORD_IDS as readonly unknown[]).includes(k))
     )
       return { ok: false, error: 'keywords must be a short list of keyword ids' };
     kw = [...new Set(d.kw as string[])];
@@ -1172,8 +1172,9 @@ export async function handleSuggestions(
 // tightly per IP. Reads and the token-gated decision form are unlimited.
 const suggestLimiter = getLimiter('suggestions', 5, 3600);
 
-function isCreate(req: VercelRequest): boolean {
-  const body = req.body as Record<string, unknown> | undefined;
+function isCreate(req: { method?: string; body?: unknown }): boolean {
+  const body: Record<string, unknown> | undefined =
+    typeof req.body === 'object' && req.body !== null ? { ...req.body } : undefined;
   return req.method === 'POST' && body?.decision === undefined && body?.action === undefined;
 }
 

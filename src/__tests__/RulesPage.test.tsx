@@ -1,12 +1,15 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, within, act } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router';
+import { MemoryRouter, Routes, Route, type Location } from 'react-router';
 import RulesPage from '../components/RulesPage';
 import { FROM_LIST } from '../utils/fromList';
 import { renderRouted } from './routed';
 import { PROBE_MS, type SaveState } from '../pdfjs/saved';
 import { stubMatchMedia } from './helpers/stubMatchMedia';
 import { ALL_GAMES } from '../data/games';
+
+/** The state the router's current history entry carries. */
+const entryState = (router: { state: { location: Location<unknown> } }): unknown => router.state.location.state;
 
 // pdf.js needs a real browser; PdfReader.test.tsx covers the reader itself.
 // This one says it has failed when a test sets `reader.fails`, and throws
@@ -69,7 +72,7 @@ function controlledBy(postMessage: (message: never, transfer: Transferable[]) =>
 /** The question a fetch mock was sent: the POST, since the PDF's size is asked (HEAD) first. */
 function body(fetchMock: { mock: { calls: unknown[][] } }) {
   const post = (fetchMock.mock.calls as [string, RequestInit][]).find(([, init]) => init?.method === 'POST')!;
-  return JSON.parse(post[1].body as string);
+  return JSON.parse(post[1].body as string) as { slug: string; message: string; parts?: string[] };
 }
 
 describe('RulesPage', () => {
@@ -884,7 +887,7 @@ describe("RulesPage's reader", () => {
     // With the words of the answer the citation closes, to mark on the page;
     // in the router state, not the URL.
     expect(reader).toHaveAttribute('data-quote', 'A 7 moves the robber');
-    expect(router.state.location.state).toEqual({ fromList: true, quote: 'A 7 moves the robber' });
+    expect(entryState(router)).toEqual({ fromList: true, quote: 'A 7 moves the robber' });
     expect(screen.getByText(/A 7 moves the robber/)).toBeInTheDocument();
     expect(screen.getByText('Reading: Base game.')).toBeInTheDocument();
     // The answer still reads as it was asked, on Cities & Knights: its own
@@ -900,7 +903,7 @@ describe("RulesPage's reader", () => {
     fireEvent.click(
       within(screen.getByRole('navigation', { name: 'Rulebooks' })).getByRole('link', { name: /Cities & Knights/ }),
     );
-    expect(router.state.location.state).toEqual({ fromList: true });
+    expect(entryState(router)).toEqual({ fromList: true });
   });
 
   it('has the reader get the first page an answer cites in another tab ready as the answer lands', async () => {

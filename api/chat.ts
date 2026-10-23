@@ -1,6 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as Sentry from '@sentry/node';
-import { assembleRulesText, streamRulesAnswer, RULES_ASSISTANT_MAX_OUTPUT_TOKENS } from './_lib/rulesAssistant.js';
+import {
+  assembleRulesText,
+  streamRulesAnswer,
+  RULES_ASSISTANT_MAX_OUTPUT_TOKENS,
+  type ChatHistoryEntry,
+} from './_lib/rulesAssistant.js';
 import { enforceRateLimit, getLimiter } from './_lib/rateLimit.js';
 import { SLUG_RE } from './_lib/slug.js';
 import { initSentry, reportError } from './_lib/sentry.js';
@@ -94,6 +99,24 @@ const DAILY_LIMIT_REFUSAL = {
   code: 'daily-limit',
 };
 
+/** Distinct rulebook names, each shaped like a slug, at most MAX_PARTS of them. */
+function isRulebookList(v: unknown): v is string[] {
+  if (!Array.isArray(v)) return false;
+  const list: unknown[] = v;
+  return (
+    list.length <= MAX_PARTS &&
+    list.every((p) => typeof p === 'string' && SLUG_RE.test(p)) &&
+    new Set(list).size === list.length
+  );
+}
+
+/** A history entry as the rules page sends one: a role and its text. */
+function isHistoryEntry(v: unknown): v is ChatHistoryEntry {
+  if (typeof v !== 'object' || v === null) return false;
+  const { role, content }: { role?: unknown; content?: unknown } = v;
+  return (role === 'user' || role === 'model') && typeof content === 'string';
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -107,7 +130,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Vercel leaves body undefined with no payload (and null for a JSON null),
   // which would throw here, outside any try, as a bare 500. Treating it as an
   // empty body sends it through the same 400s as any other bad input.
-  const { slug, message, history, parts } = req.body ?? {};
+  const { body }: { body?: unknown } = req;
+  const fields: Record<string, unknown> = typeof body === 'object' && body !== null ? { ...body } : {};
+  const { slug, message } = fields;
 
   // Validate slug
   if (!slug || typeof slug !== 'string' || !SLUG_RE.test(slug)) {
@@ -117,15 +142,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Validate the rulebooks of games inside this one to read alongside it.
   // Each picks a file, so it gets the same shape check as slug; a repeat would
   // only resend the same rulebook to a paid model, so none are allowed.
-  if (
-    parts !== undefined &&
-    (!Array.isArray(parts) ||
-      parts.length > MAX_PARTS ||
-      !parts.every((p) => typeof p === 'string' && SLUG_RE.test(p)) ||
-      new Set(parts).size !== parts.length)
-  ) {
+  if (fields.parts !== undefined && !isRulebookList(fields.parts)) {
     return res.status(400).json({ error: 'parts must be a list of rulebook names' });
   }
+  const parts = fields.parts;
 
   // Validate message
   if (!message || typeof message !== 'string' || !message.trim()) {
@@ -137,21 +157,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // Validate history
-  if (history && (!Array.isArray(history) || history.length > MAX_HISTORY)) {
+  const sent = fields.history;
+  if (sent && (!Array.isArray(sent) || sent.length > MAX_HISTORY)) {
     return res.status(400).json({ error: `history must be an array of ${MAX_HISTORY} or fewer entries` });
   }
 
-  if (Array.isArray(history)) {
+  let history: ChatHistoryEntry[] | undefined;
+  if (Array.isArray(sent)) {
+    const entries: unknown[] = sent;
+    history = [];
     let total = 0;
-    for (const entry of history) {
-      if (
-        !entry ||
-        typeof entry !== 'object' ||
-        (entry.role !== 'user' && entry.role !== 'model') ||
-        typeof entry.content !== 'string'
-      ) {
+    for (const entry of entries) {
+      if (!isHistoryEntry(entry)) {
         return res.status(400).json({ error: 'each history entry needs a valid role and string content' });
       }
+      history.push(entry);
       total += entry.content.length;
     }
     if (total > MAX_HISTORY_CONTENT) {

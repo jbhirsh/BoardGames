@@ -15,7 +15,10 @@ describe('useAuthState', () => {
     expect(result.current.loaded).toBe(false);
     await waitFor(() => expect(result.current.loaded).toBe(true));
     expect(result.current.admin).toBe(true);
-    expect(fetchSpy).toHaveBeenCalledWith('/api/auth', expect.objectContaining({ signal: expect.any(AbortSignal) }));
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/auth',
+      expect.objectContaining({ signal: expect.any(AbortSignal) as unknown }),
+    );
 
     fetchSpy.mockResolvedValue(jsonResponse({ admin: 'yes' }));
     const { result: loose } = renderHook(() => useAuthState());

@@ -34,7 +34,9 @@ async function signInWithPreview(page: Page, preview: PreviewStub, pending: unkn
       if (request.method() === 'POST') {
         const body = request.postDataJSON() as { action?: string; game?: string; decision?: string; id?: string };
         if (body.action === 'preview')
-          return route.fulfill({ json: typeof preview === 'function' ? preview(body.game ?? '') : preview });
+          return route.fulfill({
+            json: typeof preview === 'function' ? (preview as (game: string) => unknown)(body.game ?? '') : preview,
+          });
         if (body.decision === 'approve')
           return route.fulfill({ json: { item: { id: body.id, game: body.game, status: 'approved' } } });
         if (body.action === 'add')

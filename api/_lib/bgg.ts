@@ -132,8 +132,8 @@ function named(raw: string, name: string): string {
 // One pass, so `&amp;rsquo;` becomes `&rsquo;` here and `’` on the next.
 function decodeOnce(s: string): string {
   return s
-    .replace(/&#(\d+);/g, (raw, n) => codePoint(Number(n), raw))
-    .replace(/&#x([0-9a-f]+);/gi, (raw, h) => codePoint(parseInt(h, 16), raw))
+    .replace(/&#(\d+);/g, (raw: string, n: string) => codePoint(Number(n), raw))
+    .replace(/&#x([0-9a-f]+);/gi, (raw: string, h: string) => codePoint(parseInt(h, 16), raw))
     .replace(/&([a-zA-Z][a-zA-Z0-9]*);/g, named);
 }
 

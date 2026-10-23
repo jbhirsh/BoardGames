@@ -53,7 +53,7 @@ export function parseGoldenSet(data: unknown): GoldenSet {
   if (!Array.isArray(data.entries)) {
     throw new Error('golden set "entries" must be an array');
   }
-  const entries = data.entries.map((raw, index): GoldenEntry => {
+  const entries = data.entries.map((raw: unknown, index): GoldenEntry => {
     if (!isRecord(raw)) {
       throw new Error(`golden set entry ${index} must be an object`);
     }
@@ -75,7 +75,7 @@ export function parseGoldenSet(data: unknown): GoldenSet {
     const parts = raw.parts;
     if (
       parts !== undefined &&
-      (!Array.isArray(parts) || !parts.every((p) => typeof p === 'string' && p.trim() !== ''))
+      (!Array.isArray(parts) || !parts.every((p: unknown) => typeof p === 'string' && p.trim() !== ''))
     ) {
       throw new Error(`golden set entry ${index}: "parts" must be a list of rulebook names when present`);
     }

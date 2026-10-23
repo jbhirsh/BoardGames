@@ -128,7 +128,8 @@ function isPlayableDefinition(text: string, word: string): boolean {
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 function firstExample(v: Record<string, unknown>): string | undefined {
-  const parsed = Array.isArray(v.parsedExamples) ? v.parsedExamples[0] : undefined;
+  const examples = v.parsedExamples;
+  const parsed: unknown = Array.isArray(examples) ? examples[0] : undefined;
   const html = isObject(parsed) && typeof parsed.example === 'string' ? parsed.example : undefined;
   const text = html === undefined ? '' : htmlToText(html);
   return text || undefined;
@@ -137,7 +138,8 @@ function firstExample(v: Record<string, unknown>): string | undefined {
 function parseSense(v: unknown): Meaning | null {
   if (!isObject(v) || typeof v.partOfSpeech !== 'string' || !Array.isArray(v.definitions)) return null;
   const definitions = [];
-  for (const d of v.definitions) {
+  const senses: unknown[] = v.definitions;
+  for (const d of senses) {
     if (!isObject(d) || typeof d.definition !== 'string') return null;
     definitions.push({ definition: htmlToText(d.definition), example: firstExample(d) });
   }
@@ -165,7 +167,8 @@ export function readDefinitions(data: unknown, word: string): Reading | null {
   if (!Array.isArray(data.en)) return null;
 
   const byPos = new Map<string, Meaning['definitions']>();
-  for (const raw of data.en) {
+  const entries: unknown[] = data.en;
+  for (const raw of entries) {
     // Another language's sense is skipped before it's read, so its shape
     // can't spoil the English ones. One with no language field sits under
     // `en`, so it is taken as English.

@@ -125,11 +125,11 @@ describe('WishlistCard', () => {
 
   it('opens YouTube and Amazon in a new window, and the price tracker when an ASIN is pinned', () => {
     renderCard({ item: { ...testItem, asin: 'B0TESTASIN' } });
-    const links = [
+    const links: [string | RegExp, unknown][] = [
       [/YouTube/, expect.stringContaining('youtube.com')],
       ['Buy Test Wishlist Game on Amazon', expect.stringContaining('amazon.com')],
       [/price history/, 'https://camelcamelcamel.com/product/B0TESTASIN'],
-    ] as const;
+    ];
     for (const [name, href] of links) {
       const link = screen.getByRole('link', { name });
       expect(link).toHaveAttribute('href', href);
