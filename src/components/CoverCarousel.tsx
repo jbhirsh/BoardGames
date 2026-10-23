@@ -84,6 +84,9 @@ export default function CoverCarousel({ want }: { want: boolean }) {
   const [dragging, setDragging] = useState(false);
   // The cover the row's Tab stop is on: the last one a key moved to.
   const [active, setActive] = useState(0);
+  // The cover whose hidden twin stands in for it on screen (see reveal), by
+  // id, so a row rebuilt under it can't ring another cover.
+  const [twin, setTwin] = useState<string | null>(null);
   const reelRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -132,6 +135,13 @@ export default function CoverCarousel({ want }: { want: boolean }) {
   // focus has paused, to the time that puts the cover in the middle. Not
   // for a click's focus, though: the row would jump out from under the
   // pointer between press and release, and the click would go nowhere.
+  //
+  // The row only ever sits up to a copy's width left of where it starts, so
+  // a cover near the start of the list can't itself be brought to the
+  // middle: its twin in the hidden copy is, a copy's width further on, and
+  // the cover with focus is left off the screen. Its twin then wears the
+  // focus ring, so the keyboard's place shows where the cover is seen
+  // (focus itself stays put, for screen readers, which don't see the copy).
   const reveal = (e: FocusEvent<HTMLElement>) => {
     const anim = trackRef.current!.getAnimations?.()[0];
     if (!anim || !e.currentTarget.matches(':focus-visible')) return;
@@ -146,6 +156,7 @@ export default function CoverCarousel({ want }: { want: boolean }) {
     const offset = li.offsetLeft + li.offsetWidth / 2 - view.width / 2;
     const lap = Number(anim.effect!.getComputedTiming().duration);
     anim.currentTime = ((((offset % half) + half) % half) / half) * lap;
+    if (offset < 0) setTwin(shown[[...li.parentElement!.children].indexOf(li)].id);
   };
 
   // A press holds the row still, so the cover under it stays put for a
@@ -254,6 +265,8 @@ export default function CoverCarousel({ want }: { want: boolean }) {
             // A click on the hidden copy mustn't leave focus inside it.
             onMouseDown={copy ? (e) => e.preventDefault() : undefined}
             onFocus={copy ? undefined : reveal}
+            onBlur={copy ? undefined : () => setTwin(null)}
+            data-twin-focused={copy && c.id === twin ? '' : undefined}
             onKeyDown={copy ? undefined : (e) => move(e, i)}
           >
             <img

@@ -205,7 +205,9 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .hero-reel-list{display:flex;gap:var(--cover-gap);padding-right:var(--cover-gap);list-style:none;margin:0;}
 .hero-reel-list li{flex:none;width:var(--cover);}
 .hero-reel-cover{display:block;width:100%;padding:0;border:none;background:none;border-radius:var(--cover-r);cursor:pointer;transition:transform .15s;}
-.hero-reel-cover:focus-visible{outline:2px solid var(--blue);outline-offset:3px;}
+/* A cover's hidden twin wears its focus ring when it's the one on screen
+   (CoverCarousel's reveal). */
+.hero-reel-cover:focus-visible,.hero-reel-cover[data-twin-focused]{outline:2px solid var(--blue);outline-offset:3px;}
 .hero-reel-cover img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:cover;border-radius:var(--cover-r);box-shadow:var(--cover-shadow);}
 .hero-reel.is-dragging .hero-reel-view,.hero-reel.is-dragging .hero-reel-cover{cursor:grabbing;}
 /* Keyed on the cover's li, which doesn't lift: on the button itself, a
