@@ -99,6 +99,8 @@ export function timeline(
  * did): so the frame a movement settles on is never dropped, however soon
  * after the one before it came. push() takes each frame as it arrives and
  * returns the one before it if that one is kept; flush() returns the last.
+ * Now and then the screencast sends a frame painted no later than the one
+ * before it; shown after it, the GIF would flick back, so it is dropped.
  */
 export function thinner<F extends { at: number }>(gap = 40): { push(frame: F): F | null; flush(): F | null } {
   let pending: F | null = null;
@@ -111,6 +113,7 @@ export function thinner<F extends { at: number }>(gap = 40): { push(frame: F): F
   };
   return {
     push(frame) {
+      if (pending && frame.at <= pending.at) return null;
       const done = decide(frame.at);
       pending = frame;
       return done;

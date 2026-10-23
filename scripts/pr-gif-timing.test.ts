@@ -110,6 +110,10 @@ describe('thinner', () => {
     expect(keep([0, 10, 400])).toEqual([0, 10, 400]);
   });
 
+  it('drops a frame painted no later than the one before it', () => {
+    expect(keep([0, 50, 40, 50, 100])).toEqual([0, 50, 100]);
+  });
+
   it('keeps the last frame, and has nothing to flush when nothing came', () => {
     expect(keep([0, 5])).toEqual([0, 5]);
     expect(thinner().flush()).toBeNull();
