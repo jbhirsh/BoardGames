@@ -160,6 +160,16 @@ describe('a key press', () => {
     expect(label().style.left).toBe('200px');
   });
 
+  it('sits at the bottom of the recorded area, not on its edge, when what has focus is out of shot', () => {
+    win.__prGifClip = { x: 0, y: 50, width: 400, height: 110 };
+    focusOn({ left: -3000, top: 100, width: 100, height: 40 });
+    press('ArrowRight');
+    frames();
+    expect(label().textContent).toBe('→');
+    expect(label().style.left).toBe('200px');
+    expect(label().style.top).toBe('148px');
+  });
+
   it('builds up characters typed one after another, spaces and all, into one label', () => {
     for (const key of ['c', 'a', 't', ' ', 'm']) {
       press(key);
