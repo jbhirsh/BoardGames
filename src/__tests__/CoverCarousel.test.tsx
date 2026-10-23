@@ -237,7 +237,7 @@ describe('CoverCarousel', () => {
   });
 
   describe('a cover Tabbed to off the visible stretch', () => {
-    function setUp(left: number, keyboard = true) {
+    function setUp(left: number, keyboard = true, offsetLeft = 1900) {
       const { container } = renderReel();
       const view = container.querySelector<HTMLElement>('.hero-reel-view')!;
       const track = container.querySelector<HTMLElement>('.hero-reel-track')!;
@@ -248,13 +248,17 @@ describe('CoverCarousel', () => {
       const button = within(container).getByRole('button', { name: 'Show Azul in the list' });
       const li = button.parentElement!;
       li.getBoundingClientRect = () => ({ left, right: left + 100 }) as DOMRect;
-      Object.defineProperty(li, 'offsetLeft', { value: 1900 });
+      Object.defineProperty(li, 'offsetLeft', { value: offsetLeft });
       Object.defineProperty(li, 'offsetWidth', { value: 100 });
       // Focus from the keyboard, as :focus-visible tells it from a click's.
       vi.spyOn(button, 'matches').mockImplementation((selector: string) => keyboard && selector === ':focus-visible');
       fireEvent.focus(button);
       return anim;
     }
+
+    // Azul's twin in the hidden copy, and every cover wearing a ring it hasn't focus for.
+    const twin = () => document.querySelector('[aria-hidden="true"] [aria-label="Show Azul in the list"]')!;
+    const ringed = () => document.querySelectorAll('[data-twin-focused]');
 
     // The ends fade over 12% of the row's width: 96px of 800, leaving
     // 96 to 704 in plain view.
@@ -274,6 +278,33 @@ describe('CoverCarousel', () => {
 
     it('leaves the row be when a click put focus there, so the cover stays under the pointer', () => {
       expect(setUp(1200, false).currentTime).toBe(0);
+    });
+
+    it('rings the twin on screen when the cover itself can\'t be brought there', () => {
+      // 150px along: centring it would slide the row 250px right, which it
+      // can't, so its twin, a copy further on, comes to the middle instead.
+      const anim = setUp(1200, true, 100);
+      expect(anim.currentTime).toBeCloseTo(0.75 * 72000);
+      expect(ringed()).toHaveLength(1);
+      expect(twin()).toHaveAttribute('data-twin-focused');
+      // By its label: a query by role reads matches(), which setUp stubbed.
+      fireEvent.blur(document.querySelector('ul:not([aria-hidden]) [aria-label="Show Azul in the list"]')!);
+      expect(ringed()).toHaveLength(0);
+    });
+
+    it('rings no twin when the cover itself comes to the middle, is in plain view, or was clicked', () => {
+      setUp(1200);
+      expect(ringed()).toHaveLength(0);
+      cleanup();
+      // Exactly in the middle of the row's start: the cover itself can be centred.
+      expect(setUp(1200, true, 350).currentTime).toBe(0);
+      expect(ringed()).toHaveLength(0);
+      cleanup();
+      setUp(400, true, 100);
+      expect(ringed()).toHaveLength(0);
+      cleanup();
+      setUp(1200, false, 100);
+      expect(ringed()).toHaveLength(0);
     });
 
     it('leaves the row be when the cover is in plain view, edge to edge', () => {

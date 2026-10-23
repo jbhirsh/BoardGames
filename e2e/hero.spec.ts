@@ -222,6 +222,41 @@ test('the row is one Tab stop after its pause button, with arrow keys between co
   await expect(covers.last()).toBeFocused();
 });
 
+/** The covers wearing a focus ring inside the row's visible stretch, by name, from either copy. */
+function ringsOnScreen(row: Locator): Promise<(string | null)[]> {
+  return row.evaluate((el) => {
+    const view = el.closest('.hero-reel-view')!.getBoundingClientRect();
+    return [...el.parentElement!.querySelectorAll('button')]
+      .filter((b) => {
+        const box = b.getBoundingClientRect();
+        const middle = box.left + box.width / 2;
+        return getComputedStyle(b).outlineStyle !== 'none' && middle > view.left && middle < view.right;
+      })
+      .map((b) => b.getAttribute('aria-label'));
+  });
+}
+
+test('the cover the keyboard is on shows its ring on screen, at the start of the list too', async ({ page }) => {
+  await page.goto('/');
+  const row = track(page);
+  const covers = row.getByRole('button');
+  // The ring on screen is the focused cover's, and no other.
+  const ringOn = async (i: number) => {
+    await expect(covers.nth(i)).toBeFocused();
+    const name = await covers.nth(i).getAttribute('aria-label');
+    await expect.poll(() => ringsOnScreen(row)).toEqual([name]);
+  };
+  await page.getByRole('button', { name: 'Pause cover carousel' }).focus();
+  await page.keyboard.press('Tab');
+  await ringOn(0);
+  // The first few can't themselves be brought to the middle (the row only
+  // slides left), so their twins are, and wear the ring; those after can.
+  for (let i = 1; i < 6; i++) {
+    await page.keyboard.press('ArrowRight');
+    await ringOn(i);
+  }
+});
+
 test('a cover whose game the filters hide clears them to show it', async ({ page }) => {
   await page.goto('/?q=catan');
   await page.getByRole('button', { name: 'Pause cover carousel' }).click();
