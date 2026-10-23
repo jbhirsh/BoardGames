@@ -22,14 +22,7 @@ export default function ListView() {
             groups={gameGroups}
             labels={GROUPS}
             columns={COLLECTION_COLUMNS}
-            row={(g) => (
-              <GameRow
-                key={g.name}
-                game={g}
-                isOpen={openRow === g.name}
-                onToggle={toggleRow}
-              />
-            )}
+            row={(g) => <GameRow key={g.name} game={g} isOpen={openRow === g.name} onToggle={toggleRow} />}
           />
         </tbody>
       </table>

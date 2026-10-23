@@ -9,14 +9,22 @@ function makeRes() {
   const res = {
     statusCode: 0,
     body: undefined as unknown,
-    status: vi.fn((code: number) => { res.statusCode = code; return res; }),
-    json: vi.fn((data: unknown) => { res.body = data; return res; }),
+    status: vi.fn((code: number) => {
+      res.statusCode = code;
+      return res;
+    }),
+    json: vi.fn((data: unknown) => {
+      res.body = data;
+      return res;
+    }),
   };
   return res;
 }
 
-const reqWith = (headers: Record<string, string | string[] | undefined>, remote?: string) =>
-  ({ headers, socket: remote ? { remoteAddress: remote } : undefined });
+const reqWith = (headers: Record<string, string | string[] | undefined>, remote?: string) => ({
+  headers,
+  socket: remote ? { remoteAddress: remote } : undefined,
+});
 
 describe('clientIp', () => {
   it('prefers x-real-ip (the value Vercel sets and the client cannot spoof)', () => {
@@ -66,7 +74,11 @@ describe('enforceRateLimit', () => {
   it('fails open when the limiter throws, but reports it to Sentry', async () => {
     const res = makeRes();
     const boom = new Error('redis down');
-    const limiter: RateLimiter = { limit: vi.fn(async () => { throw boom; }) };
+    const limiter: RateLimiter = {
+      limit: vi.fn(async () => {
+        throw boom;
+      }),
+    };
     expect(await enforceRateLimit(limiter, reqWith({}), res)).toBe(true);
     expect(res.status).not.toHaveBeenCalled();
     expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(boom);
@@ -78,7 +90,7 @@ describe('enforceRateLimit', () => {
     expect(limiter.limit).toHaveBeenCalledWith('global');
   });
 
-  it('answers a 429 with the caller\'s own refusal when given one', async () => {
+  it("answers a 429 with the caller's own refusal when given one", async () => {
     const res = makeRes();
     const limiter: RateLimiter = { limit: vi.fn(async () => ({ success: false })) };
     const refusal = { error: 'Done for today.', code: 'daily-limit' };
@@ -90,7 +102,11 @@ describe('enforceRateLimit', () => {
   it('fails closed with a 503 when asked to and the limiter throws, still reporting it', async () => {
     const res = makeRes();
     const boom = new Error('redis down');
-    const limiter: RateLimiter = { limit: vi.fn(async () => { throw boom; }) };
+    const limiter: RateLimiter = {
+      limit: vi.fn(async () => {
+        throw boom;
+      }),
+    };
     expect(await enforceRateLimit(limiter, reqWith({}), res, { failClosed: true })).toBe(false);
     expect(res.statusCode).toBe(503);
     expect(res.body).toEqual({ error: 'Temporarily unavailable. Please try again later.' });
@@ -155,7 +171,7 @@ describe('getLimiter', () => {
     expect(getLimiter('test-memo', 99, 1)).not.toBe(a);
   });
 
-  it('keeps Upstash\'s 5 s timeout unless given a shorter one, which keys the memo too', () => {
+  it("keeps Upstash's 5 s timeout unless given a shorter one, which keys the memo too", () => {
     process.env.KV_REST_API_URL = 'https://example.upstash.io';
     process.env.KV_REST_API_TOKEN = 'test-token';
     const timeoutOf = (l: RateLimiter | null) => (l as unknown as { timeout: number }).timeout;

@@ -29,11 +29,7 @@ export default function WishlistLinks({ item }: { item: WishlistItem }) {
       >
         <CartIcon />
       </ExternalLink>
-      <ExternalLink
-        className="wish-yt"
-        href={ytURL(item.yt)}
-        aria-label={`Watch ${item.name} tutorial on YouTube`}
-      >
+      <ExternalLink className="wish-yt" href={ytURL(item.yt)} aria-label={`Watch ${item.name} tutorial on YouTube`}>
         <YouTubeIcon />
       </ExternalLink>
     </>

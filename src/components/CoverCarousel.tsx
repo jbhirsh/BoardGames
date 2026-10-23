@@ -1,4 +1,14 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type FocusEvent,
+  type KeyboardEvent,
+  type MouseEvent,
+  type PointerEvent,
+} from 'react';
 import { flushSync } from 'react-dom';
 import { GAMES } from '../data/games';
 import { useFilter } from '../context/useFilter';
@@ -210,7 +220,9 @@ export default function CoverCarousel({ want }: { want: boolean }) {
     // task; if it lands outside the row, the flag mustn't outlive it and
     // swallow the next click from the keyboard.
     dragged.current = true;
-    setTimeout(() => { dragged.current = false; });
+    setTimeout(() => {
+      dragged.current = false;
+    });
   };
 
   // Let go, the row glides on the way it was pulled. Played backwards, the
@@ -286,8 +298,15 @@ export default function CoverCarousel({ want }: { want: boolean }) {
 
   const lap = { '--reel-lap': `${covers.length * SECONDS_PER_COVER}s` } as CSSProperties;
   const classes = [
-    'hero-reel', still && 'hero-reel--still', paused && 'is-paused', idle && 'is-idle', held && 'is-held', dragging && 'is-dragging',
-  ].filter(Boolean).join(' ');
+    'hero-reel',
+    still && 'hero-reel--still',
+    paused && 'is-paused',
+    idle && 'is-idle',
+    held && 'is-held',
+    dragging && 'is-dragging',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <div ref={reelRef} className={classes} style={lap}>

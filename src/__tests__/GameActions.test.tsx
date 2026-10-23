@@ -10,28 +10,53 @@ function renderActions(game: Game, variant: 'card' | 'row', onOuter = vi.fn()) {
   // The row's click handler stands in for the list row the bar sits in.
   const router = renderRouted(
     <FilterProvider>
-      <table><tbody><tr onClick={onOuter}><td data-testid="cell"><GameActions game={game} variant={variant} /></td></tr></tbody></table>
+      <table>
+        <tbody>
+          <tr onClick={onOuter}>
+            <td data-testid="cell">
+              <GameActions game={game} variant={variant} />
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </FilterProvider>,
   );
   const bar = screen.getByTestId('cell').firstElementChild as HTMLElement;
-  const names = () => within(bar).getAllByRole('link').map((a) => a.getAttribute('aria-label') ?? a.textContent!.trim());
+  const names = () =>
+    within(bar)
+      .getAllByRole('link')
+      .map((a) => a.getAttribute('aria-label') ?? a.textContent!.trim());
   return { router, bar, names, onOuter };
 }
 
 describe('GameActions', () => {
-  it.each(['card', 'row'] as const)('on a %s, puts Rules first, then the game\'s own tools, then its video', (variant) => {
-    expect(renderActions(sevenWondersGame, variant).names()).toEqual(['Rules for 7 Wonders', 'Score', 'Watch 7 Wonders tutorial on YouTube']);
-  });
+  it.each(['card', 'row'] as const)(
+    "on a %s, puts Rules first, then the game's own tools, then its video",
+    (variant) => {
+      expect(renderActions(sevenWondersGame, variant).names()).toEqual([
+        'Rules for 7 Wonders',
+        'Score',
+        'Watch 7 Wonders tutorial on YouTube',
+      ]);
+    },
+  );
 
   it('offers the word checker on its game only', () => {
-    expect(renderActions(bananagramsGame, 'card').names()).toEqual(['Rules for Bananagrams', 'Word Checker', 'Watch Bananagrams tutorial on YouTube']);
+    expect(renderActions(bananagramsGame, 'card').names()).toEqual([
+      'Rules for Bananagrams',
+      'Word Checker',
+      'Watch Bananagrams tutorial on YouTube',
+    ]);
   });
 
   it('offers only Rules and the video to a game with no tools', () => {
-    expect(renderActions(quickGame, 'row').names()).toEqual(['Rules for Quick Game', 'Watch Quick Game tutorial on YouTube']);
+    expect(renderActions(quickGame, 'row').names()).toEqual([
+      'Rules for Quick Game',
+      'Watch Quick Game tutorial on YouTube',
+    ]);
   });
 
-  it('sits in the card\'s footer, its links with tooltips', () => {
+  it("sits in the card's footer, its links with tooltips", () => {
     const { bar } = renderActions(sevenWondersGame, 'card');
     expect(bar).toHaveClass('card-foot-end');
     expect(within(bar).getByRole('link', { name: 'Score' })).toHaveAttribute('title', 'Score Calculator');

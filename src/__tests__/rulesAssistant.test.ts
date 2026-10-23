@@ -84,7 +84,7 @@ describe('loadRulesText', () => {
     expect(() => loadRulesText('no-such-game')).toThrow(/ENOENT/);
   });
 
-  it('follows a game\'s own rules with the named games inside it, in the order asked', () => {
+  it("follows a game's own rules with the named games inside it, in the order asked", () => {
     const root = mkdtempSync(join(tmpdir(), 'rules-'));
     mkdirSync(join(root, 'rules-text'));
     const files: Record<string, string> = {
@@ -100,9 +100,13 @@ describe('loadRulesText', () => {
     try {
       expect(loadRulesText('deck')).toBe('DECK');
       // The game's own rulebook is named only when another follows it.
-      expect(loadRulesText('deck', ['speed', 'euchre'])).toBe(`${firstRulebookHeader('deck')}DECK${rulebookHeader('speed')}SPEED${rulebookHeader('euchre')}EUCHRE`);
+      expect(loadRulesText('deck', ['speed', 'euchre'])).toBe(
+        `${firstRulebookHeader('deck')}DECK${rulebookHeader('speed')}SPEED${rulebookHeader('euchre')}EUCHRE`,
+      );
       // A part with no file (a stale page) is skipped, not an error.
-      expect(loadRulesText('deck', ['euchre', 'mahjong'])).toBe(`${firstRulebookHeader('deck')}DECK${rulebookHeader('euchre')}EUCHRE`);
+      expect(loadRulesText('deck', ['euchre', 'mahjong'])).toBe(
+        `${firstRulebookHeader('deck')}DECK${rulebookHeader('euchre')}EUCHRE`,
+      );
       expect(loadRulesText('deck', ['mahjong'])).toBe('DECK');
       expect(loadRulesText('deck-builder')).toBe('OTHER GAME');
       expect(() => loadRulesText('deck', ['../deck-builder'])).not.toThrow();
@@ -113,15 +117,32 @@ describe('loadRulesText', () => {
     }
   });
 
-  it('reads the real Card Deck\'s game rulebooks when asked', () => {
-    const parts = ['euchre', 'spades', 'hearts', 'crazy-eights', 'rummy', 'president', 'spoons', 'egyptian-ratscrew', 'speed', 'golf', 'go-fish', 'klondike'];
+  it("reads the real Card Deck's game rulebooks when asked", () => {
+    const parts = [
+      'euchre',
+      'spades',
+      'hearts',
+      'crazy-eights',
+      'rummy',
+      'president',
+      'spoons',
+      'egyptian-ratscrew',
+      'speed',
+      'golf',
+      'go-fish',
+      'klondike',
+    ];
     const text = loadRulesText('card-deck', parts);
-    expect(text.startsWith(firstRulebookHeader('card-deck') + readFileSync(join(process.cwd(), 'rules-text', 'card-deck.txt'), 'utf-8'))).toBe(true);
+    expect(
+      text.startsWith(
+        firstRulebookHeader('card-deck') + readFileSync(join(process.cwd(), 'rules-text', 'card-deck.txt'), 'utf-8'),
+      ),
+    ).toBe(true);
     expect(text).toContain(readFileSync(join(process.cwd(), 'rules-text', 'card-deck.euchre.txt'), 'utf-8'));
     expect(text.split('=== Next rulebook:')).toHaveLength(13);
   });
 
-  it('names each rulebook in its header and says how it relates to the game\'s own', () => {
+  it("names each rulebook in its header and says how it relates to the game's own", () => {
     expect(rulebookHeader('cities-and-knights')).toBe(
       '\n\n=== Next rulebook: Cities And Knights. It goes with the game above; where it differs, say which rulebook a rule comes from. ===\n\n',
     );
@@ -132,10 +153,17 @@ describe('loadRulesText', () => {
 });
 
 describe('otherRulebooks', () => {
-  it('lists the game\'s rulebooks the assistant is not reading, from the directory', () => {
+  it("lists the game's rulebooks the assistant is not reading, from the directory", () => {
     const root = mkdtempSync(join(tmpdir(), 'rules-'));
     mkdirSync(join(root, 'rules-text'));
-    for (const name of ['deck.txt', 'deck.speed.txt', 'deck.euchre.txt', 'deck-builder.txt', 'deck-builder.x.txt', 'deck.notes.md']) {
+    for (const name of [
+      'deck.txt',
+      'deck.speed.txt',
+      'deck.euchre.txt',
+      'deck-builder.txt',
+      'deck-builder.x.txt',
+      'deck.notes.md',
+    ]) {
       writeFileSync(join(root, 'rules-text', name), 'x');
     }
     const cwd = vi.spyOn(process, 'cwd').mockReturnValue(root);
@@ -150,7 +178,7 @@ describe('otherRulebooks', () => {
     }
   });
 
-  it('finds Catan\'s add-ons beside its own rules', () => {
+  it("finds Catan's add-ons beside its own rules", () => {
     expect(otherRulebooks('catan')).toEqual(['5-6-player-extension', 'cities-and-knights']);
     expect(otherRulebooks('catan', ['cities-and-knights'])).toEqual(['5-6-player-extension']);
     expect(otherRulebooks('uno')).toEqual([]);
@@ -163,7 +191,7 @@ describe('otherRulebooksNote', () => {
     const one = otherRulebooksNote(['5-6-player-extension']);
     expect(one).toContain("this game's other rulebook, 5 6 Player Extension.");
     expect(one).toContain('say which rulebook covers it');
-    expect(otherRulebooksNote(['a-b', 'c', 'd'])).toContain("other rulebooks, A B, C and D.");
+    expect(otherRulebooksNote(['a-b', 'c', 'd'])).toContain('other rulebooks, A B, C and D.');
   });
 });
 
@@ -174,7 +202,7 @@ describe('assembleRulesText', () => {
     );
   });
 
-  it('is just the game\'s own rules when it has no others', () => {
+  it("is just the game's own rules when it has no others", () => {
     expect(assembleRulesText('uno')).toBe(loadRulesText('uno'));
   });
 
@@ -256,18 +284,22 @@ describe('askRulesAssistant', () => {
     expect(request.model).toBe(RULES_ASSISTANT_MODEL);
     expect(request.config.temperature).toBe(0);
     const grounding = request.contents[0].parts[0].text;
-    expect(grounding).toBe(
-      'Here are the complete rules for the game:\n\n' + loadRulesText('uno'),
-    );
+    expect(grounding).toBe('Here are the complete rules for the game:\n\n' + loadRulesText('uno'));
     expect(request.contents.at(-1)).toEqual({
       role: 'user',
       parts: [{ text: 'How many cards is each player dealt?' }],
     });
   });
 
-  it('reads the named parts with the game\'s own rules', async () => {
+  it("reads the named parts with the game's own rules", async () => {
     mocks.generateContentStream.mockResolvedValue(fakeStream('Three.'));
-    await askRulesAssistant({ slug: 'ticket-to-ride', parts: ['europe'], message: 'Stations?', apiKey: 'k', temperature: 0 });
+    await askRulesAssistant({
+      slug: 'ticket-to-ride',
+      parts: ['europe'],
+      message: 'Stations?',
+      apiKey: 'k',
+      temperature: 0,
+    });
     expect(lastRequest().contents[0].parts[0].text).toBe(
       'Here are the complete rules for the game:\n\n' + loadRulesText('ticket-to-ride', ['europe']),
     );
@@ -278,15 +310,16 @@ describe('askRulesAssistant', () => {
     mocks.generateContentStream.mockResolvedValue(fakeStream('Use the extension.'));
     await askRulesAssistant({ slug: 'catan', message: 'Five players?', apiKey: 'k', temperature: 0 });
     expect(lastRequest().contents[0].parts[0].text).toBe(
-      'Here are the complete rules for the game:\n\n' + loadRulesText('catan') +
+      'Here are the complete rules for the game:\n\n' +
+        loadRulesText('catan') +
         otherRulebooksNote(['5-6-player-extension', 'cities-and-knights']),
     );
   });
 
   it('propagates a missing-rules error before any Gemini call', async () => {
-    await expect(
-      askRulesAssistant({ slug: 'no-such-game', message: 'q', apiKey: 'test-key' }),
-    ).rejects.toThrow(/ENOENT/);
+    await expect(askRulesAssistant({ slug: 'no-such-game', message: 'q', apiKey: 'test-key' })).rejects.toThrow(
+      /ENOENT/,
+    );
     expect(mocks.generateContentStream).not.toHaveBeenCalled();
   });
 });

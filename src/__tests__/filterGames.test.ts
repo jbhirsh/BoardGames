@@ -2,7 +2,18 @@ import { filterWishlist } from '../utils/filterGames';
 import { WISHLIST } from '../data/wishlist';
 import { GROUP_ORDER, WISHLIST_TYPE_ORDER } from '../data/keywords';
 import { describe, it, expect } from 'vitest';
-import { filterGames, sortItems, sortedKw, isColumnSort, isGrouped, fitsTable, tableFiltered, budgetFor, groupGames, groupItems } from '../utils/filterGames';
+import {
+  filterGames,
+  sortItems,
+  sortedKw,
+  isColumnSort,
+  isGrouped,
+  fitsTable,
+  tableFiltered,
+  budgetFor,
+  groupGames,
+  groupItems,
+} from '../utils/filterGames';
 import { GAMES } from '../data/games';
 import { initialFilterState } from '../data/initialFilterState';
 import { testGames, quickGame, mediumGame, longGame } from './testData';
@@ -30,7 +41,11 @@ describe('filterGames', () => {
     it('keeps every game that fits the time budget, quick ones included', () => {
       expect(filterGames(testGames, makeState({ duration: 15 }))).toEqual([quickGame]);
       expect(filterGames(testGames, makeState({ duration: 30 }))).toEqual([quickGame]);
-      expect(filterGames(testGames, makeState({ duration: 60 })).map((g) => g.name).sort()).toEqual(['Medium Game', 'Quick Game']);
+      expect(
+        filterGames(testGames, makeState({ duration: 60 }))
+          .map((g) => g.name)
+          .sort(),
+      ).toEqual(['Medium Game', 'Quick Game']);
     });
 
     it('shows a game longer than every budget only with no time chosen', () => {
@@ -52,8 +67,8 @@ describe('filterGames', () => {
     it('filters by player count within range', () => {
       const result = filterGames(testGames, makeState({ players: 2 }));
       expect(result).toHaveLength(2); // quickGame (2-4) and longGame (2-5)
-      expect(result.map(g => g.name)).toContain('Quick Game');
-      expect(result.map(g => g.name)).toContain('Long Game');
+      expect(result.map((g) => g.name)).toContain('Quick Game');
+      expect(result.map((g) => g.name)).toContain('Long Game');
     });
 
     it('returns no results for impossible player count', () => {
@@ -72,13 +87,13 @@ describe('filterGames', () => {
     it('includes a game when players equals its max seat count', () => {
       // longGame seats 2–5; at exactly 5 it must still appear.
       const result = filterGames(testGames, makeState({ players: 5 }));
-      expect(result.map(g => g.name)).toContain('Long Game');
+      expect(result.map((g) => g.name)).toContain('Long Game');
     });
 
     it('includes a game when players equals its min seat count', () => {
       // mediumGame seats 3–6; at exactly 3 it must still appear.
       const result = filterGames(testGames, makeState({ players: 3 }));
-      expect(result.map(g => g.name)).toContain('Medium Game');
+      expect(result.map((g) => g.name)).toContain('Medium Game');
     });
   });
 
@@ -90,20 +105,29 @@ describe('filterGames', () => {
     });
 
     it('filters by multiple keywords (AND)', () => {
-      const result = filterGames(testGames, makeState({ keywords: new Set(['card-game', 'family']), keywordMode: 'and' }));
+      const result = filterGames(
+        testGames,
+        makeState({ keywords: new Set(['card-game', 'family']), keywordMode: 'and' }),
+      );
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe('Quick Game');
     });
 
     it('returns empty when no game matches all keywords', () => {
-      const result = filterGames(testGames, makeState({ keywords: new Set(['strategy', 'cooperative']), keywordMode: 'and' }));
+      const result = filterGames(
+        testGames,
+        makeState({ keywords: new Set(['strategy', 'cooperative']), keywordMode: 'and' }),
+      );
       expect(result).toHaveLength(0);
     });
   });
 
   describe('keyword filter (OR logic)', () => {
     it('returns games matching any keyword', () => {
-      const result = filterGames(testGames, makeState({ keywords: new Set(['strategy', 'cooperative']), keywordMode: 'or' }));
+      const result = filterGames(
+        testGames,
+        makeState({ keywords: new Set(['strategy', 'cooperative']), keywordMode: 'or' }),
+      );
       expect(result).toHaveLength(2);
     });
   });
@@ -129,7 +153,7 @@ describe('filterGames', () => {
     it('ignores whitespace around the search text', () => {
       // Guards the `.trim()`: a query pasted with stray spaces must still hit.
       const result = filterGames(testGames, makeState({ search: '  quick  ' }));
-      expect(result.map(g => g.name)).toEqual(['Quick Game']);
+      expect(result.map((g) => g.name)).toEqual(['Quick Game']);
     });
   });
 
@@ -149,18 +173,39 @@ describe('filterGames', () => {
   });
   describe('games inside a game', () => {
     const speed: SubGame = {
-      name: 'Speed', slug: 'speed', kind: 'card-game', players: '2', min: 2, max: 2,
-      dur: '5 min', mins: 5, short: 'Race.', yt: 'how to play speed',
+      name: 'Speed',
+      slug: 'speed',
+      kind: 'card-game',
+      players: '2',
+      min: 2,
+      max: 2,
+      dur: '5 min',
+      mins: 5,
+      short: 'Race.',
+      yt: 'how to play speed',
     };
     const president: SubGame = {
-      name: 'President', slug: 'president', kind: 'card-game', players: '4–8', min: 4, max: 8,
-      dur: '30 min', mins: 30, short: 'Shed your hand.', yt: 'how to play president',
+      name: 'President',
+      slug: 'president',
+      kind: 'card-game',
+      players: '4–8',
+      min: 4,
+      max: 8,
+      dur: '30 min',
+      mins: 30,
+      short: 'Shed your hand.',
+      yt: 'how to play president',
     };
     // The deck's own summary would fit one player and a long game; it is
     // never played on its own, so only its games may keep it.
     const deck: Game = { ...longGame, name: 'Deck', slug: 'deck', min: 1, max: 1, subgames: [speed, president] };
     // A base game with an add-on is a game in its own right.
-    const island: Game = { ...longGame, name: 'Island', slug: 'island', subgames: [{ ...president, kind: 'expansion' }] };
+    const island: Game = {
+      ...longGame,
+      name: 'Island',
+      slug: 'island',
+      subgames: [{ ...president, kind: 'expansion' }],
+    };
 
     it('keeps the parent when one of its games fits the players and time', () => {
       expect(filterGames([deck], makeState({ players: 2, duration: 15 }))).toEqual([deck]);
@@ -245,28 +290,28 @@ describe('tableFiltered', () => {
 describe('sortGames', () => {
   it('sorts alphabetically (az)', () => {
     const result = sortGames(testGames, 'az');
-    expect(result.map(g => g.name)).toEqual(['Long Game', 'Medium Game', 'Quick Game']);
+    expect(result.map((g) => g.name)).toEqual(['Long Game', 'Medium Game', 'Quick Game']);
   });
 
   it('sorts by name descending', () => {
     const result = sortGames(testGames, 'name-desc');
-    expect(result.map(g => g.name)).toEqual(['Quick Game', 'Medium Game', 'Long Game']);
+    expect(result.map((g) => g.name)).toEqual(['Quick Game', 'Medium Game', 'Long Game']);
   });
 
   it('sorts quickest first', () => {
     const result = sortGames(testGames, 'quick');
-    expect(result.map(g => g.mins)).toEqual([10, 45, 120]);
+    expect(result.map((g) => g.mins)).toEqual([10, 45, 120]);
   });
 
   it('sorts longest first', () => {
     const result = sortGames(testGames, 'long');
-    expect(result.map(g => g.mins)).toEqual([120, 45, 10]);
+    expect(result.map((g) => g.mins)).toEqual([120, 45, 10]);
   });
 
   it('sorts by group order', () => {
     const result = sortGames(testGames, 'group');
     // GROUP_ORDER: social, word, party, strat, coop
-    expect(result.map(g => g.group)).toEqual(['party', 'strat', 'coop']);
+    expect(result.map((g) => g.group)).toEqual(['party', 'strat', 'coop']);
   });
 
   it('sorts by player count ascending, breaking ties by max seats', () => {
@@ -274,7 +319,7 @@ describe('sortGames', () => {
     // smaller max comes first. quickGame (2–4) before longGame (2–5), then
     // mediumGame (3–6). Guards the `a.min - b.min || a.max - b.max` comparator.
     const result = sortGames([mediumGame, longGame, quickGame], 'players-asc');
-    expect(result.map(g => g.name)).toEqual(['Quick Game', 'Long Game', 'Medium Game']);
+    expect(result.map((g) => g.name)).toEqual(['Quick Game', 'Long Game', 'Medium Game']);
   });
 
   it('sorts by player count descending, breaking ties by max seats', () => {
@@ -282,7 +327,7 @@ describe('sortGames', () => {
     // first. mediumGame (3–6), then longGame (2–5) before quickGame (2–4). Input
     // is deliberately unsorted so a no-op comparator can't pass by coincidence.
     const result = sortGames([longGame, quickGame, mediumGame], 'players-desc');
-    expect(result.map(g => g.name)).toEqual(['Medium Game', 'Long Game', 'Quick Game']);
+    expect(result.map((g) => g.name)).toEqual(['Medium Game', 'Long Game', 'Quick Game']);
   });
 
   it('sorts the real lists by play time as it did with the time bucket as a tie-break', () => {
@@ -296,10 +341,12 @@ describe('sortGames', () => {
     const rank = (m: number) => (m ? RANK[durationCategory(m)] : RANK.medium);
     const unknown = { ...WISHLIST[0], id: 'sug-x', name: 'Mystery', mins: 0, dur: '' };
     for (const list of [GAMES, [...WISHLIST, unknown]] as Filterable[][]) {
-      expect(sortItems(list, 'dur-asc', () => 0))
-        .toEqual([...list].sort((a, b) => known(a.mins) - known(b.mins) || rank(a.mins) - rank(b.mins)));
-      expect(sortItems(list, 'dur-desc', () => 0))
-        .toEqual([...list].sort((a, b) => b.mins - a.mins || rank(b.mins) - rank(a.mins)));
+      expect(sortItems(list, 'dur-asc', () => 0)).toEqual(
+        [...list].sort((a, b) => known(a.mins) - known(b.mins) || rank(a.mins) - rank(b.mins)),
+      );
+      expect(sortItems(list, 'dur-desc', () => 0)).toEqual(
+        [...list].sort((a, b) => b.mins - a.mins || rank(b.mins) - rank(a.mins)),
+      );
     }
   });
 });
@@ -327,12 +374,21 @@ describe('filterWishlist', () => {
 
   it("finds a friend's suggestion by who suggested it", () => {
     const fromAlex = { ...WISHLIST[0], id: 'sug-a', name: 'Mystery', desc: 'A puzzle.', suggestedBy: 'Alex' };
-    const found = filterWishlist([...WISHLIST, fromAlex], { ...initialFilterState, keywords: new Set(), search: 'alex' });
+    const found = filterWishlist([...WISHLIST, fromAlex], {
+      ...initialFilterState,
+      keywords: new Set(),
+      search: 'alex',
+    });
     expect(found.map((w) => w.id)).toEqual(['sug-a']);
   });
 
   it('groups by wishlist type under the group sort', () => {
-    const grouped = filterWishlist(WISHLIST, { ...initialFilterState, keywords: new Set(), sort: 'group', baseSort: 'group' });
+    const grouped = filterWishlist(WISHLIST, {
+      ...initialFilterState,
+      keywords: new Set(),
+      sort: 'group',
+      baseSort: 'group',
+    });
     const order = grouped.map((w) => WISHLIST_TYPE_ORDER.indexOf(w.type));
     expect(order).toEqual([...order].sort((a, b) => a - b));
   });
@@ -344,12 +400,12 @@ describe('sortItems ordering', () => {
   // can't pass by coincidence. Names, groups, minutes and seats are all
   // deliberately out of step with one another.
   const mk = (name: string, over: Partial<Game>): Game => ({ ...quickGame, name, slug: name.toLowerCase(), ...over });
-  const bravo   = mk('Bravo',   { group: 'party', mins: 60, min: 2, max: 4 });
-  const alpha   = mk('Alpha',   { group: 'coop',  mins: 20, min: 2, max: 8 });
+  const bravo = mk('Bravo', { group: 'party', mins: 60, min: 2, max: 4 });
+  const alpha = mk('Alpha', { group: 'coop', mins: 20, min: 2, max: 8 });
   const charlie = mk('Charlie', { group: 'strat', mins: 40, min: 4, max: 4 });
-  const delta   = mk('Delta',   { group: 'word',  mins: 40, min: 2, max: 6 });
+  const delta = mk('Delta', { group: 'word', mins: 40, min: 2, max: 6 });
   const input = [bravo, alpha, charlie, delta];
-  const names = (list: Game[]) => list.map(g => g.name);
+  const names = (list: Game[]) => list.map((g) => g.name);
 
   it('starts the vote sort from A→Z, which the wishlist reorders by votes', () => {
     expect(names(sortItems(input, 'votes', () => 0))).toEqual(['Alpha', 'Bravo', 'Charlie', 'Delta']);
@@ -405,7 +461,12 @@ describe('sortItems ordering', () => {
 
   it('group sort uses the supplied groupIndex', () => {
     const byLength = (g: Game) => g.name.length;
-    expect(names(sortItems([charlie, bravo, alpha, delta], 'group', byLength))).toEqual(['Alpha', 'Bravo', 'Delta', 'Charlie']);
+    expect(names(sortItems([charlie, bravo, alpha, delta], 'group', byLength))).toEqual([
+      'Alpha',
+      'Bravo',
+      'Delta',
+      'Charlie',
+    ]);
   });
 });
 
@@ -422,7 +483,7 @@ describe('groupItems', () => {
   const list = ['b2', 'a1', 'c1', 'a2', 'b1'];
   const first = (s: string) => s[0];
 
-  it('splits a list into its groups in the given order, each in the list\'s own order', () => {
+  it("splits a list into its groups in the given order, each in the list's own order", () => {
     expect(groupItems(list, ['c', 'a', 'b'], first)).toEqual([
       { key: 'c', items: ['c1'] },
       { key: 'a', items: ['a1', 'a2'] },
@@ -442,17 +503,34 @@ describe('groupGames', () => {
   // showing, each in the filtered order, or the filtered list as it is.
   function viewsGrouping(games: Game[], state: FilterState) {
     if (!isGrouped(state)) return [{ key: null, items: games }];
-    return GROUP_ORDER
-      .filter((g) => games.some((gm) => gm.group === g))
-      .map((key) => ({ key, items: games.filter((g) => g.group === key) }));
+    return GROUP_ORDER.filter((g) => games.some((gm) => gm.group === g)).map((key) => ({
+      key,
+      items: games.filter((g) => g.group === key),
+    }));
   }
 
   const SORTS: SortMode[] = [
-    'az', 'group', 'quick', 'long', 'votes',
-    'name-asc', 'name-desc', 'dur-asc', 'dur-desc',
-    'players-asc', 'players-desc', 'weight-asc', 'weight-desc',
+    'az',
+    'group',
+    'quick',
+    'long',
+    'votes',
+    'name-asc',
+    'name-desc',
+    'dur-asc',
+    'dur-desc',
+    'players-asc',
+    'players-desc',
+    'weight-asc',
+    'weight-desc',
   ];
-  const filters: Partial<FilterState>[] = [{}, { players: 4 }, { duration: 30 }, { search: 'pandemic' }, { search: 'zzzz' }];
+  const filters: Partial<FilterState>[] = [
+    {},
+    { players: 4 },
+    { duration: 30 },
+    { search: 'pandemic' },
+    { search: 'zzzz' },
+  ];
 
   it('groups every sort, on the group base or not, as the views did', () => {
     for (const baseSort of ['az', 'group'] as BaseSort[]) {
@@ -460,13 +538,15 @@ describe('groupGames', () => {
         for (const filter of filters) {
           const state = makeState({ ...filter, sort, baseSort });
           const games = filterGames(GAMES, state);
-          expect(groupGames(games, state), `${sort} on ${baseSort} ${JSON.stringify(filter)}`).toEqual(viewsGrouping(games, state));
+          expect(groupGames(games, state), `${sort} on ${baseSort} ${JSON.stringify(filter)}`).toEqual(
+            viewsGrouping(games, state),
+          );
         }
       }
     }
   });
 
-  it('heads each kind of game in the groups\' order, by name within', () => {
+  it("heads each kind of game in the groups' order, by name within", () => {
     const state = makeState({ sort: 'group', baseSort: 'group' });
     const groups = groupGames(filterGames(GAMES, state), state);
     expect(groups.map((g) => g.key)).toEqual(GROUP_ORDER.filter((id) => GAMES.some((g) => g.group === id)));
@@ -512,7 +592,12 @@ describe('sortedKw', () => {
   });
 
   it('interleaves known labels and unknown keys in one order', () => {
-    expect(sortedKw(['zz-mystery', 'word', 'aa-mystery', 'family'])).toEqual(['aa-mystery', 'family', 'word', 'zz-mystery']);
+    expect(sortedKw(['zz-mystery', 'word', 'aa-mystery', 'family'])).toEqual([
+      'aa-mystery',
+      'family',
+      'word',
+      'zz-mystery',
+    ]);
   });
 
   it('does not mutate its input', () => {
@@ -527,11 +612,25 @@ describe('weight sort', () => {
   const b = { ...mediumGame, name: 'B', weight: 1.2 };
   const c = { ...longGame, name: 'C', weight: 1.2 };
   const unknown = { ...longGame, name: 'Unknown' };
-  const card = { slug: 'x', kind: 'card-game' as const, players: '2', min: 2, max: 2, dur: '5 min', mins: 5, short: '', yt: '' };
+  const card = {
+    slug: 'x',
+    kind: 'card-game' as const,
+    players: '2',
+    min: 2,
+    max: 2,
+    dur: '5 min',
+    mins: 5,
+    short: '',
+    yt: '',
+  };
   // A deck spanning 1.1 to 3.0: lightest first it is a 1.1, heaviest first a 3.0.
   const deck: Game = {
-    ...mediumGame, name: 'Deck',
-    subgames: [{ ...card, name: 'Snap', weight: 1.1 }, { ...card, name: 'Bridge', weight: 3 }],
+    ...mediumGame,
+    name: 'Deck',
+    subgames: [
+      { ...card, name: 'Snap', weight: 1.1 },
+      { ...card, name: 'Bridge', weight: 3 },
+    ],
   };
   const names = (list: Game[]) => list.map((g) => g.name);
 
@@ -545,7 +644,8 @@ describe('weight sort', () => {
 });
 describe('isColumnSort', () => {
   it('tells a column header sort from a filter bar one', () => {
-    for (const s of ['name-asc', 'name-desc', 'players-asc', 'dur-desc', 'weight-asc'] as const) expect(isColumnSort(s)).toBe(true);
+    for (const s of ['name-asc', 'name-desc', 'players-asc', 'dur-desc', 'weight-asc'] as const)
+      expect(isColumnSort(s)).toBe(true);
     for (const s of ['az', 'group', 'quick', 'long', 'votes'] as const) expect(isColumnSort(s)).toBe(false);
   });
 });

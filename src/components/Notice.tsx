@@ -14,7 +14,12 @@ const ICONS: Record<NoticeTone, () => ReactNode> = { info: InfoIcon, warning: Wa
  * a one-off coloured box: noticeTokens.test.ts holds its tokens to 4.5:1 in
  * both themes.
  */
-export default function Notice({ tone, children, action, live = true }: {
+export default function Notice({
+  tone,
+  children,
+  action,
+  live = true,
+}: {
   tone: NoticeTone;
   children: ReactNode;
   action?: { label: string; onClick: () => void };
@@ -25,9 +30,15 @@ export default function Notice({ tone, children, action, live = true }: {
   if (live) role = tone === 'error' ? 'alert' : 'status';
   return (
     <div className={`notice notice-${tone}`} role={role}>
-      <span className="notice-icon"><Icon /></span>
+      <span className="notice-icon">
+        <Icon />
+      </span>
       <span className="notice-text">{children}</span>
-      {action && <button type="button" className="notice-action" onClick={action.onClick}>{action.label}</button>}
+      {action && (
+        <button type="button" className="notice-action" onClick={action.onClick}>
+          {action.label}
+        </button>
+      )}
     </div>
   );
 }

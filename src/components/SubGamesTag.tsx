@@ -27,7 +27,9 @@ export default function SubGamesTag({ game }: Props) {
       trigger={label}
     >
       <ul className="sub-tag-list">
-        {fitting.map((s) => <li key={s.slug}>{s.name}</li>)}
+        {fitting.map((s) => (
+          <li key={s.slug}>{s.name}</li>
+        ))}
       </ul>
     </Popover>
   );

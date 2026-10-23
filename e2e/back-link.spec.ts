@@ -68,7 +68,7 @@ test('Back from a rules page returns to the filtered list where it was left', as
   expect(await scrolledThrough(page)).toEqual([at]);
 });
 
-test('Back from the picked game\'s rules returns to the list where it was', async ({ page }) => {
+test("Back from the picked game's rules returns to the list where it was", async ({ page }) => {
   await page.goto('/?p=2');
   await expect(page.getByRole('button', { name: rowToggles }).first()).toBeVisible();
   // Scrolled down the list, then back up just far enough to reach the button.
@@ -103,7 +103,9 @@ test('a collapsed list row carries no Rules link, on a desktop or the narrow lis
   }
 });
 
-test('the open row\'s Rules, at the end of its write-up on the right, opens the rules page, and Back returns to the list', async ({ page }) => {
+test("the open row's Rules, at the end of its write-up on the right, opens the rules page, and Back returns to the list", async ({
+  page,
+}) => {
   await page.goto('/');
   const toggle = page.getByRole('button', { name: /^(Show|Hide) details for Pandemic$/ });
   await toggle.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
@@ -111,7 +113,9 @@ test('the open row\'s Rules, at the end of its write-up on the right, opens the 
   await expect(toggle).toHaveAttribute('aria-expanded', 'true');
   // The panel is the cell spanning the table under the row; its Rules is the
   // filled one, after the write-up and over on the right.
-  const panel = page.getByRole('cell').filter({ has: page.getByRole('link', { name: 'Watch Pandemic tutorial on YouTube' }) });
+  const panel = page
+    .getByRole('cell')
+    .filter({ has: page.getByRole('link', { name: 'Watch Pandemic tutorial on YouTube' }) });
   const rules = panel.getByRole('link', { name: 'Rules for Pandemic' });
   await opened(rules);
   await rules.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
@@ -136,7 +140,7 @@ test('the open row\'s Rules, at the end of its write-up on the right, opens the 
   await expect(toggle).toHaveAttribute('aria-expanded', 'true');
 });
 
-test('the open row comes back open, its Rules in view, by the browser\'s Back and the page\'s', async ({ page }) => {
+test("the open row comes back open, its Rules in view, by the browser's Back and the page's", async ({ page }) => {
   await page.goto('/');
   const toggle = page.getByRole('button', { name: /^(Show|Hide) details for Catan$/ });
   await toggle.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));

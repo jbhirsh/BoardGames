@@ -111,32 +111,35 @@ describe('RulesChat', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/chat', expect.objectContaining({ method: 'POST' }));
     const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
     expect(body).toEqual({ slug: 'cranium', message: 'How many players?', history: [] });
-    await waitFor(() =>
-      expect(screen.getByPlaceholderText('Ask a rules question...')).toBeEnabled(),
-    );
+    await waitFor(() => expect(screen.getByPlaceholderText('Ask a rules question...')).toBeEnabled());
   });
 
   it('hands on each answer once it is whole, with the tab it was asked on', async () => {
     const onAnswer = vi.fn();
     let finish = () => {};
-    const rest = new Promise<void>((resolve) => { finish = resolve; });
+    const rest = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
     let i = 0;
-    vi.stubGlobal('fetch', vi.fn(async () => ({
-      ok: true,
-      body: {
-        getReader: () => ({
-          read: async () => {
-            i++;
-            if (i === 1) return { done: false, value: new TextEncoder().encode('Robber moves ') };
-            if (i === 2) {
-              await rest;
-              return { done: false, value: new TextEncoder().encode('(Catan p. 5).') };
-            }
-            return { done: true, value: undefined };
-          },
-        }),
-      },
-    })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        body: {
+          getReader: () => ({
+            read: async () => {
+              i++;
+              if (i === 1) return { done: false, value: new TextEncoder().encode('Robber moves ') };
+              if (i === 2) {
+                await rest;
+                return { done: false, value: new TextEncoder().encode('(Catan p. 5).') };
+              }
+              return { done: true, value: undefined };
+            },
+          }),
+        },
+      })),
+    );
     render(
       <RulesChatProvider>
         <RulesChatToggle />
@@ -157,7 +160,10 @@ describe('RulesChat', () => {
 
   it('hands on nothing for a failed question', async () => {
     const onAnswer = vi.fn();
-    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 500 }) as Response));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: false, status: 500 }) as Response),
+    );
     render(
       <RulesChatProvider>
         <RulesChatToggle />
@@ -175,7 +181,10 @@ describe('RulesChat', () => {
   it('joins a character split across two chunks', async () => {
     const bytes = new TextEncoder().encode('Lead the 10 of ♠ — café rules.');
     const cut = bytes.indexOf(0xe2) + 1; // one byte into the three-byte ♠
-    vi.stubGlobal('fetch', vi.fn(async () => streamResponse([bytes.slice(0, cut), bytes.slice(cut)])));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => streamResponse([bytes.slice(0, cut), bytes.slice(cut)])),
+    );
     setup();
     openPanel();
     send('Which suit leads?');
@@ -186,7 +195,10 @@ describe('RulesChat', () => {
 
   it('marks a character the stream cut off at its end', async () => {
     const bytes = new TextEncoder().encode('Spades ♠');
-    vi.stubGlobal('fetch', vi.fn(async () => streamResponse([bytes.slice(0, -1)])));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => streamResponse([bytes.slice(0, -1)])),
+    );
     setup();
     openPanel();
     send('Which suit?');
@@ -206,7 +218,7 @@ describe('RulesChat', () => {
     expect(document.querySelector('.rules-chat-scope')).toBeNull();
   });
 
-  it('names the rulebooks to read along with the game\'s own', async () => {
+  it("names the rulebooks to read along with the game's own", async () => {
     const fetchMock = vi.fn(async () => streamResponse(['ok']));
     vi.stubGlobal('fetch', fetchMock);
     setup(['cities-and-knights']);
@@ -214,11 +226,19 @@ describe('RulesChat', () => {
     send('How do knights work?');
     await screen.findByText('ok');
     const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
-    expect(body).toEqual({ slug: 'cranium', message: 'How do knights work?', history: [], parts: ['cities-and-knights'] });
+    expect(body).toEqual({
+      slug: 'cranium',
+      message: 'How do knights work?',
+      history: [],
+      parts: ['cities-and-knights'],
+    });
   });
 
   it('links the tabs an answer names, once the answer is in', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => streamResponse(["That's in the 5 6 Player Extension."])));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => streamResponse(["That's in the 5 6 Player Extension."])),
+    );
     const linksFor = vi.fn((answer: string) =>
       answer.includes('Extension') ? [{ label: '5–6 Player Extension', to: '/rules/catan/5-6-player-extension' }] : [],
     );
@@ -240,14 +260,19 @@ describe('RulesChat', () => {
   });
 
   it('opens a tab an answer names in place, with the state it is given', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => streamResponse(["That's in the 5 6 Player Extension."])));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => streamResponse(["That's in the 5 6 Player Extension."])),
+    );
     const router = renderRouted(
       <RulesChatProvider>
         <RulesChatToggle />
         <RulesChatPanel
           slug="catan"
           gameName="Catan"
-          linksFor={() => [{ label: '5–6 Player Extension', to: '/rules/catan/5-6-player-extension', state: FROM_LIST }]}
+          linksFor={() => [
+            { label: '5–6 Player Extension', to: '/rules/catan/5-6-player-extension', state: FROM_LIST },
+          ]}
         />
       </RulesChatProvider>,
       ['/', { pathname: '/rules/catan', state: FROM_LIST }],
@@ -257,11 +282,17 @@ describe('RulesChat', () => {
     send('How do we play with 5?');
     fireEvent.click(await screen.findByRole('link', { name: 'Open 5–6 Player Extension' }));
     expect(router.state.historyAction).toBe('REPLACE');
-    expect(router.state.location).toMatchObject({ pathname: '/rules/catan/5-6-player-extension', state: { fromList: true } });
+    expect(router.state.location).toMatchObject({
+      pathname: '/rules/catan/5-6-player-extension',
+      state: { fromList: true },
+    });
   });
 
-  it('opens an answer\'s page citations in a tab of their own', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => streamResponse(['Roll two dice (p. 4).'])));
+  it("opens an answer's page citations in a tab of their own", async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => streamResponse(['Roll two dice (p. 4).'])),
+    );
     const citeLinks = (answer: string) => answer.replace('(p. 4)', '([p. 4](/rules/catan.pdf#page=4))');
     render(
       <RulesChatProvider>
@@ -277,13 +308,22 @@ describe('RulesChat', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
-  it('names a citation by its text and its rulebook, and leaves any other link\'s title alone', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => streamResponse(['Roll two dice (p. 4). See [the FAQ](https://example.com/faq "Our FAQ").'])));
-    const citeLinks = (answer: string) => answer.replace('(p. 4)', '([p. 4](/rules/catan.pdf#page=4 "p. 4, Base game"))');
+  it("names a citation by its text and its rulebook, and leaves any other link's title alone", async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => streamResponse(['Roll two dice (p. 4). See [the FAQ](https://example.com/faq "Our FAQ").'])),
+    );
+    const citeLinks = (answer: string) =>
+      answer.replace('(p. 4)', '([p. 4](/rules/catan.pdf#page=4 "p. 4, Base game"))');
     render(
       <RulesChatProvider>
         <RulesChatToggle />
-        <RulesChatPanel slug="catan" gameName="Catan" citeLinks={citeLinks} isCitation={(href) => href.includes('#page=')} />
+        <RulesChatPanel
+          slug="catan"
+          gameName="Catan"
+          citeLinks={citeLinks}
+          isCitation={(href) => href.includes('#page=')}
+        />
       </RulesChatProvider>,
     );
     openPanel();
@@ -297,13 +337,22 @@ describe('RulesChat', () => {
   });
 
   it('lets the page take a citation it can show in place, and leaves the rest to open the PDF', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => streamResponse(['Roll (p. 4), trade (p. 9), see [the FAQ](https://example.com/faq).'])));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => streamResponse(['Roll (p. 4), trade (p. 9), see [the FAQ](https://example.com/faq).'])),
+    );
     const citeLinks = (answer: string) => answer.replace(/\(p\. (\d)\)/g, '([p. $1](/rules/catan.pdf#page=$1))');
     const onCite = vi.fn((href: string) => href.endsWith('=4'));
     render(
       <RulesChatProvider>
         <RulesChatToggle />
-        <RulesChatPanel slug="catan" gameName="Catan" citeLinks={citeLinks} isCitation={(href) => href.includes('#page=')} onCite={onCite} />
+        <RulesChatPanel
+          slug="catan"
+          gameName="Catan"
+          citeLinks={citeLinks}
+          isCitation={(href) => href.includes('#page=')}
+          onCite={onCite}
+        />
       </RulesChatProvider>,
     );
     openPanel();
@@ -327,13 +376,24 @@ describe('RulesChat', () => {
   });
 
   it('hands over the words a citation closes from its own list item, formatting and all', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => streamResponse(['Two things:\n\n- Roll **two** dice (p. 3).\n- On a 7, move the robber (p. 4).'])));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        streamResponse(['Two things:\n\n- Roll **two** dice (p. 3).\n- On a 7, move the robber (p. 4).']),
+      ),
+    );
     const citeLinks = (answer: string) => answer.replace(/\(p\. (\d)\)/g, '([p. $1](/rules/catan.pdf#page=$1))');
     const onCite = vi.fn(() => true);
     render(
       <RulesChatProvider>
         <RulesChatToggle />
-        <RulesChatPanel slug="catan" gameName="Catan" citeLinks={citeLinks} isCitation={(href) => href.includes('#page=')} onCite={onCite} />
+        <RulesChatPanel
+          slug="catan"
+          gameName="Catan"
+          citeLinks={citeLinks}
+          isCitation={(href) => href.includes('#page=')}
+          onCite={onCite}
+        />
       </RulesChatProvider>,
     );
     openPanel();
@@ -344,26 +404,34 @@ describe('RulesChat', () => {
     expect(onCite).toHaveBeenLastCalledWith('/rules/catan.pdf#page=3', 'Roll two dice');
   });
 
-  it('reads each answer\'s links against the tab it was asked on, even one still streaming', async () => {
+  it("reads each answer's links against the tab it was asked on, even one still streaming", async () => {
     const encoder = new TextEncoder();
     let release = () => {};
     const replies = [['First (p. 1).'], ['Second ', '(p. 2).']];
-    vi.stubGlobal('fetch', vi.fn(async () => {
-      const chunks = replies.shift()!;
-      let i = 0;
-      return {
-        ok: true,
-        body: {
-          getReader: () => ({
-            read: async () => {
-              // The second reply waits halfway until the test lets it go on.
-              if (chunks.length === 2 && i === 1) await new Promise<void>((resolve) => { release = resolve; });
-              return i < chunks.length ? { done: false, value: encoder.encode(chunks[i++]) } : { done: true, value: undefined };
-            },
-          }),
-        },
-      } as unknown as Response;
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        const chunks = replies.shift()!;
+        let i = 0;
+        return {
+          ok: true,
+          body: {
+            getReader: () => ({
+              read: async () => {
+                // The second reply waits halfway until the test lets it go on.
+                if (chunks.length === 2 && i === 1)
+                  await new Promise<void>((resolve) => {
+                    release = resolve;
+                  });
+                return i < chunks.length
+                  ? { done: false, value: encoder.encode(chunks[i++]) }
+                  : { done: true, value: undefined };
+              },
+            }),
+          },
+        } as unknown as Response;
+      }),
+    );
     const citeLinks = vi.fn((answer: string, tab?: string) => answer.replace(/\((p\. \d)\)/, `([$1 on ${tab}](/x))`));
     const linksFor = vi.fn<(answer: string, tab?: string) => { label: string; to: string }[]>(() => []);
     const panel = (tab: string) => (
@@ -413,7 +481,10 @@ describe('RulesChat', () => {
   });
 
   it('leaves a half-typed question in the box when a starter is tapped', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => streamResponse(['Sure.'])));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => streamResponse(['Sure.'])),
+    );
     render(
       <RulesChatProvider>
         <RulesChatToggle />
@@ -434,23 +505,27 @@ describe('RulesChat', () => {
   });
 
   it('shows the error bubble and reports to Sentry on a non-OK response', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 500 }) as Response));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: false, status: 500 }) as Response),
+    );
     setup();
     openPanel();
     send('How many players?');
 
-    expect(
-      await screen.findByText('Sorry, something went wrong. Please try again.'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Sorry, something went wrong. Please try again.')).toBeInTheDocument();
     expect(vi.mocked(Sentry.captureMessage)).toHaveBeenCalledWith(
       'rules chat request failed: HTTP 500',
       expect.objectContaining({ level: 'error', tags: { slug: 'cranium' } }),
     );
   });
 
-  it('reports a fault of ours that is no network\'s doing, though it is a TypeError before any answer', async () => {
+  it("reports a fault of ours that is no network's doing, though it is a TypeError before any answer", async () => {
     // A 200 with no body to read: the code's fault, not the visitor's network.
-    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, body: null }) as unknown as Response));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: true, body: null }) as unknown as Response),
+    );
     setup();
     openPanel();
     send('How many players?');
@@ -465,14 +540,17 @@ describe('RulesChat', () => {
 
   it('shows the error bubble and reports to Sentry when fetch throws', async () => {
     const boom = new Error('network down');
-    vi.stubGlobal('fetch', vi.fn(async () => { throw boom; }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw boom;
+      }),
+    );
     setup();
     openPanel();
     send('How many players?');
 
-    expect(
-      await screen.findByText('Sorry, something went wrong. Please try again.'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Sorry, something went wrong. Please try again.')).toBeInTheDocument();
     expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(
       boom,
       expect.objectContaining({ tags: { slug: 'cranium' } }),
@@ -480,7 +558,8 @@ describe('RulesChat', () => {
   });
 
   it('puts a failed question back in the box and retries it without repeating it', async () => {
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockResolvedValueOnce({ ok: false, status: 500 } as Response)
       .mockResolvedValueOnce(streamResponse(['Four to eight.']));
     vi.stubGlobal('fetch', fetchMock);
@@ -504,26 +583,39 @@ describe('RulesChat', () => {
   });
 
   it('says to wait on a rate limit, without reporting it as a fault', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 429 }) as Response));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: false, status: 429 }) as Response),
+    );
     setup();
     openPanel();
     send('How many players?');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Too many questions just now. Wait a minute, then try again.');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Too many questions just now. Wait a minute, then try again.',
+    );
     expect(vi.mocked(Sentry.captureMessage)).not.toHaveBeenCalled();
   });
 
   it('says the assistant is resting for the day when the daily cap answers, by the box and not as an error', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => ({
-      ok: false,
-      status: 429,
-      json: async () => ({ error: 'Daily cap.', code: 'daily-limit' }),
-    }) as Response));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          ({
+            ok: false,
+            status: 429,
+            json: async () => ({ error: 'Daily cap.', code: 'daily-limit' }),
+          }) as Response,
+      ),
+    );
     setup();
     openPanel();
     send('How many players?');
 
-    await waitFor(() => expect(statusRegion()).toHaveTextContent('The assistant is resting for today. The rulebook below still works.'));
+    await waitFor(() =>
+      expect(statusRegion()).toHaveTextContent('The assistant is resting for today. The rulebook below still works.'),
+    );
     expect(statusRegion().firstElementChild).toHaveClass('notice-info');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     // Asking again today won't help, so there is no Retry; the question
@@ -536,31 +628,46 @@ describe('RulesChat', () => {
   });
 
   it('keeps the per-minute notice for a 429 whose body has no daily code', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => ({
-      ok: false,
-      status: 429,
-      json: async () => ({ error: 'Too many requests. Please slow down.' }),
-    }) as Response));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          ({
+            ok: false,
+            status: 429,
+            json: async () => ({ error: 'Too many requests. Please slow down.' }),
+          }) as Response,
+      ),
+    );
     setup();
     openPanel();
     send('How many players?');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Too many questions just now. Wait a minute, then try again.');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Too many questions just now. Wait a minute, then try again.',
+    );
   });
 
   it('removes a half-streamed answer when the stream fails', async () => {
     const encoder = new TextEncoder();
     let calls = 0;
-    vi.stubGlobal('fetch', vi.fn(async () => ({
-      ok: true,
-      body: {
-        getReader: () => ({
-          read: () => (calls++ === 0
-            ? Promise.resolve({ done: false, value: encoder.encode('Partial ans') })
-            : Promise.reject(new Error('connection reset'))),
-        }),
-      },
-    }) as unknown as Response));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          ({
+            ok: true,
+            body: {
+              getReader: () => ({
+                read: () =>
+                  calls++ === 0
+                    ? Promise.resolve({ done: false, value: encoder.encode('Partial ans') })
+                    : Promise.reject(new Error('connection reset')),
+              }),
+            },
+          }) as unknown as Response,
+      ),
+    );
     setup();
     openPanel();
     send('How many players?');
@@ -574,15 +681,23 @@ describe('RulesChat', () => {
     vi.useFakeTimers();
     try {
       // A fetch that only settles when aborted, as a real one does.
-      vi.stubGlobal('fetch', vi.fn((_url: string, init: RequestInit) => new Promise<Response>((_, reject) => {
-        init.signal!.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
-      })));
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(
+          (_url: string, init: RequestInit) =>
+            new Promise<Response>((_, reject) => {
+              init.signal!.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+            }),
+        ),
+      );
       setup();
       openPanel();
       send('How many players?');
       expect(screen.getByText('Thinking...')).toBeInTheDocument();
 
-      await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_000);
+      });
 
       expect(screen.getByRole('alert')).toHaveTextContent('That took too long to answer. Please try again.');
       expect(screen.queryByText('Thinking...')).not.toBeInTheDocument();
@@ -603,23 +718,38 @@ describe('RulesChat', () => {
       const chunks = ['One, ', 'two, ', 'three.'];
       let i = 0;
       // Each chunk arrives 20s after the last: slow, but never 30s quiet.
-      vi.stubGlobal('fetch', vi.fn(async () => ({
-        ok: true,
-        body: {
-          getReader: () => ({
-            read: () => new Promise((resolve) => {
-              setTimeout(() => resolve(i < chunks.length
-                ? { done: false, value: encoder.encode(chunks[i++]) }
-                : { done: true, value: undefined }), 20_000);
-            }),
-          }),
-        },
-      }) as unknown as Response));
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(
+          async () =>
+            ({
+              ok: true,
+              body: {
+                getReader: () => ({
+                  read: () =>
+                    new Promise((resolve) => {
+                      setTimeout(
+                        () =>
+                          resolve(
+                            i < chunks.length
+                              ? { done: false, value: encoder.encode(chunks[i++]) }
+                              : { done: true, value: undefined },
+                          ),
+                        20_000,
+                      );
+                    }),
+                }),
+              },
+            }) as unknown as Response,
+        ),
+      );
       setup();
       openPanel();
       send('Count?');
 
-      await act(async () => { await vi.advanceTimersByTimeAsync(80_000); });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(80_000);
+      });
       expect(screen.getByText('One, two, three.')).toBeInTheDocument();
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     } finally {
@@ -628,7 +758,10 @@ describe('RulesChat', () => {
   });
 
   it('hands focus back to the box after a failure', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 500 }) as Response));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: false, status: 500 }) as Response),
+    );
     setup();
     openPanel();
     send('How many players?');
@@ -644,12 +777,20 @@ describe('RulesChat', () => {
     vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => frames.push(cb));
     const runFrames = async () => {
       await waitFor(() => expect(frames).toHaveLength(1));
-      act(() => { for (const cb of frames.splice(0)) cb(0); });
+      act(() => {
+        for (const cb of frames.splice(0)) cb(0);
+      });
     };
     let fail = () => {};
-    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>((resolve) => {
-      fail = () => resolve({ ok: false, status: 500 } as Response);
-    })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        () =>
+          new Promise<Response>((resolve) => {
+            fail = () => resolve({ ok: false, status: 500 } as Response);
+          }),
+      ),
+    );
     render(
       <>
         <RulesChatProvider>
@@ -690,12 +831,15 @@ describe('RulesChat', () => {
 
   it('cancels a request quietly when the page goes away', async () => {
     let signal: AbortSignal | undefined;
-    vi.stubGlobal('fetch', vi.fn((_url: string, init: RequestInit) => {
-      signal = init.signal!;
-      return new Promise<Response>((_, reject) => {
-        signal!.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
-      });
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((_url: string, init: RequestInit) => {
+        signal = init.signal!;
+        return new Promise<Response>((_, reject) => {
+          signal!.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+        });
+      }),
+    );
     const { unmount } = render(
       <RulesChatProvider>
         <RulesChatToggle />
@@ -712,14 +856,16 @@ describe('RulesChat', () => {
   });
 });
 
-describe('RulesChat when the assistant can\'t answer', () => {
+describe("RulesChat when the assistant can't answer", () => {
   const OFFLINE = "You're offline — the assistant needs a connection.";
   const STILL_WORKS = ' The rulebook below still works.';
 
   /** Says the browser is online or not, and tells the page, as the browser does. */
   function goOnline(online: boolean) {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(online);
-    act(() => { window.dispatchEvent(new Event(online ? 'online' : 'offline')); });
+    act(() => {
+      window.dispatchEvent(new Event(online ? 'online' : 'offline'));
+    });
   }
 
   type Rulebook = { rulebookFailed?: boolean; rulebookSaved?: boolean | 'asking' };
@@ -809,7 +955,10 @@ describe('RulesChat when the assistant can\'t answer', () => {
   });
 
   it('keeps pointing to the rulebook at the cap while the page asks whether it is saved', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 429, json: async () => ({ code: 'daily-limit' }) }) as Response));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: false, status: 429, json: async () => ({ code: 'daily-limit' }) }) as Response),
+    );
     withStarters({ rulebookSaved: 'asking' });
     fireEvent.click(screen.getByRole('button', { name: 'How do you win?' }));
     await waitFor(() => expect(statusRegion()).toHaveTextContent('The assistant is resting for today.' + STILL_WORKS));
@@ -867,7 +1016,8 @@ describe('RulesChat when the assistant can\'t answer', () => {
   });
 
   it('says the same when a request finds no network though the browser says it has one, with Retry', async () => {
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockRejectedValueOnce(new TypeError('Failed to fetch'))
       .mockResolvedValueOnce(streamResponse(['Seven cards each.']));
     vi.stubGlobal('fetch', fetchMock);
@@ -884,7 +1034,9 @@ describe('RulesChat when the assistant can\'t answer', () => {
     expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled();
 
     // Asked as typed, less the spaces around it.
-    fireEvent.change(screen.getByPlaceholderText('Ask a rules question...'), { target: { value: ' How many cards? ' } });
+    fireEvent.change(screen.getByPlaceholderText('Ask a rules question...'), {
+      target: { value: ' How many cards? ' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(await screen.findByText('Seven cards each.')).toBeInTheDocument();
     expect(JSON.parse(fetchMock.mock.calls[1][1].body).message).toBe('How many cards?');
@@ -937,12 +1089,18 @@ describe('RulesChat when the assistant can\'t answer', () => {
     expect(statusRegion()).toBeEmptyDOMElement();
   });
 
-  it('keeps the cap\'s notice when the browser comes back online', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => ({
-      ok: false,
-      status: 429,
-      json: async () => ({ code: 'daily-limit' }),
-    }) as Response));
+  it("keeps the cap's notice when the browser comes back online", async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          ({
+            ok: false,
+            status: 429,
+            json: async () => ({ code: 'daily-limit' }),
+          }) as Response,
+      ),
+    );
     setup();
     openPanel();
     send('How many cards?');
@@ -952,10 +1110,16 @@ describe('RulesChat when the assistant can\'t answer', () => {
   });
 
   it('counts a stream cut off before any of the answer came as no network', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => ({
-      ok: true,
-      body: { getReader: () => ({ read: () => Promise.reject(new TypeError('network error')) }) },
-    }) as unknown as Response));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          ({
+            ok: true,
+            body: { getReader: () => ({ read: () => Promise.reject(new TypeError('network error')) }) },
+          }) as unknown as Response,
+      ),
+    );
     setup();
     openPanel();
     send('How many cards?');
@@ -968,16 +1132,23 @@ describe('RulesChat when the assistant can\'t answer', () => {
   it('counts one cut off partway through the answer as a broken answer', async () => {
     const encoder = new TextEncoder();
     let calls = 0;
-    vi.stubGlobal('fetch', vi.fn(async () => ({
-      ok: true,
-      body: {
-        getReader: () => ({
-          read: () => (calls++ === 0
-            ? Promise.resolve({ done: false, value: encoder.encode('Seven') })
-            : Promise.reject(new TypeError('network error'))),
-        }),
-      },
-    }) as unknown as Response));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          ({
+            ok: true,
+            body: {
+              getReader: () => ({
+                read: () =>
+                  calls++ === 0
+                    ? Promise.resolve({ done: false, value: encoder.encode('Seven') })
+                    : Promise.reject(new TypeError('network error')),
+              }),
+            },
+          }) as unknown as Response,
+      ),
+    );
     setup();
     openPanel();
     send('How many cards?');
@@ -988,9 +1159,15 @@ describe('RulesChat when the assistant can\'t answer', () => {
 
   it('puts any failure of the request down to the network once the browser says it is offline', async () => {
     let fail = () => {};
-    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>((_, reject) => {
-      fail = () => reject(new Error('net::ERR_INTERNET_DISCONNECTED'));
-    })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        () =>
+          new Promise<Response>((_, reject) => {
+            fail = () => reject(new Error('net::ERR_INTERNET_DISCONNECTED'));
+          }),
+      ),
+    );
     setup();
     openPanel();
     send('How many cards?');
@@ -1003,8 +1180,11 @@ describe('RulesChat when the assistant can\'t answer', () => {
     expect(vi.mocked(Sentry.captureException)).not.toHaveBeenCalled();
   });
 
-  it('turns off an error\'s Retry while offline, and says why', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 500 }) as Response));
+  it("turns off an error's Retry while offline, and says why", async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: false, status: 500 }) as Response),
+    );
     setup();
     openPanel();
     send('How many cards?');
@@ -1020,7 +1200,7 @@ describe('RulesChat when the assistant can\'t answer', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Sorry, something went wrong.');
   });
 
-  it('doesn\'t point to the rulebook when it can\'t be shown either', () => {
+  it("doesn't point to the rulebook when it can't be shown either", () => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
     withStarters({ rulebookFailed: true });
     expect(statusRegion()).toHaveTextContent(new RegExp(`^${OFFLINE}$`));

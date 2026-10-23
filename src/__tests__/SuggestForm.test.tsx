@@ -20,14 +20,21 @@ describe('SuggestForm', () => {
 
   it('marks each placeholder as an example, not a typed value', () => {
     render(<SuggestForm />);
-    for (const field of [screen.getByLabelText('Game'), screen.getByLabelText('Your name'), screen.getByLabelText(/Why\?/)]) {
+    for (const field of [
+      screen.getByLabelText('Game'),
+      screen.getByLabelText('Your name'),
+      screen.getByLabelText(/Why\?/),
+    ]) {
       expect(field.getAttribute('placeholder')).toMatch(/^e\.g\. \S/);
     }
   });
 
   it('gives an example game that is on neither the collection nor the wishlist', () => {
     render(<SuggestForm />);
-    const example = screen.getByLabelText('Game').getAttribute('placeholder')!.replace(/^e\.g\. /, '');
+    const example = screen
+      .getByLabelText('Game')
+      .getAttribute('placeholder')!
+      .replace(/^e\.g\. /, '');
     expect(alreadyListed(example)).toBeNull();
   });
 
@@ -50,11 +57,16 @@ describe('SuggestForm', () => {
     render(<SuggestForm />);
     fill();
     fireEvent.click(screen.getByRole('button', { name: 'Send suggestion' }));
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent("Thanks! Root is waiting for Jess's approval."));
-    expect(fetchSpy).toHaveBeenCalledWith('/api/suggestions', expect.objectContaining({
-      method: 'POST',
-      body: JSON.stringify({ game: 'Root', name: 'Alex', note: 'Mean fun' }),
-    }));
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent("Thanks! Root is waiting for Jess's approval."),
+    );
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/suggestions',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ game: 'Root', name: 'Alex', note: 'Mean fun' }),
+      }),
+    );
     expect(localStorage.getItem('gameroom:name')).toBe('Alex');
     expect(screen.getByLabelText('Game')).toHaveValue('');
   });
@@ -100,7 +112,11 @@ describe('SuggestForm', () => {
 
   it('disables the button while sending', async () => {
     let resolve: (r: Response) => void = () => {};
-    vi.spyOn(globalThis, 'fetch').mockReturnValue(new Promise<Response>((r) => { resolve = r; }));
+    vi.spyOn(globalThis, 'fetch').mockReturnValue(
+      new Promise<Response>((r) => {
+        resolve = r;
+      }),
+    );
     render(<SuggestForm />);
     fill();
     fireEvent.click(screen.getByRole('button', { name: 'Send suggestion' }));

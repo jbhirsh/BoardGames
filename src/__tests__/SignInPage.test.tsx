@@ -14,13 +14,23 @@ function renderPage(over: Partial<Auth> = {}) {
     logout: vi.fn(async () => {}),
     ...over,
   };
-  render(<MemoryRouter><AuthContext.Provider value={auth}><SignInPage /></AuthContext.Provider></MemoryRouter>);
+  render(
+    <MemoryRouter>
+      <AuthContext.Provider value={auth}>
+        <SignInPage />
+      </AuthContext.Provider>
+    </MemoryRouter>,
+  );
   return auth;
 }
 
 describe('SignInPage', () => {
   it('is signed out and unavailable outside the provider', async () => {
-    render(<MemoryRouter><SignInPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <SignInPage />
+      </MemoryRouter>,
+    );
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'a@b.c' } });
     fireEvent.submit(screen.getByRole('form', { name: 'Owner sign-in' }));
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Sign-in is not available here'));
@@ -50,13 +60,20 @@ describe('SignInPage', () => {
     expect(screen.getByRole('link', { name: /Back to The Game Room/ })).toHaveAttribute('href', '/');
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: '  jess@example.com ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Email me a sign-in link' }));
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent("If that's the owner's address, a link is on its way."));
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent("If that's the owner's address, a link is on its way."),
+    );
     expect(auth.requestLink).toHaveBeenCalledWith('jess@example.com');
   });
 
   it('shows the reason when the request fails and ignores a second submit while sending', async () => {
     let resolve: (v: { ok: false; error: string }) => void = () => {};
-    const requestLink = vi.fn(() => new Promise<{ ok: false; error: string }>((r) => { resolve = r; }));
+    const requestLink = vi.fn(
+      () =>
+        new Promise<{ ok: false; error: string }>((r) => {
+          resolve = r;
+        }),
+    );
     renderPage({ requestLink });
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'a@b.c' } });
     const form = screen.getByRole('form', { name: 'Owner sign-in' });

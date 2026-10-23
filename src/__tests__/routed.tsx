@@ -10,7 +10,10 @@ import { createMemoryRouter, RouterProvider, type InitialEntry } from 'react-rou
  */
 export function renderRouted(element: ReactElement, entries: InitialEntry[] = ['/'], path = '/') {
   const router = createMemoryRouter(
-    [{ path, element }, { path: '*', element: null }],
+    [
+      { path, element },
+      { path: '*', element: null },
+    ],
     { initialEntries: entries, initialIndex: entries.length - 1 },
   );
   render(<RouterProvider router={router} />);

@@ -9,14 +9,14 @@ const background = (page: Page) => page.evaluate(() => getComputedStyle(document
 const LIGHT = 'rgb(251, 251, 253)';
 const DARK = 'rgb(17, 17, 19)';
 
-test('follows the system\'s dark setting with nothing picked', async ({ page }) => {
+test("follows the system's dark setting with nothing picked", async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
   await expect(page.getByRole('radio', { name: 'Match system' })).toHaveAttribute('aria-checked', 'true');
   await expect.poll(() => background(page)).toBe(DARK);
 });
 
-test('a picked theme wins over the system\'s and is there from the first paint next time', async ({ page }) => {
+test("a picked theme wins over the system's and is there from the first paint next time", async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
   await page.getByRole('radio', { name: 'Light' }).click();
@@ -45,7 +45,8 @@ for (const width of [390, 700, 1280]) {
       const { left, right, top, bottom } = range.getBoundingClientRect();
       return { left, right, top, bottom };
     });
-    const apart = toggle.y + toggle.height <= title.top || toggle.x >= title.right || toggle.x + toggle.width <= title.left;
+    const apart =
+      toggle.y + toggle.height <= title.top || toggle.x >= title.right || toggle.x + toggle.width <= title.left;
     expect(apart, JSON.stringify({ toggle, title })).toBe(true);
   });
 }
@@ -58,7 +59,11 @@ for (const scheme of ['light', 'dark'] as const) {
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
       await page.addScriptTag({ path: axePath });
       const failures = await page.evaluate(async () => {
-        const axe = (window as unknown as { axe: { run: (ctx: Document, opts: object) => Promise<{ violations: { nodes: { target: string[] }[] }[] }> } }).axe;
+        const axe = (
+          window as unknown as {
+            axe: { run: (ctx: Document, opts: object) => Promise<{ violations: { nodes: { target: string[] }[] }[] }> };
+          }
+        ).axe;
         const result = await axe.run(document, { runOnly: ['color-contrast'] });
         return result.violations.flatMap((v) => v.nodes.map((n) => n.target.join(' ')));
       });

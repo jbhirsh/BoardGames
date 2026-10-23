@@ -63,8 +63,7 @@ export function parseEnvFile(content: string): Record<string, string> {
     let value = unprefixed.slice(eq + 1).trim();
     if (
       value.length >= 2 &&
-      ((value.startsWith('"') && value.endsWith('"')) ||
-        (value.startsWith("'") && value.endsWith("'")))
+      ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'")))
     ) {
       value = value.slice(1, -1);
     }

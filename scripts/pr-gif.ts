@@ -38,8 +38,20 @@ import { join } from 'node:path';
 import type { BrowserContext, Locator, Page } from '@playwright/test';
 import { OVERLAY_SCRIPT } from './pr-gif-overlay.ts';
 import {
-  HOLDS, concatList, cropFilter, pngSize, restsOutside, scaledHeight, thinner, timeline,
-  type Clip, type Holds, type Move, type Rest, type Shot, type Tick,
+  HOLDS,
+  concatList,
+  cropFilter,
+  pngSize,
+  restsOutside,
+  scaledHeight,
+  thinner,
+  timeline,
+  type Clip,
+  type Holds,
+  type Move,
+  type Rest,
+  type Shot,
+  type Tick,
 } from './pr-gif-timing.ts';
 
 export type { Clip } from './pr-gif-timing.ts';
@@ -74,7 +86,7 @@ export async function glide(page: Page, target: Target, ms = 500): Promise<{ x: 
   // Placed by the clock, not by step: each move waits on a browser that's
   // busy recording, so a set number of steps would take far longer than ms.
   const start = Date.now();
-  for (let t = 0; t < 1; ) {
+  for (let t = 0; t < 1;) {
     t = from === to ? 1 : Math.min(1, (Date.now() - start) / ms);
     const ease = t * t * (3 - 2 * t);
     await page.mouse.move(from.x + (to.x - from.x) * ease, from.y + (to.y - from.y) * ease);
@@ -111,7 +123,7 @@ export async function drag(page: Page, from: Target, to: Target, ms = 800): Prom
  */
 export async function scroll(page: Page, dy: number, ms = 700): Promise<void> {
   const start = Date.now();
-  for (let done = 0, t = 0; t < 1; ) {
+  for (let done = 0, t = 0; t < 1;) {
     t = Math.min(1, (Date.now() - start) / ms);
     const to = Math.round(dy * t * t * (3 - 2 * t));
     if (to !== done) await page.mouse.wheel(0, to - done);
@@ -141,7 +153,12 @@ export async function waitForPictures(page: Page, timeout = 20_000): Promise<voi
 }
 
 /** What a recording took: the frames Chrome sent, the GIF frames they made, and where the pointer rested out of shot. */
-export interface Recording { sent: number; stills: number; seconds: number; rests: Rest[] }
+export interface Recording {
+  sent: number;
+  stills: number;
+  seconds: number;
+  rests: Rest[];
+}
 
 /**
  * Records `clip` (CSS pixels from the viewport's top left) into `dir` until
@@ -204,7 +221,9 @@ export async function recordFrames(
     const moves = (await page.evaluate('window.__prGifMoves || []')) as Move[];
     const rests = restsOutside(moves, clip, start, end);
     for (const r of rests) {
-      console.warn(`pr-gif: the pointer rested out of shot at (${r.x}, ${r.y}) for ${r.ms} ms, ${r.at} ms in; keep it inside the clip`);
+      console.warn(
+        `pr-gif: the pointer rested out of shot at (${r.x}, ${r.y}) for ${r.ms} ms, ${r.at} ms in; keep it inside the clip`,
+      );
     }
     return { sent, stills: stills.length, seconds: (end - start) / 1000, rests };
   };
@@ -213,7 +232,8 @@ export async function recordFrames(
 // One palette for the whole clip, and only the changed rectangle rewritten
 // per frame, keeps a few seconds of UI to a few hundred KB. The frames keep
 // their own durations (vfr), from the concat list.
-const PALETTE = 'split[a][b];[a]palettegen=max_colors=96:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle';
+const PALETTE =
+  'split[a][b];[a]palettegen=max_colors=96:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle';
 
 const crop = (dir: string) => readFileSync(join(dir, 'crop.txt'), 'utf8');
 

@@ -5,7 +5,7 @@ import type { WishlistItem } from '../data/types';
 import { FAVOURITES, STILL_COUNT, gameAnchor, ownCovers, wantCovers, wishAnchor } from '../utils/heroCovers';
 
 describe('ownCovers', () => {
-  it('holds every game once, the favourites first in their order, then the collection\'s', () => {
+  it("holds every game once, the favourites first in their order, then the collection's", () => {
     const covers = ownCovers(GAMES);
     expect(covers).toHaveLength(GAMES.length);
     expect(covers.slice(0, FAVOURITES.length).map((c) => c.id)).toEqual(FAVOURITES);
@@ -13,7 +13,7 @@ describe('ownCovers', () => {
     expect(covers.slice(FAVOURITES.length).map((c) => c.id)).toEqual(rest);
   });
 
-  it('gives each cover its game\'s name, box art and card anchor', () => {
+  it("gives each cover its game's name, box art and card anchor", () => {
     const catan = GAMES.find((g) => g.slug === 'catan')!;
     expect(ownCovers(GAMES)[0]).toEqual({ id: 'catan', name: catan.name, img: catan.img, anchor: 'game-catan' });
   });
@@ -26,7 +26,7 @@ describe('ownCovers', () => {
 describe('wantCovers', () => {
   const entry = (id: string, img?: string): WishlistItem => ({ ...WISHLIST[0], id, name: id.toUpperCase(), img });
 
-  it('takes the entries with bundled art, in the wishlist\'s order', () => {
+  it("takes the entries with bundled art, in the wishlist's order", () => {
     const covers = wantCovers([entry('a', '/images/wishlist/a.jpg'), entry('b'), entry('c', '/images/wishlist/c.png')]);
     expect(covers).toEqual([
       { id: 'a', name: 'A', img: '/images/wishlist/a.jpg', anchor: 'wish-a' },
@@ -44,7 +44,7 @@ describe('wantCovers', () => {
 });
 
 describe('anchors', () => {
-  it('names a game\'s card and a wishlist entry\'s apart', () => {
+  it("names a game's card and a wishlist entry's apart", () => {
     expect(gameAnchor('azul')).toBe('game-azul');
     expect(wishAnchor('azul')).toBe('wish-azul');
   });

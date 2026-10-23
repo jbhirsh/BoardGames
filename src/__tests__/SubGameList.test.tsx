@@ -30,7 +30,7 @@ const rows = () => screen.getAllByRole('listitem');
 
 // A deck's games carry their own difficulty; an add-on doesn't.
 describe('difficulty in the list', () => {
-  it('shows each game\'s own and nothing for an add-on', () => {
+  it("shows each game's own and nothing for an add-on", () => {
     const deck = { ...deckGame, subgames: [{ ...deckGame.subgames![0], weight: 1.1 }, deckGame.subgames![1]] };
     renderList(deck);
     expect(within(rows()[0]).getByText(/Light · 1\.1/)).toHaveTextContent('Difficulty: Light · 1.1');
@@ -45,7 +45,7 @@ afterEach(() => {
 });
 
 describe('SubGameList', () => {
-  it('shows each game\'s name, players, time and line, in order', () => {
+  it("shows each game's name, players, time and line, in order", () => {
     renderList(deckGame);
     expect(rows().map((r) => within(r).getByText(/Speed|President/).textContent)).toEqual(['Speed', 'President']);
     const speed = rows()[0];
@@ -54,14 +54,18 @@ describe('SubGameList', () => {
     expect(speed).toHaveTextContent('Race to empty your hand.');
   });
 
-  it('links each game to its tab on the parent\'s rules page', () => {
+  it("links each game to its tab on the parent's rules page", () => {
     renderList(deckGame);
     expect(screen.getByRole('link', { name: 'Speed rules' })).toHaveAttribute('href', '/rules/deck/speed');
     expect(screen.getByRole('link', { name: 'President rules' })).toHaveAttribute('href', '/rules/deck/president');
   });
 
-  it('marks a game\'s rules link as leaving the list, so the page\'s Back returns to it', () => {
-    const router = renderRouted(<FilterProvider><SubGameList game={deckGame as WithSubs} /></FilterProvider>);
+  it("marks a game's rules link as leaving the list, so the page's Back returns to it", () => {
+    const router = renderRouted(
+      <FilterProvider>
+        <SubGameList game={deckGame as WithSubs} />
+      </FilterProvider>,
+    );
     fireEvent.click(screen.getByRole('link', { name: 'Speed rules' }));
     expect(router.state.location).toMatchObject({ pathname: '/rules/deck/speed', state: { fromList: true } });
   });
@@ -72,19 +76,22 @@ describe('SubGameList', () => {
     expect(screen.getByText('expansion')).toHaveClass('kind-chip', 'kind-expansion');
   });
 
-  it('shows a game\'s own award wins, and no badge without any', () => {
-    const game = { ...addonGame, subgames: [{ ...addonGame.subgames![0], awards: [{ name: 'International Gamers Award', year: 2005 }] }] };
+  it("shows a game's own award wins, and no badge without any", () => {
+    const game = {
+      ...addonGame,
+      subgames: [{ ...addonGame.subgames![0], awards: [{ name: 'International Gamers Award', year: 2005 }] }],
+    };
     renderList(game);
     fireEvent.click(screen.getByRole('button', { name: 'Big Box: 1 award, show which' }));
     expect(screen.getByText(/International Gamers Award/)).toBeInTheDocument();
   });
 
-  it('marks no kind on a deck\'s card games', () => {
+  it("marks no kind on a deck's card games", () => {
     renderList(deckGame);
     expect(document.querySelector('.kind-chip')).toBeNull();
   });
 
-  it('opens the game\'s video in a new tab without toggling the row around it', () => {
+  it("opens the game's video in a new tab without toggling the row around it", () => {
     const { onParentClick } = renderList(deckGame);
     const video = screen.getByRole('link', { name: 'Watch Speed tutorial on YouTube' });
     expect(video).toHaveAttribute('href', expect.stringContaining('how%20to%20play%20speed'));
@@ -120,11 +127,13 @@ describe('SubGameList', () => {
   describe('more about a game', () => {
     const fuller = {
       ...addonGame,
-      subgames: [{
-        ...addonGame.subgames![0],
-        desc: 'Every piece doubled, and a sea to sail.',
-        detail: [{ heading: 'What It Adds', body: 'Ships and a harbour.' }],
-      }],
+      subgames: [
+        {
+          ...addonGame.subgames![0],
+          desc: 'Every piece doubled, and a sea to sail.',
+          detail: [{ heading: 'What It Adds', body: 'Ships and a harbour.' }],
+        },
+      ],
     };
 
     it('opens in place to the full description and its sections, and closes again', () => {

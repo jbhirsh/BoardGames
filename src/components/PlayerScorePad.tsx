@@ -11,12 +11,18 @@ function scrollIntoStrip(el: HTMLDivElement | null) {
 }
 
 /** What every pad keeps for a player; each pad adds its own fields. */
-export interface PadPlayer { id: number; name: string }
+export interface PadPlayer {
+  id: number;
+  name: string;
+}
 
 /** A player's own fields: everything but the id and name the pad gives them. */
 export type Fields<P extends PadPlayer> = Omit<P, keyof PadPlayer>;
 
-interface SavedGame<P> { players: P[]; active: number }
+interface SavedGame<P> {
+  players: P[];
+  active: number;
+}
 
 function newPlayer<P extends PadPlayer>(blank: () => Fields<P>, name: string): P {
   return { id: nextPlayerId++, name, ...blank() } as P;
@@ -28,7 +34,11 @@ function newGame<P extends PadPlayer>(blank: () => Fields<P>): SavedGame<P> {
 
 /** The saved game, if it's one this pad could have written; a fresh one otherwise. */
 function loadGame<P extends PadPlayer>(
-  key: string, min: number, max: number, blank: () => Fields<P>, valid: (p: Record<string, unknown>) => boolean,
+  key: string,
+  min: number,
+  max: number,
+  blank: () => Fields<P>,
+  valid: (p: Record<string, unknown>) => boolean,
 ): SavedGame<P> {
   const isPlayer = (p: unknown): p is P => {
     if (typeof p !== 'object' || p === null) return false;
@@ -39,9 +49,14 @@ function loadGame<P extends PadPlayer>(
     const saved: unknown = JSON.parse(safeStorage.get(key) ?? 'null');
     if (typeof saved === 'object' && saved !== null) {
       const { players, active } = saved as Record<string, unknown>;
-      if (Array.isArray(players) && players.length >= min && players.length <= max && players.every(isPlayer)
-        && new Set(players.map(p => p.id)).size === players.length) {
-        nextPlayerId = Math.max(nextPlayerId, ...players.map(p => p.id + 1));
+      if (
+        Array.isArray(players) &&
+        players.length >= min &&
+        players.length <= max &&
+        players.every(isPlayer) &&
+        new Set(players.map((p) => p.id)).size === players.length
+      ) {
+        nextPlayerId = Math.max(nextPlayerId, ...players.map((p) => p.id + 1));
         const idx = typeof active === 'number' && active >= 0 && active < players.length ? active : 0;
         return { players, active: idx };
       }
@@ -88,7 +103,18 @@ interface Props<P extends PadPlayer> {
  * written.
  */
 export default function PlayerScorePad<P extends PadPlayer>({
-  storageKey, minPlayers, maxPlayers, blank, valid, hasScores, form, total, unit, results, setup, onNewGame,
+  storageKey,
+  minPlayers,
+  maxPlayers,
+  blank,
+  valid,
+  hasScores,
+  form,
+  total,
+  unit,
+  results,
+  setup,
+  onNewGame,
 }: Props<P>) {
   const [initial] = useState(() => loadGame(storageKey, minPlayers, maxPlayers, blank, valid));
   const [players, setPlayers] = useState<P[]>(initial.players);
@@ -114,16 +140,16 @@ export default function PlayerScorePad<P extends PadPlayer>({
   const current = players[activePlayer];
 
   function update(patch: Partial<Fields<P>>) {
-    setPlayers(prev => prev.map((p, i) => i === activePlayer ? { ...p, ...patch } : p));
+    setPlayers((prev) => prev.map((p, i) => (i === activePlayer ? { ...p, ...patch } : p)));
   }
 
   function updateName(name: string) {
-    setPlayers(prev => prev.map((p, i) => i === activePlayer ? { ...p, name } : p));
+    setPlayers((prev) => prev.map((p, i) => (i === activePlayer ? { ...p, name } : p)));
   }
 
   function addPlayer() {
     if (players.length >= maxPlayers) return;
-    setPlayers(prev => [...prev, newPlayer(blank, `Player ${prev.length + 1}`)]);
+    setPlayers((prev) => [...prev, newPlayer(blank, `Player ${prev.length + 1}`)]);
     setActivePlayer(players.length);
   }
 
@@ -131,8 +157,8 @@ export default function PlayerScorePad<P extends PadPlayer>({
     if (players.length <= minPlayers) return;
     const p = players[idx];
     if (hasScores(p) && !window.confirm(`Remove ${p.name} and their scores?`)) return;
-    setPlayers(prev => prev.filter((_, i) => i !== idx));
-    setActivePlayer(a => a >= idx && a > 0 ? a - 1 : a);
+    setPlayers((prev) => prev.filter((_, i) => i !== idx));
+    setActivePlayer((a) => (a >= idx && a > 0 ? a - 1 : a));
   }
 
   function startNewGame() {
@@ -168,7 +194,10 @@ export default function PlayerScorePad<P extends PadPlayer>({
               <button
                 type="button"
                 className={`sc-player-tab${i === activePlayer && !showSummary ? ' active' : ''}`}
-                onClick={() => { setActivePlayer(i); setShowSummary(false); }}
+                onClick={() => {
+                  setActivePlayer(i);
+                  setShowSummary(false);
+                }}
               >
                 {p.name}
               </button>
@@ -186,7 +215,9 @@ export default function PlayerScorePad<P extends PadPlayer>({
           ))}
         </div>
         {players.length < maxPlayers && (
-          <button type="button" className="sc-add-player" aria-label="Add player" onClick={addPlayer}>+</button>
+          <button type="button" className="sc-add-player" aria-label="Add player" onClick={addPlayer}>
+            +
+          </button>
         )}
         <button
           type="button"
@@ -205,7 +236,9 @@ export default function PlayerScorePad<P extends PadPlayer>({
         <div className="sc-panel" key={current.id} ref={panelRef}>
           <div className="sc-form">
             <div className="sc-name-row">
-              <label className="sc-label" htmlFor="sc-player-name">Player Name</label>
+              <label className="sc-label" htmlFor="sc-player-name">
+                Player Name
+              </label>
               <input
                 ref={nameRef}
                 id="sc-player-name"
@@ -220,7 +253,9 @@ export default function PlayerScorePad<P extends PadPlayer>({
 
             <div className="sc-total">
               <span>Total</span>
-              <span className="sc-total-num">{total(current)} {unit}</span>
+              <span className="sc-total-num">
+                {total(current)} {unit}
+              </span>
             </div>
 
             <button type="button" className="sc-next" onClick={handOn}>
@@ -231,14 +266,20 @@ export default function PlayerScorePad<P extends PadPlayer>({
       )}
 
       <div className="sc-actions">
-        <button type="button" className="sc-new-game" onClick={startNewGame}>New game</button>
+        <button type="button" className="sc-new-game" onClick={startNewGame}>
+          New game
+        </button>
       </div>
     </>
   );
 }
 
 /** A row of the Results sheet: its heading cell's contents, then each player's cell. */
-export interface SheetRow { key: string; label: ReactNode; cells: ReactNode[] }
+export interface SheetRow {
+  key: string;
+  label: ReactNode;
+  cells: ReactNode[];
+}
 
 interface SheetProps {
   players: readonly PadPlayer[];
@@ -263,7 +304,9 @@ export function ScoreSheet({ players, rows, totals, places, won }: SheetProps) {
         <caption className="sr-only">Scores by category</caption>
         <thead>
           <tr>
-            <th scope="col"><span className="sr-only">Category</span></th>
+            <th scope="col">
+              <span className="sr-only">Category</span>
+            </th>
             {players.map((p, i) => (
               <th key={p.id} scope="col" className={win(i)}>
                 {won[i] && <ScoreIcon kind="winner" />}
@@ -273,11 +316,13 @@ export function ScoreSheet({ players, rows, totals, places, won }: SheetProps) {
           </tr>
         </thead>
         <tbody>
-          {rows.map(row => (
+          {rows.map((row) => (
             <tr key={row.key}>
               <th scope="row">{row.label}</th>
               {players.map((p, i) => (
-                <td key={p.id} className={win(i)}>{row.cells[i]}</td>
+                <td key={p.id} className={win(i)}>
+                  {row.cells[i]}
+                </td>
               ))}
             </tr>
           ))}
@@ -286,13 +331,17 @@ export function ScoreSheet({ players, rows, totals, places, won }: SheetProps) {
           <tr className="sc-sheet-total">
             <th scope="row">Total</th>
             {players.map((p, i) => (
-              <td key={p.id} className={win(i)}>{totals[i]}</td>
+              <td key={p.id} className={win(i)}>
+                {totals[i]}
+              </td>
             ))}
           </tr>
           <tr className="sc-sheet-place">
             <th scope="row">Place</th>
             {players.map((p, i) => (
-              <td key={p.id} className={win(i)}>{places[i]}</td>
+              <td key={p.id} className={win(i)}>
+                {places[i]}
+              </td>
             ))}
           </tr>
         </tfoot>

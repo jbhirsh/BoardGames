@@ -29,7 +29,9 @@ export default function DurationPill({ cat, className, label, budget, onClick }:
       tabIndex={interactive ? 0 : undefined}
       // The pill filters to the budget its game fits; with the game's own
       // time on it, say so.
-      aria-label={interactive && label && budget ? `${label}: show games ${DUR_LABELS[budget].toLowerCase()}` : undefined}
+      aria-label={
+        interactive && label && budget ? `${label}: show games ${DUR_LABELS[budget].toLowerCase()}` : undefined
+      }
       onKeyDown={
         interactive
           ? (e) => {

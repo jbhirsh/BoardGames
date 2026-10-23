@@ -10,7 +10,7 @@ function renderViewToggle() {
       <FilterProvider>
         <ViewToggle />
       </FilterProvider>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 
@@ -50,4 +50,3 @@ describe('ViewToggle', () => {
     expect(screen.getByLabelText('List view')).toHaveAttribute('aria-pressed', 'false');
   });
 });
-

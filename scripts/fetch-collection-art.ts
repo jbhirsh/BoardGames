@@ -48,13 +48,13 @@ type Entry = Cover | { keep: string };
 
 const COVERS: Record<string, Entry> = {
   '7-wonders': { image: 7416519, box: [0.036, 0.032, 0.928, 0.936] }, // second edition, inside its printed frame
-  'analyze-me': { keep: 'BGG only has the 2011 tin; this edition\'s box front, flattened from a product photo' },
+  'analyze-me': { keep: "BGG only has the 2011 tin; this edition's box front, flattened from a product photo" },
   'arkham-horror-remastered': { image: 9861848 },
   azul: { image: 6973671 },
   bananagrams: { image: 480795, box: [0.515, 0.13, 0.475, 0.85], focus: 0 }, // no box: the front of the pouch's tag
   'card-deck': { image: 1128756, box: [0.08, 0.025, 0.84, 0.93], focus: 0 }, // a generic deck: a Bicycle tuck box's front
   'cards-against-humanity': { image: 2909692, focus: 0 },
-  'caroling-charades': { keep: 'not on BoardGameGeek; the publisher\'s flat cover art' },
+  'caroling-charades': { keep: "not on BoardGameGeek; the publisher's flat cover art" },
   catan: { image: 9156909 },
   codenames: { image: 8907965, focus: 0.1 },
   cranium: { keep: 'BGG lacks the 25th anniversary edition; its box front, flattened from a product photo' },
@@ -62,7 +62,7 @@ const COVERS: Record<string, Entry> = {
   'dungeon-crawler-carl-rpg-starter-set': { image: 9629120, box: [0, 0, 0.775, 1], fit: true, pad: '#ffffff' }, // an RPG, so no BGG game id: RPGGeek's box shot, cut to its front, kept whole
   'dungeon-crawler-carl-unstoppable': { image: 9745791, focus: 0 }, // a tall cover: keep the series title along the top
   'exploding-kittens': { image: 2691976, fit: true }, // a wide box
-  'far-out-questions': { keep: 'not on BoardGameGeek; the publisher\'s flat cover art' },
+  'far-out-questions': { keep: "not on BoardGameGeek; the publisher's flat cover art" },
   'for-the-girls': { keep: 'BGG only has the German edition; the English box front, flattened from a product photo' },
   'hogwarts-battle': { image: 3518231 },
   'love-letter': { image: 4766499, focus: 0.85 }, // sold in a clamshell: its front, around the title
@@ -78,7 +78,7 @@ const COVERS: Record<string, Entry> = {
   'these-cards-will-get-you-drunk': { keep: 'not on BoardGameGeek; its box front, flattened from a product photo' },
   'throw-throw-burrito': { image: 7073068, fit: true, pad: '#ebe8d4' }, // its cream ground, not its shaded rim
   'ticket-to-ride': { image: 8937637 },
-  'truth-or-dare-tower': { keep: 'not on BoardGameGeek; the publisher\'s flat cover art' },
+  'truth-or-dare-tower': { keep: "not on BoardGameGeek; the publisher's flat cover art" },
   uno: { image: 8204165, focus: 0 },
 };
 
@@ -118,11 +118,15 @@ const pause = () => new Promise((resolve) => setTimeout(resolve, 1200));
 class Stop extends Error {}
 const get = async (url: string) => {
   // A rate limit, a challenge page or a stall ends the run; what was written stays.
-  const r = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(30_000) }).catch((e: unknown) => {
-    if ((e as Error).name === 'TimeoutError') throw new Stop(`BoardGameGeek stopped answering for ${url}; stopping, re-run later for the rest.`);
-    throw e;
-  });
-  if (r.status === 429 || r.status === 403) throw new Stop(`BoardGameGeek answered ${r.status} for ${url}; stopping, re-run later for the rest.`);
+  const r = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(30_000) }).catch(
+    (e: unknown) => {
+      if ((e as Error).name === 'TimeoutError')
+        throw new Stop(`BoardGameGeek stopped answering for ${url}; stopping, re-run later for the rest.`);
+      throw e;
+    },
+  );
+  if (r.status === 429 || r.status === 403)
+    throw new Stop(`BoardGameGeek answered ${r.status} for ${url}; stopping, re-run later for the rest.`);
   await pause();
   return r;
 };
@@ -149,7 +153,9 @@ try {
         console.warn(`${game.name}: item ${game.bgg} has no main image (${r.status}); keeping ${game.img}`);
         continue;
       }
-      console.warn(`${game.name}: not in COVERS, using its main image ${image}; check it is a flat front cover and pin it`);
+      console.warn(
+        `${game.name}: not in COVERS, using its main image ${image}; check it is a flat front cover and pin it`,
+      );
       cover = { image };
     }
     const info = await get(IMAGE_URL(cover.image));
@@ -174,38 +180,98 @@ try {
 
     // Cut the box, then the largest square inside it at the focus, or fit
     // the whole box in the square.
-    const [w, h] = execFileSync(magick, [`${raw}[0]`, '-auto-orient', '-format', '%w %h', 'info:'], { encoding: 'utf8' })
-      .split(' ').map(Number);
+    const [w, h] = execFileSync(magick, [`${raw}[0]`, '-auto-orient', '-format', '%w %h', 'info:'], {
+      encoding: 'utf8',
+    })
+      .split(' ')
+      .map(Number);
     const [bl, bt, bw, bh] = cover.box ?? [0, 0, 1, 1];
     const box = { x: Math.round(bl * w), y: Math.round(bt * h), w: Math.round(bw * w), h: Math.round(bh * h) };
     const out = `public${game.img}`;
-    const load = [`${raw}[0]`, '-auto-orient', '-colorspace', 'sRGB', '-crop', `${box.w}x${box.h}+${box.x}+${box.y}`, '+repage'];
+    const load = [
+      `${raw}[0]`,
+      '-auto-orient',
+      '-colorspace',
+      'sRGB',
+      '-crop',
+      `${box.w}x${box.h}+${box.x}+${box.y}`,
+      '+repage',
+    ];
     const save = ['-strip', '-quality', QUALITY, '-define', 'webp:method=6', out];
     if (cover.fit) {
       const trimmed = join(work, `${game.slug}.png`);
       // A white border first makes the trim take off white margins only.
-      execFileSync(magick, [...load, '-bordercolor', 'white', '-border', '1', '-fuzz', '4%', '-trim', '+repage', trimmed]);
-      const [tw, th] = execFileSync(magick, [trimmed, '-format', '%w %h', 'info:'], { encoding: 'utf8' }).split(' ').map(Number);
+      execFileSync(magick, [
+        ...load,
+        '-bordercolor',
+        'white',
+        '-border',
+        '1',
+        '-fuzz',
+        '4%',
+        '-trim',
+        '+repage',
+        trimmed,
+      ]);
+      const [tw, th] = execFileSync(magick, [trimmed, '-format', '%w %h', 'info:'], { encoding: 'utf8' })
+        .split(' ')
+        .map(Number);
       const wide = tw >= th;
       // Each band takes the mean colour of a 3 px strip just inside its
       // edge, clear of a scan's outline or shadow.
       const inset = Math.round((wide ? th : tw) * 0.02);
-      const edge = (gravity: string) => cover.pad ?? execFileSync(magick, [
-        trimmed, '-gravity', gravity, '-crop', wide ? `${tw}x3+0+${inset}` : `3x${th}+${inset}+0`, '+repage',
-        '-scale', '1x1!', '-format', '%[pixel:p{0,0}]', 'info:',
-      ], { encoding: 'utf8' });
+      const edge = (gravity: string) =>
+        cover.pad ??
+        execFileSync(
+          magick,
+          [
+            trimmed,
+            '-gravity',
+            gravity,
+            '-crop',
+            wide ? `${tw}x3+0+${inset}` : `3x${th}+${inset}+0`,
+            '+repage',
+            '-scale',
+            '1x1!',
+            '-format',
+            '%[pixel:p{0,0}]',
+            'info:',
+          ],
+          { encoding: 'utf8' },
+        );
       const half = wide ? `${SIZE}x${SIZE / 2}` : `${SIZE / 2}x${SIZE}`;
       execFileSync(magick, [
-        '-size', half, `xc:${edge(wide ? 'north' : 'west')}`,
-        '-size', half, `xc:${edge(wide ? 'south' : 'east')}`, wide ? '-append' : '+append',
-        '(', trimmed, '-resize', `${SIZE}x${SIZE}`, ')', '-gravity', 'center', '-composite', ...save,
+        '-size',
+        half,
+        `xc:${edge(wide ? 'north' : 'west')}`,
+        '-size',
+        half,
+        `xc:${edge(wide ? 'south' : 'east')}`,
+        wide ? '-append' : '+append',
+        '(',
+        trimmed,
+        '-resize',
+        `${SIZE}x${SIZE}`,
+        ')',
+        '-gravity',
+        'center',
+        '-composite',
+        ...save,
       ]);
     } else {
       const side = Math.min(box.w, box.h);
       const focus = cover.focus ?? (box.h > box.w * 1.15 ? 0.2 : 0.5);
       const x = Math.round((box.w - side) * focus);
       const y = Math.round((box.h - side) * focus);
-      execFileSync(magick, [...load, '-crop', `${side}x${side}+${x}+${y}`, '+repage', '-resize', `${SIZE}x${SIZE}!`, ...save]);
+      execFileSync(magick, [
+        ...load,
+        '-crop',
+        `${side}x${side}+${x}+${y}`,
+        '+repage',
+        '-resize',
+        `${SIZE}x${SIZE}!`,
+        ...save,
+      ]);
     }
     written++;
     console.log(`${game.name}: image ${cover.image} (${w}x${h}) -> ${out}`);

@@ -6,7 +6,14 @@ import { useWishlistItems } from '../context/useWishlistItems';
 import { alreadyListed } from '../utils/alreadyListed';
 import { isValidDisplayName, NAME_HINT } from '../utils/displayName';
 import { lookupNotice, type LookupOutcome, type PreviewDetails } from '../utils/lookupNotice';
-import { addGame, decideSuggestion, fetchPending, previewGame, type ApprovalChoice, type PendingSuggestion } from '../client/adminApi';
+import {
+  addGame,
+  decideSuggestion,
+  fetchPending,
+  previewGame,
+  type ApprovalChoice,
+  type PendingSuggestion,
+} from '../client/adminApi';
 import AdminItemControls from './AdminItemControls';
 import Notice from './Notice';
 
@@ -27,7 +34,17 @@ type InTurn = <T>(task: () => Promise<T>) => Promise<T>;
  * didn't answer, goes without details, and the server looks the game up
  * itself. Previews aren't announced: they arrive for every row on load.
  */
-function QueueRow({ item, busy, onDecide, inTurn }: { item: PendingSuggestion; busy: boolean; onDecide: Decide; inTurn: InTurn }) {
+function QueueRow({
+  item,
+  busy,
+  onDecide,
+  inTurn,
+}: {
+  item: PendingSuggestion;
+  busy: boolean;
+  onDecide: Decide;
+  inTurn: InTurn;
+}) {
   const [game, setGame] = useState(item.game);
   const [looked, setLooked] = useState<Looked | null>(null);
   // The name a lookup is out for; the friend's from the start.
@@ -38,18 +55,21 @@ function QueueRow({ item, busy, onDecide, inTurn }: { item: PendingSuggestion; b
   // Sends a lookup (`queued`: once the rows before it have had theirs),
   // setting aside any still out or waiting, and keeps its answer unless a
   // newer one or unmounting has aborted it.
-  const fetchPreview = useCallback((name: string, queued = false) => {
-    inFlight.current?.abort();
-    const controller = new AbortController();
-    inFlight.current = controller;
-    const send = () => (controller.signal.aborted ? Promise.resolve(null) : previewGame(name, controller.signal));
-    void (queued ? inTurn(send) : send()).then((result) => {
-      if (!result || controller.signal.aborted) return;
-      setLookingFor(null);
-      if (result.ok) setLooked({ game: name, outcome: result.data.outcome, details: result.data.details });
-      else setError(result.error);
-    });
-  }, [inTurn]);
+  const fetchPreview = useCallback(
+    (name: string, queued = false) => {
+      inFlight.current?.abort();
+      const controller = new AbortController();
+      inFlight.current = controller;
+      const send = () => (controller.signal.aborted ? Promise.resolve(null) : previewGame(name, controller.signal));
+      void (queued ? inTurn(send) : send()).then((result) => {
+        if (!result || controller.signal.aborted) return;
+        setLookingFor(null);
+        if (result.ok) setLooked({ game: name, outcome: result.data.outcome, details: result.data.details });
+        else setError(result.error);
+      });
+    },
+    [inTurn],
+  );
 
   useEffect(() => {
     fetchPreview(item.game, true);
@@ -90,7 +110,13 @@ function QueueRow({ item, busy, onDecide, inTurn }: { item: PendingSuggestion; b
   return (
     <li className="admin-item admin-item--pending">
       <div className="admin-item-head">
-        <form className="admin-rename" onSubmit={(e) => { e.preventDefault(); lookUp(typed); }}>
+        <form
+          className="admin-rename"
+          onSubmit={(e) => {
+            e.preventDefault();
+            lookUp(typed);
+          }}
+        >
           <input
             className="suggest-input admin-rename-input"
             aria-label={`Game name for ${item.name}'s suggestion “${item.game}”`}
@@ -103,23 +129,51 @@ function QueueRow({ item, busy, onDecide, inTurn }: { item: PendingSuggestion; b
             minLength={GAME_MIN}
             maxLength={GAME_MAX}
           />
-          <button type="submit" className="admin-btn admin-btn--ghost" aria-label={`Look up the name for ${item.name}'s suggestion “${item.game}”`}>
+          <button
+            type="submit"
+            className="admin-btn admin-btn--ghost"
+            aria-label={`Look up the name for ${item.name}'s suggestion “${item.game}”`}
+          >
             Look up
           </button>
         </form>
         <div className="admin-actions">
-          <button type="button" className="admin-btn" aria-label={`Approve ${typed || item.game}`} disabled={busy} onClick={approve}>Approve</button>
-          <button type="button" className="admin-btn admin-btn--ghost" aria-label={`Deny ${typed || item.game}`} disabled={busy} onClick={() => onDecide(item, 'deny')}>Deny</button>
+          <button
+            type="button"
+            className="admin-btn"
+            aria-label={`Approve ${typed || item.game}`}
+            disabled={busy}
+            onClick={approve}
+          >
+            Approve
+          </button>
+          <button
+            type="button"
+            className="admin-btn admin-btn--ghost"
+            aria-label={`Deny ${typed || item.game}`}
+            disabled={busy}
+            onClick={() => onDecide(item, 'deny')}
+          >
+            Deny
+          </button>
         </div>
       </div>
       <p className="admin-muted">
-        from {item.name}{renamed && ` as “${item.game}”`}{item.note ? `: “${item.note}”` : ''}
+        from {item.name}
+        {renamed && ` as “${item.game}”`}
+        {item.note ? `: “${item.note}”` : ''}
       </p>
       <div className="admin-item-preview">
         {lookingUp && <p className="admin-muted">Looking up “{typed}” on BoardGameGeek…</p>}
         {!lookingUp && current?.details && <PreviewCard details={current.details} />}
-        {!lookingUp && notice && <Notice tone="warning" live={false}>{notice}</Notice>}
-        {!lookingUp && !current && renamed && !error && <p className="admin-muted">Look the corrected name up to check its details; Approve does that first.</p>}
+        {!lookingUp && notice && (
+          <Notice tone="warning" live={false}>
+            {notice}
+          </Notice>
+        )}
+        {!lookingUp && !current && renamed && !error && (
+          <p className="admin-muted">Look the corrected name up to check its details; Approve does that first.</p>
+        )}
         {error && <p className="admin-error">{error}</p>}
       </div>
     </li>
@@ -180,21 +234,36 @@ function PendingQueue() {
       {queue.kind === 'ready' && queue.items.length > 0 && (
         <ul className="admin-list">
           {queue.items.map((item) => (
-            <QueueRow key={item.id} item={item} busy={busy !== null} onDecide={(i, d, c) => void decide(i, d, c)} inTurn={inTurn} />
+            <QueueRow
+              key={item.id}
+              item={item}
+              busy={busy !== null}
+              onDecide={(i, d, c) => void decide(i, d, c)}
+              inTurn={inTurn}
+            />
           ))}
         </ul>
       )}
       {/* Only a decision's outcome is announced, not the rows' previews; this
           region does it, so the notice doesn't announce itself too. */}
       <div aria-live="polite">
-        {notice && <Notice tone="warning" live={false}>{notice}</Notice>}
-        {error && <p className="admin-error" role="alert">{error}</p>}
+        {notice && (
+          <Notice tone="warning" live={false}>
+            {notice}
+          </Notice>
+        )}
+        {error && (
+          <p className="admin-error" role="alert">
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );
 }
 
-type AddStatus = { kind: 'idle' } | { kind: 'busy' } | { kind: 'added'; game: string } | { kind: 'error'; message: string };
+type AddStatus =
+  { kind: 'idle' } | { kind: 'busy' } | { kind: 'added'; game: string } | { kind: 'error'; message: string };
 
 /** A lookup's answer, kept for the name it was made for: typing another name sets it aside. */
 interface Looked {
@@ -214,13 +283,16 @@ function PreviewCard({ details }: { details: PreviewDetails }) {
       {details.img && <img className="admin-preview-art" src={details.img} alt="" width={64} height={64} />}
       <div className="admin-preview-main">
         <p className="admin-preview-name">
-          {details.name}{details.year !== undefined && <span className="admin-muted"> ({details.year})</span>}
+          {details.name}
+          {details.year !== undefined && <span className="admin-muted"> ({details.year})</span>}
         </p>
         <p className="admin-muted">{facts.join(' · ')}</p>
         {details.desc && <p className="admin-preview-desc">{details.desc}</p>}
         {details.kw.length > 0 && (
           <ul className="admin-preview-kw" aria-label="Keywords">
-            {details.kw.map((k) => <li key={k}>{KW[k as keyof typeof KW] ?? k}</li>)}
+            {details.kw.map((k) => (
+              <li key={k}>{KW[k as keyof typeof KW] ?? k}</li>
+            ))}
           </ul>
         )}
       </div>
@@ -282,7 +354,13 @@ function AddGameForm() {
       return;
     }
     setStatus({ kind: 'busy' });
-    const result = await addGame({ game: typed, name: trimmedName, note: note.trim(), type: type || null, details: current.details ?? null });
+    const result = await addGame({
+      game: typed,
+      name: trimmedName,
+      note: note.trim(),
+      type: type || null,
+      details: current.details ?? null,
+    });
     if (!result.ok) {
       setStatus({ kind: 'error', message: result.error });
       return;
@@ -303,29 +381,74 @@ function AddGameForm() {
 
   return (
     <form className="admin-add" onSubmit={onSubmit} aria-labelledby={`${uid}-title`}>
-      <h4 id={`${uid}-title`} className="admin-subtitle">Add a game</h4>
+      <h4 id={`${uid}-title`} className="admin-subtitle">
+        Add a game
+      </h4>
       <div className="suggest-fields">
-        <label className="suggest-label" htmlFor={`${uid}-game`}>Game</label>
-        <input id={`${uid}-game`} className="suggest-input" value={game} onChange={(e) => setGame(e.target.value)} required minLength={GAME_MIN} maxLength={GAME_MAX} placeholder="Ark Nova" />
-        <label className="suggest-label" htmlFor={`${uid}-type`}>Section</label>
+        <label className="suggest-label" htmlFor={`${uid}-game`}>
+          Game
+        </label>
+        <input
+          id={`${uid}-game`}
+          className="suggest-input"
+          value={game}
+          onChange={(e) => setGame(e.target.value)}
+          required
+          minLength={GAME_MIN}
+          maxLength={GAME_MAX}
+          placeholder="Ark Nova"
+        />
+        <label className="suggest-label" htmlFor={`${uid}-type`}>
+          Section
+        </label>
         <select id={`${uid}-type`} className="suggest-input" value={type} onChange={(e) => setType(e.target.value)}>
-          {WISHLIST_SECTIONS.map((t) => <option key={t} value={t}>{WISHLIST_TYPES[t]}</option>)}
+          {WISHLIST_SECTIONS.map((t) => (
+            <option key={t} value={t}>
+              {WISHLIST_TYPES[t]}
+            </option>
+          ))}
           <option value="">{WISHLIST_TYPES.suggested}</option>
         </select>
-        <label className="suggest-label" htmlFor={`${uid}-name`}>Added by</label>
-        <input id={`${uid}-name`} className="suggest-input" value={name} onChange={(e) => setName(e.target.value)} required maxLength={NAME_MAX} />
-        <label className="suggest-label" htmlFor={`${uid}-note`}>Note <span className="suggest-opt">(optional)</span></label>
-        <input id={`${uid}-note`} className="suggest-input" value={note} onChange={(e) => setNote(e.target.value)} maxLength={NOTE_MAX} placeholder="Shows on the card in quotes" />
+        <label className="suggest-label" htmlFor={`${uid}-name`}>
+          Added by
+        </label>
+        <input
+          id={`${uid}-name`}
+          className="suggest-input"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          maxLength={NAME_MAX}
+        />
+        <label className="suggest-label" htmlFor={`${uid}-note`}>
+          Note <span className="suggest-opt">(optional)</span>
+        </label>
+        <input
+          id={`${uid}-note`}
+          className="suggest-input"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          maxLength={NOTE_MAX}
+          placeholder="Shows on the card in quotes"
+        />
       </div>
       {/* One live region for the lookup's answer, so the notice in it doesn't announce itself twice. */}
       <div aria-live="polite">
         {found && <PreviewCard details={found} />}
-        {notice && <Notice tone="warning" live={false}>{notice}</Notice>}
+        {notice && (
+          <Notice tone="warning" live={false}>
+            {notice}
+          </Notice>
+        )}
       </div>
       <div className="suggest-actions">
-        <button type="submit" className="suggest-btn" disabled={busy}>{label}</button>
+        <button type="submit" className="suggest-btn" disabled={busy}>
+          {label}
+        </button>
         {current && !found && (
-          <button type="button" className="admin-btn admin-btn--ghost" disabled={busy} onClick={() => void lookUp()}>Look up again</button>
+          <button type="button" className="admin-btn admin-btn--ghost" disabled={busy} onClick={() => void lookUp()}>
+            Look up again
+          </button>
         )}
         <span className="suggest-status" role="status" aria-live="polite">
           {status.kind === 'added' && `${status.game} is on the wishlist.`}

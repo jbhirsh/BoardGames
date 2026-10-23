@@ -48,9 +48,20 @@ export function RulesFallback() {
   if (!game || !book) return <RouteFallback />;
   return (
     <RouteFallback title={game.name} desc={book.short}>
-      <button type="button" className="rules-chat-toggle" disabled><AiRulesIcon size={16} />AI Rules Assistant</button>
-      {scorePadLink(game.slug, book.part) && <span className="rules-chat-toggle"><CalculatorIcon /> Score calculator</span>}
-      {game.slug === WORD_CHECKER_GAME && <button type="button" className="rules-chat-toggle" disabled>Word Checker</button>}
+      <button type="button" className="rules-chat-toggle" disabled>
+        <AiRulesIcon size={16} />
+        AI Rules Assistant
+      </button>
+      {scorePadLink(game.slug, book.part) && (
+        <span className="rules-chat-toggle">
+          <CalculatorIcon /> Score calculator
+        </span>
+      )}
+      {game.slug === WORD_CHECKER_GAME && (
+        <button type="button" className="rules-chat-toggle" disabled>
+          Word Checker
+        </button>
+      )}
     </RouteFallback>
   );
 }

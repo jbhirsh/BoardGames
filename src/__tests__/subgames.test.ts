@@ -29,7 +29,7 @@ describe('subgameNoun and subgameTitle', () => {
   const extension = { ...addons[0], slug: 'more-seats', name: 'More Seats', kind: 'extension' as const };
   const version = { ...addons[0], slug: 'europe', name: 'Europe', kind: 'version' as const };
 
-  it('names a deck\'s games as games, singular for one', () => {
+  it("names a deck's games as games, singular for one", () => {
     expect(subgameNoun(deck, 2)).toBe('games');
     expect(subgameNoun(deck, 1)).toBe('game');
     expect(subgameTitle(deck)).toBe('Games in this deck');

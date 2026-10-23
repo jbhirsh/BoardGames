@@ -41,8 +41,8 @@ test('a rules page shows the rulebook and the assistant answers a question', asy
   await expect(page.getByPlaceholder('Ask a rules question...')).toHaveValue('');
 });
 
-test('a game\'s house rules open above its rulebook, on every tab', async ({ page }) => {
-  const rules = GAMES.find(g => g.slug === 'hogwarts-battle')!.houseRules!;
+test("a game's house rules open above its rulebook, on every tab", async ({ page }) => {
+  const rules = GAMES.find((g) => g.slug === 'hogwarts-battle')!.houseRules!;
   await page.goto('/rules/hogwarts-battle');
 
   const first = page.getByText(rules[0].text);
@@ -97,7 +97,9 @@ test('the daily cap says the assistant is resting for today, by the box, not to 
   await page.getByRole('button', { name: 'Send' }).click();
 
   // Said by the chat's live region by the box, its notice no live region of its own.
-  await expect(page.getByText('The assistant is resting for today. The rulebook below still works.', { exact: true })).toBeVisible();
+  await expect(
+    page.getByText('The assistant is resting for today. The rulebook below still works.', { exact: true }),
+  ).toBeVisible();
   await expect(page.getByRole('alert')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Retry' })).toHaveCount(0);
   await expect(page.getByPlaceholder('Ask a rules question...')).toHaveValue('Does everyone answer each question?');
@@ -112,7 +114,11 @@ test('under a players filter, Rules opens the add-on the game fits through', asy
 
 test('an answer that names another rulebook links to its tab', async ({ page }) => {
   await page.route('**/api/chat', (route) =>
-    route.fulfill({ status: 200, contentType: 'text/plain; charset=utf-8', body: "That's in the 5 6 Player Extension." }),
+    route.fulfill({
+      status: 200,
+      contentType: 'text/plain; charset=utf-8',
+      body: "That's in the 5 6 Player Extension.",
+    }),
   );
   await page.goto('/rules/catan');
   await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
@@ -174,7 +180,10 @@ test('on a phone a rulebook tab opens its own book in the reader', async ({ page
 
   // The reader for the next tab opens on the worker the last one used, and
   // reads its own book: the barbarians are only in Cities & Knights.
-  await page.getByRole('navigation', { name: 'Rulebooks' }).getByRole('link', { name: /Cities & Knights/ }).click();
+  await page
+    .getByRole('navigation', { name: 'Rulebooks' })
+    .getByRole('link', { name: /Cities & Knights/ })
+    .click();
   const next = page.getByRole('region', { name: /Cities & Knights rules/ });
   await next.getByRole('searchbox', { name: 'Search the rulebook' }).fill('barbarian');
   await next.getByRole('button', { name: 'Search' }).click();
@@ -193,18 +202,24 @@ test('a long rulebook strip opens with the chosen tab in view', async ({ page })
   await expect(strip.getByRole('link', { name: 'Game 1', exact: true })).not.toBeInViewport();
 });
 
-test('a tab opened from a link sits clear of the strip\'s faded edge', async ({ page }) => {
+test("a tab opened from a link sits clear of the strip's faded edge", async ({ page }) => {
   await page.goto('/rules/hogwarts-battle/game-6');
   const strip = page.getByRole('navigation', { name: 'Rulebooks' });
   const chosen = strip.getByRole('link', { name: 'Game 6', exact: true });
   await expect(chosen).toHaveAttribute('aria-current', 'page');
   // The edge fades over 48px; snapping must not pull the tab back into it.
-  await expect.poll(async () => (await chosen.boundingBox())!.x - (await strip.boundingBox())!.x).toBeGreaterThanOrEqual(40);
+  await expect
+    .poll(async () => (await chosen.boundingBox())!.x - (await strip.boundingBox())!.x)
+    .toBeGreaterThanOrEqual(40);
 });
 
-test('an answer\'s page citations open their rulebook at that page', async ({ page, request }) => {
+test("an answer's page citations open their rulebook at that page", async ({ page, request }) => {
   await page.route('**/api/chat', (route) =>
-    route.fulfill({ status: 200, contentType: 'text/plain; charset=utf-8', body: 'Three stations at most (Europe p. 4), built instead of claiming a route (Ticket To Ride p. 3), as before (p. 5).' }),
+    route.fulfill({
+      status: 200,
+      contentType: 'text/plain; charset=utf-8',
+      body: 'Three stations at most (Europe p. 4), built instead of claiming a route (Ticket To Ride p. 3), as before (p. 5).',
+    }),
   );
   await page.goto('/rules/ticket-to-ride/europe');
   await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
@@ -215,7 +230,10 @@ test('an answer\'s page citations open their rulebook at that page', async ({ pa
   const europe = page.getByRole('link', { name: 'Europe p. 4', exact: true });
   await expect(europe).toHaveAttribute('href', '/rules/ticket-to-ride.europe.pdf#page=4');
   await expect(europe).toHaveAttribute('target', '_blank');
-  await expect(page.getByRole('link', { name: 'Base game p. 3', exact: true })).toHaveAttribute('href', '/rules/ticket-to-ride.pdf#page=3');
+  await expect(page.getByRole('link', { name: 'Base game p. 3', exact: true })).toHaveAttribute(
+    'href',
+    '/rules/ticket-to-ride.pdf#page=3',
+  );
   // With two rulebooks read, a bare page could be either: it stays text.
   await expect(page.getByText('as before (p. 5).', { exact: false })).toBeVisible();
   await expect(page.getByRole('link', { name: /p\. 5/ })).toHaveCount(0);
@@ -224,11 +242,16 @@ test('an answer\'s page citations open their rulebook at that page', async ({ pa
 
 /** How far, in whole pixels, a page's top is from where a jump puts it: under the reader's search bar. */
 const offTarget = (box: Locator) =>
-  box.evaluate((el) => Math.round(Math.abs(el.getBoundingClientRect().top - parseFloat(getComputedStyle(el).scrollMarginTop))));
+  box.evaluate((el) =>
+    Math.round(Math.abs(el.getBoundingClientRect().top - parseFloat(getComputedStyle(el).scrollMarginTop))),
+  );
 
-test('on a phone a citation of another tab\'s rulebook opens that tab at the page, under the answer', async ({ page }) => {
+test("on a phone a citation of another tab's rulebook opens that tab at the page, under the answer", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  const answer = 'Knights hold off the barbarians (Cities And Knights p. 4), and a 7 still moves the robber (Catan p. 5).';
+  const answer =
+    'Knights hold off the barbarians (Cities And Knights p. 4), and a 7 still moves the robber (Catan p. 5).';
   await page.route('**/api/chat', (route) =>
     route.fulfill({ status: 200, contentType: 'text/plain; charset=utf-8', body: answer }),
   );
@@ -252,7 +275,10 @@ test('on a phone a citation of another tab\'s rulebook opens that tab at the pag
   // The conversation stays, its links as they were on the tab it was asked
   // on, and the chat now says what it reads for this tab.
   await expect(page.getByText('a 7 still moves the robber', { exact: false })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Cities & Knights p. 4', exact: true })).toHaveAttribute('href', '/rules/catan.cities-and-knights.pdf#page=4');
+  await expect(page.getByRole('link', { name: 'Cities & Knights p. 4', exact: true })).toHaveAttribute(
+    'href',
+    '/rules/catan.cities-and-knights.pdf#page=4',
+  );
   await expect(page.getByText('Reading: Base game.')).toBeAttached();
 });
 
@@ -264,7 +290,9 @@ test('on a phone a jump lands on its page in a rulebook of mixed page sizes', as
     route.fulfill({ status: 200, contentType: 'text/plain; charset=utf-8', body: 'Roll the die to move (p. 7).' }),
   );
   await page.goto('/rules/cranium');
-  await expect(page.getByRole('region', { name: 'Cranium rules' }).getByRole('button', { name: 'Search' })).toBeEnabled();
+  await expect(
+    page.getByRole('region', { name: 'Cranium rules' }).getByRole('button', { name: 'Search' }),
+  ).toBeEnabled();
   await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
   await page.getByPlaceholder('Ask a rules question...').fill('How do we move?');
   await page.getByRole('button', { name: 'Send' }).click();
@@ -277,17 +305,20 @@ test('on a phone a jump lands on its page in a rulebook of mixed page sizes', as
 });
 
 /** The text of the marks on a page: the passage a citation points to, and any search matches. */
-const marked = (box: Locator) => box.evaluate((el) => [...el.querySelectorAll('mark')].map((m) => m.textContent).join(' '));
+const marked = (box: Locator) =>
+  box.evaluate((el) => [...el.querySelectorAll('mark')].map((m) => m.textContent).join(' '));
 
 /** Whether a page's first mark is on screen, clear of the reader's search bar. */
-const markOnScreen = (box: Locator) => box.evaluate((el) => {
-  const mark = el.querySelector('mark');
-  if (!mark) return false;
-  const { top, bottom } = mark.getBoundingClientRect();
-  return top >= parseFloat(getComputedStyle(el).scrollMarginTop) && bottom <= window.innerHeight;
-});
+const markOnScreen = (box: Locator) =>
+  box.evaluate((el) => {
+    const mark = el.querySelector('mark');
+    if (!mark) return false;
+    const { top, bottom } = mark.getBoundingClientRect();
+    return top >= parseFloat(getComputedStyle(el).scrollMarginTop) && bottom <= window.innerHeight;
+  });
 
-const ROBBER_ANSWER = 'If you roll a 7, nobody gets resources and anyone holding more than 7 cards returns half of them (p. 5).';
+const ROBBER_ANSWER =
+  'If you roll a 7, nobody gets resources and anyone holding more than 7 cards returns half of them (p. 5).';
 
 test('on a desktop a citation opens its page in place and marks the passage it points to', async ({ page }) => {
   await page.route('**/api/chat', (route) =>
@@ -309,7 +340,11 @@ test('on a desktop a citation opens its page in place and marks the passage it p
   // reader, and brought on screen though the page is taller than the window.
   await expect(reader.getByText(/^Base game, page 5\. Highlighted: If you roll a .7,. no…$/)).toBeAttached();
   // Whole sentences, from the one the answer's words start in.
-  await expect.poll(() => marked(cited)).toMatch(/^If you roll a .7,. no one receives any resources\. Instead, every player who has more than 7 resource cards .* return them to the bank\.$/);
+  await expect
+    .poll(() => marked(cited))
+    .toMatch(
+      /^If you roll a .7,. no one receives any resources\. Instead, every player who has more than 7 resource cards .* return them to the bank\.$/,
+    );
   await expect.poll(() => markOnScreen(cited)).toBe(true);
 
   // A search of the reader's own takes the mark's place.
@@ -319,10 +354,14 @@ test('on a desktop a citation opens its page in place and marks the passage it p
   await expect.poll(() => marked(cited)).not.toContain('resource cards');
 });
 
-test('on a phone a citation marks the passage it points to, on another tab\'s rulebook', async ({ page }) => {
+test("on a phone a citation marks the passage it points to, on another tab's rulebook", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.route('**/api/chat', (route) =>
-    route.fulfill({ status: 200, contentType: 'text/plain; charset=utf-8', body: ROBBER_ANSWER.replace('(p. 5)', '(Catan p. 5)') }),
+    route.fulfill({
+      status: 200,
+      contentType: 'text/plain; charset=utf-8',
+      body: ROBBER_ANSWER.replace('(p. 5)', '(Catan p. 5)'),
+    }),
   );
   await page.goto('/rules/catan/cities-and-knights');
   await page.getByRole('button', { name: 'AI Rules Assistant' }).click();

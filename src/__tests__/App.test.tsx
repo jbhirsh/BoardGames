@@ -6,12 +6,15 @@ import { GAMES } from '../data/games';
 import { stubMatchMedia } from './helpers/stubMatchMedia';
 
 function renderApp(url = '/') {
-  const router = createMemoryRouter([
-    {
-      element: <App />,
-      children: [{ path: '/', element: <HomePage /> }],
-    },
-  ], { initialEntries: [url] });
+  const router = createMemoryRouter(
+    [
+      {
+        element: <App />,
+        children: [{ path: '/', element: <HomePage /> }],
+      },
+    ],
+    { initialEntries: [url] },
+  );
   return render(<RouterProvider router={router} />);
 }
 
@@ -87,7 +90,9 @@ describe('App', () => {
     const want = 'Help us pick our next game from the wishlist below.';
     expect(screen.getByText(want)).toBeVisible();
     expect(screen.queryByText(/What fits tonight\?/)).not.toBeInTheDocument();
-    fireEvent.click(within(screen.getByRole('group', { name: 'Which games to show' })).getByRole('button', { name: 'We own' }));
+    fireEvent.click(
+      within(screen.getByRole('group', { name: 'Which games to show' })).getByRole('button', { name: 'We own' }),
+    );
     expect(screen.getByText(/What fits tonight\?/)).toBeVisible();
     expect(screen.queryByText(want)).not.toBeInTheDocument();
   });

@@ -43,8 +43,12 @@ describe('CollectionToggle', () => {
       const { state } = useFilter();
       return (
         <>
-          <section aria-label="own" id={state.collection === 'own' ? 'collection' : undefined}><CollectionToggle /></section>
-          <section aria-label="want" id={state.collection === 'want' ? 'collection' : undefined}><CollectionToggle /></section>
+          <section aria-label="own" id={state.collection === 'own' ? 'collection' : undefined}>
+            <CollectionToggle />
+          </section>
+          <section aria-label="want" id={state.collection === 'want' ? 'collection' : undefined}>
+            <CollectionToggle />
+          </section>
         </>
       );
     }
@@ -56,6 +60,10 @@ describe('CollectionToggle', () => {
       </MemoryRouter>,
     );
     fireEvent.click(within(screen.getByRole('region', { name: 'own' })).getByRole('button', { name: 'We want' }));
-    await waitFor(() => expect(within(screen.getByRole('region', { name: 'want' })).getByRole('button', { name: 'We want' })).toHaveFocus());
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('region', { name: 'want' })).getByRole('button', { name: 'We want' }),
+      ).toHaveFocus(),
+    );
   });
 });

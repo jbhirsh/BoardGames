@@ -8,7 +8,13 @@ describe('scoreRounds', () => {
       { game: 'uno', out: 1, hands: [40, 999, 25] },
       { game: 'uno', out: 0, hands: [0, 12, 70] },
     ];
-    expect(scoreRounds(rounds, 3)).toEqual({ points: [[0, 65, 0], [82, 0, 0]], totals: [82, 65, 0] });
+    expect(scoreRounds(rounds, 3)).toEqual({
+      points: [
+        [0, 65, 0],
+        [82, 0, 0],
+      ],
+      totals: [82, 65, 0],
+    });
   });
 
   it('scores Hearts as taken, or 26 to everyone else when someone shoots the moon', () => {
@@ -16,11 +22,20 @@ describe('scoreRounds', () => {
       { game: 'hearts', moon: null, taken: [13, 5, 8, 0] },
       { game: 'hearts', moon: 2, taken: [0, 0, 0, 0] },
     ];
-    expect(scoreRounds(rounds, 4)).toEqual({ points: [[13, 5, 8, 0], [26, 26, 0, 26]], totals: [39, 31, 8, 26] });
+    expect(scoreRounds(rounds, 4)).toEqual({
+      points: [
+        [13, 5, 8, 0],
+        [26, 26, 0, 26],
+      ],
+      totals: [39, 31, 8, 26],
+    });
   });
 
   it('adds up Golf holes, below zero included', () => {
-    const rounds: Round[] = [{ game: 'golf', scores: [-2, 14] }, { game: 'golf', scores: [5, -4] }];
+    const rounds: Round[] = [
+      { game: 'golf', scores: [-2, 14] },
+      { game: 'golf', scores: [5, -4] },
+    ];
     expect(scoreRounds(rounds, 2).totals).toEqual([3, 10]);
   });
 
@@ -30,11 +45,22 @@ describe('scoreRounds', () => {
       { game: 'euchre', makers: 1, tricks: 5, alone: true },
       { game: 'euchre', makers: 1, tricks: 2, alone: false },
     ];
-    expect(scoreRounds(rounds, 2)).toEqual({ points: [[1, 0], [0, 4], [2, 0]], totals: [3, 4] });
+    expect(scoreRounds(rounds, 2)).toEqual({
+      points: [
+        [1, 0],
+        [0, 4],
+        [2, 0],
+      ],
+      totals: [3, 4],
+    });
   });
 
   it('carries Spades bags from hand to hand, taking 100 off at every tenth', () => {
-    const hand = (overs: number): Round => ({ game: 'spades', bids: [3, 3, 2, 2], tricks: [3 + overs, 3, 2, 2 - overs] });
+    const hand = (overs: number): Round => ({
+      game: 'spades',
+      bids: [3, 3, 2, 2],
+      tricks: [3 + overs, 3, 2, 2 - overs],
+    });
     // Partnership 1 (players 1 and 3) bids 5 and takes 5 + overs.
     const { points, totals, bags } = scoreRounds([hand(4), hand(4), hand(3)], 2);
     expect(points[0][0]).toBe(54);
@@ -62,7 +88,7 @@ describe('spadesHand', () => {
     expect(spadesHand([4, 3], [4, 2])).toEqual({ points: -70, bags: 0 });
   });
 
-  it('scores a nil on its own, its partner\'s bid on its partner\'s tricks', () => {
+  it("scores a nil on its own, its partner's bid on its partner's tricks", () => {
     expect(spadesHand([0, 4], [0, 4])).toEqual({ points: 140, bags: 0 });
     // A failed nil: -100 flat, its two tricks bags that score nothing and
     // don't help the partner, who falls short.
@@ -99,19 +125,25 @@ describe('outcome', () => {
 });
 
 describe('roundIssue', () => {
-  it('says when a Hearts hand doesn\'t add up to 26', () => {
-    expect(roundIssue({ game: 'hearts', moon: null, taken: [10, 5, 6, 0] })).toBe('These add up to 21. A hand holds 26: 13 hearts and the queen of spades.');
+  it("says when a Hearts hand doesn't add up to 26", () => {
+    expect(roundIssue({ game: 'hearts', moon: null, taken: [10, 5, 6, 0] })).toBe(
+      'These add up to 21. A hand holds 26: 13 hearts and the queen of spades.',
+    );
     expect(roundIssue({ game: 'hearts', moon: null, taken: [13, 13, 0] })).toBeNull();
     expect(roundIssue({ game: 'hearts', moon: 1, taken: [0, 0, 0] })).toBeNull();
   });
 
-  it('asks whether a Hearts hand all in one player\'s hands was a moon shot', () => {
-    expect(roundIssue({ game: 'hearts', moon: null, taken: [0, 26, 0] })).toBe('One player took all 26: did they shoot the moon? Say who above, and everyone else scores 26 instead.');
+  it("asks whether a Hearts hand all in one player's hands was a moon shot", () => {
+    expect(roundIssue({ game: 'hearts', moon: null, taken: [0, 26, 0] })).toBe(
+      'One player took all 26: did they shoot the moon? Say who above, and everyone else scores 26 instead.',
+    );
     expect(roundIssue({ game: 'hearts', moon: null, taken: [26, 5, 0] })).toMatch(/These add up to 31/);
   });
 
-  it('says when a Spades hand\'s tricks don\'t add up to 13', () => {
-    expect(roundIssue({ game: 'spades', bids: [3, 3, 3, 3], tricks: [3, 3, 3, 3] })).toBe('The tricks add up to 12. A hand has 13.');
+  it("says when a Spades hand's tricks don't add up to 13", () => {
+    expect(roundIssue({ game: 'spades', bids: [3, 3, 3, 3], tricks: [3, 3, 3, 3] })).toBe(
+      'The tricks add up to 12. A hand has 13.',
+    );
     expect(roundIssue({ game: 'spades', bids: [3, 3, 3, 3], tricks: [4, 3, 3, 3] })).toBeNull();
   });
 
@@ -129,7 +161,7 @@ describe('isRound', () => {
     expect(isRound('euchre', 4, { game: 'euchre', makers: 1, tricks: 5, alone: true })).toBe(true);
   });
 
-  it('refuses another game\'s round, a different table, or a malformed one', () => {
+  it("refuses another game's round, a different table, or a malformed one", () => {
     expect(isRound('uno', 2, { game: 'rummy', out: 0, hands: [0, 3] })).toBe(false);
     expect(isRound('uno', 3, { game: 'uno', out: 0, hands: [0, 3] })).toBe(false);
     expect(isRound('uno', 2, { game: 'uno', out: 2, hands: [0, 3] })).toBe(false);

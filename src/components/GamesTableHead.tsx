@@ -44,7 +44,9 @@ export default function GamesTableHead({ extra, difficulty = false }: { extra?: 
         <th className="col-hide col-desc">Description</th>
         <th className="col-hide col-tags">Tags</th>
         {extra}
-        <th className="col-actions-h"><span className="sr-only">Actions</span></th>
+        <th className="col-actions-h">
+          <span className="sr-only">Actions</span>
+        </th>
       </tr>
     </thead>
   );

@@ -17,16 +17,33 @@ function Said({ full, short }: { full: string; short: string }) {
   return (
     <>
       <span className="rules-more">{full}</span>
-      <span className="rules-short" aria-hidden="true">{short}</span>
+      <span className="rules-short" aria-hidden="true">
+        {short}
+      </span>
     </>
   );
 }
 
 /** What each state that isn't a button says, after its icon. */
 const STATUS: Partial<Record<SaveState, ReactNode>> = {
-  saving: <><SavingIcon />Saving…</>,
-  saved: <><SavedIcon /><Said full="Saved on this device" short="Saved" /></>,
-  full: <><WarningIcon /><Said full="Not enough space on this device" short="No space" /></>,
+  saving: (
+    <>
+      <SavingIcon />
+      Saving…
+    </>
+  ),
+  saved: (
+    <>
+      <SavedIcon />
+      <Said full="Saved on this device" short="Saved" />
+    </>
+  ),
+  full: (
+    <>
+      <WarningIcon />
+      <Said full="Not enough space on this device" short="No space" />
+    </>
+  ),
 };
 
 /**
@@ -41,7 +58,13 @@ const STATUS: Partial<Record<SaveState, ReactNode>> = {
  * says how a save ended, only as it ends: not for a tab whose rulebook was
  * saved already.
  */
-export default function SaveOffline({ pdf, state, hidden = false, sized, onSave }: {
+export default function SaveOffline({
+  pdf,
+  state,
+  hidden = false,
+  sized,
+  onSave,
+}: {
   pdf: string;
   state: SaveState;
   hidden?: boolean;
@@ -55,7 +78,7 @@ export default function SaveOffline({ pdf, state, hidden = false, sized, onSave 
   if (last.pdf !== pdf || last.state !== state || last.hidden !== hidden) {
     setLast({ pdf, state, hidden });
     if (last.pdf !== pdf || last.state !== state) {
-      setEnded(last.pdf === pdf && last.state === 'saving' && !last.hidden ? ENDED[state] ?? null : null);
+      setEnded(last.pdf === pdf && last.state === 'saving' && !last.hidden ? (ENDED[state] ?? null) : null);
     }
   }
 
@@ -67,14 +90,20 @@ export default function SaveOffline({ pdf, state, hidden = false, sized, onSave 
   useEffect(() => {
     if (focused.current && document.activeElement === document.body) item.current?.focus({ preventScroll: true });
   }, [button]);
-  const ref = (node: HTMLElement | null) => { item.current = node; };
+  const ref = (node: HTMLElement | null) => {
+    item.current = node;
+  };
 
   return (
     <span
       className="rules-save-slot"
       style={hidden ? { visibility: 'hidden' } : undefined}
-      onFocus={() => { focused.current = true; }}
-      onBlur={() => { focused.current = false; }}
+      onFocus={() => {
+        focused.current = true;
+      }}
+      onBlur={() => {
+        focused.current = false;
+      }}
     >
       {button ? (
         <button
@@ -88,16 +117,24 @@ export default function SaveOffline({ pdf, state, hidden = false, sized, onSave 
           {/* On a phone, Save offline, named so (a name read out must hold
               the words on screen, and "for" would split them), and Try
               again, with what came before read out still. */}
-          {state === 'unsaved'
-            ? <span>Save <span className="rules-wide">for</span> offline</span>
-            : <span><span className="rules-more">Couldn’t save.</span> Try again</span>}
+          {state === 'unsaved' ? (
+            <span>
+              Save <span className="rules-wide">for</span> offline
+            </span>
+          ) : (
+            <span>
+              <span className="rules-more">Couldn’t save.</span> Try again
+            </span>
+          )}
         </button>
       ) : (
         <span ref={ref} className={`rules-save rules-save-status rules-save-${state}`} tabIndex={-1}>
           {STATUS[state]}
         </span>
       )}
-      <span className="sr-only" aria-live="polite">{ended}</span>
+      <span className="sr-only" aria-live="polite">
+        {ended}
+      </span>
     </span>
   );
 }

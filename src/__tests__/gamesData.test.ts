@@ -32,7 +32,10 @@ function expectBggWeight(d: { bgg?: number; weight?: number }, label: string) {
 function expectRealAwards(awards: Award[] | undefined, label: string) {
   for (const a of awards ?? []) {
     expect(a.name.trim(), `${label}: award name`).not.toBe('');
-    expect(Number.isInteger(a.year) && a.year >= 1900 && a.year <= new Date().getFullYear(), `${label}: award year ${a.year}`).toBe(true);
+    expect(
+      Number.isInteger(a.year) && a.year >= 1900 && a.year <= new Date().getFullYear(),
+      `${label}: award year ${a.year}`,
+    ).toBe(true);
   }
 }
 
@@ -78,7 +81,7 @@ describe('games data', () => {
     }
   });
 
-  it('the word checker\'s game is in the collection', () => {
+  it("the word checker's game is in the collection", () => {
     expect(ALL_GAMES.map((g) => g.slug)).toContain(WORD_CHECKER_GAME);
   });
 
@@ -94,13 +97,15 @@ describe('games data', () => {
 
   // One id names one game: a copied id would give a game another's weight.
   it('gives each BoardGameGeek id to one game', () => {
-    const ids = ALL_GAMES.flatMap((g) => [g, ...(g.subgames ?? [])]).flatMap((t) => (t.bgg === undefined ? [] : [t.bgg]));
+    const ids = ALL_GAMES.flatMap((g) => [g, ...(g.subgames ?? [])]).flatMap((t) =>
+      t.bgg === undefined ? [] : [t.bgg],
+    );
     expect(ids.length).toBeGreaterThan(0);
     for (const id of ids) expect(Number.isInteger(id) && id > 0, `bgg ${id}`).toBe(true);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('keeps only fetched weights, each on BGG\'s 1 to 5 scale', () => {
+  it("keeps only fetched weights, each on BGG's 1 to 5 scale", () => {
     for (const [id, weight] of Object.entries(GAME_WEIGHTS)) {
       if (weight !== null) expect(weight >= 1 && weight <= 5, `BGG ${id}: weight ${weight}`).toBe(true);
     }
@@ -117,7 +122,8 @@ describe('games data', () => {
     expectRealAwards(s.awards, label);
     // A deck's games and a version are played alone; an add-on is learned
     // on top of its game, so it has no difficulty of its own.
-    if (s.kind !== 'card-game' && s.kind !== 'version') expect(s.bgg, `${label}: an add-on has no BGG id`).toBeUndefined();
+    if (s.kind !== 'card-game' && s.kind !== 'version')
+      expect(s.bgg, `${label}: an add-on has no BGG id`).toBeUndefined();
     expectBggWeight(s, label);
   });
 });

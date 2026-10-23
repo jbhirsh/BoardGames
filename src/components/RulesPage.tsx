@@ -1,4 +1,14 @@
-import { Component, lazy, Suspense, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import {
+  Component,
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
 import { useParams, useLocation, useNavigate, Link, Navigate } from 'react-router';
 import { ALL_GAMES } from '../data/games';
 import { rulebooks, rulebookPath, chatParts, chatScope, citedPageParam, starterQuestions } from '../utils/rulebooks';
@@ -37,10 +47,15 @@ const PdfReader = lazy(() => import('./PdfReader'));
 const notSaved = (pdf: string) => (
   <div className="pdf-offline">
     <Notice tone="info">
-      {waitsForSave(pdf)
+      {waitsForSave(pdf) ? (
         // Named as its button reads: "Save offline" on a phone.
-        ? <>Not saved on this device yet. Tap Save <span className="rules-wide">for </span>offline next time you have signal.</>
-        : 'Not saved on this device yet. Open it once with signal.'}
+        <>
+          Not saved on this device yet. Tap Save <span className="rules-wide">for </span>offline next time you have
+          signal.
+        </>
+      ) : (
+        'Not saved on this device yet. Open it once with signal.'
+      )}
     </Notice>
   </div>
 );
@@ -50,7 +65,10 @@ const notSaved = (pdf: string) => (
  * gone after a deploy, or the browser can't run it), so the rest of the
  * rules page (the chat, the link to the PDF) keeps working.
  */
-class ReaderBoundary extends Component<{ children: ReactNode; pdf: string; note: ReactNode; onFail: (pdf: string) => void }, { failed: boolean }> {
+class ReaderBoundary extends Component<
+  { children: ReactNode; pdf: string; note: ReactNode; onFail: (pdf: string) => void },
+  { failed: boolean }
+> {
   state = { failed: false };
   static getDerivedStateFromError() {
     return { failed: true };
@@ -100,13 +118,14 @@ function useSaved(pdf: string, online: boolean): boolean | 'asking' {
     void savedCopy(pdf).then((saved) => {
       if (live) setKnown({ pdf, online, saved });
     });
-    return () => { live = false; };
+    return () => {
+      live = false;
+    };
   }, [pdf, online]);
   if (known === null) return 'asking';
   if (known.pdf === pdf && known.online !== online && !known.saved) return 'asking';
   return known.saved;
 }
-
 
 // How far the tab strip's edges fade; a tab within this of either side is
 // partly hidden. The strip hands it to App.css's .rules-books as
@@ -159,7 +178,7 @@ export default function RulesPage() {
   // location's key tells one tap from the next, so a second tap on the same
   // citation, after scrolling away, still jumps.
   const citedAt = citedPageParam(search);
-  const game = ALL_GAMES.find(g => g.slug === slug);
+  const game = ALL_GAMES.find((g) => g.slug === slug);
   const [wordCheckerOpen, setWordCheckerOpen] = useState(false);
   // The rulebook that couldn't be shown, and whether that was for want of a
   // network (outOfReach): undefined until that is known. Forgotten when the
@@ -172,19 +191,24 @@ export default function RulesPage() {
   // opens and draws out of sight while the answer is read (see warmCited).
   const [warm, setWarm] = useState<readonly { src: string; page: number }[]>([]);
   const books = game ? rulebooks(game) : [];
-  const book = books.find(b => b.part === part);
+  const book = books.find((b) => b.part === part);
   if (failure !== null && failure.pdf !== book?.pdf) setFailure(null);
   const reached = usePdfHead(book?.pdf ?? '', attempt, book !== undefined);
   const size = rulebookBytes(book?.pdf ?? '');
   const online = useOnline();
   const saved = useSaved(book?.pdf ?? '', online);
   const offline = useOfflineSave(book?.pdf ?? '', saved, online);
-  const readerFails = useCallback((pdf: string) => {
-    // This failure, and not one after it, is what the answer is for.
-    const mine = { pdf };
-    setFailure(mine);
-    void outOfReach(pdf, () => reached(pdf, attempt)).then((unreachable) => setFailure((f) => (f === mine ? { pdf, unreachable } : f)));
-  }, [reached, attempt]);
+  const readerFails = useCallback(
+    (pdf: string) => {
+      // This failure, and not one after it, is what the answer is for.
+      const mine = { pdf };
+      setFailure(mine);
+      void outOfReach(pdf, () => reached(pdf, attempt)).then((unreachable) =>
+        setFailure((f) => (f === mine ? { pdf, unreachable } : f)),
+      );
+    },
+    [reached, attempt],
+  );
   // A rulebook that failed has another go when the network comes back:
   // one that failed for want of it then loads by itself. While the reader
   // on screen has failed, citations open the PDF again (a jump would land
@@ -211,12 +235,22 @@ export default function RulesPage() {
   }, [strip, book?.pdf]);
 
   if (!game) {
-    return <NotFoundPage title="Game not found" message="We don't have a rulebook at this address. Pick a game from the collection to read its rules." />;
+    return (
+      <NotFoundPage
+        title="Game not found"
+        message="We don't have a rulebook at this address. Pick a game from the collection to read its rules."
+      />
+    );
   }
   // A game on its way may have no rulebook yet; sending it to its own first
   // tab, as below, would only come back here.
   if (books.length === 0) {
-    return <NotFoundPage title="No rulebook yet" message={`We don't have the rulebook for ${game.name} yet. It will be here once we do.`} />;
+    return (
+      <NotFoundPage
+        title="No rulebook yet"
+        message={`We don't have the rulebook for ${game.name} yet. It will be here once we do.`}
+      />
+    );
   }
 
   // An unknown tab goes to the game's own rulebook rather than a not-found
@@ -257,7 +291,11 @@ export default function RulesPage() {
    */
   const showCited = (href: string, quote: string) => {
     const cited = citedPage(href, game)!;
-    navigate(rulebookPath(game.slug, cited.book.part, cited.page), { replace: true, state: { ...arrival, quote }, preventScrollReset: true });
+    navigate(rulebookPath(game.slug, cited.book.part, cited.page), {
+      replace: true,
+      state: { ...arrival, quote },
+      preventScrollReset: true,
+    });
     return true;
   };
 
@@ -286,10 +324,7 @@ export default function RulesPage() {
             </Link>
           )}
           {game.slug === WORD_CHECKER_GAME && (
-            <button
-              className="rules-chat-toggle"
-              onClick={() => setWordCheckerOpen(o => !o)}
-            >
+            <button className="rules-chat-toggle" onClick={() => setWordCheckerOpen((o) => !o)}>
               {wordCheckerOpen ? 'Close Word Checker' : 'Word Checker'}
             </button>
           )}
@@ -307,7 +342,7 @@ export default function RulesPage() {
             // put its focus ring under the fade.
             onFocus={(e) => revealInStrip(e.currentTarget, e.target as HTMLElement, STRIP_FADE)}
           >
-            {books.map(b => (
+            {books.map((b) => (
               <Link
                 key={b.pdf}
                 to={rulebookPath(game.slug, b.part)}
@@ -317,9 +352,7 @@ export default function RulesPage() {
                 aria-current={b === book ? 'page' : undefined}
               >
                 {b.label}
-                {b.kind && shownKind(b.label, b.kind) && (
-                  <span className={`kind-chip kind-${b.kind}`}>{b.kind}</span>
-                )}
+                {b.kind && shownKind(b.label, b.kind) && <span className={`kind-chip kind-${b.kind}`}>{b.kind}</span>}
               </Link>
             ))}
           </nav>
@@ -327,9 +360,15 @@ export default function RulesPage() {
         {game.houseRules && (
           // Folded so the rulebook stays in view; the count says it's there.
           <details className="house-rules">
-            <summary>House rules <span className="house-rules-count">{game.houseRules.length}<span className="sr-only"> rules</span></span></summary>
+            <summary>
+              House rules{' '}
+              <span className="house-rules-count">
+                {game.houseRules.length}
+                <span className="sr-only"> rules</span>
+              </span>
+            </summary>
             <dl>
-              {game.houseRules.map(r => (
+              {game.houseRules.map((r) => (
                 <div key={r.name} className="house-rule">
                   <dt>{r.name}</dt>
                   <dd>{r.text}</dd>
@@ -344,7 +383,13 @@ export default function RulesPage() {
           parts={chatParts(game, book)}
           scope={chatScope(game, book)}
           tab={book.part ?? ''}
-          linksFor={(answer, tab) => mentionedRulebooks(answer, game, askedOn(tab)).map((b) => ({ label: b.label, to: rulebookPath(game.slug, b.part), state: arrival }))}
+          linksFor={(answer, tab) =>
+            mentionedRulebooks(answer, game, askedOn(tab)).map((b) => ({
+              label: b.label,
+              to: rulebookPath(game.slug, b.part),
+              state: arrival,
+            }))
+          }
           citeLinks={(answer, tab) => linkCitations(answer, game, askedOn(tab))}
           isCitation={(href) => citedPage(href, game) !== null}
           onCite={failed ? undefined : showCited}
@@ -365,25 +410,47 @@ export default function RulesPage() {
         {!unreachable && (
           <>
             <div className="rules-pdf-links">
-              <a href={book.pdf} download className="rules-download" aria-label="Download PDF" aria-describedby="rules-download-size">
-                <span>Download <span className="rules-more">PDF</span></span>
+              <a
+                href={book.pdf}
+                download
+                className="rules-download"
+                aria-label="Download PDF"
+                aria-describedby="rules-download-size"
+              >
+                <span>
+                  Download <span className="rules-more">PDF</span>
+                </span>
                 {size !== null && (
                   <>
-                    <span className="rules-download-size" aria-hidden="true">·</span>
-                    <span className="rules-download-size" id="rules-download-size">{formatSize(size)}</span>
+                    <span className="rules-download-size" aria-hidden="true">
+                      ·
+                    </span>
+                    <span className="rules-download-size" id="rules-download-size">
+                      {formatSize(size)}
+                    </span>
                   </>
                 )}
               </a>
               <a href={book.pdf} target="_blank" rel="noopener noreferrer" className="rules-download">
-                <span>Open <span className="rules-more">PDF</span></span>
+                <span>
+                  Open <span className="rules-more">PDF</span>
+                </span>
               </a>
               {offline.state !== null && (
-                <SaveOffline pdf={book.pdf} state={offline.state} hidden={offline.hidden} sized={size !== null} onSave={offline.save} />
+                <SaveOffline
+                  pdf={book.pdf}
+                  state={offline.state}
+                  hidden={offline.hidden}
+                  sized={size !== null}
+                  onSave={offline.save}
+                />
               )}
             </div>
             {/* The reader's pages draw only near the screen, so a printout of
                 this page would be empty boxes: it prints this instead. */}
-            <p className="rules-print-note">To print this rulebook, use Open PDF and print it from the browser’s PDF viewer.</p>
+            <p className="rules-print-note">
+              To print this rulebook, use Open PDF and print it from the browser’s PDF viewer.
+            </p>
           </>
         )}
         <ReaderBoundary key={`${book.pdf}#${attempt}`} pdf={book.pdf} note={failNote} onFail={readerFails}>
@@ -391,12 +458,16 @@ export default function RulesPage() {
             <PdfReader
               src={book.pdf}
               title={`${book.name} rules`}
-              jump={citedAt === null ? undefined : {
-                page: citedAt,
-                key,
-                place: books.length > 1 ? book.label : undefined,
-                quote: typeof quote === 'string' && quote !== '' ? quote : undefined,
-              }}
+              jump={
+                citedAt === null
+                  ? undefined
+                  : {
+                      page: citedAt,
+                      key,
+                      place: books.length > 1 ? book.label : undefined,
+                      quote: typeof quote === 'string' && quote !== '' ? quote : undefined,
+                    }
+              }
               warm={warm}
               onFail={readerFails}
               failNote={failNote}

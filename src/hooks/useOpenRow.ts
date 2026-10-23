@@ -26,16 +26,19 @@ export function useOpenRow(): [string | null, (row: string) => void] {
     latest.current = { openRow, location };
   });
 
-  const toggle = useCallback((row: string) => {
-    const { openRow, location } = latest.current;
-    const next = openRow === row ? null : row;
-    setOpenRow(next);
-    const { pathname, search, hash } = location;
-    navigate(
-      { pathname, search, hash },
-      { replace: true, preventScrollReset: true, state: withOpenRow(location.state, next) },
-    );
-  }, [navigate]);
+  const toggle = useCallback(
+    (row: string) => {
+      const { openRow, location } = latest.current;
+      const next = openRow === row ? null : row;
+      setOpenRow(next);
+      const { pathname, search, hash } = location;
+      navigate(
+        { pathname, search, hash },
+        { replace: true, preventScrollReset: true, state: withOpenRow(location.state, next) },
+      );
+    },
+    [navigate],
+  );
 
   return [openRow, toggle];
 }

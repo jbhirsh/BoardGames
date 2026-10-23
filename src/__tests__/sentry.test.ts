@@ -34,9 +34,17 @@ describe('api Sentry helpers', () => {
   it('reportError captures, waits for the flush, then logs under the label', async () => {
     const boom = new Error('boom');
     const order: string[] = [];
-    vi.mocked(Sentry.captureException).mockImplementation(() => { order.push('capture'); return ''; });
-    vi.mocked(Sentry.flush).mockImplementation(async () => { order.push('flush'); return true; });
-    consoleError.mockImplementation(() => { order.push('log'); });
+    vi.mocked(Sentry.captureException).mockImplementation(() => {
+      order.push('capture');
+      return '';
+    });
+    vi.mocked(Sentry.flush).mockImplementation(async () => {
+      order.push('flush');
+      return true;
+    });
+    consoleError.mockImplementation(() => {
+      order.push('log');
+    });
 
     await reportError('votes api error:', boom);
 
@@ -51,8 +59,14 @@ describe('api Sentry helpers', () => {
     const res = {
       statusCode: 0,
       body: undefined as unknown,
-      status(code: number) { res.statusCode = code; return res; },
-      json(body: unknown) { res.body = body; return res; },
+      status(code: number) {
+        res.statusCode = code;
+        return res;
+      },
+      json(body: unknown) {
+        res.body = body;
+        return res;
+      },
     };
 
     const returned = await failWith500(res, 'auth api error:', boom);

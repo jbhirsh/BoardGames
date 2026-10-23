@@ -90,7 +90,10 @@ export interface RulebookLink {
 // The panel's link handlers, for its answers' links. A context rather than
 // a components map built per render: a new component each render would
 // mount every link afresh, losing focus on one mid-answer.
-const CitationContext = createContext<{ isCitation: (href: string) => boolean; onCite?: (href: string, quote: string) => boolean }>({
+const CitationContext = createContext<{
+  isCitation: (href: string) => boolean;
+  onCite?: (href: string, quote: string) => boolean;
+}>({
   isCitation: () => false,
 });
 const NO_CITATIONS = () => false;
@@ -121,7 +124,14 @@ function AnswerLink({ href, title, children }: ComponentProps<'a'>) {
     if (onCite(href, citingClause(textBefore(e.currentTarget)))) e.preventDefault();
   }
   return (
-    <a href={href} title={cite ? undefined : title} aria-label={cite ? title : undefined} target="_blank" rel="noopener noreferrer" onClick={click}>
+    <a
+      href={href}
+      title={cite ? undefined : title}
+      aria-label={cite ? title : undefined}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={click}
+    >
       {children}
     </a>
   );
@@ -160,7 +170,21 @@ const ANSWER_COMPONENTS: Components = { a: AnswerLink };
  * cap says the assistant is resting for today. Every other failure keeps
  * the red error and Retry (#198).
  */
-export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFor, citeLinks, isCitation = NO_CITATIONS, onCite, onAnswer, starters = [], rulebookFailed = false, rulebookSaved = false }: {
+export function RulesChatPanel({
+  slug,
+  gameName,
+  parts = [],
+  scope,
+  tab,
+  linksFor,
+  citeLinks,
+  isCitation = NO_CITATIONS,
+  onCite,
+  onAnswer,
+  starters = [],
+  rulebookFailed = false,
+  rulebookSaved = false,
+}: {
   slug: string;
   gameName: string;
   parts?: string[];
@@ -252,7 +276,10 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
     const controller = new AbortController();
     requestRef.current = controller;
     let timedOut = false;
-    const giveUp = () => { timedOut = true; controller.abort(); };
+    const giveUp = () => {
+      timedOut = true;
+      controller.abort();
+    };
     let timer = setTimeout(giveUp, STALL_MS);
     const stillAlive = () => {
       clearTimeout(timer);
@@ -281,18 +308,21 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
     // only failure the network can be blamed for: any other is a fault of
     // ours, and goes to Sentry.
     let lost = false;
-    const network = <T,>(request: Promise<T>) => request.catch((err: unknown) => {
-      lost = true;
-      throw err;
-    });
+    const network = <T,>(request: Promise<T>) =>
+      request.catch((err: unknown) => {
+        lost = true;
+        throw err;
+      });
 
     try {
-      const response = await network(fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug, message: userMsg, history, ...(parts.length > 0 ? { parts } : {}) }),
-        signal: controller.signal,
-      }));
+      const response = await network(
+        fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug, message: userMsg, history, ...(parts.length > 0 ? { parts } : {}) }),
+          signal: controller.signal,
+        }),
+      );
 
       if (!response.ok) {
         // A 429 is the rate limiter doing its job, not a fault to report.
@@ -361,7 +391,8 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
         if (failed || !fromBox) {
           requestAnimationFrame(() => {
             const at = document.activeElement;
-            if (at === document.body || panelRef.current?.contains(at)) inputRef.current?.focus({ preventScroll: true });
+            if (at === document.body || panelRef.current?.contains(at))
+              inputRef.current?.focus({ preventScroll: true });
           });
         }
       }
@@ -380,7 +411,11 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
 
   return (
     <div ref={panelRef} className={`rules-chat-panel${fresh ? ' rules-chat-panel-fresh' : ''}`}>
-      {scope && <p className="rules-chat-scope" aria-live="polite">{scope}</p>}
+      {scope && (
+        <p className="rules-chat-scope" aria-live="polite">
+          {scope}
+        </p>
+      )}
       <div className="rules-chat-messages" ref={messagesContainerRef}>
         {messages.map((msg, i) => (
           // A notice gets its own key so it mounts fresh and its alert is announced.
@@ -388,19 +423,36 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
             {msg.error ? (
               <div className="rules-chat-bubble rules-chat-error">
                 <p role="alert">{msg.content}</p>
-                <button type="button" className="rules-chat-retry" onClick={() => void ask(input.trim())} disabled={!input.trim() || !online} aria-describedby={online ? undefined : statusId}>
+                <button
+                  type="button"
+                  className="rules-chat-retry"
+                  onClick={() => void ask(input.trim())}
+                  disabled={!input.trim() || !online}
+                  aria-describedby={online ? undefined : statusId}
+                >
                   Retry
                 </button>
               </div>
             ) : (
               <div className="rules-chat-bubble">
-                {msg.role === 'assistant'
-                  ? <CitationContext.Provider value={{ isCitation, onCite }}><Markdown components={ANSWER_COMPONENTS}>{citeLinks?.(msg.content, msg.tab ?? tab) ?? msg.content}</Markdown></CitationContext.Provider>
-                  : msg.content}
+                {msg.role === 'assistant' ? (
+                  <CitationContext.Provider value={{ isCitation, onCite }}>
+                    <Markdown components={ANSWER_COMPONENTS}>
+                      {citeLinks?.(msg.content, msg.tab ?? tab) ?? msg.content}
+                    </Markdown>
+                  </CitationContext.Provider>
+                ) : (
+                  msg.content
+                )}
                 {/* Once the answer is whole, so links don't come and go mid-stream. */}
-                {msg.role === 'assistant' && i > 0 && !(isLoading && i === messages.length - 1) && linksFor?.(msg.content, msg.tab ?? tab).map((l) => (
-                  <Link key={l.to} className="rules-chat-tablink" to={l.to} replace state={l.state}>Open {l.label} <span aria-hidden="true">→</span></Link>
-                ))}
+                {msg.role === 'assistant' &&
+                  i > 0 &&
+                  !(isLoading && i === messages.length - 1) &&
+                  linksFor?.(msg.content, msg.tab ?? tab).map((l) => (
+                    <Link key={l.to} className="rules-chat-tablink" to={l.to} replace state={l.state}>
+                      Open {l.label} <span aria-hidden="true">→</span>
+                    </Link>
+                  ))}
               </div>
             )}
           </div>
@@ -408,7 +460,16 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
         {fresh && starters.length > 0 && (
           <div className="rules-chat-starters" role="group" aria-label="Try asking">
             {starters.map((q) => (
-              <button key={q} type="button" className="rules-chat-starter" onClick={() => void ask(q, false)} disabled={!online} aria-describedby={online ? undefined : statusId}>{q}</button>
+              <button
+                key={q}
+                type="button"
+                className="rules-chat-starter"
+                onClick={() => void ask(q, false)}
+                disabled={!online}
+                aria-describedby={online ? undefined : statusId}
+              >
+                {q}
+              </button>
             ))}
           </div>
         )}
@@ -428,9 +489,14 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
             // Retry for a request that found no network while the browser
             // said it had one (a captive or dead Wi-Fi), which may come back
             // without telling it.
-            action={shown === 'offline' && online && input.trim() ? { label: 'Retry', onClick: () => void ask(input.trim()) } : undefined}
+            action={
+              shown === 'offline' && online && input.trim()
+                ? { label: 'Retry', onClick: () => void ask(input.trim()) }
+                : undefined
+            }
           >
-            {UNAVAILABLE[shown]}{stillWorks && STILL_WORKS}
+            {UNAVAILABLE[shown]}
+            {stillWorks && STILL_WORKS}
           </Notice>
         )}
       </div>
@@ -443,7 +509,11 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
           placeholder="Ask a rules question..."
           disabled={isLoading}
         />
-        <button type="submit" disabled={!input.trim() || isLoading || !online} aria-describedby={online ? undefined : statusId}>
+        <button
+          type="submit"
+          disabled={!input.trim() || isLoading || !online}
+          aria-describedby={online ? undefined : statusId}
+        >
           Send
         </button>
       </form>
@@ -453,9 +523,5 @@ export function RulesChatPanel({ slug, gameName, parts = [], scope, tab, linksFo
 
 export default function RulesChatProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
-  return (
-    <ChatContext.Provider value={{ isOpen, toggle: () => setIsOpen((o) => !o) }}>
-      {children}
-    </ChatContext.Provider>
-  );
+  return <ChatContext.Provider value={{ isOpen, toggle: () => setIsOpen((o) => !o) }}>{children}</ChatContext.Provider>;
 }

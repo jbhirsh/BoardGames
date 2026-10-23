@@ -11,11 +11,17 @@ describe('pageText', () => {
 
 describe('findMatches', () => {
   it('finds every occurrence, ignoring case', () => {
-    expect(findMatches('Outbreak! An outbreak.', 'outbreak')).toEqual([[0, 8], [13, 21]]);
+    expect(findMatches('Outbreak! An outbreak.', 'outbreak')).toEqual([
+      [0, 8],
+      [13, 21],
+    ]);
   });
 
   it('lets a space in the query match any whitespace, or none', () => {
-    expect(findMatches('Research\nstation and researchstation', 'research station')).toEqual([[0, 16], [21, 36]]);
+    expect(findMatches('Research\nstation and researchstation', 'research station')).toEqual([
+      [0, 16],
+      [21, 36],
+    ]);
   });
 
   it('treats the query as text, not a pattern', () => {

@@ -52,8 +52,12 @@ function SubGameRow({ parent, sub }: { parent: string; sub: SubGame }) {
           {kind && <span className={`kind-chip kind-${kind}`}>{kind}</span>}
         </span>
         <span className="sub-meta">
-          <span className="cmeta"><UserIcon /> {sub.players}</span>
-          <span className="cmeta"><ClockIcon /> {sub.dur}</span>
+          <span className="cmeta">
+            <UserIcon /> {sub.players}
+          </span>
+          <span className="cmeta">
+            <ClockIcon /> {sub.dur}
+          </span>
           <DifficultyMeta item={sub} />
           <AwardsBadge itemName={sub.name} awards={sub.awards ?? []} />
         </span>
@@ -66,14 +70,19 @@ function SubGameRow({ parent, sub }: { parent: string; sub: SubGame }) {
               aria-expanded={open}
               aria-controls={moreId}
               aria-label={`${open ? 'Less' : 'More'} about ${sub.name}`}
-              onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen((o) => !o);
+              }}
             >
               {open ? 'Less' : 'More'}
             </button>
             <div id={moreId} className="sub-more" hidden={!open}>
               {open && sub.desc && <p className="sub-desc">{sub.desc}</p>}
               {open && sub.detail && (
-                <div className="sub-detail"><GameDetail sections={sub.detail} /></div>
+                <div className="sub-detail">
+                  <GameDetail sections={sub.detail} />
+                </div>
               )}
             </div>
           </>

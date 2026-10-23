@@ -24,16 +24,36 @@ export interface Rulebook {
 export function rulebooks(game: Game): Rulebook[] {
   const subs = game.subgames ?? [];
   return [
-    ...(game.rules ? [{ label: game.rulesLabel ?? (isDeck(subs) ? 'Overview' : 'Base game'), name: game.name, short: game.short, pdf: game.rules }] : []),
+    ...(game.rules
+      ? [
+          {
+            label: game.rulesLabel ?? (isDeck(subs) ? 'Overview' : 'Base game'),
+            name: game.name,
+            short: game.short,
+            pdf: game.rules,
+          },
+        ]
+      : []),
     ...(game.moreRules ?? []).map((r) => ({
-      part: r.slug, label: r.label, name: `${game.name}: ${r.label}`, short: game.short, pdf: r.pdf,
+      part: r.slug,
+      label: r.label,
+      name: `${game.name}: ${r.label}`,
+      short: game.short,
+      pdf: r.pdf,
     })),
-    ...subs.filter((s) => s.rules).flatMap((s) => [
-      { part: s.slug, label: s.rulesLabel ?? s.name, name: s.name, short: s.short, pdf: s.rules!, kind: s.kind },
-      ...(s.moreRules ?? []).map((r) => ({
-        part: r.slug, label: r.label, name: `${s.name}: ${r.label}`, short: s.short, pdf: r.pdf, kind: s.kind,
-      })),
-    ]),
+    ...subs
+      .filter((s) => s.rules)
+      .flatMap((s) => [
+        { part: s.slug, label: s.rulesLabel ?? s.name, name: s.name, short: s.short, pdf: s.rules!, kind: s.kind },
+        ...(s.moreRules ?? []).map((r) => ({
+          part: r.slug,
+          label: r.label,
+          name: `${s.name}: ${r.label}`,
+          short: s.short,
+          pdf: r.pdf,
+          kind: s.kind,
+        })),
+      ]),
   ];
 }
 
@@ -52,7 +72,10 @@ export function rulebooks(game: Game): Rulebook[] {
  */
 export function chatParts(game: Game, shown: Rulebook): string[] {
   const own = (game.moreRules ?? []).map((r) => r.slug);
-  if (isDeck(game.subgames)) return rulebooks(game).filter((b) => b.kind !== undefined).map((b) => b.part!);
+  if (isDeck(game.subgames))
+    return rulebooks(game)
+      .filter((b) => b.kind !== undefined)
+      .map((b) => b.part!);
   const upTo = own.indexOf(shown.part ?? '');
   if (upTo >= 0) return own.slice(0, upTo + 1);
   if (shown.kind === undefined) return [];
@@ -87,7 +110,10 @@ function numberRuns(labels: string[]): string[] {
   };
   for (const label of labels) {
     const m = /^(.*?)(\d+)$/.exec(label);
-    if (m && run && run.prefix === m[1] && Number(m[2]) === run.last + 1) { run.last += 1; continue; }
+    if (m && run && run.prefix === m[1] && Number(m[2]) === run.last + 1) {
+      run.last += 1;
+      continue;
+    }
     flush();
     if (m) run = { prefix: m[1], first: Number(m[2]), last: Number(m[2]) };
     else out.push(label);
@@ -141,7 +167,12 @@ function seats(t: { min: number; max: number }): string {
 export function starterQuestions(game: Game, book: Rulebook): string[] {
   const subs = game.subgames ?? [];
   if (book.part === undefined) {
-    if (isDeck(subs)) return [`Which of these games work for ${seats(game)}?`, `How do you play ${subs[0].name}?`, `How do you win at ${(subs[1] ?? subs[0]).name}?`];
+    if (isDeck(subs))
+      return [
+        `Which of these games work for ${seats(game)}?`,
+        `How do you play ${subs[0].name}?`,
+        `How do you win at ${(subs[1] ?? subs[0]).name}?`,
+      ];
     return [`How do we set up for ${seats(game)}?`, 'How does a turn go?', 'How do you win?'];
   }
   const sub = subs.find((s) => s.slug === book.part || s.moreRules?.some((r) => r.slug === book.part));

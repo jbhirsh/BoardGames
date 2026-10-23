@@ -52,8 +52,11 @@ describe('loadWordList', () => {
 
   it('answers null when ENABLE cannot load, and tries again next time', async () => {
     let enableDown = true;
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => (
-      String(url).endsWith('enable.txt') && enableDown ? { ok: false, status: 503 } as Response : serve(url)));
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async (url) =>
+        String(url).endsWith('enable.txt') && enableDown ? ({ ok: false, status: 503 } as Response) : serve(url),
+      );
     const { loadWordList } = await import('../client/wordList');
     expect(await loadWordList()).toBeNull();
     enableDown = false;
@@ -62,8 +65,9 @@ describe('loadWordList', () => {
   });
 
   it('answers from ENABLE alone when the additions cannot load', async () => {
-    vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => (
-      String(url).endsWith('additions.txt') ? Promise.reject(new TypeError('Failed to fetch')) : serve(url)));
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) =>
+      String(url).endsWith('additions.txt') ? Promise.reject(new TypeError('Failed to fetch')) : serve(url),
+    );
     const { loadWordList } = await import('../client/wordList');
     const words = await loadWordList();
     expect(words?.has('cat')).toBe(true);
@@ -73,9 +77,12 @@ describe('loadWordList', () => {
   it('gives up on a list that takes more than 10 seconds', async () => {
     vi.useFakeTimers();
     try {
-      vi.spyOn(globalThis, 'fetch').mockImplementation((_url, init) => new Promise((_, reject) => {
-        init!.signal!.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
-      }));
+      vi.spyOn(globalThis, 'fetch').mockImplementation(
+        (_url, init) =>
+          new Promise((_, reject) => {
+            init!.signal!.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+          }),
+      );
       const { loadWordList } = await import('../client/wordList');
       const pending = loadWordList();
       await vi.advanceTimersByTimeAsync(10_000);
@@ -86,9 +93,11 @@ describe('loadWordList', () => {
   });
 });
 
-
 describe('the bundled word lists', () => {
-  const read = (file: string) => readFileSync(join(process.cwd(), 'public/words', file), 'utf8').trim().split('\n');
+  const read = (file: string) =>
+    readFileSync(join(process.cwd(), 'public/words', file), 'utf8')
+      .trim()
+      .split('\n');
   const enable = new Set(read('enable.txt'));
   const additions = read('additions.txt');
 

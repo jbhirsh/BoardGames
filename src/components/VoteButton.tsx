@@ -28,7 +28,9 @@ export default function VoteButton({ itemName, voteCount, voted, onClick, disabl
       onClick={onClick}
       disabled={disabled}
     >
-      <span className="vote-heart" aria-hidden="true">{voted ? '♥' : '♡'}</span>
+      <span className="vote-heart" aria-hidden="true">
+        {voted ? '♥' : '♡'}
+      </span>
       {/* No count until there is one: "Vote · 0" says nobody cares. */}
       <span className="vote-label">{voteCount > 0 ? `${verb} · ${voteCount}` : verb}</span>
     </button>

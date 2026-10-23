@@ -19,7 +19,11 @@ function renderAt(url: string, kind: 'games' | 'wishlist' = 'games') {
   return render(
     <MemoryRouter initialEntries={[url]}>
       <FilterProvider>
-        <section id="collection"><h2 tabIndex={-1} data-focus-target="title">Our Collection</h2></section>
+        <section id="collection">
+          <h2 tabIndex={-1} data-focus-target="title">
+            Our Collection
+          </h2>
+        </section>
         <NoResults kind={kind} />
         <Probe />
       </FilterProvider>

@@ -12,7 +12,7 @@ function renderFilterBar(url = '/') {
       <FilterProvider>
         <FilterBar />
       </FilterProvider>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 
@@ -69,9 +69,11 @@ describe('DurationDropdown', () => {
     renderFilterBar();
     fireEvent.click(getDDButton('Duration'));
     const group = screen.getByRole('radiogroup', { name: 'Time available' });
-    expect(within(group).getAllByRole('radio').map((r) => r.textContent)).toEqual([
-      'Any length', 'Up to 15 min', 'Up to 30 min', 'Up to 60 min',
-    ]);
+    expect(
+      within(group)
+        .getAllByRole('radio')
+        .map((r) => r.textContent),
+    ).toEqual(['Any length', 'Up to 15 min', 'Up to 30 min', 'Up to 60 min']);
     expect(within(group).getByRole('radio', { name: 'Any length' })).toHaveAttribute('aria-checked', 'true');
 
     fireEvent.click(within(group).getByRole('radio', { name: 'Up to 60 min' }));
@@ -98,9 +100,22 @@ describe('PlayersDropdown', () => {
     renderFilterBar();
     fireEvent.click(getDDButton('Players'));
     const group = screen.getByRole('radiogroup', { name: 'Players' });
-    expect(within(group).getAllByRole('radio').map((r) => r.textContent)).toEqual([
-      'Any number', '1 player', '2 players', '3 players', '4 players', '5 players',
-      '6 players', '7 players', '8 players', '9 players', '10+ players',
+    expect(
+      within(group)
+        .getAllByRole('radio')
+        .map((r) => r.textContent),
+    ).toEqual([
+      'Any number',
+      '1 player',
+      '2 players',
+      '3 players',
+      '4 players',
+      '5 players',
+      '6 players',
+      '7 players',
+      '8 players',
+      '9 players',
+      '10+ players',
     ]);
 
     fireEvent.click(within(group).getByRole('radio', { name: '1 player' }));
@@ -237,7 +252,10 @@ describe('SortDropdown', () => {
     renderFilterBar();
     fireEvent.click(getDDButton('A\u2192Z'));
     expect(screen.getAllByRole('radio').map((r) => r.textContent)).toEqual([
-      'Group by Type', 'A\u2192Z', 'Quickest First', 'Longest First',
+      'Group by Type',
+      'A\u2192Z',
+      'Quickest First',
+      'Longest First',
     ]);
     cleanup();
     renderFilterBar('/?c=want');
@@ -314,4 +332,3 @@ describe('Dropdown accessibility', () => {
     expect(document.querySelector('[data-dd="players"]')).not.toBeNull();
   });
 });
-

@@ -2,12 +2,14 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 // App.css's theme blocks, for the token tests: the light :root, the system
-// dark theme and the toggle's dark theme.
+// dark theme and the toggle's dark theme. The toggle's block ends at the
+// first width breakpoint, found whatever the spacing Prettier gives it.
 const css = readFileSync(join(process.cwd(), 'src/App.css'), 'utf8');
+const firstBreakpoint = css.search(/@media\s*\(max-width:\s*900px\)/);
 export const BLOCKS = {
   light: css.slice(0, css.indexOf('/* ══ DARK THEME')),
   'system dark': css.slice(css.indexOf('@media (prefers-color-scheme: dark)'), css.indexOf(':root[data-theme="dark"]')),
-  'toggled dark': css.slice(css.indexOf(':root[data-theme="dark"]'), css.indexOf('@media(max-width:900px)')),
+  'toggled dark': css.slice(css.indexOf(':root[data-theme="dark"]'), firstBreakpoint),
 };
 
 /** The six-digit hex a block gives `--name`. */
@@ -18,7 +20,8 @@ export function token(block: string, name: string): string {
 }
 
 function luminance(hex: string): number {
-  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+  const [r, g, b] = [1, 3, 5]
+    .map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
     .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
@@ -38,8 +41,16 @@ export function rgbToken(block: string, name: string): [number, number, number] 
 
 /** The hex an `rgba(rgb, alpha)` tint composites to over the hex `base`. */
 export function mix(rgb: readonly [number, number, number], alpha: number, base: string): string {
-  return '#' + [1, 3, 5].map((i, k) => Math.round(rgb[k] * alpha + parseInt(base.slice(i, i + 2), 16) * (1 - alpha))
-    .toString(16).padStart(2, '0')).join('');
+  return (
+    '#' +
+    [1, 3, 5]
+      .map((i, k) =>
+        Math.round(rgb[k] * alpha + parseInt(base.slice(i, i + 2), 16) * (1 - alpha))
+          .toString(16)
+          .padStart(2, '0'),
+      )
+      .join('')
+  );
 }
 
 /** Every custom property a block declares, name to value. */

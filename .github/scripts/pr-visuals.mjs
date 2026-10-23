@@ -72,7 +72,10 @@ export function checkPrVisuals({ files, body }) {
 
 /** The check's verdict for the changed files (one per line) and the body. */
 export function report(fileList, body) {
-  const files = fileList.split('\n').map((l) => l.trim()).filter(Boolean);
+  const files = fileList
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
   const result = checkPrVisuals({ files, body });
   if (result.ok) return { code: 0, message: `PR visuals: ok (${result.reason}).` };
   return {

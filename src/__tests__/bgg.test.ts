@@ -1,5 +1,14 @@
 import { describe, it, expect, vi } from 'vitest';
-import { DESC_MAX, MINS_MAX, PLAYERS_MAX, cleanDescription, parseThing, pickSearchId, lookupGame, type FetchLike } from '../../api/_lib/bgg';
+import {
+  DESC_MAX,
+  MINS_MAX,
+  PLAYERS_MAX,
+  cleanDescription,
+  parseThing,
+  pickSearchId,
+  lookupGame,
+  type FetchLike,
+} from '../../api/_lib/bgg';
 
 const THING = `<?xml version="1.0" encoding="utf-8"?>
 <items termsofuse="https://boardgamegeek.com/xmlapi/termsofuse">
@@ -37,8 +46,9 @@ const SEARCH = `<items total="3" termsofuse="x">
 
 describe('cleanDescription', () => {
   it('keeps the whole description, decoding entities and joining paragraphs', () => {
-    expect(cleanDescription('First one.&#10;&#10;Second &amp;mdash; here! Third goes on and on and on.'))
-      .toBe('First one. Second — here! Third goes on and on and on.');
+    expect(cleanDescription('First one.&#10;&#10;Second &amp;mdash; here! Third goes on and on and on.')).toBe(
+      'First one. Second — here! Third goes on and on and on.',
+    );
   });
 
   it('caps at DESC_MAX by default', () => {
@@ -46,7 +56,9 @@ describe('cleanDescription', () => {
   });
 
   it('keeps decimals whole and a trailing unpunctuated sentence', () => {
-    expect(cleanDescription('Version 2.0 of the classic game. It plays in about 1.5 hours')).toBe('Version 2.0 of the classic game. It plays in about 1.5 hours');
+    expect(cleanDescription('Version 2.0 of the classic game. It plays in about 1.5 hours')).toBe(
+      'Version 2.0 of the classic game. It plays in about 1.5 hours',
+    );
   });
 
   it('leaves an out-of-range numeric entity as written instead of throwing', () => {
@@ -55,12 +67,17 @@ describe('cleanDescription', () => {
 
   it('shortens an over-long description to the whole sentences that fit, never cutting one', () => {
     const first = 'Skull & Roses is the quintessence of bluffing.';
-    expect(cleanDescription(`${first} Each player plays a face-down card, then bids on how many to flip.`, 60)).toBe(first);
+    expect(cleanDescription(`${first} Each player plays a face-down card, then bids on how many to flip.`, 60)).toBe(
+      first,
+    );
   });
 
   it('decodes named entities, double-encoded as BGG sends them, and composes accented letters', () => {
-    expect(cleanDescription('Your card&amp;rsquo;s colour isn&amp;rsquo;t set&amp;hellip; &amp;ldquo;Caf&amp;eacute;&amp;rdquo; &amp;Uuml;ber.'))
-      .toBe('Your card\u2019s colour isn\u2019t set\u2026 \u201cCaf\u00e9\u201d \u00dcber.');
+    expect(
+      cleanDescription(
+        'Your card&amp;rsquo;s colour isn&amp;rsquo;t set&amp;hellip; &amp;ldquo;Caf&amp;eacute;&amp;rdquo; &amp;Uuml;ber.',
+      ),
+    ).toBe('Your card\u2019s colour isn\u2019t set\u2026 \u201cCaf\u00e9\u201d \u00dcber.');
     // Unknown names, and letter-plus-mark pairs that don't compose, stay as written.
     expect(cleanDescription('&bogus; &qacute; &eacutex;')).toBe('&bogus; &qacute; &eacutex;');
   });
@@ -93,12 +110,14 @@ describe('cleanDescription', () => {
   });
 
   it('drops inline tags without leaving a space, and parts words at block tags', () => {
-    expect(cleanDescription('In &lt;i&gt;Inkwell&lt;/i&gt;, ink.&lt;br/&gt;&lt;br/&gt;Next&lt;p&gt;line&lt;/p&gt;'))
-      .toBe('In Inkwell, ink. Next line');
+    expect(
+      cleanDescription('In &lt;i&gt;Inkwell&lt;/i&gt;, ink.&lt;br/&gt;&lt;br/&gt;Next&lt;p&gt;line&lt;/p&gt;'),
+    ).toBe('In Inkwell, ink. Next line');
   });
 
   it('leaves no tag behind when removing one would form another', () => {
-    for (const raw of ['a&lt;scr&lt;b&gt;ipt&gt;b', '&lt;&lt;b&gt;script&gt;x', '&lt;i&lt;i&gt;&gt;x']) expect(cleanDescription(raw)).not.toContain('<');
+    for (const raw of ['a&lt;scr&lt;b&gt;ipt&gt;b', '&lt;&lt;b&gt;script&gt;x', '&lt;i&lt;i&gt;&gt;x'])
+      expect(cleanDescription(raw)).not.toContain('<');
   });
 
   it('keeps every sentence that fits', () => {
@@ -128,28 +147,39 @@ describe('parseThing', () => {
   });
 
   it('defaults sensibly when fields are missing and tags short games quick-play', () => {
-    const d = parseThing('<items><item type="boardgame" id="7"><name type="primary" value="Tiny"/><playingtime value="10"/></item></items>')!;
+    const d = parseThing(
+      '<items><item type="boardgame" id="7"><name type="primary" value="Tiny"/><playingtime value="10"/></item></items>',
+    )!;
     expect(d).toMatchObject({ min: 1, max: 1, mins: 10, desc: '', year: undefined });
     expect(d.kw).toEqual(['quick-play']);
   });
 
-  it("treats BGG's value=\"0\" sentinels as unknown", () => {
-    const d = parseThing('<items><item type="boardgame" id="7"><name type="primary" value="Obscure"/><minplayers value="0"/><maxplayers value="0"/><yearpublished value="0"/></item></items>')!;
+  it('treats BGG\'s value="0" sentinels as unknown', () => {
+    const d = parseThing(
+      '<items><item type="boardgame" id="7"><name type="primary" value="Obscure"/><minplayers value="0"/><maxplayers value="0"/><yearpublished value="0"/></item></items>',
+    )!;
     expect(d).toMatchObject({ min: 1, max: 1, year: undefined });
   });
 
   it('reads rank names regardless of attribute order', () => {
-    const d = parseThing('<items><item type="boardgame" id="7"><name type="primary" value="X"/><statistics><ratings><ranks><rank type="family" id="5497" friendlyname="Strategy Game Rank" name="strategygames" value="22"/></ranks></ratings></statistics></item></items>')!;
+    const d = parseThing(
+      '<items><item type="boardgame" id="7"><name type="primary" value="X"/><statistics><ratings><ranks><rank type="family" id="5497" friendlyname="Strategy Game Rank" name="strategygames" value="22"/></ranks></ratings></statistics></item></items>',
+    )!;
     expect(d.kw).toEqual(['strategy']);
   });
 
   const thing = (inner: string) => parseThing(`<items><item type="boardgame" id="7">${inner}</item></items>`)!;
 
   it('caps players and minutes at what an entry can hold, so an add of the preview passes', () => {
-    const d = parseThing('<items><item type="boardgame" id="7"><name type="primary" value="Crowd"/><description>Every&#173;one plays.</description><minplayers value="3"/><maxplayers value="100"/><playingtime value="720"/></item></items>')!;
+    const d = parseThing(
+      '<items><item type="boardgame" id="7"><name type="primary" value="Crowd"/><description>Every&#173;one plays.</description><minplayers value="3"/><maxplayers value="100"/><playingtime value="720"/></item></items>',
+    )!;
     expect(d).toMatchObject({ min: 3, max: PLAYERS_MAX, mins: MINS_MAX, desc: 'Everyone plays.' });
     // A minimum past the cap comes down with it, so min never exceeds max.
-    expect(thing('<minplayers value="150"/><maxplayers value="999"/>')).toMatchObject({ min: PLAYERS_MAX, max: PLAYERS_MAX });
+    expect(thing('<minplayers value="150"/><maxplayers value="999"/>')).toMatchObject({
+      min: PLAYERS_MAX,
+      max: PLAYERS_MAX,
+    });
     expect(thing(`<maxplaytime value="${MINS_MAX + 1}"/>`).mins).toBe(MINS_MAX);
     expect(thing(`<playingtime value="${MINS_MAX}"/>`).mins).toBe(MINS_MAX);
     expect(thing(`<maxplayers value="${PLAYERS_MAX}"/>`).max).toBe(PLAYERS_MAX);
@@ -172,9 +202,11 @@ describe('parseThing', () => {
     expect(thing('<playingtime value="16"/>').kw).toEqual([]);
   });
 
-  it('keeps the thumbnail URL only when it is an https link on BGG\'s image CDN', () => {
+  it("keeps the thumbnail URL only when it is an https link on BGG's image CDN", () => {
     expect(parseThing(THING)?.img).toBe('https://cf.geekdo-images.com/x.jpg');
-    expect(thing('<thumbnail> https://cf.geekdo-images.com/y.png </thumbnail>').img).toBe('https://cf.geekdo-images.com/y.png');
+    expect(thing('<thumbnail> https://cf.geekdo-images.com/y.png </thumbnail>').img).toBe(
+      'https://cf.geekdo-images.com/y.png',
+    );
     expect(thing('<thumbnail>http://insecure.example/x.jpg</thumbnail>').img).toBeUndefined();
     // Only BGG's image CDN, which is all an entry's box art may come from.
     expect(thing('<thumbnail>https://evil.example/x.jpg</thumbnail>').img).toBeUndefined();
@@ -251,7 +283,11 @@ describe('lookupGame', () => {
     const statuses = [202, 200, 200, 200];
     const bodies = ['', '<items total="0"></items>', SEARCH, THING];
     let i = 0;
-    const fetchLike: FetchLike = vi.fn(async () => { const r = respond(statuses[i], bodies[i]); i++; return r; });
+    const fetchLike: FetchLike = vi.fn(async () => {
+      const r = respond(statuses[i], bodies[i]);
+      i++;
+      return r;
+    });
     const p = lookupGame('WINGSPAN', TOKEN, fetchLike);
     await vi.runAllTimersAsync();
     const r = await p;
@@ -270,7 +306,10 @@ describe('lookupGame', () => {
   it('retries a persistent 202 exactly once per request when time allows, then says BGG did not answer', async () => {
     vi.useFakeTimers();
     const calls: string[] = [];
-    const fetchLike: FetchLike = vi.fn(async (url: string) => { calls.push(url); return respond(202); });
+    const fetchLike: FetchLike = vi.fn(async (url: string) => {
+      calls.push(url);
+      return respond(202);
+    });
     const p = lookupGame('Wingspan', TOKEN, fetchLike, 60_000);
     await vi.runAllTimersAsync();
     const r = await p;
@@ -329,9 +368,13 @@ describe('lookupGame', () => {
   });
 
   it('reports a refusal from the loose search or the thing request too', async () => {
-    const loose: FetchLike = vi.fn(async (url: string) => (url.includes('exact=1') ? respond(200, '<items total="0"></items>') : respond(401)));
+    const loose: FetchLike = vi.fn(async (url: string) =>
+      url.includes('exact=1') ? respond(200, '<items total="0"></items>') : respond(401),
+    );
     expect(await lookupGame('Wingspan', TOKEN, loose)).toEqual({ outcome: 'refused', status: 401 });
-    const thing: FetchLike = vi.fn(async (url: string) => (url.includes('/thing?') ? respond(403) : respond(200, SEARCH)));
+    const thing: FetchLike = vi.fn(async (url: string) =>
+      url.includes('/thing?') ? respond(403) : respond(200, SEARCH),
+    );
     expect(await lookupGame('Wingspan', TOKEN, thing)).toEqual({ outcome: 'refused', status: 403 });
   });
 
@@ -348,7 +391,13 @@ describe('lookupGame', () => {
 
   it('turns a network failure or a timeout into unavailable, keeping the cause', async () => {
     const down = new TypeError('fetch failed');
-    const r = await lookupGame('Wingspan', TOKEN, vi.fn(async () => { throw down; }));
+    const r = await lookupGame(
+      'Wingspan',
+      TOKEN,
+      vi.fn(async () => {
+        throw down;
+      }),
+    );
     expect(r).toEqual({ outcome: 'unavailable', cause: down });
     const thingFails: FetchLike = vi.fn(async (url: string) => {
       if (url.includes('/thing?')) throw new DOMException('timed out', 'TimeoutError');
@@ -358,14 +407,30 @@ describe('lookupGame', () => {
   });
 
   it('decides on the loose search when the exact one fails', async () => {
-    const fetchLike: FetchLike = vi.fn(async (url: string) => (url.includes('exact=1') ? respond(500) : respond(200, '<items total="0"></items>')));
+    const fetchLike: FetchLike = vi.fn(async (url: string) =>
+      url.includes('exact=1') ? respond(500) : respond(200, '<items total="0"></items>'),
+    );
     expect(await lookupGame('Wingspan', TOKEN, fetchLike)).toEqual({ outcome: 'no-match' });
   });
 
   it('says no match when nothing matches the typed name or the thing has no item', async () => {
-    expect(await lookupGame('x', TOKEN, vi.fn(async () => respond(200, '<items total="0"></items>')))).toEqual({ outcome: 'no-match' });
-    expect(await lookupGame('Wingspan Oceania', TOKEN, vi.fn(async () => respond(200, SEARCH)))).toEqual({ outcome: 'no-match' });
-    const empty: FetchLike = vi.fn(async (url: string) => respond(200, url.includes('/thing?') ? '<items></items>' : SEARCH));
+    expect(
+      await lookupGame(
+        'x',
+        TOKEN,
+        vi.fn(async () => respond(200, '<items total="0"></items>')),
+      ),
+    ).toEqual({ outcome: 'no-match' });
+    expect(
+      await lookupGame(
+        'Wingspan Oceania',
+        TOKEN,
+        vi.fn(async () => respond(200, SEARCH)),
+      ),
+    ).toEqual({ outcome: 'no-match' });
+    const empty: FetchLike = vi.fn(async (url: string) =>
+      respond(200, url.includes('/thing?') ? '<items></items>' : SEARCH),
+    );
     expect(await lookupGame('Wingspan', TOKEN, empty)).toEqual({ outcome: 'no-match' });
   });
 

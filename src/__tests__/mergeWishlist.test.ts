@@ -4,21 +4,22 @@ import { mergeWishlist } from '../utils/mergeWishlist';
 
 // Merging reads names alone, so a stored entry here is one with a `source`
 // and nothing else a stored one carries.
-const item = (name: string, over: Partial<WishlistItem> = {}) => ({
-  id: name.toLowerCase().replace(/\W+/g, '-'),
-  name,
-  desc: `About ${name}.`,
-  yt: `how to play ${name}`,
-  players: '2–4',
-  min: 2,
-  max: 4,
-  dur: '30 min',
-  mins: 30,
-  kw: [],
-  type: 'party',
-  awards: [],
-  ...over,
-}) as WishlistItem;
+const item = (name: string, over: Partial<WishlistItem> = {}) =>
+  ({
+    id: name.toLowerCase().replace(/\W+/g, '-'),
+    name,
+    desc: `About ${name}.`,
+    yt: `how to play ${name}`,
+    players: '2–4',
+    min: 2,
+    max: 4,
+    dur: '30 min',
+    mins: 30,
+    kw: [],
+    type: 'party',
+    awards: [],
+    ...over,
+  }) as WishlistItem;
 
 describe('mergeWishlist', () => {
   it('keeps both lists when nothing overlaps, compiled entries first', () => {

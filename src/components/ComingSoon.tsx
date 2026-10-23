@@ -19,7 +19,9 @@ export default function ComingSoon({ hidden = false }: { hidden?: boolean }) {
 
   return (
     <section className="coming-soon" hidden={hidden} aria-labelledby={headingId}>
-      <h2 className="group-hd" id={headingId}>Coming Soon</h2>
+      <h2 className="group-hd" id={headingId}>
+        Coming Soon
+      </h2>
       <div className="soon-grid">
         {games.map((g) => (
           <GameCard key={g.name} game={g} />

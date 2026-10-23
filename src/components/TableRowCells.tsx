@@ -39,7 +39,18 @@ interface CellsProps {
  * the row click and any data attributes.
  */
 export default function TableRowCells({
-  name, players, dur, mins, short, kw, awards, subTag, difficulty, extra, isOpen, onToggle,
+  name,
+  players,
+  dur,
+  mins,
+  short,
+  kw,
+  awards,
+  subTag,
+  difficulty,
+  extra,
+  isOpen,
+  onToggle,
 }: CellsProps) {
   const { lit } = useItemFilter();
   const dispatch = useFilterDispatch();
@@ -62,7 +73,9 @@ export default function TableRowCells({
       <td className="col-name">
         <div className="col-name-wrap">
           <span className="col-name">{name}</span>
-          <span className="mobile-short">{short} {badges}</span>
+          <span className="mobile-short">
+            {short} {badges}
+          </span>
         </div>
       </td>
       <td className="col-hide col-players-h col-players">{players}</td>
@@ -84,11 +97,18 @@ export default function TableRowCells({
           {label ?? (
             // BoardGameGeek doesn't rate a few party games. A dash says so,
             // where an empty cell read as something that failed to render.
-            <><span className="diff-none" aria-hidden="true">–</span><span className="sr-only">Not rated on BoardGameGeek</span></>
+            <>
+              <span className="diff-none" aria-hidden="true">
+                –
+              </span>
+              <span className="sr-only">Not rated on BoardGameGeek</span>
+            </>
           )}
         </td>
       )}
-      <td className="col-hide col-short">{short} {badges}</td>
+      <td className="col-hide col-short">
+        {short} {badges}
+      </td>
       <td className="col-hide col-tags col-kw">
         {sortedKw(kw).map((k) => (
           <KeywordPill
@@ -107,7 +127,10 @@ export default function TableRowCells({
           data-focus-target="item"
           aria-expanded={isOpen}
           aria-label={`${isOpen ? 'Hide' : 'Show'} details for ${name}`}
-          onClick={(e) => { e.stopPropagation(); onToggle(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+          }}
         >
           <ChevronIcon />
         </button>
@@ -132,9 +155,7 @@ export function TableRowExpand({ colSpan, isOpen, children }: ExpandProps) {
     <tr className="row-expand">
       <td colSpan={colSpan} style={{ padding: 0 }}>
         <div className="row-expand-inner" inert={!isOpen}>
-          <div className="row-expand-content">
-            {children}
-          </div>
+          <div className="row-expand-content">{children}</div>
         </div>
       </td>
     </tr>

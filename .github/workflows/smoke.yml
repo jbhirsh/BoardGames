@@ -25,7 +25,7 @@ name: Deployment Smoke Test
 on:
   deployment_status:
   schedule:
-    - cron: '17 5,17 * * *'
+    - cron: "17 5,17 * * *"
   workflow_dispatch:
 
 # This job only curls public URLs and reads one secret; it needs no repo token.

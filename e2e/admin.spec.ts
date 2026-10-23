@@ -7,29 +7,42 @@ import { test, expect, nextPost } from './fixtures';
 // test gives it, for every name or name by name.
 
 const FOUND = {
-  bggId: 385761, name: 'Faraway', year: 2023, min: 2, max: 6, mins: 30,
-  desc: 'Explore Alula backwards.', kw: ['card-game', 'quick-play'],
+  bggId: 385761,
+  name: 'Faraway',
+  year: 2023,
+  min: 2,
+  max: 6,
+  mins: 30,
+  desc: 'Explore Alula backwards.',
+  kw: ['card-game', 'quick-play'],
 };
 
 type PreviewStub = unknown | ((game: string) => unknown);
 
 async function signInWithPreview(page: Page, preview: PreviewStub, pending: unknown[] = []): Promise<void> {
-  await page.route((url) => url.pathname === '/api/auth', (route) =>
-    route.request().method() === 'GET' ? route.fulfill({ json: { admin: true } }) : route.fallback(),
+  await page.route(
+    (url) => url.pathname === '/api/auth',
+    (route) => (route.request().method() === 'GET' ? route.fulfill({ json: { admin: true } }) : route.fallback()),
   );
-  await page.route((url) => url.pathname === '/api/suggestions', (route) => {
-    const request = route.request();
-    if (request.method() === 'GET' && new URL(request.url()).searchParams.get('action') === 'pending') {
-      return route.fulfill({ json: { items: pending } });
-    }
-    if (request.method() === 'POST') {
-      const body = request.postDataJSON() as { action?: string; game?: string; decision?: string; id?: string };
-      if (body.action === 'preview') return route.fulfill({ json: typeof preview === 'function' ? preview(body.game ?? '') : preview });
-      if (body.decision === 'approve') return route.fulfill({ json: { item: { id: body.id, game: body.game, status: 'approved' } } });
-      if (body.action === 'add') return route.fulfill({ status: 201, json: { item: { id: 'sug-0e2eadd0e2ea', game: body.game } } });
-    }
-    return route.fallback();
-  });
+  await page.route(
+    (url) => url.pathname === '/api/suggestions',
+    (route) => {
+      const request = route.request();
+      if (request.method() === 'GET' && new URL(request.url()).searchParams.get('action') === 'pending') {
+        return route.fulfill({ json: { items: pending } });
+      }
+      if (request.method() === 'POST') {
+        const body = request.postDataJSON() as { action?: string; game?: string; decision?: string; id?: string };
+        if (body.action === 'preview')
+          return route.fulfill({ json: typeof preview === 'function' ? preview(body.game ?? '') : preview });
+        if (body.decision === 'approve')
+          return route.fulfill({ json: { item: { id: body.id, game: body.game, status: 'approved' } } });
+        if (body.action === 'add')
+          return route.fulfill({ status: 201, json: { item: { id: 'sug-0e2eadd0e2ea', game: body.game } } });
+      }
+      return route.fallback();
+    },
+  );
 }
 
 test('the owner sees what BoardGameGeek found before adding a game', async ({ page }) => {
@@ -46,7 +59,11 @@ test('the owner sees what BoardGameGeek found before adding a game', async ({ pa
 
   const added = nextPost(page, '/api/suggestions');
   await form.getByRole('button', { name: 'Add to wishlist' }).click();
-  expect((await added).postDataJSON()).toMatchObject({ action: 'add', game: 'Faraway', details: { bggId: 385761, mins: 30 } });
+  expect((await added).postDataJSON()).toMatchObject({
+    action: 'add',
+    game: 'Faraway',
+    details: { bggId: 385761, mins: 30 },
+  });
   await expect(form.getByRole('status')).toHaveText('Faraway is on the wishlist.');
 });
 
@@ -64,10 +81,18 @@ test('the owner is told on the form when BoardGameGeek has no match, and can add
   await expect(form.getByRole('status')).toHaveText('Magical Athlete is on the wishlist.');
 });
 
-test('the owner corrects a misspelt suggestion, sees what BoardGameGeek has for it, and approves it', async ({ page }) => {
+test('the owner corrects a misspelt suggestion, sees what BoardGameGeek has for it, and approves it', async ({
+  page,
+}) => {
   const ARKHAM = {
-    bggId: 15987, name: 'Arkham Horror', year: 2005, min: 1, max: 8, mins: 240,
-    desc: 'Investigate the mysteries of Arkham.', kw: ['cooperative', 'thematic'],
+    bggId: 15987,
+    name: 'Arkham Horror',
+    year: 2005,
+    min: 1,
+    max: 8,
+    mins: 240,
+    desc: 'Investigate the mysteries of Arkham.',
+    kw: ['cooperative', 'thematic'],
   };
   const byName: Record<string, unknown> = {
     Faraway: { outcome: 'found', details: FOUND },
@@ -87,8 +112,17 @@ test('the owner corrects a misspelt suggestion, sees what BoardGameGeek has for 
   const approvedFaraway = nextPost(page, '/api/suggestions');
   await queue.getByRole('button', { name: 'Approve Faraway' }).click();
   expect((await approvedFaraway).postDataJSON()).toEqual({
-    decision: 'approve', id: 'sug-0e2efar00001',
-    details: { bggId: 385761, year: 2023, min: 2, max: 6, mins: 30, desc: 'Explore Alula backwards.', kw: ['card-game', 'quick-play'] },
+    decision: 'approve',
+    id: 'sug-0e2efar00001',
+    details: {
+      bggId: 385761,
+      year: 2023,
+      min: 2,
+      max: 6,
+      mins: 30,
+      desc: 'Explore Alula backwards.',
+      kw: ['card-game', 'quick-play'],
+    },
   });
   await expect(queue.getByRole('textbox', { name: "Game name for Sam's suggestion “Faraway”" })).toBeHidden();
 
@@ -106,8 +140,18 @@ test('the owner corrects a misspelt suggestion, sees what BoardGameGeek has for 
   // Approve is named by the corrected name now.
   await queue.getByRole('button', { name: 'Approve Arkham Horror' }).click();
   expect((await approved).postDataJSON()).toEqual({
-    decision: 'approve', id: 'sug-0e2earkh0001', game: 'Arkham Horror',
-    details: { bggId: 15987, year: 2005, min: 1, max: 8, mins: 240, desc: 'Investigate the mysteries of Arkham.', kw: ['cooperative', 'thematic'] },
+    decision: 'approve',
+    id: 'sug-0e2earkh0001',
+    game: 'Arkham Horror',
+    details: {
+      bggId: 15987,
+      year: 2005,
+      min: 1,
+      max: 8,
+      mins: 240,
+      desc: 'Investigate the mysteries of Arkham.',
+      kw: ['cooperative', 'thematic'],
+    },
   });
   await expect(queue.getByText('Nothing waiting.')).toBeVisible();
 });

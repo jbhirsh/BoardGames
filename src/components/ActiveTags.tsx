@@ -17,44 +17,27 @@ export default function ActiveTags() {
   return (
     <div className={`atags${hasAny ? ' show' : ''}`}>
       {hasDuration && (
-        <button
-          className="atag"
-          onClick={() => dispatch({ type: 'SET_DURATION', payload: 'all' })}
-        >
+        <button className="atag" onClick={() => dispatch({ type: 'SET_DURATION', payload: 'all' })}>
           {DUR_LABELS[state.duration]} {'\u2715'}
         </button>
       )}
       {hasPlayers && (
-        <button
-          className="atag"
-          onClick={() => dispatch({ type: 'SET_PLAYERS', payload: 0 })}
-        >
+        <button className="atag" onClick={() => dispatch({ type: 'SET_PLAYERS', payload: 0 })}>
           {playersLabel(state.players)} {'\u2715'}
         </button>
       )}
       {[...state.keywords].map((kw: KeywordId) => (
-        <button
-          key={kw}
-          className="atag"
-          onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: kw })}
-        >
+        <button key={kw} className="atag" onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: kw })}>
           {KW[kw]} {'\u2715'}
         </button>
       ))}
       {hasSearch && (
-        <button
-          className="atag"
-          onClick={() => dispatch({ type: 'SET_SEARCH', payload: '' })}
-        >
+        <button className="atag" onClick={() => dispatch({ type: 'SET_SEARCH', payload: '' })}>
           &quot;{state.search}&quot; {'\u2715'}
         </button>
       )}
       {hasAny && (
-        <button
-          type="button"
-          className="share-link"
-          onClick={() => copy(buildShareUrl(state, window.location.origin))}
-        >
+        <button type="button" className="share-link" onClick={() => copy(buildShareUrl(state, window.location.origin))}>
           {copied ? 'Copied!' : 'Share link'}
         </button>
       )}

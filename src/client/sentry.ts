@@ -40,12 +40,18 @@ let failedAt = -Infinity;
 
 function onError(event: ErrorEvent): void {
   const error: unknown = event.error ?? event.message;
-  report((s) => s.captureException(error, { mechanism: { handled: false, type: 'auto.browser.global_handlers.onerror' } }));
+  report((s) =>
+    s.captureException(error, { mechanism: { handled: false, type: 'auto.browser.global_handlers.onerror' } }),
+  );
 }
 
 function onRejection(event: PromiseRejectionEvent): void {
   const reason: unknown = event.reason;
-  report((s) => s.captureException(reason, { mechanism: { handled: false, type: 'auto.browser.global_handlers.onunhandledrejection' } }));
+  report((s) =>
+    s.captureException(reason, {
+      mechanism: { handled: false, type: 'auto.browser.global_handlers.onunhandledrejection' },
+    }),
+  );
 }
 
 /** Fetches the SDK, once, and sends what was queued; not again soon after a failure. */

@@ -1,12 +1,26 @@
 export type DurationCategory = 'quick' | 'medium' | 'long';
 export type GroupId = 'social' | 'word' | 'party' | 'strat' | 'coop';
 export type KeywordId =
-  | 'social' | 'bluffing' | 'deduction'
-  | 'strategy' | 'negotiation' | 'abstract' | 'deck-building'
-  | 'cooperative' | 'team'
-  | 'party' | 'adult' | 'active' | 'creative'
-  | 'card-game' | 'word'
-  | 'family' | 'classic' | 'thematic' | 'portable' | 'quick-play';
+  | 'social'
+  | 'bluffing'
+  | 'deduction'
+  | 'strategy'
+  | 'negotiation'
+  | 'abstract'
+  | 'deck-building'
+  | 'cooperative'
+  | 'team'
+  | 'party'
+  | 'adult'
+  | 'active'
+  | 'creative'
+  | 'card-game'
+  | 'word'
+  | 'family'
+  | 'classic'
+  | 'thematic'
+  | 'portable'
+  | 'quick-play';
 
 /**
  * What a game inside another one is: an expansion adds rules or pieces, an

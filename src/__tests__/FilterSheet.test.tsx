@@ -10,7 +10,9 @@ import { stubMatchMedia } from './helpers/stubMatchMedia';
 
 function Probe() {
   const { state } = useFilter();
-  return <output>{`${state.duration}|${state.players}|${[...state.keywords].join(',')}|${state.baseSort}|${state.keywordMode}|${state.search}`}</output>;
+  return (
+    <output>{`${state.duration}|${state.players}|${[...state.keywords].join(',')}|${state.baseSort}|${state.keywordMode}|${state.search}`}</output>
+  );
 }
 
 function renderBar(url = '/') {
@@ -57,8 +59,11 @@ describe('the filter bar on a phone', () => {
     fireEvent.click(filtersButton());
     expect(sheet()).toHaveAttribute('aria-modal', 'true');
     expect(sheet()).toHaveFocus();
-    expect(within(sheet()).getAllByRole('heading', { level: 3 }).map((h) => h.textContent))
-      .toEqual(['Time', 'Players', 'Keywords', 'Sort']);
+    expect(
+      within(sheet())
+        .getAllByRole('heading', { level: 3 })
+        .map((h) => h.textContent),
+    ).toEqual(['Time', 'Players', 'Keywords', 'Sort']);
     expect(within(sheet()).getByRole('button', { name: `Show ${GAMES.length} games` })).toBeInTheDocument();
     // Nothing to clear yet.
     expect(within(sheet()).queryByRole('button', { name: 'Clear all' })).not.toBeInTheDocument();

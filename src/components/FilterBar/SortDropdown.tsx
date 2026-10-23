@@ -13,13 +13,7 @@ export default function SortDropdown({ isOpen, onToggle }: Props) {
   const currentLabel = SORT_OPTIONS.find((o) => o.value === state.baseSort)?.label ?? 'Sort';
 
   return (
-    <Dropdown
-      id="sort"
-      label={currentLabel}
-      isActive={false}
-      isOpen={isOpen}
-      onToggle={onToggle}
-    >
+    <Dropdown id="sort" label={currentLabel} isActive={false} isOpen={isOpen} onToggle={onToggle}>
       <SortOptions onPicked={onToggle} />
     </Dropdown>
   );

@@ -5,13 +5,28 @@ import InstantRouteScroll from '../components/InstantRouteScroll';
 
 /** The app's shell: InstantRouteScroll, then ScrollRestoration, over a list and a rules page. */
 function renderShell() {
-  const router = createMemoryRouter([{
-    element: <><InstantRouteScroll /><ScrollRestoration /><Outlet /></>,
-    children: [
-      { path: '/', element: <Link to="/rules/catan">Catan rules</Link> },
-      { path: '/rules/:slug', element: <button type="button" onClick={() => router.navigate(-1)}>Back</button> },
-    ],
-  }]);
+  const router = createMemoryRouter([
+    {
+      element: (
+        <>
+          <InstantRouteScroll />
+          <ScrollRestoration />
+          <Outlet />
+        </>
+      ),
+      children: [
+        { path: '/', element: <Link to="/rules/catan">Catan rules</Link> },
+        {
+          path: '/rules/:slug',
+          element: (
+            <button type="button" onClick={() => router.navigate(-1)}>
+              Back
+            </button>
+          ),
+        },
+      ],
+    },
+  ]);
   render(<RouterProvider router={router} />);
   return router;
 }
@@ -22,13 +37,19 @@ describe('InstantRouteScroll', () => {
   const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {
     behaviours.push(document.documentElement.style.scrollBehavior);
   });
-  afterEach(() => { behaviours.length = 0; });
-  afterAll(() => { scrollTo.mockRestore(); });
+  afterEach(() => {
+    behaviours.length = 0;
+  });
+  afterAll(() => {
+    scrollTo.mockRestore();
+  });
 
   it('moves to a new page at once rather than gliding to its top', () => {
     renderShell();
     behaviours.length = 0;
-    act(() => { fireEvent.click(screen.getByRole('link', { name: 'Catan rules' })); });
+    act(() => {
+      fireEvent.click(screen.getByRole('link', { name: 'Catan rules' }));
+    });
     expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument();
     expect(behaviours).toEqual(['auto']);
     // Smooth again for the page's own jumps once it is in place.
@@ -37,9 +58,13 @@ describe('InstantRouteScroll', () => {
 
   it('puts the list back at once on Back rather than gliding there from the top', () => {
     renderShell();
-    act(() => { fireEvent.click(screen.getByRole('link', { name: 'Catan rules' })); });
+    act(() => {
+      fireEvent.click(screen.getByRole('link', { name: 'Catan rules' }));
+    });
     behaviours.length = 0;
-    act(() => { fireEvent.click(screen.getByRole('button', { name: 'Back' })); });
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    });
     expect(screen.getByRole('link', { name: 'Catan rules' })).toBeInTheDocument();
     expect(behaviours).toEqual(['auto']);
     expect(document.documentElement.style.scrollBehavior).toBe('');

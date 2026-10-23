@@ -29,7 +29,13 @@ export default function WishlistListView({ groups, counts, myVotes, onVote, disa
   return (
     <div className="table-wrap">
       <table className="games-list">
-        <GamesTableHead extra={<th className="col-vote"><span className="sr-only">Votes</span></th>} />
+        <GamesTableHead
+          extra={
+            <th className="col-vote">
+              <span className="sr-only">Votes</span>
+            </th>
+          }
+        />
         <tbody>
           <GroupedRows
             groups={groups}

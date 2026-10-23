@@ -37,20 +37,34 @@ describe('useAuthState', () => {
 
     fetchSpy.mockResolvedValueOnce(jsonResponse({ ok: true }));
     expect(await result.current.requestLink('jess@example.com')).toEqual({ ok: true });
-    expect(fetchSpy).toHaveBeenLastCalledWith('/api/auth', expect.objectContaining({
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'jess@example.com' }),
-    }));
+    expect(fetchSpy).toHaveBeenLastCalledWith(
+      '/api/auth',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'jess@example.com' }),
+      }),
+    );
 
     fetchSpy.mockResolvedValueOnce(jsonResponse({ error: 'Sign-in is not set up yet' }, false));
     expect(await result.current.requestLink('x@y.z')).toEqual({ ok: false, error: 'Sign-in is not set up yet' });
 
-    fetchSpy.mockResolvedValueOnce({ ok: false, json: async () => { throw new Error('no body'); } } as unknown as Response);
-    expect(await result.current.requestLink('x@y.z')).toEqual({ ok: false, error: 'Something went wrong. Try again in a minute.' });
+    fetchSpy.mockResolvedValueOnce({
+      ok: false,
+      json: async () => {
+        throw new Error('no body');
+      },
+    } as unknown as Response);
+    expect(await result.current.requestLink('x@y.z')).toEqual({
+      ok: false,
+      error: 'Something went wrong. Try again in a minute.',
+    });
 
     fetchSpy.mockRejectedValueOnce(new Error('offline'));
-    expect(await result.current.requestLink('x@y.z')).toEqual({ ok: false, error: 'Something went wrong. Try again in a minute.' });
+    expect(await result.current.requestLink('x@y.z')).toEqual({
+      ok: false,
+      error: 'Something went wrong. Try again in a minute.',
+    });
   });
 
   it('logs out through the API and drops admin mode even if that call fails', async () => {
@@ -61,9 +75,12 @@ describe('useAuthState', () => {
     fetchSpy.mockRejectedValueOnce(new Error('offline'));
     await act(() => result.current.logout());
     expect(result.current.admin).toBe(false);
-    expect(fetchSpy).toHaveBeenLastCalledWith('/api/auth', expect.objectContaining({
-      method: 'POST',
-      body: JSON.stringify({ action: 'logout' }),
-    }));
+    expect(fetchSpy).toHaveBeenLastCalledWith(
+      '/api/auth',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ action: 'logout' }),
+      }),
+    );
   });
 });

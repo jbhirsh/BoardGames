@@ -1,7 +1,9 @@
 import { test, expect, nextPost, ANON_ID, SUGGESTION } from './fixtures';
 
 test('voting on a wishlist game posts the vote and shows the new count', async ({ page }) => {
-  const votesLoaded = page.waitForRequest((req) => req.method() === 'GET' && new URL(req.url()).pathname === '/api/votes');
+  const votesLoaded = page.waitForRequest(
+    (req) => req.method() === 'GET' && new URL(req.url()).pathname === '/api/votes',
+  );
   await page.goto('/?c=want');
 
   const query = new URL((await votesLoaded).url()).searchParams;
@@ -22,7 +24,10 @@ test('voting on a wishlist game posts the vote and shows the new count', async (
   const withdrawn = nextPost(page, '/api/votes');
   await unvote.click();
   expect((await withdrawn).postDataJSON()).toEqual({ itemId: 'splendor', anonId: ANON_ID, vote: 0 });
-  await expect(page.getByRole('button', { name: 'Vote for Splendor (3 votes)' })).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByRole('button', { name: 'Vote for Splendor (3 votes)' })).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  );
 });
 
 test('the wishlist sorts by most votes, marks expansions and jumps to the suggest form', async ({ page }) => {
@@ -50,7 +55,11 @@ test('the wishlist sorts by most votes, marks expansions and jumps to the sugges
   await expect(field).toBeInViewport();
 });
 
-test('a friend opening the wishlist link is asked to vote, and sees the vote land', async ({ page, context, baseURL }) => {
+test('a friend opening the wishlist link is asked to vote, and sees the vote land', async ({
+  page,
+  context,
+  baseURL,
+}) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: new URL(baseURL!).origin });
   await page.goto('/?c=want&v=grid');
   await expect(page.getByText('Help us pick our next game from the wishlist below.')).toBeVisible();

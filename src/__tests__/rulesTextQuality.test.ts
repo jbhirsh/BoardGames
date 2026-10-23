@@ -22,7 +22,9 @@ import { join } from 'path';
 const ROOT = process.cwd();
 const RULES_TEXT_DIR = join(ROOT, 'rules-text');
 const FIXTURES = join(ROOT, 'src', '__tests__', 'fixtures', 'rules-text');
-const FILES = readdirSync(RULES_TEXT_DIR).filter((f) => f.endsWith('.txt')).sort();
+const FILES = readdirSync(RULES_TEXT_DIR)
+  .filter((f) => f.endsWith('.txt'))
+  .sort();
 
 // The word checker's lists: ENABLE plus the hand-picked newer words.
 const DICTIONARY = new Set(
@@ -80,7 +82,9 @@ function pageCount(text: string): number {
 }
 
 function words(text: string): string[] {
-  return body(text).split(/\s+/).filter((w) => /\p{L}/u.test(w));
+  return body(text)
+    .split(/\s+/)
+    .filter((w) => /\p{L}/u.test(w));
 }
 
 // Words the list leaves out: one-letter words, and what "can't", "won't"
@@ -101,14 +105,20 @@ function strayLetters(text: string): number {
 function dictionaryRatio(text: string): number {
   const all = words(text);
   const real = all.filter((w) => {
-    const bare = w.toLowerCase().replace(/n['’]t\b/g, '').replace(/['’](s|re|ll|ve|d|m)\b/g, '');
+    const bare = w
+      .toLowerCase()
+      .replace(/n['’]t\b/g, '')
+      .replace(/['’](s|re|ll|ve|d|m)\b/g, '');
     return (bare.match(/\p{L}+/gu) ?? []).every((r) => DICTIONARY.has(r) || SHORT_WORDS.has(r));
   });
   return real.length / all.length;
 }
 
 function shingles(text: string): Set<string> {
-  const tokens = body(text).toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+  const tokens =
+    body(text)
+      .toLowerCase()
+      .match(/[\p{L}\p{N}]+/gu) ?? [];
   const out = new Set<string>();
   for (let i = 0; i + SHINGLE <= tokens.length; i++) out.add(tokens.slice(i, i + SHINGLE).join(' '));
   return out;
@@ -137,14 +147,17 @@ function failures(text: string): string[] {
 const fixture = (name: string) => readFileSync(join(FIXTURES, name), 'utf8');
 
 describe('the guard on the texts it was written for', () => {
-  it('fails Cranium\'s OCR', () => {
+  it("fails Cranium's OCR", () => {
     expect(failures(fixture('cranium-ocr.txt'))).toEqual(['words per page', 'stray letters']);
   });
 
   it('fails the two compendium extracts as one text', () => {
     // Three pages of each: two of the core rules both carried, and the
     // first card-reference page, which differed.
-    const share = shared(shingles(fixture('dominion-compendium.txt')), shingles(fixture('dominion-intrigue-compendium.txt')));
+    const share = shared(
+      shingles(fixture('dominion-compendium.txt')),
+      shingles(fixture('dominion-intrigue-compendium.txt')),
+    );
     expect(share).toBeGreaterThan(MAX_SHARED);
   });
 });
@@ -165,7 +178,9 @@ describe('rules-text quality', () => {
     if (file in NOISE_OK) {
       expect(ratio, `${file} now passes: take it off NOISE_OK`).toBeLessThan(MIN_DICTIONARY_RATIO);
     } else {
-      expect(ratio, `${file}: ${(ratio * 100).toFixed(1)}% dictionary words`).toBeGreaterThanOrEqual(MIN_DICTIONARY_RATIO);
+      expect(ratio, `${file}: ${(ratio * 100).toFixed(1)}% dictionary words`).toBeGreaterThanOrEqual(
+        MIN_DICTIONARY_RATIO,
+      );
     }
   });
 

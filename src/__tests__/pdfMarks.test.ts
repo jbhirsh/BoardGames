@@ -22,7 +22,12 @@ describe('planMarks', () => {
   it('marks the current match stronger, and only that one', () => {
     const current: Match = [10, 19];
     const marks = planMarks(page, runs, [[0, 5], current], current, null);
-    expect(marks).toEqual(new Map([[0, [hit(0, 5)]], [1, [now(0, 9)]]]));
+    expect(marks).toEqual(
+      new Map([
+        [0, [hit(0, 5)]],
+        [1, [now(0, 9)]],
+      ]),
+    );
   });
 
   it('knows the current match by identity, not by its offsets', () => {
@@ -33,12 +38,27 @@ describe('planMarks', () => {
   it('splits a match across the items it spans, every piece current', () => {
     const current: Match = [6, 22];
     expect(planMarks(page, runs, [current], current, null)).toEqual(
-      new Map([[0, [now(6, 10)]], [1, [now(0, 9)]], [2, [now(0, 3)]]]),
+      new Map([
+        [0, [now(6, 10)]],
+        [1, [now(0, 9)]],
+        [2, [now(0, 3)]],
+      ]),
     );
   });
 
   it("lists an item's marks in text order whatever order the matches come in", () => {
-    expect(planMarks(page, runs, [[30, 33], [26, 29]], null, null).get(3)).toEqual([hit(0, 3), hit(4, 7)]);
+    expect(
+      planMarks(
+        page,
+        runs,
+        [
+          [30, 33],
+          [26, 29],
+        ],
+        null,
+        null,
+      ).get(3),
+    ).toEqual([hit(0, 3), hit(4, 7)]);
   });
 
   it('keeps the items in the order the matches reach them, the current match first when it comes first', () => {
@@ -49,7 +69,11 @@ describe('planMarks', () => {
 
   it('marks a cited passage with no matches as cited, across its items', () => {
     expect(planMarks(page, runs, [], null, [6, 22])).toEqual(
-      new Map([[0, [cite(6, 10)]], [1, [cite(0, 9)]], [2, [cite(0, 3)]]]),
+      new Map([
+        [0, [cite(6, 10)]],
+        [1, [cite(0, 9)]],
+        [2, [cite(0, 3)]],
+      ]),
     );
   });
 
@@ -63,13 +87,18 @@ describe('planMarks', () => {
   });
 
   it('cites the gaps between several matches inside the passage', () => {
-    expect(planMarks(page, runs, [[16, 18], [11, 13]], null, [10, 19]).get(1)).toEqual([
-      cite(0, 1),
-      hit(1, 3),
-      cite(3, 6),
-      hit(6, 8),
-      cite(8, 9),
-    ]);
+    expect(
+      planMarks(
+        page,
+        runs,
+        [
+          [16, 18],
+          [11, 13],
+        ],
+        null,
+        [10, 19],
+      ).get(1),
+    ).toEqual([cite(0, 1), hit(1, 3), cite(3, 6), hit(6, 8), cite(8, 9)]);
   });
 
   it('cites nothing where a match covers the whole passage', () => {
@@ -82,6 +111,11 @@ describe('planMarks', () => {
   });
 
   it('leaves alone a match in an item the passage does not reach', () => {
-    expect(planMarks(page, runs, [[0, 5]], null, [10, 19])).toEqual(new Map([[0, [hit(0, 5)]], [1, [cite(0, 9)]]]));
+    expect(planMarks(page, runs, [[0, 5]], null, [10, 19])).toEqual(
+      new Map([
+        [0, [hit(0, 5)]],
+        [1, [cite(0, 9)]],
+      ]),
+    );
   });
 });

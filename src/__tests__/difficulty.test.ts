@@ -28,15 +28,24 @@ describe('weightLabel', () => {
 
 describe('difficultyOf', () => {
   const sub = (weight?: number): SubGame => ({
-    name: 'S', slug: 's', kind: 'card-game', players: '2', min: 2, max: 2, dur: '5 min', mins: 5,
-    short: '', yt: '', weight,
+    name: 'S',
+    slug: 's',
+    kind: 'card-game',
+    players: '2',
+    min: 2,
+    max: 2,
+    dur: '5 min',
+    mins: 5,
+    short: '',
+    yt: '',
+    weight,
   });
 
   it('labels a game by its own weight', () => {
     expect(difficultyOf({ weight: 2.28 })).toBe('Medium · 2.3');
   });
 
-  it('spans a deck\'s games, which carry the weight the deck lacks, skipping unrated ones', () => {
+  it("spans a deck's games, which carry the weight the deck lacks, skipping unrated ones", () => {
     expect(difficultyOf({ subgames: [sub(1), sub(1.92), sub()] })).toBe('Light · 1.0–1.9');
     expect(difficultyOf({ subgames: [sub(1.2), sub(2.4)] })).toBe('Light–Medium · 1.2–2.4');
   });

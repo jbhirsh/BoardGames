@@ -43,15 +43,25 @@ describe('client/sentry', () => {
     idle = undefined;
     const add = window.addEventListener.bind(window);
     const remove = window.removeEventListener.bind(window);
-    vi.spyOn(window, 'addEventListener').mockImplementation((type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) => {
-      added.add([type, listener]);
-      add(type, listener, options);
-    });
-    vi.spyOn(window, 'removeEventListener').mockImplementation((type: string, listener: EventListenerOrEventListenerObject) => {
-      for (const entry of added) if (entry[0] === type && entry[1] === listener) added.delete(entry);
-      remove(type, listener);
-    });
-    vi.stubGlobal('requestIdleCallback', vi.fn((callback: () => void) => { idle = callback; return 1 }));
+    vi.spyOn(window, 'addEventListener').mockImplementation(
+      (type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) => {
+        added.add([type, listener]);
+        add(type, listener, options);
+      },
+    );
+    vi.spyOn(window, 'removeEventListener').mockImplementation(
+      (type: string, listener: EventListenerOrEventListenerObject) => {
+        for (const entry of added) if (entry[0] === type && entry[1] === listener) added.delete(entry);
+        remove(type, listener);
+      },
+    );
+    vi.stubGlobal(
+      'requestIdleCallback',
+      vi.fn((callback: () => void) => {
+        idle = callback;
+        return 1;
+      }),
+    );
   });
 
   afterEach(() => {
@@ -105,7 +115,9 @@ describe('client/sentry', () => {
     await settle();
     expect(sdk.captureException).toHaveBeenCalledExactlyOnceWith(boom, { tags: { slug: 'catan' } });
     expect(sdk.captureMessage).toHaveBeenCalledExactlyOnceWith('dictionary unreachable', { level: 'warning' });
-    expect(sdk.captureException.mock.invocationCallOrder[0]).toBeLessThan(sdk.captureMessage.mock.invocationCallOrder[0]);
+    expect(sdk.captureException.mock.invocationCallOrder[0]).toBeLessThan(
+      sdk.captureMessage.mock.invocationCallOrder[0],
+    );
 
     captureMessage('later');
     expect(sdk.captureMessage).toHaveBeenLastCalledWith('later', undefined);
@@ -161,7 +173,10 @@ describe('client/sentry', () => {
     captureMessage('second');
     await settle();
     expect(fetched.count).toBe(2);
-    expect(sdk.captureMessage.mock.calls).toEqual([['first', undefined], ['second', undefined]]);
+    expect(sdk.captureMessage.mock.calls).toEqual([
+      ['first', undefined],
+      ['second', undefined],
+    ]);
     expect(sdk.captureException).toHaveBeenCalledTimes(5);
   });
 
@@ -177,7 +192,9 @@ describe('client/sentry', () => {
     now.mockReturnValue(1_010_000);
     captureMessage('late');
     await settle();
-    expect(sdk.captureMessage.mock.calls.map(([message]) => message)).toEqual(Array.from({ length: 20 }, (_, i) => `report ${i}`));
+    expect(sdk.captureMessage.mock.calls.map(([message]) => message)).toEqual(
+      Array.from({ length: 20 }, (_, i) => `report ${i}`),
+    );
   });
 
   it('starts once, however often it is called', async () => {

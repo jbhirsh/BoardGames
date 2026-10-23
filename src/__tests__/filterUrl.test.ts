@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  filterToSearchParams,
-  searchParamsToFilter,
-  buildShareUrl,
-} from '../utils/filterUrl';
+import { filterToSearchParams, searchParamsToFilter, buildShareUrl } from '../utils/filterUrl';
 import { initialFilterState } from '../data/initialFilterState';
 import type { FilterState } from '../data/types';
 
@@ -60,23 +56,17 @@ describe('filterToSearchParams', () => {
   it('omits active column sort, serialising baseSort instead', () => {
     // sort='name-asc' is a transient column-sort; baseSort is still the
     // default 'az', so the URL should have no `s` at all.
-    const params = filterToSearchParams(
-      makeState({ sort: 'name-asc', baseSort: 'az' }),
-    );
+    const params = filterToSearchParams(makeState({ sort: 'name-asc', baseSort: 'az' }));
     expect(params.has('s')).toBe(false);
   });
 
   it('serialises baseSort and ignores sort when they diverge', () => {
-    const params = filterToSearchParams(
-      makeState({ sort: 'name-asc', baseSort: 'group' }),
-    );
+    const params = filterToSearchParams(makeState({ sort: 'name-asc', baseSort: 'group' }));
     expect(params.get('s')).toBe('group');
   });
 
   it('omits defaults', () => {
-    const params = filterToSearchParams(
-      makeState({ keywordMode: 'or', view: 'list', baseSort: 'az' }),
-    );
+    const params = filterToSearchParams(makeState({ keywordMode: 'or', view: 'list', baseSort: 'az' }));
     expect(params.has('m')).toBe(false);
     expect(params.has('v')).toBe(false);
     expect(params.has('s')).toBe(false);
@@ -95,9 +85,7 @@ describe('searchParamsToFilter', () => {
   });
 
   it('parses valid params', () => {
-    const state = searchParamsToFilter(
-      new URLSearchParams('d=30&p=4&k=strategy,family&m=and&q=epic&s=group&v=grid'),
-    );
+    const state = searchParamsToFilter(new URLSearchParams('d=30&p=4&k=strategy,family&m=and&q=epic&s=group&v=grid'));
     expect(state.duration).toBe(30);
     expect(state.players).toBe(4);
     expect(state.keywords.has('strategy')).toBe(true);
@@ -210,47 +198,118 @@ describe('buildShareUrl', () => {
   });
 });
 
-
 describe('every link reads and writes as it always has', () => {
   // Each parameter's spellings, from the canonical one to old and unknown
   // ones, with what the canonical URL carries for it ('' for nothing). The
   // product of all of them, old links included, must read to a state that
   // writes back exactly this, and the state must survive that round trip.
-  const D: [string | null, string][] = [[null, ''], ['15', '15'], ['30', '30'], ['60', '60'], ['quick', '15'], ['medium', '60'], ['long', ''], ['45', '']];
-  const P: [string | null, string][] = [[null, ''], ['1', '1'], ['4', '4'], ['0', ''], ['100', '']];
-  const K: [string | null, string][] = [[null, ''], ['strategy', 'strategy'], ['strategy,family', 'family,strategy'], ['bogus,word', 'word']];
-  const M: [string | null, string][] = [[null, ''], ['and', 'and'], ['or', ''], ['xor', '']];
-  const Q: [string | null, string][] = [[null, ''], ['cat', 'cat']];
+  const D: [string | null, string][] = [
+    [null, ''],
+    ['15', '15'],
+    ['30', '30'],
+    ['60', '60'],
+    ['quick', '15'],
+    ['medium', '60'],
+    ['long', ''],
+    ['45', ''],
+  ];
+  const P: [string | null, string][] = [
+    [null, ''],
+    ['1', '1'],
+    ['4', '4'],
+    ['0', ''],
+    ['100', ''],
+  ];
+  const K: [string | null, string][] = [
+    [null, ''],
+    ['strategy', 'strategy'],
+    ['strategy,family', 'family,strategy'],
+    ['bogus,word', 'word'],
+  ];
+  const M: [string | null, string][] = [
+    [null, ''],
+    ['and', 'and'],
+    ['or', ''],
+    ['xor', ''],
+  ];
+  const Q: [string | null, string][] = [
+    [null, ''],
+    ['cat', 'cat'],
+  ];
   // Votes is the wishlist's alone: on the collection it reads as the default.
   const S: [string | null, (want: boolean) => string][] = [
-    [null, () => ''], ['az', () => ''], ['group', () => 'group'], ['quick', () => 'quick'], ['long', () => 'long'],
-    ['votes', (want) => (want ? 'votes' : '')], ['name-asc', () => ''], ['dur-desc', () => ''], ['weight-asc', () => ''], ['chaos', () => ''],
+    [null, () => ''],
+    ['az', () => ''],
+    ['group', () => 'group'],
+    ['quick', () => 'quick'],
+    ['long', () => 'long'],
+    ['votes', (want) => (want ? 'votes' : '')],
+    ['name-asc', () => ''],
+    ['dur-desc', () => ''],
+    ['weight-asc', () => ''],
+    ['chaos', () => ''],
   ];
-  const V: [string | null, string][] = [[null, ''], ['grid', 'grid'], ['list', '']];
-  const C: [string | null, string][] = [[null, ''], ['want', 'want'], ['own', ''], ['all', '']];
+  const V: [string | null, string][] = [
+    [null, ''],
+    ['grid', 'grid'],
+    ['list', ''],
+  ];
+  const C: [string | null, string][] = [
+    [null, ''],
+    ['want', 'want'],
+    ['own', ''],
+    ['all', ''],
+  ];
 
   it('covers every combination', () => {
     const mismatches: string[] = [];
     let checked = 0;
-    for (const [d, dOut] of D) for (const [p, pOut] of P) for (const [k, kOut] of K) for (const [m, mOut] of M)
-      for (const [q, qOut] of Q) for (const [s, sOut] of S) for (const [v, vOut] of V) for (const [c, cOut] of C) {
-        const input = new URLSearchParams();
-        for (const [key, val] of [['d', d], ['p', p], ['k', k], ['m', m], ['q', q], ['s', s], ['v', v], ['c', c]] as const) {
-          if (val !== null) input.set(key, val);
-        }
-        const expected = new URLSearchParams();
-        const out: [string, string][] = [['d', dOut], ['p', pOut], ['k', kOut], ['m', mOut], ['q', qOut], ['s', sOut(cOut === 'want')], ['v', vOut], ['c', cOut]];
-        for (const [key, val] of out) if (val) expected.set(key, val);
+    for (const [d, dOut] of D)
+      for (const [p, pOut] of P)
+        for (const [k, kOut] of K)
+          for (const [m, mOut] of M)
+            for (const [q, qOut] of Q)
+              for (const [s, sOut] of S)
+                for (const [v, vOut] of V)
+                  for (const [c, cOut] of C) {
+                    const input = new URLSearchParams();
+                    for (const [key, val] of [
+                      ['d', d],
+                      ['p', p],
+                      ['k', k],
+                      ['m', m],
+                      ['q', q],
+                      ['s', s],
+                      ['v', v],
+                      ['c', c],
+                    ] as const) {
+                      if (val !== null) input.set(key, val);
+                    }
+                    const expected = new URLSearchParams();
+                    const out: [string, string][] = [
+                      ['d', dOut],
+                      ['p', pOut],
+                      ['k', kOut],
+                      ['m', mOut],
+                      ['q', qOut],
+                      ['s', sOut(cOut === 'want')],
+                      ['v', vOut],
+                      ['c', cOut],
+                    ];
+                    for (const [key, val] of out) if (val) expected.set(key, val);
 
-        const state = searchParamsToFilter(input);
-        const written = filterToSearchParams(state).toString();
-        const reread = searchParamsToFilter(new URLSearchParams(written));
-        if (written !== expected.toString()) mismatches.push(`${input} wrote ${written}, not ${expected}`);
-        else if (JSON.stringify({ ...reread, keywords: [...reread.keywords].sort() }) !== JSON.stringify({ ...state, keywords: [...state.keywords].sort() })) {
-          mismatches.push(`${input} did not survive the round trip`);
-        }
-        checked++;
-      }
+                    const state = searchParamsToFilter(input);
+                    const written = filterToSearchParams(state).toString();
+                    const reread = searchParamsToFilter(new URLSearchParams(written));
+                    if (written !== expected.toString()) mismatches.push(`${input} wrote ${written}, not ${expected}`);
+                    else if (
+                      JSON.stringify({ ...reread, keywords: [...reread.keywords].sort() }) !==
+                      JSON.stringify({ ...state, keywords: [...state.keywords].sort() })
+                    ) {
+                      mismatches.push(`${input} did not survive the round trip`);
+                    }
+                    checked++;
+                  }
     expect(mismatches).toEqual([]);
     expect(checked).toBe(D.length * P.length * K.length * M.length * Q.length * S.length * V.length * C.length);
   });

@@ -13,9 +13,15 @@ export function stubMatchMedia(answer: Answer) {
   const listeners = new Set<() => void>();
   const matchMedia = vi.fn((query: string) => ({
     media: query,
-    get matches() { return matches(query); },
-    addEventListener: (_type: string, fn: () => void) => { listeners.add(fn); },
-    removeEventListener: (_type: string, fn: () => void) => { listeners.delete(fn); },
+    get matches() {
+      return matches(query);
+    },
+    addEventListener: (_type: string, fn: () => void) => {
+      listeners.add(fn);
+    },
+    removeEventListener: (_type: string, fn: () => void) => {
+      listeners.delete(fn);
+    },
   }));
   vi.stubGlobal('matchMedia', matchMedia);
   return {

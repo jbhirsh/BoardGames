@@ -44,7 +44,6 @@ function renderCells(overrides: Partial<Props> = {}, onRowClick = vi.fn()) {
 }
 
 describe('TableRowCells', () => {
-
   it("shows the game's own time on the duration pill and names the budget it filters to", () => {
     renderCells({ dur: '20 min', mins: 20 });
     const pill = screen.getByRole('button', { name: '20 min: show games up to 30 min' });
@@ -74,13 +73,18 @@ describe('TableRowCells', () => {
     // The award count sits on the name's line and opens the list of wins.
     // The award count closes the description, in its column and in the copy
     // folded under the name for narrow widths.
-    expect(row.querySelector('td.col-short .row-badges .awards')).toContainElement(screen.getAllByRole('button', { name: 'Cell Game: 1 award, show which' })[1]);
+    expect(row.querySelector('td.col-short .row-badges .awards')).toContainElement(
+      screen.getAllByRole('button', { name: 'Cell Game: 1 award, show which' })[1],
+    );
     expect(row.querySelector('.col-name-wrap .mobile-short .row-badges .awards')).toBeInTheDocument();
     expect(row.querySelector('td.col-players')).toHaveTextContent('2–5');
     expect(row.querySelector('.row-dur')).toHaveClass('dur-long');
     expect(row.querySelector('.row-dur')).toHaveTextContent('90 min');
     expect(row.querySelector('td.col-short')).toHaveTextContent('A game of cells.');
-    expect(Array.from(row.querySelectorAll('.col-kw .kw-pill')).map((p) => p.textContent)).toEqual(['Abstract', 'Strategy']);
+    expect(Array.from(row.querySelectorAll('.col-kw .kw-pill')).map((p) => p.textContent)).toEqual([
+      'Abstract',
+      'Strategy',
+    ]);
     expect(row.querySelector('.col-actions .row-toggle .row-chevron')).toBeInTheDocument();
   });
 

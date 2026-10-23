@@ -124,7 +124,8 @@ export function useWishlistVotes(itemIds: readonly string[]): UseWishlistVotesRe
 
     setSnapshot((s) => {
       const nextMy = new Set(s.myVotes);
-      if (wasVoted) nextMy.delete(itemId); else nextMy.add(itemId);
+      if (wasVoted) nextMy.delete(itemId);
+      else nextMy.add(itemId);
       const nextCounts = { ...s.counts };
       nextCounts[itemId] = Math.max(0, (nextCounts[itemId] ?? 0) + delta);
       return { ...s, myVotes: nextMy, counts: nextCounts };
@@ -148,7 +149,8 @@ export function useWishlistVotes(itemIds: readonly string[]): UseWishlistVotesRe
     } catch {
       setSnapshot((s) => {
         const revMy = new Set(s.myVotes);
-        if (wasVoted) revMy.add(itemId); else revMy.delete(itemId);
+        if (wasVoted) revMy.add(itemId);
+        else revMy.delete(itemId);
         const revCounts = { ...s.counts };
         revCounts[itemId] = Math.max(0, (revCounts[itemId] ?? 0) - delta);
         return { ...s, myVotes: revMy, counts: revCounts };

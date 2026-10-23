@@ -80,7 +80,12 @@ export default function FilterSheet() {
         }}
       >
         {/* The dot is for the eye; the name reads "Filters 2". */}
-        Filters{on > 0 && <><span aria-hidden="true"> ·</span> {on}</>}
+        Filters
+        {on > 0 && (
+          <>
+            <span aria-hidden="true"> ·</span> {on}
+          </>
+        )}
       </button>
 
       {open && (
@@ -95,7 +100,9 @@ export default function FilterSheet() {
             tabIndex={-1}
           >
             <div className="sheet-hd">
-              <h2 id={titleId} className="sheet-title">Filters</h2>
+              <h2 id={titleId} className="sheet-title">
+                Filters
+              </h2>
               <button type="button" className="sheet-close" aria-label="Close filters" onClick={close}>
                 {'✕'}
               </button>

@@ -25,7 +25,9 @@ export default function NotFoundPage({
       <h1>{title ?? 'This box is empty'}</h1>
       <p className="hero-sub">{message}</p>
       <div className="hero-actions">
-        <Link to="/" className="pick-btn">Browse the collection</Link>
+        <Link to="/" className="pick-btn">
+          Browse the collection
+        </Link>
       </div>
     </main>
   );
@@ -51,7 +53,12 @@ export function RouteError() {
   }, [error, notFound, reloading]);
 
   if (reloading) return null;
-  return notFound
-    ? <NotFoundPage />
-    : <NotFoundPage title="Something went wrong" message="This page hit a snag. Try reloading, or head back to the collection." />;
+  return notFound ? (
+    <NotFoundPage />
+  ) : (
+    <NotFoundPage
+      title="Something went wrong"
+      message="This page hit a snag. Try reloading, or head back to the collection."
+    />
+  );
 }

@@ -78,16 +78,16 @@ describe('focusSection', () => {
   });
 });
 
-describe('the home page\'s focus targets', () => {
+describe("the home page's focus targets", () => {
   function renderHome(entry: string) {
-    const router = createMemoryRouter([
-      { element: <App />, children: [{ path: '/', element: <HomePage /> }] },
-    ], { initialEntries: [entry] });
+    const router = createMemoryRouter([{ element: <App />, children: [{ path: '/', element: <HomePage /> }] }], {
+      initialEntries: [entry],
+    });
     render(<RouterProvider router={router} />);
   }
   const marked = (el: Element, target: string) => expect(el).toHaveAttribute('data-focus-target', target);
 
-  it('marks the section headings, the Own/Want buttons and every row\'s landing spot', () => {
+  it("marks the section headings, the Own/Want buttons and every row's landing spot", () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise(() => {}));
     renderHome('/');
     marked(screen.getByRole('heading', { level: 2, name: 'Our Collection' }), 'title');
@@ -99,7 +99,7 @@ describe('the home page\'s focus targets', () => {
     }
   });
 
-  it('marks every card\'s name in the grid', () => {
+  it("marks every card's name in the grid", () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise(() => {}));
     renderHome('/?v=grid');
     for (const game of GAMES) {

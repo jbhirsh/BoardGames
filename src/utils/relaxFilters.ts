@@ -18,7 +18,11 @@ export function activeFilters(state: FilterState): ActiveFilter[] {
   const out: ActiveFilter[] = [];
   if (filterOn(state, 'duration')) {
     // Lower case: it reads inside a sentence ("Filtering for up to 30 min").
-    out.push({ id: 'duration', label: DUR_LABELS[state.duration].toLowerCase(), without: { duration: initialFilterState.duration } });
+    out.push({
+      id: 'duration',
+      label: DUR_LABELS[state.duration].toLowerCase(),
+      without: { duration: initialFilterState.duration },
+    });
   }
   if (filterOn(state, 'players')) {
     out.push({ id: 'players', label: playersLabel(state.players), without: { players: initialFilterState.players } });

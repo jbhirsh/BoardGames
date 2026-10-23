@@ -19,7 +19,21 @@ describe('parseOptions', () => {
 
   it('takes every option', () => {
     expect(
-      parseOptions(['flow.ts', '--name', '259', '--base', 'origin/release', '--side-by-side', '--width', '900', '--fps', '20', '--fixtures', '--keep', '--publish']),
+      parseOptions([
+        'flow.ts',
+        '--name',
+        '259',
+        '--base',
+        'origin/release',
+        '--side-by-side',
+        '--width',
+        '900',
+        '--fps',
+        '20',
+        '--fixtures',
+        '--keep',
+        '--publish',
+      ]),
     ).toEqual({
       scenario: 'flow.ts',
       name: '259',
@@ -35,7 +49,7 @@ describe('parseOptions', () => {
     expect(parseOptions(['flow.ts', '--after-only']).afterOnly).toBe(true);
   });
 
-  it('refuses what it can\'t use, with the usage', () => {
+  it("refuses what it can't use, with the usage", () => {
     expect(() => parseOptions([])).toThrow(USAGE);
     expect(() => parseOptions(['a.ts', 'b.ts'])).toThrow(USAGE);
     expect(() => parseOptions(['a.ts', '--colour'])).toThrow(USAGE);
@@ -65,8 +79,10 @@ describe('repoFromRemote', () => {
     }
   });
 
-  it('refuses a remote that isn\'t GitHub', () => {
-    expect(() => repoFromRemote('https://gitlab.com/jbhirsh/BoardGames.git')).toThrow("origin isn't a GitHub repository");
+  it("refuses a remote that isn't GitHub", () => {
+    expect(() => repoFromRemote('https://gitlab.com/jbhirsh/BoardGames.git')).toThrow(
+      "origin isn't a GitHub repository",
+    );
   });
 });
 

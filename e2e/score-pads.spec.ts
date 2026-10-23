@@ -4,7 +4,7 @@ import { test, expect } from './fixtures';
 // played at the table.
 test.use({ viewport: { width: 390, height: 844 } });
 
-test('a deck\'s Hearts is scored hand by hand from its rules page, to the end', async ({ page }) => {
+test("a deck's Hearts is scored hand by hand from its rules page, to the end", async ({ page }) => {
   await page.goto('/rules/card-deck/hearts');
   await page.getByRole('link', { name: 'Score calculator' }).click();
   await expect(page).toHaveURL(/\/score\/card-deck\/hearts$/);
@@ -15,7 +15,7 @@ test('a deck\'s Hearts is scored hand by hand from its rules page, to the end', 
   await expect(add).toBeDisabled();
   await page.getByRole('spinbutton', { name: 'Ana' }).fill('13');
   await page.getByRole('spinbutton', { name: 'Ben' }).fill('9');
-  await expect(page.getByText('22 of the hand\'s 26 points so far.')).toBeVisible();
+  await expect(page.getByText("22 of the hand's 26 points so far.")).toBeVisible();
   await page.getByRole('spinbutton', { name: 'Cy' }).fill('3');
   await expect(page.getByRole('status').filter({ hasText: 'These add up to 25' })).toBeVisible();
   await page.getByRole('spinbutton', { name: 'Cy' }).fill('4');
@@ -39,7 +39,7 @@ test('a deck\'s Hearts is scored hand by hand from its rules page, to the end', 
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
 });
 
-test('Uno\'s Score button opens its pad, and the first to 500 wins', async ({ page }) => {
+test("Uno's Score button opens its pad, and the first to 500 wins", async ({ page }) => {
   await page.goto('/');
   await page.getByPlaceholder('Search games...').fill('Uno');
   await page.getByRole('link', { name: 'Score', exact: true }).click();
@@ -74,11 +74,14 @@ test('Spades scores partnerships, and Euchre the makers', async ({ page }) => {
   await page.getByRole('group', { name: 'Tricks they took' }).getByRole('button', { name: '5', exact: true }).click();
   await page.getByRole('checkbox', { name: 'One of them went alone' }).check();
   await page.getByRole('button', { name: 'Add hand 1' }).click();
-  const total = page.getByRole('table', { name: 'Scores by hand' }).getByRole('row').filter({ has: page.getByRole('rowheader', { name: 'Total' }) });
+  const total = page
+    .getByRole('table', { name: 'Scores by hand' })
+    .getByRole('row')
+    .filter({ has: page.getByRole('rowheader', { name: 'Total' }) });
   await expect(total.getByRole('cell')).toHaveText(['0', '4']);
 });
 
-test('Ticket to Ride scores each player\'s routes and tickets on the map played', async ({ page }) => {
+test("Ticket to Ride scores each player's routes and tickets on the map played", async ({ page }) => {
   await page.goto('/score/ticket-to-ride');
   await page.getByRole('button', { name: 'Europe' }).click();
   await page.getByRole('spinbutton', { name: '8-train routes' }).fill('1');
@@ -93,7 +96,8 @@ test('Ticket to Ride scores each player\'s routes and tickets on the map played'
   await page.getByRole('checkbox', { name: /European Express/ }).check();
   await page.getByRole('button', { name: 'See results' }).click();
   const sheet = page.getByRole('table', { name: 'Scores by category' });
-  const row = (name: string) => sheet.getByRole('row').filter({ has: page.getByRole('rowheader', { name, exact: true }) });
+  const row = (name: string) =>
+    sheet.getByRole('row').filter({ has: page.getByRole('rowheader', { name, exact: true }) });
   // Player 2's three stations, never built, are 12 more.
   await expect(row('Total').getByRole('cell')).toHaveText(['67', '52']);
   await expect(row('Place').getByRole('cell')).toHaveText(['1st', '2nd']);

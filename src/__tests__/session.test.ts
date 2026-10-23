@@ -1,5 +1,14 @@
 import { describe, it, expect, vi } from 'vitest';
-import { isAdmin, isJsonRequest, parseCookies, sessionCookie, sessionIdFrom, sessionKey, newId, ID_RE } from '../../api/_lib/session';
+import {
+  isAdmin,
+  isJsonRequest,
+  parseCookies,
+  sessionCookie,
+  sessionIdFrom,
+  sessionKey,
+  newId,
+  ID_RE,
+} from '../../api/_lib/session';
 
 const SID = 'test-session-' + 'a'.repeat(20);
 

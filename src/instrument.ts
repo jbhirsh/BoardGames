@@ -2,12 +2,12 @@
 // statically: src/client/sentry.ts fetches it once the page is up, so it
 // builds into a chunk of its own, and reports through the two functions
 // below, sending what was reported before it came.
-import * as Sentry from "@sentry/react";
-import type { ErrorEvent } from "@sentry/react";
+import * as Sentry from '@sentry/react';
+import type { ErrorEvent } from '@sentry/react';
 
-export { captureException, captureMessage } from "@sentry/react";
+export { captureException, captureMessage } from '@sentry/react';
 
-type Replay = ReturnType<typeof import("./sentryReplay").replayIntegration>;
+type Replay = ReturnType<typeof import('./sentryReplay').replayIntegration>;
 
 /** The replay integration, once added. */
 let replay: Replay | undefined;
@@ -38,7 +38,7 @@ const REPLAY_MAX_MS = 60 * 60 * 1000;
  */
 export function loadReplay(): Promise<void> {
   if (!Sentry.getClient()?.getDsn()) return Promise.resolve();
-  loading ??= import("./sentryReplay").then(
+  loading ??= import('./sentryReplay').then(
     ({ replayIntegration }) => {
       // Replay allows one instance a page, so once constructed it is never
       // tried again, whatever fails from here.
@@ -53,7 +53,9 @@ export function loadReplay(): Promise<void> {
     },
     // Offline, or a newer deploy has replaced the chunk: go without, and
     // let a later error try again.
-    () => { loading = undefined },
+    () => {
+      loading = undefined;
+    },
   );
   return loading;
 }
@@ -64,8 +66,8 @@ export function loadReplay(): Promise<void> {
  * attaches a stack to messages too, as a synthetic exception.
  */
 function startsReplay(event: ErrorEvent): boolean {
-  const level = event.level ?? "error";
-  return level === "error" || level === "fatal";
+  const level = event.level ?? 'error';
+  return level === 'error' || level === 'fatal';
 }
 
 /**
@@ -74,12 +76,18 @@ function startsReplay(event: ErrorEvent): boolean {
  */
 function resumeReplay(): void {
   try {
-    const session = JSON.parse(sessionStorage.getItem("sentryReplaySession") ?? "null") as
-      { segmentId?: number; lastActivity?: number; started?: number } | null;
+    const session = JSON.parse(sessionStorage.getItem('sentryReplaySession') ?? 'null') as {
+      segmentId?: number;
+      lastActivity?: number;
+      started?: number;
+    } | null;
     const now = Date.now();
-    if (session && (session.segmentId ?? 0) > 0
-      && now - (session.lastActivity ?? 0) < REPLAY_IDLE_MS
-      && now - (session.started ?? 0) < REPLAY_MAX_MS) {
+    if (
+      session &&
+      (session.segmentId ?? 0) > 0 &&
+      now - (session.lastActivity ?? 0) < REPLAY_IDLE_MS &&
+      now - (session.started ?? 0) < REPLAY_MAX_MS
+    ) {
       void loadReplay();
     }
   } catch {
@@ -100,7 +108,9 @@ Sentry.init({
     let timer: ReturnType<typeof setTimeout> | undefined;
     await Promise.race([
       loadReplay(),
-      new Promise<void>((resolve) => { timer = setTimeout(resolve, REPLAY_WAIT_MS) }),
+      new Promise<void>((resolve) => {
+        timer = setTimeout(resolve, REPLAY_WAIT_MS);
+      }),
     ]);
     clearTimeout(timer);
     const replayId = replay?.getReplayId();

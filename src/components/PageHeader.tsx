@@ -32,16 +32,27 @@ export default function PageHeader({ title, desc, art, loading = false, children
   return (
     <header className="rules-header">
       <BackLink />
-      {loading && <p className="sr-only" role="status">Loading…</p>}
+      {loading && (
+        <p className="sr-only" role="status">
+          Loading…
+        </p>
+      )}
       <div className="rules-title-row" aria-hidden={loading || undefined}>
-        {art && (loading || art === true
-          ? <div className="rules-box-art" />
-          : <img src={art.img} alt={`${art.name} box art`} className="rules-box-art" />)}
+        {art &&
+          (loading || art === true ? (
+            <div className="rules-box-art" />
+          ) : (
+            <img src={art.img} alt={`${art.name} box art`} className="rules-box-art" />
+          ))}
         <div className="rules-title-info">
           {loading ? (
             <>
-              <div className="rules-game-name"><span className="skeleton-text">{title}</span></div>
-              <div className="rules-game-desc"><span className="skeleton-text">{desc}</span></div>
+              <div className="rules-game-name">
+                <span className="skeleton-text">{title}</span>
+              </div>
+              <div className="rules-game-desc">
+                <span className="skeleton-text">{desc}</span>
+              </div>
             </>
           ) : (
             <>

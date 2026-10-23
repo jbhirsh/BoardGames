@@ -5,7 +5,7 @@
  */
 export const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} .'-]{0,29}$/u;
 
-export const NAME_HINT = 'Use 1–30 letters, numbers, spaces, or . \' -';
+export const NAME_HINT = "Use 1–30 letters, numbers, spaces, or . ' -";
 
 export function isValidDisplayName(name: string): boolean {
   return NAME_RE.test(name);

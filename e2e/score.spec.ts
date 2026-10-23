@@ -24,7 +24,8 @@ test('the 7 Wonders calculator totals a player and ranks the table', async ({ pa
 
   await page.getByRole('button', { name: 'Results', exact: true }).click();
   const sheet = page.getByRole('table', { name: 'Scores by category' });
-  const row = (name: string) => sheet.getByRole('row').filter({ has: page.getByRole('rowheader', { name, exact: true }) });
+  const row = (name: string) =>
+    sheet.getByRole('row').filter({ has: page.getByRole('rowheader', { name, exact: true }) });
   await expect(row('Science').getByRole('cell')).toHaveText(['13', '0']);
   await expect(row('Total').getByRole('cell')).toHaveText(['43', '0']);
   await expect(row('Place').getByRole('cell')).toHaveText(['1st', '2nd']);
@@ -60,7 +61,9 @@ test('Next passes the phone round the table and ends on the results', async ({ p
   await expect(page.getByLabel('Player Name')).toHaveValue('Player 2');
   await page.getByRole('spinbutton', { name: /Civilian/ }).fill('9');
   await page.getByRole('button', { name: 'See results' }).click();
-  const total = page.getByRole('table', { name: 'Scores by category' }).getByRole('row')
+  const total = page
+    .getByRole('table', { name: 'Scores by category' })
+    .getByRole('row')
     .filter({ has: page.getByRole('rowheader', { name: 'Total', exact: true }) });
   await expect(total.getByRole('cell')).toHaveText(['6', '9']);
 });
@@ -118,31 +121,39 @@ test('a score sits dead centre in its box', async ({ page }) => {
     });
     // The ink's bounding box inside the 2px border, against the middle of
     // the box: the digits' up and down, and everything's across.
-    const off = await page.evaluate(async ({ png, digitsEnd }) => {
-      const img = new Image();
-      img.src = `data:image/png;base64,${png}`;
-      await img.decode();
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d')!;
-      ctx.drawImage(img, 0, 0);
-      const { data } = ctx.getImageData(0, 0, img.width, img.height);
-      const bg = data[(4 * img.width + 4) * 4];
-      const ink = (end: number) => {
-        let top = Infinity, bottom = -1, left = Infinity, right = -1;
-        for (let y = 4; y < img.height - 4; y++) {
-          for (let x = 4; x < Math.min(end, img.width - 4); x++) {
-            if (Math.abs(data[(y * img.width + x) * 4] - bg) > 80) {
-              top = Math.min(top, y); bottom = Math.max(bottom, y + 1);
-              left = Math.min(left, x); right = Math.max(right, x + 1);
+    const off = await page.evaluate(
+      async ({ png, digitsEnd }) => {
+        const img = new Image();
+        img.src = `data:image/png;base64,${png}`;
+        await img.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0);
+        const { data } = ctx.getImageData(0, 0, img.width, img.height);
+        const bg = data[(4 * img.width + 4) * 4];
+        const ink = (end: number) => {
+          let top = Infinity,
+            bottom = -1,
+            left = Infinity,
+            right = -1;
+          for (let y = 4; y < img.height - 4; y++) {
+            for (let x = 4; x < Math.min(end, img.width - 4); x++) {
+              if (Math.abs(data[(y * img.width + x) * 4] - bg) > 80) {
+                top = Math.min(top, y);
+                bottom = Math.max(bottom, y + 1);
+                left = Math.min(left, x);
+                right = Math.max(right, x + 1);
+              }
             }
           }
-        }
-        return { x: (left + right - img.width) / 2, y: (top + bottom - img.height) / 2 };
-      };
-      return { x: ink(img.width).x, y: ink(Math.floor(digitsEnd)).y };
-    }, { png: shot, digitsEnd });
+          return { x: (left + right - img.width) / 2, y: (top + bottom - img.height) / 2 };
+        };
+        return { x: ink(img.width).x, y: ink(Math.floor(digitsEnd)).y };
+      },
+      { png: shot, digitsEnd },
+    );
     expect(Math.abs(off.x), `${value}: across`).toBeLessThanOrEqual(1);
     expect(Math.abs(off.y), `${value}: up and down`).toBeLessThanOrEqual(0.5);
   }
@@ -167,15 +178,24 @@ function onOrUnder(a: { x: number; y: number; height: number }, b: { x: number; 
  */
 async function boxesOf(...locators: Locator[]) {
   const handles = await Promise.all(locators.map((l) => l.elementHandle()));
-  return locators[0].page().evaluate((els) => els.map((el) => {
-    const { x, y, width, height } = (el!.closest('.sc-field') ?? el!).getBoundingClientRect();
-    return { x, y, width, height };
-  }), handles);
+  return locators[0].page().evaluate(
+    (els) =>
+      els.map((el) => {
+        const { x, y, width, height } = (el!.closest('.sc-field') ?? el!).getBoundingClientRect();
+        return { x, y, width, height };
+      }),
+    handles,
+  );
 }
 
 // A phone as wide as most, and as narrow as any still in use.
-for (const [width, height] of [[390, 844], [320, 568]]) {
-  test(`on a ${width}px phone each box names its unit and a converted field shows its points on its label line`, async ({ page }) => {
+for (const [width, height] of [
+  [390, 844],
+  [320, 568],
+]) {
+  test(`on a ${width}px phone each box names its unit and a converted field shows its points on its label line`, async ({
+    page,
+  }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/score/7-wonders');
     const field = (name: string) => page.getByRole('spinbutton', { name, exact: true });
@@ -185,7 +205,12 @@ for (const [width, height] of [[390, 844], [320, 568]]) {
     await expect(field('tablets')).toHaveAccessibleDescription('symbols = 0 VP');
     await expect(field('Treasury')).toHaveAttribute('inputmode', 'numeric');
     // Where the rows under each converted field sit on the page.
-    const rows = async () => Promise.all(['Wonder', 'tablets'].map((name) => field(name).evaluate((el) => el.getBoundingClientRect().top + window.scrollY)));
+    const rows = async () =>
+      Promise.all(
+        ['Wonder', 'tablets'].map((name) =>
+          field(name).evaluate((el) => el.getBoundingClientRect().top + window.scrollY),
+        ),
+      );
     const before = await rows();
 
     await field('Military').fill('-1');
@@ -206,13 +231,19 @@ for (const [width, height] of [[390, 844], [320, 568]]) {
     // Treasury's points sit beside its label, or under it where the row is
     // too narrow, and left of its box.
     const [treasury, coinsVP, coinsBox] = await boxesOf(
-      page.getByText('Treasury', { exact: true }), page.getByText('= 3 VP', { exact: true }), field('Treasury'));
-    expect(onOrUnder(coinsVP, treasury), 'Treasury\'s points on its label line').toBe(true);
+      page.getByText('Treasury', { exact: true }),
+      page.getByText('= 3 VP', { exact: true }),
+      field('Treasury'),
+    );
+    expect(onOrUnder(coinsVP, treasury), "Treasury's points on its label line").toBe(true);
     expect(coinsVP.x + coinsVP.width).toBeLessThanOrEqual(coinsBox.x);
     // Science says its unit once, with its points, on its label line, above the boxes.
     const [science, unit, scienceVP, tablets] = await boxesOf(
-      page.getByText('Science (Green)', { exact: true }), page.getByText('symbols', { exact: true }),
-      page.getByText('= 21 VP', { exact: true }), field('tablets'));
+      page.getByText('Science (Green)', { exact: true }),
+      page.getByText('symbols', { exact: true }),
+      page.getByText('= 21 VP', { exact: true }),
+      field('tablets'),
+    );
     expect(onOrUnder(unit, science), 'the science unit on its label line').toBe(true);
     expect(Math.abs(scienceVP.y - unit.y), 'the science points beside the unit').toBeLessThanOrEqual(1);
     expect(scienceVP.x).toBeGreaterThan(unit.x + unit.width);
@@ -274,7 +305,13 @@ async function scoreBox(field: Locator) {
       content,
       text: { left: (content.left + content.right - textWidth) / 2, width: textWidth },
       fontSize: s.fontSize,
-      unit: u && { left: u.left, right: u.right, top: u.top, bottom: u.bottom, fontSize: getComputedStyle(unitEl!).fontSize },
+      unit: u && {
+        left: u.left,
+        right: u.right,
+        top: u.top,
+        bottom: u.bottom,
+        fontSize: getComputedStyle(unitEl!).fontSize,
+      },
     };
   });
 }
@@ -289,16 +326,22 @@ for (const width of [1280, 390, 375, 320]) {
       await field(name).fill(value);
       const { width: boxWidth, inside, content, text, fontSize, unit } = await scoreBox(field(name));
       widths.add(boxWidth);
-      expect(text.width, `${name}: the input shows the whole score`).toBeLessThanOrEqual(content.right - content.left + 0.5);
+      expect(text.width, `${name}: the input shows the whole score`).toBeLessThanOrEqual(
+        content.right - content.left + 0.5,
+      );
       expect(unit, `${name}: a unit in the box`).toBeDefined();
       expect(unit!.fontSize, `${name}: the unit as big as the score`).toBe(fontSize);
       // The unit follows the score after a space, on its line.
       expect(unit!.left, `${name}: a space before the unit`).toBeGreaterThan(content.right + 2);
-      expect(Math.abs((unit!.top + unit!.bottom) / 2 - (content.top + content.bottom) / 2), `${name}: unit and score share a middle`)
-        .toBeLessThanOrEqual(1);
+      expect(
+        Math.abs((unit!.top + unit!.bottom) / 2 - (content.top + content.bottom) / 2),
+        `${name}: unit and score share a middle`,
+      ).toBeLessThanOrEqual(1);
       // Score and unit centred as one, with room to spare on each side.
-      expect(Math.abs((text.left + unit!.right) / 2 - (inside.left + inside.right) / 2), `${name}: centred in the box`)
-        .toBeLessThanOrEqual(1);
+      expect(
+        Math.abs((text.left + unit!.right) / 2 - (inside.left + inside.right) / 2),
+        `${name}: centred in the box`,
+      ).toBeLessThanOrEqual(1);
       expect(text.left - inside.left, `${name}: room left of the score`).toBeGreaterThanOrEqual(8);
       expect(inside.right - unit!.right, `${name}: room right of the unit`).toBeGreaterThanOrEqual(8);
       expect(unit!.top, `${name}: unit inside the box`).toBeGreaterThanOrEqual(inside.top);
@@ -313,11 +356,17 @@ for (const width of [1280, 390, 375, 320]) {
       scienceWidths.push(boxWidth);
       expect(unit, `${name}: no unit in the box`).toBeUndefined();
       expect(text.width, `${name}: the score fits`).toBeLessThanOrEqual(content.right - content.left);
-      expect(Math.abs((content.left + content.right) / 2 - (inside.left + inside.right) / 2), `${name}: the score is centred`).toBeLessThanOrEqual(1);
+      expect(
+        Math.abs((content.left + content.right) / 2 - (inside.left + inside.right) / 2),
+        `${name}: the score is centred`,
+      ).toBeLessThanOrEqual(1);
     }
     // On a wide screen the science boxes match the others; on a phone they
     // share their row in thirds.
-    expect(scienceWidths.every((w) => widths.has(w)), 'science boxes as wide as the others').toBe(width > 520);
+    expect(
+      scienceWidths.every((w) => widths.has(w)),
+      'science boxes as wide as the others',
+    ).toBe(width > 520);
     // The page doesn't pan.
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
   });

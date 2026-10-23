@@ -11,7 +11,9 @@ export function AwardsList({ awards }: { awards: Award[] }) {
   return (
     <ul className="awards-list">
       {awards.map((a) => (
-        <li key={`${a.name}-${a.year}`}>{a.name} <span className="awards-year">{a.year}</span></li>
+        <li key={`${a.name}-${a.year}`}>
+          {a.name} <span className="awards-year">{a.year}</span>
+        </li>
       ))}
     </ul>
   );
@@ -34,7 +36,9 @@ export function AwardsSection({ awards }: { awards: Award[] }) {
 function Trophy({ count }: { count: number }) {
   return (
     <>
-      <span className="awards-trophy" aria-hidden="true">🏆</span>
+      <span className="awards-trophy" aria-hidden="true">
+        🏆
+      </span>
       <span className="awards-n">{count}</span>
     </>
   );

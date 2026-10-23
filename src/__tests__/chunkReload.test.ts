@@ -6,19 +6,25 @@ function store(): Session {
   const items = new Map<string, string>();
   const storage = {
     getItem: (key: string) => items.get(key) ?? null,
-    setItem: (key: string, value: string) => { items.set(key, value); },
-    removeItem: (key: string) => { items.delete(key); },
+    setItem: (key: string, value: string) => {
+      items.set(key, value);
+    },
+    removeItem: (key: string) => {
+      items.delete(key);
+    },
   };
   return () => storage;
 }
-const blocked: Session = () => { throw new DOMException('The operation is insecure.', 'SecurityError'); };
+const blocked: Session = () => {
+  throw new DOMException('The operation is insecure.', 'SecurityError');
+};
 
 describe('isChunkLoadError', () => {
   it.each([
     'Failed to fetch dynamically imported module: https://game-room.example/assets/ScoreCalculatorPage-abc.js',
     'error loading dynamically imported module: https://game-room.example/assets/RulesPage-abc.js',
     'Importing a module script failed.',
-  ])('knows each browser\'s word for a page\'s code that won\'t load: %s', (message) => {
+  ])("knows each browser's word for a page's code that won't load: %s", (message) => {
     expect(isChunkLoadError(new TypeError(message))).toBe(true);
   });
 
@@ -31,7 +37,7 @@ describe('isChunkLoadError', () => {
 });
 
 describe('reloadOnce', () => {
-  it('reloads once a session, until a page\'s code loads', () => {
+  it("reloads once a session, until a page's code loads", () => {
     const session = store();
     const reload = vi.fn();
     expect(mayReload(session)).toBe(true);

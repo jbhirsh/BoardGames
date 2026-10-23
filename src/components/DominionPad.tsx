@@ -5,29 +5,48 @@ import { ordinal, places, tieNotes } from '../utils/standings';
 import PlayerScorePad, { ScoreSheet, type PadPlayer } from './PlayerScorePad';
 import { CountRow } from './ScoreInput';
 
-const FIELDS = ['estates', 'duchies', 'provinces', 'curses', 'gardens', 'deck', 'duke', 'harem', 'mill', 'nobles'] as const;
-type Field = typeof FIELDS[number];
+const FIELDS = [
+  'estates',
+  'duchies',
+  'provinces',
+  'curses',
+  'gardens',
+  'deck',
+  'duke',
+  'harem',
+  'mill',
+  'nobles',
+] as const;
+type Field = (typeof FIELDS)[number];
 
 /** A player's boxes, as typed. */
 type DominionPlayer = PadPlayer & Record<Field, string>;
 
-const KINGDOM_KEYS: readonly KingdomCard[] = KINGDOM_CARDS.map(c => c.key);
+const KINGDOM_KEYS: readonly KingdomCard[] = KINGDOM_CARDS.map((c) => c.key);
 
 function blank(): Record<Field, string> {
-  return Object.fromEntries(FIELDS.map(f => [f, ''])) as Record<Field, string>;
+  return Object.fromEntries(FIELDS.map((f) => [f, ''])) as Record<Field, string>;
 }
 
 function tally(p: DominionPlayer): DominionTally {
-  return Object.fromEntries(FIELDS.map(f => [f, num(p[f])])) as DominionTally;
+  return Object.fromEntries(FIELDS.map((f) => [f, num(p[f])])) as DominionTally;
 }
 
 function hasScores(p: DominionPlayer): boolean {
-  return FIELDS.some(f => num(p[f]) > 0);
+  return FIELDS.some((f) => num(p[f]) > 0);
 }
 
 const vp = (n: number) => `${showScore(n)} VP`;
 
-function Form({ kingdom, player, update }: { kingdom: ReadonlySet<KingdomCard>; player: DominionPlayer; update: (patch: Partial<Record<Field, string>>) => void }) {
+function Form({
+  kingdom,
+  player,
+  update,
+}: {
+  kingdom: ReadonlySet<KingdomCard>;
+  player: DominionPlayer;
+  update: (patch: Partial<Record<Field, string>>) => void;
+}) {
   const b = dominionBreakdown(tally(player), kingdom);
   const row = (key: Exclude<Field, 'deck'>, label: string, worth: string) => (
     <CountRow
@@ -43,8 +62,8 @@ function Form({ kingdom, player, update }: { kingdom: ReadonlySet<KingdomCard>; 
   );
   return (
     <>
-      {BASE_CARDS.map(c => row(c.key, c.name, `${showScore(c.vp)} VP each`))}
-      {KINGDOM_CARDS.filter(c => kingdom.has(c.key)).map(c => row(c.key, c.name, c.worth))}
+      {BASE_CARDS.map((c) => row(c.key, c.name, `${showScore(c.vp)} VP each`))}
+      {KINGDOM_CARDS.filter((c) => kingdom.has(c.key)).map((c) => row(c.key, c.name, c.worth))}
       {kingdom.has('gardens') && (
         <CountRow
           id="sc-deck"
@@ -61,26 +80,38 @@ function Form({ kingdom, player, update }: { kingdom: ReadonlySet<KingdomCard>; 
 }
 
 function Results({ kingdom, players }: { kingdom: ReadonlySet<KingdomCard>; players: DominionPlayer[] }) {
-  const sheet = players.map(p => dominionBreakdown(tally(p), kingdom));
-  const totals = sheet.map(s => s.total);
+  const sheet = players.map((p) => dominionBreakdown(tally(p), kingdom));
+  const totals = sheet.map((s) => s.total);
   const placed = places(totals);
   const scored = players.some(hasScores);
   const rows = [
-    ...BASE_CARDS.map(c => ({ key: c.key, label: c.name })),
-    ...KINGDOM_CARDS.filter(c => kingdom.has(c.key)).map(c => ({ key: c.key, label: c.name })),
+    ...BASE_CARDS.map((c) => ({ key: c.key, label: c.name })),
+    ...KINGDOM_CARDS.filter((c) => kingdom.has(c.key)).map((c) => ({ key: c.key, label: c.name })),
   ];
   return (
     <>
       <ScoreSheet
         players={players}
-        rows={rows.map(r => ({ key: r.key, label: r.label, cells: sheet.map(s => showScore(s[r.key])) }))}
+        rows={rows.map((r) => ({ key: r.key, label: r.label, cells: sheet.map((s) => showScore(s[r.key])) }))}
         totals={totals.map(showScore)}
-        places={placed.map(p => (scored ? ordinal(p) : '–'))}
-        won={placed.map(p => scored && p === 1)}
+        places={placed.map((p) => (scored ? ordinal(p) : '–'))}
+        won={placed.map((p) => scored && p === 1)}
       />
-      {scored && tieNotes(players.map(p => p.name), totals.map(vp), totals, [], (place) => `so they share ${place} place, unless one of them had fewer turns`)
-        .map(note => <p key={note} className="sc-tie-note">{note}</p>)}
-      <p className="sc-tie-rule">A tie on points goes to the player who had fewer turns; tied on turns too, they share the win.</p>
+      {scored &&
+        tieNotes(
+          players.map((p) => p.name),
+          totals.map(vp),
+          totals,
+          [],
+          (place) => `so they share ${place} place, unless one of them had fewer turns`,
+        ).map((note) => (
+          <p key={note} className="sc-tie-note">
+            {note}
+          </p>
+        ))}
+      <p className="sc-tie-rule">
+        A tie on points goes to the player who had fewer turns; tied on turns too, they share the win.
+      </p>
     </>
   );
 }
@@ -96,28 +127,28 @@ function Results({ kingdom, players }: { kingdom: ReadonlySet<KingdomCard>; play
  * rulebook settles it on turns taken.
  */
 export default function DominionPad() {
-  const [kingdom, setKingdom] = useSavedState<KingdomCard[]>(
-    'gameroom:score:dominion:kingdom',
-    [],
-    (v) => (Array.isArray(v) && v.every(c => KINGDOM_KEYS.includes(c)) ? v : null),
+  const [kingdom, setKingdom] = useSavedState<KingdomCard[]>('gameroom:score:dominion:kingdom', [], (v) =>
+    Array.isArray(v) && v.every((c) => KINGDOM_KEYS.includes(c)) ? v : null,
   );
   const inPlay = new Set(kingdom);
   const toggle = (card: KingdomCard, on: boolean) =>
-    setKingdom(KINGDOM_KEYS.filter(c => (c === card ? on : inPlay.has(c))));
+    setKingdom(KINGDOM_KEYS.filter((c) => (c === card ? on : inPlay.has(c))));
   return (
     <PlayerScorePad<DominionPlayer>
       storageKey="gameroom:score:dominion"
       minPlayers={2}
       maxPlayers={6}
       blank={blank}
-      valid={(r) => FIELDS.every(f => isBoxText(r[f]))}
+      valid={(r) => FIELDS.every((f) => isBoxText(r[f]))}
       hasScores={hasScores}
-      setup={(
+      setup={
         <section className="sc-setup" aria-labelledby="sc-kingdom-title">
-          <h2 className="sc-setup-title" id="sc-kingdom-title">Kingdom cards that score</h2>
+          <h2 className="sc-setup-title" id="sc-kingdom-title">
+            Kingdom cards that score
+          </h2>
           <p className="sc-hint">Tick the ones in this game&apos;s Supply.</p>
           <div className="sc-chips">
-            {KINGDOM_CARDS.map(c => (
+            {KINGDOM_CARDS.map((c) => (
               <label key={c.key} className="sc-chip">
                 <input type="checkbox" checked={inPlay.has(c.key)} onChange={(e) => toggle(c.key, e.target.checked)} />
                 {c.name}
@@ -125,7 +156,7 @@ export default function DominionPad() {
             ))}
           </div>
         </section>
-      )}
+      }
       onNewGame={() => setKingdom([])}
       form={(player, update) => <Form kingdom={inPlay} player={player} update={update} />}
       total={(p) => dominionBreakdown(tally(p), inPlay).total}

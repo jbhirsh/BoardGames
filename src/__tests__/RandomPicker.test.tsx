@@ -374,7 +374,7 @@ describe('RandomPicker picks something playable', () => {
     expect(screen.getByText('The only match')).toBeInTheDocument();
   });
 
-  it("works through the list before offering a game again", () => {
+  it('works through the list before offering a game again', () => {
     renderAt('/?q=Ca');
     const names = new Set<string>();
     for (let i = 0; i < 3; i++) {
@@ -388,7 +388,10 @@ describe('RandomPicker picks something playable', () => {
 
   it('explains why the button is off', () => {
     renderAt('/?q=__no_such_game__');
-    expect(screen.getByRole('button', { name: /^Pick for us$/ })).toHaveAttribute('title', 'No games match your filters');
+    expect(screen.getByRole('button', { name: /^Pick for us$/ })).toHaveAttribute(
+      'title',
+      'No games match your filters',
+    );
   });
 
   it("lands on the game a search named, and opens that game's own rulebook tab", () => {
@@ -408,11 +411,15 @@ describe('RandomPicker picks something playable', () => {
     expect(screen.getByText(`with the ${addon.name}`)).toBeInTheDocument();
   });
 
-  it("starts the list over without repeating the game just shown", () => {
+  it('starts the list over without repeating the game just shown', () => {
     renderAt('/?q=Ca');
     const shown: string[] = [];
-    const total = GAMES.filter((g) => g.name.toLowerCase().includes('ca') || g.desc.toLowerCase().includes('ca')
-      || (g.subgames ?? []).some((s) => s.name.toLowerCase().includes('ca'))).length;
+    const total = GAMES.filter(
+      (g) =>
+        g.name.toLowerCase().includes('ca') ||
+        g.desc.toLowerCase().includes('ca') ||
+        (g.subgames ?? []).some((s) => s.name.toLowerCase().includes('ca')),
+    ).length;
     for (let i = 0; i <= total; i++) {
       spin();
       shown.push(screen.getByRole('dialog').getAttribute('aria-label')!);
@@ -422,4 +429,3 @@ describe('RandomPicker picks something playable', () => {
     expect(shown[total]).not.toBe(shown[total - 1]);
   });
 });
-

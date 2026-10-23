@@ -128,9 +128,7 @@ describe('parseJudgeVerdict', () => {
   });
 
   it('uses the first verdict token when both appear', () => {
-    expect(parseJudgeVerdict('FAIL. It would only PASS if it named the penalty.').verdict).toBe(
-      'FAIL',
-    );
+    expect(parseJudgeVerdict('FAIL. It would only PASS if it named the penalty.').verdict).toBe('FAIL');
   });
 
   it('does not match PASS inside a longer word', () => {
@@ -152,11 +150,7 @@ describe('parseJudgeVerdict', () => {
 
 describe('buildJudgePrompt', () => {
   it('frames expected as a reference answer and embeds question, reference, and response', () => {
-    const prompt = buildJudgePrompt(
-      'How many cards?',
-      'Each player is dealt 7 cards.',
-      'You are dealt 7 cards.',
-    );
+    const prompt = buildJudgePrompt('How many cards?', 'Each player is dealt 7 cards.', 'You are dealt 7 cards.');
     expect(prompt).toContain('Question asked to the assistant: How many cards?');
     expect(prompt).toContain('Reference answer:');
     expect(prompt).toContain('Each player is dealt 7 cards.');
@@ -211,7 +205,8 @@ describe('gradeAnswer', () => {
     expect(gradeAnswer(four, 'Unused stations score 4 points (Europe p. 4).').passed).toBe(true);
     expect(gradeAnswer(makeEntry({ matchType: 'exact', expected: '7 cards' }), '7 cards (p. 2)').passed).toBe(true);
     expect(gradeAnswer(makeEntry({ matchType: 'contains', expected: 'p. 2' }), 'Deal 7 (p. 2).')).toEqual({
-      passed: false, reason: 'answer does not contain expected text',
+      passed: false,
+      reason: 'answer does not contain expected text',
     });
   });
 
@@ -220,7 +215,8 @@ describe('gradeAnswer', () => {
     const passed = gradeAnswer(entry, 'Three (p. 3), then (Europe p. 4).');
     expect(passed).toEqual({ passed: true, reason: 'a citation matches the expected pattern' });
     expect(gradeAnswer(entry, 'Three stations (p. 4). Europe adds them.')).toEqual({
-      passed: false, reason: 'no citation matches the expected pattern',
+      passed: false,
+      reason: 'no citation matches the expected pattern',
     });
     expect(gradeAnswer(entry, 'Europe, page 4.').passed).toBe(false);
   });
@@ -268,8 +264,10 @@ describe('parseGoldenSet', () => {
 
   it('rejects parts that are not a list of names', () => {
     for (const parts of ['europe', [3], [''], ['  ']]) {
-      expect(() => parseGoldenSet({ status: 'ready', entries: [{ ...validEntry, parts }] }), JSON.stringify(parts))
-        .toThrow('golden set entry 0: "parts" must be a list of rulebook names when present');
+      expect(
+        () => parseGoldenSet({ status: 'ready', entries: [{ ...validEntry, parts }] }),
+        JSON.stringify(parts),
+      ).toThrow('golden set entry 0: "parts" must be a list of rulebook names when present');
     }
   });
 
@@ -293,12 +291,12 @@ describe('parseGoldenSet', () => {
   });
 
   it('rejects a missing or non-string sourceQuote', () => {
-    expect(() =>
-      parseGoldenSet({ status: 'ready', entries: [{ ...validEntry, sourceQuote: undefined }] }),
-    ).toThrow('"sourceQuote" must be a string');
-    expect(() =>
-      parseGoldenSet({ status: 'ready', entries: [{ ...validEntry, sourceQuote: 7 }] }),
-    ).toThrow('"sourceQuote" must be a string');
+    expect(() => parseGoldenSet({ status: 'ready', entries: [{ ...validEntry, sourceQuote: undefined }] })).toThrow(
+      '"sourceQuote" must be a string',
+    );
+    expect(() => parseGoldenSet({ status: 'ready', entries: [{ ...validEntry, sourceQuote: 7 }] })).toThrow(
+      '"sourceQuote" must be a string',
+    );
   });
 
   it('rejects non-object roots', () => {
@@ -315,15 +313,13 @@ describe('parseGoldenSet', () => {
   });
 
   it('rejects non-object entries', () => {
-    expect(() => parseGoldenSet({ status: 'ready', entries: ['x'] })).toThrow(
-      'entry 0 must be an object',
-    );
+    expect(() => parseGoldenSet({ status: 'ready', entries: ['x'] })).toThrow('entry 0 must be an object');
   });
 
   it('rejects an unknown matchType', () => {
-    expect(() =>
-      parseGoldenSet({ status: 'ready', entries: [{ ...validEntry, matchType: 'fuzzy' }] }),
-    ).toThrow('matchType "fuzzy"');
+    expect(() => parseGoldenSet({ status: 'ready', entries: [{ ...validEntry, matchType: 'fuzzy' }] })).toThrow(
+      'matchType "fuzzy"',
+    );
   });
 
   it('rejects a missing required string field, naming it', () => {
@@ -340,9 +336,9 @@ describe('parseGoldenSet', () => {
   });
 
   it('rejects non-string notes', () => {
-    expect(() =>
-      parseGoldenSet({ status: 'ready', entries: [{ ...validEntry, notes: 42 }] }),
-    ).toThrow('"notes" must be a string');
+    expect(() => parseGoldenSet({ status: 'ready', entries: [{ ...validEntry, notes: 42 }] })).toThrow(
+      '"notes" must be a string',
+    );
   });
 });
 

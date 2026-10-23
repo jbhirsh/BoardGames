@@ -23,7 +23,9 @@ function whyLine(state: FilterState, poolSize: number): string {
   const fits = [
     state.players > 0 ? playersLabel(state.players) : null,
     state.duration !== 'all' ? DUR_LABELS[state.duration].toLowerCase() : null,
-  ].filter(Boolean).join(' · ');
+  ]
+    .filter(Boolean)
+    .join(' · ');
   return `Fits ${fits} · ${ofPool}`;
 }
 
@@ -111,7 +113,9 @@ export default function RandomPicker() {
     tickRef.current = window.setTimeout(tick, TICK_MS);
   }, [stopTicking]);
 
-  useEffect(() => { return stopTicking; }, [stopTicking]);
+  useEffect(() => {
+    return stopTicking;
+  }, [stopTicking]);
 
   useScrollLock(open);
   useDialogFocus(cardRef, open, close);
@@ -120,14 +124,13 @@ export default function RandomPicker() {
 
   // A deck's game is named on its own ("Hearts"); an add-on rides with its game.
   const sub = result?.sub;
-  const playName = sub?.kind === 'card-game' ? sub.name : current?.name ?? '';
+  const playName = sub?.kind === 'card-game' ? sub.name : (current?.name ?? '');
   // What the dialog and the live region announce, add-on included.
   const spokenName = sub && sub.kind !== 'card-game' ? `${playName} with the ${sub.name}` : playName;
   const shown = sub ?? current;
 
   // Stays mounted at top-level so older NVDA+Firefox / VoiceOver combos that ignore late-added live regions still hear the pick.
-  const liveMessage =
-    open && current && !spinning ? `Tonight, play — ${spokenName}` : '';
+  const liveMessage = open && current && !spinning ? `Tonight, play — ${spokenName}` : '';
 
   return (
     <>
@@ -181,11 +184,7 @@ export default function RandomPicker() {
             )}
             {!spinning && (
               <div className="pick-actions">
-                <button
-                  type="button"
-                  className="pick-secondary"
-                  onClick={pick}
-                >
+                <button type="button" className="pick-secondary" onClick={pick}>
                   Pick again
                 </button>
                 <button
@@ -205,12 +204,7 @@ export default function RandomPicker() {
                 </button>
               </div>
             )}
-            <button
-              type="button"
-              className="pick-close"
-              onClick={close}
-              aria-label="Close"
-            >
+            <button type="button" className="pick-close" onClick={close} aria-label="Close">
               ✕
             </button>
           </div>

@@ -70,7 +70,16 @@ describe('renderQueue', () => {
     const log: string[] = [];
     const live = new Set<string>();
     const queue = renderQueue(1);
-    const jobs = new Map(([['below', 300], ['shown', -400], ['mostly shown', -600], ['above', 100]] as const).map(([name, order]) => [name, job(name, order, log, live)]));
+    const jobs = new Map(
+      (
+        [
+          ['below', 300],
+          ['shown', -400],
+          ['mostly shown', -600],
+          ['above', 100],
+        ] as const
+      ).map(([name, order]) => [name, job(name, order, log, live)]),
+    );
     jobs.forEach((j) => queue.add(j));
     await settle();
     expect(log).toEqual(['mostly shown']);
@@ -189,14 +198,23 @@ describe('renderQueue', () => {
     expect(log).toEqual(['first', 'kept']);
   });
 
-  it('puts a job whose order can\'t be told after the pages on screen, and goes on', async () => {
+  it("puts a job whose order can't be told after the pages on screen, and goes on", async () => {
     const log: string[] = [];
     const live = new Set<string>();
     const queue = renderQueue(1);
     const first = job('first', -500, log, live);
     queue.add(first);
     // Its page gone mid-unmount, before its job is taken out.
-    queue.add(job('gone', () => { throw new Error('no page'); }, log, live));
+    queue.add(
+      job(
+        'gone',
+        () => {
+          throw new Error('no page');
+        },
+        log,
+        live,
+      ),
+    );
     queue.add(job('shown', -100, log, live));
     queue.add(job('below', 100, log, live));
     await settle();
@@ -212,7 +230,13 @@ describe('renderQueue', () => {
     const queue = renderQueue(1);
     const failing = job('failing', 1, log, live);
     queue.add(failing);
-    queue.add({ order: () => 2, run: () => { log.push('throws'); throw new Error('no page'); } });
+    queue.add({
+      order: () => 2,
+      run: () => {
+        log.push('throws');
+        throw new Error('no page');
+      },
+    });
     queue.add(job('after', 3, log, live));
     await settle();
     await failing.end(false);

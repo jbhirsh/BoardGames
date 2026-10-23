@@ -32,7 +32,8 @@ async function goOnline(context: BrowserContext) {
 const savedStatus = (page: Page) => page.getByText('Saved on this device', { exact: true });
 
 /** Whether the service worker has a rulebook saved. */
-const inCache = (page: Page, pdf: string) => page.evaluate(async (path) => (await caches.match(path)) !== undefined, pdf);
+const inCache = (page: Page, pdf: string) =>
+  page.evaluate(async (path) => (await caches.match(path)) !== undefined, pdf);
 
 /** Waits until a rulebook opened while online is saved for offline. */
 async function saved(page: Page, pdf: string) {
@@ -53,13 +54,19 @@ async function saveForOffline(page: Page) {
  * worker does once a rulebook is: the JPEG 2000 decoder stands for them.
  */
 async function readerSaved(page: Page) {
-  await expect.poll(() => page.evaluate(async () => (await caches.match('/pdfjs/wasm/openjpeg.wasm')) !== undefined), { timeout: 15_000 }).toBe(true);
+  await expect
+    .poll(() => page.evaluate(async () => (await caches.match('/pdfjs/wasm/openjpeg.wasm')) !== undefined), {
+      timeout: 15_000,
+    })
+    .toBe(true);
 }
 
 /** A hash of a rulebook page's drawing, once it is drawn (its text is laid over it after). */
 async function drawing(group: Locator): Promise<string> {
   await group.scrollIntoViewIfNeeded();
-  await expect.poll(() => group.evaluate((el) => el.querySelector('.textLayer')?.childElementCount ?? 0), { timeout: 15_000 }).toBeGreaterThan(0);
+  await expect
+    .poll(() => group.evaluate((el) => el.querySelector('.textLayer')?.childElementCount ?? 0), { timeout: 15_000 })
+    .toBeGreaterThan(0);
   return group.evaluate(async (el) => {
     const canvas = el.querySelector('canvas')!;
     const pixels = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data;
@@ -75,7 +82,14 @@ async function drawing(group: Locator): Promise<string> {
  * whose images need a decoder the reader never fetched online would be
  * missing them offline.
  */
-async function offlineAndOnline(page: Page, context: BrowserContext, slug: string, name: string, n: number, tap = false) {
+async function offlineAndOnline(
+  page: Page,
+  context: BrowserContext,
+  slug: string,
+  name: string,
+  n: number,
+  tap = false,
+) {
   await page.goto('/');
   await controlled(page);
   await page.goto(`/rules/${slug}`);
@@ -95,7 +109,10 @@ async function offlineAndOnline(page: Page, context: BrowserContext, slug: strin
   return { offline, online: await drawing(shown) };
 }
 
-test('after a first visit, the installed site lists the collection, checks words and keeps score with no network', async ({ page, context }) => {
+test('after a first visit, the installed site lists the collection, checks words and keeps score with no network', async ({
+  page,
+  context,
+}) => {
   await page.goto('/');
   await controlled(page);
   // Box art opened in its own tab is a page too, and must not stand in for
@@ -131,7 +148,7 @@ test('after a first visit, the installed site lists the collection, checks words
   await expect(page.getByText('15 VP', { exact: true })).toBeVisible();
 });
 
-test('the wishlist\'s box art, seen once online, shows on its cards with no network', async ({ page, context }) => {
+test("the wishlist's box art, seen once online, shows on its cards with no network", async ({ page, context }) => {
   await page.goto('/');
   await controlled(page);
   await page.goto('/?c=want&v=grid');
@@ -140,15 +157,29 @@ test('the wishlist\'s box art, seen once online, shows on its cards with no netw
   // leaves alone), once the worker has saved it, marked with the build's
   // hash of the file so an update that changes it drops the copy.
   const art = page.getByRole('img', { name: / box art$/ });
-  const drawn = () => art.evaluateAll((imgs) => (imgs as HTMLImageElement[])
-    .filter((img) => img.getAttribute('src')!.startsWith('/images/wishlist/') && img.complete && img.naturalWidth > 0)
-    .map((img) => ({ name: img.alt, src: img.getAttribute('src')! })));
+  const drawn = () =>
+    art.evaluateAll((imgs) =>
+      (imgs as HTMLImageElement[])
+        .filter(
+          (img) => img.getAttribute('src')!.startsWith('/images/wishlist/') && img.complete && img.naturalWidth > 0,
+        )
+        .map((img) => ({ name: img.alt, src: img.getAttribute('src')! })),
+    );
   await expect.poll(async () => (await drawn()).length).toBeGreaterThanOrEqual(3);
   const seen = await drawn();
-  await expect.poll(() => page.evaluate(async (paths) => {
-    for (const path of paths) if (!(await caches.match(path))?.headers.get('X-Art-Version')) return false;
-    return true;
-  }, seen.map((img) => img.src)), { timeout: 15_000 }).toBe(true);
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          async (paths) => {
+            for (const path of paths) if (!(await caches.match(path))?.headers.get('X-Art-Version')) return false;
+            return true;
+          },
+          seen.map((img) => img.src),
+        ),
+      { timeout: 15_000 },
+    )
+    .toBe(true);
 
   await goOffline(context);
   await page.reload();
@@ -158,11 +189,16 @@ test('the wishlist\'s box art, seen once online, shows on its cards with no netw
     // can draw online from the memory cache without coming near the
     // screen; offline it waits, lazily, until it does.
     await img.scrollIntoViewIfNeeded();
-    await expect.poll(() => img.evaluate((el) => (el as HTMLImageElement).naturalWidth), { message: name }).toBeGreaterThan(0);
+    await expect
+      .poll(() => img.evaluate((el) => (el as HTMLImageElement).naturalWidth), { message: name })
+      .toBeGreaterThan(0);
   }
 });
 
-test('a large rulebook saved with Save for offline draws offline, its JPEG 2000 pages included', async ({ page, context }) => {
+test('a large rulebook saved with Save for offline draws offline, its JPEG 2000 pages included', async ({
+  page,
+  context,
+}) => {
   // Catan's p. 5 is drawn over a JPEG 2000 image; at 3.7 MB, opening it
   // doesn't save it.
   const { offline, online } = await offlineAndOnline(page, context, 'catan', 'Catan', 5, true);
@@ -195,12 +231,17 @@ test('a small rulebook saves itself on its first open, says so, and reads offlin
   await expect(page.getByText(/Not saved on this device/)).toHaveCount(0);
 });
 
-test('a large rulebook isn\'t saved by opening it, and offline says to tap Save for offline next time', async ({ page, context }) => {
+test("a large rulebook isn't saved by opening it, and offline says to tap Save for offline next time", async ({
+  page,
+  context,
+}) => {
   await page.goto('/');
   await controlled(page);
   // Ticket to Ride's rulebook is 3.6 MB.
   await page.goto('/rules/ticket-to-ride');
-  await expect(page.getByRole('region', { name: 'Ticket to Ride rules' }).getByRole('button', { name: 'Search' })).toBeEnabled();
+  await expect(
+    page.getByRole('region', { name: 'Ticket to Ride rules' }).getByRole('button', { name: 'Search' }),
+  ).toBeEnabled();
   // Described by the Download link's size, the third item in its row.
   const save = page.getByRole('button', { name: 'Save for offline' });
   await expect(save).toHaveAccessibleDescription('3.6 MB');
@@ -210,7 +251,12 @@ test('a large rulebook isn\'t saved by opening it, and offline says to tap Save 
   // Level with them on a desktop, and on a phone too, where the three keep
   // one line in fewer words: Download and Open, "PDF" still read out, and
   // Save offline, named so (a name holds the words it shows).
-  const widths = [[1280, 'Save for offline'], [414, 'Save offline'], [375, 'Save offline'], [320, 'Save offline']] as const;
+  const widths = [
+    [1280, 'Save for offline'],
+    [414, 'Save offline'],
+    [375, 'Save offline'],
+    [320, 'Save offline'],
+  ] as const;
   for (const [width, name] of widths) {
     await page.setViewportSize({ width, height: 812 });
     const item = page.getByRole('button', { name, exact: true });
@@ -228,9 +274,13 @@ test('a large rulebook isn\'t saved by opening it, and offline says to tap Save 
   // The notice names the button as it reads: "Save offline" on a phone.
   const notice = page.getByText(/^Not saved on this device yet\. Tap Save/);
   await expect(notice).toBeVisible();
-  expect(await notice.evaluate((el) => (el as HTMLElement).innerText)).toBe('Not saved on this device yet. Tap Save offline next time you have signal.');
+  expect(await notice.evaluate((el) => (el as HTMLElement).innerText)).toBe(
+    'Not saved on this device yet. Tap Save offline next time you have signal.',
+  );
   await page.setViewportSize({ width: 1280, height: 812 });
-  expect(await notice.evaluate((el) => (el as HTMLElement).innerText)).toBe('Not saved on this device yet. Tap Save for offline next time you have signal.');
+  expect(await notice.evaluate((el) => (el as HTMLElement).innerText)).toBe(
+    'Not saved on this device yet. Tap Save for offline next time you have signal.',
+  );
   await expect(page.getByRole('button', { name: /^Save/ })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Download PDF' })).toHaveCount(0);
 });
@@ -262,7 +312,9 @@ test('a rulebook the device has no room for says so, with nothing to try again',
   await cdp.send('Storage.overrideQuotaForOrigin', { origin, quotaSize: usage! + 1_000_000 });
   try {
     await page.goto('/rules/ticket-to-ride');
-    await expect(page.getByRole('region', { name: 'Ticket to Ride rules' }).getByRole('button', { name: 'Search' })).toBeEnabled();
+    await expect(
+      page.getByRole('region', { name: 'Ticket to Ride rules' }).getByRole('button', { name: 'Search' }),
+    ).toBeEnabled();
     await page.getByRole('button', { name: 'Save for offline' }).click();
     await expect(page.getByText('Not enough space on this device', { exact: true })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('button', { name: /Try again/ })).toHaveCount(0);
@@ -290,7 +342,10 @@ test('a rulebook opened once reads on a phone with no network', async ({ page, c
   await expect(reader.getByRole('status')).toHaveText(/^1 of \d+ · page \d+$/);
 });
 
-test('offline on a rules page, the chat says the assistant needs a connection and waits for one', async ({ page, context }) => {
+test('offline on a rules page, the chat says the assistant needs a connection and waits for one', async ({
+  page,
+  context,
+}) => {
   await page.goto('/');
   await controlled(page);
   await page.goto('/rules/catan');
@@ -318,7 +373,10 @@ test('offline on a rules page, the chat says the assistant needs a connection an
   await expect(starter).toBeEnabled();
 });
 
-test('a rulebook never opened says offline that it isn\'t saved, with no dead links to it', async ({ page, context }) => {
+test("a rulebook never opened says offline that it isn't saved, with no dead links to it", async ({
+  page,
+  context,
+}) => {
   await page.goto('/');
   await controlled(page);
   await goOffline(context);

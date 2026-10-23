@@ -1,6 +1,12 @@
 // First, so the methods pdf.js expects are there before its code runs.
 import './polyfills';
-import { getDocument, PDFWorker, type PDFDocumentLoadingTask, type PDFDocumentProxy, type PDFPageProxy } from 'pdfjs-dist';
+import {
+  getDocument,
+  PDFWorker,
+  type PDFDocumentLoadingTask,
+  type PDFDocumentProxy,
+  type PDFPageProxy,
+} from 'pdfjs-dist';
 import { pageText, type PageText, type TextRun } from '../utils/pdfSearch';
 import { startWorker } from './startWorker';
 import { savedCopy, type Online } from './saved';
@@ -48,7 +54,9 @@ export function sharedWorker() {
   if (!shared || shared.broken) {
     const port = startWorker();
     const current = { worker: new PDFWorker({ port: port as never }), broken: false, port };
-    port.addEventListener('error', () => { current.broken = true; });
+    port.addEventListener('error', () => {
+      current.broken = true;
+    });
     shared = current;
   }
   return shared;
@@ -99,7 +107,11 @@ async function readText(doc: PDFDocumentProxy, n: number): Promise<PageTextData>
 }
 
 /** Page `n`'s text, read once into `texts` (pdf.js reads it afresh each time it is asked). */
-export function textOf(texts: Map<number, Promise<PageTextData>>, doc: PDFDocumentProxy, n: number): Promise<PageTextData> {
+export function textOf(
+  texts: Map<number, Promise<PageTextData>>,
+  doc: PDFDocumentProxy,
+  n: number,
+): Promise<PageTextData> {
   let text = texts.get(n);
   if (!text) {
     text = readText(doc, n);
@@ -171,11 +183,16 @@ function tidy(src: string, entry: Kept) {
   setTimeout(() => {
     const idle = () => entry.readers === 0 && kept.get(src) === entry;
     if (!idle()) return;
-    entry.task.promise.then((doc) => doc.cleanup()).then(() => entry.warmed.clear(), () => {
-      if (!idle()) return;
-      kept.delete(src);
-      void entry.task.destroy();
-    });
+    entry.task.promise
+      .then((doc) => doc.cleanup())
+      .then(
+        () => entry.warmed.clear(),
+        () => {
+          if (!idle()) return;
+          kept.delete(src);
+          void entry.task.destroy();
+        },
+      );
   }, TIDY_MS);
 }
 
@@ -185,7 +202,9 @@ function tidy(src: string, entry: Kept) {
  * reader shows it; `release` when it closes, which leaves it kept, tidied.
  * Null if it isn't kept.
  */
-export function heldDocument(src: string): { promise: Promise<PDFDocumentProxy>; texts: Map<number, Promise<PageTextData>>; release: () => void } | null {
+export function heldDocument(
+  src: string,
+): { promise: Promise<PDFDocumentProxy>; texts: Map<number, Promise<PageTextData>>; release: () => void } | null {
   const entry = kept.get(src);
   if (!entry) return null;
   entry.readers++;
@@ -228,7 +247,11 @@ export interface Browser extends Online {
  * (Save-Data); otherwise null. A browser that says nothing of its
  * connection (Safari, Firefox) gets no warm: it may be a phone's data.
  */
-export async function warmWay(src: string, nav: Browser = navigator as Browser, store: CacheStorage | undefined = globalThis.caches): Promise<'saved' | 'ranges' | null> {
+export async function warmWay(
+  src: string,
+  nav: Browser = navigator as Browser,
+  store: CacheStorage | undefined = globalThis.caches,
+): Promise<'saved' | 'ranges' | null> {
   if (await savedCopy(src, nav, store)) return 'saved';
   const connection = nav.connection;
   if (nav.onLine === false || !connection || connection.saveData) return null;
@@ -238,7 +261,12 @@ export async function warmWay(src: string, nav: Browser = navigator as Browser, 
 /** A promise that settles with `work`, or after `ms` if that is sooner. */
 function within(work: Promise<void>, ms: number): Promise<void> {
   let timer: ReturnType<typeof setTimeout> | undefined;
-  return Promise.race([work, new Promise<void>((resolve) => { timer = setTimeout(resolve, ms); })]).finally(() => clearTimeout(timer));
+  return Promise.race([
+    work,
+    new Promise<void>((resolve) => {
+      timer = setTimeout(resolve, ms);
+    }),
+  ]).finally(() => clearTimeout(timer));
 }
 
 /**
@@ -274,9 +302,12 @@ export async function warmPage(src: string, n: number): Promise<(() => Promise<v
         // The reader's own drawing asks the same way, so it uses what this one leaves.
         page.render({ canvas, viewport: page.getViewport({ scale }) }).promise,
         textOf(entry.texts, doc, n),
-      ]).then(() => {}, () => {
-        entry.warmed.delete(n);
-      });
+      ]).then(
+        () => {},
+        () => {
+          entry.warmed.delete(n);
+        },
+      );
       entry.warmed.set(n, warming);
     }
     return within(warming, WARM_TURN_MS);

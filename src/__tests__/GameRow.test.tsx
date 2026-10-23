@@ -18,7 +18,7 @@ function renderRow(game: Game, isOpen = false, onToggle = vi.fn()) {
           </tbody>
         </table>
       </FilterProvider>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 
@@ -53,16 +53,29 @@ describe('GameRow', () => {
     rerender(
       <MemoryRouter>
         <FilterProvider>
-          <table><tbody><GameRow game={quickGame} isOpen onToggle={onToggle} /></tbody></table>
+          <table>
+            <tbody>
+              <GameRow game={quickGame} isOpen onToggle={onToggle} />
+            </tbody>
+          </table>
         </FilterProvider>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
-    expect(screen.getByRole('button', { name: 'Hide details for Quick Game' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: 'Hide details for Quick Game' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
     expect(document.querySelector('.row-expand-inner')).not.toHaveAttribute('inert');
   });
 
   it('shows the award count in the row and the full list when expanded', () => {
-    const game: Game = { ...quickGame, awards: [{ name: 'Mensa Select', year: 2009 }, { name: 'As d\'Or', year: 2010 }] };
+    const game: Game = {
+      ...quickGame,
+      awards: [
+        { name: 'Mensa Select', year: 2009 },
+        { name: "As d'Or", year: 2010 },
+      ],
+    };
     const { container } = renderRow(game, true);
     // The count closes the description; the list lives in the expand section.
     const column = container.querySelector('td.col-short') as HTMLElement;
@@ -116,12 +129,19 @@ describe('GameRow', () => {
     render(
       <MemoryRouter initialEntries={['/?p=5']}>
         <FilterProvider>
-          <table><tbody><GameRow game={catan} isOpen onToggle={vi.fn()} /></tbody></table>
+          <table>
+            <tbody>
+              <GameRow game={catan} isOpen onToggle={vi.fn()} />
+            </tbody>
+          </table>
         </FilterProvider>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
     // Only the open panel carries Rules; the row itself has none.
-    expect(screen.getByRole('link', { name: 'Rules for Catan' })).toHaveAttribute('href', '/rules/catan/5-6-player-extension');
+    expect(screen.getByRole('link', { name: 'Rules for Catan' })).toHaveAttribute(
+      'href',
+      '/rules/catan/5-6-player-extension',
+    );
   });
 
   it('gives a collapsed row no Rules link: the actions cell holds only the chevron', () => {
@@ -157,7 +177,9 @@ describe('GameRow', () => {
     expect(content.querySelector('.row-expand-actions')).toBeNull();
     const links = within(foot).getAllByRole('link');
     expect(links.map((a) => a.getAttribute('aria-label') ?? a.textContent!.trim())).toEqual([
-      'Rules for 7 Wonders', 'Score', 'Watch 7 Wonders tutorial on YouTube',
+      'Rules for 7 Wonders',
+      'Score',
+      'Watch 7 Wonders tutorial on YouTube',
     ]);
     expect(links[0]).toHaveClass('rules-btn', 'rules-btn--primary');
     expect(links[1]).toHaveClass('rules-btn');
@@ -165,16 +187,20 @@ describe('GameRow', () => {
     expect(links[2]).toHaveClass('row-yt');
     // The write-up comes first, and every section of the panel before the actions.
     expect(content.firstElementChild).toHaveClass('detail-section');
-    expect(content.firstElementChild).toHaveTextContent(`${sevenWondersGame.detail[0].heading}${sevenWondersGame.detail[0].body}`);
+    expect(content.firstElementChild).toHaveTextContent(
+      `${sevenWondersGame.detail[0].heading}${sevenWondersGame.detail[0].body}`,
+    );
     for (const section of Array.from(content.children).slice(0, -1)) expect(section).toHaveClass('detail-section');
     cleanup();
     renderRow(bananagramsGame, true);
     const bananaContent = document.querySelector('.row-expand-content') as HTMLElement;
     const bananaFoot = bananaContent.lastElementChild as HTMLElement;
     expect(bananaFoot).toHaveClass('row-expand-foot');
-    expect(within(bananaFoot).getAllByRole('link').map((a) => a.getAttribute('aria-label') ?? a.textContent!.trim())).toEqual([
-      'Rules for Bananagrams', 'Word Checker', 'Watch Bananagrams tutorial on YouTube',
-    ]);
+    expect(
+      within(bananaFoot)
+        .getAllByRole('link')
+        .map((a) => a.getAttribute('aria-label') ?? a.textContent!.trim()),
+    ).toEqual(['Rules for Bananagrams', 'Word Checker', 'Watch Bananagrams tutorial on YouTube']);
   });
 
   it('renders Rules link to /rules/slug when game has rules', () => {
@@ -207,10 +233,14 @@ describe('GameRow', () => {
     ['Rules for 7 Wonders', sevenWondersGame, '/rules/7-wonders'],
     ['Score', sevenWondersGame, '/score/7-wonders'],
     ['Word Checker', bananagramsGame, '/word-checker'],
-  ])('marks the open row\'s %s link as leaving the list, so the page\'s Back returns to it', (name, game, pathname) => {
+  ])("marks the open row's %s link as leaving the list, so the page's Back returns to it", (name, game, pathname) => {
     const router = renderRouted(
       <FilterProvider>
-        <table><tbody><GameRow game={game} isOpen onToggle={vi.fn()} /></tbody></table>
+        <table>
+          <tbody>
+            <GameRow game={game} isOpen onToggle={vi.fn()} />
+          </tbody>
+        </table>
       </FilterProvider>,
     );
     const panel = document.querySelector('tr.row-expand') as HTMLElement;
@@ -275,7 +305,9 @@ describe('GameRow', () => {
     const inColumn = document.querySelector('td.col-short > .row-badges') as HTMLElement;
     const folded = document.querySelector('td.col-name .mobile-short > .row-badges') as HTMLElement;
     for (const badges of [inColumn, folded]) {
-      expect(within(badges).getByRole('button', { name: 'Island: +1 expansion, show which' })).toHaveTextContent('+1 expansion');
+      expect(within(badges).getByRole('button', { name: 'Island: +1 expansion, show which' })).toHaveTextContent(
+        '+1 expansion',
+      );
       expect(Array.from(badges.children).map((c) => c.className)).toEqual(['sub-tag-wrap', 'awards']);
       expect(badges.parentElement!.firstChild!.textContent).toBe(addonGame.short);
     }
@@ -290,13 +322,18 @@ describe('GameRow', () => {
   });
 
   it('tags how many fit once players or time is chosen, and leaves the tag off when none do', () => {
-    const renderAt = (url: string) => render(
-      <MemoryRouter initialEntries={[url]}>
-        <FilterProvider>
-          <table><tbody><GameRow game={deckGame} isOpen={false} onToggle={vi.fn()} /></tbody></table>
-        </FilterProvider>
-      </MemoryRouter>,
-    );
+    const renderAt = (url: string) =>
+      render(
+        <MemoryRouter initialEntries={[url]}>
+          <FilterProvider>
+            <table>
+              <tbody>
+                <GameRow game={deckGame} isOpen={false} onToggle={vi.fn()} />
+              </tbody>
+            </table>
+          </FilterProvider>
+        </MemoryRouter>,
+      );
     renderAt('/?p=2');
     expect(document.querySelector('td.col-short .sub-tag')).toHaveTextContent('1 of 2 games fit');
     cleanup();
@@ -309,7 +346,11 @@ describe('GameRow', () => {
     render(
       <MemoryRouter initialEntries={['/?p=2']}>
         <FilterProvider>
-          <table><tbody><GameRow game={deckGame} isOpen={false} onToggle={onToggle} /></tbody></table>
+          <table>
+            <tbody>
+              <GameRow game={deckGame} isOpen={false} onToggle={onToggle} />
+            </tbody>
+          </table>
         </FilterProvider>
       </MemoryRouter>,
     );
@@ -342,7 +383,11 @@ describe('GameRow', () => {
     render(
       <MemoryRouter initialEntries={['/?p=9']}>
         <FilterProvider>
-          <table><tbody><GameRow game={deckGame} isOpen onToggle={vi.fn()} /></tbody></table>
+          <table>
+            <tbody>
+              <GameRow game={deckGame} isOpen onToggle={vi.fn()} />
+            </tbody>
+          </table>
         </FilterProvider>
       </MemoryRouter>,
     );

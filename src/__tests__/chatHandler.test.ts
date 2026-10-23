@@ -36,10 +36,20 @@ function makeRes() {
     headers: {} as Record<string, string>,
     chunks: [] as string[],
     ended: false,
-    status(code: number) { res.statusCode = code; return res; },
-    json(data: unknown) { res.body = data; return res; },
-    setHeader(name: string, value: string) { res.headers[name] = value; },
-    write(chunk: string) { res.chunks.push(chunk); },
+    status(code: number) {
+      res.statusCode = code;
+      return res;
+    },
+    json(data: unknown) {
+      res.body = data;
+      return res;
+    },
+    setHeader(name: string, value: string) {
+      res.headers[name] = value;
+    },
+    write(chunk: string) {
+      res.chunks.push(chunk);
+    },
     end(chunk?: string) {
       if (chunk !== undefined) res.chunks.push(chunk);
       res.ended = true;
@@ -62,9 +72,7 @@ describe('chat handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(assembleRulesText).mockReturnValue('the rules');
-    vi.mocked(streamRulesAnswer).mockResolvedValue(
-      fakeStream('Hello') as unknown as Stream,
-    );
+    vi.mocked(streamRulesAnswer).mockResolvedValue(fakeStream('Hello') as unknown as Stream);
     vi.mocked(enforceRateLimit).mockResolvedValue(true);
   });
 
@@ -75,7 +83,9 @@ describe('chat handler', () => {
 
   it('stops with no further work when rate limited', async () => {
     vi.mocked(enforceRateLimit).mockImplementation(async (_l, _req, res) => {
-      (res as unknown as { status(c: number): { json(b: unknown): void } }).status(429).json({ error: 'Too many requests. Please slow down.' });
+      (res as unknown as { status(c: number): { json(b: unknown): void } })
+        .status(429)
+        .json({ error: 'Too many requests. Please slow down.' });
       return false;
     });
     const res = await run({ slug: 'catan', message: 'hi' });
@@ -89,7 +99,7 @@ describe('chat handler', () => {
     expect(vi.mocked(assembleRulesText)).not.toHaveBeenCalled();
   });
 
-  it('reads the rulebooks named in parts along with the game\'s own', async () => {
+  it("reads the rulebooks named in parts along with the game's own", async () => {
     await run({ slug: 'catan', message: 'hi', parts: ['cities-and-knights'] });
     expect(vi.mocked(assembleRulesText)).toHaveBeenCalledWith('catan', ['cities-and-knights']);
     expect(vi.mocked(streamRulesAnswer)).toHaveBeenCalled();
@@ -100,13 +110,19 @@ describe('chat handler', () => {
     expect(vi.mocked(streamRulesAnswer).mock.calls[0][0].rulesText).toBe('the rules');
   });
 
-  it('reads only the game\'s own rules when no parts are named', async () => {
+  it("reads only the game's own rules when no parts are named", async () => {
     await run({ slug: 'catan', message: 'hi' });
     expect(vi.mocked(assembleRulesText)).toHaveBeenCalledWith('catan', undefined);
   });
 
   it('rejects parts that are not a short list of clean identifiers', async () => {
-    for (const parts of ['euchre', [42], ['../../etc/passwd'], Array.from({ length: 17 }, (_, i) => `p${i}`), ['euchre', 'speed', 'euchre']]) {
+    for (const parts of [
+      'euchre',
+      [42],
+      ['../../etc/passwd'],
+      Array.from({ length: 17 }, (_, i) => `p${i}`),
+      ['euchre', 'speed', 'euchre'],
+    ]) {
       const res = await run({ slug: 'card-deck', message: 'hi', parts });
       expect(res.statusCode, JSON.stringify(parts)).toBe(400);
     }
@@ -117,8 +133,12 @@ describe('chat handler', () => {
   });
 
   it('rejects a history entry with a bad role or non-string content', async () => {
-    expect((await run({ slug: 'catan', message: 'hi', history: [{ role: 'system', content: 'x' }] })).statusCode).toBe(400);
-    expect((await run({ slug: 'catan', message: 'hi', history: [{ role: 'user', content: 123 }] })).statusCode).toBe(400);
+    expect((await run({ slug: 'catan', message: 'hi', history: [{ role: 'system', content: 'x' }] })).statusCode).toBe(
+      400,
+    );
+    expect((await run({ slug: 'catan', message: 'hi', history: [{ role: 'user', content: 123 }] })).statusCode).toBe(
+      400,
+    );
   });
 
   it('rejects history whose total content exceeds the cap', async () => {
@@ -176,16 +196,16 @@ describe('chat handler', () => {
   });
 
   it('returns 404 when no rules text exists for the slug', async () => {
-    vi.mocked(assembleRulesText).mockImplementation(() => { throw new Error('ENOENT'); });
+    vi.mocked(assembleRulesText).mockImplementation(() => {
+      throw new Error('ENOENT');
+    });
     const res = await run({ slug: 'unknown-game', message: 'hi' });
     expect(res.statusCode).toBe(404);
     expect(res.body).toEqual({ error: 'Rules not found for this game' });
   });
 
   it('streams the answer as plain text and ends the response', async () => {
-    vi.mocked(streamRulesAnswer).mockResolvedValue(
-      fakeStream('2-4 ', undefined, 'players') as unknown as Stream,
-    );
+    vi.mocked(streamRulesAnswer).mockResolvedValue(fakeStream('2-4 ', undefined, 'players') as unknown as Stream);
     const res = await run({ slug: 'catan', message: 'How many players?' });
     expect(res.headers['Content-Type']).toBe('text/plain; charset=utf-8');
     expect(res.chunks.join('')).toBe('2-4 players');
@@ -207,9 +227,7 @@ describe('chat handler', () => {
   it('passes history through to the pipeline', async () => {
     const history = [{ role: 'user', content: 'earlier question' }];
     await run({ slug: 'catan', message: 'hi', history });
-    expect(vi.mocked(streamRulesAnswer)).toHaveBeenCalledWith(
-      expect.objectContaining({ history }),
-    );
+    expect(vi.mocked(streamRulesAnswer)).toHaveBeenCalledWith(expect.objectContaining({ history }));
   });
 
   it('returns 500 and reports to Sentry when the pipeline fails', async () => {
@@ -226,8 +244,12 @@ describe('chat handler', () => {
   describe('when Gemini is overloaded', () => {
     const overloaded = Object.assign(new Error('UNAVAILABLE'), { status: 503 });
 
-    beforeEach(() => { vi.useFakeTimers(); });
-    afterEach(() => { vi.useRealTimers(); });
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
 
     it('retries once after a second and streams the answer', async () => {
       vi.mocked(streamRulesAnswer)
@@ -244,7 +266,7 @@ describe('chat handler', () => {
       expect(vi.mocked(Sentry.captureException)).not.toHaveBeenCalled();
     });
 
-    it('gives both attempts one shared time budget, under the function\'s 60 s limit', async () => {
+    it("gives both attempts one shared time budget, under the function's 60 s limit", async () => {
       vi.mocked(streamRulesAnswer)
         .mockRejectedValueOnce(overloaded)
         .mockResolvedValueOnce(fakeStream('Hello') as unknown as Stream);

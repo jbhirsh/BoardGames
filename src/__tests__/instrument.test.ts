@@ -28,10 +28,16 @@ async function instrument() {
   return { ...module, options, beforeSend };
 }
 
-const thrown: ErrorEvent = { type: undefined, level: 'error', exception: { values: [{ type: 'Error', value: 'boom' }] } };
+const thrown: ErrorEvent = {
+  type: undefined,
+  level: 'error',
+  exception: { values: [{ type: 'Error', value: 'boom' }] },
+};
 // The SDK attaches a stack to a message as a synthetic exception.
 const warning: ErrorEvent = {
-  type: undefined, level: 'warning', message: 'rules chat request timed out',
+  type: undefined,
+  level: 'warning',
+  message: 'rules chat request timed out',
   exception: { values: [{ value: 'rules chat request timed out', mechanism: { type: 'generic', synthetic: true } }] },
 };
 const failed: ErrorEvent = { type: undefined, level: 'error', message: 'rules chat request failed: HTTP 502' };
@@ -74,8 +80,9 @@ describe('instrument', () => {
     expect(sentry.addIntegration).toHaveBeenCalledExactlyOnceWith(integration);
     // From buffering to recording the session, once it's set up.
     expect(integration.flush).toHaveBeenCalledExactlyOnceWith();
-    expect(sentry.addIntegration.mock.invocationCallOrder[0])
-      .toBeLessThan(integration.flush.mock.invocationCallOrder[0]);
+    expect(sentry.addIntegration.mock.invocationCallOrder[0]).toBeLessThan(
+      integration.flush.mock.invocationCallOrder[0],
+    );
     expect(first).toEqual({ ...thrown, tags: { replayId: 'replay-1' } });
 
     const second = await beforeSend({ ...thrown, tags: { slug: 'catan' } });
@@ -96,7 +103,10 @@ describe('instrument', () => {
 
   it.each<[string, ErrorEvent]>([
     ['a fatal message', { type: undefined, level: 'fatal', message: 'down' }],
-    ['an exception with no level (Sentry reads it as an error)', { type: undefined, exception: { values: [{ type: 'Error' }] } }],
+    [
+      'an exception with no level (Sentry reads it as an error)',
+      { type: undefined, exception: { values: [{ type: 'Error' }] } },
+    ],
   ])('starts replay for %s', async (_, event) => {
     const { beforeSend } = await instrument();
     await beforeSend(event);
@@ -125,7 +135,9 @@ describe('instrument', () => {
   });
 
   it('goes without replay when its code fails to load, and tries again on a later error', async () => {
-    vi.doMock('../sentryReplay', () => { throw new Error('offline') });
+    vi.doMock('../sentryReplay', () => {
+      throw new Error('offline');
+    });
     const { beforeSend } = await instrument();
     await expect(beforeSend({ ...thrown })).resolves.toEqual(thrown);
     expect(sentry.addIntegration).not.toHaveBeenCalled();
@@ -145,7 +157,9 @@ describe('instrument', () => {
   });
 
   it('never builds a second replay when adding it threw', async () => {
-    sentry.addIntegration.mockImplementationOnce(() => { throw new Error('Multiple instances') });
+    sentry.addIntegration.mockImplementationOnce(() => {
+      throw new Error('Multiple instances');
+    });
     const { beforeSend } = await instrument();
     await expect(beforeSend({ ...thrown })).resolves.toEqual(thrown);
     await beforeSend({ ...thrown });
@@ -159,7 +173,9 @@ describe('instrument', () => {
     const sent = beforeSend({ ...thrown });
     await vi.advanceTimersByTimeAsync(2999);
     let done = false;
-    void sent.then(() => { done = true });
+    void sent.then(() => {
+      done = true;
+    });
     await vi.advanceTimersByTimeAsync(0);
     expect(done).toBe(false);
     await vi.advanceTimersByTimeAsync(1);
@@ -181,7 +197,7 @@ describe('instrument', () => {
     it.each([
       ['buffering only, never sent', { segmentId: 0, started: minutesAgo(5), lastActivity: minutesAgo(1) }],
       ['idle too long', { segmentId: 3, started: minutesAgo(30), lastActivity: minutesAgo(16) }],
-      ['past replay\'s hour', { segmentId: 3, started: minutesAgo(61), lastActivity: minutesAgo(1) }],
+      ["past replay's hour", { segmentId: 3, started: minutesAgo(61), lastActivity: minutesAgo(1) }],
       ['unreadable', '{not json'],
     ])('starts nothing for a stored session %s', async (_, session) => {
       save(session);

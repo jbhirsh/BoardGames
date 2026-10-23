@@ -20,21 +20,24 @@ export function useWakeLock(active: boolean): void {
     function request() {
       if (pending || document.visibilityState !== 'visible' || (lock && !lock.released)) return;
       pending = true;
-      navigator.wakeLock.request('screen').then((sentinel) => {
-        pending = false;
-        if (done) {
-          void sentinel.release().catch(() => {});
-          return;
-        }
-        lock = sentinel;
-        // Our own release, below, comes after `done`, so it asks nothing;
-        // one hiding the page leaves the asking to visibilitychange.
-        sentinel.addEventListener('release', () => {
-          if (!done) request();
-        });
-      }, () => {
-        pending = false;
-      });
+      navigator.wakeLock.request('screen').then(
+        (sentinel) => {
+          pending = false;
+          if (done) {
+            void sentinel.release().catch(() => {});
+            return;
+          }
+          lock = sentinel;
+          // Our own release, below, comes after `done`, so it asks nothing;
+          // one hiding the page leaves the asking to visibilitychange.
+          sentinel.addEventListener('release', () => {
+            if (!done) request();
+          });
+        },
+        () => {
+          pending = false;
+        },
+      );
     }
 
     request();

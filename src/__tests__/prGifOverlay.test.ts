@@ -23,7 +23,7 @@ beforeEach(() => {
 });
 
 describe('the pointer', () => {
-  it('draws a layer the page can\'t click', () => {
+  it("draws a layer the page can't click", () => {
     expect(part('layer').style.pointerEvents).toBe('none');
   });
 
@@ -56,7 +56,12 @@ describe('the pointer', () => {
   });
 
   it('points a wheel turn the way the page scrolls, then fades it', () => {
-    for (const [deltaX, deltaY, arrow] of [[0, 100, '↓'], [0, -100, '↑'], [100, 0, '→'], [-100, 0, '←']] as const) {
+    for (const [deltaX, deltaY, arrow] of [
+      [0, 100, '↓'],
+      [0, -100, '↑'],
+      [100, 0, '→'],
+      [-100, 0, '←'],
+    ] as const) {
       window.dispatchEvent(new WheelEvent('wheel', { deltaX, deltaY }));
       expect(part('wheel').textContent).toBe(arrow);
       expect(part('wheel').style.opacity).toBe('1');
@@ -87,7 +92,11 @@ describe('the ticks', () => {
     window.dispatchEvent(new WheelEvent('wheel', { deltaY: 10 }));
     vi.advanceTimersByTime(16);
     vi.advanceTimersByTime(16);
-    expect(ticks().slice(-4).map((k) => k.moving)).toEqual([true, true, true, false]);
+    expect(
+      ticks()
+        .slice(-4)
+        .map((k) => k.moving),
+    ).toEqual([true, true, true, false]);
     expect(ticks().every((k, i) => i === 0 || k.t >= ticks()[i - 1].t)).toBe(true);
   });
 
@@ -120,11 +129,19 @@ describe('a key press', () => {
   function focusOn(box: { left: number; top: number; width: number; height: number }) {
     const button = document.createElement('button');
     document.body.prepend(button);
-    button.getBoundingClientRect = () => ({ ...box, right: box.left + box.width, bottom: box.top + box.height, x: box.left, y: box.top, toJSON: () => box });
+    button.getBoundingClientRect = () => ({
+      ...box,
+      right: box.left + box.width,
+      bottom: box.top + box.height,
+      x: box.left,
+      y: box.top,
+      toJSON: () => box,
+    });
     button.focus();
     return button;
   }
-  const press = (key: string, init: KeyboardEventInit = {}) => window.dispatchEvent(new KeyboardEvent('keydown', { key, ...init }));
+  const press = (key: string, init: KeyboardEventInit = {}) =>
+    window.dispatchEvent(new KeyboardEvent('keydown', { key, ...init }));
   const label = () => part('key');
 
   it('is labelled under what has focus, a frame after the key', () => {

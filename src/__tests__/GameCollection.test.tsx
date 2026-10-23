@@ -16,7 +16,7 @@ function renderWithFilter(hidden = false) {
         <FilterBar />
         <GameCollection hidden={hidden} />
       </FilterProvider>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 
@@ -127,7 +127,7 @@ describe('GameCollection scroll on a change of filters', () => {
           <Dispatcher />
           <GameCollection />
         </FilterProvider>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
     stubHeaderHeight(80);
     stubSectionTop(-200);

@@ -34,7 +34,8 @@ const ACT: Record<'preview' | 'queue', string> = { preview: 'add it anyway', que
 const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const PREVIEW_ADVICE: Record<Exclude<LookupOutcome, 'found'>, (act: string) => string> = {
   'no-match': (act) => `Check the name and look it up again, or ${act} and fill in its details with Edit.`,
-  'no-token': (act) => `${capital(act)} and fill in its details with Edit, or set the token, redeploy, then look it up again.`,
+  'no-token': (act) =>
+    `${capital(act)} and fill in its details with Edit, or set the token, redeploy, then look it up again.`,
   refused: (act) => `${capital(act)} and fill in its details with Edit, or check the token and look it up again.`,
   unavailable: (act) => `Look it up again in a minute, or ${act} and fill in its details with Edit.`,
 };
@@ -45,7 +46,11 @@ const PREVIEW_ADVICE: Record<Exclude<LookupOutcome, 'found'>, (act: string) => s
  * after an approval. Null when it found the game or none ran, so success
  * stays quiet.
  */
-export function lookupNotice(outcome: LookupOutcome | undefined, game: string, context: 'preview' | 'queue' | 'approved'): string | null {
+export function lookupNotice(
+  outcome: LookupOutcome | undefined,
+  game: string,
+  context: 'preview' | 'queue' | 'approved',
+): string | null {
   if (outcome === undefined || outcome === 'found' || !(outcome in CAUSE)) return null;
   const cause = CAUSE[outcome](game);
   return context === 'approved'

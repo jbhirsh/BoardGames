@@ -13,7 +13,13 @@ function renderItem(props: { pdf?: string; state: SaveState; hidden?: boolean; s
   const item = (p: typeof props) => (
     <>
       <span id="rules-download-size">4.6 MB</span>
-      <SaveOffline pdf={p.pdf ?? SEVEN} state={p.state} hidden={p.hidden} sized={p.sized ?? true} onSave={p.onSave ?? (() => {})} />
+      <SaveOffline
+        pdf={p.pdf ?? SEVEN}
+        state={p.state}
+        hidden={p.hidden}
+        sized={p.sized ?? true}
+        onSave={p.onSave ?? (() => {})}
+      />
     </>
   );
   const view = render(item(props));
@@ -21,7 +27,7 @@ function renderItem(props: { pdf?: string; state: SaveState; hidden?: boolean; s
 }
 
 describe('SaveOffline', () => {
-  it('offers to save the rulebook, described by the Download link\'s size', () => {
+  it("offers to save the rulebook, described by the Download link's size", () => {
     const onSave = vi.fn();
     const { container } = renderItem({ state: 'unsaved', onSave });
     const button = screen.getByRole('button', { name: 'Save for offline' });
@@ -67,7 +73,10 @@ describe('SaveOffline', () => {
   it('says when the device has no room, with nothing to try again', () => {
     renderItem({ state: 'full' });
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
-    expect(screen.getByText('Not enough space on this device').parentElement).toHaveClass('rules-save-status', 'rules-save-full');
+    expect(screen.getByText('Not enough space on this device').parentElement).toHaveClass(
+      'rules-save-status',
+      'rules-save-full',
+    );
   });
 
   // On a phone (App.css, 600px and narrower) the row's three items keep one
@@ -77,14 +86,17 @@ describe('SaveOffline', () => {
   it.each([
     ['unsaved', 'Save for offline', 'for', 'rules-wide', 'Save offline'],
     ['failed', 'Couldn’t save. Try again', 'Couldn’t save.', 'rules-more', 'Try again'],
-  ] as const)('keeps a %s button to fewer words on a phone, named so it holds them', (state, name, dropped, how, shown) => {
-    renderItem({ state });
-    const button = screen.getByRole('button', { name });
-    const words = within(button).getByText(dropped);
-    expect(words).toHaveAttribute('class', how);
-    words.remove();
-    expect(button).toHaveTextContent(new RegExp(`^${shown}$`));
-  });
+  ] as const)(
+    'keeps a %s button to fewer words on a phone, named so it holds them',
+    (state, name, dropped, how, shown) => {
+      renderItem({ state });
+      const button = screen.getByRole('button', { name });
+      const words = within(button).getByText(dropped);
+      expect(words).toHaveAttribute('class', how);
+      words.remove();
+      expect(button).toHaveTextContent(new RegExp(`^${shown}$`));
+    },
+  );
 
   it.each([
     ['saved', 'Saved on this device', 'Saved'],
@@ -170,7 +182,7 @@ describe('SaveOffline', () => {
     expect(said(container)).toBeEmptyDOMElement();
   });
 
-  it('takes no focus it didn\'t have', () => {
+  it("takes no focus it didn't have", () => {
     const { update } = renderItem({ state: 'unsaved' });
     const button = screen.getByRole('button', { name: 'Save for offline' });
     button.focus();

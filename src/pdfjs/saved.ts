@@ -116,7 +116,10 @@ export function waitsForSave(
   sizes: Readonly<Record<string, number>> = SIZES,
   nav: object = navigator,
 ): boolean {
-  return (sizes[src] ?? 0) >= SAVE_ON_OPEN_BELOW || (nav as { connection?: { saveData?: unknown } }).connection?.saveData === true;
+  return (
+    (sizes[src] ?? 0) >= SAVE_ON_OPEN_BELOW ||
+    (nav as { connection?: { saveData?: unknown } }).connection?.saveData === true
+  );
 }
 
 // The message the service worker answers about a rulebook (SAVE_MESSAGE in
@@ -141,7 +144,12 @@ export interface Controller {
  * up to the last ('saving' is the only one that has another after it).
  * Returns a function that stops listening sooner (a save goes on).
  */
-export function askWorker(worker: Controller, src: string, save: boolean, heard: (state: SaveState) => void): () => void {
+export function askWorker(
+  worker: Controller,
+  src: string,
+  save: boolean,
+  heard: (state: SaveState) => void,
+): () => void {
   const { port1, port2 } = new MessageChannel();
   // Closed, a port may still hand over what was already on its way.
   let open = true;

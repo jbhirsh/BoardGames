@@ -10,7 +10,10 @@ import { safeStorage } from '../client/safeStorage';
  * something). Where storage is unavailable it's ordinary state.
  */
 export function useSavedState<T>(
-  key: string, initial: T, read: (stored: unknown) => T | null, chosen: T | null = null,
+  key: string,
+  initial: T,
+  read: (stored: unknown) => T | null,
+  chosen: T | null = null,
 ): [T, (value: T) => void] {
   const [value, setValue] = useState<T>(() => {
     if (chosen !== null) return chosen;

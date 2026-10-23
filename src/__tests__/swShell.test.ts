@@ -1,8 +1,28 @@
 import { describe, it, expect, vi } from 'vitest';
-import { activate, ART_VERSION, ASSETS, healReader, install, isReaderMessage, pruneShells, READER_MESSAGE, readerSaved, RULEBOOK_VERSION, RULEBOOKS, SAVE_MESSAGE, saveReader, saveRulebook, saver, stamped, type Build, type SaveReply } from '../sw/shell';
+import {
+  activate,
+  ART_VERSION,
+  ASSETS,
+  healReader,
+  install,
+  isReaderMessage,
+  pruneShells,
+  READER_MESSAGE,
+  readerSaved,
+  RULEBOOK_VERSION,
+  RULEBOOKS,
+  SAVE_MESSAGE,
+  saveReader,
+  saveRulebook,
+  saver,
+  stamped,
+  type Build,
+  type SaveReply,
+} from '../sw/shell';
 
 const ORIGIN = 'https://game-room.example';
-const pathOf = (request: RequestInfo | URL) => new URL(typeof request === 'object' && 'url' in request ? request.url : String(request), ORIGIN).pathname;
+const pathOf = (request: RequestInfo | URL) =>
+  new URL(typeof request === 'object' && 'url' in request ? request.url : String(request), ORIGIN).pathname;
 
 /** What the fake network answers, by path; empty when offline. */
 type Network = Map<string, string>;
@@ -11,11 +31,21 @@ type Network = Map<string, string>;
 class FakeCache {
   entries = new Map<string, Response>();
   network: () => Network;
-  constructor(network: () => Network) { this.network = network; }
-  async match(request: RequestInfo | URL) { return this.entries.get(pathOf(request))?.clone(); }
-  async put(request: RequestInfo | URL, response: Response) { this.entries.set(pathOf(request), response); }
-  async delete(request: RequestInfo | URL) { return this.entries.delete(pathOf(request)); }
-  async keys() { return [...this.entries.keys()].map((path) => ({ url: ORIGIN + path }) as Request); }
+  constructor(network: () => Network) {
+    this.network = network;
+  }
+  async match(request: RequestInfo | URL) {
+    return this.entries.get(pathOf(request))?.clone();
+  }
+  async put(request: RequestInfo | URL, response: Response) {
+    this.entries.set(pathOf(request), response);
+  }
+  async delete(request: RequestInfo | URL) {
+    return this.entries.delete(pathOf(request));
+  }
+  async keys() {
+    return [...this.entries.keys()].map((path) => ({ url: ORIGIN + path }) as Request);
+  }
   async addAll(requests: string[]) {
     const network = this.network();
     const missing = requests.filter((path) => !network.has(path));
@@ -31,9 +61,15 @@ class FakeCaches {
     if (!this.caches.has(name)) this.caches.set(name, new FakeCache(() => this.network));
     return this.caches.get(name)!;
   }
-  async keys() { return [...this.caches.keys()]; }
-  async delete(name: string) { return this.caches.delete(name); }
-  async has(name: string) { return this.caches.has(name); }
+  async keys() {
+    return [...this.caches.keys()];
+  }
+  async delete(name: string) {
+    return this.caches.delete(name);
+  }
+  async has(name: string) {
+    return this.caches.has(name);
+  }
   async match(request: RequestInfo | URL) {
     for (const cache of this.caches.values()) {
       const hit = await cache.match(request);
@@ -42,10 +78,15 @@ class FakeCaches {
     return undefined;
   }
   /** The paths in cache `name`, sorted, or null if there is none. */
-  paths(name: string) { const cache = this.caches.get(name); return cache ? [...cache.entries.keys()].sort() : null; }
+  paths(name: string) {
+    const cache = this.caches.get(name);
+    return cache ? [...cache.entries.keys()].sort() : null;
+  }
   /** Saves a rulebook as sw.ts does, with the hash `build` has for it. */
   async saveRulebook(build: Build, path: string) {
-    await (await this.open(RULEBOOKS)).put(path, new Response('%PDF-', { headers: { [RULEBOOK_VERSION]: build.rulebooks[path] } }));
+    await (
+      await this.open(RULEBOOKS)
+    ).put(path, new Response('%PDF-', { headers: { [RULEBOOK_VERSION]: build.rulebooks[path] } }));
   }
 }
 
@@ -69,7 +110,9 @@ const B = build('b', 'worker-b');
 function online(fake: FakeCaches, ...builds: Build[]) {
   fake.network = new Map(['/', ...builds.flatMap((b) => [...b.precache, ...b.reader])].map((path) => [path, path]));
 }
-const offline = (fake: FakeCaches) => { fake.network = new Map(); };
+const offline = (fake: FakeCaches) => {
+  fake.network = new Map();
+};
 
 describe('install', () => {
   it('saves the app, without the reader, for a visitor with no rulebook saved', async () => {
@@ -84,12 +127,18 @@ describe('install', () => {
     online(fake, B);
     await fake.saveRulebook(A, '/rules/azul.pdf');
     await install(B, storage(fake));
-    expect(fake.paths(B.shell)).toEqual(['/', '/assets/index-b.js', '/assets/worker-b.js', '/pdfjs/wasm/openjpeg.wasm', '/words/enable.txt']);
+    expect(fake.paths(B.shell)).toEqual([
+      '/',
+      '/assets/index-b.js',
+      '/assets/worker-b.js',
+      '/pdfjs/wasm/openjpeg.wasm',
+      '/words/enable.txt',
+    ]);
   });
 });
 
 describe('saveReader', () => {
-  it('fetches only the reader\'s files the shell lacks', async () => {
+  it("fetches only the reader's files the shell lacks", async () => {
     const fake = new FakeCaches();
     const shell = await fake.open(A.shell);
     await shell.put('/assets/worker-a.js', new Response('saved'));
@@ -102,7 +151,7 @@ describe('saveReader', () => {
 });
 
 describe('an update', () => {
-  it('(d) a rulebook saved under A: B installs with the reader, and A\'s shell goes', async () => {
+  it("(d) a rulebook saved under A: B installs with the reader, and A's shell goes", async () => {
     const fake = new FakeCaches();
     online(fake, A);
     await install(A, storage(fake));
@@ -120,7 +169,7 @@ describe('an update', () => {
     expect(fake.paths(RULEBOOKS)).toEqual(['/rules/azul.pdf']);
   });
 
-  it('(a) a first rulebook saved while A still runs: B activating offline keeps A\'s shell for its reader, then heals', async () => {
+  it("(a) a first rulebook saved while A still runs: B activating offline keeps A's shell for its reader, then heals", async () => {
     const fake = new FakeCaches();
     online(fake, A);
     await install(A, storage(fake));
@@ -169,7 +218,12 @@ describe('an update', () => {
 
     // A saves the first rulebook and tells B, which heals (sw.ts: tellNewer, then B's message handler).
     const told: string[] = [];
-    const saving = saver(A, storage(fake), async () => new Response('%PDF'), (path) => told.push(path));
+    const saving = saver(
+      A,
+      storage(fake),
+      async () => new Response('%PDF'),
+      (path) => told.push(path),
+    );
     expect(await saving.save('/rules/azul.pdf')).toBe('saved');
     expect(told).toEqual(['/rules/azul.pdf']);
     await healReader(B, storage(fake));
@@ -181,7 +235,7 @@ describe('an update', () => {
     expect(await fake.keys()).not.toContain(A.shell);
   });
 
-  it('(a) online, B activating then healing ends with B\'s reader and A\'s shell gone', async () => {
+  it("(a) online, B activating then healing ends with B's reader and A's shell gone", async () => {
     const fake = new FakeCaches();
     online(fake, A, B);
     await install(A, storage(fake));
@@ -212,9 +266,16 @@ describe('an update', () => {
     online(fake, B);
     await install(B, storage(fake));
     await fake.saveRulebook(A, '/rules/azul.pdf');
-    await (await fake.open(RULEBOOKS)).put('/rules/catan.pdf', new Response('%PDF-', { headers: { [RULEBOOK_VERSION]: 'catan0' } }));
+    await (
+      await fake.open(RULEBOOKS)
+    ).put('/rules/catan.pdf', new Response('%PDF-', { headers: { [RULEBOOK_VERSION]: 'catan0' } }));
     const assets = await fake.open(ASSETS);
-    for (const path of ['/assets/later-a.js', '/pdfjs/wasm/openjpeg_nowasm_fallback.js', '/pdfjs/standard_fonts/FoxitSymbol.pfb', '/images/assets/shelf.webp']) {
+    for (const path of [
+      '/assets/later-a.js',
+      '/pdfjs/wasm/openjpeg_nowasm_fallback.js',
+      '/pdfjs/standard_fonts/FoxitSymbol.pfb',
+      '/images/assets/shelf.webp',
+    ]) {
       await assets.put(path, new Response(path));
     }
     await assets.put('/images/wishlist/ark-nova.jpg', new Response('art', { headers: { [ART_VERSION]: 'ark1' } }));
@@ -228,7 +289,9 @@ describe('an update', () => {
     online(fake, A, B);
     await install(A, storage(fake));
     await install(B, storage(fake));
-    await (await fake.open(RULEBOOKS)).put('/rules/azul.pdf', new Response('%PDF-', { headers: { [RULEBOOK_VERSION]: 'azul0' } }));
+    await (
+      await fake.open(RULEBOOKS)
+    ).put('/rules/azul.pdf', new Response('%PDF-', { headers: { [RULEBOOK_VERSION]: 'azul0' } }));
     await activate(B, storage(fake));
     expect(fake.paths(RULEBOOKS)).toEqual([]);
     expect(await fake.keys()).not.toContain(A.shell);
@@ -236,8 +299,12 @@ describe('an update', () => {
 });
 
 describe('wishlist box art', () => {
-  it('is kept marked with the build\'s hash of it, and everything else as it came', async () => {
-    const art = stamped(A, '/images/wishlist/cascadia.jpg', new Response('jpeg', { status: 200, statusText: 'OK', headers: { 'Content-Type': 'image/jpeg' } }));
+  it("is kept marked with the build's hash of it, and everything else as it came", async () => {
+    const art = stamped(
+      A,
+      '/images/wishlist/cascadia.jpg',
+      new Response('jpeg', { status: 200, statusText: 'OK', headers: { 'Content-Type': 'image/jpeg' } }),
+    );
     expect(art.headers.get(ART_VERSION)).toBe('cascadia-a');
     expect(art.headers.get('Content-Type')).toBe('image/jpeg');
     expect([art.status, art.statusText, await art.text()]).toEqual([200, 'OK', 'jpeg']);
@@ -254,7 +321,11 @@ describe('wishlist box art', () => {
     await install(A, storage(fake));
     await activate(A, storage(fake));
     const assets = await fake.open(ASSETS);
-    for (const path of ['/images/wishlist/ark-nova.jpg', '/images/wishlist/cascadia.jpg', '/images/wishlist/gone.jpg']) {
+    for (const path of [
+      '/images/wishlist/ark-nova.jpg',
+      '/images/wishlist/cascadia.jpg',
+      '/images/wishlist/gone.jpg',
+    ]) {
       await assets.put(path, stamped(A, path, new Response(path)));
     }
     // Saved before copies were marked: its file may have changed since.
@@ -281,9 +352,11 @@ describe('saveRulebook', () => {
     return { fetched, fetcher };
   }
 
-  it('saves the whole file, marked with the build\'s hash of it, then the reader', async () => {
+  it("saves the whole file, marked with the build's hash of it, then the reader", async () => {
     const fake = new FakeCaches();
-    const { fetcher } = serving(fake, { '/rules/catan.pdf': new Response('%PDF-catan', { headers: { 'Content-Type': 'application/pdf' } }) });
+    const { fetcher } = serving(fake, {
+      '/rules/catan.pdf': new Response('%PDF-catan', { headers: { 'Content-Type': 'application/pdf' } }),
+    });
     await saveRulebook('/rules/catan.pdf', A, storage(fake), fetcher);
     const copy = (await (await fake.open(RULEBOOKS)).match('/rules/catan.pdf'))!;
     expect(await copy.text()).toBe('%PDF-catan');
@@ -302,7 +375,7 @@ describe('saveRulebook', () => {
     expect(await readerSaved(A, storage(fake))).toBe(true);
   });
 
-  it('fails, saving nothing, for an answer that isn\'t the whole file', async () => {
+  it("fails, saving nothing, for an answer that isn't the whole file", async () => {
     const fake = new FakeCaches();
     const { fetcher } = serving(fake, {
       '/rules/catan.pdf': new Response('gone', { status: 404 }),
@@ -314,7 +387,7 @@ describe('saveRulebook', () => {
     expect(await readerSaved(A, storage(fake))).toBe(false);
   });
 
-  it('fails when the reader can\'t be had', async () => {
+  it("fails when the reader can't be had", async () => {
     const fake = new FakeCaches();
     const { fetcher } = serving(fake, { '/rules/catan.pdf': new Response('%PDF') });
     offline(fake);
@@ -338,14 +411,18 @@ describe('saver', () => {
     online(fake, A);
     const fetched: string[] = [];
     let release: () => void = () => {};
-    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
     const fetcher = async (path: string) => {
       fetched.push(path);
       await gate;
       return answer();
     };
     const replies: SaveReply[] = [];
-    const reply = (r: SaveReply) => { replies.push(r); };
+    const reply = (r: SaveReply) => {
+      replies.push(r);
+    };
     return { fake, fetched, release, replies, reply, saving: saver(A, storage(fake), fetcher) };
   }
   const ask = (path: string, save: boolean) => ({ type: SAVE_MESSAGE, path, save });
@@ -364,7 +441,7 @@ describe('saver', () => {
     expect(fetched).toEqual(['/rules/catan.pdf', '/rules/catan.pdf']);
   });
 
-  it('saves the reader\'s files once for rulebooks saved at once, and again for a save after', async () => {
+  it("saves the reader's files once for rulebooks saved at once, and again for a save after", async () => {
     const { fake, release, saving } = setUp();
     const shell = await fake.open(A.shell);
     const addAll = vi.spyOn(shell, 'addAll');
@@ -380,7 +457,7 @@ describe('saver', () => {
     expect(addAll.mock.calls).toEqual([[A.reader], [[A.reader[0]]]]);
   });
 
-  it('fails each save sharing a reader that can\'t be had', async () => {
+  it("fails each save sharing a reader that can't be had", async () => {
     const { fake, release, saving } = setUp();
     vi.spyOn(await fake.open(A.shell), 'addAll').mockRejectedValue(new TypeError('Failed to fetch'));
     const both = Promise.all([saving.save('/rules/catan.pdf'), saving.save('/rules/azul.pdf')]);
@@ -443,7 +520,12 @@ describe('saver', () => {
     const tapped = saving.answer(ask('/rules/azul.pdf', true), reply);
     release();
     await Promise.all([opened, answered, tapped]);
-    expect(states(replies)).toEqual(['/rules/azul.pdf saving', '/rules/azul.pdf saving', '/rules/azul.pdf saved', '/rules/azul.pdf saved']);
+    expect(states(replies)).toEqual([
+      '/rules/azul.pdf saving',
+      '/rules/azul.pdf saving',
+      '/rules/azul.pdf saved',
+      '/rules/azul.pdf saved',
+    ]);
     expect(fetched).toEqual(['/rules/azul.pdf']);
   });
 
@@ -452,20 +534,30 @@ describe('saver', () => {
     online(fake, A);
     const told: string[] = [];
     let ok = true;
-    const saving = saver(A, storage(fake), async () => new Response('%PDF', { status: ok ? 200 : 500 }), (path) => told.push(path));
+    const saving = saver(
+      A,
+      storage(fake),
+      async () => new Response('%PDF', { status: ok ? 200 : 500 }),
+      (path) => told.push(path),
+    );
     const replies: SaveReply[] = [];
-    await Promise.all([saving.save('/rules/azul.pdf'), saving.answer(ask('/rules/azul.pdf', true), (r) => replies.push(r))]);
+    await Promise.all([
+      saving.save('/rules/azul.pdf'),
+      saving.answer(ask('/rules/azul.pdf', true), (r) => replies.push(r)),
+    ]);
     expect(told).toEqual(['/rules/azul.pdf']);
     ok = false;
     expect(await saving.save('/rules/catan.pdf')).toBe('failed');
     expect(told).toEqual(['/rules/azul.pdf']);
   });
 
-  it('answers nothing but its own message, for one of the build\'s rulebooks', async () => {
+  it("answers nothing but its own message, for one of the build's rulebooks", async () => {
     const { fetched, release, replies, reply, saving } = setUp();
     release();
     for (const message of [
-      null, 'save', 42,
+      null,
+      'save',
+      42,
       { type: 'other', path: '/rules/catan.pdf', save: true },
       { type: SAVE_MESSAGE, path: '/rules/elsewhere.pdf', save: true },
       { type: SAVE_MESSAGE, path: '/api/votes', save: true },
@@ -473,16 +565,24 @@ describe('saver', () => {
       { type: SAVE_MESSAGE, path: 7, save: true },
       { type: SAVE_MESSAGE, path: '/rules/catan.pdf', save: 'yes' },
       { type: SAVE_MESSAGE, path: '/rules/catan.pdf' },
-    ]) await saving.answer(message, reply);
+    ])
+      await saving.answer(message, reply);
     expect(replies).toEqual([]);
     expect(fetched).toEqual([]);
   });
 });
 
 describe('isReaderMessage', () => {
-  it('knows only the message an older build\'s worker sends a newer one', () => {
+  it("knows only the message an older build's worker sends a newer one", () => {
     expect(isReaderMessage({ type: READER_MESSAGE })).toBe(true);
-    for (const message of [null, undefined, READER_MESSAGE, 42, {}, { type: SAVE_MESSAGE, path: '/rules/azul.pdf', save: true }]) {
+    for (const message of [
+      null,
+      undefined,
+      READER_MESSAGE,
+      42,
+      {},
+      { type: SAVE_MESSAGE, path: '/rules/azul.pdf', save: true },
+    ]) {
       expect(isReaderMessage(message)).toBe(false);
     }
   });

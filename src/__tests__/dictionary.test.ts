@@ -7,7 +7,8 @@ vi.mock('../client/sentry', () => ({ captureMessage }));
 const BASE = 'https://en.wiktionary.org/api/rest_v1/page/definition/';
 const NOUN = { en: [{ partOfSpeech: 'Noun', language: 'English', definitions: [{ definition: 'A <b>fruit</b>.' }] }] };
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as Response;
-const status = (code: number, body: unknown = {}) => ({ ok: code < 300, status: code, json: async () => body }) as Response;
+const status = (code: number, body: unknown = {}) =>
+  ({ ok: code < 300, status: code, json: async () => body }) as Response;
 /** The API's own answer for a page it doesn't have. */
 const MISSING_PAGE = { status: 404, type: 'Internal error' };
 
@@ -44,7 +45,9 @@ describe('lookUp', () => {
   it('takes a 404, or a page with nothing playable, as no such word, without a report', async () => {
     vi.spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce(status(404, MISSING_PAGE))
-      .mockResolvedValueOnce(ok({ en: [{ partOfSpeech: 'Proper noun', language: 'English', definitions: [{ definition: 'A city.' }] }] }))
+      .mockResolvedValueOnce(
+        ok({ en: [{ partOfSpeech: 'Proper noun', language: 'English', definitions: [{ definition: 'A city.' }] }] }),
+      )
       .mockResolvedValueOnce(ok({ fr: [] }));
     const lookUp = await load();
     expect(await lookUp('asdfgh')).toEqual({ found: false });
@@ -59,7 +62,10 @@ describe('lookUp', () => {
     expect(await lookUp('qi')).toBeNull();
     expect(await lookUp('za')).toBeNull();
     expect(captureMessage).toHaveBeenCalledTimes(1);
-    expect(captureMessage).toHaveBeenCalledWith('word checker: dictionary unreachable', { level: 'warning', extra: { status: 522 } });
+    expect(captureMessage).toHaveBeenCalledWith('word checker: dictionary unreachable', {
+      level: 'warning',
+      extra: { status: 522 },
+    });
   });
 
   it("takes a 404 that isn't the API's missing page, as from a retired route, as unreachable, and reports it", async () => {
@@ -70,12 +76,19 @@ describe('lookUp', () => {
     expect(await lookUp('qi')).toBeNull();
     expect(await lookUp('za')).toBeNull();
     expect(captureMessage).toHaveBeenCalledTimes(1);
-    expect(captureMessage).toHaveBeenCalledWith('word checker: dictionary unreachable', { level: 'warning', extra: { status: 404 } });
+    expect(captureMessage).toHaveBeenCalledWith('word checker: dictionary unreachable', {
+      level: 'warning',
+      extra: { status: 404 },
+    });
   });
 
   it('takes a 404 whose body is not JSON as unreachable', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
-      ok: false, status: 404, json: async () => { throw new SyntaxError('Unexpected token <'); },
+      ok: false,
+      status: 404,
+      json: async () => {
+        throw new SyntaxError('Unexpected token <');
+      },
     } as unknown as Response);
     const lookUp = await load();
     expect(await lookUp('qi')).toBeNull();
@@ -95,9 +108,12 @@ describe('lookUp', () => {
 
   it('gives up after five seconds and reports a timeout', async () => {
     vi.useFakeTimers();
-    vi.spyOn(globalThis, 'fetch').mockImplementation((_url, init) => new Promise((_, reject) => {
-      init!.signal!.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
-    }));
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
+      (_url, init) =>
+        new Promise((_, reject) => {
+          init!.signal!.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+        }),
+    );
     const lookUp = await load();
     const pending = lookUp('qi');
     await vi.advanceTimersByTimeAsync(4999);
@@ -111,13 +127,17 @@ describe('lookUp', () => {
 
   it('reports a timeout that cuts the body off', async () => {
     vi.useFakeTimers();
-    vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => ({
-      ok: true,
-      status: 200,
-      json: () => new Promise((_, reject) => {
-        init!.signal!.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
-      }),
-    }) as Response);
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
+      async (_url, init) =>
+        ({
+          ok: true,
+          status: 200,
+          json: () =>
+            new Promise((_, reject) => {
+              init!.signal!.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+            }),
+        }) as Response,
+    );
     const lookUp = await load();
     const pending = lookUp('qi');
     await vi.advanceTimersByTimeAsync(5000);
@@ -148,7 +168,16 @@ describe('lookUp', () => {
   });
 
   it.each([
-    ['not JSON', { ok: true, status: 200, json: async () => { throw new SyntaxError('Unexpected token <'); } } as unknown as Response],
+    [
+      'not JSON',
+      {
+        ok: true,
+        status: 200,
+        json: async () => {
+          throw new SyntaxError('Unexpected token <');
+        },
+      } as unknown as Response,
+    ],
     ['not shaped as expected', ok([])],
   ])('reports a 200 whose body is %s as unexpected, once per page load', async (_label, response) => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(response).mockResolvedValueOnce(ok(null));

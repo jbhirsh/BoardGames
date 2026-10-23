@@ -14,11 +14,15 @@ describe('useOnline', () => {
     expect(result.current).toBe(false);
 
     onLine.mockReturnValue(true);
-    act(() => { window.dispatchEvent(new Event('online')); });
+    act(() => {
+      window.dispatchEvent(new Event('online'));
+    });
     expect(result.current).toBe(true);
 
     onLine.mockReturnValue(false);
-    act(() => { window.dispatchEvent(new Event('offline')); });
+    act(() => {
+      window.dispatchEvent(new Event('offline'));
+    });
     expect(result.current).toBe(false);
 
     const remove = vi.spyOn(window, 'removeEventListener');

@@ -81,7 +81,13 @@ export function AiRulesIcon({ size = 16 }: { size?: number }) {
       <rect x="4.5" y="6" width="7" height="1.4" rx=".7" fill="var(--surface, #fff)" />
       <rect x="4.5" y="8.5" width="7" height="1.4" rx=".7" fill="var(--surface, #fff)" />
       <rect x="4.5" y="11" width="5" height="1.4" rx=".7" fill="var(--surface, #fff)" />
-      <path d="M12 8l1.5 3.5L17 13l-3.5 1.5L12 18l-1.5-3.5L7 13l3.5-1.5Z" fill="var(--surface, #fff)" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" />
+      <path
+        d="M12 8l1.5 3.5L17 13l-3.5 1.5L12 18l-1.5-3.5L7 13l3.5-1.5Z"
+        fill="var(--surface, #fff)"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -112,7 +118,13 @@ export function ListIcon() {
 export function CartIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="M1.5 2h2l1.6 8.2a1 1 0 0 0 1 .8h6.4a1 1 0 0 0 1-.8L14.5 5H4.3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M1.5 2h2l1.6 8.2a1 1 0 0 0 1 .8h6.4a1 1 0 0 0 1-.8L14.5 5H4.3"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
       <circle cx="6.5" cy="13.5" r="1" fill="currentColor" />
       <circle cx="12" cy="13.5" r="1" fill="currentColor" />
     </svg>
@@ -122,7 +134,13 @@ export function CartIcon() {
 export function TrendIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="M2 12l3.5-4 3 2.5L14 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M2 12l3.5-4 3 2.5L14 4"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
       <path d="M10.5 4H14v3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -132,7 +150,12 @@ export function SunIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M12 12l1 1M13 3l-1 1M4 12l-1 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path
+        d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M12 12l1 1M13 3l-1 1M4 12l-1 1"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -140,7 +163,12 @@ export function SunIcon() {
 export function MoonIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="M13.5 9.5A5.5 5.5 0 0 1 6.5 2.5a5.5 5.5 0 1 0 7 7z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path
+        d="M13.5 9.5A5.5 5.5 0 0 1 6.5 2.5a5.5 5.5 0 1 0 7 7z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -169,7 +197,12 @@ export function InfoIcon() {
 export function WarningIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="M7.1 2.4a1 1 0 0 1 1.8 0l5.6 10.2a1 1 0 0 1-.9 1.4H2.4a1 1 0 0 1-.9-1.4z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+      <path
+        d="M7.1 2.4a1 1 0 0 1 1.8 0l5.6 10.2a1 1 0 0 1-.9 1.4H2.4a1 1 0 0 1-.9-1.4z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
       <path d="M8 6.2v3.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       <circle cx="8" cy="11.6" r=".9" fill="currentColor" />
     </svg>
@@ -189,8 +222,19 @@ export function ErrorIcon() {
 export function SaveOfflineIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="M8 1.75v8M4.75 6.75L8 10l3.25-3.25" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M2 10.5v2.25c0 .83.67 1.5 1.5 1.5h9c.83 0 1.5-.67 1.5-1.5V10.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <path
+        d="M8 1.75v8M4.75 6.75L8 10l3.25-3.25"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M2 10.5v2.25c0 .83.67 1.5 1.5 1.5h9c.83 0 1.5-.67 1.5-1.5V10.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -198,7 +242,13 @@ export function SaveOfflineIcon() {
 export function SavedIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="M3 8.5l3.25 3.25L13 4.75" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M3 8.5l3.25 3.25L13 4.75"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
