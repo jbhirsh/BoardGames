@@ -351,6 +351,64 @@ describe('CoverCarousel', () => {
       expect(screen.getByRole('button', { name: 'Play cover carousel' })).toBeInTheDocument();
     });
 
+    it('glides on the way it was last pulled: right turns it round, left turns it back', () => {
+      const { anim, down, to, up } = setUp();
+      const played = anim as typeof anim & { playbackRate?: number };
+      down(500);
+      to(600);
+      up();
+      expect(played.playbackRate).toBe(-1);
+      down(600);
+      to(650);
+      to(560);
+      up();
+      expect(played.playbackRate).toBe(1);
+    });
+
+    it('turns with a drag a scroll takes over, and not with a press that hardly moves', () => {
+      const { anim, cover, down, to, up } = setUp();
+      const played = anim as typeof anim & { playbackRate?: number };
+      down(500);
+      to(600);
+      fireEvent.pointerCancel(cover, { pointerId: 1 });
+      expect(played.playbackRate).toBe(-1);
+      down(500);
+      to(497);
+      up();
+      expect(played.playbackRate).toBe(-1);
+      // Pulled out and back to where it began: no way to go, so no turn.
+      down(500);
+      to(400);
+      to(500);
+      up();
+      expect(played.playbackRate).toBe(-1);
+    });
+
+    it('comes round to the end of the lap, rather than stopping, when played backwards to its start', () => {
+      const { anim, down, to, up } = setUp();
+      const played = anim as typeof anim & { onfinish?: () => void };
+      down(500);
+      to(600);
+      up();
+      anim.currentTime = 0;
+      played.onfinish!();
+      expect(anim.currentTime).toBe(72000);
+    });
+
+    it('starts the drag on the next move when the row is between laps, with no animation', () => {
+      const { reel, anim, view, down, to } = setUp();
+      const track = view.querySelector<HTMLElement>('.hero-reel-track')!;
+      const between = track.getAnimations;
+      track.getAnimations = () => [];
+      down(500);
+      expect(() => to(600)).not.toThrow();
+      expect(reel).not.toHaveClass('is-dragging');
+      track.getAnimations = between;
+      to(600);
+      expect(reel).toHaveClass('is-dragging');
+      expect(anim.currentTime).toBeCloseTo(10000 - 100 * 72);
+    });
+
     it('leaves a press that hardly moves alone', () => {
       const { anim, down, to } = setUp();
       down(500);
