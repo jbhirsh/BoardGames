@@ -11,6 +11,8 @@
     "scripts/ocr-pdfs.mjs",
     // A scenario passed to `npm run pr-gif` on the command line.
     "scripts/pr-gif-example.ts",
+    // The README's screenshots, a Playwright project only when README_SHOTS is set.
+    "e2e/readme.shots.ts",
   ],
   // A system tool the GIF recorder runs, not an npm package.
   "ignoreBinaries": ["ffmpeg"],
