@@ -2016,6 +2016,15 @@ body {
   color: var(--on-fill);
   font-weight: 600;
 }
+/* The Rules icon's lines and spark are cut in the colour behind it
+   (--icon-cut, the page's surface by default), so they show on the filled
+   button too, in its blue. */
+.rules-btn--primary {
+  --icon-cut: var(--blue-fill);
+}
+.rules-btn--primary:hover {
+  --icon-cut: var(--blue-fill-hover);
+}
 .rules-btn--primary:hover {
   background: var(--blue-fill-hover);
   border-color: var(--blue-fill-hover);
