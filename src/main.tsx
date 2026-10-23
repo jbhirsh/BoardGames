@@ -1,4 +1,4 @@
-import './instrument'
+import './startSentry'
 import { StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router'
@@ -9,7 +9,8 @@ import RouteFallback, { RulesFallback } from './components/RouteFallback'
 import { AuthProvider } from './context/AuthContext'
 import { SIGN_IN_INTRO, SIGN_IN_TITLE } from './data/signIn'
 
-// The app's entry: Sentry first (./instrument), then the router. Its pages:
+// The app's entry: error reporting first (./startSentry; client/sentry.ts
+// fetches Sentry's SDK once the page is up), then the router. Its pages:
 //   /                    HomePage (App.tsx): the hero, the filter bar, then the
 //                        collection or the wishlist
 //   /rules/:slug/:part?  a game's rulebooks and the AI rules assistant

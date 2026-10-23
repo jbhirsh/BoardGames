@@ -1,6 +1,6 @@
 import { useState, useEffect, useEffectEvent, useId, useLayoutEffect, useRef, createContext, useContext } from 'react';
 import type { ComponentProps, FormEvent, MouseEvent, ReactNode } from 'react';
-import * as Sentry from '@sentry/react';
+import * as Sentry from '../client/sentry';
 import { Link } from 'react-router';
 import Markdown, { type Components } from 'react-markdown';
 import { AiRulesIcon } from './Icons';

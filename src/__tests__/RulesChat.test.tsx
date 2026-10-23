@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import * as Sentry from '@sentry/react';
+import * as Sentry from '../client/sentry';
 import { MemoryRouter } from 'react-router';
 import RulesChatProvider, { HISTORY_SENT, RulesChatToggle, RulesChatPanel } from '../components/RulesChat';
 import { FROM_LIST } from '../utils/fromList';
 import { renderRouted } from './routed';
 
-vi.mock('@sentry/react', () => ({
+vi.mock('../client/sentry', () => ({
   captureMessage: vi.fn(),
   captureException: vi.fn(),
 }));

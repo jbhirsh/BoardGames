@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { isChunkLoadError, mayReload, reloadOnce } from '../utils/chunkReload';
 import { Link, isRouteErrorResponse, useRouteError } from 'react-router';
-import * as Sentry from '@sentry/react';
+import * as Sentry from '../client/sentry';
 
 interface Props {
   title?: string;

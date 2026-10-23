@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Shared across the fresh module each test imports, so its calls can be read.
 const { captureMessage } = vi.hoisted(() => ({ captureMessage: vi.fn() }));
-vi.mock('@sentry/react', () => ({ captureMessage }));
+vi.mock('../client/sentry', () => ({ captureMessage }));
 
 const BASE = 'https://en.wiktionary.org/api/rest_v1/page/definition/';
 const NOUN = { en: [{ partOfSpeech: 'Noun', language: 'English', definitions: [{ definition: 'A <b>fruit</b>.' }] }] };
