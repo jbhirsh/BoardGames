@@ -9,11 +9,11 @@
 // publish the GIFs for the PR. The functions here are its parts, for a
 // recording it doesn't cover:
 //
-//   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+//   const context = await browser.newContext({ viewport: { width: 402, height: 874 } });
 //   await showPointer(context);              // before the first page loads
 //   const page = await context.newPage();
 //   await page.goto('http://127.0.0.1:4192/');
-//   const stop = await recordFrames(page, { x: 0, y: 0, width: 390, height: 400 }, 'frames');
+//   const stop = await recordFrames(page, { x: 0, y: 0, width: 402, height: 400 }, 'frames');
 //   await glide(page, { x: 195, y: 200 });           // at a person's pace
 //   await page.waitForTimeout(1000);                 // a pause to follow it by
 //   await click(page, page.getByRole('button', { name: 'Pause' }));
@@ -21,7 +21,7 @@
 //   await scroll(page, 400);                         // shown as a ↓ by the pointer
 //   await page.keyboard.press('Tab');                // labelled "Tab" by what it focuses
 //   await stop();
-//   framesToGif('frames', 'after.gif', { width: 390 });
+//   framesToGif('frames', 'after.gif', { width: 402 });
 //
 // Move with glide, click and drag, which go at a person's pace: page.mouse
 // alone, or locator.click(), moves in a few milliseconds, which the GIF
@@ -297,7 +297,7 @@ export function sideBySide(
 export interface Scenario {
   /** The page to open, from the app's root: '/' by default. */
   path?: string;
-  /** The browser window, in CSS pixels: a phone's, 390 × 844, by default. */
+  /** The browser window, in CSS pixels: a phone's, 402 × 874 (the newest iPhone Pro's screen), by default. */
   viewport?: { width: number; height: number };
   /** The colour scheme the page sees: light by default. */
   colorScheme?: 'light' | 'dark';

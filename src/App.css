@@ -4829,6 +4829,15 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
 .line-text {
   flex: 1;
   min-width: 0;
+  container-type: inline-size;
+}
+/* "2–4 players" where every line's players, time and weight fit on one
+   line with the word (232px of text on a 402px iPhone Pro, where Card
+   Deck's, the longest, takes 224px), "2–4" where they wouldn't. */
+@container (max-width:225px) {
+  .line-unit {
+    display: none;
+  }
 }
 .line-name {
   font-family: "Playfair Display", "Playfair Fallback", "Playfair Fallback Noto", serif;

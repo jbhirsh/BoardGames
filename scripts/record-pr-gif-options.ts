@@ -84,7 +84,7 @@ export function parseOptions(argv: string[]): Options {
 }
 
 /** The browser window a scenario gets unless it names one: a phone, as the site is designed phone first. */
-export const PHONE = { width: 390, height: 844 };
+export const PHONE = { width: 402, height: 874 };
 
 /**
  * A GIF's width when neither --width nor the scenario sets one: the window's

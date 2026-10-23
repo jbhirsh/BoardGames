@@ -12,7 +12,7 @@
 // pr-gif/<name>/ (gitignored): before.gif and after.gif, or one
 // side-by-side.gif with --side-by-side.
 //   - --after-only skips the base, for UI that is new.
-//   - The window is the scenario's, or a phone's (390 × 844), as the site is
+//   - The window is the scenario's, or a phone's (402 × 874, the newest iPhone Pro's screen), as the site is
 //     designed phone first.
 //   - Width: each GIF is the scenario's width, or the window's up to 700; a
 //     side-by-side one is two of those, each up to 496. --width overrides

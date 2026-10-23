@@ -36,7 +36,7 @@ npm run test:mutation                   # StrykerJS, full run (mutation.yml call
 # `vite preview` on port 4174, and drives it with every /api call stubbed
 npm run test:e2e
 npx playwright test e2e/home.spec.ts    # one spec file
-npx playwright test --project=phone     # the phone project (e2e/phone.spec.ts, a Pixel 7)
+npx playwright test --project=phone     # the phone project (e2e/phone.spec.ts, an iPhone Pro's window)
 npx playwright test --project=visual-chromium   # one engine's screenshots
 npx playwright show-report              # open the last HTML report
 
@@ -139,13 +139,14 @@ before changing the module.
 
 ## Conventions
 
-- **Phone first.** Design a change for a phone (390px) before widening
-  it: 44px touch targets (an invisible tap area around a smaller control
-  rather than a bigger box, App.css), the main actions in reach of a
-  thumb, as much on a screen as reads well. Styles for what only a phone
-  renders need no media query; new rules that differ by width start from the phone's and add
-  `min-width` breakpoints (the older `max-width` blocks convert when next
-  touched). Show a UI change at phone size in the PR first.
+- **Phone first.** Design a change for a phone (402px, the newest iPhone
+  Pro) before widening it: 44px touch targets (an invisible tap area
+  around a smaller control rather than a bigger box, App.css), the main
+  actions in reach of a thumb, as much on a screen as reads well. Styles
+  for what only a phone renders need no media query; new rules that differ
+  by width start from the phone's and add `min-width` breakpoints (the
+  older `max-width` blocks convert when next touched). Show a UI change at
+  phone size in the PR first.
 - **TypeScript strict everywhere.** One solution of configs, each extending
   `tsconfig.base.json` (the shared strict options): `tsconfig.{app,api,node,
   eval,sw,e2e}.json` for `src` (DOM), `api` (Node), `vite.config.ts`, `eval`,
@@ -184,8 +185,8 @@ before changing the module.
   with web-first assertions, never a timer. A spec may import `src/data`,
   nothing else from the app. Add a test here for a new user-facing flow.
   The site is designed phone first: `e2e/phone.spec.ts` runs on its own
-  Playwright project, a Pixel 7, and every other spec on a desktop; a
-  phone flow's test goes there.
+  Playwright project, an iPhone Pro's window (in Chromium), and every
+  other spec on a desktop; a phone flow's test goes there.
 - **Visual regression is part of e2e** (`e2e/visual.ts`, `visual*.spec.ts`):
   screenshots against baselines, the core pages in Chromium, Firefox and
   WebKit on a desktop and on phones, every state in both themes in desktop
