@@ -4530,7 +4530,7 @@ a.rules-chat-toggle {
      end, Pick for us and Own/Want having gone to the bar along the bottom.
      Narrower, the buttons wrap under it, still at the right. */
   .sec-hd {
-    padding: 6px 0 0;
+    padding: 0;
     column-gap: 10px;
     row-gap: 10px;
     margin-bottom: 16px;
@@ -4546,27 +4546,49 @@ a.rules-chat-toggle {
     margin: -4px 0 16px;
     font-size: 14px;
   }
+  /* The title and the theme picker share a line, the subtitle under them,
+     and the covers run small under that, so the list starts high enough
+     for four games under Safari's bars. */
   .hero {
-    padding: 16px var(--gutter) 24px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    column-gap: 12px;
+    text-align: left;
+    padding: 14px var(--gutter) 16px;
   }
   .theme-toggle {
-    margin-bottom: 12px;
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0;
+  }
+  /* 30px where it fits on its line beside the picker (the picker and the
+     gutters take 146px; the title runs about 7.7 times its size), smaller
+     on a narrower phone, so it never wraps. */
+  .hero h1 {
+    grid-column: 1;
+    grid-row: 1;
+    font-size: clamp(20px, (100vw - 146px) / 8, 30px);
+    margin: 0;
   }
   .hero-sub {
-    font-size: 15px;
-    margin-bottom: 20px;
+    grid-column: 1 / -1;
+    font-size: 14px;
+    margin: 8px 0 0;
+    max-width: none;
   }
   .hero-reel {
-    --cover: 58px;
-    --cover-gap: 10px;
-    --cover-r: 14px;
+    grid-column: 1 / -1;
+    margin-top: 12px;
+    --cover: 48px;
+    --cover-gap: 8px;
+    --cover-r: 11px;
     --cover-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   }
   .hero-reel-view {
-    padding: 8px 0 20px;
-    margin: -8px 0 -20px;
+    padding: 6px 0 14px;
+    margin: -6px 0 -14px;
   }
-  /* Room under the row for its pause button. */
   /* The pause button sits over the row's right end, rather than on a line
      of its own under it. */
   .hero-reel-toggle {
@@ -4577,11 +4599,13 @@ a.rules-chat-toggle {
     opacity: 1;
     box-shadow: var(--shadow-md);
   }
-  .hero-reel--still li:nth-child(n + 6) {
+  /* Six covers fill the row when it stands still (reduced motion). */
+  .hero-reel--still li:nth-child(n + 7) {
     display: none;
   }
+  /* A short step from the search to the list's heading. */
   .main {
-    padding-top: 24px;
+    padding-top: 14px;
   }
 
   /* score calculator: three icon+input pairs are 360px wide and overflow
