@@ -5,8 +5,9 @@ Guidance for Claude Code (claude.ai/code) when working in this repository.
 ## What this is
 
 **The Game Room** — a SPA for a personal board game collection: filter and
-sort it, pick at random, read rule PDFs with an AI rules assistant, keep a
-7 Wonders score, check a Bananagrams word, vote on a wishlist. Installable
+sort it, pick at random, read rule PDFs with an AI rules assistant, keep
+score (7 Wonders, Ticket to Ride, Dominion, the card games), check a
+Bananagrams word, vote on a wishlist. Installable
 and usable offline. React 19 + TypeScript + Vite, on Vercel with a small API.
 
 ## Commands
@@ -65,7 +66,8 @@ before changing the module.
 - **`src/context/`** — the filter store (`FilterContext.tsx`,
   `filterReducer.ts`, `useFilterUrlSync.ts`), wishlist, owner session.
 - **`src/components/`** — pages `RulesPage` (`PdfReader`, `RulesChat`,
-  `SaveOffline`), `ScoreCalculatorPage`, `WordCheckerPage`, `SignInPage`;
+  `SaveOffline`), `ScoreCalculatorPage` (its pads listed in
+  `data/scoreCalculators.ts`), `WordCheckerPage`, `SignInPage`;
   home `Hero`, `FilterBar/`, `GameCard`, `GameRow`, `Wishlist`.
 - **`src/hooks/`** hooks; **`src/utils/`** pure helpers; **`src/client/`**
   side-effecting browser modules; **`src/pdfjs/`** the reader's pdf.js;

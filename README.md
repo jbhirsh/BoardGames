@@ -2,8 +2,9 @@
 
 A single-page web app for browsing a personal board game collection — filter and
 sort 30 games by length, player count, and vibe; get a "pick for us" random
-suggestion; read bundled rulebooks; ask an **AI rules assistant**; tally a
-**7 Wonders** score; check whether a word is playable in **Bananagrams**; and
+suggestion; read bundled rulebooks; ask an **AI rules assistant**; keep score
+for **7 Wonders**, **Ticket to Ride**, **Dominion** and the card games; check
+whether a word is playable in **Bananagrams**; and
 vote on a shared wishlist.
 
 Built with React 19 + TypeScript on Vite, with a small set of Vercel serverless
@@ -21,8 +22,10 @@ functions for the AI and voting features.
 - **AI rules assistant.** Each game's rulebook PDF is extracted to text and fed to
   Google Gemini, which answers rules questions grounded only in that game's rules
   and streams the reply token-by-token.
-- **7 Wonders score calculator** with the full scoring model, including the
-  quadratic science formula.
+- **Score pads.** 7 Wonders with the full scoring model, including the
+  quadratic science formula; Ticket to Ride (US and Europe) from routes by
+  length and tickets; Dominion with Intrigue's Victory cards; and a running
+  score, round by round, for Uno, Rummy, Hearts, Golf, Spades and Euchre.
 - **Bananagrams word checker** backed by a bundled word-game list (ENABLE),
   with a public dictionary API for meanings and newer words.
 - **Anonymous wishlist voting** stored in Upstash Redis.

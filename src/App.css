@@ -1377,11 +1377,13 @@ select.suggest-input{appearance:auto;}
 /* ══ SCORE PADS ══════════════════════════════════════════════
    What the pads past 7 Wonders add (ScoreCalculatorPage.tsx): the
    table's own choices (a map, a Kingdom), groups of boxes, ticket rows,
-   and two-way choices. Written
+   two-way and many-way choices, and the card games' round pad. Written
    for a phone first: every control is 44px, and wider screens only add
    room. */
 .sc-setup{margin:0 0 12px;padding:14px 16px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);display:flex;flex-direction:column;gap:10px;min-width:0;}
 .sc-setup-title{margin:0;padding:0;font-family:inherit;font-size:14px;font-weight:600;color:var(--text);display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;}
+summary.sc-setup-title{cursor:pointer;min-height:24px;}
+details.sc-setup:not([open]){gap:0;}
 .sc-hint{font-size:13px;color:var(--text2);line-height:1.5;}
 .sc-group{margin:0;padding:0;border:0;display:flex;flex-direction:column;gap:12px;min-width:0;}
 .sc-group-title{padding:0;margin-bottom:2px;font-size:15px;font-weight:700;color:var(--text);}
@@ -1389,7 +1391,7 @@ select.suggest-input{appearance:auto;}
 .sc-seg{display:flex;flex-wrap:wrap;gap:6px;}
 .sc-seg-btn{min-height:44px;min-width:44px;padding:0 14px;font:inherit;font-size:14px;font-weight:600;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;transition:color .15s,background .15s,border-color .15s;}
 .sc-seg-btn[aria-pressed="true"]{color:var(--blue);background:var(--blue-bg);border-color:rgba(var(--blue-rgb),0.4);}
-.sc-seg-btn:focus-visible,.sc-remove:focus-visible,.sc-add-row:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+.sc-seg-btn:focus-visible,.sc-remove:focus-visible,.sc-add-row:focus-visible,.rp-round-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
 .sc-ticket{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
 .sc-ticket .sc-seg{flex:1;flex-wrap:nowrap;}
 .sc-ticket .sc-seg-btn{flex:1;padding:0 8px;}
@@ -1404,10 +1406,40 @@ select.suggest-input{appearance:auto;}
 .sc-chip:has(input:checked){background:var(--blue-bg);border-color:rgba(var(--blue-rgb),0.4);}
 .sc-chip:has(input:focus-visible){outline:2px solid var(--blue);outline-offset:2px;}
 .sc-panel + .sc-panel{margin-top:12px;}
+/* The round pad. */
+.rp-names{display:flex;flex-direction:column;gap:8px;}
+.rp-name{display:flex;gap:8px;align-items:center;}
+.rp-name .sc-name-input{max-width:none;min-height:44px;text-align:left;}
+.rp-totals{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;}
+.rp-total{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r-sm);min-width:0;}
+.rp-total.sc-win{background:color-mix(in srgb,var(--award-fg) 10%,transparent);border-color:color-mix(in srgb,var(--award-fg) 40%,transparent);}
+.rp-total-name{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--text2);overflow-wrap:anywhere;}
+.rp-total-name .sc-icon{width:18px;height:18px;color:var(--award-fg);}
+.rp-total-num{font-size:24px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;}
+.rp-status{margin-top:12px;font-size:14px;color:var(--text);}
+.rp-standings .sc-next{margin-top:12px;}
+.rp-entry-title{margin:0 0 14px;font-family:inherit;font-size:17px;font-weight:700;color:var(--text);}
+.rp-question{display:flex;flex-direction:column;gap:8px;}
+.rp-choice .sc-seg-btn{flex:1 0 auto;}
+.rp-spades{display:flex;flex-direction:column;gap:8px;}
+.rp-spades-row{display:grid;grid-template-columns:minmax(0,1fr) 80px 80px;gap:8px;align-items:center;}
+.rp-spades-row .sc-label{overflow-wrap:anywhere;}
+.rp-col-head{font-size:12px;font-weight:600;color:var(--text2);text-align:center;}
+.rp-preview{font-size:14px;font-weight:600;color:var(--blue);font-variant-numeric:tabular-nums;}
+.rp-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;}
+.rp-actions .sc-new-game{min-height:44px;}
+.rp-save{min-height:48px;flex:1 1 100%;}
+.rp-save:disabled{opacity:.5;cursor:default;filter:none;}
+.rp-missing{text-align:right;}
+.rp-round-btn{min-width:44px;min-height:36px;font:inherit;font-weight:600;color:var(--blue);background:transparent;border:1px solid var(--border);border-radius:8px;cursor:pointer;}
+.rp-sheet tbody td{font-variant-numeric:tabular-nums;}
+.rp-sheet .rp-editing th,.rp-sheet .rp-editing td{background:var(--blue-bg);}
+.rp-rule{margin-top:12px;line-height:1.5;}
 .sc-input{min-height:44px;}
 .sc-field .sc-input{min-height:40px;}
 .sc-row > .sc-field,.sc-row > .sc-input{flex:none;}
 @media (min-width:600px){
+  .rp-save{flex:0 0 auto;}
   .sc-ticket .sc-seg{flex:0 1 auto;}
 }
 

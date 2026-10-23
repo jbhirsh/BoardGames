@@ -15,7 +15,8 @@ import { SIGN_IN_INTRO, SIGN_IN_TITLE } from './data/signIn'
 //                        collection or the wishlist
 //   /rules/:slug/:part?  a game's rulebooks and the AI rules assistant
 //                        (components/RulesPage.tsx)
-//   /score/:slug         the score pad, for a game in data/scoreCalculators.ts
+//   /score/:slug/:part?  the score pad for a game, or a game inside one (a
+//                        deck's Hearts), in data/scoreCalculators.ts
 //                        (components/ScoreCalculatorPage.tsx)
 //   /word-checker        components/WordCheckerPage.tsx
 //   /sign-in             the owner's magic-link sign-in (components/SignInPage.tsx),
@@ -32,7 +33,7 @@ const router = createBrowserRouter([
     children: [
       { path: '/', element: <HomePage /> },
       { path: '/rules/:slug/:part?', element: <Suspense fallback={<RulesFallback />}><RulesPage /></Suspense> },
-      { path: '/score/:slug', element: <Suspense fallback={<RouteFallback title="Score Calculator" />}><ScoreCalculatorPage /></Suspense> },
+      { path: '/score/:slug/:part?', element: <Suspense fallback={<RouteFallback title="Score Calculator" />}><ScoreCalculatorPage /></Suspense> },
       { path: '/word-checker', element: <Suspense fallback={<RouteFallback title="Word Checker" />}><WordCheckerPage /></Suspense> },
       { path: '/sign-in', element: <AuthProvider><Suspense fallback={<RouteFallback title={SIGN_IN_TITLE} desc={SIGN_IN_INTRO} art={false} />}><SignInPage /></Suspense></AuthProvider> },
       { path: '*', element: <NotFoundPage /> },

@@ -26,7 +26,18 @@ beforeEach(() => localStorage.clear());
 afterEach(() => vi.restoreAllMocks());
 
 describe('ScoreCalculatorPage picks the pad', () => {
+  it('opens a game inside a deck at its own address, under the deck\'s art', () => {
+    renderPage('/score/card-deck/hearts');
+    expect(screen.getByRole('heading', { level: 1, name: 'Score Calculator' })).toBeInTheDocument();
+    expect(screen.getByText('Hearts')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Card Deck box art' })).toBeInTheDocument();
+    expect(document.title).toBe('Hearts score · The Game Room');
+  });
+
   it.each([
+    ['/score/card-deck', 'a deck has no pad of its own'],
+    ['/score/card-deck/spoons', 'a deck\'s game with no pad'],
+    ['/score/card-deck/not-a-game', 'no such game in the deck'],
     ['/score/catan/cities-and-knights', 'a real add-on with no pad'],
     ['/score/7-wonders/extra', 'a pad\'s game with a part it hasn\'t'],
   ])('shows the not-found page for %s (%s)', (path) => {
@@ -180,5 +191,246 @@ describe('Dominion', () => {
     unmount();
     renderPage('/score/dominion');
     expect(screen.getByRole('checkbox', { name: 'Harem (Farm)' })).toBeChecked();
+  });
+});
+
+describe('the round-by-round pad', () => {
+  it('scores Uno: who went out takes the points left in the other hands', () => {
+    renderPage('/score/uno');
+    expect(screen.getByRole('status')).toHaveTextContent('First to 500 wins.');
+    const add = screen.getByRole('button', { name: 'Add round 1' });
+    expect(add).toBeDisabled();
+    expect(add).toHaveAccessibleDescription('Choose who went out.');
+    click('Player 2', group('Who went out?'));
+    expect(screen.queryByRole('spinbutton', { name: 'Player 2' })).not.toBeInTheDocument();
+    type('Player 1', '40');
+    expect(screen.getByText('Player 1 0 · Player 2 +40')).toBeInTheDocument();
+    click('Add round 1');
+    expect(within(screen.getByRole('region', { name: 'Standings' })).getAllByRole('listitem').map((li) => li.textContent))
+      .toEqual(['Player 10', 'Player 240']);
+    expect(cells('Total')).toEqual(['0', '40']);
+    expect(screen.getByRole('heading', { name: 'Round 2' })).toBeInTheDocument();
+    expect(screen.getByText('Round 1 added.')).toBeInTheDocument();
+  });
+
+  it('adds and removes players only before the first round, and names them', () => {
+    renderPage('/score/card-deck/rummy');
+    click('+ Add player');
+    fireEvent.change(screen.getByLabelText('Player 3 name'), { target: { value: 'Cy' } });
+    click('Remove Player 2');
+    expect(screen.getAllByRole('textbox').map((t) => (t as HTMLInputElement).value)).toEqual(['Player 1', 'Cy']);
+    click('Cy', group('Who went out?'));
+    click('Add hand 1');
+    expect(screen.queryByRole('button', { name: '+ Add player' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Remove/ })).not.toBeInTheDocument();
+    expect(screen.getByText(/before the first hand/)).toBeInTheDocument();
+  });
+
+  it('scores Hearts, warning when a hand doesn\'t add up to 26 but taking it anyway', () => {
+    renderPage('/score/card-deck/hearts');
+    expect(screen.getByRole('button', { name: 'Add hand 1' })).toBeDisabled();
+    // Part-way in, a short hand is only progress.
+    type('Player 1', '10');
+    type('Player 2', '5');
+    expect(screen.getByText('15 of the hand\'s 26 points so far.')).toBeInTheDocument();
+    expect(screen.queryByText(/These add up to/)).not.toBeInTheDocument();
+    // Every box in, or past 26 already, it's a warning.
+    type('Player 3', '3');
+    expect(screen.getByText(/These add up to 18/)).toBeInTheDocument();
+    expect(screen.queryByText(/so far/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add hand 1' })).toBeEnabled();
+    type('Player 3', '');
+    type('Player 2', '25');
+    expect(screen.getByText(/These add up to 35/)).toBeInTheDocument();
+    type('Player 2', '5');
+    type('Player 3', '11');
+    expect(screen.queryByText(/These add up to|so far/)).not.toBeInTheDocument();
+    click('Add hand 1');
+    click('Player 3', group('Did anyone shoot the moon?'));
+    expect(screen.getByText('Player 3 scores 0 and everyone else 26.')).toBeInTheDocument();
+    click('Add hand 2');
+    expect(cells('Total')).toEqual(['36', '31', '11']);
+    expect(screen.getByRole('status')).toHaveTextContent('First to 100; then the lowest score wins.');
+  });
+
+  it('ends Hearts when someone reaches 100, crowning the lowest', () => {
+    localStorage.setItem('gameroom:score:hearts', JSON.stringify({
+      names: ['Ana', 'Ben', 'Cy'],
+      rounds: [{ game: 'hearts', moon: null, taken: [26, 0, 0] }, { game: 'hearts', moon: null, taken: [26, 0, 0] }, { game: 'hearts', moon: null, taken: [26, 0, 0] }],
+    }));
+    renderPage('/score/card-deck/hearts');
+    type('Ana', '26');
+    click('Add hand 4');
+    expect(screen.getByRole('status')).toHaveTextContent('Ben and Cy tie for the win on 0.');
+    // Over: the form gives way to New game, though a hand can still be fixed.
+    expect(screen.queryByRole('heading', { name: 'Hand 5' })).not.toBeInTheDocument();
+    click('Fix hand 2');
+    expect(screen.getByRole('heading', { name: 'Fix hand 2' })).toBeInTheDocument();
+  });
+
+  it('fixes and deletes a round, asking before deleting', () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    renderPage('/score/card-deck/golf');
+    expect(screen.getByRole('button', { name: 'Add hole 1' })).toHaveAccessibleDescription('Enter every player\'s score, 0 included.');
+    type('Player 1', '4');
+    click('± Switch Player 1\'s sign');
+    type('Player 2', '12');
+    click('Add hole 1');
+    type('Player 1', '3');
+    type('Player 2', '0');
+    click('Add hole 2');
+    expect(cells('Total')).toEqual(['−1', '12']);
+    expect(screen.getByRole('status')).toHaveTextContent('9 holes; the lowest total wins. 2 of 9 played.');
+
+    click('Fix hole 1');
+    expect(screen.getByRole('heading', { name: 'Fix hole 1' })).toHaveFocus();
+    expect(box('Player 1')).toHaveValue(-4);
+    type('Player 2', '10');
+    click('Save');
+    expect(cells('Total')).toEqual(['−1', '10']);
+
+    click('Fix hole 2');
+    click('Cancel');
+    expect(screen.getByRole('heading', { name: 'Hole 3' })).toBeInTheDocument();
+
+    click('Fix hole 1');
+    click('Delete');
+    expect(confirm).toHaveBeenCalledWith('Delete hole 1?');
+    expect(cells('Total')).toEqual(['3', '0']);
+    expect(screen.getByText('Hole 1 deleted.')).toBeInTheDocument();
+  });
+
+  it('keeps a round when its deletion is declined', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    renderPage('/score/card-deck/golf');
+    type('Player 1', '1');
+    type('Player 2', '2');
+    click('Add hole 1');
+    click('Fix hole 1');
+    click('Delete');
+    expect(cells('Total')).toEqual(['1', '2']);
+  });
+
+  it('ends Golf after nine holes', () => {
+    localStorage.setItem('gameroom:score:golf', JSON.stringify({
+      names: ['Ana', 'Ben'],
+      rounds: Array.from({ length: 8 }, () => ({ game: 'golf', scores: [3, 4] })),
+    }));
+    renderPage('/score/card-deck/golf');
+    type('Ana', '10');
+    type('Ben', '0');
+    click('Add hole 9');
+    expect(screen.getByRole('status')).toHaveTextContent('Ben wins on 32.');
+  });
+
+  it('scores Spades by partnership, partners sitting opposite, with bags carried', () => {
+    renderPage('/score/card-deck/spades');
+    expect(screen.getByText('Partners sit opposite: players 1 and 3 against 2 and 4.')).toBeInTheDocument();
+    const bids = [3, 4, 2, 0];
+    const tricks = [4, 5, 2, 2];
+    bids.forEach((b, i) => type(`Player ${i + 1} bid`, String(b)));
+    tricks.forEach((t, i) => type(`Player ${i + 1} tricks`, String(t)));
+    // Players 1 and 3 bid 5 and take 6: 51 and a bag. Player 2 bids 4 and
+    // takes 5 (41, a bag); player 4's nil fails (-100), its 2 tricks bags.
+    expect(screen.getByText('Player 1 & Player 3 +51 · Player 2 & Player 4 −57')).toBeInTheDocument();
+    click('Add hand 1');
+    const [us, them] = within(screen.getByRole('region', { name: 'Standings' })).getAllByRole('listitem');
+    expect(within(us).getByText('51')).toBeInTheDocument();
+    expect(within(us).getByText('1 bag')).toBeInTheDocument();
+    expect(within(them).getByText('−57')).toBeInTheDocument();
+    expect(within(them).getByText('3 bags')).toBeInTheDocument();
+  });
+
+  it('warns when a Spades hand\'s tricks aren\'t 13, and needs every box', () => {
+    renderPage('/score/card-deck/spades');
+    [1, 2, 3].forEach((i) => type(`Player ${i} bid`, '3'));
+    expect(screen.getByRole('button', { name: 'Add hand 1' })).toBeDisabled();
+    type('Player 4 bid', '3');
+    [1, 2, 3, 4].forEach((i) => type(`Player ${i} tricks`, '3'));
+    expect(screen.getByText('The tricks add up to 12. A hand has 13.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add hand 1' })).toBeEnabled();
+  });
+
+  it('scores Euchre for the makers, renaming the partnerships', () => {
+    renderPage('/score/card-deck/euchre');
+    fireEvent.change(screen.getByLabelText('Partnership 1 name'), { target: { value: 'Us' } });
+    expect(screen.getByRole('button', { name: 'Add hand 1' })).toHaveAccessibleDescription('Choose who chose trump.');
+    click('Us', group('Who chose trump?'));
+    expect(screen.getByRole('button', { name: 'Add hand 1' })).toHaveAccessibleDescription('Choose how many tricks they took.');
+    click('5', group('Tricks they took'));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'One of them went alone' }));
+    click('Add hand 1');
+    click('Team 2', group('Who chose trump?'));
+    click('2', group('Tricks they took'));
+    click('Add hand 2');
+    expect(cells('Total')).toEqual(['6', '0']);
+  });
+
+  it('starts a new game with the same players, asking first', () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
+    renderPage('/score/card-deck/euchre');
+    click('Team 1', group('Who chose trump?'));
+    click('3', group('Tricks they took'));
+    click('Add hand 1');
+    click('New game');
+    expect(cells('Total')).toEqual(['1', '0']);
+    click('New game');
+    expect(confirm).toHaveBeenLastCalledWith('Clear every round and start a new game? The players stay.');
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(screen.getByText('New game started.')).toBeInTheDocument();
+  });
+
+  it('starts a new game without asking when nothing is scored yet, or from the finished game\'s button', () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    localStorage.setItem('gameroom:score:euchre', JSON.stringify({
+      names: ['Us', 'Them'],
+      rounds: Array.from({ length: 5 }, () => ({ game: 'euchre', makers: 0, tricks: 5, alone: false })),
+    }));
+    renderPage('/score/card-deck/euchre');
+    expect(screen.getByRole('status')).toHaveTextContent('Us wins on 10.');
+    click('New game', screen.getByRole('region', { name: 'Standings' }));
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('heading', { name: 'Hand 1' })).toBeInTheDocument();
+    click('New game');
+    expect(confirm).toHaveBeenCalledTimes(1);
+  });
+
+  it('restores the game in progress, and starts fresh from anything it didn\'t write', () => {
+    const { unmount } = renderPage('/score/card-deck/rummy');
+    click('Player 1', group('Who went out?'));
+    type('Player 2', '17');
+    click('Add hand 1');
+    unmount();
+    const again = renderPage('/score/card-deck/rummy');
+    expect(cells('Total')).toEqual(['17', '0']);
+    again.unmount();
+
+    for (const saved of [
+      'not json',
+      '7',
+      JSON.stringify({ names: ['Solo'], rounds: [] }),
+      JSON.stringify({ names: ['A', 'B'], rounds: [{ game: 'uno', out: 0, hands: [0, 1] }] }),
+      JSON.stringify({ names: ['A', 3], rounds: [] }),
+      JSON.stringify({ names: ['A', 'B'], rounds: 'none' }),
+    ]) {
+      localStorage.setItem('gameroom:score:rummy', saved);
+      const { unmount: done } = renderPage('/score/card-deck/rummy');
+      expect(screen.queryByRole('table')).not.toBeInTheDocument();
+      expect(screen.getByLabelText('Player 1 name')).toHaveValue('Player 1');
+      done();
+    }
+  });
+
+  it('loads a saved Hearts moon and an Uno round back into the form to fix', () => {
+    localStorage.setItem('gameroom:score:hearts', JSON.stringify({ names: ['A', 'B', 'C'], rounds: [{ game: 'hearts', moon: 1, taken: [0, 0, 0] }] }));
+    const { unmount } = renderPage('/score/card-deck/hearts');
+    click('Fix hand 1');
+    expect(within(group('Did anyone shoot the moon?')).getByRole('button', { name: 'B' })).toHaveAttribute('aria-pressed', 'true');
+    unmount();
+    localStorage.setItem('gameroom:score:uno', JSON.stringify({ names: ['A', 'B'], rounds: [{ game: 'uno', out: 1, hands: [33, 0] }] }));
+    renderPage('/score/uno');
+    click('Fix round 1');
+    expect(box('A')).toHaveValue(33);
+    expect(within(group('Who went out?')).getByRole('button', { name: 'B' })).toHaveAttribute('aria-pressed', 'true');
   });
 });

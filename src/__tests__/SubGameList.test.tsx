@@ -6,6 +6,7 @@ import { FilterProvider } from '../context/FilterContext';
 import { deckGame, addonGame } from './testData';
 import type { Game } from '../data/types';
 import { renderRouted } from './routed';
+import { ALL_GAMES } from '../data/games';
 
 type WithSubs = Game & { subgames: NonNullable<Game['subgames']> };
 
@@ -91,6 +92,16 @@ describe('SubGameList', () => {
     expect(video).toHaveAttribute('rel', 'noopener noreferrer');
     fireEvent.click(video);
     expect(onParentClick).not.toHaveBeenCalled();
+  });
+
+  it('links a game with a score pad to it, keeping the click from the row around it', () => {
+    const cardDeck = ALL_GAMES.find((g) => g.slug === 'card-deck')!;
+    const { onParentClick } = renderList(cardDeck);
+    const pad = screen.getByRole('link', { name: 'Hearts score pad' });
+    expect(pad).toHaveAttribute('href', '/score/card-deck/hearts');
+    fireEvent.click(pad);
+    expect(onParentClick).not.toHaveBeenCalled();
+    expect(screen.queryByRole('link', { name: 'Spoons score pad' })).not.toBeInTheDocument();
   });
 
   it('keeps a rules click from toggling the row around it', () => {

@@ -3,7 +3,7 @@ import { useParams, useLocation, useNavigate, Link, Navigate } from 'react-route
 import { ALL_GAMES } from '../data/games';
 import { rulebooks, rulebookPath, chatParts, chatScope, citedPageParam, starterQuestions } from '../utils/rulebooks';
 import { citationsIn, citedPage, linkCitations, mentionedRulebooks } from '../utils/citations';
-import { SCORE_CALCULATORS } from '../data/scoreCalculators';
+import { scorePadPath } from '../data/scoreCalculators';
 import { WORD_CHECKER_GAME } from '../data/wordChecker';
 import { CalculatorIcon } from './Icons';
 import { shownKind } from '../utils/subgames';
@@ -229,6 +229,10 @@ export default function RulesPage() {
    */
   const askedOn = (tab: string | undefined) => books.find((b) => (b.part ?? '') === tab)!;
 
+  // The pad for this tab's game, a deck's Hearts having its own; else the
+  // game's, which every tab shares (Dominion's Intrigue scores on Dominion's).
+  const scorePath = scorePadPath(game.slug, book.part) ?? scorePadPath(game.slug);
+
   // This tab's rulebook, if it couldn't be shown (failure is only ever this
   // tab's): nothing said until it is known why, so one note doesn't give
   // way to another.
@@ -275,8 +279,8 @@ export default function RulesPage() {
         <title>{`${book.name} rules · The Game Room`}</title>
         <PageHeader title={game.name} desc={book.short} art={game}>
           <RulesChatToggle />
-          {SCORE_CALCULATORS.has(game.slug) && (
-            <Link className="rules-chat-toggle" to={`/score/${game.slug}`}>
+          {scorePath && (
+            <Link className="rules-chat-toggle" to={scorePath}>
               <CalculatorIcon /> Score calculator
             </Link>
           )}
