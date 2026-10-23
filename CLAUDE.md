@@ -171,6 +171,9 @@ before changing the module.
   states that can't occur inside the app.
 - **Document behaviour where the code lives**, in the module's header or the
   component's JSDoc, and change it with the code; this file stays a map.
+  `eslint-plugin-jsdoc` checks the JSDoc that's written (tags name real
+  parameters and parse; TypeScript's types stay out of it) and never asks
+  for more.
 - **Commit hygiene.** Imperative subject <=72 chars; body explains *why*; end
   with the `Co-Authored-By:` trailer. One logical change per commit; squash
   "fix typo"/"oops" churn before opening or updating a PR. Linear history

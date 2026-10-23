@@ -15,7 +15,7 @@ import * as Sentry from '@sentry/node';
 import { Ratelimit } from '@upstash/ratelimit';
 import { getRedis } from './redis.js';
 
-/** Minimal shape of what enforceRateLimit needs — satisfied by @upstash/ratelimit. */
+/** Minimal shape of what enforceRateLimit needs — satisfied by `@upstash/ratelimit`. */
 export interface RateLimiter {
   limit(identifier: string): Promise<{ success: boolean; reason?: string }>;
 }

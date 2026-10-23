@@ -7,7 +7,27 @@ import tseslint from 'typescript-eslint';
 import playwright from 'eslint-plugin-playwright';
 import eslintComments from '@eslint-community/eslint-plugin-eslint-comments';
 import eslintConfigPrettier from 'eslint-config-prettier/flat';
+import jsdoc from 'eslint-plugin-jsdoc';
 import { defineConfig, globalIgnores } from 'eslint/config';
+
+// JSDoc is checked where it's written, never demanded where it isn't: a tag
+// must name a real parameter, say something, and parse, but no function
+// needs a comment, and TypeScript's types stay in the signature (no-types).
+const JSDOC_OPTIONAL = {
+  'jsdoc/require-jsdoc': 'off',
+  'jsdoc/require-param': 'off',
+  'jsdoc/require-param-description': 'off',
+  'jsdoc/require-property': 'off',
+  'jsdoc/require-property-description': 'off',
+  'jsdoc/require-returns': 'off',
+  'jsdoc/require-returns-description': 'off',
+  'jsdoc/require-yields': 'off',
+  'jsdoc/require-next-type': 'off',
+  'jsdoc/require-throws-type': 'off',
+  'jsdoc/require-yields-type': 'off',
+  // Blank lines between tags are layout, not accuracy.
+  'jsdoc/tag-lines': 'off',
+};
 
 export default defineConfig([
   globalIgnores(['dist', 'coverage', '.stryker-tmp', 'reports', 'test-results', 'playwright-report', 'blob-report']),
@@ -83,6 +103,17 @@ export default defineConfig([
     rules: {
       'react-hooks/refs': 'off',
     },
+  },
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [jsdoc.configs['flat/recommended-typescript-error']],
+    rules: JSDOC_OPTIONAL,
+  },
+  {
+    // Plain JS documents its types in JSDoc, so those are checked too.
+    files: ['**/*.{js,mjs,cjs}'],
+    extends: [jsdoc.configs['flat/recommended-error']],
+    rules: JSDOC_OPTIONAL,
   },
   // Last, so it switches off every rule above that only argues with
   // Prettier's layout (npm run format); Prettier owns formatting.
