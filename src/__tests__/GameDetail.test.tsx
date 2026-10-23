@@ -9,12 +9,22 @@ const sections = [
 
 describe('GameDetail', () => {
   it('draws each section as a heading over its paragraph, side by side rather than nested', () => {
-    const { container } = render(<div data-testid="host"><GameDetail sections={sections} /></div>);
+    const { container } = render(
+      <div data-testid="host">
+        <GameDetail sections={sections} />
+      </div>,
+    );
     const host = screen.getByTestId('host');
     expect([...host.children].map((el) => el.className)).toEqual(['detail-section', 'detail-section']);
     expect(container.querySelector('.detail-section .detail-section')).toBeNull();
-    expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual(['How It Works', 'Why It Works']);
-    expect([...host.querySelectorAll('.detail-section > p')].map((p) => p.textContent)).toEqual(['Everyone gets a secret role.', 'Ten minutes, then play again.']);
+    expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual([
+      'How It Works',
+      'Why It Works',
+    ]);
+    expect([...host.querySelectorAll('.detail-section > p')].map((p) => p.textContent)).toEqual([
+      'Everyone gets a secret role.',
+      'Ten minutes, then play again.',
+    ]);
   });
 
   it('shows the words as text, never as markup', () => {

@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { concatList, cropFilter, keyLabel, pngSize, restsOutside, scaledHeight, stillTime, thinner, timeline, type Shot, type Tick } from './pr-gif-timing.ts';
+import {
+  concatList,
+  cropFilter,
+  keyLabel,
+  pngSize,
+  restsOutside,
+  scaledHeight,
+  stillTime,
+  thinner,
+  timeline,
+  type Shot,
+  type Tick,
+} from './pr-gif-timing.ts';
 
 const shot = (at: number, hash = `h${at}`): Shot => ({ file: `f${at}.png`, at, hash });
 
@@ -25,7 +37,7 @@ describe('timeline', () => {
     ]);
   });
 
-  it('rounds to a GIF\'s hundredths, and never under 20 ms', () => {
+  it("rounds to a GIF's hundredths, and never under 20 ms", () => {
     const stills = timeline([shot(0), shot(44), shot(48), shot(100)], 104);
     expect(stills.map((s) => s.ms)).toEqual([40, 20, 50, 20]);
   });
@@ -53,7 +65,7 @@ describe('stillTime', () => {
   });
 });
 
-describe('timeline, with the page\'s ticks', () => {
+describe("timeline, with the page's ticks", () => {
   const frame = 70;
   const ticksFor = (moving: (t: number) => boolean): Tick[] =>
     Array.from({ length: 101 }, (_, i) => ({ t: i * 20, moving: moving(i * 20) }));
@@ -67,24 +79,35 @@ describe('timeline, with the page\'s ticks', () => {
   it('keeps a long frame the page was still for, and cuts only the moving part', () => {
     const shots = [shot(0), shot(70), shot(140), shot(1140), shot(1210)];
     // Still from 140 to 1140: a press held, say.
-    expect(timeline(shots, 1280, undefined, { ticks: ticksFor((t) => t <= 140 || t > 1140), frame }).map((s) => s.ms))
-      .toEqual([70, 70, 1000, 70, 70]);
+    expect(
+      timeline(shots, 1280, undefined, { ticks: ticksFor((t) => t <= 140 || t > 1140), frame }).map((s) => s.ms),
+    ).toEqual([70, 70, 1000, 70, 70]);
     // Moving for its first 300 ms, then still.
-    expect(timeline(shots, 1280, undefined, { ticks: ticksFor((t) => t <= 440 || t > 1140), frame }).map((s) => s.ms))
-      .toEqual([70, 70, 770, 70, 70]);
+    expect(
+      timeline(shots, 1280, undefined, { ticks: ticksFor((t) => t <= 440 || t > 1140), frame }).map((s) => s.ms),
+    ).toEqual([70, 70, 770, 70, 70]);
   });
 
   it('leaves a long frame be when no ticks cover it, and a short one always', () => {
     const shots = [shot(0), shot(70), shot(140), shot(3000)];
     const early = ticksFor(() => true).filter(({ t }) => t <= 140);
     expect(timeline(shots, 3070, undefined, { ticks: early, frame }).map((s) => s.ms)).toEqual([70, 70, 2860, 70]);
-    expect(timeline([shot(0), shot(130), shot(200)], 270, undefined, { ticks: ticksFor(() => true), frame }).map((s) => s.ms)).toEqual([130, 70, 70]);
+    expect(
+      timeline([shot(0), shot(130), shot(200)], 270, undefined, { ticks: ticksFor(() => true), frame }).map(
+        (s) => s.ms,
+      ),
+    ).toEqual([130, 70, 70]);
   });
 });
 
 describe('concatList', () => {
   it('gives each frame its duration at 100 a second, listing the last once more for ffmpeg to honour its own', () => {
-    expect(concatList([{ file: 'f0.png', ms: 500 }, { file: 'f1.png', ms: 70 }])).toBe(
+    expect(
+      concatList([
+        { file: 'f0.png', ms: 500 },
+        { file: 'f1.png', ms: 70 },
+      ]),
+    ).toBe(
       'ffconcat version 1.0\n' +
         "file 'f0.png'\noption framerate 100\nduration 0.500\n" +
         "file 'f1.png'\noption framerate 100\nduration 0.070\n" +
@@ -183,8 +206,10 @@ describe('restsOutside', () => {
 });
 
 describe('keyLabel', () => {
-  const press = (key: string, mods: Partial<{ shiftKey: boolean; ctrlKey: boolean; altKey: boolean; metaKey: boolean }> = {}) =>
-    keyLabel({ key, shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, ...mods });
+  const press = (
+    key: string,
+    mods: Partial<{ shiftKey: boolean; ctrlKey: boolean; altKey: boolean; metaKey: boolean }> = {},
+  ) => keyLabel({ key, shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, ...mods });
 
   it('names keys as a keyboard does', () => {
     expect(press('Tab')).toBe('Tab');

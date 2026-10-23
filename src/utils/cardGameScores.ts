@@ -88,13 +88,18 @@ export function scoreRounds(rounds: readonly Round[], columns: number): Scored {
         });
         break;
       case 'golf':
-        row.forEach((_, i) => { row[i] = round.scores[i]; });
+        row.forEach((_, i) => {
+          row[i] = round.scores[i];
+        });
         break;
       case 'spades':
         spades = true;
         for (const team of [0, 1]) {
           const seats = [team, team + 2];
-          const hand = spadesHand(seats.map((s) => round.bids[s]), seats.map((s) => round.tricks[s]));
+          const hand = spadesHand(
+            seats.map((s) => round.bids[s]),
+            seats.map((s) => round.tricks[s]),
+          );
           row[team] = hand.points;
           bags[team] += hand.bags;
           while (bags[team] >= BAGS_PER_PENALTY) {
@@ -110,7 +115,9 @@ export function scoreRounds(rounds: readonly Round[], columns: number): Scored {
         break;
       }
     }
-    row.forEach((p, i) => { totals[i] += p; });
+    row.forEach((p, i) => {
+      totals[i] += p;
+    });
     return row;
   });
   return spades ? { points, totals, bags } : { points, totals };
@@ -122,7 +129,11 @@ export function scoreRounds(rounds: readonly Round[], columns: number): Scored {
  * it, the best total then winning; a game of a set number of rounds ends
  * after the last.
  */
-export function outcome(goal: CardGameGoal, totals: readonly number[], rounds: number): { over: boolean; leaders: number[] } {
+export function outcome(
+  goal: CardGameGoal,
+  totals: readonly number[],
+  rounds: number,
+): { over: boolean; leaders: number[] } {
   const best = goal.low ? Math.min(...totals) : Math.max(...totals);
   const leaders = totals.flatMap((t, i) => (t === best ? [i] : []));
   const over = 'to' in goal ? rounds > 0 && totals.some((t) => t >= goal.to) : rounds >= goal.rounds;
@@ -136,7 +147,12 @@ export function outcome(goal: CardGameGoal, totals: readonly number[], rounds: n
  */
 export function roundIssue(round: Round): string | null {
   const sum = (list: readonly number[]) => list.reduce((a, b) => a + b, 0);
-  if (round.game === 'hearts' && round.moon === null && round.taken.includes(HEARTS_HAND) && sum(round.taken) === HEARTS_HAND) {
+  if (
+    round.game === 'hearts' &&
+    round.moon === null &&
+    round.taken.includes(HEARTS_HAND) &&
+    sum(round.taken) === HEARTS_HAND
+  ) {
     return 'One player took all 26: did they shoot the moon? Say who above, and everyone else scores 26 instead.';
   }
   if (round.game === 'hearts' && round.moon === null && sum(round.taken) !== HEARTS_HAND) {
@@ -148,7 +164,8 @@ export function roundIssue(round: Round): string | null {
   return null;
 }
 
-const isCount = (v: unknown, max = Infinity): v is number => Number.isSafeInteger(v) && (v as number) >= 0 && (v as number) <= max;
+const isCount = (v: unknown, max = Infinity): v is number =>
+  Number.isSafeInteger(v) && (v as number) >= 0 && (v as number) <= max;
 const isScore = (v: unknown): v is number => Number.isSafeInteger(v);
 const listOf = (v: unknown, length: number, item: (x: unknown) => boolean) =>
   Array.isArray(v) && v.length === length && v.every(item);
@@ -166,11 +183,15 @@ export function isRound(game: CardGameId, players: number, v: unknown): v is Rou
     case 'rummy':
       return isCount(r.out, players - 1) && listOf(r.hands, players, (x) => isCount(x));
     case 'hearts':
-      return (r.moon === null || isCount(r.moon, players - 1)) && listOf(r.taken, players, (x) => isCount(x, HEARTS_HAND));
+      return (
+        (r.moon === null || isCount(r.moon, players - 1)) && listOf(r.taken, players, (x) => isCount(x, HEARTS_HAND))
+      );
     case 'golf':
       return listOf(r.scores, players, isScore);
     case 'spades':
-      return listOf(r.bids, 4, (x) => isCount(x, SPADES_TRICKS)) && listOf(r.tricks, 4, (x) => isCount(x, SPADES_TRICKS));
+      return (
+        listOf(r.bids, 4, (x) => isCount(x, SPADES_TRICKS)) && listOf(r.tricks, 4, (x) => isCount(x, SPADES_TRICKS))
+      );
     case 'euchre':
       return (r.makers === 0 || r.makers === 1) && isCount(r.tricks, EUCHRE_TRICKS) && typeof r.alone === 'boolean';
   }

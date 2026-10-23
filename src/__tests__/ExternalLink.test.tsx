@@ -4,7 +4,11 @@ import ExternalLink from '../components/ExternalLink';
 
 describe('ExternalLink', () => {
   it('is a plain link to a new tab that gets no opener and no referrer', () => {
-    render(<ExternalLink href="https://example.com/video" className="row-yt" aria-label="Watch it" title="Watch Tutorial">Video</ExternalLink>);
+    render(
+      <ExternalLink href="https://example.com/video" className="row-yt" aria-label="Watch it" title="Watch Tutorial">
+        Video
+      </ExternalLink>,
+    );
     const link = screen.getByRole('link', { name: 'Watch it' });
     expect(link).toHaveAttribute('href', 'https://example.com/video');
     expect(link).toHaveAttribute('target', '_blank');

@@ -25,7 +25,7 @@ function atRest(row: Locator): Promise<boolean> {
   });
 }
 
-test('the hero\'s covers glide sideways, and stop when paused', async ({ page }) => {
+test("the hero's covers glide sideways, and stop when paused", async ({ page }) => {
   await page.goto('/');
   const row = track(page);
   // Every game once to a screen reader; the loop's second copy is hidden.
@@ -92,7 +92,7 @@ test('only a cover holds the row still, not the gaps or the room round it', asyn
   await expect.poll(() => playState(row)).toBe('paused');
 });
 
-test('the row drags sideways, and the drag doesn\'t open a game', async ({ page }) => {
+test("the row drags sideways, and the drag doesn't open a game", async ({ page }) => {
   await page.goto('/');
   const row = track(page);
   const cover = row.getByRole('button').nth(4);
@@ -124,13 +124,16 @@ test('the row drags sideways, and the drag doesn\'t open a game', async ({ page 
 test('pulled right, the row turns to glide right, coming round its loop', async ({ page }) => {
   await page.goto('/');
   const row = track(page);
-  const at = (ms: number) => row.evaluate((el, t) => {
-    el.parentElement!.getAnimations()[0].currentTime = t;
-  }, ms);
+  const at = (ms: number) =>
+    row.evaluate((el, t) => {
+      el.parentElement!.getAnimations()[0].currentTime = t;
+    }, ms);
   // Between finishing and being wound round, the row has no animation for
   // a frame: no time, which the poll waits out.
   const time = () => row.evaluate((el) => Number(el.parentElement!.getAnimations()[0]?.currentTime));
-  const lap = await row.evaluate((el) => Number(el.parentElement!.getAnimations()[0].effect!.getComputedTiming().duration));
+  const lap = await row.evaluate((el) =>
+    Number(el.parentElement!.getAnimations()[0].effect!.getComputedTiming().duration),
+  );
   // The middle of the row, whatever is under it: pressed, the row holds.
   const cover = (await row.getByRole('button').first().boundingBox())!;
   const x = page.viewportSize()!.width / 2;
@@ -169,7 +172,7 @@ test('pulled right, the row turns to glide right, coming round its loop', async 
   await expect.poll(() => slid(row)).toBeLessThan(left - 1);
 });
 
-test('a press on a cover that doesn\'t move still opens its game', async ({ page }) => {
+test("a press on a cover that doesn't move still opens its game", async ({ page }) => {
   await page.goto('/');
   const row = track(page);
   const cover = row.getByRole('button').nth(4);
@@ -183,7 +186,7 @@ test('a press on a cover that doesn\'t move still opens its game', async ({ page
   await expect(page.getByRole('button', { name: `Show details for ${name}` })).toBeFocused();
 });
 
-test('clicking a cover brings its game\'s row into view, ready for the keyboard', async ({ page }) => {
+test("clicking a cover brings its game's row into view, ready for the keyboard", async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Pause cover carousel' }).click();
   await page.getByRole('button', { name: 'Show Azul in the list' }).click();
@@ -192,7 +195,7 @@ test('clicking a cover brings its game\'s row into view, ready for the keyboard'
   await expect(toggle).toBeFocused();
 });
 
-test('a cover Tabbed to and pressed brings its game\'s card into view', async ({ page }) => {
+test("a cover Tabbed to and pressed brings its game's card into view", async ({ page }) => {
   await page.goto('/?v=grid');
   const cover = page.getByRole('button', { name: 'Show Codenames in the list' });
   await cover.focus();

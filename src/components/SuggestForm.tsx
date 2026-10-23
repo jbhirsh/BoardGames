@@ -5,7 +5,8 @@ import { alreadyListed } from '../utils/alreadyListed';
 import { GAME_MAX, GAME_MIN, NAME_MAX, NOTE_MAX } from '../data/suggestionLimits';
 import { callJson } from '../client/adminApi';
 
-type Status = { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent'; game: string } | { kind: 'error'; message: string };
+type Status =
+  { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent'; game: string } | { kind: 'error'; message: string };
 
 /**
  * "Suggest a game": posts to /api/suggestions, which emails the owner an
@@ -32,7 +33,11 @@ export default function SuggestForm() {
       return;
     }
     setStatus({ kind: 'sending' });
-    const result = await callJson('/api/suggestions', 'POST', { game: game.trim(), name: trimmedName, note: note.trim() });
+    const result = await callJson('/api/suggestions', 'POST', {
+      game: game.trim(),
+      name: trimmedName,
+      note: note.trim(),
+    });
     if (!result.ok) {
       setStatus({ kind: 'error', message: result.error });
       return;
@@ -45,15 +50,49 @@ export default function SuggestForm() {
 
   return (
     <form id="suggest" className="suggest" onSubmit={onSubmit} aria-labelledby={`${uid}-title`}>
-      <h3 id={`${uid}-title`} className="suggest-title">Suggest a game</h3>
+      <h3 id={`${uid}-title`} className="suggest-title">
+        Suggest a game
+      </h3>
       <p className="suggest-sub">Know something we'd love? Jess gets an email and can add it with one click.</p>
       <div className="suggest-fields">
-        <label className="suggest-label" htmlFor={`${uid}-game`}>Game</label>
-        <input id={`${uid}-game`} className="suggest-input" data-focus-target="field" value={game} onChange={(e) => setGame(e.target.value)} required minLength={GAME_MIN} maxLength={GAME_MAX} placeholder="e.g. Kingdomino" />
-        <label className="suggest-label" htmlFor={`${uid}-name`}>Your name</label>
-        <input id={`${uid}-name`} className="suggest-input" value={name} onChange={(e) => setName(e.target.value)} required maxLength={NAME_MAX} autoComplete="given-name" placeholder="e.g. Alex" />
-        <label className="suggest-label" htmlFor={`${uid}-note`}>Why? <span className="suggest-opt">(optional)</span></label>
-        <input id={`${uid}-note`} className="suggest-input" value={note} onChange={(e) => setNote(e.target.value)} maxLength={NOTE_MAX} placeholder="e.g. Great with six people" />
+        <label className="suggest-label" htmlFor={`${uid}-game`}>
+          Game
+        </label>
+        <input
+          id={`${uid}-game`}
+          className="suggest-input"
+          data-focus-target="field"
+          value={game}
+          onChange={(e) => setGame(e.target.value)}
+          required
+          minLength={GAME_MIN}
+          maxLength={GAME_MAX}
+          placeholder="e.g. Kingdomino"
+        />
+        <label className="suggest-label" htmlFor={`${uid}-name`}>
+          Your name
+        </label>
+        <input
+          id={`${uid}-name`}
+          className="suggest-input"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          maxLength={NAME_MAX}
+          autoComplete="given-name"
+          placeholder="e.g. Alex"
+        />
+        <label className="suggest-label" htmlFor={`${uid}-note`}>
+          Why? <span className="suggest-opt">(optional)</span>
+        </label>
+        <input
+          id={`${uid}-note`}
+          className="suggest-input"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          maxLength={NOTE_MAX}
+          placeholder="e.g. Great with six people"
+        />
       </div>
       <div className="suggest-actions">
         <button type="submit" className="suggest-btn" disabled={status.kind === 'sending'}>

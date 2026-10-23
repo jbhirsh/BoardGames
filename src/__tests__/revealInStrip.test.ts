@@ -9,7 +9,11 @@ import { revealInStrip } from '../client/revealInStrip';
 function layout(scroll: number, at: number) {
   const strip = { offsetLeft: 10, clientWidth: 300, scrollLeft: scroll };
   const el = { offsetLeft: 10 + at, offsetWidth: 100 };
-  return { strip, el, reveal: (margin?: number) => revealInStrip(strip as unknown as HTMLElement, el as unknown as HTMLElement, margin) };
+  return {
+    strip,
+    el,
+    reveal: (margin?: number) => revealInStrip(strip as unknown as HTMLElement, el as unknown as HTMLElement, margin),
+  };
 }
 
 describe('revealInStrip', () => {
@@ -47,7 +51,7 @@ describe('revealInStrip', () => {
     expect(clear.strip.scrollLeft).toBe(100);
   });
 
-  it('never scrolls before the strip\'s start for an item near it', () => {
+  it("never scrolls before the strip's start for an item near it", () => {
     const { strip, reveal } = layout(30, 20);
     reveal(48);
     expect(strip.scrollLeft).toBe(0);

@@ -54,11 +54,7 @@ export interface VotesResponse {
   json(data: unknown): VotesResponse;
 }
 
-export async function handleVotes(
-  redis: VotesRedis,
-  req: VotesRequest,
-  res: VotesResponse,
-): Promise<VotesResponse> {
+export async function handleVotes(redis: VotesRedis, req: VotesRequest, res: VotesResponse): Promise<VotesResponse> {
   try {
     if (req.method === 'GET') {
       const parsed = parseIds(req.query.ids);
@@ -77,9 +73,7 @@ export async function handleVotes(
       ids.forEach((id, i) => {
         counts[id] = Number(pipeResult[i]) || 0;
       });
-      const myVotes = anonId
-        ? ids.filter((_, i) => Number(pipeResult[ids.length + i]) === 1)
-        : [];
+      const myVotes = anonId ? ids.filter((_, i) => Number(pipeResult[ids.length + i]) === 1) : [];
 
       return res.status(200).json({ counts, myVotes });
     }

@@ -7,7 +7,7 @@ function renderPage() {
   return render(
     <MemoryRouter>
       <WordCheckerPage />
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 

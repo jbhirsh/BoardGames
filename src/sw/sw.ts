@@ -15,7 +15,22 @@
 // stamps sw.js on every build, so every deploy installs a new worker. Bulk
 // saving of rulebooks and precaching the rules text are left out.
 import { parseRange, rangeHeaders, routeFor, savesOnOpen, savingData } from '../utils/offline';
-import { activate, ASSETS, healReader, install, isReaderMessage, MATCH, pruneShells, READER_MESSAGE, RULEBOOKS, saver, SHELL_PREFIX, stamped, type Build, type SaveReply } from './shell';
+import {
+  activate,
+  ASSETS,
+  healReader,
+  install,
+  isReaderMessage,
+  MATCH,
+  pruneShells,
+  READER_MESSAGE,
+  RULEBOOKS,
+  saver,
+  SHELL_PREFIX,
+  stamped,
+  type Build,
+  type SaveReply,
+} from './shell';
 
 declare const self: ServiceWorkerGlobalScope;
 /** Paths saved at install: the app's code (every page's), box art, the font, the word lists. */
@@ -34,12 +49,23 @@ declare const __RULEBOOKS__: Record<string, string>;
 declare const __ART__: Record<string, string>;
 
 const SHELL = `${SHELL_PREFIX}${__SW_VERSION__}`;
-const BUILD: Build = { shell: SHELL, precache: __PRECACHE__, reader: __READER__, rulebooks: __RULEBOOKS__, art: __ART__ };
+const BUILD: Build = {
+  shell: SHELL,
+  precache: __PRECACHE__,
+  reader: __READER__,
+  rulebooks: __RULEBOOKS__,
+  art: __ART__,
+};
 // The reader's files too: saved or not yet, they are this build's, kept in its shell.
 const SHELL_PATHS = new Set([...__PRECACHE__, ...__READER__]);
 // Rulebooks saved whole, once each however many range requests and pages
 // ask for one; a newer build on its way in is told of each (tellNewer).
-const saving = saver(BUILD, caches, (path) => fetch(path), () => tellNewer());
+const saving = saver(
+  BUILD,
+  caches,
+  (path) => fetch(path),
+  () => tellNewer(),
+);
 // Give a slow network this long before a page comes from the saved app.
 const PAGE_TIMEOUT_MS = 4000;
 
@@ -72,11 +98,16 @@ self.addEventListener('message', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   switch (routeFor(request, self.location.origin, SHELL_PATHS)) {
-    case 'page': return event.respondWith(page(request));
-    case 'rulebook': return event.respondWith(rulebook(event));
-    case 'shell': return event.respondWith(saved(event, SHELL));
-    case 'asset': return event.respondWith(saved(event, ASSETS));
-    case 'skip': return;
+    case 'page':
+      return event.respondWith(page(request));
+    case 'rulebook':
+      return event.respondWith(rulebook(event));
+    case 'shell':
+      return event.respondWith(saved(event, SHELL));
+    case 'asset':
+      return event.respondWith(saved(event, ASSETS));
+    case 'skip':
+      return;
   }
 });
 
@@ -150,7 +181,9 @@ function heal(): Promise<void> {
   healing ??= healReader(BUILD, caches)
     .then(() => (newest() ? pruneShells(BUILD, caches) : undefined))
     .catch(() => {})
-    .finally(() => { healing = null; });
+    .finally(() => {
+      healing = null;
+    });
   return healing;
 }
 // The rulebook being read, held so each of the reader's range requests is cut

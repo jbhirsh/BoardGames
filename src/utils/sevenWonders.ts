@@ -1,7 +1,7 @@
 // 7 Wonders scoring, as the printed score pad adds it up.
 
 export const SCIENCE_SYMBOLS = ['tablets', 'compasses', 'gears'] as const;
-export type ScienceSymbol = typeof SCIENCE_SYMBOLS[number];
+export type ScienceSymbol = (typeof SCIENCE_SYMBOLS)[number];
 export type Symbols = Record<ScienceSymbol, number>;
 
 /** Each symbol scores its count squared; each full set of three scores 7 more. */
@@ -61,8 +61,7 @@ export interface Standing {
  * rule); players level on both share the place.
  */
 export function standings(scores: readonly { total: number; coins: number }[]): Standing[] {
-  const order = scores.map((s, player) => ({ ...s, player }))
-    .sort((a, b) => b.total - a.total || b.coins - a.coins);
+  const order = scores.map((s, player) => ({ ...s, player })).sort((a, b) => b.total - a.total || b.coins - a.coins);
   return order.map((s) => ({
     player: s.player,
     place: order.findIndex((o) => o.total === s.total && o.coins === s.coins) + 1,
@@ -88,7 +87,9 @@ export function tieBreaks(ranked: readonly { name: string; total: number; coins:
     if (tied.length < 2) continue;
     const who = names(tied.map((p) => p.name));
     if (tied.every((p) => p.coins === tied[0].coins)) {
-      notes.push(`${who} tie on ${total} VP and ${tied[0].coins} coins, so they share ${ordinal(tied[0].place)} place.`);
+      notes.push(
+        `${who} tie on ${total} VP and ${tied[0].coins} coins, so they share ${ordinal(tied[0].place)} place.`,
+      );
       continue;
     }
     // Coins settle it, except between players level on coins too.
@@ -96,7 +97,9 @@ export function tieBreaks(ranked: readonly { name: string; total: number; coins:
       .map((place) => tied.filter((p) => p.place === place))
       .filter((group) => group.length > 1)
       .map((group) => ` ${names(group.map((p) => p.name))} still share ${ordinal(group[0].place)}.`);
-    notes.push(`${who} tie on ${total} VP; coins break the tie: ${tied.map((p) => `${p.name} ${p.coins}`).join(', ')}.${still.join('')}`);
+    notes.push(
+      `${who} tie on ${total} VP; coins break the tie: ${tied.map((p) => `${p.name} ${p.coins}`).join(', ')}.${still.join('')}`,
+    );
   }
   return notes;
 }

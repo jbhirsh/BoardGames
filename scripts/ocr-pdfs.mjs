@@ -1,24 +1,24 @@
-import { writeFile, mkdir } from "node:fs/promises";
-import { join, basename } from "node:path";
-import { createWorker } from "tesseract.js";
-import { pdf } from "pdf-to-img";
+import { writeFile, mkdir } from 'node:fs/promises';
+import { join, basename } from 'node:path';
+import { createWorker } from 'tesseract.js';
+import { pdf } from 'pdf-to-img';
 
-const RULES_DIR = join(import.meta.dirname, "..", "public", "rules");
-const OUTPUT_DIR = join(import.meta.dirname, "..", "rules-text");
+const RULES_DIR = join(import.meta.dirname, '..', 'public', 'rules');
+const OUTPUT_DIR = join(import.meta.dirname, '..', 'rules-text');
 
 await mkdir(OUTPUT_DIR, { recursive: true });
 
 const files = process.argv.slice(2);
 if (files.length === 0) {
-  console.log("No files to OCR.");
+  console.log('No files to OCR.');
   process.exit(0);
 }
 
-const worker = await createWorker("eng");
+const worker = await createWorker('eng');
 
 for (const file of files) {
   const pdfPath = join(RULES_DIR, file);
-  const outName = basename(file, ".pdf") + ".txt";
+  const outName = basename(file, '.pdf') + '.txt';
 
   try {
     const doc = await pdf(pdfPath, { scale: 2 });
@@ -33,7 +33,7 @@ for (const file of files) {
     }
 
     // "[Page N]" before each page, as extract-rules-text.mjs writes them.
-    const finalText = pages.map((t, i) => `[Page ${i + 1}]\n${t}`).join("\n\n");
+    const finalText = pages.map((t, i) => `[Page ${i + 1}]\n${t}`).join('\n\n');
     await writeFile(join(OUTPUT_DIR, outName), finalText);
     console.log(`${file} -> ${outName} (${Buffer.byteLength(finalText)} bytes)`);
   } catch (err) {

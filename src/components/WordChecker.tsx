@@ -59,7 +59,9 @@ export default function WordChecker() {
   const latest = useRef(0);
 
   // Start fetching the list on arrival, so the first check doesn't wait on it.
-  useEffect(() => { void loadWordList(); }, []);
+  useEffect(() => {
+    void loadWordList();
+  }, []);
 
   /** Asks the dictionary about a word the list lacks, and settles its verdict. */
   async function askDictionary(word: string, request: number) {
@@ -152,13 +154,13 @@ export default function WordChecker() {
         {result?.status === 'letters' && (
           <Notice tone="info">Use one word of letters only, without spaces, hyphens or apostrophes.</Notice>
         )}
-        {result?.status === 'short' && (
-          <Notice tone="info">Words need at least two letters.</Notice>
-        )}
+        {result?.status === 'short' && <Notice tone="info">Words need at least two letters.</Notice>}
         {result && result.status !== 'letters' && result.status !== 'short' && (
           <div className="word-result">
             <div className={`word-badge word-${result.status}`}>
-              <span className="word-badge-icon" aria-hidden="true">{STATUS_ICON[result.status]}</span>
+              <span className="word-badge-icon" aria-hidden="true">
+                {STATUS_ICON[result.status]}
+              </span>
               <span className="word-badge-word">{result.word}</span>
               <span className="word-badge-status">{STATUS_TEXT[result.status]}</span>
             </div>
@@ -169,7 +171,13 @@ export default function WordChecker() {
               <p className="word-note">Checking the dictionary…</p>
             )}
             {result.status === 'unlisted' && result.dictionary === 'unreachable' && (
-              <Notice tone="warning" action={{ label: 'Try again', onClick: () => retry(() => askDictionary(result.word, ++latest.current)) }}>
+              <Notice
+                tone="warning"
+                action={{
+                  label: 'Try again',
+                  onClick: () => retry(() => askDictionary(result.word, ++latest.current)),
+                }}
+              >
                 The dictionary couldn&apos;t be reached to double-check.
               </Notice>
             )}
@@ -189,30 +197,30 @@ export default function WordChecker() {
                     {meaning.definitions.slice(0, 2).map((def, k) => (
                       <div key={k} className="word-def">
                         <span className="word-def-num">{k + 1}.</span> {def.definition}
-                        {def.example && (
-                          <div className="word-example">"{def.example}"</div>
-                        )}
+                        {def.example && <div className="word-example">"{def.example}"</div>}
                       </div>
                     ))}
                   </div>
                 ))}
                 <p className="word-source">
                   Definitions from{' '}
-                  <a href={wiktionaryPage(result.word)} target="_blank" rel="noopener noreferrer">Wiktionary</a>
-                  {' '}(<a href={LICENCE_URL} target="_blank" rel="noopener noreferrer">CC BY-SA 4.0</a>), shortened
+                  <a href={wiktionaryPage(result.word)} target="_blank" rel="noopener noreferrer">
+                    Wiktionary
+                  </a>{' '}
+                  (
+                  <a href={LICENCE_URL} target="_blank" rel="noopener noreferrer">
+                    CC BY-SA 4.0
+                  </a>
+                  ), shortened
                 </p>
               </div>
             )}
           </div>
         )}
         {!result && !isChecking && (
-          <div className="word-checker-empty">
-            Type a word to check if it's valid for word games like Bananagrams.
-          </div>
+          <div className="word-checker-empty">Type a word to check if it's valid for word games like Bananagrams.</div>
         )}
-        {isChecking && (
-          <div className="word-checker-empty">Checking...</div>
-        )}
+        {isChecking && <div className="word-checker-empty">Checking...</div>}
       </div>
     </div>
   );

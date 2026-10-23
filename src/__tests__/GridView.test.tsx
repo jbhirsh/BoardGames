@@ -12,7 +12,7 @@ function renderGridView() {
       <FilterProvider>
         <GridView />
       </FilterProvider>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 
@@ -30,9 +30,7 @@ describe('GridView', () => {
       const { dispatch } = useFilter();
       return (
         <>
-          <button onClick={() => dispatch({ type: 'SET_SORT', payload: 'group' })}>
-            Set Group
-          </button>
+          <button onClick={() => dispatch({ type: 'SET_SORT', payload: 'group' })}>Set Group</button>
           <GridView />
         </>
       );
@@ -43,7 +41,7 @@ describe('GridView', () => {
         <FilterProvider>
           <GroupGridTest />
         </FilterProvider>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     fireEvent.click(screen.getByText('Set Group'));
@@ -55,9 +53,7 @@ describe('GridView', () => {
       const { dispatch } = useFilter();
       return (
         <>
-          <button onClick={() => dispatch({ type: 'SET_SEARCH', payload: 'zzzzzznotfound' })}>
-            Search Empty
-          </button>
+          <button onClick={() => dispatch({ type: 'SET_SEARCH', payload: 'zzzzzznotfound' })}>Search Empty</button>
           <GridView />
         </>
       );
@@ -68,7 +64,7 @@ describe('GridView', () => {
         <FilterProvider>
           <EmptyTest />
         </FilterProvider>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     fireEvent.click(screen.getByText('Search Empty'));
@@ -80,9 +76,7 @@ describe('GridView', () => {
       const { dispatch } = useFilter();
       return (
         <>
-          <button onClick={() => dispatch({ type: 'SET_SEARCH', payload: 'zzzzzznotfound' })}>
-            Search Empty
-          </button>
+          <button onClick={() => dispatch({ type: 'SET_SEARCH', payload: 'zzzzzznotfound' })}>Search Empty</button>
           <GridView />
         </>
       );
@@ -93,7 +87,7 @@ describe('GridView', () => {
         <FilterProvider>
           <EmptyTest />
         </FilterProvider>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     fireEvent.click(screen.getByText('Search Empty'));

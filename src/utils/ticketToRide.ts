@@ -21,7 +21,10 @@ export const STATION_POINTS = 4;
 export const STATIONS = 3;
 
 /** A Destination Ticket kept: its value, and whether its cities were joined. */
-export interface Ticket { points: number; made: boolean }
+export interface Ticket {
+  points: number;
+  made: boolean;
+}
 
 /** What a player counts at the end. */
 export interface TtrTally {
@@ -59,7 +62,11 @@ export function ttrBreakdown(map: TtrMap, t: TtrTally): TtrBreakdown {
   const longest = t.longest ? LONGEST_BONUS : 0;
   const stations = map === 'europe' ? Math.min(t.stationsLeft, STATIONS) * STATION_POINTS : 0;
   return {
-    routes, made, missed, longest, stations,
+    routes,
+    made,
+    missed,
+    longest,
+    stations,
     total: routes + made + missed + longest + stations,
     ticketsMade: t.tickets.filter((k) => k.made && k.points > 0).length,
   };

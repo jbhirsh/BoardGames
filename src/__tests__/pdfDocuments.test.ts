@@ -47,13 +47,25 @@ vi.mock('pdfjs-dist', () => ({
     };
     return {
       promise: pdf.fail.has(url) ? Promise.reject(new Error('bad pdf')) : Promise.resolve(doc),
-      destroy: async () => { pdf.destroyed.push(url); },
+      destroy: async () => {
+        pdf.destroyed.push(url);
+      },
     };
   },
 }));
 
 import { WARM_HEADER } from '../utils/offline';
-import { closeKept, heldDocument, readerOpens, textOf, TIDY_MS, warmPage, warmWay, WARM_TURN_MS, type Browser } from '../pdfjs/documents';
+import {
+  closeKept,
+  heldDocument,
+  readerOpens,
+  textOf,
+  TIDY_MS,
+  warmPage,
+  warmWay,
+  WARM_TURN_MS,
+  type Browser,
+} from '../pdfjs/documents';
 
 /** Lets the module's promises and microtasks run. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -99,24 +111,37 @@ afterEach(() => {
 });
 
 describe('warmWay', () => {
-  const nav = (onLine: boolean, connection?: object, controller: unknown = null): Browser => ({ onLine, connection, serviceWorker: { controller } });
+  const nav = (onLine: boolean, connection?: object, controller: unknown = null): Browser => ({
+    onLine,
+    connection,
+    serviceWorker: { controller },
+  });
   /** A service worker's cache store holding `saved`. */
-  const store = (...saved: string[]) => ({ match: async (src: string) => (saved.includes(src) ? new Response('%PDF') : undefined) }) as unknown as CacheStorage;
+  const store = (...saved: string[]) =>
+    ({
+      match: async (src: string) => (saved.includes(src) ? new Response('%PDF') : undefined),
+    }) as unknown as CacheStorage;
 
   it('reads a rulebook the service worker has saved, which costs no data, on any connection or none', async () => {
     expect(await warmWay('/a.pdf', nav(true, undefined, {}), store('/a.pdf'))).toBe('saved');
-    expect(await warmWay('/a.pdf', nav(false, { type: 'cellular', saveData: true }, {}), store('/a.pdf'))).toBe('saved');
+    expect(await warmWay('/a.pdf', nav(false, { type: 'cellular', saveData: true }, {}), store('/a.pdf'))).toBe(
+      'saved',
+    );
   });
 
   it('counts nothing as saved without a service worker in charge of the page, or a store to look in', async () => {
     expect(await warmWay('/a.pdf', nav(true), store('/a.pdf'))).toBeNull();
     expect(await warmWay('/a.pdf', nav(true, undefined, {}), undefined)).toBeNull();
-    const broken = { match: async () => { throw new Error('blocked'); } } as unknown as CacheStorage;
+    const broken = {
+      match: async () => {
+        throw new Error('blocked');
+      },
+    } as unknown as CacheStorage;
     expect(await warmWay('/a.pdf', nav(true, undefined, {}), broken)).toBeNull();
     expect(await warmWay('/a.pdf', nav(true, undefined, {}), store('/b.pdf'))).toBeNull();
   });
 
-  it('fetches only the cited page\'s parts on a fast connection that isn\'t mobile data', async () => {
+  it("fetches only the cited page's parts on a fast connection that isn't mobile data", async () => {
     expect(await warmWay('/a.pdf', nav(true, { effectiveType: '4g' }))).toBe('ranges');
     expect(await warmWay('/a.pdf', nav(true, { effectiveType: '4g', type: 'wifi', saveData: false }))).toBe('ranges');
   });
@@ -128,7 +153,7 @@ describe('warmWay', () => {
     expect(await warmWay('/a.pdf', nav(false, { effectiveType: '4g' }))).toBeNull();
   });
 
-  it('fetches nothing where the browser doesn\'t say what its connection is (Safari, Firefox)', async () => {
+  it("fetches nothing where the browser doesn't say what its connection is (Safari, Firefox)", async () => {
     expect(await warmWay('/a.pdf', nav(true))).toBeNull();
   });
 
@@ -171,7 +196,7 @@ describe('warmPage', () => {
     expect(pdf.rendered).toEqual([['/a.pdf', 2, 64]]);
   });
 
-  it('opens nothing when it isn\'t worth it', async () => {
+  it("opens nothing when it isn't worth it", async () => {
     connection({ effectiveType: '4g', type: 'cellular' });
     expect(await warmPage('/a.pdf', 2)).toBeNull();
     expect(pdf.opened).toEqual([]);
@@ -203,16 +228,21 @@ describe('warmPage', () => {
     await warm('/a.pdf', 2);
     pdf.failText = 0;
     await warm('/a.pdf', 2);
-    expect(pdf.texts).toEqual([['/a.pdf', 2], ['/a.pdf', 2]]);
+    expect(pdf.texts).toEqual([
+      ['/a.pdf', 2],
+      ['/a.pdf', 2],
+    ]);
     expect(await warmPage('/a.pdf', 9)).toBeNull();
   });
 
-  it('gives the reader\'s queue its place back when the drawing doesn\'t finish', async () => {
+  it("gives the reader's queue its place back when the drawing doesn't finish", async () => {
     vi.useFakeTimers();
     pdf.hang.add('/a.pdf');
     const draw = (await warmPage('/a.pdf', 2))!;
     let over = false;
-    void draw().then(() => { over = true; });
+    void draw().then(() => {
+      over = true;
+    });
     await vi.advanceTimersByTimeAsync(WARM_TURN_MS - 1);
     expect(over).toBe(false);
     await vi.advanceTimersByTimeAsync(1);
@@ -303,7 +333,7 @@ describe('the kept rulebooks', () => {
     c.release();
   });
 
-  it('drop their drawings once the last reader lets them go, the warm\'s too', async () => {
+  it("drop their drawings once the last reader lets them go, the warm's too", async () => {
     vi.useFakeTimers();
     await warm('/a.pdf', 2);
     const first = heldDocument('/a.pdf')!;
@@ -319,7 +349,7 @@ describe('the kept rulebooks', () => {
     expect(pdf.cleaned).toEqual(['/a.pdf']);
     expect(pdf.destroyed).toEqual([]);
     // Kept still, and the page can be warmed again.
-    expect((await warmPage('/a.pdf', 2))).not.toBeNull();
+    expect(await warmPage('/a.pdf', 2)).not.toBeNull();
   });
 
   it('leave one shown again before it is tidied as it is', async () => {
@@ -332,7 +362,7 @@ describe('the kept rulebooks', () => {
     again.release();
   });
 
-  it('close one that can\'t be tidied while a drawing runs', async () => {
+  it("close one that can't be tidied while a drawing runs", async () => {
     vi.useFakeTimers();
     await warm('/a.pdf', 2);
     pdf.cleanupFails = true;

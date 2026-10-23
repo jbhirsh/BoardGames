@@ -11,8 +11,21 @@ function jsonResponse(body: unknown, ok = true): Response {
 }
 
 const item: StoredWishlistItem = {
-  id: 'sug-1', name: 'Root', desc: 'Woodland war. “Mean fun”', blurb: 'Woodland war.', yt: '', players: '2–4',
-  min: 2, max: 4, dur: '90 min', mins: 90, kw: ['strategy'], type: 'suggested', awards: [], suggestedBy: 'Alex', source: 'friend',
+  id: 'sug-1',
+  name: 'Root',
+  desc: 'Woodland war. “Mean fun”',
+  blurb: 'Woodland war.',
+  yt: '',
+  players: '2–4',
+  min: 2,
+  max: 4,
+  dur: '90 min',
+  mins: 90,
+  kw: ['strategy'],
+  type: 'suggested',
+  awards: [],
+  suggestedBy: 'Alex',
+  source: 'friend',
 };
 
 function renderControls(over: Partial<WishlistItem> = {}, admin = true) {
@@ -63,10 +76,14 @@ describe('AdminItemControls', () => {
     fireEvent.click(within(form).getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
-    expect(lastBody(spy)).toEqual({ method: 'PATCH', body: {
-      id: 'sug-1', game: 'Root: Riverfolk',
-      details: { min: 2, max: 4, mins: 60, desc: 'Asymmetric.', kw: ['thematic'], type: 'heavy' },
-    } });
+    expect(lastBody(spy)).toEqual({
+      method: 'PATCH',
+      body: {
+        id: 'sug-1',
+        game: 'Root: Riverfolk',
+        details: { min: 2, max: 4, mins: 60, desc: 'Asymmetric.', kw: ['thematic'], type: 'heavy' },
+      },
+    });
     expect(screen.queryByRole('form')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Edit Root' })).toBeInTheDocument();
   });

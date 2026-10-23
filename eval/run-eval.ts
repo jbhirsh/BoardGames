@@ -16,13 +16,7 @@ import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import { askRulesAssistant, RULES_ASSISTANT_MODEL } from '../api/_lib/rulesAssistant.ts';
-import {
-  buildJudgePrompt,
-  formatScorecard,
-  gradeAnswer,
-  parseGoldenSet,
-  summarize,
-} from './grading.ts';
+import { buildJudgePrompt, formatScorecard, gradeAnswer, parseGoldenSet, summarize } from './grading.ts';
 import type { EntryResult, GoldenEntry, GoldenSet } from './grading.ts';
 import { parseCliArgs, parseEnvFile } from './cli.ts';
 

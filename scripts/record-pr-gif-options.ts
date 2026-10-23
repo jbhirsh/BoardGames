@@ -62,10 +62,12 @@ export function parseOptions(argv: string[]): Options {
   }
   const { values, positionals } = parsed;
   if (positionals.length !== 1) throw new Error(`one scenario, please\n${USAGE}`);
-  if (values['side-by-side'] && values['after-only']) throw new Error('--side-by-side needs a before: drop --after-only');
+  if (values['side-by-side'] && values['after-only'])
+    throw new Error('--side-by-side needs a before: drop --after-only');
   const scenario = positionals[0];
   const name = values.name ?? scenario.replace(/^.*\//, '').replace(/\.[^.]*$/, '');
-  if (!/^[\w.-]+$/.test(name) || /^\.+$/.test(name)) throw new Error(`--name is one folder name (letters, digits, . _ -), not ${name}`);
+  if (!/^[\w.-]+$/.test(name) || /^\.+$/.test(name))
+    throw new Error(`--name is one folder name (letters, digits, . _ -), not ${name}`);
   return {
     scenario,
     name,
@@ -96,9 +98,20 @@ export function repoFromRemote(url: string): string {
  * one side-by-side GIF, linked by the pr-screenshots commit's SHA so a later
  * push can't change what the PR shows.
  */
-export function markdown({ repo, sha, name, gifs }: { repo: string; sha: string; name: string; gifs: string[] }): string {
+export function markdown({
+  repo,
+  sha,
+  name,
+  gifs,
+}: {
+  repo: string;
+  sha: string;
+  name: string;
+  gifs: string[];
+}): string {
   const img = (gif: string, width: number) =>
     `<img src="https://raw.githubusercontent.com/${repo}/${sha}/${name}/${gif}" width="${width}">`;
-  if (gifs.length === 2) return `| Before (\`main\`) | After |\n|---|---|\n| ${img(gifs[0], 400)} | ${img(gifs[1], 400)} |`;
+  if (gifs.length === 2)
+    return `| Before (\`main\`) | After |\n|---|---|\n| ${img(gifs[0], 400)} | ${img(gifs[1], 400)} |`;
   return img(gifs[0], gifs[0] === 'side-by-side.gif' ? 800 : 500);
 }

@@ -4,13 +4,23 @@
 // all of it is unit tested (pr-gif-timing.test.ts).
 
 /** A screenshot taken while recording: its file, when it was taken (ms), and a hash of its pixels. */
-export interface Shot { file: string; at: number; hash: string }
+export interface Shot {
+  file: string;
+  at: number;
+  hash: string;
+}
 
 /** A frame of the GIF and how long it shows, in ms. */
-export interface Still { file: string; ms: number }
+export interface Still {
+  file: string;
+  ms: number;
+}
 
 /** The most the GIF dwells on its first and last frames. */
-export interface Holds { lead: number; tail: number }
+export interface Holds {
+  lead: number;
+  tail: number;
+}
 
 export const HOLDS: Holds = { lead: 500, tail: 1500 };
 
@@ -25,7 +35,10 @@ const TICK = 10;
  * whether anything in the recorded area moved since the frame before (an
  * animation or transition running there, the pointer, a key, the wheel).
  */
-export interface Tick { t: number; moving: boolean }
+export interface Tick {
+  t: number;
+  moving: boolean;
+}
 
 /**
  * How long, of `from` to `to`, the page was still by its ticks (in time
@@ -166,13 +179,27 @@ export function scaledHeight(crop: string, width: number): number {
 }
 
 /** A pointer position the overlay saw, at a time in ms. */
-export interface Move { x: number; y: number; t: number }
+export interface Move {
+  x: number;
+  y: number;
+  t: number;
+}
 
 /** The part of the viewport recorded, in CSS pixels. */
-export interface Clip { x: number; y: number; width: number; height: number }
+export interface Clip {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 /** A stretch of the recording with the pointer still, outside the clip. */
-export interface Rest { x: number; y: number; at: number; ms: number }
+export interface Rest {
+  x: number;
+  y: number;
+  at: number;
+  ms: number;
+}
 
 /**
  * Where the pointer sat still outside the recorded area for at least `min`
@@ -193,7 +220,13 @@ export function restsOutside(moves: Move[], clip: Clip, start: number, end: numb
 }
 
 /** The parts of a keydown the overlay names. */
-export interface KeyPress { key: string; shiftKey: boolean; ctrlKey: boolean; altKey: boolean; metaKey: boolean }
+export interface KeyPress {
+  key: string;
+  shiftKey: boolean;
+  ctrlKey: boolean;
+  altKey: boolean;
+  metaKey: boolean;
+}
 
 /**
  * How the overlay labels a key press: "Tab", "Shift+Tab", "→", "Space", a
@@ -206,12 +239,22 @@ export interface KeyPress { key: string; shiftKey: boolean; ctrlKey: boolean; al
  */
 export function keyLabel(e: KeyPress): string | null {
   const names: Record<string, string> = {
-    ' ': 'Space', ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓', Escape: 'Esc',
+    ' ': 'Space',
+    ArrowLeft: '←',
+    ArrowRight: '→',
+    ArrowUp: '↑',
+    ArrowDown: '↓',
+    Escape: 'Esc',
   };
   if (['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) return null;
   const printable = e.key.length === 1 && e.key !== ' ';
   const chord = e.ctrlKey || e.altKey || e.metaKey;
-  const mods = [e.ctrlKey && 'Ctrl', e.altKey && 'Alt', e.metaKey && 'Meta', e.shiftKey && (chord || !printable) && 'Shift'].filter(Boolean);
+  const mods = [
+    e.ctrlKey && 'Ctrl',
+    e.altKey && 'Alt',
+    e.metaKey && 'Meta',
+    e.shiftKey && (chord || !printable) && 'Shift',
+  ].filter(Boolean);
   const name = names[e.key] ?? (printable && chord ? e.key.toUpperCase() : e.key);
   return [...mods, name].join('+');
 }

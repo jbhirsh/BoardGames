@@ -19,16 +19,16 @@ export const RULES_ASSISTANT_MAX_OUTPUT_TOKENS = 1024;
 
 /** System instruction sent with every rules-assistant request. */
 export const RULES_ASSISTANT_SYSTEM_INSTRUCTION =
-  'You are a helpful board game rules assistant. Answer questions based only on the provided rules text. If the rules don\'t cover the question, say so. Keep answers concise and friendly. ' +
+  "You are a helpful board game rules assistant. Answer questions based only on the provided rules text. If the rules don't cover the question, say so. Keep answers concise and friendly. " +
   // The rules text marks each page with [Page N] (scripts/extract-rules-text.mjs),
   // so a player can show the doubter at the table; the chat links "(p. N)" to
   // that page of the PDF. A number printed on the page itself can differ from
   // the PDF's, so only the marker's will do.
   'Each page of a rulebook begins with a [Page N] marker. After each rule you give, cite the page it is on as (p. N), ' +
   'taking N from the nearest [Page N] marker above it, never from a page number printed in the text. ' +
-  'When the rules text holds more than one rulebook, each opens with a === line naming it; then put the rulebook\'s name before the page ' +
+  "When the rules text holds more than one rulebook, each opens with a === line naming it; then put the rulebook's name before the page " +
   'in every citation, as that line names it: (Catan p. N), (Cities And Knights p. N). ' +
-  'Cite nothing for something the rules don\'t say.';
+  "Cite nothing for something the rules don't say.";
 
 export interface ChatHistoryEntry {
   role: 'user' | 'model';
@@ -111,9 +111,11 @@ export function otherRulebooksNote(parts: string[]): string {
   if (parts.length === 0) return '';
   const names = parts.map(rulebookName);
   const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
-  return `\n\n=== Not included above: this game's other ${names.length === 1 ? 'rulebook' : 'rulebooks'}, ${list}. ` +
+  return (
+    `\n\n=== Not included above: this game's other ${names.length === 1 ? 'rulebook' : 'rulebooks'}, ${list}. ` +
     'If a question is about one of them, or its answer is probably in one, say which rulebook covers it ' +
-    'so the player can open it, rather than saying the rules don\'t cover it. ===';
+    "so the player can open it, rather than saying the rules don't cover it. ==="
+  );
 }
 
 /**
@@ -127,11 +129,7 @@ export function assembleRulesText(slug: string, parts?: string[]): string {
 }
 
 /** Builds the Gemini conversation: rules text first, then history, then the new question. */
-export function buildContents(
-  rulesText: string,
-  history: ChatHistoryEntry[] | undefined,
-  message: string,
-): Content[] {
+export function buildContents(rulesText: string, history: ChatHistoryEntry[] | undefined, message: string): Content[] {
   const contents: Content[] = [];
 
   // First message: rules text as context

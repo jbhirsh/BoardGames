@@ -3,8 +3,14 @@ import { parseIds, optionalAnonId, ANON_RE, MAX_IDS } from '../../api/_lib/ids';
 import { getRawRedis, getRedis, resetRedisForTests } from '../../api/_lib/redis';
 import { NAME_RE as CLIENT_NAME_RE } from '../utils/displayName';
 
-const errorOf = (v: unknown) => { const r = parseIds(v); return r.ok ? undefined : r.error; };
-const idsOf = (v: unknown) => { const r = parseIds(v); return r.ok ? r.ids : undefined; };
+const errorOf = (v: unknown) => {
+  const r = parseIds(v);
+  return r.ok ? undefined : r.error;
+};
+const idsOf = (v: unknown) => {
+  const r = parseIds(v);
+  return r.ok ? r.ids : undefined;
+};
 
 describe('parseIds', () => {
   it('requires a non-empty string', () => {
@@ -36,7 +42,10 @@ describe('optionalAnonId', () => {
 describe('getRedis', () => {
   const env = { ...process.env };
   beforeEach(() => resetRedisForTests());
-  afterEach(() => { process.env = { ...env }; resetRedisForTests(); });
+  afterEach(() => {
+    process.env = { ...env };
+    resetRedisForTests();
+  });
 
   it('throws a clear error when the KV env vars are missing', () => {
     delete process.env.KV_REST_API_URL;
@@ -59,8 +68,11 @@ describe('getRedis', () => {
     process.env.KV_REST_API_TOKEN = 'token';
     // Upstash's REST reply, base64-encoded as the client asks for it.
     const stored = ['game', 'null', 'alt', 'true', 'price', '1.50'];
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
-      new Response(JSON.stringify({ result: stored.map((v) => Buffer.from(v).toString('base64')) })));
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(
+        async () => new Response(JSON.stringify({ result: stored.map((v) => Buffer.from(v).toString('base64')) })),
+      );
     try {
       expect(await getRawRedis().hgetall('k')).toEqual(stored);
       expect(await getRedis().hgetall('k')).toEqual({ game: null, alt: true, price: '1.50' });

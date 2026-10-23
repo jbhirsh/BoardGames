@@ -20,7 +20,7 @@ export const sessionKey = (id: string) => `auth:session:${id}`;
 export const newId = () => randomBytes(24).toString('base64url');
 
 export function parseCookies(header: string | string[] | undefined): Record<string, string> {
-  const raw = Array.isArray(header) ? header.join(';') : header ?? '';
+  const raw = Array.isArray(header) ? header.join(';') : (header ?? '');
   const out: Record<string, string> = {};
   for (const part of raw.split(';')) {
     const eq = part.indexOf('=');

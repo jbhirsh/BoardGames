@@ -8,10 +8,22 @@ function makeRes() {
     statusCode: 0,
     body: undefined as unknown,
     headers: {} as Record<string, string>,
-    status(code: number) { res.statusCode = code; return res as unknown as AuthResponse; },
-    json(data: unknown) { res.body = data; return res as unknown as AuthResponse; },
-    setHeader(name: string, value: string) { res.headers[name] = value; return res as unknown as AuthResponse; },
-    send(body: string) { res.body = body; return res as unknown as AuthResponse; },
+    status(code: number) {
+      res.statusCode = code;
+      return res as unknown as AuthResponse;
+    },
+    json(data: unknown) {
+      res.body = data;
+      return res as unknown as AuthResponse;
+    },
+    setHeader(name: string, value: string) {
+      res.headers[name] = value;
+      return res as unknown as AuthResponse;
+    },
+    send(body: string) {
+      res.body = body;
+      return res as unknown as AuthResponse;
+    },
   };
   return res;
 }
@@ -27,7 +39,11 @@ function deps(over: Partial<AuthDeps> = {}): AuthDeps & { sent: Mail[] } {
   const sent: Mail[] = [];
   return {
     redis: makeRedis(),
-    mailer: { send: vi.fn(async (m: Mail) => { sent.push(m); }) },
+    mailer: {
+      send: vi.fn(async (m: Mail) => {
+        sent.push(m);
+      }),
+    },
     ownerEmail: 'Jess@Example.com',
     baseUrl: () => 'https://games.example',
     randomToken: () => TOKEN,
@@ -70,7 +86,13 @@ describe('handleAuth', () => {
     });
 
     it('still answers 200 to the owner when the send fails, so the address cannot be read off the status', async () => {
-      const d = deps({ mailer: { send: vi.fn(async () => { throw new Error('Resend responded 500'); }) } });
+      const d = deps({
+        mailer: {
+          send: vi.fn(async () => {
+            throw new Error('Resend responded 500');
+          }),
+        },
+      });
       const res = await ask('jess@example.com', d);
       expect(res.statusCode).toBe(200);
       expect(res.body).toEqual({ ok: true });
@@ -79,7 +101,11 @@ describe('handleAuth', () => {
     it('rejects an unknown action instead of treating it as a link request', async () => {
       const d = deps();
       const res = makeRes();
-      await handleAuth(d, { method: 'POST', query: {}, body: { action: 'x', email: 'jess@example.com' }, headers: {} }, res);
+      await handleAuth(
+        d,
+        { method: 'POST', query: {}, body: { action: 'x', email: 'jess@example.com' }, headers: {} },
+        res,
+      );
       expect(res.statusCode).toBe(400);
       expect(res.body).toEqual({ error: 'unknown action' });
       expect(d.sent).toHaveLength(0);
@@ -176,13 +202,26 @@ describe('handleAuth', () => {
       const JSON_H = { 'content-type': 'application/json' };
       // A cross-site form post must not clear the cookie.
       const form = makeRes();
-      await handleAuth(d, { method: 'POST', query: {}, body: { action: 'logout' }, headers: { 'content-type': 'application/x-www-form-urlencoded' } }, form);
+      await handleAuth(
+        d,
+        {
+          method: 'POST',
+          query: {},
+          body: { action: 'logout' },
+          headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        },
+        form,
+      );
       expect(form.statusCode).toBe(403);
       expect(form.headers['Set-Cookie']).toBeUndefined();
       expect((d.redis as ReturnType<typeof makeRedis>).strings[`auth:session:${SID}`]).toBe('1');
 
       const res = makeRes();
-      await handleAuth(d, { method: 'POST', query: {}, body: { action: 'logout' }, headers: { ...JSON_H, cookie: `gr_session=${SID}` } }, res);
+      await handleAuth(
+        d,
+        { method: 'POST', query: {}, body: { action: 'logout' }, headers: { ...JSON_H, cookie: `gr_session=${SID}` } },
+        res,
+      );
       expect(res.body).toEqual({ ok: true });
       expect(res.headers['Set-Cookie']).toContain('gr_session=; Max-Age=0');
       expect((d.redis as ReturnType<typeof makeRedis>).strings[`auth:session:${SID}`]).toBeUndefined();
@@ -197,7 +236,14 @@ describe('handleAuth', () => {
     const res = makeRes();
     await handleAuth(deps(), { method: 'PUT', query: {}, headers: {} }, res);
     expect(res.statusCode).toBe(405);
-    const broken = deps({ redis: { ...makeRedis(), get: vi.fn(async () => { throw new Error('down'); }) } });
+    const broken = deps({
+      redis: {
+        ...makeRedis(),
+        get: vi.fn(async () => {
+          throw new Error('down');
+        }),
+      },
+    });
     const err = makeRes();
     await handleAuth(broken, { method: 'GET', query: {}, headers: { cookie: `gr_session=${SID}` } }, err);
     expect(err.statusCode).toBe(500);

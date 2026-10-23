@@ -20,9 +20,9 @@ function renderReel(want = false) {
 }
 
 function renderHome(entry = '/') {
-  const router = createMemoryRouter([
-    { element: <App />, children: [{ path: '/', element: <HomePage /> }] },
-  ], { initialEntries: [entry] });
+  const router = createMemoryRouter([{ element: <App />, children: [{ path: '/', element: <HomePage /> }] }], {
+    initialEntries: [entry],
+  });
   render(<RouterProvider router={router} />);
   return router;
 }
@@ -53,17 +53,21 @@ describe('CoverCarousel', () => {
   it('shows every game in the collection once to assistive tech, favourites first', () => {
     renderReel();
     const covers = within(screen.getByRole('list', { name: 'Collection covers' })).getAllByRole('button');
-    expect(covers.map((b) => b.getAttribute('aria-label'))).toEqual(ownCovers(GAMES).map((c) => `Show ${c.name} in the list`));
+    expect(covers.map((b) => b.getAttribute('aria-label'))).toEqual(
+      ownCovers(GAMES).map((c) => `Show ${c.name} in the list`),
+    );
     expect(covers[0]).toHaveAttribute('title', GAMES.find((g) => g.slug === FAVOURITES[0])!.name);
     expect(covers[0].querySelector('img')).toHaveAttribute('src', GAMES.find((g) => g.slug === 'catan')!.img);
     // The copy that closes the loop is there but hidden.
     expect(screen.getAllByRole('button', { name: 'Show Catan in the list' })).toHaveLength(1);
   });
 
-  it('shows the wishlist\'s covers in Want mode', () => {
+  it("shows the wishlist's covers in Want mode", () => {
     renderReel(true);
     const covers = within(screen.getByRole('list', { name: 'Wishlist covers' })).getAllByRole('button');
-    expect(covers.map((b) => b.getAttribute('aria-label'))).toEqual(wantCovers(WISHLIST).map((c) => `Show ${c.name} in the list`));
+    expect(covers.map((b) => b.getAttribute('aria-label'))).toEqual(
+      wantCovers(WISHLIST).map((c) => `Show ${c.name} in the list`),
+    );
     expect(screen.queryByRole('list', { name: 'Collection covers' })).not.toBeInTheDocument();
   });
 
@@ -106,13 +110,19 @@ describe('CoverCarousel', () => {
 
   describe('as one Tab stop', () => {
     const tabbable = (c: HTMLElement) =>
-      [...c.querySelectorAll('.hero-reel-list:not([aria-hidden]) button')].filter((b) => b.getAttribute('tabindex') === '0');
+      [...c.querySelectorAll('.hero-reel-list:not([aria-hidden]) button')].filter(
+        (b) => b.getAttribute('tabindex') === '0',
+      );
     const covers = () => within(screen.getByRole('list', { name: 'Collection covers' })).getAllByRole('button');
 
     it('starts on the first cover, the rest out of the Tab order', () => {
       const { container } = renderReel();
       expect(tabbable(container)).toEqual([covers()[0]]);
-      expect(covers().slice(1).every((b) => b.getAttribute('tabindex') === '-1')).toBe(true);
+      expect(
+        covers()
+          .slice(1)
+          .every((b) => b.getAttribute('tabindex') === '-1'),
+      ).toBe(true);
     });
 
     it('moves between covers with the arrow keys, Home and End, wrapping at the ends', () => {
@@ -174,8 +184,17 @@ describe('CoverCarousel', () => {
     const imgs = [...container.querySelectorAll('img')];
     expect(imgs.slice(0, 8).every((i) => !i.hasAttribute('loading'))).toBe(true);
     expect(imgs.slice(8).every((i) => i.getAttribute('loading') === 'lazy')).toBe(true);
-    expect(imgs.every((i) => i.getAttribute('decoding') === 'async' && i.getAttribute('width') === '120' && i.getAttribute('height') === '120')).toBe(true);
-    act(() => { vi.advanceTimersByTime(1500); });
+    expect(
+      imgs.every(
+        (i) =>
+          i.getAttribute('decoding') === 'async' &&
+          i.getAttribute('width') === '120' &&
+          i.getAttribute('height') === '120',
+      ),
+    ).toBe(true);
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
     expect(imgs.every((i) => !i.hasAttribute('loading'))).toBe(true);
   });
 
@@ -193,29 +212,45 @@ describe('CoverCarousel', () => {
     let report: IntersectionObserverCallback = () => {};
     const observe = vi.fn();
     const disconnect = vi.fn();
-    vi.stubGlobal('IntersectionObserver', class {
-      constructor(cb: IntersectionObserverCallback) { report = cb; }
-      observe(el: Element) { observe(el); }
-      disconnect() { disconnect(); }
-    });
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        constructor(cb: IntersectionObserverCallback) {
+          report = cb;
+        }
+        observe(el: Element) {
+          observe(el);
+        }
+        disconnect() {
+          disconnect();
+        }
+      },
+    );
     const { container, unmount } = renderReel();
     const reel = container.querySelector('.hero-reel')!;
     expect(observe).toHaveBeenCalledWith(reel);
     expect(reel.className).toBe('hero-reel');
     // On screen until told otherwise.
-    act(() => { document.dispatchEvent(new Event('visibilitychange')); });
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
     expect(reel).not.toHaveClass('is-idle');
-    const seen = (isIntersecting: boolean) => act(() => report([{ isIntersecting } as IntersectionObserverEntry], {} as IntersectionObserver));
+    const seen = (isIntersecting: boolean) =>
+      act(() => report([{ isIntersecting } as IntersectionObserverEntry], {} as IntersectionObserver));
     seen(false);
     expect(reel).toHaveClass('is-idle');
     seen(true);
     expect(reel).not.toHaveClass('is-idle');
 
     const hidden = vi.spyOn(document, 'hidden', 'get').mockReturnValue(true);
-    act(() => { document.dispatchEvent(new Event('visibilitychange')); });
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
     expect(reel).toHaveClass('is-idle');
     hidden.mockReturnValue(false);
-    act(() => { document.dispatchEvent(new Event('visibilitychange')); });
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
     expect(reel).not.toHaveClass('is-idle');
     hidden.mockRestore();
 
@@ -280,7 +315,7 @@ describe('CoverCarousel', () => {
       expect(setUp(1200, false).currentTime).toBe(0);
     });
 
-    it('rings the twin on screen when the cover itself can\'t be brought there', () => {
+    it("rings the twin on screen when the cover itself can't be brought there", () => {
       // 150px along: centring it would slide the row 250px right, which it
       // can't, so its twin, a copy further on, comes to the middle instead.
       const anim = setUp(1200, true, 100);
@@ -509,7 +544,7 @@ describe('CoverCarousel', () => {
 });
 
 describe('a cover in the home page', () => {
-  it('brings its game\'s row into view and puts focus on its toggle', () => {
+  it("brings its game's row into view and puts focus on its toggle", () => {
     renderHome();
     const focus = vi.spyOn(HTMLElement.prototype, 'focus');
     fireEvent.click(screen.getByRole('button', { name: 'Show Azul in the list' }));
@@ -531,7 +566,7 @@ describe('a cover in the home page', () => {
     expect(row).toHaveClass('jump-arrive');
   });
 
-  it('brings its game\'s card into view in the grid, with focus on its name', () => {
+  it("brings its game's card into view in the grid, with focus on its name", () => {
     renderHome('/?v=grid');
     fireEvent.click(screen.getByRole('button', { name: 'Show Codenames in the list' }));
     const card = document.getElementById('game-codenames')!;
@@ -570,7 +605,7 @@ describe('a cover in the home page', () => {
       return cover;
     }
 
-    it('doesn\'t open the game the drag let go over', () => {
+    it("doesn't open the game the drag let go over", () => {
       const cover = setUp();
       fireEvent.pointerMove(cover, { pointerId: 1, clientX: 540 });
       fireEvent.pointerUp(cover, { pointerId: 1 });
@@ -586,7 +621,9 @@ describe('a cover in the home page', () => {
       const cover = setUp();
       fireEvent.pointerMove(cover, { pointerId: 1, clientX: 540 });
       fireEvent.pointerUp(cover, { pointerId: 1 });
-      act(() => { vi.runOnlyPendingTimers(); });
+      act(() => {
+        vi.runOnlyPendingTimers();
+      });
       fireEvent.click(cover);
       expect(scrolled).toHaveBeenCalledWith(document.getElementById('game-azul'));
     });
@@ -599,7 +636,7 @@ describe('a cover in the home page', () => {
       expect(scrolled).toHaveBeenCalledWith(document.getElementById('game-azul'));
     });
 
-    it('opens it after a drag taken over by the page\'s scroll', () => {
+    it("opens it after a drag taken over by the page's scroll", () => {
       const cover = setUp();
       fireEvent.pointerMove(cover, { pointerId: 1, clientX: 540 });
       fireEvent.pointerCancel(cover, { pointerId: 1 });
@@ -616,7 +653,7 @@ describe('a cover in the home page', () => {
     expect(document.getElementById('game-azul')).toHaveClass('jump-arrive');
   });
 
-  it('brings a wishlist entry\'s card into view in Want mode, clearing a filter that hid it', async () => {
+  it("brings a wishlist entry's card into view in Want mode, clearing a filter that hid it", async () => {
     const entry = wantCovers(WISHLIST)[0];
     const router = renderHome('/?c=want&q=zzzz');
     // The entries mount once the suggestions request settles (here, fails).
@@ -641,8 +678,11 @@ describe('a cover in the home page', () => {
     expect(screen.getByRole('button', { name: `Show details for ${other.name}` })).toHaveFocus();
   });
 
-  it('lands on the wishlist\'s heading while its entries are still loading', () => {
-    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
+  it("lands on the wishlist's heading while its entries are still loading", () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise(() => {})),
+    );
     renderHome('/?c=want');
     const entry = wantCovers(WISHLIST)[0];
     fireEvent.click(screen.getByRole('button', { name: `Show ${entry.name} in the list` }));

@@ -12,7 +12,7 @@ export function hasSubgames(game: Game): game is GameWithSubgames {
  * when they mix.
  */
 export function subgameNoun(subs: SubGame[], count: number): string {
-  const word = isDeck(subs) ? 'game' : sharedKind(subs) ?? 'add-on';
+  const word = isDeck(subs) ? 'game' : (sharedKind(subs) ?? 'add-on');
   return count === 1 ? word : `${word}s`;
 }
 

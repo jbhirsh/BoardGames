@@ -297,7 +297,13 @@ describe('evaluate', () => {
     const offline = async () => {
       throw new Error('runs: HTTP 403');
     };
-    const ctx = { GITHUB_EVENT_NAME: 'pull_request', DRAFT: 'false', BASE_REF: 'main', ACTION: 'synchronize', AFTER: head };
+    const ctx = {
+      GITHUB_EVENT_NAME: 'pull_request',
+      DRAFT: 'false',
+      BASE_REF: 'main',
+      ACTION: 'synchronize',
+      AFTER: head,
+    };
     expect(await evaluate(ctx, AI, cwd, offline)).toEqual(unreadable);
   });
 
@@ -305,9 +311,7 @@ describe('evaluate', () => {
     const { cwd, git, commit, lines } = repo();
     git('checkout', '-q', '-b', 'pr');
     const head = commit('ai', { 'api/ai.ts': lines.replace('c\n', 'C\n') });
-    expect(
-      await run(cwd, { ACTION: 'synchronize', AFTER: head }, { sha: '1'.repeat(40), passed: true }),
-    ).toEqual({
+    expect(await run(cwd, { ACTION: 'synchronize', AFTER: head }, { sha: '1'.repeat(40), passed: true })).toEqual({
       grade: true,
       reason: 'push: the last run’s head is gone, so the PR is graded as a whole',
     });

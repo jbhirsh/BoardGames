@@ -37,13 +37,22 @@ export default function ScoreInput({ id, unit, value, color, negative = false, d
       aria-describedby={[unit && `${id}-unit`, describedBy].filter(Boolean).join(' ') || undefined}
       value={value}
       onChange={onChange}
-      style={unit ? { '--chars': Math.max(1, value.length) } as CSSProperties : color ? { '--box-color': color } as CSSProperties : undefined}
+      style={
+        unit
+          ? ({ '--chars': Math.max(1, value.length) } as CSSProperties)
+          : color
+            ? ({ '--box-color': color } as CSSProperties)
+            : undefined
+      }
     />
   );
   if (!unit) return input;
   return (
-    <span className="sc-field" style={color ? { '--box-color': color } as CSSProperties : undefined}>
-      {input}{' '}<span className="sc-unit" id={`${id}-unit`} aria-hidden="true">{unit}</span>
+    <span className="sc-field" style={color ? ({ '--box-color': color } as CSSProperties) : undefined}>
+      {input}{' '}
+      <span className="sc-unit" id={`${id}-unit`} aria-hidden="true">
+        {unit}
+      </span>
     </span>
   );
 }
@@ -72,8 +81,12 @@ export function CountRow({ id, label, worth, unit, value, points, onChange }: Co
       <label className="sc-label" htmlFor={id}>
         <span className="sc-label-text">
           {label}
-          <span className="sc-vp-note" id={`${id}-worth`} aria-hidden="true">{worth}</span>
-          <span className="sc-vp-note sc-vp-pts" id={`${id}-pts`} aria-hidden="true">{points}</span>
+          <span className="sc-vp-note" id={`${id}-worth`} aria-hidden="true">
+            {worth}
+          </span>
+          <span className="sc-vp-note sc-vp-pts" id={`${id}-pts`} aria-hidden="true">
+            {points}
+          </span>
         </span>
       </label>
       <ScoreInput

@@ -29,11 +29,23 @@ function FilterProbe() {
 }
 
 function renderRow(overrides: Partial<Props> = {}) {
-  const props: Props = { item: testItem, voteCount: 0, voted: false, onVote: () => {}, isOpen: false, onToggle: () => {}, ...overrides };
+  const props: Props = {
+    item: testItem,
+    voteCount: 0,
+    voted: false,
+    onVote: () => {},
+    isOpen: false,
+    onToggle: () => {},
+    ...overrides,
+  };
   return render(
     <MemoryRouter>
       <FilterProvider>
-        <table><tbody><WishlistRow {...props} /></tbody></table>
+        <table>
+          <tbody>
+            <WishlistRow {...props} />
+          </tbody>
+        </table>
         <FilterProbe />
       </FilterProvider>
     </MemoryRouter>,
@@ -43,7 +55,7 @@ function renderRow(overrides: Partial<Props> = {}) {
 describe('WishlistRow', () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it('is the collection\'s table row: name, players, duration pill, description, tags, vote and chevron', () => {
+  it("is the collection's table row: name, players, duration pill, description, tags, vote and chevron", () => {
     const { container } = renderRow({ voteCount: 4 });
     const row = container.querySelector('tr.game-row')!;
     expect(row).toHaveAttribute('data-item-id', 'test-row-game');
@@ -52,7 +64,10 @@ describe('WishlistRow', () => {
     expect(row.querySelector('td.col-players')).toHaveTextContent('3–8');
     expect(row.querySelector('.row-dur')).toHaveTextContent('20 min');
     expect(row.querySelector('td.col-short')).toHaveTextContent('A row of a game.');
-    expect(Array.from(row.querySelectorAll('.col-kw .kw-pill')).map((p) => p.textContent)).toEqual(['Bluffing', 'Party']);
+    expect(Array.from(row.querySelectorAll('.col-kw .kw-pill')).map((p) => p.textContent)).toEqual([
+      'Bluffing',
+      'Party',
+    ]);
     expect(row.querySelector('.col-vote .vote-btn')).toHaveTextContent('4');
     expect(row.querySelector('.col-actions .row-chevron')).toBeInTheDocument();
     expect(row.querySelector('.awards')).toBeNull();
@@ -74,7 +89,12 @@ describe('WishlistRow', () => {
   });
 
   it('marks an open row and shows the full entry in the expanded section', () => {
-    const item = { ...testItem, img: '/images/wishlist/r.jpg', suggestedBy: 'Alex', awards: [{ name: 'As d\'Or', year: 2021 }] };
+    const item = {
+      ...testItem,
+      img: '/images/wishlist/r.jpg',
+      suggestedBy: 'Alex',
+      awards: [{ name: "As d'Or", year: 2021 }],
+    };
     const { container } = renderRow({ item, isOpen: true });
     expect(container.querySelector('tr.game-row')).toHaveClass('open');
     const expand = container.querySelector('tr.row-expand')!;
@@ -84,8 +104,14 @@ describe('WishlistRow', () => {
     expect(expand.querySelectorAll('.awards-list li')).toHaveLength(1);
     expect(container.querySelector('td.col-short .row-badges .awards')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Row Game: 1 award, show which' })).toHaveLength(2);
-    expect(screen.getByRole('link', { name: 'Buy Row Game on Amazon' })).toHaveAttribute('href', expect.stringContaining('amazon.com'));
-    expect(screen.getByRole('link', { name: /YouTube/ })).toHaveAttribute('href', expect.stringContaining('youtube.com'));
+    expect(screen.getByRole('link', { name: 'Buy Row Game on Amazon' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('amazon.com'),
+    );
+    expect(screen.getByRole('link', { name: /YouTube/ })).toHaveAttribute(
+      'href',
+      expect.stringContaining('youtube.com'),
+    );
   });
 
   it('leaves out the duration pill for an unknown play time and the credit and awards for a curated entry', () => {

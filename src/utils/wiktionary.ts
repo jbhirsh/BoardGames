@@ -50,9 +50,17 @@ export type Reading = { playable: true; meanings: Meaning[] } | { playable: fals
 
 const EXCLUDED_POS = new Set([
   'proper noun',
-  'abbreviation', 'initialism', 'acronym',
-  'symbol', 'letter', 'contraction',
-  'prefix', 'suffix', 'infix', 'interfix', 'circumfix',
+  'abbreviation',
+  'initialism',
+  'acronym',
+  'symbol',
+  'letter',
+  'contraction',
+  'prefix',
+  'suffix',
+  'infix',
+  'interfix',
+  'circumfix',
   'phrase',
 ]);
 
@@ -117,8 +125,7 @@ function isPlayableDefinition(text: string, word: string): boolean {
   return !(target && target !== word && target.toLowerCase() === word);
 }
 
-const isObject = (v: unknown): v is Record<string, unknown> =>
-  typeof v === 'object' && v !== null && !Array.isArray(v);
+const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 function firstExample(v: Record<string, unknown>): string | undefined {
   const parsed = Array.isArray(v.parsedExamples) ? v.parsedExamples[0] : undefined;

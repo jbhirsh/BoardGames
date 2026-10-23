@@ -135,7 +135,7 @@ test("opening a card's games on the grid gives it a row of its own and keeps the
   expect(next.y).toBeGreaterThan(deck.y);
 });
 
-test('on a phone, the collection is cards only and More opens a game\'s write-up', async ({ page }) => {
+test("on a phone, the collection is cards only and More opens a game's write-up", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/?v=list');
 
@@ -179,8 +179,14 @@ test('on a phone, filters live in a sheet behind one button and survive a reload
 
   // Narrowing from down the list brings the shorter list's top back up.
   await filters.click();
-  await page.getByRole('dialog', { name: 'Filters' }).getByRole('button', { name: /^Party/ }).click();
-  await page.getByRole('dialog', { name: 'Filters' }).getByRole('button', { name: /^Show / }).click();
+  await page
+    .getByRole('dialog', { name: 'Filters' })
+    .getByRole('button', { name: /^Party/ })
+    .click();
+  await page
+    .getByRole('dialog', { name: 'Filters' })
+    .getByRole('button', { name: /^Show / })
+    .click();
   await expect(page.getByRole('heading', { level: 2, name: 'Our Collection' })).toBeInViewport();
   await page.getByRole('button', { name: 'Party ✕' }).click();
 
@@ -188,11 +194,14 @@ test('on a phone, filters live in a sheet behind one button and survive a reload
   await expect(page.getByRole('button', { name: 'Filters 2' })).toBeVisible();
   await page.getByRole('button', { name: 'Filters 2' }).click();
   await page.getByRole('dialog', { name: 'Filters' }).getByRole('button', { name: 'Clear all' }).click();
-  await page.getByRole('dialog', { name: 'Filters' }).getByRole('button', { name: `Show ${GAMES.length} games` }).click();
+  await page
+    .getByRole('dialog', { name: 'Filters' })
+    .getByRole('button', { name: `Show ${GAMES.length} games` })
+    .click();
   await expect(page).toHaveURL(/\/$/);
 });
 
-test('on a desktop grid, More opens a game\'s write-up across the row', async ({ page }) => {
+test("on a desktop grid, More opens a game's write-up across the row", async ({ page }) => {
   await page.goto('/?v=grid');
   await page.getByRole('button', { name: 'More about Azul' }).click();
   await expect(page.getByRole('button', { name: 'Less about Azul' })).toHaveAttribute('aria-expanded', 'true');
@@ -221,9 +230,14 @@ test('an empty result names the filters and offers to drop one', async ({ page }
   await page.goto('/?d=15&p=1&k=word');
   await expect(page.getByText('No games match your filters.')).toBeVisible();
   // The hidden wishlist section has its own empty state; act on the one showing.
-  await expect(page.getByText('Filtering for up to 15 min, 1 player and Word.').filter({ visible: true })).toBeVisible();
+  await expect(
+    page.getByText('Filtering for up to 15 min, 1 player and Word.').filter({ visible: true }),
+  ).toBeVisible();
 
-  await page.getByRole('button', { name: /^Drop Word, \d+ games?$/ }).filter({ visible: true }).click();
+  await page
+    .getByRole('button', { name: /^Drop Word, \d+ games?$/ })
+    .filter({ visible: true })
+    .click();
   await expect(page).toHaveURL(/\/\?d=15&p=1$/);
   await expect(page.getByRole('button', { name: rowToggles }).first()).toBeVisible();
   // The button that was clicked is gone; focus lands on the list's heading.
@@ -252,7 +266,9 @@ function weightWord(weight: number): string {
 
 /** A deck's label: the span of its rated games' weights, "Light–Medium · 1.0–2.0". */
 function deckSpan(slug: string): string {
-  const weights = GAMES.find((g) => g.slug === slug)!.subgames!.flatMap((s) => (s.weight === undefined ? [] : [s.weight]));
+  const weights = GAMES.find((g) => g.slug === slug)!.subgames!.flatMap((s) =>
+    s.weight === undefined ? [] : [s.weight],
+  );
   const [lo, hi] = [weightLabel(Math.min(...weights)).split(' · '), weightLabel(Math.max(...weights)).split(' · ')];
   const span = (a: string, b: string) => (a === b ? a : `${a}–${b}`);
   return `${span(lo[0], hi[0])} · ${span(lo[1], hi[1])}`;
@@ -271,7 +287,7 @@ function sortWeight(g: (typeof GAMES)[number], dir: 1 | -1): number {
   return dir === 1 ? Math.min(...known) : Math.max(...known);
 }
 
-test('each card shows BoardGameGeek\'s difficulty, and a deck the span of its games\'', async ({ page }) => {
+test("each card shows BoardGameGeek's difficulty, and a deck the span of its games'", async ({ page }) => {
   await page.goto('/?v=grid');
   const game = uniquelyLabelled();
   await expect(page.getByText(`Difficulty: ${weightLabel(game.weight!)}`, { exact: true })).toBeVisible();

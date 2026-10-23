@@ -13,7 +13,9 @@ import { htmlToText, isMissingPage, readDefinitions, wiktionaryPage } from '../u
  * examples. The rest are as served.
  */
 function fixture(name: string): unknown {
-  return JSON.parse(readFileSync(join(process.cwd(), 'src', '__tests__', 'fixtures', 'wiktionary', `${name}.json`), 'utf8'));
+  return JSON.parse(
+    readFileSync(join(process.cwd(), 'src', '__tests__', 'fixtures', 'wiktionary', `${name}.json`), 'utf8'),
+  );
 }
 
 function read(name: string, word = name.toLowerCase()) {
@@ -33,7 +35,9 @@ describe('readDefinitions on real Wiktionary answers', () => {
   it('takes an alternative form as playable (qi, of chi)', () => {
     expect(read('qi')).toEqual({
       playable: true,
-      meanings: [{ partOfSpeech: 'noun', definitions: [expect.objectContaining({ definition: 'Alternative form of chi.' })] }],
+      meanings: [
+        { partOfSpeech: 'noun', definitions: [expect.objectContaining({ definition: 'Alternative form of chi.' })] },
+      ],
     });
   });
 
@@ -41,16 +45,19 @@ describe('readDefinitions on real Wiktionary answers', () => {
     const reading = read('doomscroll');
     expect(reading).toEqual({
       playable: true,
-      meanings: [{
-        partOfSpeech: 'verb',
-        definitions: [
-          { definition: 'To continually read Internet news about catastrophic events.', example: undefined },
-          {
-            definition: 'To excessively and unproductively consume Internet posts.',
-            example: "It sucks that I can't even open my phone and check my emails without doomscrolling social media for an hour!",
-          },
-        ],
-      }],
+      meanings: [
+        {
+          partOfSpeech: 'verb',
+          definitions: [
+            { definition: 'To continually read Internet news about catastrophic events.', example: undefined },
+            {
+              definition: 'To excessively and unproductively consume Internet posts.',
+              example:
+                "It sucks that I can't even open my phone and check my emails without doomscrolling social media for an hour!",
+            },
+          ],
+        },
+      ],
     });
   });
 
@@ -82,8 +89,9 @@ describe('readDefinitions on real Wiktionary answers', () => {
   it("keeps a word's own senses beside its capitals' (lol: a particle, and a nonsense syllable)", () => {
     expect(partsOfSpeech('lol')).toEqual(['particle', 'interjection']);
     const reading = read('lol');
-    expect(reading?.playable && reading.meanings[1].definitions.map((d) => d.definition))
-      .toEqual(['Used in song as a nonsense syllable.']);
+    expect(reading?.playable && reading.meanings[1].definitions.map((d) => d.definition)).toEqual([
+      'Used in song as a nonsense syllable.',
+    ]);
   });
 
   it('turns away an alternative form that is the same letters capitalised (tv, of TV)', () => {
@@ -140,15 +148,34 @@ describe('readDefinitions on real Wiktionary answers', () => {
   // shows the part-of-speech filter on one real body with many kinds.
   it('drops the letter, symbol and contraction senses and keeps the others (a)', () => {
     expect(partsOfSpeech('a')).toEqual([
-      'noun', 'article', 'preposition', 'verb', 'pronoun', 'adverb', 'adjective', 'particle', 'interjection',
+      'noun',
+      'article',
+      'preposition',
+      'verb',
+      'pronoun',
+      'adverb',
+      'adjective',
+      'particle',
+      'interjection',
     ]);
   });
 });
 
 describe('readDefinitions rules', () => {
   it.each([
-    'Proper noun', 'Abbreviation', 'Initialism', 'Acronym', 'Symbol', 'Letter',
-    'Prefix', 'Suffix', 'Infix', 'Interfix', 'Circumfix', 'Contraction', 'Phrase',
+    'Proper noun',
+    'Abbreviation',
+    'Initialism',
+    'Acronym',
+    'Symbol',
+    'Letter',
+    'Prefix',
+    'Suffix',
+    'Infix',
+    'Interfix',
+    'Circumfix',
+    'Contraction',
+    'Phrase',
   ])('turns away a word that is only a %s', (pos) => {
     expect(readDefinitions({ en: [sense(pos, 'Something.')] }, 'word')).toEqual({ playable: false });
   });
@@ -190,30 +217,54 @@ describe('readDefinitions rules', () => {
   });
 
   it('needs only one playable definition in a sense', () => {
-    const reading = readDefinitions({
-      en: [{ partOfSpeech: 'Noun', language: 'English', definitions: [{ definition: 'Misspelling of the.' }, { definition: 'A real thing.' }] }],
-    }, 'teh');
-    expect(reading).toEqual({ playable: true, meanings: [{ partOfSpeech: 'noun', definitions: [{ definition: 'A real thing.', example: undefined }] }] });
+    const reading = readDefinitions(
+      {
+        en: [
+          {
+            partOfSpeech: 'Noun',
+            language: 'English',
+            definitions: [{ definition: 'Misspelling of the.' }, { definition: 'A real thing.' }],
+          },
+        ],
+      },
+      'teh',
+    );
+    expect(reading).toEqual({
+      playable: true,
+      meanings: [{ partOfSpeech: 'noun', definitions: [{ definition: 'A real thing.', example: undefined }] }],
+    });
   });
 
   it('reads only English senses, and takes a sense with no language as English', () => {
     expect(readDefinitions({ en: [sense('Noun', 'A code.', 'Translingual')] }, 'w')).toEqual({ playable: false });
     expect(readDefinitions({ fr: [sense('Noun', 'Un mot.', 'French')] }, 'w')).toEqual({ playable: false });
-    expect(readDefinitions({ en: [{ partOfSpeech: 'Noun', definitions: [{ definition: 'A thing.' }] }] }, 'w'))
-      .toMatchObject({ playable: true });
+    expect(
+      readDefinitions({ en: [{ partOfSpeech: 'Noun', definitions: [{ definition: 'A thing.' }] }] }, 'w'),
+    ).toMatchObject({ playable: true });
   });
 
   it('takes the first example that has text', () => {
-    const reading = readDefinitions({
-      en: [{ partOfSpeech: 'Verb', definitions: [
-        { definition: 'To go.', parsedExamples: [{ example: '<b>Go</b> away.' }, { example: 'Second.' }] },
-        { definition: 'To leave.', parsedExamples: [{ example: '<span></span>' }] },
-        { definition: 'To run.', parsedExamples: [{ example: 7 }] },
-        { definition: 'To walk.', parsedExamples: 'oops' },
-      ] }],
-    }, 'go');
+    const reading = readDefinitions(
+      {
+        en: [
+          {
+            partOfSpeech: 'Verb',
+            definitions: [
+              { definition: 'To go.', parsedExamples: [{ example: '<b>Go</b> away.' }, { example: 'Second.' }] },
+              { definition: 'To leave.', parsedExamples: [{ example: '<span></span>' }] },
+              { definition: 'To run.', parsedExamples: [{ example: 7 }] },
+              { definition: 'To walk.', parsedExamples: 'oops' },
+            ],
+          },
+        ],
+      },
+      'go',
+    );
     expect(reading?.playable && reading.meanings[0].definitions.map((d) => d.example)).toEqual([
-      'Go away.', undefined, undefined, undefined,
+      'Go away.',
+      undefined,
+      undefined,
+      undefined,
     ]);
   });
 
@@ -232,15 +283,17 @@ describe('readDefinitions rules', () => {
   });
 
   it("skips another language's sense before reading it, so a malformed one does no harm", () => {
-    expect(readDefinitions({ en: [{ language: 'Translingual', definitions: 'oops' }, sense('Noun', 'A thing.')] }, 'word'))
-      .toMatchObject({ playable: true });
-    expect(readDefinitions({ en: [{ language: 'Translingual', definitions: 'oops' }] }, 'word')).toEqual({ playable: false });
+    expect(
+      readDefinitions({ en: [{ language: 'Translingual', definitions: 'oops' }, sense('Noun', 'A thing.')] }, 'word'),
+    ).toMatchObject({ playable: true });
+    expect(readDefinitions({ en: [{ language: 'Translingual', definitions: 'oops' }] }, 'word')).toEqual({
+      playable: false,
+    });
   });
 
   it('reads a malformed sense as unusable even after a playable one', () => {
     expect(readDefinitions({ en: [sense('Noun', 'A thing.'), { partOfSpeech: 'Verb' }] }, 'word')).toBeNull();
   });
-
 });
 
 describe('isMissingPage', () => {
@@ -273,7 +326,9 @@ describe('htmlToText', () => {
   });
 
   it('drops inline stylesheets', () => {
-    expect(htmlToText('Events. <style data-mw="x">.mw-parser-output .defdate{font-size:smaller}</style>')).toBe('Events.');
+    expect(htmlToText('Events. <style data-mw="x">.mw-parser-output .defdate{font-size:smaller}</style>')).toBe(
+      'Events.',
+    );
   });
 
   it('keeps the sense and leaves out its nested sub-senses', () => {
@@ -284,7 +339,7 @@ describe('htmlToText', () => {
 
   it('decodes named and numeric entities', () => {
     expect(htmlToText('Q&amp;A &lt;b&gt; &quot;x&quot; it&apos;s a&nbsp;b &#39;c&#39; &#x2013; &#X2014; &AMP;')).toBe(
-      'Q&A <b> "x" it\'s a b \'c\' – — &',
+      "Q&A <b> \"x\" it's a b 'c' – — &",
     );
   });
 

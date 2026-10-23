@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createSafeStorage, safeSessionStorage, safeStorage } from '../client/safeStorage';
 
-const denied = () => { throw new DOMException('The operation is insecure.', 'SecurityError'); };
+const denied = () => {
+  throw new DOMException('The operation is insecure.', 'SecurityError');
+};
 
 describe('safeStorage', () => {
   beforeEach(() => {

@@ -6,9 +6,10 @@ import { checkPrVisuals, report, uiFiles } from './pr-visuals.mjs';
 
 describe('uiFiles', () => {
   it('keeps components and stylesheets under src', () => {
-    expect(
-      uiFiles(['src/components/GameCard.tsx', 'src/App.css', 'src/utils/filterGames.ts', 'api/chat.ts']),
-    ).toEqual(['src/components/GameCard.tsx', 'src/App.css']);
+    expect(uiFiles(['src/components/GameCard.tsx', 'src/App.css', 'src/utils/filterGames.ts', 'api/chat.ts'])).toEqual([
+      'src/components/GameCard.tsx',
+      'src/App.css',
+    ]);
   });
 
   it('drops tests and the files that draw nothing', () => {
@@ -83,7 +84,9 @@ describe('checkPrVisuals', () => {
   });
 
   it('does not let a comment quoted in code hide what follows', () => {
-    expect(checkPrVisuals({ files: ui, body: '```html\n<!-- example\n```\n![after](https://example.com/a.png)' }).ok).toBe(true);
+    expect(
+      checkPrVisuals({ files: ui, body: '```html\n<!-- example\n```\n![after](https://example.com/a.png)' }).ok,
+    ).toBe(true);
   });
 
   it('does not count an unticked box or a mention of an image', () => {

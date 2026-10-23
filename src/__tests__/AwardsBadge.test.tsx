@@ -27,7 +27,17 @@ describe('AwardsBadge', () => {
   it('opens a floating list on click, positioned from the pill, and closes on a second click', () => {
     render(<AwardsBadge itemName="Sky Team" awards={awards} />);
     const btn = screen.getByRole('button', { name: /Sky Team/ });
-    vi.spyOn(btn, 'getBoundingClientRect').mockReturnValue({ top: 100, bottom: 120, left: 40, right: 90, width: 50, height: 20, x: 40, y: 100, toJSON: () => ({}) } as DOMRect);
+    vi.spyOn(btn, 'getBoundingClientRect').mockReturnValue({
+      top: 100,
+      bottom: 120,
+      left: 40,
+      right: 90,
+      width: 50,
+      height: 20,
+      x: 40,
+      y: 100,
+      toJSON: () => ({}),
+    } as DOMRect);
     fireEvent.click(btn);
     const pop = screen.getByRole('group');
     expect(btn).toHaveAttribute('aria-expanded', 'true');
@@ -48,7 +58,17 @@ describe('AwardsBadge', () => {
   it('keeps the list on screen when the pill sits near the right edge', () => {
     render(<AwardsBadge itemName="Sky Team" awards={awards} />);
     const btn = screen.getByRole('button', { name: /Sky Team/ });
-    vi.spyOn(btn, 'getBoundingClientRect').mockReturnValue({ top: 10, bottom: 30, left: window.innerWidth - 30, right: window.innerWidth, width: 30, height: 20, x: 0, y: 10, toJSON: () => ({}) } as DOMRect);
+    vi.spyOn(btn, 'getBoundingClientRect').mockReturnValue({
+      top: 10,
+      bottom: 30,
+      left: window.innerWidth - 30,
+      right: window.innerWidth,
+      width: 30,
+      height: 20,
+      x: 0,
+      y: 10,
+      toJSON: () => ({}),
+    } as DOMRect);
     fireEvent.click(btn);
     const pop = screen.getByRole('group');
     expect(pop.style.left).toBe(`${window.innerWidth - 260 - 8}px`);
@@ -62,7 +82,17 @@ describe('AwardsBadge', () => {
       render(<AwardsBadge itemName="Azul" awards={awards} />);
       const btn = screen.getByRole('button');
       const near = window.innerHeight - 40;
-      vi.spyOn(btn, 'getBoundingClientRect').mockReturnValue({ top: near, bottom: near + 20, left: 40, right: 90, width: 50, height: 20, x: 40, y: near, toJSON: () => ({}) } as DOMRect);
+      vi.spyOn(btn, 'getBoundingClientRect').mockReturnValue({
+        top: near,
+        bottom: near + 20,
+        left: 40,
+        right: 90,
+        width: 50,
+        height: 20,
+        x: 40,
+        y: near,
+        toJSON: () => ({}),
+      } as DOMRect);
       fireEvent.click(btn);
       expect(screen.getByRole('group').style.top).toBe(`${near - 6 - 200}px`);
     } finally {
@@ -85,7 +115,12 @@ describe('AwardsBadge', () => {
   });
 
   it('closes on Escape, on a click elsewhere, and when the page scrolls', () => {
-    render(<div><AwardsBadge itemName="Sky Team" awards={awards} /><p>elsewhere</p></div>);
+    render(
+      <div>
+        <AwardsBadge itemName="Sky Team" awards={awards} />
+        <p>elsewhere</p>
+      </div>,
+    );
     const btn = screen.getByRole('button', { name: /Sky Team/ });
     fireEvent.click(btn);
     fireEvent.keyDown(document, { key: 'Escape' });
@@ -104,7 +139,11 @@ describe('AwardsBadge', () => {
 
   it('does not let the click reach a row behind it', () => {
     const onRow = vi.fn();
-    render(<button type="button" onClick={onRow}><AwardsBadge itemName="Sky Team" awards={awards} /></button>);
+    render(
+      <button type="button" onClick={onRow}>
+        <AwardsBadge itemName="Sky Team" awards={awards} />
+      </button>,
+    );
     fireEvent.click(screen.getByRole('button', { name: /Sky Team/ }));
     expect(onRow).not.toHaveBeenCalled();
   });
@@ -128,7 +167,10 @@ describe('AwardsSection', () => {
     expect(section).toHaveClass('detail-section', 'row-awards');
     expect(screen.getByRole('heading', { level: 3, name: 'Awards' })).toBeInTheDocument();
     const items = screen.getAllByRole('listitem');
-    expect(items.map((li) => li.textContent)).toEqual(['Spiel des Jahres 2024', 'Golden Geek Best Two-Player Game 2023']);
+    expect(items.map((li) => li.textContent)).toEqual([
+      'Spiel des Jahres 2024',
+      'Golden Geek Best Two-Player Game 2023',
+    ]);
   });
 
   it('renders nothing for an entry with no wins', () => {

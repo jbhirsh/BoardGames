@@ -20,8 +20,10 @@ function versionOf(spec: string): string {
 }
 
 describe('package.json', () => {
-  const pkg = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf-8')) as
-    Record<string, Record<string, string> | undefined>;
+  const pkg = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf-8')) as Record<
+    string,
+    Record<string, string> | undefined
+  >;
 
   it('pins no dependency to an exact version', () => {
     const pinned = ['dependencies', 'devDependencies', 'optionalDependencies']

@@ -1,5 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { parseRange, rangeHeaders, routeFor, rulebookSize, SAVE_ON_OPEN_BELOW, savesOnOpen, savesRulebook, savingData, WARM_HEADER } from '../utils/offline';
+import {
+  parseRange,
+  rangeHeaders,
+  routeFor,
+  rulebookSize,
+  SAVE_ON_OPEN_BELOW,
+  savesOnOpen,
+  savesRulebook,
+  savingData,
+  WARM_HEADER,
+} from '../utils/offline';
 
 const ORIGIN = 'https://game-room.example';
 const SHELL = new Set(['/assets/index-abc.js', '/words/enable.txt', '/images/catan.webp']);
@@ -42,7 +52,7 @@ describe('routeFor', () => {
     expect(route('/images/catan.webp')).toBe('shell');
   });
 
-  it('saves the app\'s other files as they are fetched', () => {
+  it("saves the app's other files as they are fetched", () => {
     expect(route('/assets/later-chunk-def.js')).toBe('asset');
     expect(route('/images/wishlist/ark-nova.jpg')).toBe('asset');
     expect(route('/pdfjs/wasm/openjpeg.wasm')).toBe('asset');
@@ -60,7 +70,7 @@ describe('routeFor', () => {
 });
 
 describe('savesRulebook', () => {
-  it('saves the whole rulebook for a reader\'s request', () => {
+  it("saves the whole rulebook for a reader's request", () => {
     expect(savesRulebook(new Headers({ Range: 'bytes=0-65535' }))).toBe(true);
     expect(savesRulebook(new Headers())).toBe(true);
   });
@@ -74,8 +84,10 @@ describe('savesRulebook', () => {
 describe('rulebookSize', () => {
   const answer = (status: number, headers: Record<string, string>) => ({ status, headers: new Headers(headers) });
 
-  it('reads the whole file\'s size from a range\'s Content-Range', () => {
-    expect(rulebookSize(answer(206, { 'Content-Range': 'bytes 0-65535/16445120', 'Content-Length': '65536' }))).toBe(16445120);
+  it("reads the whole file's size from a range's Content-Range", () => {
+    expect(rulebookSize(answer(206, { 'Content-Range': 'bytes 0-65535/16445120', 'Content-Length': '65536' }))).toBe(
+      16445120,
+    );
     expect(rulebookSize(answer(206, { 'Content-Range': ' bytes 100-199/2048 ' }))).toBe(2048);
   });
 
@@ -84,7 +96,7 @@ describe('rulebookSize', () => {
     expect(rulebookSize(answer(200, { 'Content-Length': ' 2048 ' }))).toBe(2048);
   });
 
-  it('knows no size it isn\'t told, nor one from another answer', () => {
+  it("knows no size it isn't told, nor one from another answer", () => {
     expect(rulebookSize(answer(206, { 'Content-Range': 'bytes 0-99/*' }))).toBeNull();
     expect(rulebookSize(answer(206, { 'Content-Range': 'bytes */2048' }))).toBeNull();
     expect(rulebookSize(answer(206, { 'Content-Range': 'bytes 0-99/2048 extra' }))).toBeNull();
@@ -102,7 +114,10 @@ describe('rulebookSize', () => {
 describe('savesOnOpen', () => {
   const reader = new Headers({ Range: 'bytes=0-65535' });
   const whole = (bytes: number) => ({ status: 200, headers: new Headers({ 'Content-Length': String(bytes) }) });
-  const range = (bytes: number) => ({ status: 206, headers: new Headers({ 'Content-Range': `bytes 0-65535/${bytes}` }) });
+  const range = (bytes: number) => ({
+    status: 206,
+    headers: new Headers({ 'Content-Range': `bytes 0-65535/${bytes}` }),
+  });
 
   it('saves a rulebook under 3 MB when it is opened, whether the answer is whole or a range', () => {
     expect(SAVE_ON_OPEN_BELOW).toBe(3_000_000);
@@ -115,7 +130,7 @@ describe('savesOnOpen', () => {
     expect(savesOnOpen(new Headers(), whole(16_445_120), false)).toBe(false);
   });
 
-  it('leaves one whose size isn\'t said, and any when the browser is saving data', () => {
+  it("leaves one whose size isn't said, and any when the browser is saving data", () => {
     expect(savesOnOpen(reader, { status: 200, headers: new Headers() }, false)).toBe(false);
     expect(savesOnOpen(reader, range(1_470_444), true)).toBe(false);
   });
@@ -126,7 +141,7 @@ describe('savesOnOpen', () => {
 });
 
 describe('savingData', () => {
-  it('reads the browser\'s data saver where it says, and counts it off where it doesn\'t', () => {
+  it("reads the browser's data saver where it says, and counts it off where it doesn't", () => {
     expect(savingData({ connection: { saveData: true } })).toBe(true);
     expect(savingData({ connection: { saveData: false } })).toBe(false);
     expect(savingData({ connection: {} })).toBe(false);
@@ -159,7 +174,7 @@ describe('parseRange', () => {
     expect(parseRange('bytes=-5000', 1000)).toEqual({ start: 0, end: 999 });
   });
 
-  it('refuses ranges that can\'t be met', () => {
+  it("refuses ranges that can't be met", () => {
     expect(parseRange('bytes=1000-1100', 1000)).toBe('unsatisfiable');
     expect(parseRange('bytes=1000-', 1000)).toBe('unsatisfiable');
     expect(parseRange('bytes=999-', 1000)).toEqual({ start: 999, end: 999 });
@@ -167,7 +182,7 @@ describe('parseRange', () => {
     expect(parseRange('bytes=-10', 0)).toBe('unsatisfiable');
   });
 
-  it('answers what it doesn\'t understand with the whole file', () => {
+  it("answers what it doesn't understand with the whole file", () => {
     expect(parseRange('bytes=0-10, 20-30', 1000)).toBeNull();
     expect(parseRange('items=0-10', 1000)).toBeNull();
     expect(parseRange('bytes=a-b', 1000)).toBeNull();

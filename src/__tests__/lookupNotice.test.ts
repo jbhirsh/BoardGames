@@ -15,27 +15,41 @@ describe('lookupNotice', () => {
 
   it('on the add form, says why the lookup found nothing and what can still be done', () => {
     expect(lookupNotice('no-match', 'Magical Athlete', 'preview')).toBe(
-      'BoardGameGeek had no match for “Magical Athlete”. Check the name and look it up again, or add it anyway and fill in its details with Edit.');
+      'BoardGameGeek had no match for “Magical Athlete”. Check the name and look it up again, or add it anyway and fill in its details with Edit.',
+    );
     expect(lookupNotice('no-token', 'Magical Athlete', 'preview')).toBe(
-      "“Magical Athlete” couldn't be looked up: the BoardGameGeek token (BGG_API_TOKEN) is missing. Add it anyway and fill in its details with Edit, or set the token, redeploy, then look it up again.");
+      "“Magical Athlete” couldn't be looked up: the BoardGameGeek token (BGG_API_TOKEN) is missing. Add it anyway and fill in its details with Edit, or set the token, redeploy, then look it up again.",
+    );
     expect(lookupNotice('refused', 'Magical Athlete', 'preview')).toBe(
-      "“Magical Athlete” couldn't be looked up: BoardGameGeek refused the request (check BGG_API_TOKEN). Add it anyway and fill in its details with Edit, or check the token and look it up again.");
+      "“Magical Athlete” couldn't be looked up: BoardGameGeek refused the request (check BGG_API_TOKEN). Add it anyway and fill in its details with Edit, or check the token and look it up again.",
+    );
     expect(lookupNotice('unavailable', 'Magical Athlete', 'preview')).toBe(
-      "BoardGameGeek didn't answer for “Magical Athlete”. Look it up again in a minute, or add it anyway and fill in its details with Edit.");
+      "BoardGameGeek didn't answer for “Magical Athlete”. Look it up again in a minute, or add it anyway and fill in its details with Edit.",
+    );
   });
 
   it('in the queue, offers approving where the add form offers adding', () => {
     expect(lookupNotice('no-match', 'Arkham Horry', 'queue')).toBe(
-      'BoardGameGeek had no match for “Arkham Horry”. Check the name and look it up again, or approve it and fill in its details with Edit.');
+      'BoardGameGeek had no match for “Arkham Horry”. Check the name and look it up again, or approve it and fill in its details with Edit.',
+    );
     expect(lookupNotice('no-token', 'Root', 'queue')).toBe(
-      "“Root” couldn't be looked up: the BoardGameGeek token (BGG_API_TOKEN) is missing. Approve it and fill in its details with Edit, or set the token, redeploy, then look it up again.");
-    expect(lookupNotice('refused', 'Root', 'queue')).toMatch(/\. Approve it and fill in its details with Edit, or check the token and look it up again\.$/);
-    expect(lookupNotice('unavailable', 'Root', 'queue')).toMatch(/Look it up again in a minute, or approve it and fill in its details with Edit\.$/);
+      "“Root” couldn't be looked up: the BoardGameGeek token (BGG_API_TOKEN) is missing. Approve it and fill in its details with Edit, or set the token, redeploy, then look it up again.",
+    );
+    expect(lookupNotice('refused', 'Root', 'queue')).toMatch(
+      /\. Approve it and fill in its details with Edit, or check the token and look it up again\.$/,
+    );
+    expect(lookupNotice('unavailable', 'Root', 'queue')).toMatch(
+      /Look it up again in a minute, or approve it and fill in its details with Edit\.$/,
+    );
     expect(lookupNotice('found', 'Root', 'queue')).toBeNull();
   });
 
   it('after an approval, leads with it and points at Edit', () => {
-    expect(lookupNotice('no-match', 'Root', 'approved')).toBe('Approved, but BoardGameGeek had no match for “Root”. Fill in its details with Edit.');
-    expect(lookupNotice('refused', 'Root', 'approved')).toBe("Approved, but “Root” couldn't be looked up: BoardGameGeek refused the request (check BGG_API_TOKEN). Fill in its details with Edit.");
+    expect(lookupNotice('no-match', 'Root', 'approved')).toBe(
+      'Approved, but BoardGameGeek had no match for “Root”. Fill in its details with Edit.',
+    );
+    expect(lookupNotice('refused', 'Root', 'approved')).toBe(
+      "Approved, but “Root” couldn't be looked up: BoardGameGeek refused the request (check BGG_API_TOKEN). Fill in its details with Edit.",
+    );
   });
 });

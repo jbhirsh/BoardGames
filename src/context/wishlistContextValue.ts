@@ -20,4 +20,9 @@ export interface WishlistData {
  * Defaults to the static list, already loaded, so components render sensibly
  * outside the provider (unit tests, pages without the wishlist).
  */
-export const WishlistContext = createContext<WishlistData>({ items: WISHLIST, hidden: [], loaded: true, reload: () => {} });
+export const WishlistContext = createContext<WishlistData>({
+  items: WISHLIST,
+  hidden: [],
+  loaded: true,
+  reload: () => {},
+});

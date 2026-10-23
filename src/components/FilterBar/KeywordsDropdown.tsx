@@ -15,13 +15,7 @@ export default function KeywordsDropdown({ isOpen, onToggle }: Props) {
     : 'Keywords';
 
   return (
-    <Dropdown
-      id="keywords"
-      label={label}
-      isActive={isActive}
-      isOpen={isOpen}
-      onToggle={onToggle}
-    >
+    <Dropdown id="keywords" label={label} isActive={isActive} isOpen={isOpen} onToggle={onToggle}>
       <KeywordOptions />
     </Dropdown>
   );

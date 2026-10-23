@@ -19,14 +19,19 @@ const click = (name: string | RegExp, within_?: HTMLElement) =>
   fireEvent.click((within_ ? within(within_) : screen).getByRole('button', { name }));
 const group = (name: string) => screen.getByRole('group', { name });
 const sheetRow = (name: string) =>
-  within(screen.getByRole('table')).getAllByRole('row').find((r) => within(r).queryByRole('rowheader', { name }))!;
-const cells = (name: string) => within(sheetRow(name)).getAllByRole('cell').map((c) => c.textContent);
+  within(screen.getByRole('table'))
+    .getAllByRole('row')
+    .find((r) => within(r).queryByRole('rowheader', { name }))!;
+const cells = (name: string) =>
+  within(sheetRow(name))
+    .getAllByRole('cell')
+    .map((c) => c.textContent);
 
 beforeEach(() => localStorage.clear());
 afterEach(() => vi.restoreAllMocks());
 
 describe('ScoreCalculatorPage picks the pad', () => {
-  it('opens a game inside a deck at its own address, under the deck\'s art', () => {
+  it("opens a game inside a deck at its own address, under the deck's art", () => {
     renderPage('/score/card-deck/hearts');
     expect(screen.getByRole('heading', { level: 1, name: 'Score Calculator' })).toBeInTheDocument();
     expect(screen.getByText('Hearts')).toBeInTheDocument();
@@ -36,10 +41,10 @@ describe('ScoreCalculatorPage picks the pad', () => {
 
   it.each([
     ['/score/card-deck', 'a deck has no pad of its own'],
-    ['/score/card-deck/spoons', 'a deck\'s game with no pad'],
+    ['/score/card-deck/spoons', "a deck's game with no pad"],
     ['/score/card-deck/not-a-game', 'no such game in the deck'],
     ['/score/catan/cities-and-knights', 'a real add-on with no pad'],
-    ['/score/7-wonders/extra', 'a pad\'s game with a part it hasn\'t'],
+    ['/score/7-wonders/extra', "a pad's game with a part it hasn't"],
   ])('shows the not-found page for %s (%s)', (path) => {
     renderPage(path);
     expect(screen.getByRole('heading', { level: 1, name: 'No score calculator' })).toBeInTheDocument();
@@ -64,14 +69,14 @@ describe('Ticket to Ride', () => {
     expect(screen.getByText('45 points')).toBeInTheDocument();
   });
 
-  it('names a box\'s unit in the singular for one', () => {
+  it("names a box's unit in the singular for one", () => {
     renderPage('/score/ticket-to-ride');
     type(/1-train route\b/, '1');
     expect(document.getElementById('sc-route-1-unit')).toHaveTextContent('route');
     expect(document.getElementById('sc-route-1-unit')).not.toHaveTextContent('routes');
   });
 
-  it('scores Europe\'s 8-train routes and stations, and its own bonus', () => {
+  it("scores Europe's 8-train routes and stations, and its own bonus", () => {
     renderPage('/score/ticket-to-ride');
     expect(screen.queryByRole('spinbutton', { name: /8-train/ })).not.toBeInTheDocument();
     click('Europe');
@@ -83,7 +88,7 @@ describe('Ticket to Ride', () => {
     expect(screen.getByRole('checkbox', { name: /European Express/ })).toBeInTheDocument();
   });
 
-  it('keeps the map with the game, and ranks the table with the rulebook\'s tie-breaks', () => {
+  it("keeps the map with the game, and ranks the table with the rulebook's tie-breaks", () => {
     const { unmount } = renderPage('/score/ticket-to-ride');
     click('Europe');
     type(/4-train/, '1');
@@ -115,11 +120,13 @@ describe('Ticket to Ride', () => {
     click('Next: Player 2');
     type(/3-train/, '1');
     click('Results');
-    expect(screen.getByText('Player 1 and Player 2 tie on 4 points, broken on tickets completed: Player 1 1, Player 2 0.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Player 1 and Player 2 tie on 4 points, broken on tickets completed: Player 1 1, Player 2 0.'),
+    ).toBeInTheDocument();
     expect(cells('Place')).toEqual(['1st', '2nd']);
   });
 
-  it('crowns nobody before anyone has scored, Europe\'s kept stations aside', () => {
+  it("crowns nobody before anyone has scored, Europe's kept stations aside", () => {
     renderPage('/score/ticket-to-ride');
     click('Europe');
     expect(box(/Stations kept/)).toHaveValue(3);
@@ -128,21 +135,30 @@ describe('Ticket to Ride', () => {
     expect(cells('Place')).toEqual(['–', '–']);
   });
 
-  it('opens on Europe from Europe\'s rules tab, whatever was played last', () => {
+  it("opens on Europe from Europe's rules tab, whatever was played last", () => {
     localStorage.setItem('gameroom:score:ticket-to-ride:map', '"usa"');
     renderPage('/score/ticket-to-ride?map=europe');
     expect(screen.getByRole('button', { name: 'Europe' })).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('starts fresh when a saved player isn\'t one it wrote, and ignores a map it doesn\'t know', () => {
-    localStorage.setItem('gameroom:score:ticket-to-ride', JSON.stringify({ players: [{ id: 0, name: 'Ann', routes: {}, tickets: [], longest: false, stations: '' }, { id: 1, name: 'Bo' }], active: 0 }));
+  it("starts fresh when a saved player isn't one it wrote, and ignores a map it doesn't know", () => {
+    localStorage.setItem(
+      'gameroom:score:ticket-to-ride',
+      JSON.stringify({
+        players: [
+          { id: 0, name: 'Ann', routes: {}, tickets: [], longest: false, stations: '' },
+          { id: 1, name: 'Bo' },
+        ],
+        active: 0,
+      }),
+    );
     localStorage.setItem('gameroom:score:ticket-to-ride:map', '"mars"');
     renderPage('/score/ticket-to-ride');
     expect(screen.queryByRole('button', { name: 'Ann' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'United States' })).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('ignores a saved map that isn\'t JSON', () => {
+  it("ignores a saved map that isn't JSON", () => {
     localStorage.setItem('gameroom:score:ticket-to-ride:map', 'europe');
     renderPage('/score/ticket-to-ride');
     expect(screen.getByRole('button', { name: 'United States' })).toHaveAttribute('aria-pressed', 'true');
@@ -179,7 +195,11 @@ describe('Dominion', () => {
     expect(cells('Nobles')).toEqual(['2', '0']);
     expect(cells('Curses')).toEqual(['0', '0']);
     expect(screen.queryByRole('rowheader', { name: 'Mill' })).not.toBeInTheDocument();
-    expect(screen.getByText('Player 1 and Player 2 tie on 2 VP, so they share 1st place, unless one of them had fewer turns.')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Player 1 and Player 2 tie on 2 VP, so they share 1st place, unless one of them had fewer turns.',
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText(/^A tie on points goes to the player who had fewer turns/)).toBeInTheDocument();
   });
 
@@ -193,7 +213,7 @@ describe('Dominion', () => {
     expect(screen.getByText('0 VP')).toBeInTheDocument();
   });
 
-  it('keeps the Kingdom across a reload, but not one it doesn\'t know', () => {
+  it("keeps the Kingdom across a reload, but not one it doesn't know", () => {
     localStorage.setItem('gameroom:score:dominion:kingdom', '["mill","witch"]');
     const { unmount } = renderPage('/score/dominion');
     expect(screen.getByRole('checkbox', { name: 'Mill' })).not.toBeChecked();
@@ -216,8 +236,11 @@ describe('the round-by-round pad', () => {
     type('Player 1', '40');
     expect(screen.getByText('Player 1 0 · Player 2 +40')).toBeInTheDocument();
     click('Add round 1');
-    expect(within(screen.getByRole('region', { name: 'Standings' })).getAllByRole('listitem').map((li) => li.textContent))
-      .toEqual(['Player 10', 'Player 240']);
+    expect(
+      within(screen.getByRole('region', { name: 'Standings' }))
+        .getAllByRole('listitem')
+        .map((li) => li.textContent),
+    ).toEqual(['Player 10', 'Player 240']);
     expect(cells('Total')).toEqual(['0', '40']);
     expect(screen.getByRole('heading', { name: 'Round 2' })).toBeInTheDocument();
     expect(screen.getByText('Round 1 added.')).toBeInTheDocument();
@@ -236,13 +259,13 @@ describe('the round-by-round pad', () => {
     expect(screen.getByText(/before the first hand/)).toBeInTheDocument();
   });
 
-  it('scores Hearts, warning when a hand doesn\'t add up to 26 but taking it anyway', () => {
+  it("scores Hearts, warning when a hand doesn't add up to 26 but taking it anyway", () => {
     renderPage('/score/card-deck/hearts');
     expect(screen.getByRole('button', { name: 'Add hand 1' })).toBeDisabled();
     // Part-way in, a short hand is only progress.
     type('Player 1', '10');
     type('Player 2', '5');
-    expect(screen.getByText('15 of the hand\'s 26 points so far.')).toBeInTheDocument();
+    expect(screen.getByText("15 of the hand's 26 points so far.")).toBeInTheDocument();
     expect(screen.queryByText(/These add up to/)).not.toBeInTheDocument();
     // Every box in, or past 26 already, it's a warning.
     type('Player 3', '3');
@@ -263,7 +286,7 @@ describe('the round-by-round pad', () => {
     expect(screen.getByRole('status')).toHaveTextContent('First to 100; then the lowest score wins.');
   });
 
-  it('asks whether a hand all in one player\'s hands was a moon shot', () => {
+  it("asks whether a hand all in one player's hands was a moon shot", () => {
     renderPage('/score/card-deck/hearts');
     type('Player 2', '26');
     expect(screen.getByText(/One player took all 26: did they shoot the moon\?/)).toBeInTheDocument();
@@ -272,10 +295,17 @@ describe('the round-by-round pad', () => {
   });
 
   it('ends Hearts when someone reaches 100, crowning the lowest', () => {
-    localStorage.setItem('gameroom:score:hearts', JSON.stringify({
-      names: ['Ana', 'Ben', 'Cy'],
-      rounds: [{ game: 'hearts', moon: null, taken: [26, 0, 0] }, { game: 'hearts', moon: null, taken: [26, 0, 0] }, { game: 'hearts', moon: null, taken: [26, 0, 0] }],
-    }));
+    localStorage.setItem(
+      'gameroom:score:hearts',
+      JSON.stringify({
+        names: ['Ana', 'Ben', 'Cy'],
+        rounds: [
+          { game: 'hearts', moon: null, taken: [26, 0, 0] },
+          { game: 'hearts', moon: null, taken: [26, 0, 0] },
+          { game: 'hearts', moon: null, taken: [26, 0, 0] },
+        ],
+      }),
+    );
     renderPage('/score/card-deck/hearts');
     type('Ana', '26');
     click('Add hand 4');
@@ -289,9 +319,11 @@ describe('the round-by-round pad', () => {
   it('fixes and deletes a round, asking before deleting', () => {
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     renderPage('/score/card-deck/golf');
-    expect(screen.getByRole('button', { name: 'Add hole 1' })).toHaveAccessibleDescription('Enter every player\'s score, 0 included.');
+    expect(screen.getByRole('button', { name: 'Add hole 1' })).toHaveAccessibleDescription(
+      "Enter every player's score, 0 included.",
+    );
     type('Player 1', '4');
-    click('± Switch Player 1\'s sign');
+    click("± Switch Player 1's sign");
     type('Player 2', '12');
     click('Add hole 1');
     type('Player 1', '3');
@@ -335,15 +367,25 @@ describe('the round-by-round pad', () => {
     expect(screen.getByLabelText('Player 1 name')).toHaveValue(' ');
   });
 
-  it('keeps each card game\'s table to itself when Back and Forward move between them', async () => {
-    localStorage.setItem('gameroom:score:hearts', JSON.stringify({ names: ['Ana', 'Ben', 'Cy'], rounds: [{ game: 'hearts', moon: null, taken: [26, 0, 0] }] }));
-    const router = createMemoryRouter([{ path: '/score/:slug/:part?', element: <ScoreCalculatorPage /> }], { initialEntries: ['/score/card-deck/hearts'] });
+  it("keeps each card game's table to itself when Back and Forward move between them", async () => {
+    localStorage.setItem(
+      'gameroom:score:hearts',
+      JSON.stringify({ names: ['Ana', 'Ben', 'Cy'], rounds: [{ game: 'hearts', moon: null, taken: [26, 0, 0] }] }),
+    );
+    const router = createMemoryRouter([{ path: '/score/:slug/:part?', element: <ScoreCalculatorPage /> }], {
+      initialEntries: ['/score/card-deck/hearts'],
+    });
     render(<RouterProvider router={router} />);
     expect(screen.getByLabelText('Player 1 name')).toHaveValue('Ana');
-    await act(async () => { await router.navigate('/score/card-deck/golf'); });
+    await act(async () => {
+      await router.navigate('/score/card-deck/golf');
+    });
     expect(screen.getByLabelText('Player 1 name')).toHaveValue('Player 1');
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem('gameroom:score:golf')!)).toEqual({ names: ['Player 1', 'Player 2'], rounds: [] });
+    expect(JSON.parse(localStorage.getItem('gameroom:score:golf')!)).toEqual({
+      names: ['Player 1', 'Player 2'],
+      rounds: [],
+    });
     expect(JSON.parse(localStorage.getItem('gameroom:score:hearts')!).names).toEqual(['Ana', 'Ben', 'Cy']);
   });
 
@@ -359,10 +401,13 @@ describe('the round-by-round pad', () => {
   });
 
   it('ends Golf after nine holes', () => {
-    localStorage.setItem('gameroom:score:golf', JSON.stringify({
-      names: ['Ana', 'Ben'],
-      rounds: Array.from({ length: 8 }, () => ({ game: 'golf', scores: [3, 4] })),
-    }));
+    localStorage.setItem(
+      'gameroom:score:golf',
+      JSON.stringify({
+        names: ['Ana', 'Ben'],
+        rounds: Array.from({ length: 8 }, () => ({ game: 'golf', scores: [3, 4] })),
+      }),
+    );
     renderPage('/score/card-deck/golf');
     type('Ana', '10');
     type('Ben', '0');
@@ -389,7 +434,7 @@ describe('the round-by-round pad', () => {
     expect(within(them).getByText('3 bags')).toBeInTheDocument();
   });
 
-  it('warns when a Spades hand\'s tricks aren\'t 13, and needs every box', () => {
+  it("warns when a Spades hand's tricks aren't 13, and needs every box", () => {
     renderPage('/score/card-deck/spades');
     [1, 2, 3].forEach((i) => type(`Player ${i} bid`, '3'));
     expect(screen.getByRole('button', { name: 'Add hand 1' })).toBeDisabled();
@@ -404,7 +449,9 @@ describe('the round-by-round pad', () => {
     fireEvent.change(screen.getByLabelText('Partnership 1 name'), { target: { value: 'Us' } });
     expect(screen.getByRole('button', { name: 'Add hand 1' })).toHaveAccessibleDescription('Choose who chose trump.');
     click('Us', group('Who chose trump?'));
-    expect(screen.getByRole('button', { name: 'Add hand 1' })).toHaveAccessibleDescription('Choose how many tricks they took.');
+    expect(screen.getByRole('button', { name: 'Add hand 1' })).toHaveAccessibleDescription(
+      'Choose how many tricks they took.',
+    );
     click('5', group('Tricks they took'));
     fireEvent.click(screen.getByRole('checkbox', { name: 'One of them went alone' }));
     click('Add hand 1');
@@ -428,12 +475,15 @@ describe('the round-by-round pad', () => {
     expect(screen.getByText('New game started.')).toBeInTheDocument();
   });
 
-  it('starts a new game without asking when nothing is scored yet, or from the finished game\'s button', () => {
+  it("starts a new game without asking when nothing is scored yet, or from the finished game's button", () => {
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    localStorage.setItem('gameroom:score:euchre', JSON.stringify({
-      names: ['Us', 'Them'],
-      rounds: Array.from({ length: 5 }, () => ({ game: 'euchre', makers: 0, tricks: 5, alone: false })),
-    }));
+    localStorage.setItem(
+      'gameroom:score:euchre',
+      JSON.stringify({
+        names: ['Us', 'Them'],
+        rounds: Array.from({ length: 5 }, () => ({ game: 'euchre', makers: 0, tricks: 5, alone: false })),
+      }),
+    );
     renderPage('/score/card-deck/euchre');
     expect(screen.getByRole('status')).toHaveTextContent('Us wins on 10.');
     click('New game', screen.getByRole('region', { name: 'Standings' }));
@@ -443,7 +493,7 @@ describe('the round-by-round pad', () => {
     expect(confirm).toHaveBeenCalledTimes(1);
   });
 
-  it('restores the game in progress, and starts fresh from anything it didn\'t write', () => {
+  it("restores the game in progress, and starts fresh from anything it didn't write", () => {
     const { unmount } = renderPage('/score/card-deck/rummy');
     click('Player 1', group('Who went out?'));
     type('Player 2', '17');
@@ -470,12 +520,21 @@ describe('the round-by-round pad', () => {
   });
 
   it('loads a saved Hearts moon and an Uno round back into the form to fix', () => {
-    localStorage.setItem('gameroom:score:hearts', JSON.stringify({ names: ['A', 'B', 'C'], rounds: [{ game: 'hearts', moon: 1, taken: [0, 0, 0] }] }));
+    localStorage.setItem(
+      'gameroom:score:hearts',
+      JSON.stringify({ names: ['A', 'B', 'C'], rounds: [{ game: 'hearts', moon: 1, taken: [0, 0, 0] }] }),
+    );
     const { unmount } = renderPage('/score/card-deck/hearts');
     click('Fix hand 1');
-    expect(within(group('Did anyone shoot the moon?')).getByRole('button', { name: 'B' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(group('Did anyone shoot the moon?')).getByRole('button', { name: 'B' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     unmount();
-    localStorage.setItem('gameroom:score:uno', JSON.stringify({ names: ['A', 'B'], rounds: [{ game: 'uno', out: 1, hands: [33, 0] }] }));
+    localStorage.setItem(
+      'gameroom:score:uno',
+      JSON.stringify({ names: ['A', 'B'], rounds: [{ game: 'uno', out: 1, hands: [33, 0] }] }),
+    );
     renderPage('/score/uno');
     click('Fix round 1');
     expect(box('A')).toHaveValue(33);

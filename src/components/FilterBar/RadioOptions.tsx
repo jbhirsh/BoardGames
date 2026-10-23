@@ -50,7 +50,9 @@ export default function RadioOptions<T extends string | number>({ label, options
         return (
           <button
             key={opt.value}
-            ref={(el) => { refs.current[i] = el; }}
+            ref={(el) => {
+              refs.current[i] = el;
+            }}
             type="button"
             role="radio"
             aria-checked={isSel}

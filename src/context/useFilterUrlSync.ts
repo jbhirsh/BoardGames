@@ -1,9 +1,6 @@
 import { useEffect, useRef, type Dispatch } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import {
-  filterToSearchParams,
-  searchParamsToFilter,
-} from '../utils/filterUrl';
+import { filterToSearchParams, searchParamsToFilter } from '../utils/filterUrl';
 import type { FilterAction } from './filterReducer';
 import type { FilterState } from '../data/types';
 
@@ -25,9 +22,7 @@ export function useFilterUrlSync(state: FilterState, dispatch: Dispatch<FilterAc
     if (loc.pathname !== '/') return;
     const query = filterToSearchParams(state).toString();
     const target = query ? `/?${query}` : '/';
-    const currentQuery = filterToSearchParams(
-      searchParamsToFilter(new URLSearchParams(loc.search)),
-    ).toString();
+    const currentQuery = filterToSearchParams(searchParamsToFilter(new URLSearchParams(loc.search))).toString();
     const current = loc.pathname + (currentQuery ? `?${currentQuery}` : '');
     if (current === target) return;
     wroteUrlRef.current = true;

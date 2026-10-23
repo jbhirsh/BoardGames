@@ -36,7 +36,10 @@ export const DESC_MAX = 5000;
  */
 export const BGG_IMG_RE = /^https:\/\/cf\.geekdo-images\.com\/\S+$/;
 
-export type FetchLike = (url: string, init?: { signal?: AbortSignal; headers?: Record<string, string> }) => Promise<{ status: number; text(): Promise<string> }>;
+export type FetchLike = (
+  url: string,
+  init?: { signal?: AbortSignal; headers?: Record<string, string> },
+) => Promise<{ status: number; text(): Promise<string> }>;
 
 const BASE = 'https://boardgamegeek.com/xmlapi2';
 
@@ -52,18 +55,70 @@ const codePoint = (n: number, raw: string) => (n >= 0 && n <= 0x10ffff ? String.
 // symbols here, accented letters by DIACRITIC below. Any other name is left
 // as written.
 const NAMED: Record<string, string> = {
-  amp: '&', quot: '"', apos: "'", lt: '<', gt: '>', nbsp: ' ',
-  mdash: '—', ndash: '–', hellip: '…', bull: '•', middot: '·',
-  lsquo: '‘', rsquo: '’', sbquo: '‚', ldquo: '“', rdquo: '”', bdquo: '„', laquo: '«', raquo: '»',
-  prime: '′', Prime: '″', iexcl: '¡', iquest: '¿', shy: '\u00ad',
-  trade: '™', copy: '©', reg: '®', deg: '°', times: '×', divide: '÷', plusmn: '±', minus: '−',
-  frac12: '½', frac14: '¼', frac34: '¾', sup2: '²', sup3: '³', euro: '€', pound: '£', cent: '¢', sect: '§',
-  aelig: 'æ', AElig: 'Æ', oelig: 'œ', OElig: 'Œ', oslash: 'ø', Oslash: 'Ø', szlig: 'ß', eth: 'ð', ETH: 'Ð', thorn: 'þ', THORN: 'Þ',
+  amp: '&',
+  quot: '"',
+  apos: "'",
+  lt: '<',
+  gt: '>',
+  nbsp: ' ',
+  mdash: '—',
+  ndash: '–',
+  hellip: '…',
+  bull: '•',
+  middot: '·',
+  lsquo: '‘',
+  rsquo: '’',
+  sbquo: '‚',
+  ldquo: '“',
+  rdquo: '”',
+  bdquo: '„',
+  laquo: '«',
+  raquo: '»',
+  prime: '′',
+  Prime: '″',
+  iexcl: '¡',
+  iquest: '¿',
+  shy: '\u00ad',
+  trade: '™',
+  copy: '©',
+  reg: '®',
+  deg: '°',
+  times: '×',
+  divide: '÷',
+  plusmn: '±',
+  minus: '−',
+  frac12: '½',
+  frac14: '¼',
+  frac34: '¾',
+  sup2: '²',
+  sup3: '³',
+  euro: '€',
+  pound: '£',
+  cent: '¢',
+  sect: '§',
+  aelig: 'æ',
+  AElig: 'Æ',
+  oelig: 'œ',
+  OElig: 'Œ',
+  oslash: 'ø',
+  Oslash: 'Ø',
+  szlig: 'ß',
+  eth: 'ð',
+  ETH: 'Ð',
+  thorn: 'þ',
+  THORN: 'Þ',
 };
 
 // `&eacute;` is "e" plus a combining acute accent, composed into "é".
 const DIACRITIC: Record<string, string> = {
-  grave: '\u0300', acute: '\u0301', circ: '\u0302', tilde: '\u0303', uml: '\u0308', ring: '\u030a', cedil: '\u0327', caron: '\u030c',
+  grave: '\u0300',
+  acute: '\u0301',
+  circ: '\u0302',
+  tilde: '\u0303',
+  uml: '\u0308',
+  ring: '\u030a',
+  cedil: '\u0327',
+  caron: '\u030c',
 };
 
 function named(raw: string, name: string): string {
@@ -83,8 +138,7 @@ function decodeOnce(s: string): string {
 }
 
 // Anchored on whitespace so `name=` never matches inside `friendlyname=`.
-const attr = (tag: string, name: string): string | undefined =>
-  new RegExp(`(?:^|\\s)${name}="([^"]*)"`).exec(tag)?.[1];
+const attr = (tag: string, name: string): string | undefined => new RegExp(`(?:^|\\s)${name}="([^"]*)"`).exec(tag)?.[1];
 
 // Repeated until nothing changes, so removing one tag can't leave another
 // (`<scr<b>ipt>`) behind.
@@ -111,7 +165,9 @@ export function cleanDescription(raw: string, max = DESC_MAX): string {
   // either side; an inline one (BGG italicises titles) goes without a trace,
   // so "<i>Inkwell</i>," doesn't become "Inkwell ,".
   const text = stripTags(decodeEntities(raw).replace(/<\/?(?:br|p|div|li|ul|ol|h[1-6])\b[^>]*>/gi, ' '))
-    .replace(/(?!\s)\p{C}/gu, '').replace(/\s+/g, ' ').trim();
+    .replace(/(?!\s)\p{C}/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim();
   if (text.length <= max) return text;
   // Split after sentence punctuation followed by whitespace, so decimals
   // like "2.0" stay whole.
@@ -127,14 +183,28 @@ export function cleanDescription(raw: string, max = DESC_MAX): string {
 // BGG label -> app keyword id. Ranks come from <rank name="…">, categories and
 // mechanics from <link type="boardgamecategory|boardgamemechanic" value="…">.
 const RANK_KW: Record<string, string> = {
-  strategygames: 'strategy', familygames: 'family', partygames: 'party', thematic: 'thematic',
-  abstracts: 'abstract', cgs: 'card-game', childrensgames: 'family',
+  strategygames: 'strategy',
+  familygames: 'family',
+  partygames: 'party',
+  thematic: 'thematic',
+  abstracts: 'abstract',
+  cgs: 'card-game',
+  childrensgames: 'family',
 };
 const LINK_KW: Record<string, string> = {
-  'Party Game': 'party', 'Card Game': 'card-game', 'Word Game': 'word', 'Bluffing': 'bluffing',
-  'Deduction': 'deduction', 'Negotiation': 'negotiation', 'Abstract Strategy': 'abstract',
-  'Action / Dexterity': 'active', 'Mature / Adult': 'adult', "Children's Game": 'family',
-  'Cooperative Game': 'cooperative', 'Team-Based Game': 'team', 'Deck, Bag, and Pool Building': 'deck-building',
+  'Party Game': 'party',
+  'Card Game': 'card-game',
+  'Word Game': 'word',
+  Bluffing: 'bluffing',
+  Deduction: 'deduction',
+  Negotiation: 'negotiation',
+  'Abstract Strategy': 'abstract',
+  'Action / Dexterity': 'active',
+  'Mature / Adult': 'adult',
+  "Children's Game": 'family',
+  'Cooperative Game': 'cooperative',
+  'Team-Based Game': 'team',
+  'Deck, Bag, and Pool Building': 'deck-building',
   'Real-Time': 'quick-play',
 };
 
@@ -188,7 +258,11 @@ export function parseThing(xml: string): GameDetails | null {
   };
 }
 
-const norm = (s: string) => decodeEntities(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const norm = (s: string) =>
+  decodeEntities(s)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
 
 /**
  * Pick the search hit whose name matches what was typed, ignoring case and
@@ -230,17 +304,24 @@ export type LookupResult =
 
 export type LookupOutcome = LookupResult['outcome'];
 
-type Fetched = { ok: true; body: string } | { ok: false; result: Extract<LookupResult, { outcome: 'refused' | 'unavailable' }> };
+type Fetched =
+  { ok: true; body: string } | { ok: false; result: Extract<LookupResult, { outcome: 'refused' | 'unavailable' }> };
 
 /** One GET within the overall deadline. BGG answers 202 while it queues a request; one short retry covers it. */
 async function get(fetchLike: FetchLike, url: string, deadline: number, token: string): Promise<Fetched> {
-  const unavailable = (cause?: unknown): Fetched => ({ ok: false, result: { outcome: 'unavailable', ...(cause === undefined ? {} : { cause }) } });
+  const unavailable = (cause?: unknown): Fetched => ({
+    ok: false,
+    result: { outcome: 'unavailable', ...(cause === undefined ? {} : { cause }) },
+  });
   for (let attempt = 0; attempt < 2; attempt++) {
     const remaining = deadline - Date.now();
     if (remaining <= 0) return unavailable();
     let r: Awaited<ReturnType<FetchLike>>;
     try {
-      r = await fetchLike(url, { signal: AbortSignal.timeout(remaining), headers: { Authorization: `Bearer ${token}` } });
+      r = await fetchLike(url, {
+        signal: AbortSignal.timeout(remaining),
+        headers: { Authorization: `Bearer ${token}` },
+      });
     } catch (err) {
       // A network failure, or the timeout signal firing.
       return unavailable(err);
@@ -259,11 +340,21 @@ async function get(fetchLike: FetchLike, url: string, deadline: number, token: s
  * nothing. BGG answers 401 to a request without a token, so with none set
  * this returns `no-token` without calling it at all.
  */
-export async function lookupGame(name: string, token: string | undefined, fetchLike: FetchLike = fetch, budgetMs = 6000): Promise<LookupResult> {
+export async function lookupGame(
+  name: string,
+  token: string | undefined,
+  fetchLike: FetchLike = fetch,
+  budgetMs = 6000,
+): Promise<LookupResult> {
   if (!token) return { outcome: 'no-token' };
   const deadline = Date.now() + budgetMs;
   const q = encodeURIComponent(name);
-  const exact = await get(fetchLike, `${BASE}/search?type=boardgame,boardgameexpansion&exact=1&query=${q}`, deadline, token);
+  const exact = await get(
+    fetchLike,
+    `${BASE}/search?type=boardgame,boardgameexpansion&exact=1&query=${q}`,
+    deadline,
+    token,
+  );
   if (!exact.ok && exact.result.outcome === 'refused') return exact.result;
   let id = exact.ok ? pickSearchId(exact.body, name) : null;
   if (id === null) {

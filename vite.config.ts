@@ -1,17 +1,17 @@
-import { createHash } from 'node:crypto'
-import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { extname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { defineConfig, type Plugin } from 'vite'
-import { configDefaults } from 'vitest/config'
-import react from '@vitejs/plugin-react'
-import { sentryVitePlugin } from '@sentry/vite-plugin'
-import { PDFJS_DECODERS, savedWhen, WISHLIST_ART_DIR } from './src/utils/precache.ts'
+import { createHash } from 'node:crypto';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { extname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { defineConfig, type Plugin } from 'vite';
+import { configDefaults } from 'vitest/config';
+import react from '@vitejs/plugin-react';
+import { sentryVitePlugin } from '@sentry/vite-plugin';
+import { PDFJS_DECODERS, savedWhen, WISHLIST_ART_DIR } from './src/utils/precache.ts';
 
 // pdf.js loads its image decoders (JPEG 2000, JBIG2, colour profiles) and the
 // standard fonts at run time, by URL, so they can't go through the bundle.
 // Serve them at /pdfjs/<dir>/ in dev and copy them into the build.
-const PDFJS = fileURLToPath(new URL('./node_modules/pdfjs-dist/', import.meta.url))
+const PDFJS = fileURLToPath(new URL('./node_modules/pdfjs-dist/', import.meta.url));
 const PDFJS_ASSETS: Record<string, (file: string) => boolean> = {
   // quickjs is pdf.js's sandbox for scripted forms, which rulebooks don't use.
   wasm: (file) => !file.startsWith('quickjs'),
@@ -19,27 +19,31 @@ const PDFJS_ASSETS: Record<string, (file: string) => boolean> = {
   // The colour profile for CMYK images (8 KB), which pdf.js's worker reads
   // itself (useWorkerFetch, src/pdfjs/documents.ts).
   iccs: (file) => file.endsWith('.icc'),
-}
+};
 
 function pdfjsAssets(): Plugin {
-  const files = () => Object.entries(PDFJS_ASSETS).flatMap(([dir, keep]) =>
-    readdirSync(join(PDFJS, dir)).filter(keep).map((file) => `${dir}/${file}`))
+  const files = () =>
+    Object.entries(PDFJS_ASSETS).flatMap(([dir, keep]) =>
+      readdirSync(join(PDFJS, dir))
+        .filter(keep)
+        .map((file) => `${dir}/${file}`),
+    );
   return {
     name: 'pdfjs-assets',
     configureServer(server) {
       server.middlewares.use('/pdfjs/', (req, res, next) => {
-        const path = decodeURIComponent((req.url ?? '').split('?')[0]).replace(/^\//, '')
-        if (!files().includes(path)) return next()
-        res.setHeader('Content-Type', extname(path) === '.wasm' ? 'application/wasm' : 'application/octet-stream')
-        res.end(readFileSync(join(PDFJS, path)))
-      })
+        const path = decodeURIComponent((req.url ?? '').split('?')[0]).replace(/^\//, '');
+        if (!files().includes(path)) return next();
+        res.setHeader('Content-Type', extname(path) === '.wasm' ? 'application/wasm' : 'application/octet-stream');
+        res.end(readFileSync(join(PDFJS, path)));
+      });
     },
     generateBundle() {
       for (const path of files()) {
-        this.emitFile({ type: 'asset', fileName: `pdfjs/${path}`, source: readFileSync(join(PDFJS, path)) })
+        this.emitFile({ type: 'asset', fileName: `pdfjs/${path}`, source: readFileSync(join(PDFJS, path)) });
       }
     },
-  }
+  };
 }
 
 // public/ files saved at install, beside the build's own: the collection's
@@ -52,7 +56,7 @@ const PRECACHE_PUBLIC: Record<string, (file: string) => boolean> = {
   images: (file) => file.endsWith('.webp'),
   words: (file) => file.endsWith('.txt'),
   fonts: (file) => file.endsWith('.woff2'),
-}
+};
 
 // Session replay's chunk (src/instrument.ts, itself fetched once the page is
 // up, fetches it after an error), left out of the precache so an install
@@ -60,9 +64,10 @@ const PRECACHE_PUBLIC: Record<string, (file: string) => boolean> = {
 // keeps it like any later chunk; offline it fails to load, and replay could
 // not upload then anyway. The rest of Sentry's SDK is saved at install like
 // any chunk; that it stays out of the entry is checked below.
-const NOT_PRECACHED = [fileURLToPath(new URL('./src/sentryReplay.ts', import.meta.url))]
-const SENTRY_CODE = /[\\/]node_modules[\\/](@sentry|@sentry-internal)[\\/]/
-const REPLAY_CODE = /[\\/]node_modules[\\/](@sentry[\\/]replay|@sentry-internal[\\/]replay|@sentry-internal[\\/]rrweb|rrweb)[\\/-]/
+const NOT_PRECACHED = [fileURLToPath(new URL('./src/sentryReplay.ts', import.meta.url))];
+const SENTRY_CODE = /[\\/]node_modules[\\/](@sentry|@sentry-internal)[\\/]/;
+const REPLAY_CODE =
+  /[\\/]node_modules[\\/](@sentry[\\/]replay|@sentry-internal[\\/]replay|@sentry-internal[\\/]rrweb|rrweb)[\\/-]/;
 
 // The service worker (src/sw/sw.ts), bundled to /sw.js with the files it
 // saves at install, the rulebook reader's files it saves with the first
@@ -71,101 +76,122 @@ const REPLAY_CODE = /[\\/]node_modules[\\/](@sentry[\\/]replay|@sentry-internal[
 // none keeps it) and a hash of each rulebook and of each wishlist box art,
 // so a saved one is dropped once its file changes.
 function serviceWorker(): Plugin {
-  let publicDir = ''
+  let publicDir = '';
   const hashOf = (...parts: (string | Uint8Array)[]) => {
-    const hash = createHash('sha256')
-    for (const part of parts) hash.update(part)
-    return hash.digest('hex').slice(0, 12)
-  }
+    const hash = createHash('sha256');
+    for (const part of parts) hash.update(part);
+    return hash.digest('hex').slice(0, 12);
+  };
   return {
     name: 'service-worker',
     apply: 'build',
     // After vite emits index.html, which the version covers.
     enforce: 'post',
     configResolved(config) {
-      publicDir = config.publicDir
+      publicDir = config.publicDir;
     },
     buildStart() {
-      this.emitFile({ type: 'chunk', id: fileURLToPath(new URL('./src/sw/sw.ts', import.meta.url)), fileName: 'sw.js' })
+      this.emitFile({
+        type: 'chunk',
+        id: fileURLToPath(new URL('./src/sw/sw.ts', import.meta.url)),
+        fileName: 'sw.js',
+      });
     },
     generateBundle(_, bundle) {
-      const sw = bundle['sw.js']
-      const html = bundle['index.html']
-      if (sw?.type !== 'chunk' || html?.type !== 'asset') throw new Error('service worker or index.html missing from the build')
+      const sw = bundle['sw.js'];
+      const html = bundle['index.html'];
+      if (sw?.type !== 'chunk' || html?.type !== 'asset')
+        throw new Error('service worker or index.html missing from the build');
       // A classic worker can't import: code shared with the app would be split
       // into a chunk sw.js imports, and registration would fail.
-      if (sw.imports.length || sw.dynamicImports.length) throw new Error('sw.js must not share code with the app')
+      if (sw.imports.length || sw.dynamicImports.length) throw new Error('sw.js must not share code with the app');
       // Each must build to a chunk of its own: one folded into the main
       // bundle (a static import of it, say) would be downloaded on every visit.
-      const lazy = Object.values(bundle).map((file) => file.type === 'chunk' && file.facadeModuleId)
-      const inlined = NOT_PRECACHED.filter((id) => !lazy.includes(id))
-      if (inlined.length) throw new Error(`not split into a chunk of its own: ${inlined.join(', ')}`)
+      const lazy = Object.values(bundle).map((file) => file.type === 'chunk' && file.facadeModuleId);
+      const inlined = NOT_PRECACHED.filter((id) => !lazy.includes(id));
+      if (inlined.length) throw new Error(`not split into a chunk of its own: ${inlined.join(', ')}`);
       // And replay's code (rrweb with it) must be in that chunk alone, not in
       // the entry or a chunk shared with it: something else reaching for it
       // statically (Sentry.getReplay, say) would pull all of it back in.
       for (const [name, file] of Object.entries(bundle)) {
-        if (file.type !== 'chunk' || (file.facadeModuleId && NOT_PRECACHED.includes(file.facadeModuleId))) continue
+        if (file.type !== 'chunk' || (file.facadeModuleId && NOT_PRECACHED.includes(file.facadeModuleId))) continue;
         const leaked = Object.entries(file.modules)
-          .filter(([id, module]) => REPLAY_CODE.test(id) && module.renderedLength > 0).map(([id]) => id)
-        if (leaked.length) throw new Error(`session replay's code is in ${name}: ${leaked.join(', ')}`)
+          .filter(([id, module]) => REPLAY_CODE.test(id) && module.renderedLength > 0)
+          .map(([id]) => id);
+        if (leaked.length) throw new Error(`session replay's code is in ${name}: ${leaked.join(', ')}`);
       }
       // Nor is any of Sentry in what every visit downloads, the entry and the
       // chunks it imports: src/client/sentry.ts fetches it once the page is up.
-      const upFront = new Set<string>()
+      const upFront = new Set<string>();
       const visit = (name: string) => {
-        const file = bundle[name]
-        if (upFront.has(name) || file?.type !== 'chunk') return
-        upFront.add(name)
-        file.imports.forEach(visit)
-      }
-      for (const [name, file] of Object.entries(bundle)) if (file.type === 'chunk' && file.isEntry && name !== 'sw.js') visit(name)
+        const file = bundle[name];
+        if (upFront.has(name) || file?.type !== 'chunk') return;
+        upFront.add(name);
+        file.imports.forEach(visit);
+      };
+      for (const [name, file] of Object.entries(bundle))
+        if (file.type === 'chunk' && file.isEntry && name !== 'sw.js') visit(name);
       for (const name of upFront) {
-        const file = bundle[name]
-        if (file.type !== 'chunk') continue
+        const file = bundle[name];
+        if (file.type !== 'chunk') continue;
         const sentry = Object.entries(file.modules)
-          .filter(([id, module]) => SENTRY_CODE.test(id) && module.renderedLength > 0).map(([id]) => id)
-        if (sentry.length) throw new Error(`Sentry's SDK is in ${name}, which every visit downloads: ${sentry.slice(0, 3).join(', ')}`)
+          .filter(([id, module]) => SENTRY_CODE.test(id) && module.renderedLength > 0)
+          .map(([id]) => id);
+        if (sentry.length)
+          throw new Error(`Sentry's SDK is in ${name}, which every visit downloads: ${sentry.slice(0, 3).join(', ')}`);
       }
-      const files = new Map<string, string | Uint8Array>()
-      const reader = new Map<string, string | Uint8Array>()
+      const files = new Map<string, string | Uint8Array>();
+      const reader = new Map<string, string | Uint8Array>();
       for (const [name, file] of Object.entries(bundle)) {
-        if (name === 'sw.js' || name === 'index.html' || name.endsWith('.map')) continue
-        if (file.type === 'chunk' && file.facadeModuleId && NOT_PRECACHED.includes(file.facadeModuleId)) continue
-        const body = file.type === 'chunk' ? file.code : file.source
-        const when = savedWhen(name, file.type)
-        if (when === 'install') files.set(`/${name}`, body)
-        else if (when === 'reader') reader.set(`/${name}`, body)
+        if (name === 'sw.js' || name === 'index.html' || name.endsWith('.map')) continue;
+        if (file.type === 'chunk' && file.facadeModuleId && NOT_PRECACHED.includes(file.facadeModuleId)) continue;
+        const body = file.type === 'chunk' ? file.code : file.source;
+        const when = savedWhen(name, file.type);
+        if (when === 'install') files.set(`/${name}`, body);
+        else if (when === 'reader') reader.set(`/${name}`, body);
       }
       // pdf.js's worker and each decoder, so a renamed one fails the build
       // rather than a rulebook offline.
       if (reader.size !== PDFJS_DECODERS.length + 1) {
-        throw new Error(`expected pdf.js's worker and ${PDFJS_DECODERS.join(', ')} for the reader, found ${[...reader.keys()].join(', ')}`)
+        throw new Error(
+          `expected pdf.js's worker and ${PDFJS_DECODERS.join(', ')} for the reader, found ${[...reader.keys()].join(', ')}`,
+        );
       }
       for (const [dir, keep] of Object.entries(PRECACHE_PUBLIC)) {
         for (const file of readdirSync(join(publicDir, dir)).filter(keep)) {
-          files.set(`/${dir ? `${dir}/` : ''}${file}`, readFileSync(join(publicDir, dir, file)))
+          files.set(`/${dir ? `${dir}/` : ''}${file}`, readFileSync(join(publicDir, dir, file)));
         }
       }
-      const paths = [...files.keys()].sort()
-      const readerPaths = [...reader.keys()].sort()
-      const saved = new Map([...files, ...reader])
-      const version = hashOf(html.source, ...[...saved.keys()].sort().flatMap((path) => [path, saved.get(path)!]))
-      const rulebooks = Object.fromEntries(readdirSync(join(publicDir, 'rules')).filter((file) => file.endsWith('.pdf'))
-        .map((file) => [`/rules/${file}`, hashOf(readFileSync(join(publicDir, 'rules', file)))]))
+      const paths = [...files.keys()].sort();
+      const readerPaths = [...reader.keys()].sort();
+      const saved = new Map([...files, ...reader]);
+      const version = hashOf(html.source, ...[...saved.keys()].sort().flatMap((path) => [path, saved.get(path)!]));
+      const rulebooks = Object.fromEntries(
+        readdirSync(join(publicDir, 'rules'))
+          .filter((file) => file.endsWith('.pdf'))
+          .map((file) => [`/rules/${file}`, hashOf(readFileSync(join(publicDir, 'rules', file)))]),
+      );
       // The wishlist's box art, saved as fetched, by the same hash.
-      const art = Object.fromEntries(readdirSync(join(publicDir, WISHLIST_ART_DIR))
-        .map((file) => [`/${WISHLIST_ART_DIR}/${file}`, hashOf(readFileSync(join(publicDir, WISHLIST_ART_DIR, file)))]))
-      sw.code = `const __PRECACHE__=${JSON.stringify(paths)},__READER__=${JSON.stringify(readerPaths)},__SW_VERSION__=${JSON.stringify(version)},__RULEBOOKS__=${JSON.stringify(rulebooks)},__ART__=${JSON.stringify(art)};${sw.code}`
+      const art = Object.fromEntries(
+        readdirSync(join(publicDir, WISHLIST_ART_DIR)).map((file) => [
+          `/${WISHLIST_ART_DIR}/${file}`,
+          hashOf(readFileSync(join(publicDir, WISHLIST_ART_DIR, file))),
+        ]),
+      );
+      sw.code = `const __PRECACHE__=${JSON.stringify(paths)},__READER__=${JSON.stringify(readerPaths)},__SW_VERSION__=${JSON.stringify(version)},__RULEBOOKS__=${JSON.stringify(rulebooks)},__ART__=${JSON.stringify(art)};${sw.code}`;
     },
-  }
+  };
 }
 
 // Each rulebook's size in bytes, by its path, for the rules page to tell
 // offline whether opening one would have saved it (src/pdfjs/saved.ts):
 // the HEAD that asks its size online has no answer then.
-const RULES = fileURLToPath(new URL('./public/rules/', import.meta.url))
-const RULEBOOK_SIZES = Object.fromEntries(readdirSync(RULES).filter((file) => file.endsWith('.pdf'))
-  .map((file) => [`/rules/${file}`, statSync(join(RULES, file)).size]))
+const RULES = fileURLToPath(new URL('./public/rules/', import.meta.url));
+const RULEBOOK_SIZES = Object.fromEntries(
+  readdirSync(RULES)
+    .filter((file) => file.endsWith('.pdf'))
+    .map((file) => [`/rules/${file}`, statSync(join(RULES, file)).size]),
+);
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -193,8 +219,8 @@ export default defineConfig({
     pdfjsAssets(),
     serviceWorker(),
     sentryVitePlugin({
-      org: "solo-23",
-      project: "game_room",
+      org: 'solo-23',
+      project: 'game_room',
       // Runs whether or not there was an upload (no SENTRY_AUTH_TOKEN), so a
       // build never ships its maps.
       sourcemaps: {
@@ -224,4 +250,4 @@ export default defineConfig({
       },
     },
   },
-})
+});

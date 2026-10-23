@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { digitNudge } from '../utils/digitNudge';
 
 describe('digitNudge', () => {
-  it('moves digits down by how far their middle sits above the line\'s', () => {
+  it("moves digits down by how far their middle sits above the line's", () => {
     // A 17px line with its baseline 13px down: 12px digits span 1-13, middle
     // 7, against the line's 8.5.
     expect(digitNudge({ height: 17, baseline: 13, capHeight: 12 })).toBe(1.5);

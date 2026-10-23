@@ -15,7 +15,9 @@ export default function Hero({ want }: { want: boolean }) {
   return (
     <header className="hero">
       <ThemeToggle />
-      <h1>Our <em>Game</em> Room</h1>
+      <h1>
+        Our <em>Game</em> Room
+      </h1>
       <p className="hero-sub">
         {want
           ? 'Help us pick our next game from the wishlist below.'

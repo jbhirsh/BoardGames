@@ -7,7 +7,11 @@ import { chatParts, rulebooks, type Rulebook } from './rulebooks';
 
 /** Lowercase words only: "Cities & Knights" and "cities and knights" match, as do "5–6" and "5-6". */
 function bareWords(text: string): string {
-  return ` ${text.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim()} `;
+  return ` ${text
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()} `;
 }
 
 /**
@@ -20,9 +24,12 @@ function bareWords(text: string): string {
 export function mentionedRulebooks(answer: string, game: Game, shown: Rulebook): Rulebook[] {
   const text = bareWords(answer);
   const read = new Set(chatParts(game, shown));
-  return rulebooks(game).filter((b) =>
-    b.part !== undefined && b.part !== shown.part && !read.has(b.part) &&
-    (text.includes(bareWords(b.label)) || text.includes(bareWords(b.part))),
+  return rulebooks(game).filter(
+    (b) =>
+      b.part !== undefined &&
+      b.part !== shown.part &&
+      !read.has(b.part) &&
+      (text.includes(bareWords(b.label)) || text.includes(bareWords(b.part))),
   );
 }
 
@@ -94,7 +101,9 @@ function citedPages(list: string): Cited[] | null {
  * before it or "rulebook" after: "(p. 3, see also p. 5)" is one rulebook.
  */
 function citedName(text: string): string {
-  return bareWords(text).replace(/^ (see )?(also )?/, ' ').replace(/ (rulebook|rules) $/, ' ');
+  return bareWords(text)
+    .replace(/^ (see )?(also )?/, ' ')
+    .replace(/ (rulebook|rules) $/, ' ');
 }
 
 /** Text safe inside a Markdown link's [text]. */
@@ -159,22 +168,27 @@ export function linkCitations(answer: string, game: Game, shown: Rulebook): stri
       // The tab label only where there are tabs to tell apart.
       const label = named && books.length > 1 ? `${book.label} ` : '';
       const seen = new Set<string>();
-      return pages.filter((p) => {
-        const key = 'page' in p ? `${p.page}` : `${p.from}–${p.to}`;
-        return !seen.has(key) && seen.add(key);
-      }).map((p, i) => {
-        const first = i === 0 ? label : '';
-        return 'page' in p
-          ? link(p.page, `${first}p. ${p.page}`, first !== '')
-          : `${link(p.from, `${first}p. ${p.from}`, first !== '')}–${link(p.to, `p. ${p.to}`, false)}`;
-      }).join(', ');
+      return pages
+        .filter((p) => {
+          const key = 'page' in p ? `${p.page}` : `${p.from}–${p.to}`;
+          return !seen.has(key) && seen.add(key);
+        })
+        .map((p, i) => {
+          const first = i === 0 ? label : '';
+          return 'page' in p
+            ? link(p.page, `${first}p. ${p.page}`, first !== '')
+            : `${link(p.from, `${first}p. ${p.from}`, first !== '')}–${link(p.to, `p. ${p.to}`, false)}`;
+        })
+        .join(', ');
     };
     // Two linked rulebooks are split by "; "; words left as written keep
     // the separator they were written with.
-    return `(${parts.map((p, i) => {
-      const sep = i === 0 ? '' : typeof p.cite === 'string' || typeof parts[i - 1].cite === 'string' ? p.sep : '; ';
-      return sep + (typeof p.cite === 'string' ? p.cite : linked(p.cite));
-    }).join('')})`;
+    return `(${parts
+      .map((p, i) => {
+        const sep = i === 0 ? '' : typeof p.cite === 'string' || typeof parts[i - 1].cite === 'string' ? p.sep : '; ';
+        return sep + (typeof p.cite === 'string' ? p.cite : linked(p.cite));
+      })
+      .join('')})`;
   });
 }
 

@@ -22,11 +22,15 @@ async function check(page: Page, word: string) {
 
 test('a dictionary word is valid and shows its definition', async ({ page }) => {
   const asked = await stubDictionary(page, 200, {
-    en: [{
-      partOfSpeech: 'Noun',
-      language: 'English',
-      definitions: [{ definition: 'An elongated curved tropical <a rel="mw:WikiLink" href="/wiki/fruit">fruit</a>.' }],
-    }],
+    en: [
+      {
+        partOfSpeech: 'Noun',
+        language: 'English',
+        definitions: [
+          { definition: 'An elongated curved tropical <a rel="mw:WikiLink" href="/wiki/fruit">fruit</a>.' },
+        ],
+      },
+    ],
   });
 
   await check(page, '  Banana ');
@@ -36,10 +40,14 @@ test('a dictionary word is valid and shows its definition', async ({ page }) => 
   await expect(page.getByText('noun', { exact: true })).toBeVisible();
   await expect(page.getByText('An elongated curved tropical fruit.')).toBeVisible();
   await expect(page.getByText('Definitions from Wiktionary (CC BY-SA 4.0), shortened')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Wiktionary', exact: true }))
-    .toHaveAttribute('href', 'https://en.wiktionary.org/wiki/banana');
-  await expect(page.getByRole('link', { name: 'CC BY-SA 4.0' }))
-    .toHaveAttribute('href', 'https://creativecommons.org/licenses/by-sa/4.0/');
+  await expect(page.getByRole('link', { name: 'Wiktionary', exact: true })).toHaveAttribute(
+    'href',
+    'https://en.wiktionary.org/wiki/banana',
+  );
+  await expect(page.getByRole('link', { name: 'CC BY-SA 4.0' })).toHaveAttribute(
+    'href',
+    'https://creativecommons.org/licenses/by-sa/4.0/',
+  );
   // Trimmed and lowercased before the lookup.
   expect(asked).toEqual(['banana']);
 });
@@ -55,7 +63,9 @@ test('a word the dictionary does not know (404) is not valid', async ({ page }) 
 });
 
 test('a lone letter gets a note, not a verdict, and no lookup', async ({ page }) => {
-  const asked = await stubDictionary(page, 200, { en: [{ partOfSpeech: 'Article', language: 'English', definitions: [{ definition: 'One.' }] }] });
+  const asked = await stubDictionary(page, 200, {
+    en: [{ partOfSpeech: 'Article', language: 'English', definitions: [{ definition: 'One.' }] }],
+  });
 
   await check(page, 'a');
 
@@ -67,8 +77,16 @@ test('a lone letter gets a note, not a verdict, and no lookup', async ({ page })
 test('a word Wiktionary has only as a misspelling is not valid', async ({ page }) => {
   await stubDictionary(page, 200, {
     en: [
-      { partOfSpeech: 'Symbol', language: 'Translingual', definitions: [{ definition: 'ISO 639-3 language code for Tehuelche.' }] },
-      { partOfSpeech: 'Article', language: 'English', definitions: [{ definition: 'Deliberate misspelling of <a href="/wiki/the">the</a>.' }] },
+      {
+        partOfSpeech: 'Symbol',
+        language: 'Translingual',
+        definitions: [{ definition: 'ISO 639-3 language code for Tehuelche.' }],
+      },
+      {
+        partOfSpeech: 'Article',
+        language: 'English',
+        definitions: [{ definition: 'Deliberate misspelling of <a href="/wiki/the">the</a>.' }],
+      },
     ],
   });
 
@@ -103,7 +121,13 @@ test('a dictionary outage still answers from the word-game list', async ({ page 
 
 test('a word missing from both lists is valid when the dictionary has it', async ({ page }) => {
   const asked = await stubDictionary(page, 200, {
-    en: [{ partOfSpeech: 'Verb', language: 'English', definitions: [{ definition: 'To keep scrolling through bad news.' }] }],
+    en: [
+      {
+        partOfSpeech: 'Verb',
+        language: 'English',
+        definitions: [{ definition: 'To keep scrolling through bad news.' }],
+      },
+    ],
   });
 
   await check(page, 'doomscroll');

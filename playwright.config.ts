@@ -21,9 +21,7 @@ export default defineConfig({
   // run when that retry passes, so it never hides a flake.
   retries: CI ? 1 : 0,
   failOnFlakyTests: CI,
-  reporter: CI
-    ? [['github'], ['html', { open: 'never' }]]
-    : [['list'], ['html', { open: 'never' }]],
+  reporter: CI ? [['github'], ['html', { open: 'never' }]] : [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: BASE_URL,
     // The trace of the attempt that failed, not of a retry that may pass.

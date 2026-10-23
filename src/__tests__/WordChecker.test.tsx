@@ -23,11 +23,14 @@ function renderChecker() {
 }
 
 /** Wiktionary's answer for a page it doesn't have. */
-const notFound = () => ({ ok: false, status: 404, json: async () => ({ status: 404, type: 'Internal error' }) }) as Response;
+const notFound = () =>
+  ({ ok: false, status: 404, json: async () => ({ status: 404, type: 'Internal error' }) }) as Response;
 
 /** A Wiktionary definition-API body with one English sense. */
 function wiktionary(partOfSpeech: string, ...definitions: string[]) {
-  return { en: [{ partOfSpeech, language: 'English', definitions: definitions.map((definition) => ({ definition })) }] };
+  return {
+    en: [{ partOfSpeech, language: 'English', definitions: definitions.map((definition) => ({ definition })) }],
+  };
 }
 
 describe('WordChecker', () => {
@@ -71,17 +74,19 @@ describe('WordChecker', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
       ok: true,
       json: async () => ({
-        en: [{
-          partOfSpeech: 'Noun',
-          language: 'English',
-          definitions: [
-            {
-              definition: 'A <a rel="mw:WikiLink" href="/wiki/greeting">greeting</a>',
-              parsedExamples: [{ example: 'She said <b>hello</b>' }],
-            },
-            { definition: 'An exclamation' },
-          ],
-        }],
+        en: [
+          {
+            partOfSpeech: 'Noun',
+            language: 'English',
+            definitions: [
+              {
+                definition: 'A <a rel="mw:WikiLink" href="/wiki/greeting">greeting</a>',
+                parsedExamples: [{ example: 'She said <b>hello</b>' }],
+              },
+              { definition: 'An exclamation' },
+            ],
+          },
+        ],
       }),
     } as Response);
 
@@ -98,11 +103,17 @@ describe('WordChecker', () => {
     expect(screen.getByText(/A greeting/)).toBeInTheDocument();
     expect(screen.getByText(/"She said hello"/)).toBeInTheDocument();
     // Wiktionary's text is CC BY-SA 4.0: credit, source, licence, and the change.
-    expect(screen.getByText(/^Definitions from/)).toHaveTextContent('Definitions from Wiktionary (CC BY-SA 4.0), shortened');
-    expect(screen.getByRole('link', { name: 'Wiktionary' }))
-      .toHaveAttribute('href', 'https://en.wiktionary.org/wiki/hello');
-    expect(screen.getByRole('link', { name: 'CC BY-SA 4.0' }))
-      .toHaveAttribute('href', 'https://creativecommons.org/licenses/by-sa/4.0/');
+    expect(screen.getByText(/^Definitions from/)).toHaveTextContent(
+      'Definitions from Wiktionary (CC BY-SA 4.0), shortened',
+    );
+    expect(screen.getByRole('link', { name: 'Wiktionary' })).toHaveAttribute(
+      'href',
+      'https://en.wiktionary.org/wiki/hello',
+    );
+    expect(screen.getByRole('link', { name: 'CC BY-SA 4.0' })).toHaveAttribute(
+      'href',
+      'https://creativecommons.org/licenses/by-sa/4.0/',
+    );
   });
 
   it('shows invalid result for an unknown word', async () => {
@@ -180,13 +191,19 @@ describe('WordChecker', () => {
 
   it('waits on the dictionary, box locked, when there is no list to answer from', async () => {
     let answer!: (r: Response) => void;
-    vi.spyOn(globalThis, 'fetch').mockReturnValue(new Promise((resolve) => { answer = resolve; }));
+    vi.spyOn(globalThis, 'fetch').mockReturnValue(
+      new Promise((resolve) => {
+        answer = resolve;
+      }),
+    );
     renderChecker();
     fireEvent.change(screen.getByPlaceholderText('Enter a word...'), { target: { value: 'test' } });
     fireEvent.click(screen.getByText('Check'));
     expect(await screen.findByText('Checking...')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter a word...')).toBeDisabled();
-    await act(async () => { answer(notFound()); });
+    await act(async () => {
+      answer(notFound());
+    });
     expect(screen.getByText('Not a valid word')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter a word...')).toBeEnabled();
   });
@@ -250,7 +267,9 @@ describe('WordChecker', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
       ok: true,
       status: 200,
-      json: async () => { throw new SyntaxError('Unexpected token <'); },
+      json: async () => {
+        throw new SyntaxError('Unexpected token <');
+      },
     } as unknown as Response);
 
     renderChecker();
@@ -290,7 +309,11 @@ describe('WordChecker', () => {
       json: async () => ({
         en: [
           { partOfSpeech: 'Proper noun', language: 'English', definitions: [{ definition: 'A city.' }] },
-          { partOfSpeech: 'Verb', language: 'English', definitions: [{ definition: 'To move.' }, { definition: 'To leave.' }, { definition: 'To work.' }] },
+          {
+            partOfSpeech: 'Verb',
+            language: 'English',
+            definitions: [{ definition: 'To move.' }, { definition: 'To leave.' }, { definition: 'To work.' }],
+          },
         ],
       }),
     } as Response);
@@ -324,7 +347,11 @@ describe('WordChecker with the word-game list', () => {
 
   it('says a listed word is valid before the dictionary answers, then shows its meaning', async () => {
     let answer!: (r: Response) => void;
-    vi.spyOn(globalThis, 'fetch').mockReturnValue(new Promise((resolve) => { answer = resolve; }));
+    vi.spyOn(globalThis, 'fetch').mockReturnValue(
+      new Promise((resolve) => {
+        answer = resolve;
+      }),
+    );
     check('Banana');
 
     expect(await screen.findByText('Valid word')).toBeInTheDocument();
@@ -370,17 +397,23 @@ describe('WordChecker with the word-game list', () => {
 
   it('says at once that the list lacks a word, before the dictionary answers', async () => {
     let answer!: (r: Response) => void;
-    vi.spyOn(globalThis, 'fetch').mockReturnValue(new Promise((resolve) => { answer = resolve; }));
+    vi.spyOn(globalThis, 'fetch').mockReturnValue(
+      new Promise((resolve) => {
+        answer = resolve;
+      }),
+    );
     check('teh');
     expect(await screen.findByText('Not in our word list')).toBeInTheDocument();
     expect(screen.getByText('Checking the dictionary…')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter a word...')).toBeEnabled();
-    await act(async () => { answer(notFound()); });
+    await act(async () => {
+      answer(notFound());
+    });
     expect(screen.getByText('Not a valid word')).toBeInTheDocument();
     expect(screen.queryByText('Checking the dictionary…')).not.toBeInTheDocument();
   });
 
-  it('never calls an unlisted word invalid when the dictionary can\'t be reached, and can ask again', async () => {
+  it("never calls an unlisted word invalid when the dictionary can't be reached, and can ask again", async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new TypeError('Failed to fetch'));
     check('teh');
     expect(await screen.findByText(/couldn't be reached to double-check/)).toBeInTheDocument();
@@ -397,13 +430,20 @@ describe('WordChecker with the word-game list', () => {
 
   it("doesn't let an unlisted word's late verdict replace the next word's", async () => {
     const answers: ((r: Response) => void)[] = [];
-    vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise((resolve) => { answers.push(resolve); }));
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          answers.push(resolve);
+        }),
+    );
     check('teh');
     expect(await screen.findByText('teh')).toBeInTheDocument();
     fireEvent.change(screen.getByPlaceholderText('Enter a word...'), { target: { value: 'cat' } });
     fireEvent.click(screen.getByText('Check'));
     expect(await screen.findByText('cat')).toBeInTheDocument();
-    await act(async () => { answers[0](notFound()); });
+    await act(async () => {
+      answers[0](notFound());
+    });
     expect(screen.queryByText('Not a valid word')).not.toBeInTheDocument();
     expect(screen.getByText('Valid word')).toBeInTheDocument();
   });
@@ -411,11 +451,16 @@ describe('WordChecker with the word-game list', () => {
   it('gives up on a dictionary that never answers', async () => {
     vi.useFakeTimers();
     try {
-      vi.spyOn(globalThis, 'fetch').mockImplementation((_url, init) => new Promise((_, reject) => {
-        init!.signal!.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
-      }));
+      vi.spyOn(globalThis, 'fetch').mockImplementation(
+        (_url, init) =>
+          new Promise((_, reject) => {
+            init!.signal!.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+          }),
+      );
       check('teh');
-      await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5000);
+      });
       expect(screen.getByText('Not in our word list')).toBeInTheDocument();
       expect(screen.getByText(/couldn't be reached to double-check/)).toBeInTheDocument();
       expect(screen.queryByText('Not a valid word')).not.toBeInTheDocument();
@@ -449,7 +494,7 @@ describe('WordChecker with the word-game list', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it('takes a word with a phone\'s full stop after it', async () => {
+  it("takes a word with a phone's full stop after it", async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: false, status: 522 } as Response);
     check('Cat.');
     expect(await screen.findByText('Valid word')).toBeInTheDocument();
@@ -457,12 +502,18 @@ describe('WordChecker with the word-game list', () => {
 
   it('keeps the box usable while the list loads', async () => {
     let listReady!: (s: Set<string>) => void;
-    vi.mocked(loadWordList).mockReturnValue(new Promise((resolve) => { listReady = resolve; }));
+    vi.mocked(loadWordList).mockReturnValue(
+      new Promise((resolve) => {
+        listReady = resolve;
+      }),
+    );
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: false, status: 522 } as Response);
     check('cat');
     expect(await screen.findByText('Checking...')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter a word...')).toBeEnabled();
-    await act(async () => { listReady(new Set(['cat'])); });
+    await act(async () => {
+      listReady(new Set(['cat']));
+    });
     expect(screen.getByText('Valid word')).toBeInTheDocument();
   });
 
@@ -478,20 +529,31 @@ describe('WordChecker with the word-game list', () => {
 
   it('answers a word checked twice from its latest lookup', async () => {
     const answers: ((r: Response) => void)[] = [];
-    vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise((resolve) => { answers.push(resolve); }));
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          answers.push(resolve);
+        }),
+    );
     check('teh');
     expect(await screen.findByText('Checking the dictionary…')).toBeInTheDocument();
     fireEvent.click(screen.getByText('Check'));
     await waitFor(() => expect(answers).toHaveLength(2));
     // The first lookup fails after the second was asked; the second answers.
-    await act(async () => { answers[0]({ ok: false, status: 522 } as Response); });
+    await act(async () => {
+      answers[0]({ ok: false, status: 522 } as Response);
+    });
     expect(screen.queryByText(/couldn't be reached/)).not.toBeInTheDocument();
-    await act(async () => { answers[1](ok(ENTRY)); });
+    await act(async () => {
+      answers[1](ok(ENTRY));
+    });
     expect(screen.getByText('Valid word')).toBeInTheDocument();
   });
 
   it('announces a verdict as it changes, and keeps the box focused on Try again', async () => {
-    vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new TypeError('Failed to fetch')).mockResolvedValueOnce(ok(ENTRY));
+    vi.spyOn(globalThis, 'fetch')
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce(ok(ENTRY));
     check('teh');
     expect(await screen.findByText('Not in our word list')).toBeInTheDocument();
     expect(screen.getByText('teh').closest('[aria-live="polite"]')).not.toBeNull();
@@ -508,7 +570,12 @@ describe('WordChecker with the word-game list', () => {
 
   it("doesn't give a word another word's late-arriving meaning", async () => {
     const answers: ((r: Response) => void)[] = [];
-    vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise((resolve) => { answers.push(resolve); }));
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          answers.push(resolve);
+        }),
+    );
     check('banana');
     expect(await screen.findByText('banana')).toBeInTheDocument();
 
@@ -517,9 +584,10 @@ describe('WordChecker with the word-game list', () => {
     expect(await screen.findByText('cat')).toBeInTheDocument();
 
     // banana's lookup answers after cat's check began; cat keeps waiting for its own.
-    await act(async () => { answers[0](ok(ENTRY)); });
+    await act(async () => {
+      answers[0](ok(ENTRY));
+    });
     expect(screen.queryByText(/A fruit\./)).not.toBeInTheDocument();
     expect(screen.getByText('Looking up the meaning…')).toBeInTheDocument();
   });
 });
-

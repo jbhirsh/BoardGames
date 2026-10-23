@@ -14,15 +14,9 @@ function FilterControls() {
   const navigate = useNavigate();
   return (
     <>
-      <button onClick={() => dispatch({ type: 'SET_DURATION', payload: 15 })}>
-        quick
-      </button>
-      <button onClick={() => dispatch({ type: 'SET_PLAYERS', payload: 4 })}>
-        four
-      </button>
-      <button onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: 'strategy' })}>
-        strategy
-      </button>
+      <button onClick={() => dispatch({ type: 'SET_DURATION', payload: 15 })}>quick</button>
+      <button onClick={() => dispatch({ type: 'SET_PLAYERS', payload: 4 })}>four</button>
+      <button onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: 'strategy' })}>strategy</button>
       <button onClick={() => dispatch({ type: 'CLEAR_ALL' })}>clear</button>
       <button onClick={() => navigate('/?d=30&p=6')}>push-different-url</button>
       <div data-testid="state-duration">{state.duration}</div>

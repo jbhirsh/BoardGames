@@ -33,12 +33,9 @@ describe('games ↔ assets integrity', () => {
   // The slug becomes a filesystem path in the chat API (rules-text/<slug>.txt)
   // and a Redis key elsewhere, so it must satisfy the shared boundary regex or
   // the API rejects it with a 400 even when the file exists.
-  it.each(ALL_GAMES.map((g) => [g.slug] as const))(
-    'slug "%s" matches the chat/votes slug shape',
-    (slug) => {
-      expect(slug).toMatch(SLUG_RE);
-    },
-  );
+  it.each(ALL_GAMES.map((g) => [g.slug] as const))('slug "%s" matches the chat/votes slug shape', (slug) => {
+    expect(slug).toMatch(SLUG_RE);
+  });
 
   it.each(ALL_GAMES.map((g) => [g.slug, g] as const))(
     'game "%s" has its rules PDF, image, and rules-text',
@@ -52,8 +49,13 @@ describe('games ↔ assets integrity', () => {
         // Further rulebooks need the game's own first tab to hang off, or its
         // rules page would match no tab and send itself back to the same URL.
         expect(game.moreRules ?? [], `${slug} has further rulebooks but none of its own`).toEqual([]);
-        expect((game.subgames ?? []).filter((s) => s.rules), `${slug} has add-on rulebooks but none of its own`).toEqual([]);
-        expect(existsSync(join(RULES_TEXT_DIR, `${slug}.txt`)), `rules-text/${slug}.txt without a rulebook`).toBe(false);
+        expect(
+          (game.subgames ?? []).filter((s) => s.rules),
+          `${slug} has add-on rulebooks but none of its own`,
+        ).toEqual([]);
+        expect(existsSync(join(RULES_TEXT_DIR, `${slug}.txt`)), `rules-text/${slug}.txt without a rulebook`).toBe(
+          false,
+        );
         return;
       }
       // `rules`/`img` are absolute-from-web-root ("/rules/x.pdf"); join maps
@@ -77,10 +79,12 @@ describe('games ↔ assets integrity', () => {
   // would never reach the assistant.
   const withRules = ALL_GAMES.flatMap((g) => [
     ...(g.moreRules ?? []).map((r) => [`${g.slug}.${r.slug}`, r.pdf] as const),
-    ...(g.subgames ?? []).filter((s) => s.rules).flatMap((s) => [
-      [`${g.slug}.${s.slug}`, s.rules!] as const,
-      ...(s.moreRules ?? []).map((r) => [`${g.slug}.${r.slug}`, r.pdf] as const),
-    ]),
+    ...(g.subgames ?? [])
+      .filter((s) => s.rules)
+      .flatMap((s) => [
+        [`${g.slug}.${s.slug}`, s.rules!] as const,
+        ...(s.moreRules ?? []).map((r) => [`${g.slug}.${r.slug}`, r.pdf] as const),
+      ]),
   ]);
 
   // Its further rulebooks and the games inside it share one set of tabs and
@@ -89,22 +93,21 @@ describe('games ↔ assets integrity', () => {
     'game "%s" names each extra rulebook and game inside it once, in the slug shape',
     (_slug, game) => {
       const subs = game.subgames ?? [];
-      const subSlugs = [...(game.moreRules ?? []), ...subs, ...subs.flatMap((s) => s.moreRules ?? [])].map((s) => s.slug);
+      const subSlugs = [...(game.moreRules ?? []), ...subs, ...subs.flatMap((s) => s.moreRules ?? [])].map(
+        (s) => s.slug,
+      );
       expect(new Set(subSlugs).size).toBe(subSlugs.length);
       for (const s of subSlugs) expect(s).toMatch(SLUG_RE);
     },
   );
 
-  it.each(withRules)(
-    'extra rulebook "%s" has its rules PDF and rules-text',
-    (key, rules) => {
-      expect(rules).toBe(`/rules/${key}.pdf`);
-      expect(existsSync(join(PUBLIC, rules)), `missing rules PDF: ${rules}`).toBe(true);
-      const text = join(RULES_TEXT_DIR, `${key}.txt`);
-      expect(existsSync(text), `missing rules-text/${key}.txt`).toBe(true);
-      expect(statSync(text).size, `empty rules-text/${key}.txt`).toBeGreaterThan(0);
-    },
-  );
+  it.each(withRules)('extra rulebook "%s" has its rules PDF and rules-text', (key, rules) => {
+    expect(rules).toBe(`/rules/${key}.pdf`);
+    expect(existsSync(join(PUBLIC, rules)), `missing rules PDF: ${rules}`).toBe(true);
+    const text = join(RULES_TEXT_DIR, `${key}.txt`);
+    expect(existsSync(text), `missing rules-text/${key}.txt`).toBe(true);
+    expect(statSync(text).size, `empty rules-text/${key}.txt`).toBeGreaterThan(0);
+  });
 
   // public/rules and rules-text hold game assets only (unlike public/images,
   // which also carries decorative art), so every file there must map to a
@@ -138,7 +141,7 @@ describe('games ↔ assets integrity', () => {
   );
 });
 
-describe('the eval\'s golden set', () => {
+describe("the eval's golden set", () => {
   // A quote is where a person checks an expected answer, and the citation
   // entries' expected pages were read off the markers above it.
   const { entries } = parseGoldenSet(JSON.parse(readFileSync(join(process.cwd(), 'eval', 'golden-set.json'), 'utf8')));

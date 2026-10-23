@@ -16,5 +16,9 @@ function subscribe(changed: () => void) {
  * request that fails for want of a network needs handling as well.
  */
 export function useOnline(): boolean {
-  return useSyncExternalStore(subscribe, () => navigator.onLine, () => true);
+  return useSyncExternalStore(
+    subscribe,
+    () => navigator.onLine,
+    () => true,
+  );
 }

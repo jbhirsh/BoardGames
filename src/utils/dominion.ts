@@ -23,8 +23,8 @@ export const KINGDOM_CARDS = [
   { key: 'nobles', name: 'Nobles', worth: '2 VP' },
 ] as const;
 
-export type BaseCard = typeof BASE_CARDS[number]['key'];
-export type KingdomCard = typeof KINGDOM_CARDS[number]['key'];
+export type BaseCard = (typeof BASE_CARDS)[number]['key'];
+export type KingdomCard = (typeof KINGDOM_CARDS)[number]['key'];
 
 /** How many of each card a player has at the end, and (for Gardens) how many cards in all. */
 export type DominionTally = Record<BaseCard | KingdomCard, number> & { deck: number };
@@ -35,7 +35,7 @@ export type DominionBreakdown = Record<BaseCard | KingdomCard, number> & { total
 export function dominionBreakdown(t: DominionTally, kingdom: ReadonlySet<KingdomCard>): DominionBreakdown {
   const has = (card: KingdomCard) => kingdom.has(card);
   // 0 + keeps a Curse-free count at 0, where -1 times 0 is -0.
-  const base = Object.fromEntries(BASE_CARDS.map(c => [c.key, 0 + t[c.key] * c.vp])) as Record<BaseCard, number>;
+  const base = Object.fromEntries(BASE_CARDS.map((c) => [c.key, 0 + t[c.key] * c.vp])) as Record<BaseCard, number>;
   const rows = {
     ...base,
     gardens: has('gardens') ? t.gardens * Math.floor(t.deck / 10) : 0,

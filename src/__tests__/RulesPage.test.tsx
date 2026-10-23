@@ -15,12 +15,33 @@ const reader = vi.hoisted(() => ({ fails: false, broken: 'vampire' as string | n
 vi.mock('../components/PdfReader', async () => {
   const { useEffect } = await import('react');
   return {
-    default: function PdfReader({ src, title, jump, warm, onFail }: { src: string; title: string; jump?: { page: number; key: string; place?: string; quote?: string }; warm?: readonly { src: string; page: number }[]; onFail?: (src: string) => void }) {
+    default: function PdfReader({
+      src,
+      title,
+      jump,
+      warm,
+      onFail,
+    }: {
+      src: string;
+      title: string;
+      jump?: { page: number; key: string; place?: string; quote?: string };
+      warm?: readonly { src: string; page: number }[];
+      onFail?: (src: string) => void;
+    }) {
       if (reader.broken !== null && src.includes(reader.broken)) throw new Error('reader broke');
       useEffect(() => {
         if (reader.fails) onFail?.(src);
       }, [onFail, src]);
-      return <section aria-label={title} data-src={src} data-jump={jump && `${jump.page}:${jump.key}`} data-place={jump?.place} data-quote={jump?.quote} data-warm={warm?.map((w) => `${w.src}:${w.page}`).join(' ')} />;
+      return (
+        <section
+          aria-label={title}
+          data-src={src}
+          data-jump={jump && `${jump.page}:${jump.key}`}
+          data-place={jump?.place}
+          data-quote={jump?.quote}
+          data-warm={warm?.map((w) => `${w.src}:${w.page}`).join(' ')}
+        />
+      );
     },
   };
 });
@@ -63,7 +84,9 @@ describe('RulesPage', () => {
     const game = ALL_GAMES.find((g) => !g.rules)!;
     renderAt(`/rules/${game.slug}`);
     expect(screen.getByText('No rulebook yet')).toBeInTheDocument();
-    expect(screen.getByText(`We don't have the rulebook for ${game.name} yet. It will be here once we do.`)).toBeInTheDocument();
+    expect(
+      screen.getByText(`We don't have the rulebook for ${game.name} yet. It will be here once we do.`),
+    ).toBeInTheDocument();
   });
 
   it('renders the game for a known slug and no Word Checker button for non-word games', () => {
@@ -84,7 +107,7 @@ describe('RulesPage', () => {
     expect(screen.queryByRole('link', { name: 'Score calculator' })).toBeNull();
   });
 
-  it('links a deck\'s game to its own pad, and a game\'s other rulebooks to the game\'s', () => {
+  it("links a deck's game to its own pad, and a game's other rulebooks to the game's", () => {
     const { unmount } = renderAt('/rules/card-deck/hearts');
     expect(screen.getByRole('link', { name: 'Score calculator' })).toHaveAttribute('href', '/score/card-deck/hearts');
     unmount();
@@ -92,7 +115,10 @@ describe('RulesPage', () => {
     expect(screen.getByRole('link', { name: 'Score calculator' })).toHaveAttribute('href', '/score/dominion');
     again.unmount();
     const europe = renderAt('/rules/ticket-to-ride/europe');
-    expect(screen.getByRole('link', { name: 'Score calculator' })).toHaveAttribute('href', '/score/ticket-to-ride?map=europe');
+    expect(screen.getByRole('link', { name: 'Score calculator' })).toHaveAttribute(
+      'href',
+      '/score/ticket-to-ride?map=europe',
+    );
     europe.unmount();
     renderAt('/rules/card-deck/spoons');
     expect(screen.queryByRole('link', { name: 'Score calculator' })).toBeNull();
@@ -121,19 +147,31 @@ describe('RulesPage', () => {
   describe('house rules', () => {
     const houseRules = () => screen.getByText('House rules').closest('details')!;
 
-    it('lists the game\'s house rules, folded so the rulebook stays in view', () => {
+    it("lists the game's house rules, folded so the rulebook stays in view", () => {
       renderAt('/rules/hogwarts-battle');
       expect(houseRules()).not.toHaveAttribute('open');
       expect(within(houseRules()).getByText('7')).toHaveTextContent('7 rules');
-      const names = within(houseRules()).getAllByRole('term').map(t => t.textContent);
-      expect(names).toEqual(['Altered villain setup', 'Split by cost', 'Stack duplicates', 'Clear the market', 'Dismiss for half', 'Detention amnesty', 'Epic mode']);
+      const names = within(houseRules())
+        .getAllByRole('term')
+        .map((t) => t.textContent);
+      expect(names).toEqual([
+        'Altered villain setup',
+        'Split by cost',
+        'Stack duplicates',
+        'Clear the market',
+        'Dismiss for half',
+        'Detention amnesty',
+        'Epic mode',
+      ]);
       expect(within(houseRules()).getByText(/pay half its cost in Influence, rounded up/)).toBeInTheDocument();
     });
 
-    it('keeps them on an add-on\'s tabs, which are played on top of the game', () => {
+    it("keeps them on an add-on's tabs, which are played on top of the game", () => {
       renderAt('/rules/hogwarts-battle/monster-box-2');
       // An unknown tab falls back to Game 1, which has them too: pin the tab.
-      expect(within(screen.getByRole('navigation', { name: 'Rulebooks' })).getByRole('link', { current: 'page' })).toHaveTextContent('Monster Box 2');
+      expect(
+        within(screen.getByRole('navigation', { name: 'Rulebooks' })).getByRole('link', { current: 'page' }),
+      ).toHaveTextContent('Monster Box 2');
       expect(within(houseRules()).getByText('Altered villain setup')).toBeInTheDocument();
     });
 
@@ -153,12 +191,21 @@ describe('RulesPage', () => {
       expect(screen.queryByRole('navigation', { name: 'Rulebooks' })).not.toBeInTheDocument();
     });
 
-    it('gives a game\'s own further rulebooks a tab each, then its add-ons', async () => {
+    it("gives a game's own further rulebooks a tab each, then its add-ons", async () => {
       renderAt('/rules/hogwarts-battle/game-4');
       const links = within(tabs()).getAllByRole('link');
-      expect(links.map(l => l.textContent)).toEqual([
-        'Game 1', 'Game 2', 'Game 3', 'Game 4', 'Game 5', 'Game 6', 'Game 7',
-        'Monster Box 1expansion', 'Monster Box 2expansion', 'Monster Box 3expansion', 'Monster Box 4expansion',
+      expect(links.map((l) => l.textContent)).toEqual([
+        'Game 1',
+        'Game 2',
+        'Game 3',
+        'Game 4',
+        'Game 5',
+        'Game 6',
+        'Game 7',
+        'Monster Box 1expansion',
+        'Monster Box 2expansion',
+        'Monster Box 3expansion',
+        'Monster Box 4expansion',
       ]);
       expect(within(tabs()).getByRole('link', { current: 'page' })).toHaveTextContent('Game 4');
       expect(await viewer()).toHaveAttribute('data-src', '/rules/hogwarts-battle.game-4.pdf');
@@ -169,7 +216,11 @@ describe('RulesPage', () => {
       renderAt('/rules/catan');
       const links = within(tabs()).getAllByRole('link');
       // The extension's name already says what it is, so only the expansion is tagged.
-      expect(links.map(l => l.textContent)).toEqual(['Base game', '5–6 Player Extension', 'Cities & Knightsexpansion']);
+      expect(links.map((l) => l.textContent)).toEqual([
+        'Base game',
+        '5–6 Player Extension',
+        'Cities & Knightsexpansion',
+      ]);
       expect(links[0]).toHaveAttribute('aria-current', 'page');
       expect(links[1]).not.toHaveAttribute('aria-current');
       expect(links[1]).toHaveAttribute('href', '/rules/catan/5-6-player-extension');
@@ -190,16 +241,23 @@ describe('RulesPage', () => {
     });
 
     it('switches tabs in place, so Back still returns to the list it came from', () => {
-      const router = renderRouted(<RulesPage />, ['/?p=5', { pathname: '/rules/catan', state: FROM_LIST }], '/rules/:slug/:part?');
+      const router = renderRouted(
+        <RulesPage />,
+        ['/?p=5', { pathname: '/rules/catan', state: FROM_LIST }],
+        '/rules/:slug/:part?',
+      );
       fireEvent.click(within(tabs()).getByRole('link', { name: '5–6 Player Extension' }));
       expect(router.state.historyAction).toBe('REPLACE');
-      expect(router.state.location).toMatchObject({ pathname: '/rules/catan/5-6-player-extension', state: { fromList: true } });
+      expect(router.state.location).toMatchObject({
+        pathname: '/rules/catan/5-6-player-extension',
+        state: { fromList: true },
+      });
 
       fireEvent.click(screen.getByRole('link', { name: /Back to The Game Room/ }));
       expect(router.state.location).toMatchObject({ pathname: '/', search: '?p=5' });
     });
 
-    it('falls back to the game\'s own rulebook for an unknown tab', async () => {
+    it("falls back to the game's own rulebook for an unknown tab", async () => {
       renderAt('/rules/card-deck/mahjong');
       expect(within(tabs()).getByRole('link', { current: 'page' })).toHaveTextContent('Overview');
       expect(await viewer()).toHaveAttribute('data-src', '/rules/card-deck.pdf');
@@ -208,14 +266,19 @@ describe('RulesPage', () => {
     it('scrolls the tab strip sideways to the chosen tab, and only the strip', () => {
       // jsdom has no layout: place Rummy 300px into the strip, and record
       // which elements get scrolled where.
-      const offset = vi.spyOn(HTMLElement.prototype, 'offsetLeft', 'get')
-        .mockImplementation(function (this: HTMLElement) { return this.textContent === 'Rummy' ? 300 : 0; });
+      const offset = vi.spyOn(HTMLElement.prototype, 'offsetLeft', 'get').mockImplementation(function (
+        this: HTMLElement,
+      ) {
+        return this.textContent === 'Rummy' ? 300 : 0;
+      });
       const scrolled: [Element, number][] = [];
       const original = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollLeft');
       Object.defineProperty(Element.prototype, 'scrollLeft', {
         configurable: true,
         get: () => 0,
-        set(this: Element, v: number) { scrolled.push([this, v]); },
+        set(this: Element, v: number) {
+          scrolled.push([this, v]);
+        },
       });
       try {
         renderAt('/rules/card-deck/rummy');
@@ -240,7 +303,10 @@ describe('RulesPage', () => {
       Object.defineProperty(Element.prototype, 'scrollLeft', {
         configurable: true,
         get: () => left,
-        set(v: number) { sets.push(v); left = v; },
+        set(v: number) {
+          sets.push(v);
+          left = v;
+        },
       });
       try {
         renderAt('/rules/card-deck');
@@ -271,14 +337,17 @@ describe('RulesPage', () => {
       const restore = [
         vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(300),
         vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(60),
-        vi.spyOn(HTMLElement.prototype, 'offsetLeft', 'get')
-          .mockImplementation(function (this: HTMLElement) { return at[this.textContent ?? ''] ?? 0; }),
+        vi.spyOn(HTMLElement.prototype, 'offsetLeft', 'get').mockImplementation(function (this: HTMLElement) {
+          return at[this.textContent ?? ''] ?? 0;
+        }),
       ];
       const original = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollLeft');
       Object.defineProperty(Element.prototype, 'scrollLeft', {
         configurable: true,
         get: () => left,
-        set(v: number) { left = v; },
+        set(v: number) {
+          left = v;
+        },
       });
       try {
         renderAt('/rules/card-deck');
@@ -325,7 +394,17 @@ describe('RulesPage', () => {
         fireEvent.change(screen.getByPlaceholderText('Ask a rules question...'), { target: { value: 'Patronus?' } });
         fireEvent.click(screen.getByRole('button', { name: 'Send' }));
         await screen.findByText(/something went wrong/);
-        expect(body(fetchMock).parts).toEqual(['game-2', 'game-3', 'game-4', 'game-5', 'game-6', 'game-7', 'monster-box-of-monsters', 'monster-box-2', 'monster-box-3']);
+        expect(body(fetchMock).parts).toEqual([
+          'game-2',
+          'game-3',
+          'game-4',
+          'game-5',
+          'game-6',
+          'game-7',
+          'monster-box-of-monsters',
+          'monster-box-2',
+          'monster-box-3',
+        ]);
       } finally {
         vi.unstubAllGlobals();
       }
@@ -334,38 +413,74 @@ describe('RulesPage', () => {
     it('opens a tab the assistant names in place too, keeping the way back to the list', async () => {
       const answer = new TextEncoder().encode("That's in the Cities & Knights rules.");
       let read = false;
-      vi.stubGlobal('fetch', vi.fn(async () => ({
-        ok: true,
-        body: { getReader: () => ({ read: async () => (read ? { done: true } : (read = true, { done: false, value: answer })) }) },
-      }) as unknown as Response));
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(
+          async () =>
+            ({
+              ok: true,
+              body: {
+                getReader: () => ({
+                  read: async () => (read ? { done: true } : ((read = true), { done: false, value: answer })),
+                }),
+              },
+            }) as unknown as Response,
+        ),
+      );
       try {
-        const router = renderRouted(<RulesPage />, ['/?p=3', { pathname: '/rules/catan', state: FROM_LIST }], '/rules/:slug/:part?');
+        const router = renderRouted(
+          <RulesPage />,
+          ['/?p=3', { pathname: '/rules/catan', state: FROM_LIST }],
+          '/rules/:slug/:part?',
+        );
         fireEvent.click(screen.getByRole('button', { name: /ai rules assistant/i }));
         fireEvent.change(screen.getByPlaceholderText('Ask a rules question...'), { target: { value: 'Knights?' } });
         fireEvent.click(screen.getByRole('button', { name: 'Send' }));
         fireEvent.click(await screen.findByRole('link', { name: /Open Cities & Knights/ }));
         expect(router.state.historyAction).toBe('REPLACE');
-        expect(router.state.location).toMatchObject({ pathname: '/rules/catan/cities-and-knights', state: { fromList: true } });
+        expect(router.state.location).toMatchObject({
+          pathname: '/rules/catan/cities-and-knights',
+          state: { fromList: true },
+        });
       } finally {
         vi.unstubAllGlobals();
       }
     });
 
-    it('links an answer\'s citations to their rulebooks, each named with what it shows', async () => {
+    it("links an answer's citations to their rulebooks, each named with what it shows", async () => {
       const answer = new TextEncoder().encode('Robber (Catan p. 11, 12), knights (Cities And Knights p. 4).');
       let read = false;
-      vi.stubGlobal('fetch', vi.fn(async () => ({
-        ok: true,
-        body: { getReader: () => ({ read: async () => (read ? { done: true } : (read = true, { done: false, value: answer })) }) },
-      }) as unknown as Response));
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(
+          async () =>
+            ({
+              ok: true,
+              body: {
+                getReader: () => ({
+                  read: async () => (read ? { done: true } : ((read = true), { done: false, value: answer })),
+                }),
+              },
+            }) as unknown as Response,
+        ),
+      );
       try {
         renderAt('/rules/catan/cities-and-knights');
         fireEvent.click(screen.getByRole('button', { name: /ai rules assistant/i }));
         fireEvent.change(screen.getByPlaceholderText('Ask a rules question...'), { target: { value: 'Robber?' } });
         fireEvent.click(screen.getByRole('button', { name: 'Send' }));
-        expect(await screen.findByRole('link', { name: 'Base game p. 11' })).toHaveAttribute('href', '/rules/catan.pdf#page=11');
-        expect(screen.getByRole('link', { name: 'p. 12, Base game' })).toHaveAttribute('href', '/rules/catan.pdf#page=12');
-        expect(screen.getByRole('link', { name: 'Cities & Knights p. 4' })).toHaveAttribute('href', '/rules/catan.cities-and-knights.pdf#page=4');
+        expect(await screen.findByRole('link', { name: 'Base game p. 11' })).toHaveAttribute(
+          'href',
+          '/rules/catan.pdf#page=11',
+        );
+        expect(screen.getByRole('link', { name: 'p. 12, Base game' })).toHaveAttribute(
+          'href',
+          '/rules/catan.pdf#page=12',
+        );
+        expect(screen.getByRole('link', { name: 'Cities & Knights p. 4' })).toHaveAttribute(
+          'href',
+          '/rules/catan.cities-and-knights.pdf#page=4',
+        );
       } finally {
         vi.unstubAllGlobals();
       }
@@ -380,7 +495,7 @@ describe('RulesPage', () => {
   });
 });
 
-describe('RulesPage\'s reader', () => {
+describe("RulesPage's reader", () => {
   // The page reads no media query: a desktop, a phone and a touch tablet
   // all get the reader. `desktop` makes every query answer as a desktop would.
   const desktop = () => stubMatchMedia(false);
@@ -428,8 +543,13 @@ describe('RulesPage\'s reader', () => {
     headWith({});
     renderAt('/rules/catan');
     expect(await screen.findByRole('region', { name: 'Catan rules' })).toHaveAttribute('data-src', '/rules/catan.pdf');
-    fireEvent.click(within(screen.getByRole('navigation', { name: 'Rulebooks' })).getByRole('link', { name: /Cities & Knights/ }));
-    expect(await screen.findByRole('region', { name: /Cities & Knights rules/ })).toHaveAttribute('data-src', '/rules/catan.cities-and-knights.pdf');
+    fireEvent.click(
+      within(screen.getByRole('navigation', { name: 'Rulebooks' })).getByRole('link', { name: /Cities & Knights/ }),
+    );
+    expect(await screen.findByRole('region', { name: /Cities & Knights rules/ })).toHaveAttribute(
+      'data-src',
+      '/rules/catan.cities-and-knights.pdf',
+    );
   });
 
   it('keeps the page, with its link to the PDF, when the reader fails', async () => {
@@ -456,11 +576,15 @@ describe('RulesPage\'s reader', () => {
     /** Says the browser is online or not, and tells the page, as the browser does. */
     const goOnline = (online: boolean) => {
       vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(online);
-      act(() => { window.dispatchEvent(new Event(online ? 'online' : 'offline')); });
+      act(() => {
+        window.dispatchEvent(new Event(online ? 'online' : 'offline'));
+      });
     };
     /** The chat's live region by its box, where it says why it can't answer. */
-    const chatSays = () => screen.getByPlaceholderText('Ask a rules question...').closest('form')!.previousElementSibling as HTMLElement;
-    const tab = (name: RegExp) => within(screen.getByRole('navigation', { name: 'Rulebooks' })).getByRole('link', { name });
+    const chatSays = () =>
+      screen.getByPlaceholderText('Ask a rules question...').closest('form')!.previousElementSibling as HTMLElement;
+    const tab = (name: RegExp) =>
+      within(screen.getByRole('navigation', { name: 'Rulebooks' })).getByRole('link', { name });
 
     afterEach(() => {
       delete (navigator as { serviceWorker?: unknown }).serviceWorker;
@@ -495,14 +619,17 @@ describe('RulesPage\'s reader', () => {
       expect(await screen.findByText(NOT_SAVED)).toBeInTheDocument();
 
       fireEvent.click(within(screen.getByRole('navigation', { name: 'Rulebooks' })).getAllByRole('link')[0]);
-      expect(await screen.findByRole('region', { name: /rules$/ })).toHaveAttribute('data-src', '/rules/one-night-werewolf.pdf');
+      expect(await screen.findByRole('region', { name: /rules$/ })).toHaveAttribute(
+        'data-src',
+        '/rules/one-night-werewolf.pdf',
+      );
       expect(screen.queryByText(NOT_SAVED)).not.toBeInTheDocument();
       expect(screen.getByRole('link', { name: 'Download PDF' })).toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: /ai rules assistant/i }));
       await vi.waitFor(() => expect(chatSays()).toHaveTextContent(OFFLINE + STILL_WORKS));
     });
 
-    it('doesn\'t send the chat to a rulebook that shows but isn\'t saved, which can\'t draw the pages it hasn\'t fetched', async () => {
+    it("doesn't send the chat to a rulebook that shows but isn't saved, which can't draw the pages it hasn't fetched", async () => {
       vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
       headWith({});
       const match = savedHere();
@@ -528,7 +655,7 @@ describe('RulesPage\'s reader', () => {
       expect(match).toHaveBeenCalledWith('/rules/catan.pdf', expect.anything());
     });
 
-    it('keeps what the notice says while another tab\'s rulebook is asked after', async () => {
+    it("keeps what the notice says while another tab's rulebook is asked after", async () => {
       vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
       headWith({});
       let answer: (saved: boolean) => void = () => {};
@@ -538,7 +665,12 @@ describe('RulesPage\'s reader', () => {
       fireEvent.click(screen.getByRole('button', { name: /ai rules assistant/i }));
       await vi.waitFor(() => expect(chatSays()).toHaveTextContent(OFFLINE + STILL_WORKS));
 
-      vi.stubGlobal('caches', { match: () => new Promise((resolve) => { answer = (saved) => resolve(saved ? new Response('%PDF') : undefined); }) });
+      vi.stubGlobal('caches', {
+        match: () =>
+          new Promise((resolve) => {
+            answer = (saved) => resolve(saved ? new Response('%PDF') : undefined);
+          }),
+      });
       fireEvent.click(tab(/Cities & Knights/));
       expect(await screen.findByRole('region', { name: /Cities & Knights rules/ })).toBeInTheDocument();
       expect(chatSays()).toHaveTextContent(OFFLINE + STILL_WORKS);
@@ -546,7 +678,7 @@ describe('RulesPage\'s reader', () => {
       expect(chatSays()).toHaveTextContent(new RegExp(`^${OFFLINE}$`));
     });
 
-    it('forgets a rulebook\'s failure once another tab is open, so going back gives it a fresh reader', async () => {
+    it("forgets a rulebook's failure once another tab is open, so going back gives it a fresh reader", async () => {
       vi.spyOn(console, 'error').mockImplementation(() => {});
       vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
       vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
@@ -583,7 +715,7 @@ describe('RulesPage\'s reader', () => {
       expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAccessibleDescription('2.1 MB');
     });
 
-    it('judges a failure on the network\'s return by that attempt\'s own HEAD, not the last one\'s', async () => {
+    it("judges a failure on the network's return by that attempt's own HEAD, not the last one's", async () => {
       vi.spyOn(console, 'error').mockImplementation(() => {});
       // A dead Wi-Fi, which the browser calls online, then the network back.
       const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new TypeError('Failed to fetch'));
@@ -605,9 +737,12 @@ describe('RulesPage\'s reader', () => {
       controlledBy();
       let late: (saved: boolean) => void = () => {};
       vi.stubGlobal('caches', {
-        match: (src: string) => (src === '/rules/catan.pdf'
-          ? new Promise((resolve) => { late = (saved) => resolve(saved ? new Response('%PDF') : undefined); })
-          : Promise.resolve(undefined)),
+        match: (src: string) =>
+          src === '/rules/catan.pdf'
+            ? new Promise((resolve) => {
+                late = (saved) => resolve(saved ? new Response('%PDF') : undefined);
+              })
+            : Promise.resolve(undefined),
       });
       renderAt('/rules/catan');
       await screen.findByRole('region', { name: 'Catan rules' });
@@ -643,24 +778,28 @@ describe('RulesPage\'s reader', () => {
       expect(remove).not.toHaveBeenCalledWith('online', expect.anything());
     });
 
-    it('says nothing in the reader\'s place until it knows why it failed, and counts no answer in time as no network', async () => {
+    it("says nothing in the reader's place until it knows why it failed, and counts no answer in time as no network", async () => {
       vi.useFakeTimers({ shouldAdvanceTime: true });
       vi.spyOn(console, 'error').mockImplementation(() => {});
       // The network neither answers nor fails.
       const fetchSpy = vi.spyOn(globalThis, 'fetch').mockReturnValue(new Promise<Response>(() => {}));
       renderAt('/rules/one-night-werewolf/vampire');
-      await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledWith(VAMPIRE, expect.objectContaining({ method: 'HEAD' })));
+      await vi.waitFor(() =>
+        expect(fetchSpy).toHaveBeenCalledWith(VAMPIRE, expect.objectContaining({ method: 'HEAD' })),
+      );
       await act(async () => {});
       expect(screen.queryByText(/couldn’t be shown here/)).not.toBeInTheDocument();
       expect(screen.queryByText(NOT_SAVED)).not.toBeInTheDocument();
       expect(screen.getByRole('link', { name: 'Download PDF' })).toBeInTheDocument();
 
-      await act(async () => { await vi.advanceTimersByTimeAsync(PROBE_MS); });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(PROBE_MS);
+      });
       expect(screen.getByText(NOT_SAVED)).toBeInTheDocument();
       expect(screen.queryByRole('link', { name: 'Download PDF' })).not.toBeInTheDocument();
     });
 
-    it('counts a network that doesn\'t answer as none, though the browser says it is online, asking it once', async () => {
+    it("counts a network that doesn't answer as none, though the browser says it is online, asking it once", async () => {
       vi.spyOn(console, 'error').mockImplementation(() => {});
       const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
       renderAt('/rules/one-night-werewolf/vampire');
@@ -679,7 +818,9 @@ describe('RulesPage\'s reader', () => {
       const match = savedHere(VAMPIRE);
       renderAt('/rules/one-night-werewolf/vampire');
 
-      await vi.waitFor(() => expect(match).toHaveBeenCalledWith(VAMPIRE, { cacheName: 'gameroom-rulebooks', ignoreVary: true }));
+      await vi.waitFor(() =>
+        expect(match).toHaveBeenCalledWith(VAMPIRE, { cacheName: 'gameroom-rulebooks', ignoreVary: true }),
+      );
       await act(async () => {});
       expect(screen.getByText(/couldn’t be shown here/)).toBeInTheDocument();
       expect(screen.queryByText(NOT_SAVED)).not.toBeInTheDocument();
@@ -700,15 +841,18 @@ describe('RulesPage\'s reader', () => {
   });
 
   /** A HEAD for the PDF's size gets no answer; a question gets `answer`. */
-  const answering = (answer: string) => vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
-    if (init?.method === 'HEAD') return { ok: false, headers: new Headers() } as Response;
-    let read = false;
-    const value = new TextEncoder().encode(answer);
-    return {
-      ok: true,
-      body: { getReader: () => ({ read: async () => (read ? { done: true } : (read = true, { done: false, value })) }) },
-    } as unknown as Response;
-  });
+  const answering = (answer: string) =>
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
+      if (init?.method === 'HEAD') return { ok: false, headers: new Headers() } as Response;
+      let read = false;
+      const value = new TextEncoder().encode(answer);
+      return {
+        ok: true,
+        body: {
+          getReader: () => ({ read: async () => (read ? { done: true } : ((read = true), { done: false, value })) }),
+        },
+      } as unknown as Response;
+    });
   const ask = () => {
     fireEvent.click(screen.getByRole('button', { name: /ai rules assistant/i }));
     fireEvent.change(screen.getByPlaceholderText('Ask a rules question...'), { target: { value: 'Robber?' } });
@@ -717,13 +861,21 @@ describe('RulesPage\'s reader', () => {
 
   it('opens a citation of another tab at its page in the reader, in place, under the answer', async () => {
     answering('A 7 moves the robber (Catan p. 5), knights (Cities And Knights p. 4), as before (p. 3).');
-    const router = renderRouted(<RulesPage />, ['/?p=3', { pathname: '/rules/catan/cities-and-knights', state: FROM_LIST }], '/rules/:slug/:part?');
+    const router = renderRouted(
+      <RulesPage />,
+      ['/?p=3', { pathname: '/rules/catan/cities-and-knights', state: FROM_LIST }],
+      '/rules/:slug/:part?',
+    );
     ask();
     const link = await screen.findByRole('link', { name: 'Base game p. 5' });
     // Taken by the page, not opened as a PDF.
     expect(fireEvent.click(link)).toBe(false);
     expect(router.state.historyAction).toBe('REPLACE');
-    expect(router.state.location).toMatchObject({ pathname: '/rules/catan', search: '?page=5', state: { fromList: true } });
+    expect(router.state.location).toMatchObject({
+      pathname: '/rules/catan',
+      search: '?page=5',
+      state: { fromList: true },
+    });
     // The window stays put for the reader to move, not sent to the top first.
     expect(router.state.preventScrollReset).toBe(true);
     const reader = await screen.findByRole('region', { name: 'Catan rules' });
@@ -738,11 +890,16 @@ describe('RulesPage\'s reader', () => {
     // The answer still reads as it was asked, on Cities & Knights: its own
     // page stays a link, and a bare page, which could have been either
     // rulebook there, stays text rather than turning into Catan's.
-    expect(screen.getByRole('link', { name: 'Cities & Knights p. 4' })).toHaveAttribute('href', '/rules/catan.cities-and-knights.pdf#page=4');
+    expect(screen.getByRole('link', { name: 'Cities & Knights p. 4' })).toHaveAttribute(
+      'href',
+      '/rules/catan.cities-and-knights.pdf#page=4',
+    );
     expect(screen.queryByRole('link', { name: /p\. 3/ })).not.toBeInTheDocument();
     expect(screen.getByText(/as before \(p\. 3\)/)).toBeInTheDocument();
     // A tab opened afterwards carries the way back, not the citation's words.
-    fireEvent.click(within(screen.getByRole('navigation', { name: 'Rulebooks' })).getByRole('link', { name: /Cities & Knights/ }));
+    fireEvent.click(
+      within(screen.getByRole('navigation', { name: 'Rulebooks' })).getByRole('link', { name: /Cities & Knights/ }),
+    );
     expect(router.state.location.state).toEqual({ fromList: true });
   });
 
@@ -852,7 +1009,7 @@ describe('RulesPage\'s reader', () => {
     }
   });
 
-  it('leaves citations to open the PDF when the reader itself won\'t load', async () => {
+  it("leaves citations to open the PDF when the reader itself won't load", async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     answering('A vampire wakes (Vampire p. 2).');
     const router = renderRouted(<RulesPage />, ['/rules/one-night-werewolf/vampire'], '/rules/:slug/:part?');
@@ -863,7 +1020,7 @@ describe('RulesPage\'s reader', () => {
     expect(router.state.location.search).toBe('');
   });
 
-  it('takes citations in the reader again once a rulebook that failed offline loads on the network\'s return', async () => {
+  it("takes citations in the reader again once a rulebook that failed offline loads on the network's return", async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
     answering('A vampire wakes (Vampire p. 2).');
@@ -873,7 +1030,9 @@ describe('RulesPage\'s reader', () => {
 
       reader.broken = null;
       onLine.mockReturnValue(true);
-      act(() => { window.dispatchEvent(new Event('online')); });
+      act(() => {
+        window.dispatchEvent(new Event('online'));
+      });
       const shown = await screen.findByRole('region', { name: /Vampire rules/ });
       ask();
       const link = await screen.findByRole('link', { name: 'Vampire p. 2' });
@@ -916,7 +1075,10 @@ describe('RulesPage\'s reader', () => {
     desktop();
     headWith({ 'content-length': '2048' });
     renderAt('/rules/7-wonders');
-    expect(await screen.findByRole('region', { name: '7 Wonders rules' })).toHaveAttribute('data-src', '/rules/7-wonders.pdf');
+    expect(await screen.findByRole('region', { name: '7 Wonders rules' })).toHaveAttribute(
+      'data-src',
+      '/rules/7-wonders.pdf',
+    );
     expect(screen.queryByTitle('7 Wonders rules')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAccessibleDescription('4.6 MB');
     // The browser's own viewer a click away, for its zoom, thumbnails and printing.
@@ -938,7 +1100,10 @@ describe('RulesPage\'s reader', () => {
      * `saving(path)`, each a list of answers sent at once, or a function
      * that gets the port to answer on later.
      */
-    function worker({ asked = () => ['unsaved'], saving = () => ['saving', 'saved'] }: {
+    function worker({
+      asked = () => ['unsaved'],
+      saving = () => ['saving', 'saved'],
+    }: {
       asked?: (path: string) => SaveState[] | ((say: (state: SaveState) => void) => void);
       saving?: (path: string) => SaveState[] | ((say: (state: SaveState) => void) => void);
     } = {}) {
@@ -953,8 +1118,11 @@ describe('RulesPage\'s reader', () => {
     }
     /** The service worker's saved rulebooks, as the page's saved check reads them. */
     const savedHere = (...saved: string[]) =>
-      vi.stubGlobal('caches', { match: vi.fn(async (src: string) => (saved.includes(src) ? new Response('%PDF') : undefined)) });
-    const asks = (post: ReturnType<typeof worker>) => post.mock.calls.map(([m]) => `${m.path} ${m.save ? 'save' : 'ask'}`);
+      vi.stubGlobal('caches', {
+        match: vi.fn(async (src: string) => (saved.includes(src) ? new Response('%PDF') : undefined)),
+      });
+    const asks = (post: ReturnType<typeof worker>) =>
+      post.mock.calls.map(([m]) => `${m.path} ${m.save ? 'save' : 'ask'}`);
     /** The Save for offline button, once the page has asked the worker after its rulebook. */
     const saveButton = async () => {
       const button = await screen.findByRole('button', { name: 'Save for offline' });
@@ -999,7 +1167,12 @@ describe('RulesPage\'s reader', () => {
       headWith({});
       savedHere();
       let finish: (state: SaveState) => void = () => {};
-      const post = worker({ saving: () => (say) => { say('saving'); finish = say; } });
+      const post = worker({
+        saving: () => (say) => {
+          say('saving');
+          finish = say;
+        },
+      });
       renderAt('/rules/7-wonders');
       fireEvent.click(await saveButton());
       expect(screen.getByText('Saving…')).toBeInTheDocument();
@@ -1035,7 +1208,12 @@ describe('RulesPage\'s reader', () => {
       headWith({});
       savedHere();
       let finish: (state: SaveState) => void = () => {};
-      const post = worker({ saving: () => (say) => { say('saving'); finish = say; } });
+      const post = worker({
+        saving: () => (say) => {
+          say('saving');
+          finish = say;
+        },
+      });
       renderAt('/rules/azul');
       await vi.waitFor(() => expect(screen.getByText('Saving…')).toBeVisible());
       expect(screen.queryByRole('button', { name: 'Save for offline' })).not.toBeInTheDocument();
@@ -1056,19 +1234,27 @@ describe('RulesPage\'s reader', () => {
       expect(screen.queryByText('Saved on this device.')).not.toBeInTheDocument();
     });
 
-    it('acts on the tab on screen, an add-on\'s rulebook included, announcing only a save that ends', async () => {
+    it("acts on the tab on screen, an add-on's rulebook included, announcing only a save that ends", async () => {
       headWith({});
       savedHere();
       const post = worker({ asked: (path) => [path === '/rules/catan.pdf' ? 'saved' : 'unsaved'] });
       renderAt('/rules/catan');
       expect(await screen.findByText('Saved on this device')).toBeInTheDocument();
-      fireEvent.click(within(screen.getByRole('navigation', { name: 'Rulebooks' })).getByRole('link', { name: /Cities & Knights/ }));
+      fireEvent.click(
+        within(screen.getByRole('navigation', { name: 'Rulebooks' })).getByRole('link', { name: /Cities & Knights/ }),
+      );
       fireEvent.click(await saveButton());
-      expect(asks(post)).toEqual(['/rules/catan.pdf ask', '/rules/catan.cities-and-knights.pdf ask', '/rules/catan.cities-and-knights.pdf save']);
+      expect(asks(post)).toEqual([
+        '/rules/catan.pdf ask',
+        '/rules/catan.cities-and-knights.pdf ask',
+        '/rules/catan.cities-and-knights.pdf save',
+      ]);
       expect(await screen.findByText('Saved on this device')).toBeInTheDocument();
       expect(screen.getByText('Saved on this device.')).toBeInTheDocument();
       // Back on the base game, what was said of it stands, and isn't news.
-      fireEvent.click(within(screen.getByRole('navigation', { name: 'Rulebooks' })).getByRole('link', { name: 'Base game' }));
+      fireEvent.click(
+        within(screen.getByRole('navigation', { name: 'Rulebooks' })).getByRole('link', { name: 'Base game' }),
+      );
       expect(await screen.findByText('Saved on this device')).toBeInTheDocument();
       expect(screen.queryByText('Saved on this device.')).not.toBeInTheDocument();
     });
@@ -1096,7 +1282,9 @@ describe('RulesPage\'s reader', () => {
       savedHere();
       worker();
       renderAt('/rules/7-wonders');
-      expect(await screen.findByRole('status')).toHaveTextContent('Not saved on this device yet. Tap Save for offline next time you have signal.');
+      expect(await screen.findByRole('status')).toHaveTextContent(
+        'Not saved on this device yet. Tap Save for offline next time you have signal.',
+      );
       expect(screen.queryByRole('button', { name: /^Save/ })).not.toBeInTheDocument();
     });
 
@@ -1106,7 +1294,9 @@ describe('RulesPage\'s reader', () => {
       vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
       vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
       renderAt('/rules/one-night-werewolf/vampire');
-      expect(await screen.findByRole('status')).toHaveTextContent('Not saved on this device yet. Tap Save for offline next time you have signal.');
+      expect(await screen.findByRole('status')).toHaveTextContent(
+        'Not saved on this device yet. Tap Save for offline next time you have signal.',
+      );
     });
 
     it('asks again when the network comes back', async () => {
@@ -1122,7 +1312,9 @@ describe('RulesPage\'s reader', () => {
       reader.broken = null;
       fetchSpy.mockReturnValue(new Promise(() => {}));
       vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
-      act(() => { window.dispatchEvent(new Event('online')); });
+      act(() => {
+        window.dispatchEvent(new Event('online'));
+      });
       await screen.findByRole('region', { name: /Vampire rules/ });
       expect(await screen.findByText('Saved on this device')).toBeInTheDocument();
       expect(asks(post)).toEqual(['/rules/one-night-werewolf.vampire.pdf save']);

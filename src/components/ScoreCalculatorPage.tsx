@@ -23,12 +23,17 @@ import RoundScorePad from './RoundScorePad';
  */
 export default function ScoreCalculatorPage() {
   const { slug = '', part } = useParams<{ slug: string; part?: string }>();
-  const game = ALL_GAMES.find(g => g.slug === slug);
-  const sub = part === undefined ? undefined : game?.subgames?.find(s => s.slug === part);
+  const game = ALL_GAMES.find((g) => g.slug === slug);
+  const sub = part === undefined ? undefined : game?.subgames?.find((s) => s.slug === part);
   const pad = scorePadFor(slug, part);
 
   if (!game || !pad || (part !== undefined && !sub)) {
-    return <NotFoundPage title="No score calculator" message="There's no score calculator for that game. Pick a game from the collection to see what it has." />;
+    return (
+      <NotFoundPage
+        title="No score calculator"
+        message="There's no score calculator for that game. Pick a game from the collection to see what it has."
+      />
+    );
   }
 
   return (

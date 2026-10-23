@@ -47,9 +47,7 @@ describe('VoteButton', () => {
   });
 
   it('uses plural "votes" when count is 0 or greater than 1', () => {
-    const { rerender } = render(
-      <VoteButton itemName="Splendor" voteCount={0} voted={false} onClick={() => {}} />,
-    );
+    const { rerender } = render(<VoteButton itemName="Splendor" voteCount={0} voted={false} onClick={() => {}} />);
     expect(screen.getByRole('button', { name: 'Vote for Splendor (0 votes)' })).toBeInTheDocument();
     rerender(<VoteButton itemName="Splendor" voteCount={2} voted={false} onClick={() => {}} />);
     expect(screen.getByRole('button', { name: 'Vote for Splendor (2 votes)' })).toBeInTheDocument();

@@ -13,7 +13,7 @@ function renderWithContext(ui: React.ReactElement, url = '/') {
   return render(
     <MemoryRouter initialEntries={[url]}>
       <FilterProvider>{ui}</FilterProvider>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 
@@ -28,11 +28,14 @@ describe('GameCard', () => {
     expect(screen.getByText(/Medium · 2\.3/)).toHaveTextContent('Difficulty: Medium · 2.3');
   });
 
-  it('shows a deck\'s difficulty as the span of its games', () => {
-    const deck = { ...deckGame, subgames: [
-      { ...deckGame.subgames![0], weight: 1.1 },
-      { ...deckGame.subgames![1], weight: 1.2 },
-    ] };
+  it("shows a deck's difficulty as the span of its games", () => {
+    const deck = {
+      ...deckGame,
+      subgames: [
+        { ...deckGame.subgames![0], weight: 1.1 },
+        { ...deckGame.subgames![1], weight: 1.2 },
+      ],
+    };
     renderWithContext(<GameCard game={deck} />);
     expect(screen.getByText(/Light · 1\.1–1\.2/)).toBeInTheDocument();
   });
@@ -91,7 +94,10 @@ describe('GameCard', () => {
   it('points Rules at the add-on the players filter admits the game through', () => {
     const catan = GAMES.find((g) => g.slug === 'catan')!;
     renderWithContext(<GameCard game={catan} />, '/?p=5');
-    expect(screen.getByTitle('Rules for Catan').closest('a')).toHaveAttribute('href', '/rules/catan/5-6-player-extension');
+    expect(screen.getByTitle('Rules for Catan').closest('a')).toHaveAttribute(
+      'href',
+      '/rules/catan/5-6-player-extension',
+    );
   });
 
   it('renders fallback rules link when game has no rules field', () => {
@@ -137,8 +143,12 @@ describe('GameCard', () => {
     ['Rules for 7 Wonders', sevenWondersGame, '/rules/7-wonders'],
     ['Score Calculator', sevenWondersGame, '/score/7-wonders'],
     ['Word Checker', bananagramsGame, '/word-checker'],
-  ])('marks its %s link as leaving the list, so the page\'s Back returns to it', (title, game, pathname) => {
-    const router = renderRouted(<FilterProvider><GameCard game={game} /></FilterProvider>);
+  ])("marks its %s link as leaving the list, so the page's Back returns to it", (title, game, pathname) => {
+    const router = renderRouted(
+      <FilterProvider>
+        <GameCard game={game} />
+      </FilterProvider>,
+    );
     fireEvent.click(screen.getByTitle(title));
     expect(router.state.location).toMatchObject({ pathname, state: { fromList: true } });
   });
@@ -230,15 +240,26 @@ describe('GameCard', () => {
     it('says how many fit once players are chosen, and lists only those', () => {
       renderWithContext(<GameCard game={deckGame} />, '/?p=2');
       fireEvent.click(screen.getByRole('button', { name: 'Deck: 1 of 2 games fit' }));
-      expect(screen.getAllByRole('listitem').map((li) => li.querySelector('.sub-name')!.textContent)).toEqual(['Speed']);
+      expect(screen.getAllByRole('listitem').map((li) => li.querySelector('.sub-name')!.textContent)).toEqual([
+        'Speed',
+      ]);
     });
 
     it('closes the list when a filter leaves nothing in it', () => {
       function NinePlayers() {
         const { dispatch } = useFilter();
-        return <button type="button" onClick={() => dispatch({ type: 'SET_PLAYERS', payload: 9 })}>Nine players</button>;
+        return (
+          <button type="button" onClick={() => dispatch({ type: 'SET_PLAYERS', payload: 9 })}>
+            Nine players
+          </button>
+        );
       }
-      renderWithContext(<><NinePlayers /><GameCard game={deckGame} /></>);
+      renderWithContext(
+        <>
+          <NinePlayers />
+          <GameCard game={deckGame} />
+        </>,
+      );
       fireEvent.click(screen.getByRole('button', { name: 'Deck: +2 games' }));
       expect(screen.getByRole('list', { name: 'Deck games' })).toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: 'Nine players' }));
@@ -270,7 +291,11 @@ describe('GameCard add-ons layout', () => {
 
 describe('GameCard More', () => {
   it('sits at the end of the description and opens the long write-up and awards in place', () => {
-    const game: Game = { ...quickGame, detail: [{ heading: 'How it plays', body: 'Full rules story.' }], awards: [{ name: 'Mensa Select', year: 2009 }] };
+    const game: Game = {
+      ...quickGame,
+      detail: [{ heading: 'How it plays', body: 'Full rules story.' }],
+      awards: [{ name: 'Mensa Select', year: 2009 }],
+    };
     const { container } = renderWithContext(<GameCard game={game} />);
     const more = screen.getByRole('button', { name: 'More about Quick Game' });
     expect(more.closest('.card-desc')).toHaveTextContent(`${quickGame.short} More`);

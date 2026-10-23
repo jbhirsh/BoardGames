@@ -58,7 +58,9 @@ export function tieNotes(
     const who = names(tied.map((i) => players[i]));
     const settles = breaks.find((b) => tied.some((i) => b.values[i] !== b.values[tied[0]]));
     if (!settles) {
-      notes.push(`${who} tie on ${shown[tied[0]]}${breaks.length ? ' and every tie-break' : ''}, ${shared(ordinal(placed[tied[0]]))}.`);
+      notes.push(
+        `${who} tie on ${shown[tied[0]]}${breaks.length ? ' and every tie-break' : ''}, ${shared(ordinal(placed[tied[0]]))}.`,
+      );
       continue;
     }
     const still = [...new Set(tied.map((i) => placed[i]))]

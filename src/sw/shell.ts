@@ -107,8 +107,10 @@ export async function activate(build: Build, caches: CacheStorage): Promise<void
   const assets = await caches.open(ASSETS);
   for (const request of await assets.keys()) {
     const path = pathOf(request);
-    if (/^\/(assets|pdfjs)\//.test(path)
-      || (path.startsWith(ART) && (await assets.match(request))?.headers.get(ART_VERSION) !== build.art[path])) {
+    if (
+      /^\/(assets|pdfjs)\//.test(path) ||
+      (path.startsWith(ART) && (await assets.match(request))?.headers.get(ART_VERSION) !== build.art[path])
+    ) {
       await assets.delete(request);
     }
   }
@@ -230,14 +232,22 @@ export function saver(
   // at once: each would otherwise fetch the files none has saved yet.
   let readerSaving: Promise<void> | null = null;
   const reader = () => {
-    readerSaving ??= saveReader(build, caches).finally(() => { readerSaving = null; });
+    readerSaving ??= saveReader(build, caches).finally(() => {
+      readerSaving = null;
+    });
     return readerSaving;
   };
   const save = (path: string) => {
     let done = saving.get(path);
     if (!done) {
       done = saveRulebook(path, build, caches, fetcher, reader)
-        .then((): SaveOutcome => { saved(path); return 'saved'; }, (error: unknown): SaveOutcome => (isFull(error) ? 'full' : 'failed'))
+        .then(
+          (): SaveOutcome => {
+            saved(path);
+            return 'saved';
+          },
+          (error: unknown): SaveOutcome => (isFull(error) ? 'full' : 'failed'),
+        )
         .finally(() => saving.delete(path));
       saving.set(path, done);
     }
@@ -245,15 +255,22 @@ export function saver(
   };
   const isRequest = (message: unknown): message is SaveRequest => {
     const m = message as Partial<SaveRequest> | null;
-    return typeof m === 'object' && m !== null && m.type === SAVE_MESSAGE && typeof m.save === 'boolean'
-      && typeof m.path === 'string' && Object.hasOwn(build.rulebooks, m.path);
+    return (
+      typeof m === 'object' &&
+      m !== null &&
+      m.type === SAVE_MESSAGE &&
+      typeof m.save === 'boolean' &&
+      typeof m.path === 'string' &&
+      Object.hasOwn(build.rulebooks, m.path)
+    );
   };
   return {
     save,
     async answer(message, reply) {
       if (!isRequest(message)) return;
       const { path } = message;
-      if (!saving.has(path) && (await (await caches.open(RULEBOOKS)).match(path, MATCH))) return reply({ path, state: 'saved' });
+      if (!saving.has(path) && (await (await caches.open(RULEBOOKS)).match(path, MATCH)))
+        return reply({ path, state: 'saved' });
       // Asked again after the wait: a save may have begun meanwhile.
       const done = saving.get(path) ?? (message.save ? save(path) : null);
       if (!done) return reply({ path, state: 'unsaved' });

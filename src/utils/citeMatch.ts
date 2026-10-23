@@ -20,7 +20,8 @@ const list = (text: string) => text.split(/\s+/).filter(Boolean);
 
 // Words that say nothing about which rule is meant. Matched on the word as
 // written (lowercased, apostrophes gone), before stemming.
-const STOPWORDS = new Set(list(`
+const STOPWORDS = new Set(
+  list(`
   a an the and or but nor if then than so as at by for from in into of off on onto to with within without
   is are was were be been being am do does did done doing have has had having
   it its this that these those there here which who whom whose what when where why how
@@ -31,7 +32,8 @@ const STOPWORDS = new Set(list(`
   still even yes own instead however because since
   dont cant wont isnt arent doesnt didnt youre theyre thats theres
   page pages rule rules rulebook rulebooks
-`));
+`),
+);
 
 // The fewest distinct answer words the passage must share, how many of
 // those must be more than generic, and the share of the answer's words that
@@ -58,10 +60,15 @@ const DOUBLING = new Set(['ing', 'ed', 'er']);
 
 // Words every rulebook uses everywhere: they count toward a passage's
 // share of the answer's words, but a passage needs more than these.
-const GENERIC = new Set([...list('player card turn game take draw play hand deck put get use make give').map((w) => stem(w)), '1']);
+const GENERIC = new Set([
+  ...list('player card turn game take draw play hand deck put get use make give').map((w) => stem(w)),
+  '1',
+]);
 
 // Number words as the digits rulebooks often print instead ("steal one" for "steal 1").
-const NUMBERS = new Map(list('one two three four five six seven eight nine ten eleven twelve').map((w, i) => [w, String(i + 1)]));
+const NUMBERS = new Map(
+  list('one two three four five six seven eight nine ten eleven twelve').map((w, i) => [w, String(i + 1)]),
+);
 
 /**
  * A light stem, so "moves", "moved", "moving" and "move" meet, and
@@ -123,7 +130,10 @@ export function citingClause(before: string): string {
   let from = 0;
   for (const m of text.matchAll(CITATION)) from = Math.max(from, m.index + m[0].length);
   for (const m of text.matchAll(SENTENCE_END)) from = Math.max(from, m.index + m[0].length);
-  return text.slice(from).replace(/^[\s,;:–—-]+/, '').trim();
+  return text
+    .slice(from)
+    .replace(/^[\s,;:–—-]+/, '')
+    .trim();
 }
 
 // A sentence's end in the text between two words, with any closing quote or
@@ -273,7 +283,8 @@ export function lineBreaks(runs: readonly StyledRun[], starts: readonly number[]
   let newLine = false;
   runs.forEach((run, i) => {
     if (run.str.trim() !== '') {
-      if (last && newLine && (run.fontName !== last.fontName || run.transform?.[3] !== last.transform?.[3])) out.push(starts[i]);
+      if (last && newLine && (run.fontName !== last.fontName || run.transform?.[3] !== last.transform?.[3]))
+        out.push(starts[i]);
       last = run;
       newLine = false;
     }

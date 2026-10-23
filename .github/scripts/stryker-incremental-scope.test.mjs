@@ -55,7 +55,7 @@ describe('narrowFile', () => {
       'src/utils/filterUrl.ts',
       'api/chat.ts',
     ]);
-    expect(log).toHaveBeenCalledWith('Kept 2 of 3 file(s) from the incremental file for this run\'s scope.');
+    expect(log).toHaveBeenCalledWith("Kept 2 of 3 file(s) from the incremental file for this run's scope.");
   });
 
   it('leaves a missing file missing', () => {

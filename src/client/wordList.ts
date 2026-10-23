@@ -21,8 +21,10 @@ export function loadWordList(): Promise<Set<string> | null> {
   if (!loading) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), LOAD_TIMEOUT_MS);
-    const text = (url: string) => fetch(url, { signal: controller.signal })
-      .then((res) => (res.ok ? res.text() : Promise.reject(new Error(`HTTP ${res.status}`))));
+    const text = (url: string) =>
+      fetch(url, { signal: controller.signal }).then((res) =>
+        res.ok ? res.text() : Promise.reject(new Error(`HTTP ${res.status}`)),
+      );
     loading = Promise.all([text(ENABLE_URL), text(ADDITIONS_URL).catch(() => '')])
       .then((texts) => parseWordList(texts.join('\n')))
       .catch(() => {

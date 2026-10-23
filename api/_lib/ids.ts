@@ -13,8 +13,12 @@ export type ParsedIds = { ok: true; ids: string[] } | { ok: false; error: string
 export function parseIds(raw: unknown): ParsedIds {
   const idsRaw = typeof raw === 'string' ? raw : '';
   if (idsRaw.length === 0) return { ok: false, error: 'ids query parameter is required' };
-  const ids = idsRaw.split(',').map((s) => s.trim()).filter((s) => SLUG_RE.test(s));
-  if (ids.length === 0) return { ok: false, error: 'ids must contain at least one valid slug (lowercase alphanumeric + hyphens)' };
+  const ids = idsRaw
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => SLUG_RE.test(s));
+  if (ids.length === 0)
+    return { ok: false, error: 'ids must contain at least one valid slug (lowercase alphanumeric + hyphens)' };
   if (ids.length > MAX_IDS) return { ok: false, error: `too many ids (max ${MAX_IDS})` };
   return { ok: true, ids };
 }

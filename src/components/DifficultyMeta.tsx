@@ -12,7 +12,8 @@ export default function DifficultyMeta({ item }: { item: Pick<Filterable, 'weigh
   if (!label) return null;
   return (
     <span className="cmeta">
-      <GaugeIcon /> <span className="sr-only">Difficulty: </span>{label}
+      <GaugeIcon /> <span className="sr-only">Difficulty: </span>
+      {label}
     </span>
   );
 }

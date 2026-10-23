@@ -28,10 +28,11 @@ function serviceWorker(asked: (path: string, save: boolean) => Answer = () => ['
     postMessage,
     asks: () => postMessage.mock.calls.map(([m]) => `${m.path} ${m.save ? 'save' : 'ask'}`),
     /** Takes charge of the page, as a first visit's worker does with clients.claim(). */
-    claim: () => act(() => {
-      container.controller = { postMessage };
-      container.dispatchEvent(new Event('controllerchange'));
-    }),
+    claim: () =>
+      act(() => {
+        container.controller = { postMessage };
+        container.dispatchEvent(new Event('controllerchange'));
+      }),
   };
 }
 
@@ -39,9 +40,12 @@ function serviceWorker(asked: (path: string, save: boolean) => Answer = () => ['
 const answers = () => act(() => new Promise<void>((resolve) => setImmediate(resolve)));
 
 function hook(pdf: string, saved: boolean | 'asking' = false, online = true) {
-  return renderHook((p: { pdf: string; saved: boolean | 'asking'; online: boolean }) => useOfflineSave(p.pdf, p.saved, p.online), {
-    initialProps: { pdf, saved, online },
-  });
+  return renderHook(
+    (p: { pdf: string; saved: boolean | 'asking'; online: boolean }) => useOfflineSave(p.pdf, p.saved, p.online),
+    {
+      initialProps: { pdf, saved, online },
+    },
+  );
 }
 
 afterEach(() => {
@@ -67,7 +71,10 @@ describe('useOfflineSave', () => {
 
   it('starts a small rulebook at Saving… and asks the worker to save it, as opening it does', async () => {
     let finish: Say = () => {};
-    const sw = serviceWorker(() => (say) => { say('saving'); finish = say; });
+    const sw = serviceWorker(() => (say) => {
+      say('saving');
+      finish = say;
+    });
     const { result } = hook(SMALL);
     expect(result.current.state).toBe('saving');
     expect(sw.asks()).toEqual([`${SMALL} save`]);
@@ -78,7 +85,7 @@ describe('useOfflineSave', () => {
     expect(result.current.state).toBe('saved');
   });
 
-  it('holds its place unseen until the page\'s saved check answers, and asks nothing meanwhile', () => {
+  it("holds its place unseen until the page's saved check answers, and asks nothing meanwhile", () => {
     const sw = serviceWorker();
     const { result, rerender } = hook(LARGE, 'asking');
     expect(result.current).toMatchObject({ state: 'unsaved', hidden: true });
@@ -88,7 +95,7 @@ describe('useOfflineSave', () => {
     expect(sw.postMessage).not.toHaveBeenCalled();
   });
 
-  it('says Saved offline of a saved rulebook, and nothing of one that isn\'t', () => {
+  it("says Saved offline of a saved rulebook, and nothing of one that isn't", () => {
     const sw = serviceWorker();
     const { result, rerender } = hook(LARGE, true, false);
     expect(result.current.state).toBe('saved');
@@ -100,7 +107,9 @@ describe('useOfflineSave', () => {
   it('shows nothing once a worker answers nothing in time, an older one that knows no such message', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
     let late: Say = () => {};
-    serviceWorker(() => (say) => { late = say; });
+    serviceWorker(() => (say) => {
+      late = say;
+    });
     const { result } = hook(LARGE);
     act(() => vi.advanceTimersByTime(NO_REPLY_MS - 1));
     expect(result.current.state).toBe('unsaved');
@@ -147,16 +156,20 @@ describe('useOfflineSave', () => {
     await answers();
     expect(result.current.state).toBe('saving');
     const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
-    act(() => { document.dispatchEvent(new Event('visibilitychange')); });
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
     expect(sw.asks()).toEqual([`${SMALL} save`]);
     visibility.mockReturnValue('visible');
-    act(() => { document.dispatchEvent(new Event('visibilitychange')); });
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
     expect(sw.asks()).toEqual([`${SMALL} save`, `${SMALL} ask`]);
     await answers();
     expect(result.current.state).toBe('saved');
   });
 
-  it('comes in as a first visit\'s worker takes charge of the page', async () => {
+  it("comes in as a first visit's worker takes charge of the page", async () => {
     const sw = serviceWorker(() => ['saving', 'saved'], false);
     const { result } = hook(SMALL);
     expect(result.current.state).toBeNull();
@@ -167,7 +180,7 @@ describe('useOfflineSave', () => {
     expect(result.current.state).toBe('saved');
   });
 
-  it('saves on a tap, asking once for the site\'s storage to be kept, failures and all', async () => {
+  it("saves on a tap, asking once for the site's storage to be kept, failures and all", async () => {
     const persist = vi.fn().mockRejectedValue(new Error('no'));
     Object.defineProperty(navigator, 'storage', { value: { persist }, configurable: true });
     const sw = serviceWorker((_path, save) => (save ? ['saving', 'failed'] : ['unsaved']));
@@ -183,7 +196,7 @@ describe('useOfflineSave', () => {
     expect(persist).toHaveBeenCalledTimes(1);
   });
 
-  it('saves without asking to keep storage where the browser can\'t', async () => {
+  it("saves without asking to keep storage where the browser can't", async () => {
     Object.defineProperty(navigator, 'storage', { value: {}, configurable: true });
     serviceWorker((_path, save) => (save ? ['saving', 'full'] : ['unsaved']));
     const { result } = hook(LARGE);
@@ -199,7 +212,7 @@ describe('useOfflineSave', () => {
     expect(result.current.state).toBeNull();
   });
 
-  it('keeps what each tab\'s rulebook was said to be', async () => {
+  it("keeps what each tab's rulebook was said to be", async () => {
     serviceWorker((path) => [path === LARGE ? 'saved' : 'unsaved']);
     const { result, rerender } = hook(LARGE);
     await answers();

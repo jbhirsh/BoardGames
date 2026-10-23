@@ -23,8 +23,14 @@ function makeRes() {
   const res = {
     statusCode: 0,
     body: undefined as unknown,
-    status(code: number) { res.statusCode = code; return res; },
-    json(data: unknown) { res.body = data; return res; },
+    status(code: number) {
+      res.statusCode = code;
+      return res;
+    },
+    json(data: unknown) {
+      res.body = data;
+      return res;
+    },
   };
   return res;
 }
@@ -45,7 +51,9 @@ describe('votes default handler rate limiting', () => {
 
   it('short-circuits with 429 and never reaches handleVotes when rate limited', async () => {
     vi.mocked(enforceRateLimit).mockImplementation(async (_l, _req, res) => {
-      (res as unknown as { status(c: number): { json(b: unknown): void } }).status(429).json({ error: 'Too many requests. Please slow down.' });
+      (res as unknown as { status(c: number): { json(b: unknown): void } })
+        .status(429)
+        .json({ error: 'Too many requests. Please slow down.' });
       return false;
     });
     const res = await run('GET');

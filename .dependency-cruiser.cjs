@@ -26,7 +26,8 @@ module.exports = {
     {
       name: 'utils-pure',
       severity: 'error',
-      comment: 'src/utils are pure helpers: they may reach only other utils and the static data layer (CLAUDE.md: "keep these free of React and side effects").',
+      comment:
+        'src/utils are pure helpers: they may reach only other utils and the static data layer (CLAUDE.md: "keep these free of React and side effects").',
       from: { path: '^src/utils' },
       to: { path: '^src/', pathNot: '^src/(utils|data)/' },
     },
@@ -40,14 +41,16 @@ module.exports = {
     {
       name: 'client-below-ui',
       severity: 'error',
-      comment: 'src/client holds plain browser modules (API calls, storage) that hooks, context and components use; they may not reach back into the UI.',
+      comment:
+        'src/client holds plain browser modules (API calls, storage) that hooks, context and components use; they may not reach back into the UI.',
       from: { path: '^src/client' },
       to: { path: '^src/(components|context|hooks)/' },
     },
     {
       name: 'client-no-react',
       severity: 'error',
-      comment: 'src/client is for modules that are not hooks or components; anything needing React belongs in src/hooks.',
+      comment:
+        'src/client is for modules that are not hooks or components; anything needing React belongs in src/hooks.',
       from: { path: '^src/client' },
       to: { path: '^node_modules/(react|react-dom|react-router)' },
     },
@@ -75,21 +78,24 @@ module.exports = {
     {
       name: 'api-isolated-from-src',
       severity: 'error',
-      comment: 'Serverless functions are bundled separately by Vercel; importing from src/ would drag DOM-flavored code into the Node runtime.',
+      comment:
+        'Serverless functions are bundled separately by Vercel; importing from src/ would drag DOM-flavored code into the Node runtime.',
       from: { path: '^api/' },
       to: { path: '^src/' },
     },
     {
       name: 'src-no-api-imports',
       severity: 'error',
-      comment: 'The SPA talks to the API over HTTP, never by importing server code into the browser bundle. src/__tests__ is exempt: api handlers are deliberately written against small interfaces so those tests can drive them with fakes.',
+      comment:
+        'The SPA talks to the API over HTTP, never by importing server code into the browser bundle. src/__tests__ is exempt: api handlers are deliberately written against small interfaces so those tests can drive them with fakes.',
       from: { path: '^src/', pathNot: '^src/__tests__/' },
       to: { path: '^api/' },
     },
     {
       name: 'e2e-through-the-browser',
       severity: 'error',
-      comment: 'The Playwright suite drives the built app in a browser. It may read the static data layer for expected values, never import components, state or server code.',
+      comment:
+        'The Playwright suite drives the built app in a browser. It may read the static data layer for expected values, never import components, state or server code.',
       from: { path: '^e2e/' },
       to: { path: '^(src|api)/', pathNot: '^src/data/' },
     },

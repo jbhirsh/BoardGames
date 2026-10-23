@@ -62,7 +62,9 @@ describe('WishlistCard', () => {
 
   it('shows the award count bottom left, with the vote and links on the right', () => {
     renderCard();
-    expect(document.querySelector('.card-foot-start')).toContainElement(screen.getByRole('button', { name: /1 award, show which/ }));
+    expect(document.querySelector('.card-foot-start')).toContainElement(
+      screen.getByRole('button', { name: /1 award, show which/ }),
+    );
     expect(document.querySelector('.card-head .awards')).toBeNull();
     expect(document.querySelector('.card-foot-end')).toContainElement(screen.getByRole('button', { name: /vote/i }));
   });
@@ -83,7 +85,7 @@ describe('WishlistCard', () => {
     expect(container.querySelector('.card-kw')).toBeNull();
   });
 
-  it('shows box art in the collection card\'s corner when the entry has some, and reclaims the space otherwise', () => {
+  it("shows box art in the collection card's corner when the entry has some, and reclaims the space otherwise", () => {
     const { container, unmount } = renderCard({ item: { ...testItem, img: '/images/wishlist/x.jpg' } });
     expect(screen.getByRole('img', { name: 'Test Wishlist Game box art' })).toHaveClass('card-corner-img');
     expect(container.querySelector('.card-head')).not.toHaveClass('no-art');
@@ -110,7 +112,10 @@ describe('WishlistCard', () => {
     expect(onVote).toHaveBeenCalledOnce();
     unmount();
     renderCard({ voted: true, voteCount: 1 });
-    expect(screen.getByRole('button', { name: 'Voted for Test Wishlist Game (1 vote)' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Voted for Test Wishlist Game (1 vote)' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
   });
 
   it('disables the vote button when asked', () => {
@@ -135,7 +140,10 @@ describe('WishlistCard', () => {
 });
 
 describe('WishlistCard More', () => {
-  const long = { ...testItem, desc: 'Draft tiles to build a palace. Score walls, gardens and towers. Ends after the fourth season.' };
+  const long = {
+    ...testItem,
+    desc: 'Draft tiles to build a palace. Score walls, gardens and towers. Ends after the fourth season.',
+  };
 
   it('opens on the first sentence and More shows the rest', () => {
     renderCard({ item: long });
@@ -146,7 +154,10 @@ describe('WishlistCard More', () => {
 
     fireEvent.click(more);
     expect(desc).toHaveTextContent(/Ends after the fourth season\. Less$/);
-    expect(screen.getByRole('button', { name: 'Less about Test Wishlist Game' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: 'Less about Test Wishlist Game' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
   });
 
   it('has no More when the blurb is one sentence', () => {
@@ -155,4 +166,3 @@ describe('WishlistCard More', () => {
     expect(screen.queryByRole('button', { name: /^More about/ })).not.toBeInTheDocument();
   });
 });
-

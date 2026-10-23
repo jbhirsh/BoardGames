@@ -21,7 +21,11 @@ import ExternalLink from './ExternalLink';
 export default function RulesLink({ game, className }: { game: Game; className: string }) {
   const filter = useItemFilter();
   const label = `Rules for ${game.name}`;
-  const content = <><AiRulesIcon /> Rules</>;
+  const content = (
+    <>
+      <AiRulesIcon /> Rules
+    </>
+  );
   return game.rules ? (
     <Link
       className={className}

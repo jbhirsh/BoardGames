@@ -60,7 +60,11 @@ export function toHex(this: Uint8Array): string {
   return Array.from(this, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-export function withResolvers<T>(): { promise: Promise<T>; resolve: (value: T) => void; reject: (reason?: unknown) => void } {
+export function withResolvers<T>(): {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+  reject: (reason?: unknown) => void;
+} {
   let resolve!: (value: T) => void;
   let reject!: (reason?: unknown) => void;
   const promise = new Promise<T>((res, rej) => {
@@ -112,7 +116,9 @@ function* take(this: It, limit: number) {
 }
 function* drop(this: It, count: number) {
   let left = count;
-  for (const value of this) if (left > 0) left--; else yield value;
+  for (const value of this)
+    if (left > 0) left--;
+    else yield value;
 }
 
 export const iteratorHelpers = {

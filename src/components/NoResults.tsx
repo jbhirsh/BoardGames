@@ -24,12 +24,16 @@ export default function NoResults({ kind }: Props) {
   // Every action here empties or swaps the list, so this block unmounts and
   // the focused button with it. Hand focus to the heading of the section
   // that shows next, rather than dropping it on the page.
-  const dispatch: typeof send = (action) => { send(action); focusSection(); };
+  const dispatch: typeof send = (action) => {
+    send(action);
+    focusSection();
+  };
   const { items } = useWishlistItems();
   const filteredWishlist = useFilteredWishlist();
-  const count = kind === 'games'
-    ? (s: typeof state) => filterGames(GAMES, s).length
-    : (s: typeof state) => filterWishlist(items, s).length;
+  const count =
+    kind === 'games'
+      ? (s: typeof state) => filterGames(GAMES, s).length
+      : (s: typeof state) => filterWishlist(items, s).length;
   const filters = activeFilters(state);
   const options = relaxations(state, count).slice(0, 3);
   const otherCount = kind === 'games' ? filteredWishlist.length : filteredGames.length;
@@ -41,8 +45,14 @@ export default function NoResults({ kind }: Props) {
   return (
     <div className="no-results">
       <p>No {noun} match your filters.</p>
-      {arriving > 0 && <p className="no-results-which">{plural(arriving)} on the way {fit(arriving)}, under Coming Soon below.</p>}
-      {filters.length > 0 && <p className="no-results-which">Filtering for {listFilters(filters, state.keywordMode)}.</p>}
+      {arriving > 0 && (
+        <p className="no-results-which">
+          {plural(arriving)} on the way {fit(arriving)}, under Coming Soon below.
+        </p>
+      )}
+      {filters.length > 0 && (
+        <p className="no-results-which">Filtering for {listFilters(filters, state.keywordMode)}.</p>
+      )}
       {options.length > 0 && (
         <ul className="no-results-options" aria-label="Loosen the filters">
           {options.map((r) => (
@@ -60,7 +70,9 @@ export default function NoResults({ kind }: Props) {
         </ul>
       )}
       <div className="no-results-actions">
-        <button type="button" className="no-results-btn" onClick={() => dispatch({ type: 'CLEAR_ALL' })}>Clear filters</button>
+        <button type="button" className="no-results-btn" onClick={() => dispatch({ type: 'CLEAR_ALL' })}>
+          Clear filters
+        </button>
         {otherCount > 0 && (
           <button
             type="button"

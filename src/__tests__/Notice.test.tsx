@@ -20,8 +20,12 @@ describe('Notice', () => {
   it('leaves the announcing to a live region around it when told to', () => {
     const { container } = render(
       <>
-        <Notice tone="info" live={false}>The assistant is resting for today.</Notice>
-        <Notice tone="error" live={false}>Something broke.</Notice>
+        <Notice tone="info" live={false}>
+          The assistant is resting for today.
+        </Notice>
+        <Notice tone="error" live={false}>
+          Something broke.
+        </Notice>
       </>,
     );
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
@@ -32,7 +36,11 @@ describe('Notice', () => {
 
   it('offers its action as a button', () => {
     const onClick = vi.fn();
-    render(<Notice tone="warning" action={{ label: 'Try again', onClick }}>Couldn't double-check.</Notice>);
+    render(
+      <Notice tone="warning" action={{ label: 'Try again', onClick }}>
+        Couldn't double-check.
+      </Notice>,
+    );
     expect(screen.getByRole('status')).toHaveClass('notice-warning');
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(onClick).toHaveBeenCalledTimes(1);

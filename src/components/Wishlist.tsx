@@ -62,8 +62,12 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
   return (
     <section className="wishlist" id={hidden ? undefined : 'collection'} ref={sectionRef} hidden={hidden}>
       <div className="sec-hd">
-        <h2 className="sec-title" tabIndex={-1} data-focus-target="title">Wishlist</h2>
-        <span className="sec-count">{filtered.length} {filtered.length === 1 ? 'game' : 'games'}</span>
+        <h2 className="sec-title" tabIndex={-1} data-focus-target="title">
+          Wishlist
+        </h2>
+        <span className="sec-count">
+          {filtered.length} {filtered.length === 1 ? 'game' : 'games'}
+        </span>
         {/* The wishlist's counterpart to the collection's Pick for us, on
             the heading's line: the form sits below every entry. */}
         {loaded && (
@@ -74,9 +78,7 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
               type="button"
               className="share-btn"
               data-label="Share wishlist"
-              onClick={() =>
-                copy(buildShareUrl({ ...initialFilterState, collection: 'want' }, window.location.origin))
-              }
+              onClick={() => copy(buildShareUrl({ ...initialFilterState, collection: 'want' }, window.location.origin))}
             >
               <span className="share-btn-label">{copied ? 'Copied!' : 'Share wishlist'}</span>
             </button>
@@ -100,7 +102,15 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
   );
 }
 
-function WishlistBody({ items, filtered, isPhone }: { items: WishlistItem[]; filtered: WishlistItem[]; isPhone: boolean }) {
+function WishlistBody({
+  items,
+  filtered,
+  isPhone,
+}: {
+  items: WishlistItem[];
+  filtered: WishlistItem[];
+  isPhone: boolean;
+}) {
   const { state } = useFilterResults();
   const { admin } = useAuth();
   const ids = useMemo(() => items.map((w) => w.id), [items]);
@@ -128,30 +138,34 @@ function WishlistBody({ items, filtered, isPhone }: { items: WishlistItem[]; fil
       return [{ key: null, items: [...filtered].sort((a, b) => (orderCounts[b.id] ?? 0) - (orderCounts[a.id] ?? 0)) }];
     }
     if (!grouped) return [{ key: null, items: filtered }];
-    const ordered = state.sort === 'group'
-      ? [...filtered].sort((a, b) => (orderCounts[b.id] ?? 0) - (orderCounts[a.id] ?? 0) || a.name.localeCompare(b.name))
-      : filtered;
+    const ordered =
+      state.sort === 'group'
+        ? [...filtered].sort(
+            (a, b) => (orderCounts[b.id] ?? 0) - (orderCounts[a.id] ?? 0) || a.name.localeCompare(b.name),
+          )
+        : filtered;
     return groupItems(ordered, WISHLIST_TYPE_ORDER, (w) => w.type);
   }, [filtered, grouped, state.sort, orderCounts]);
 
-  const renderGrid = () => groups.map(({ key, items: entries }) => (
-    <div className="wish-group" key={key ?? 'all'}>
-      {key && <h3 className="group-hd">{WISHLIST_TYPES[key]}</h3>}
-      <div className="games-grid wish-grid">
-        {entries.map((item) => (
-          <WishlistCard
-            key={item.id}
-            item={item}
-            headingLevel={grouped ? 4 : 3}
-            voteCount={counts[item.id] ?? 0}
-            voted={myVotes.has(item.id)}
-            onVote={toggle}
-            disabled={!loaded}
-          />
-        ))}
+  const renderGrid = () =>
+    groups.map(({ key, items: entries }) => (
+      <div className="wish-group" key={key ?? 'all'}>
+        {key && <h3 className="group-hd">{WISHLIST_TYPES[key]}</h3>}
+        <div className="games-grid wish-grid">
+          {entries.map((item) => (
+            <WishlistCard
+              key={item.id}
+              item={item}
+              headingLevel={grouped ? 4 : 3}
+              voteCount={counts[item.id] ?? 0}
+              voted={myVotes.has(item.id)}
+              onVote={toggle}
+              disabled={!loaded}
+            />
+          ))}
+        </div>
       </div>
-    </div>
-  ));
+    ));
 
   return (
     <>

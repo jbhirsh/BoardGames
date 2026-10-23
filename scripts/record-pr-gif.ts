@@ -57,7 +57,11 @@ function build(cwd: string, outDir: string): void {
   console.log(`pr-gif: building ${cwd === ROOT ? 'this working tree' : 'the base'}`);
   const env = { ...process.env };
   delete env.SENTRY_AUTH_TOKEN;
-  execFileSync(process.execPath, [VITE, 'build', '--outDir', outDir, '--emptyOutDir', '--logLevel', 'error'], { cwd, env, stdio: 'inherit' });
+  execFileSync(process.execPath, [VITE, 'build', '--outDir', outDir, '--emptyOutDir', '--logLevel', 'error'], {
+    cwd,
+    env,
+    stdio: 'inherit',
+  });
 }
 
 function freePort(): Promise<number> {
@@ -74,10 +78,14 @@ function freePort(): Promise<number> {
 /** Serves a build with `vite preview` (added to `servers`, to be stopped) and resolves with its origin once it answers. */
 async function serve(outDir: string, servers: ChildProcess[]): Promise<string> {
   const port = await freePort();
-  const server = spawn(process.execPath, [VITE, 'preview', '--outDir', outDir, '--port', String(port), '--strictPort', '--host', '127.0.0.1'], {
-    cwd: ROOT,
-    stdio: 'ignore',
-  });
+  const server = spawn(
+    process.execPath,
+    [VITE, 'preview', '--outDir', outDir, '--port', String(port), '--strictPort', '--host', '127.0.0.1'],
+    {
+      cwd: ROOT,
+      stdio: 'ignore',
+    },
+  );
   servers.push(server);
   const origin = `http://127.0.0.1:${port}`;
   for (let tries = 0; tries < 100; tries++) {
@@ -109,40 +117,67 @@ function json(body: unknown) {
 async function stubApi(page: Page, origin: string, fixtures: boolean): Promise<void> {
   const api = (url: URL, path: string) => url.origin === origin && url.pathname === path;
   const read = (route: Parameters<Parameters<Page['route']>[1]>[0]) => route.request().method() === 'GET';
-  await page.route((url) => url.origin !== origin, (route) =>
-    !fixtures && route.request().resourceType() === 'image' ? route.continue() : route.abort('blockedbyclient'),
+  await page.route(
+    (url) => url.origin !== origin,
+    (route) =>
+      !fixtures && route.request().resourceType() === 'image' ? route.continue() : route.abort('blockedbyclient'),
   );
-  await page.route((url) => url.origin === origin && url.pathname.startsWith('/api/'), (route) => route.fulfill({ status: 501 }));
-  await page.route((url) => url.origin === origin && url.pathname.startsWith('/_vercel/'), (route) =>
-    route.fulfill({ status: 200, contentType: 'text/javascript', body: '' }),
+  await page.route(
+    (url) => url.origin === origin && url.pathname.startsWith('/api/'),
+    (route) => route.fulfill({ status: 501 }),
   );
-  await page.route((url) => api(url, '/api/auth'), (route) => (read(route) ? route.fulfill(json({ admin: false })) : route.fallback()));
-  await page.route((url) => api(url, '/api/suggestions'), (route) => (read(route) ? route.fulfill(json({ items: [] })) : route.fallback()));
-  await page.route((url) => api(url, '/api/votes'), (route) => {
-    if (!read(route)) return route.fallback();
-    const ids = new URL(route.request().url()).searchParams.get('ids')?.split(',') ?? [];
-    return route.fulfill(json({ counts: Object.fromEntries(ids.map((id) => [id, 0])), myVotes: [] }));
-  });
+  await page.route(
+    (url) => url.origin === origin && url.pathname.startsWith('/_vercel/'),
+    (route) => route.fulfill({ status: 200, contentType: 'text/javascript', body: '' }),
+  );
+  await page.route(
+    (url) => api(url, '/api/auth'),
+    (route) => (read(route) ? route.fulfill(json({ admin: false })) : route.fallback()),
+  );
+  await page.route(
+    (url) => api(url, '/api/suggestions'),
+    (route) => (read(route) ? route.fulfill(json({ items: [] })) : route.fallback()),
+  );
+  await page.route(
+    (url) => api(url, '/api/votes'),
+    (route) => {
+      if (!read(route)) return route.fallback();
+      const ids = new URL(route.request().url()).searchParams.get('ids')?.split(',') ?? [];
+      return route.fulfill(json({ counts: Object.fromEntries(ids.map((id) => [id, 0])), myVotes: [] }));
+    },
+  );
   if (fixtures) return;
   let warned = false;
-  await page.route((url) => api(url, '/api/suggestions') || api(url, '/api/votes'), async (route) => {
-    if (!read(route)) return route.fallback();
-    const url = new URL(route.request().url());
-    try {
-      const response = await route.fetch({ url: LIVE + url.pathname + url.search });
-      if (response.ok()) return await route.fulfill({ response });
-    } catch {
-      // Out of reach: the stub's empty answer.
-    }
-    // Said once, so a recording that isn't of the live data is never taken for it.
-    if (!warned) console.warn(`pr-gif: ${LIVE} didn't answer ${url.pathname}, so this recording shows the stub's empty wishlist`);
-    warned = true;
-    return route.fallback();
-  });
+  await page.route(
+    (url) => api(url, '/api/suggestions') || api(url, '/api/votes'),
+    async (route) => {
+      if (!read(route)) return route.fallback();
+      const url = new URL(route.request().url());
+      try {
+        const response = await route.fetch({ url: LIVE + url.pathname + url.search });
+        if (response.ok()) return await route.fulfill({ response });
+      } catch {
+        // Out of reach: the stub's empty answer.
+      }
+      // Said once, so a recording that isn't of the live data is never taken for it.
+      if (!warned)
+        console.warn(
+          `pr-gif: ${LIVE} didn't answer ${url.pathname}, so this recording shows the stub's empty wishlist`,
+        );
+      warned = true;
+      return route.fallback();
+    },
+  );
 }
 
 /** Plays the scenario against the app at `origin`, leaving its frames in `dir`. */
-async function record(browser: Browser, scenario: Scenario, origin: string, dir: string, options: Options): Promise<void> {
+async function record(
+  browser: Browser,
+  scenario: Scenario,
+  origin: string,
+  dir: string,
+  options: Options,
+): Promise<void> {
   const context = await browser.newContext({
     viewport: scenario.viewport ?? { width: 900, height: 560 },
     // Chrome's screencast sends frames at 1×, whatever the scale factor.
@@ -191,19 +226,24 @@ function publish(gifs: string[], name: string, work: string, trees: string[]): s
 function checkFfmpeg(sideBySide: boolean): void {
   let filters: string;
   try {
-    filters = execFileSync('ffmpeg', ['-hide_banner', '-filters'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    filters = execFileSync('ffmpeg', ['-hide_banner', '-filters'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
   } catch (error) {
     throw new Error('pr-gif needs ffmpeg on the PATH', { cause: error });
   }
   if (sideBySide && !/\sdrawtext\s/.test(filters)) {
-    throw new Error("this ffmpeg has no drawtext filter (it's built without libfreetype), which --side-by-side labels with");
+    throw new Error(
+      "this ffmpeg has no drawtext filter (it's built without libfreetype), which --side-by-side labels with",
+    );
   }
 }
 
 async function main(): Promise<void> {
   const options = parseOptions(process.argv.slice(2));
   checkFfmpeg(options.sideBySide);
-  const scenario = (await import(pathToFileURL(resolve(options.scenario)).href) as { default: Scenario }).default;
+  const scenario = ((await import(pathToFileURL(resolve(options.scenario)).href)) as { default: Scenario }).default;
   // Before anything is pushed, so a remote it can't read stops the run first.
   const repo = options.publish ? repoFromRemote(git(['remote', 'get-url', 'origin'])) : '';
   const out = join(ROOT, 'pr-gif', options.name);
@@ -217,19 +257,20 @@ async function main(): Promise<void> {
   // or hide the error that stopped the run. Started once: a second call (the
   // finally below, after an interruption) waits for the first to finish.
   let cleaning: Promise<void> | undefined;
-  const cleanUp = () => (cleaning ??= (async () => {
-    for (const server of servers) server.kill();
-    await browser?.close().catch(() => {});
-    for (const tree of trees) {
-      try {
-        git(['worktree', 'remove', '--force', tree]);
-      } catch {
-        // Gone already.
+  const cleanUp = () =>
+    (cleaning ??= (async () => {
+      for (const server of servers) server.kill();
+      await browser?.close().catch(() => {});
+      for (const tree of trees) {
+        try {
+          git(['worktree', 'remove', '--force', tree]);
+        } catch {
+          // Gone already.
+        }
       }
-    }
-    if (options.keep) console.log(`pr-gif: kept ${work}`);
-    else rmSync(work, { recursive: true, force: true });
-  })());
+      if (options.keep) console.log(`pr-gif: kept ${work}`);
+      else rmSync(work, { recursive: true, force: true });
+    })());
   // Interrupted, the run may not reach the finally below: clean up here, and
   // exit once that's done. What the interruption breaks on its way out (a
   // page closed under a step) is no news.
@@ -262,7 +303,11 @@ async function main(): Promise<void> {
 
     // Ctrl-C is this script's to handle: Playwright's own would close the
     // browser under the cleanup above.
-    browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE, handleSIGINT: false, handleSIGTERM: false });
+    browser = await chromium.launch({
+      executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE,
+      handleSIGINT: false,
+      handleSIGTERM: false,
+    });
     for (const { side, dist } of sides) {
       const origin = await serve(dist, servers);
       console.log(`pr-gif: recording ${side}`);
@@ -283,13 +328,18 @@ async function main(): Promise<void> {
     for (const gif of gifs) {
       const mb = statSync(gif).size / 1e6;
       console.log(`pr-gif: wrote ${gif} (${mb.toFixed(1)} MB)`);
-      if (mb > 5) console.warn('pr-gif: over 5 MB, which a PR may not show: try a lower --fps, a narrower --width or a shorter scenario');
+      if (mb > 5)
+        console.warn(
+          'pr-gif: over 5 MB, which a PR may not show: try a lower --fps, a narrower --width or a shorter scenario',
+        );
     }
     console.log('pr-gif: look through them before publishing.');
 
     if (options.publish) {
       const sha = publish(gifs, options.name, work, trees);
-      console.log(`\nFor the PR description:\n\n${markdown({ repo, sha, name: options.name, gifs: gifs.map((gif) => basename(gif)) })}\n`);
+      console.log(
+        `\nFor the PR description:\n\n${markdown({ repo, sha, name: options.name, gifs: gifs.map((gif) => basename(gif)) })}\n`,
+      );
     }
   } finally {
     await cleanUp();

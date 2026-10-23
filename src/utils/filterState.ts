@@ -30,7 +30,12 @@ export function anyFilterOn<F extends FilterField>(state: Pick<FilterState, F>, 
 
 /** The state with the filters in `patch` set and everything else kept. */
 export function withFilters(state: FilterState, patch: FilterPatch): FilterState {
-  const { duration = state.duration, players = state.players, keywords = state.keywords, search = state.search } = patch;
+  const {
+    duration = state.duration,
+    players = state.players,
+    keywords = state.keywords,
+    search = state.search,
+  } = patch;
   return { ...state, duration, players, keywords, search };
 }
 

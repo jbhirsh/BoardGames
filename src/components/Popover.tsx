@@ -68,8 +68,13 @@ export default function Popover({ className, buttonClassName, label, title, trig
   // the user clicks elsewhere or presses Escape, it goes away.
   useEffect(() => {
     if (!open) return;
-    const close = () => { setPinned(false); setHover(false); };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    const close = () => {
+      setPinned(false);
+      setHover(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close();
+    };
     const onDown = (e: MouseEvent) => {
       const t = e.target as Node;
       if (!wrapRef.current?.contains(t) && !popRef.current?.contains(t)) close();
@@ -109,25 +114,28 @@ export default function Popover({ className, buttonClassName, label, title, trig
       >
         {trigger}
       </button>
-      {open && createPortal(
-        // React bubbles a click inside a portal up the component tree, not the
-        // page, so one on the panel would still reach a table row behind it.
-        // The wrapper only stops it; it means nothing to assistive tech.
-        <div role="presentation" onClick={(e) => e.stopPropagation()}>
-          <div
-            id={id}
-            ref={popRef}
-            className="pop"
-            role={activate ? 'tooltip' : 'group'}
-            aria-labelledby={activate ? undefined : `${id}-title`}
-            style={pos}
-          >
-            <div id={`${id}-title`} className="pop-title">{title}</div>
-            {children}
-          </div>
-        </div>,
-        document.body,
-      )}
+      {open &&
+        createPortal(
+          // React bubbles a click inside a portal up the component tree, not the
+          // page, so one on the panel would still reach a table row behind it.
+          // The wrapper only stops it; it means nothing to assistive tech.
+          <div role="presentation" onClick={(e) => e.stopPropagation()}>
+            <div
+              id={id}
+              ref={popRef}
+              className="pop"
+              role={activate ? 'tooltip' : 'group'}
+              aria-labelledby={activate ? undefined : `${id}-title`}
+              style={pos}
+            >
+              <div id={`${id}-title`} className="pop-title">
+                {title}
+              </div>
+              {children}
+            </div>
+          </div>,
+          document.body,
+        )}
     </span>
   );
 }

@@ -35,12 +35,24 @@ export default function GameActions({ game, variant }: Props) {
     <div className={card ? 'card-foot-end' : 'row-expand-foot'}>
       <RulesLink game={game} className="rules-btn rules-btn--primary" />
       {SCORE_CALCULATORS.has(game.slug) && (
-        <Link className="rules-btn" to={`/score/${game.slug}`} state={FROM_LIST} title={card ? 'Score Calculator' : undefined} onClick={stop}>
+        <Link
+          className="rules-btn"
+          to={`/score/${game.slug}`}
+          state={FROM_LIST}
+          title={card ? 'Score Calculator' : undefined}
+          onClick={stop}
+        >
           <CalculatorIcon /> Score
         </Link>
       )}
       {game.slug === WORD_CHECKER_GAME && (
-        <Link className="rules-btn" to="/word-checker" state={FROM_LIST} title={card ? 'Word Checker' : undefined} onClick={stop}>
+        <Link
+          className="rules-btn"
+          to="/word-checker"
+          state={FROM_LIST}
+          title={card ? 'Word Checker' : undefined}
+          onClick={stop}
+        >
           <SearchIcon /> Word Checker
         </Link>
       )}

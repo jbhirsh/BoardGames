@@ -25,7 +25,12 @@ function mockVotes(counts: Record<string, number>, myVotes: string[] = [], sugge
 }
 
 function renderWishlist(url = '/?c=want', hidden = false, admin = false) {
-  const auth = { admin, loaded: true, requestLink: vi.fn(async () => ({ ok: true as const })), logout: vi.fn(async () => {}) };
+  const auth = {
+    admin,
+    loaded: true,
+    requestLink: vi.fn(async () => ({ ok: true as const })),
+    logout: vi.fn(async () => {}),
+  };
   return render(
     <MemoryRouter initialEntries={[url]}>
       <FilterProvider>
@@ -76,15 +81,17 @@ describe('Wishlist', () => {
         // covers a handful of elements, not every control on the page.
         const n = counts[item.id];
         const row = document.querySelector(`[data-item-id="${item.id}"]`) as HTMLElement;
-        const btn = within(row).getByRole('button', { name: `Vote for ${item.name} (${n} ${n === 1 ? 'vote' : 'votes'})` });
+        const btn = within(row).getByRole('button', {
+          name: `Vote for ${item.name} (${n} ${n === 1 ? 'vote' : 'votes'})`,
+        });
         expect(btn).toHaveTextContent(String(n));
       }
     });
   });
 
-  const expectedGroups = WISHLIST_TYPE_ORDER
-    .filter((t) => WISHLIST.some((w) => w.type === t))
-    .map((t) => WISHLIST_TYPES[t]);
+  const expectedGroups = WISHLIST_TYPE_ORDER.filter((t) => WISHLIST.some((w) => w.type === t)).map(
+    (t) => WISHLIST_TYPES[t],
+  );
 
   it('groups the grid by type under the group sort, in the configured type order', async () => {
     mockVotes({});
@@ -106,7 +113,7 @@ describe('Wishlist', () => {
     }
   });
 
-  it('groups the table by type with the collection\'s group rows, and each row belongs to its group', async () => {
+  it("groups the table by type with the collection's group rows, and each row belongs to its group", async () => {
     mockVotes({});
     renderWishlist('/?c=want&s=group');
     await screen.findByText(WISHLIST[0].name);
@@ -115,7 +122,10 @@ describe('Wishlist', () => {
     expect(labels).toEqual(expectedGroups);
     let current: string | null = null;
     for (const row of rows) {
-      if (row.classList.contains('list-group-row')) { current = row.textContent; continue; }
+      if (row.classList.contains('list-group-row')) {
+        current = row.textContent;
+        continue;
+      }
       const id = row.getAttribute('data-item-id')!;
       expect(WISHLIST_TYPES[WISHLIST.find((w) => w.id === id)!.type]).toBe(current);
     }
@@ -128,7 +138,9 @@ describe('Wishlist', () => {
     const inGroup = WISHLIST.filter((w) => w.type === firstType);
     const star = inGroup[inGroup.length - 1];
     const counts: Record<string, number> = {};
-    WISHLIST.forEach((w) => { counts[w.id] = w.id === star.id ? 999 : byId[w.id]; });
+    WISHLIST.forEach((w) => {
+      counts[w.id] = w.id === star.id ? 999 : byId[w.id];
+    });
     mockVotes(counts);
     renderWishlist('/?c=want&s=group&v=grid');
 
@@ -152,11 +164,17 @@ describe('Wishlist', () => {
     fireEvent.click(name);
     expect(name).toHaveClass('sort-desc');
     const rows = Array.from(document.querySelectorAll('tbody tr.list-group-row, tbody tr.game-row'));
-    expect(rows.filter((r) => r.classList.contains('list-group-row')).map((r) => r.textContent)).toEqual(expectedGroups);
+    expect(rows.filter((r) => r.classList.contains('list-group-row')).map((r) => r.textContent)).toEqual(
+      expectedGroups,
+    );
     let group: string[] = [];
     const groups: string[][] = [];
     for (const row of rows) {
-      if (row.classList.contains('list-group-row')) { group = []; groups.push(group); continue; }
+      if (row.classList.contains('list-group-row')) {
+        group = [];
+        groups.push(group);
+        continue;
+      }
       group.push(row.querySelector('.col-name-wrap .col-name')!.textContent ?? '');
     }
     for (const names of groups) expect(names).toEqual([...names].sort((a, b) => b.localeCompare(a)));
@@ -167,7 +185,9 @@ describe('Wishlist', () => {
     const { unmount } = renderWishlist();
     await screen.findByText(WISHLIST[0].name);
     expect(document.querySelectorAll('.list-group-row')).toHaveLength(0);
-    const rowNames = Array.from(document.querySelectorAll('tr.game-row .col-name-wrap .col-name')).map((n) => n.textContent ?? '');
+    const rowNames = Array.from(document.querySelectorAll('tr.game-row .col-name-wrap .col-name')).map(
+      (n) => n.textContent ?? '',
+    );
     expect(rowNames).toEqual([...rowNames].sort((a, b) => a.localeCompare(b)));
     unmount();
 
@@ -175,7 +195,10 @@ describe('Wishlist', () => {
     await screen.findByText(WISHLIST[0].name);
     expect(document.querySelectorAll('.group-hd')).toHaveLength(0);
     // Flat grid: card headings sit directly under the section h2, so they are h3.
-    const names = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent ?? '').filter((n) => n !== 'Suggest a game');
+    const names = screen
+      .getAllByRole('heading', { level: 3 })
+      .map((h) => h.textContent ?? '')
+      .filter((n) => n !== 'Suggest a game');
     expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
   });
 
@@ -259,7 +282,8 @@ describe('Wishlist', () => {
     renderWishlist();
     await screen.findByText(WISHLIST[0].name);
 
-    const item = screen.getAllByTestId('wishlist-item')
+    const item = screen
+      .getAllByTestId('wishlist-item')
       .find((el) => el.getAttribute('data-item-id') === WISHLIST[0].id)!;
     const voteBtn = within(item).getByRole('button', { name: /Vote for/ });
     await waitFor(() => expect(voteBtn).toBeEnabled());
@@ -286,8 +310,10 @@ describe('Wishlist', () => {
     // Votes were requested for the suggestion too. The request goes out
     // from a passive effect after the body mounts, so wait for it rather
     // than reading the calls the instant the name appears.
-    const voteCall = () => (globalThis.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls
-      .map((c) => String(c[0])).find((u) => u.startsWith('/api/votes?'));
+    const voteCall = () =>
+      (globalThis.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls
+        .map((c) => String(c[0]))
+        .find((u) => u.startsWith('/api/votes?'));
     await waitFor(() => expect(voteCall()).toBeDefined());
     expect(voteCall()).toContain('sug-abc123');
   });
@@ -323,8 +349,10 @@ describe('Wishlist', () => {
     const fetchSpy = mockVotes({}, [], [{ id: 'sug-abc123', game: 'Root', name: 'Alex', note: '' }]);
     fetchSpy.mockImplementation(async (input) => {
       const url = String(input);
-      if (url.startsWith('/api/suggestions?action=pending')) return jsonResponse({ items: [{ id: 'sug-p', game: 'Ark Nova', name: 'Sam', note: '' }] });
-      if (url.startsWith('/api/suggestions')) return jsonResponse({ items: [{ id: 'sug-abc123', game: 'Root', name: 'Alex', note: '' }] });
+      if (url.startsWith('/api/suggestions?action=pending'))
+        return jsonResponse({ items: [{ id: 'sug-p', game: 'Ark Nova', name: 'Sam', note: '' }] });
+      if (url.startsWith('/api/suggestions'))
+        return jsonResponse({ items: [{ id: 'sug-abc123', game: 'Root', name: 'Alex', note: '' }] });
       return jsonResponse({ counts: {}, myVotes: [] });
     });
     renderWishlist('/?c=want', false, true);
@@ -354,7 +382,8 @@ describe('Wishlist', () => {
     fetchSpy.mockImplementation(async (input) => {
       const url = String(input);
       if (url.startsWith('/api/suggestions?action=pending')) return jsonResponse({ items: [] });
-      if (url.startsWith('/api/suggestions')) return jsonResponse({ items: [{ id: 'sug-dup', game: compiled.name, name: 'Alex', note: '' }] });
+      if (url.startsWith('/api/suggestions'))
+        return jsonResponse({ items: [{ id: 'sug-dup', game: compiled.name, name: 'Alex', note: '' }] });
       return jsonResponse({ counts: {}, myVotes: [] });
     });
     renderWishlist('/?c=want', false, true);
@@ -390,7 +419,8 @@ describe('Wishlist engagement', () => {
   });
 
   it('holds the vote order while votes are cast, picking it up again on a new sort', async () => {
-    const ids = () => Array.from(document.querySelectorAll('[data-item-id]')).map((el) => el.getAttribute('data-item-id'));
+    const ids = () =>
+      Array.from(document.querySelectorAll('[data-item-id]')).map((el) => el.getAttribute('data-item-id'));
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
       const url = String(input);
       if (url.startsWith('/api/suggestions')) return jsonResponse({ items: [] });
@@ -414,10 +444,16 @@ describe('Wishlist engagement', () => {
     renderWishlist('/?c=want&v=grid');
     const seafarers = await screen.findByRole('heading', { name: 'Catan: Seafarers' });
     const card = seafarers.closest('[data-item-id]') as HTMLElement;
-    expect(within(card).getByText('Expansion for Catan', { exact: false })).toHaveTextContent('Expansion for Catan (owned)');
+    expect(within(card).getByText('Expansion for Catan', { exact: false })).toHaveTextContent(
+      'Expansion for Catan (owned)',
+    );
     // Wyrmspan is itself on the wishlist, not in the collection.
-    const academy = screen.getByRole('heading', { name: 'Wyrmspan: Dragon Academy' }).closest('[data-item-id]') as HTMLElement;
-    expect(within(academy).getByText('Expansion for Wyrmspan', { exact: false })).toHaveTextContent(/^Expansion for Wyrmspan$/);
+    const academy = screen
+      .getByRole('heading', { name: 'Wyrmspan: Dragon Academy' })
+      .closest('[data-item-id]') as HTMLElement;
+    expect(within(academy).getByText('Expansion for Wyrmspan', { exact: false })).toHaveTextContent(
+      /^Expansion for Wyrmspan$/,
+    );
     // A standalone game has no tag.
     const splendor = screen.getByRole('heading', { name: 'Splendor' }).closest('[data-item-id]') as HTMLElement;
     expect(within(splendor).queryByText(/Expansion for/)).not.toBeInTheDocument();
@@ -428,11 +464,20 @@ describe('Wishlist engagement', () => {
     renderWishlist('/?c=want&v=list');
     const [first, second] = WISHLIST;
     fireEvent.click(await screen.findByRole('button', { name: `Show details for ${first.name}` }));
-    expect(screen.getByRole('button', { name: `Hide details for ${first.name}` })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: `Hide details for ${first.name}` })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
     fireEvent.click(screen.getByRole('button', { name: `Show details for ${second.name}` }));
-    expect(screen.getByRole('button', { name: `Show details for ${first.name}` })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: `Show details for ${first.name}` })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
     fireEvent.click(screen.getByRole('button', { name: `Hide details for ${second.name}` }));
-    expect(screen.getByRole('button', { name: `Show details for ${second.name}` })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: `Show details for ${second.name}` })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
   });
 
   it('marks an expansion in the list view too', async () => {
@@ -440,7 +485,9 @@ describe('Wishlist engagement', () => {
     renderWishlist('/?c=want&v=list');
     await screen.findByText(WISHLIST[0].name);
     const row = document.querySelector('tr[data-item-id="dominion-seaside"]') as HTMLElement;
-    expect(within(row).getAllByText('Expansion for Dominion', { exact: false })[0]).toHaveTextContent('Expansion for Dominion (owned)');
+    expect(within(row).getAllByText('Expansion for Dominion', { exact: false })[0]).toHaveTextContent(
+      'Expansion for Dominion (owned)',
+    );
   });
 
   it('jumps from the header to the suggestion form, ready to type', async () => {
@@ -512,7 +559,9 @@ describe('Wishlist engagement', () => {
       mockVotes({});
       renderWishlist();
       const share = await screen.findByRole('button', { name: 'Share wishlist' });
-      await act(async () => { fireEvent.click(share); });
+      await act(async () => {
+        fireEvent.click(share);
+      });
       expect(writeText).toHaveBeenCalledOnce();
       expect(share).toHaveTextContent('Share wishlist');
       expect(screen.queryByText('Link copied to clipboard')).not.toBeInTheDocument();
@@ -525,17 +574,23 @@ describe('Wishlist engagement', () => {
       vi.useFakeTimers();
       try {
         const clear = vi.spyOn(globalThis, 'clearTimeout');
-        await act(async () => { fireEvent.click(share); });
+        await act(async () => {
+          fireEvent.click(share);
+        });
         expect(share).toHaveTextContent('Copied!');
         // A second copy restarts the moment rather than stacking a timer.
         clear.mockClear();
-        await act(async () => { fireEvent.click(share); });
+        await act(async () => {
+          fireEvent.click(share);
+        });
         expect(clear).toHaveBeenCalled();
         await act(() => vi.advanceTimersByTimeAsync(1799));
         expect(share).toHaveTextContent('Copied!');
         await act(() => vi.advanceTimersByTimeAsync(1));
         expect(share).toHaveTextContent('Share wishlist');
-        await act(async () => { fireEvent.click(share); });
+        await act(async () => {
+          fireEvent.click(share);
+        });
         clear.mockClear();
         unmount();
         expect(clear).toHaveBeenCalled();

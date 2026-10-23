@@ -8,7 +8,11 @@ import { BLOCKS, token, rgbToken, mix, contrast, declarations } from './themeTok
 // A fill drawn on another fill, and where. Each must differ from its base.
 const FILL_ON_FILL: [fill: string, base: string, where: string][] = [
   ['surface', 'bg', 'cards, panels and the filter sheet on the page'],
-  ['bg2', 'surface', "the assistant's answer bubble in the chat panel, the filter sheet's close and Clear buttons, the Keywords Any/All buttons and a hovered option in a dropdown, a card's add-ons panel"],
+  [
+    'bg2',
+    'surface',
+    "the assistant's answer bubble in the chat panel, the filter sheet's close and Clear buttons, the Keywords Any/All buttons and a hovered option in a dropdown, a card's add-ons panel",
+  ],
   ['bg2', 'bg', 'the active filters bar, the Own/Want and view toggles, the rulebook tabs, the score calculator tabs'],
   ['surface', 'bg2', "the chosen Own/Want or view button in its track, an add-on's row in a card's add-ons panel"],
   ['bg3', 'bg2', 'a hovered Any/All button, score calculator tab or +/- button'],
@@ -27,7 +31,7 @@ type Fill = string | { tint: string | [number, number, number]; alpha: number; o
 
 // A dark block inherits what it doesn't redeclare from the light :root, as
 // the cascade does: the vote button's red and --on-fill are set once.
-const own = (block: string, name: string) => declarations(block).has(name) ? block : BLOCKS.light;
+const own = (block: string, name: string) => (declarations(block).has(name) ? block : BLOCKS.light);
 const tokenIn = (block: string, name: string) => token(own(block, name), name);
 
 function fillHex(block: string, fill: Fill): string {
@@ -50,30 +54,54 @@ const TEXT_ON_FILL: [text: string, fill: Fill, where: string][] = [
   ['text', 'bg3', 'a hovered Any/All button or score calculator tab'],
   ['text', 'row-hover', 'a hovered table row'],
   ['text2', 'bg', "the hero's subtitle, the chat's scope line"],
-  ['text2', 'surface', "card descriptions, dropdown options, the Score and Word Checker buttons and a list row's Rules"],
+  [
+    'text2',
+    'surface',
+    "card descriptions, dropdown options, the Score and Word Checker buttons and a list row's Rules",
+  ],
   ['text2', 'bg2', "keyword and duration pills, the filter sheet's close button, the Any/All buttons, rulebook tabs"],
   ['text2', 'bg3', 'the house rules count'],
   ['text2', 'row-hover', "a hovered row's players, difficulty and short line"],
   ['text3', 'bg', "section counts, a score calculator box's unit, the suggest form's placeholders"],
-  ['text3', 'surface', "card meta, dropdown counts, popover titles, the filter sheet section titles, a score calculator field's points"],
-  ['text3', 'bg2', "table headers, the toggles' other buttons, the score calculator tabs, a hovered option's count, Clear all"],
+  [
+    'text3',
+    'surface',
+    "card meta, dropdown counts, popover titles, the filter sheet section titles, a score calculator field's points",
+  ],
+  [
+    'text3',
+    'bg2',
+    "table headers, the toggles' other buttons, the score calculator tabs, a hovered option's count, Clear all",
+  ],
   ['text3', 'row-hover', "a hovered row's chevron and credit"],
   ['text3', 'bg3', "a score calculator tab's name while its remove button is hovered"],
   ['yt-red', 'surface', "the play glyph on a card's or an add-on's video button"],
   ['yt-red', 'bg2', "the play glyph on an expanded row's video button"],
   ['on-fill', 'vote', 'a voted Vote button'],
   ['on-fill', 'vote-hover', 'a voted Vote button, hovered'],
-  ['text', { tint: 'vote-rgb', alpha: 0.10, over: 'surface' }, 'a Vote button on a card or a list row'],
+  ['text', { tint: 'vote-rgb', alpha: 0.1, over: 'surface' }, 'a Vote button on a card or a list row'],
   ['text', { tint: 'vote-rgb', alpha: 0.18, over: 'surface' }, 'a Vote button on a card or a list row, hovered'],
-  ['blue', 'bg2', "links in the assistant's answer bubble, the Share link on the active filters bar, the sorted column's arrow"],
+  [
+    'blue',
+    'bg2',
+    "links in the assistant's answer bubble, the Share link on the active filters bar, the sorted column's arrow",
+  ],
   ['blue', 'bg3', "the sorted column's arrow while its header is hovered"],
-  ['blue', blueTint(0.08, 'bg2'), 'an active filter chip on the active filters bar, hovered or not; a hovered Rules link in an expanded row'],
+  [
+    'blue',
+    blueTint(0.08, 'bg2'),
+    'an active filter chip on the active filters bar, hovered or not; a hovered Rules link in an expanded row',
+  ],
   ['blue', blueTint(0.08, 'surface'), 'a hovered or lit keyword pill on a card'],
   ['blue', blueTint(0.08, 'bg'), 'an active filter button on the filter bar'],
   ['blue', blueTint(0.08, 'row-hover'), "a hovered row's add-ons tag, hovered or open"],
   ['blue', blueTint(0.15, 'surface'), "the chosen theme, a hovered card's add-ons button"],
-  ['award-fg', { tint: [201, 162, 39], alpha: 0.12, over: 'bg2' }, "the award count in an expanded row"],
-  ['award-fg', { tint: [201, 162, 39], alpha: 0.24, over: 'bg2' }, 'the award count in an expanded row, hovered or open'],
+  ['award-fg', { tint: [201, 162, 39], alpha: 0.12, over: 'bg2' }, 'the award count in an expanded row'],
+  [
+    'award-fg',
+    { tint: [201, 162, 39], alpha: 0.24, over: 'bg2' },
+    'the award count in an expanded row, hovered or open',
+  ],
   ['award-fg', { tint: [201, 162, 39], alpha: 0.24, over: 'surface' }, 'the award count on a card, hovered or open'],
   ['expansion-fg', { tint: [176, 108, 0], alpha: 0.12, over: 'bg2' }, "an expansion's chip on its rulebook tab"],
   ['extension-fg', { tint: [30, 123, 75], alpha: 0.12, over: 'bg2' }, "an extension's chip on its rulebook tab"],
@@ -90,8 +118,8 @@ const LIGHT_KNOWN_FAILURES: [text: string, fill: Fill, why: string][] = [
   ['text2', 'bg3', '4.26:1, the house rules count'],
   ['text3', 'bg3', "4.14:1, a score calculator tab's name while its remove button is hovered"],
 ];
-const knownFailure = (theme: string, text: string, fill: Fill) => theme === 'light'
-  && LIGHT_KNOWN_FAILURES.some(([t, f]) => t === text && fillName(f) === fillName(fill));
+const knownFailure = (theme: string, text: string, fill: Fill) =>
+  theme === 'light' && LIGHT_KNOWN_FAILURES.some(([t, f]) => t === text && fillName(f) === fillName(fill));
 
 // Text tokens that rank one below the other, so metadata reads under body text.
 const TEXT_STEPS: [upper: string, lower: string][] = [

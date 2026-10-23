@@ -1,8 +1,16 @@
 import { useSearchParams } from 'react-router';
 import { useSavedState } from '../hooks/useSavedState';
 import {
-  LONGEST_BONUS, ROUTE_LENGTHS, ROUTE_POINTS, STATION_POINTS, STATIONS, ttrBreakdown, ttrTieBreaks,
-  type TtrBreakdown, type TtrMap, type TtrTally,
+  LONGEST_BONUS,
+  ROUTE_LENGTHS,
+  ROUTE_POINTS,
+  STATION_POINTS,
+  STATIONS,
+  ttrBreakdown,
+  ttrTieBreaks,
+  type TtrBreakdown,
+  type TtrMap,
+  type TtrTally,
 } from '../utils/ticketToRide';
 import { cleanInput, isBoxText, num, showScore } from '../utils/scoreInput';
 import { ordinal, places, tieNotes } from '../utils/standings';
@@ -12,7 +20,10 @@ import ScoreInput, { CountRow } from './ScoreInput';
 // Every length either map has, so a player's routes survive a change of map.
 const LENGTHS = [...new Set([...ROUTE_LENGTHS.usa, ...ROUTE_LENGTHS.europe])];
 
-interface TicketText { points: string; made: boolean }
+interface TicketText {
+  points: string;
+  made: boolean;
+}
 
 /** A player's boxes, as typed. */
 interface TtrPlayer extends PadPlayer {
@@ -29,41 +40,72 @@ const MAPS: Record<TtrMap, { name: string; longest: string }> = {
 
 function blank() {
   // Every player starts with all three stations, and most build few.
-  return { routes: Object.fromEntries(LENGTHS.map(l => [l, ''])), tickets: [], longest: false, stations: String(STATIONS) };
+  return {
+    routes: Object.fromEntries(LENGTHS.map((l) => [l, ''])),
+    tickets: [],
+    longest: false,
+    stations: String(STATIONS),
+  };
 }
 
 function valid(r: Record<string, unknown>): boolean {
   const routes = r.routes as Record<string, unknown> | null;
-  return typeof routes === 'object' && routes !== null && LENGTHS.every(l => isBoxText(routes[l]))
-    && Array.isArray(r.tickets) && r.tickets.every((t: unknown) =>
-      typeof t === 'object' && t !== null && isBoxText((t as TicketText).points) && typeof (t as TicketText).made === 'boolean')
-    && typeof r.longest === 'boolean' && isBoxText(r.stations);
+  return (
+    typeof routes === 'object' &&
+    routes !== null &&
+    LENGTHS.every((l) => isBoxText(routes[l])) &&
+    Array.isArray(r.tickets) &&
+    r.tickets.every(
+      (t: unknown) =>
+        typeof t === 'object' &&
+        t !== null &&
+        isBoxText((t as TicketText).points) &&
+        typeof (t as TicketText).made === 'boolean',
+    ) &&
+    typeof r.longest === 'boolean' &&
+    isBoxText(r.stations)
+  );
 }
 
 function tally(p: TtrPlayer): TtrTally {
   return {
-    routes: Object.fromEntries(LENGTHS.map(l => [l, num(p.routes[l])])),
-    tickets: p.tickets.map(t => ({ points: num(t.points), made: t.made })),
+    routes: Object.fromEntries(LENGTHS.map((l) => [l, num(p.routes[l])])),
+    tickets: p.tickets.map((t) => ({ points: num(t.points), made: t.made })),
     longest: p.longest,
     stationsLeft: num(p.stations),
   };
 }
 
 function hasScores(p: TtrPlayer): boolean {
-  return LENGTHS.some(l => num(p.routes[l]) > 0) || p.tickets.some(t => num(t.points) > 0) || p.longest || p.stations !== String(STATIONS);
+  return (
+    LENGTHS.some((l) => num(p.routes[l]) > 0) ||
+    p.tickets.some((t) => num(t.points) > 0) ||
+    p.longest ||
+    p.stations !== String(STATIONS)
+  );
 }
 
 const pts = (n: number) => `${n} ${Math.abs(n) === 1 ? 'point' : 'points'}`;
 
-function Form({ map, player, update }: { map: TtrMap; player: TtrPlayer; update: (patch: Partial<Omit<TtrPlayer, keyof PadPlayer>>) => void }) {
+function Form({
+  map,
+  player,
+  update,
+}: {
+  map: TtrMap;
+  player: TtrPlayer;
+  update: (patch: Partial<Omit<TtrPlayer, keyof PadPlayer>>) => void;
+}) {
   const b = ttrBreakdown(map, tally(player));
   const setTicket = (i: number, patch: Partial<TicketText>) =>
     update({ tickets: player.tickets.map((t, j) => (j === i ? { ...t, ...patch } : t)) });
   return (
     <>
       <fieldset className="sc-group">
-        <legend className="sc-group-title">Routes <span className="sc-vp-note">= {pts(b.routes)}</span></legend>
-        {ROUTE_LENGTHS[map].map(len => (
+        <legend className="sc-group-title">
+          Routes <span className="sc-vp-note">= {pts(b.routes)}</span>
+        </legend>
+        {ROUTE_LENGTHS[map].map((len) => (
           <CountRow
             key={len}
             id={`sc-route-${len}`}
@@ -81,7 +123,9 @@ function Form({ map, player, update }: { map: TtrMap; player: TtrPlayer; update:
         <legend className="sc-group-title">
           Destination tickets <span className="sc-vp-note">= {pts(b.made + b.missed)}</span>
         </legend>
-        {player.tickets.length === 0 && <p className="sc-hint">Add each ticket you kept, with the points printed on it.</p>}
+        {player.tickets.length === 0 && (
+          <p className="sc-hint">Add each ticket you kept, with the points printed on it.</p>
+        )}
         {player.tickets.map((t, i) => (
           <div key={i} className="sc-ticket">
             <ScoreInput
@@ -92,8 +136,22 @@ function Form({ map, player, update }: { map: TtrMap; player: TtrPlayer; update:
               onChange={(e) => setTicket(i, { points: cleanInput(e.target.value, false, 99) })}
             />
             <div className="sc-seg" role="group" aria-label={`Ticket ${i + 1}`}>
-              <button type="button" className="sc-seg-btn" aria-pressed={t.made} onClick={() => setTicket(i, { made: true })}>Made</button>
-              <button type="button" className="sc-seg-btn" aria-pressed={!t.made} onClick={() => setTicket(i, { made: false })}>Missed</button>
+              <button
+                type="button"
+                className="sc-seg-btn"
+                aria-pressed={t.made}
+                onClick={() => setTicket(i, { made: true })}
+              >
+                Made
+              </button>
+              <button
+                type="button"
+                className="sc-seg-btn"
+                aria-pressed={!t.made}
+                onClick={() => setTicket(i, { made: false })}
+              >
+                Missed
+              </button>
             </div>
             <button
               type="button"
@@ -105,7 +163,11 @@ function Form({ map, player, update }: { map: TtrMap; player: TtrPlayer; update:
             </button>
           </div>
         ))}
-        <button type="button" className="sc-add-row" onClick={() => update({ tickets: [...player.tickets, { points: '', made: true }] })}>
+        <button
+          type="button"
+          className="sc-add-row"
+          onClick={() => update({ tickets: [...player.tickets, { points: '', made: true }] })}
+        >
           + Add ticket
         </button>
       </fieldset>
@@ -143,29 +205,35 @@ const SHEET_ROWS: { key: keyof TtrBreakdown; label: string; europe?: boolean }[]
 
 function Results({ map, players }: { map: TtrMap; players: TtrPlayer[] }) {
   const tallies = players.map(tally);
-  const sheet = tallies.map(t => ttrBreakdown(map, t));
-  const totals = sheet.map(s => s.total);
+  const sheet = tallies.map((t) => ttrBreakdown(map, t));
+  const totals = sheet.map((s) => s.total);
   const breaks = ttrTieBreaks(map, tallies);
   const placed = places(totals, breaks);
   const scored = players.some(hasScores);
-  const names = players.map(p => p.name);
+  const names = players.map((p) => p.name);
   return (
     <>
       <ScoreSheet
         players={players}
-        rows={SHEET_ROWS.filter(r => !r.europe || map === 'europe').map(row => ({
+        rows={SHEET_ROWS.filter((r) => !r.europe || map === 'europe').map((row) => ({
           key: row.key,
           label: row.key === 'longest' ? MAPS[map].longest : row.label,
-          cells: sheet.map(s => showScore(s[row.key])),
+          cells: sheet.map((s) => showScore(s[row.key])),
         }))}
         totals={totals.map(showScore)}
-        places={placed.map(p => (scored ? ordinal(p) : '–'))}
-        won={placed.map(p => scored && p === 1)}
+        places={placed.map((p) => (scored ? ordinal(p) : '–'))}
+        won={placed.map((p) => scored && p === 1)}
       />
-      {scored && tieNotes(names, totals.map(pts), totals, breaks).map(note => <p key={note} className="sc-tie-note">{note}</p>)}
+      {scored &&
+        tieNotes(names, totals.map(pts), totals, breaks).map((note) => (
+          <p key={note} className="sc-tie-note">
+            {note}
+          </p>
+        ))}
       <p className="sc-tie-rule">
         A tie on points goes to the player who completed more tickets
-        {map === 'europe' ? ', then to the one who built fewer stations' : ''}, then to the holder of the {MAPS[map].longest} card.
+        {map === 'europe' ? ', then to the one who built fewer stations' : ''}, then to the holder of the{' '}
+        {MAPS[map].longest} card.
       </p>
     </>
   );
@@ -184,7 +252,12 @@ export default function TicketToRidePad() {
   // ?map=europe, from Europe's rules tab, opens on that map.
   const [search] = useSearchParams();
   const asked = search.get('map');
-  const [map, setMap] = useSavedState<TtrMap>('gameroom:score:ticket-to-ride:map', 'usa', (v) => (isMap(v) ? v : null), isMap(asked) ? asked : null);
+  const [map, setMap] = useSavedState<TtrMap>(
+    'gameroom:score:ticket-to-ride:map',
+    'usa',
+    (v) => (isMap(v) ? v : null),
+    isMap(asked) ? asked : null,
+  );
   return (
     <PlayerScorePad<TtrPlayer>
       storageKey="gameroom:score:ticket-to-ride"
@@ -193,18 +266,20 @@ export default function TicketToRidePad() {
       blank={blank}
       valid={valid}
       hasScores={hasScores}
-      setup={(
+      setup={
         <section className="sc-setup" aria-labelledby="sc-map-title">
-          <h2 className="sc-setup-title" id="sc-map-title">Map</h2>
+          <h2 className="sc-setup-title" id="sc-map-title">
+            Map
+          </h2>
           <div className="sc-seg" role="group" aria-labelledby="sc-map-title">
-            {(['usa', 'europe'] as const).map(m => (
+            {(['usa', 'europe'] as const).map((m) => (
               <button key={m} type="button" className="sc-seg-btn" aria-pressed={map === m} onClick={() => setMap(m)}>
                 {MAPS[m].name}
               </button>
             ))}
           </div>
         </section>
-      )}
+      }
       form={(player, update) => <Form map={map} player={player} update={update} />}
       total={(p) => ttrBreakdown(map, tally(p)).total}
       unit="points"

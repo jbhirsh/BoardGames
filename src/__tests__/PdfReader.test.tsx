@@ -44,7 +44,11 @@ const pdf = vi.hoisted(() => ({
 
 vi.mock('pdfjs-dist', () => {
   const page = (n: number, strs: string[], url: string) => ({
-    getViewport: ({ scale }: { scale: number }) => ({ width: 100 * scale, height: (pdf.heights[n - 1] ?? 130) * scale, scale }),
+    getViewport: ({ scale }: { scale: number }) => ({
+      width: 100 * scale,
+      height: (pdf.heights[n - 1] ?? 130) * scale,
+      scale,
+    }),
     render: () => {
       pdf.calls.push(`render ${n}`);
       pdf.drawn.push(`${url} ${n}`);
@@ -53,10 +57,15 @@ vi.mock('pdfjs-dist', () => {
       if (n === pdf.failRender) return { promise: Promise.reject(new Error('render failed')), cancel: () => {} };
       // A cancelled render rejects, as pdf.js's does.
       let cancel = () => {};
-      const cancelled = new Promise<never>((_, reject) => { cancel = () => reject(new Error('cancelled')); });
-      const step = url === pdf.hangFrom
-        ? new Promise<void>(() => {})
-        : pdf.stepwise ? new Promise<void>((resolve) => pdf.steps.push(resolve)) : null;
+      const cancelled = new Promise<never>((_, reject) => {
+        cancel = () => reject(new Error('cancelled'));
+      });
+      const step =
+        url === pdf.hangFrom
+          ? new Promise<void>(() => {})
+          : pdf.stepwise
+            ? new Promise<void>((resolve) => pdf.steps.push(resolve))
+            : null;
       return { promise: Promise.race([step ?? pdf.paint ?? Promise.resolve(), cancelled]), cancel };
     },
     getTextContent: async () => {
@@ -75,7 +84,13 @@ vi.mock('pdfjs-dist', () => {
     #items: { str: string }[];
     #container: HTMLElement;
     textDivs: HTMLElement[] = [];
-    constructor({ textContentSource, container }: { textContentSource: { items: { str: string }[] }; container: HTMLElement }) {
+    constructor({
+      textContentSource,
+      container,
+    }: {
+      textContentSource: { items: { str: string }[] };
+      container: HTMLElement;
+    }) {
       this.#items = textContentSource.items;
       this.#container = container;
     }
@@ -102,17 +117,19 @@ vi.mock('pdfjs-dist', () => {
         promise: pdf.fail
           ? Promise.reject(new Error('bad pdf'))
           : (url === pdf.slowDoc ? pdf.docUntil : Promise.resolve()).then(() => {
-            if (failing) throw new Error('network gave out');
-            return {
-              numPages: pdf.pages.length,
-              getPage: async (n: number) => {
-                if (n === pdf.slowPage) await pdf.slowUntil;
-                return page(n, pdf.pages[n - 1], url);
-              },
-              cleanup: async () => {},
-            };
-          }),
-        destroy: async () => { pdf.destroyed++; },
+              if (failing) throw new Error('network gave out');
+              return {
+                numPages: pdf.pages.length,
+                getPage: async (n: number) => {
+                  if (n === pdf.slowPage) await pdf.slowUntil;
+                  return page(n, pdf.pages[n - 1], url);
+                },
+                cleanup: async () => {},
+              };
+            }),
+        destroy: async () => {
+          pdf.destroyed++;
+        },
       };
     },
   };
@@ -151,31 +168,44 @@ beforeEach(() => {
   pdf.failNext = '';
   pdf.slowDoc = '';
   observers.length = 0;
-  vi.stubGlobal('Worker', class extends EventTarget {
-    constructor() {
-      super();
-      ports.push(this);
-    }
-  });
+  vi.stubGlobal(
+    'Worker',
+    class extends EventTarget {
+      constructor() {
+        super();
+        ports.push(this);
+      }
+    },
+  );
   // Every page starts on screen, and the column is 300px wide.
-  vi.stubGlobal('IntersectionObserver', class {
-    cb: (e: { isIntersecting: boolean }[]) => void;
-    constructor(cb: (e: { isIntersecting: boolean }[]) => void) { this.cb = cb; }
-    observe() {
-      observers.push(this.cb);
-      this.cb([{ isIntersecting: !pdf.away }]);
-    }
-    disconnect() {}
-  });
-  vi.stubGlobal('ResizeObserver', class {
-    cb: (e: { contentRect: { width: number } }[]) => void;
-    constructor(cb: (e: { contentRect: { width: number } }[]) => void) { this.cb = cb; }
-    observe() {
-      resize = (width) => this.cb([{ contentRect: { width } }]);
-      resize(300);
-    }
-    disconnect() {}
-  });
+  vi.stubGlobal(
+    'IntersectionObserver',
+    class {
+      cb: (e: { isIntersecting: boolean }[]) => void;
+      constructor(cb: (e: { isIntersecting: boolean }[]) => void) {
+        this.cb = cb;
+      }
+      observe() {
+        observers.push(this.cb);
+        this.cb([{ isIntersecting: !pdf.away }]);
+      }
+      disconnect() {}
+    },
+  );
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      cb: (e: { contentRect: { width: number } }[]) => void;
+      constructor(cb: (e: { contentRect: { width: number } }[]) => void) {
+        this.cb = cb;
+      }
+      observe() {
+        resize = (width) => this.cb([{ contentRect: { width } }]);
+        resize(300);
+      }
+      disconnect() {}
+    },
+  );
 });
 
 afterEach(() => vi.unstubAllGlobals());
@@ -225,7 +255,7 @@ describe('PdfReader', () => {
     expect(screen.getByText('Loading the rulebook…')).toBeInTheDocument();
   });
 
-  it('says so when the PDF cannot be shown, with no search for a rulebook that isn\'t there', async () => {
+  it("says so when the PDF cannot be shown, with no search for a rulebook that isn't there", async () => {
     pdf.fail = true;
     render(<PdfReader src="/rules/x.pdf" title="X rules" />);
     expect(screen.getByRole('search')).toBeInTheDocument();
@@ -352,7 +382,13 @@ describe('PdfReader', () => {
   it('draws one page at a time: the most on screen first, then the nearest, each with its text before the next', async () => {
     // jsdom's screen is 768px tall. Page 3 shows 400px of itself, 2 shows
     // 300, 4 shows 68; 1 is 100px above the screen, 5 is 332px below it.
-    const boxes: Record<string, [number, number]> = { 1: [-900, -100], 2: [-100, 300], 3: [300, 700], 4: [700, 1100], 5: [1100, 1500] };
+    const boxes: Record<string, [number, number]> = {
+      1: [-900, -100],
+      2: [-100, 300],
+      3: [300, 700],
+      4: [700, 1100],
+      5: [1100, 1500],
+    };
     vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
       const [top, bottom] = boxes[(this as HTMLElement).dataset.page ?? ''] ?? [0, 0];
       return { top, bottom, height: bottom - top } as DOMRect;
@@ -375,17 +411,28 @@ describe('PdfReader', () => {
     expect(screen.getByText('Three')).toBeInTheDocument();
     expect(screen.queryByText('Five')).not.toBeInTheDocument();
     // Each page's text is read before the next page is drawn.
-    expect(pdf.calls.slice(0, 8)).toEqual(['render 3', 'text 3', 'render 2', 'text 2', 'render 4', 'text 4', 'render 1', 'text 1']);
+    expect(pdf.calls.slice(0, 8)).toEqual([
+      'render 3',
+      'text 3',
+      'render 2',
+      'text 2',
+      'render 4',
+      'text 4',
+      'render 1',
+      'text 1',
+    ]);
     await act(async () => pdf.steps[4]());
     await flush();
     expect(screen.getByText('Five')).toBeInTheDocument();
     vi.restoreAllMocks();
   });
 
-  it('starts drawing the next page only once the last one\'s text is read', async () => {
+  it("starts drawing the next page only once the last one's text is read", async () => {
     let text = () => {};
     pdf.slowText = 1;
-    pdf.textUntil = new Promise<void>((resolve) => { text = resolve; });
+    pdf.textUntil = new Promise<void>((resolve) => {
+      text = resolve;
+    });
     pdf.stepwise = true;
     pdf.pages = [['One'], ['Two']];
     render(<PdfReader src="/rules/x.pdf" title="X rules" />);
@@ -399,7 +446,7 @@ describe('PdfReader', () => {
     expect(pdf.rendered).toEqual([1, 2]);
   });
 
-  it('gives a page\'s turn back at once when it goes away while still loading', async () => {
+  it("gives a page's turn back at once when it goes away while still loading", async () => {
     pdf.slowPage = 2;
     pdf.slowUntil = new Promise<void>(() => {});
     pdf.away = true;
@@ -418,7 +465,7 @@ describe('PdfReader', () => {
     expect(pdf.rendered).toEqual([1]);
   });
 
-  it('draws a search\'s match at once, beside a page already being drawn', async () => {
+  it("draws a search's match at once, beside a page already being drawn", async () => {
     pdf.stepwise = true;
     pdf.away = true;
     pdf.pages = [['One'], ['Two'], ['Draw three cards']];
@@ -440,7 +487,10 @@ describe('PdfReader', () => {
     // A fast connection that isn't mobile data, where a warm fetches the cited page's parts.
     beforeEach(() => {
       Object.defineProperty(navigator, 'connection', { value: { effectiveType: '4g' }, configurable: true });
-      vi.stubGlobal('fetch', vi.fn(async () => new Response(null)));
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () => new Response(null)),
+      );
     });
     afterEach(() => {
       delete (navigator as { connection?: unknown }).connection;
@@ -475,7 +525,9 @@ describe('PdfReader', () => {
     it('waits for its own rulebook to open first', async () => {
       let open = () => {};
       pdf.slowDoc = '/rules/x.pdf';
-      pdf.docUntil = new Promise<void>((resolve) => { open = resolve; });
+      pdf.docUntil = new Promise<void>((resolve) => {
+        open = resolve;
+      });
       pdf.pages = [['One'], ['Two']];
       render(<PdfReader src="/rules/x.pdf" title="X rules" warm={[Y]} />);
       await flush();
@@ -485,7 +537,7 @@ describe('PdfReader', () => {
       expect(pdf.opened).toEqual(['/rules/x.pdf', '/rules/y.pdf']);
     });
 
-    it('draws nothing out of sight that hadn\'t started when the reader closes', async () => {
+    it("draws nothing out of sight that hadn't started when the reader closes", async () => {
       pdf.stepwise = true;
       pdf.pages = [['One'], ['Two']];
       const { unmount } = render(<PdfReader src="/rules/x.pdf" title="X rules" warm={[Y]} />);
@@ -499,7 +551,7 @@ describe('PdfReader', () => {
       expect(pdf.drawn).toEqual(['/rules/x.pdf 1']);
     });
 
-    it('keeps drawing its own pages while the cited rulebook\'s network stalls', async () => {
+    it("keeps drawing its own pages while the cited rulebook's network stalls", async () => {
       pdf.slowDoc = '/rules/y.pdf';
       pdf.docUntil = new Promise<void>(() => {});
       pdf.pages = [['One'], ['Two'], ['Three']];
@@ -510,7 +562,7 @@ describe('PdfReader', () => {
       expect(pdf.drawn).toEqual(['/rules/x.pdf 1', '/rules/x.pdf 2', '/rules/x.pdf 3']);
     });
 
-    it('gives its own pages their turn back when the drawing out of sight doesn\'t finish', async () => {
+    it("gives its own pages their turn back when the drawing out of sight doesn't finish", async () => {
       // The warm's turn is timed from when it starts drawing, so the clock is
       // fake from the outset. Timeouts only: the flushes below yield to the
       // real event loop (as advancing the fake clock does), and RTL's async
@@ -526,7 +578,9 @@ describe('PdfReader', () => {
       expect(screen.getAllByRole('group')).toHaveLength(2);
       // Page 2 comes near, off screen: after the warm, which never finishes.
       vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
-        return ((this as HTMLElement).dataset.page === '2' ? { top: 900, bottom: 1000 } : { top: -2000, bottom: -1500 }) as DOMRect;
+        return (
+          (this as HTMLElement).dataset.page === '2' ? { top: 900, bottom: 1000 } : { top: -2000, bottom: -1500 }
+        ) as DOMRect;
       });
       act(() => observers[1]([{ isIntersecting: true }]));
       await tick();
@@ -542,7 +596,9 @@ describe('PdfReader', () => {
     it('opens a kept rulebook afresh, once, when it fails to load after all', async () => {
       let open = () => {};
       pdf.slowDoc = '/rules/y.pdf';
-      pdf.docUntil = new Promise<void>((resolve) => { open = resolve; });
+      pdf.docUntil = new Promise<void>((resolve) => {
+        open = resolve;
+      });
       pdf.failNext = '/rules/y.pdf';
       pdf.pages = [['One'], ['Two']];
       const { rerender } = render(<PdfReader src="/rules/x.pdf" title="X rules" warm={[Y]} />);
@@ -585,7 +641,9 @@ describe('PdfReader', () => {
       await flush();
       // Page 1 is on screen and being drawn; page 2 comes near, off screen.
       vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
-        return ((this as HTMLElement).dataset.page === '2' ? { top: 900, bottom: 1000 } : { top: 0, bottom: 500 }) as DOMRect;
+        return (
+          (this as HTMLElement).dataset.page === '2' ? { top: 900, bottom: 1000 } : { top: 0, bottom: 500 }
+        ) as DOMRect;
       });
       act(() => observers[0]([{ isIntersecting: true }]));
       await flush();
@@ -609,7 +667,8 @@ describe('PdfReader', () => {
   describe('jumping to a cited page', () => {
     const scrolled: { page: string | undefined; options: unknown; above?: string }[] = [];
     const page = (n: number) => screen.getByRole('group', { name: new RegExp(`^Page ${n} of`) });
-    const ringed = () => [...document.querySelectorAll('.pdf-page--cited')].map((el) => (el as HTMLElement).dataset.page);
+    const ringed = () =>
+      [...document.querySelectorAll('.pdf-page--cited')].map((el) => (el as HTMLElement).dataset.page);
     // Jumps a reader has made are remembered for the session, so each test's keys are its own.
     let n = 0;
     const key = () => `test-${++n}`;
@@ -640,12 +699,17 @@ describe('PdfReader', () => {
       await act(async () => {});
       return view;
     }
-    const jumpTo = (view: { rerender: (ui: React.ReactElement) => void }, jump: { page: number; key: string; quote?: string }) =>
-      act(async () => view.rerender(<PdfReader src="/rules/x.pdf" title="X rules" jump={jump} />));
+    const jumpTo = (
+      view: { rerender: (ui: React.ReactElement) => void },
+      jump: { page: number; key: string; quote?: string },
+    ) => act(async () => view.rerender(<PdfReader src="/rules/x.pdf" title="X rules" jump={jump} />));
 
     it('names each page with the count, so focus on one says where it is', async () => {
       await open([['One'], ['Two']]);
-      expect(screen.getAllByRole('group').map((g) => g.getAttribute('aria-label'))).toEqual(['Page 1 of 2', 'Page 2 of 2']);
+      expect(screen.getAllByRole('group').map((g) => g.getAttribute('aria-label'))).toEqual([
+        'Page 1 of 2',
+        'Page 2 of 2',
+      ]);
       expect(page(1)).toHaveAttribute('tabindex', '-1');
     });
 
@@ -669,7 +733,9 @@ describe('PdfReader', () => {
 
     it('rings the page only once its image is drawn', async () => {
       let paint = () => {};
-      pdf.paint = new Promise<void>((resolve) => { paint = resolve; });
+      pdf.paint = new Promise<void>((resolve) => {
+        paint = resolve;
+      });
       await openAt([['One'], ['Two']], { page: 2, key: key() });
       expect(scrolled).toHaveLength(1);
       expect(ringed()).toEqual([]);
@@ -679,7 +745,9 @@ describe('PdfReader', () => {
 
     it('draws the cited page first, and the pages on screen only once it is drawn', async () => {
       let paint = () => {};
-      pdf.paint = new Promise<void>((resolve) => { paint = resolve; });
+      pdf.paint = new Promise<void>((resolve) => {
+        paint = resolve;
+      });
       await openAt([['One'], ['Two'], ['Three']], { page: 3, key: key() });
       // Every page is on screen, yet only the cited one is drawn while the
       // jump is on its way, and the others' text waits too.
@@ -695,7 +763,9 @@ describe('PdfReader', () => {
     it('starts drawing the cited page while the heights above it are still being read', async () => {
       let read = () => {};
       pdf.slowPage = 2;
-      pdf.slowUntil = new Promise<void>((resolve) => { read = resolve; });
+      pdf.slowUntil = new Promise<void>((resolve) => {
+        read = resolve;
+      });
       pdf.pages = [['One'], ['Two'], ['Three']];
       render(<PdfReader src="/rules/x.pdf" title="X rules" jump={{ page: 3, key: key() }} />);
       await screen.findAllByRole('group');
@@ -709,7 +779,9 @@ describe('PdfReader', () => {
 
     it('rings a cited page redrawn at a new width once the new drawing is done', async () => {
       let paint = () => {};
-      pdf.paint = new Promise<void>((resolve) => { paint = resolve; });
+      pdf.paint = new Promise<void>((resolve) => {
+        paint = resolve;
+      });
       await openAt([['One'], ['Two']], { page: 2, key: key() });
       // Turned mid-drawing: that drawing is cancelled and another started.
       act(() => resize(200));
@@ -742,7 +814,9 @@ describe('PdfReader', () => {
       await act(async () => {});
       expect(pdf.rendered).toEqual([1]);
       let paint = () => {};
-      pdf.paint = new Promise<void>((resolve) => { paint = resolve; });
+      pdf.paint = new Promise<void>((resolve) => {
+        paint = resolve;
+      });
       await jumpTo(view, { page: 3, key: key() });
       const [first, second] = document.querySelectorAll('canvas');
       act(() => {
@@ -778,10 +852,14 @@ describe('PdfReader', () => {
 
     it('says where a jump went once, when someone takes the scroll over before the page is drawn', async () => {
       let paint = () => {};
-      pdf.paint = new Promise<void>((resolve) => { paint = resolve; });
+      pdf.paint = new Promise<void>((resolve) => {
+        paint = resolve;
+      });
       top = (p) => (p === '2' ? 400 : 0);
       await openAt([['One'], ['Two']], { page: 2, key: key() });
-      await act(async () => { window.dispatchEvent(new Event('touchstart')); });
+      await act(async () => {
+        window.dispatchEvent(new Event('touchstart'));
+      });
       const said = document.querySelector('[aria-live="polite"]')!;
       await vi.waitFor(() => expect(said).toHaveTextContent(/^Page 2$/));
       await act(async () => paint());
@@ -794,7 +872,9 @@ describe('PdfReader', () => {
       top = (p) => (p === '2' ? 400 : 0);
       await openAt([['One'], ['Two']], { page: 2, key: key() });
       expect(pdf.rendered).toEqual([2]);
-      await act(async () => { window.dispatchEvent(new Event('touchstart')); });
+      await act(async () => {
+        window.dispatchEvent(new Event('touchstart'));
+      });
       expect(pdf.rendered).toEqual([2, 1]);
       expect(ringed()).toEqual([]);
     });
@@ -812,7 +892,9 @@ describe('PdfReader', () => {
       await openAt([['One'], ['Two']], { page: 2, key: key() });
       expect(scrolled).toHaveLength(1);
       expect(ringed()).toEqual([]);
-      await act(async () => { window.dispatchEvent(new Event('scrollend')); });
+      await act(async () => {
+        window.dispatchEvent(new Event('scrollend'));
+      });
       expect(scrolled).toMatchObject([{ page: '2' }, { page: '2', options: { block: 'start', behavior: 'instant' } }]);
       expect(ringed()).toEqual(['2']);
     });
@@ -822,11 +904,17 @@ describe('PdfReader', () => {
       top = (p) => (p === '2' ? 400 : 0);
       pdf.pages = [['One'], ['Two']];
       render(<PdfReader src="/rules/x.pdf" title="X rules" jump={{ page: 2, key: key() }} />);
-      await act(async () => { await vi.advanceTimersByTimeAsync(10); });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10);
+      });
       expect(scrolled).toHaveLength(1);
-      await act(async () => { await vi.advanceTimersByTimeAsync(1900); });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1900);
+      });
       expect(scrolled).toHaveLength(1);
-      await act(async () => { await vi.advanceTimersByTimeAsync(200); });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(200);
+      });
       expect(scrolled).toHaveLength(2);
       expect(ringed()).toEqual(['2']);
     });
@@ -834,8 +922,12 @@ describe('PdfReader', () => {
     it('leaves the page where someone who took the scroll over put it', async () => {
       top = (p) => (p === '2' ? 400 : 0);
       await openAt([['One'], ['Two']], { page: 2, key: key() });
-      await act(async () => { window.dispatchEvent(new Event('touchstart')); });
-      await act(async () => { window.dispatchEvent(new Event('scrollend')); });
+      await act(async () => {
+        window.dispatchEvent(new Event('touchstart'));
+      });
+      await act(async () => {
+        window.dispatchEvent(new Event('scrollend'));
+      });
       expect(scrolled).toHaveLength(1);
       expect(ringed()).toEqual(['2']);
     });
@@ -854,7 +946,9 @@ describe('PdfReader', () => {
       top = (p) => (p === '2' ? 132 : 0);
       await openAt([['One'], ['Two']], { page: 2, key: key() });
       expect(ringed()).toEqual([]);
-      await act(async () => { window.dispatchEvent(new Event('scrollend')); });
+      await act(async () => {
+        window.dispatchEvent(new Event('scrollend'));
+      });
       expect(scrolled).toHaveLength(2);
       expect(ringed()).toEqual(['2']);
     });
@@ -880,12 +974,18 @@ describe('PdfReader', () => {
       vi.useFakeTimers();
       pdf.pages = [['One'], ['Two']];
       const view = render(<PdfReader src="/rules/x.pdf" title="X rules" />);
-      await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0);
+      });
       await jumpTo(view, { page: 2, key: key() });
       expect(ringed()).toEqual(['2']);
-      await act(async () => { await vi.advanceTimersByTimeAsync(1599); });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1599);
+      });
       expect(ringed()).toEqual(['2']);
-      await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1);
+      });
       expect(ringed()).toEqual([]);
       expect(page(2)).toHaveFocus();
     });
@@ -894,14 +994,22 @@ describe('PdfReader', () => {
       vi.useFakeTimers();
       pdf.pages = [['One'], ['Two']];
       const view = render(<PdfReader src="/rules/x.pdf" title="X rules" />);
-      await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0);
+      });
       await jumpTo(view, { page: 2, key: key() });
-      await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1000);
+      });
       await jumpTo(view, { page: 2, key: key() });
       // The first tap's timer went with it.
-      await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1000);
+      });
       expect(ringed()).toEqual(['2']);
-      await act(async () => { await vi.advanceTimersByTimeAsync(600); });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(600);
+      });
       expect(ringed()).toEqual([]);
     });
 
@@ -942,7 +1050,7 @@ describe('PdfReader', () => {
       sessionStorage.clear();
     });
 
-    it('says where a jump went, by its rulebook\'s tab when it has one', async () => {
+    it("says where a jump went, by its rulebook's tab when it has one", async () => {
       const view = await openAt([['One'], ['Two']], { page: 2, key: key(), place: 'Base game' });
       const said = document.querySelector('[aria-live="polite"]')!;
       await vi.waitFor(() => expect(said).toHaveTextContent('Base game, page 2'));
@@ -982,18 +1090,22 @@ describe('PdfReader', () => {
     });
 
     describe('marking the passage a citation points to', () => {
-      const ROBBER = [['Setup is quick.'], ['If you roll a 7, nobody collects resources.', 'Then you must move the robber to another hex.']];
+      const ROBBER = [
+        ['Setup is quick.'],
+        ['If you roll a 7, nobody collects resources.', 'Then you must move the robber to another hex.'],
+      ];
       const QUOTE = 'On a 7 nobody collects resources, and you move the robber';
       const PASSAGE = ['If you roll a 7, nobody collects resources.', 'Then you must move the robber to another hex.'];
       const cites = () => [...document.querySelectorAll('mark.pdf-hit--cited')].map((m) => m.textContent);
       const said = () => document.querySelector('[aria-live="polite"]')!;
       /** Puts the marks `at` pixels down the screen, 20px tall; pages stay where `top` puts them. */
-      const marksAt = (at: number) => vi.mocked(Element.prototype.getBoundingClientRect).mockImplementation(function (this: Element) {
-        const y = this.tagName === 'MARK' ? at : top((this as HTMLElement).dataset.page);
-        return { top: y, bottom: y + 20, height: 20 } as DOMRect;
-      });
+      const marksAt = (at: number) =>
+        vi.mocked(Element.prototype.getBoundingClientRect).mockImplementation(function (this: Element) {
+          const y = this.tagName === 'MARK' ? at : top((this as HTMLElement).dataset.page);
+          return { top: y, bottom: y + 20, height: 20 } as DOMRect;
+        });
 
-      it('marks the passage the answer\'s words point to, like a match, and says where it starts', async () => {
+      it("marks the passage the answer's words point to, like a match, and says where it starts", async () => {
         await openAt(ROBBER, { page: 2, key: key(), quote: QUOTE });
         // Whole sentences, so each mark is a whole item of the text layer.
         expect(cites()).toEqual(PASSAGE);
@@ -1009,10 +1121,12 @@ describe('PdfReader', () => {
         await vi.waitFor(() => expect(said()).toHaveTextContent(/^Page 2$/));
       });
 
-      it('jumps without waiting for the page\'s text, and marks the passage, and says it, once the text comes', async () => {
+      it("jumps without waiting for the page's text, and marks the passage, and says it, once the text comes", async () => {
         let text = () => {};
         pdf.slowText = 2;
-        pdf.textUntil = new Promise<void>((resolve) => { text = resolve; });
+        pdf.textUntil = new Promise<void>((resolve) => {
+          text = resolve;
+        });
         await openAt(ROBBER, { page: 2, key: key(), quote: QUOTE });
         expect(scrolled).toMatchObject([{ page: '2' }]);
         expect(ringed()).toEqual(['2']);
@@ -1029,11 +1143,18 @@ describe('PdfReader', () => {
         // Frames run only when the test runs them.
         const frames = new Map<number, FrameRequestCallback>();
         let id = 0;
-        vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => { frames.set(++id, cb); return id; });
-        vi.stubGlobal('cancelAnimationFrame', (n: number) => { frames.delete(n); });
+        vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+          frames.set(++id, cb);
+          return id;
+        });
+        vi.stubGlobal('cancelAnimationFrame', (n: number) => {
+          frames.delete(n);
+        });
         let text = () => {};
         pdf.slowText = 2;
-        pdf.textUntil = new Promise<void>((resolve) => { text = resolve; });
+        pdf.textUntil = new Promise<void>((resolve) => {
+          text = resolve;
+        });
         await openAt(ROBBER, { page: 2, key: key(), quote: QUOTE });
         expect(scrolled).toMatchObject([{ page: '2' }]);
         await act(async () => text());
@@ -1049,19 +1170,29 @@ describe('PdfReader', () => {
         // nothing waiting for a frame, not nothing said within a while.
         const frames = new Map<number, FrameRequestCallback>();
         let id = 0;
-        vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => { frames.set(++id, cb); return id; });
-        vi.stubGlobal('cancelAnimationFrame', (n: number) => { frames.delete(n); });
-        const runFrames = () => act(() => {
-          const due = [...frames.values()];
-          frames.clear();
-          for (const cb of due) cb(0);
+        vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+          frames.set(++id, cb);
+          return id;
         });
+        vi.stubGlobal('cancelAnimationFrame', (n: number) => {
+          frames.delete(n);
+        });
+        const runFrames = () =>
+          act(() => {
+            const due = [...frames.values()];
+            frames.clear();
+            for (const cb of due) cb(0);
+          });
         let text = () => {};
         pdf.slowText = 2;
-        pdf.textUntil = new Promise<void>((resolve) => { text = resolve; });
+        pdf.textUntil = new Promise<void>((resolve) => {
+          text = resolve;
+        });
         top = (p) => (p === '2' ? 400 : 0);
         await openAt(ROBBER, { page: 2, key: key(), quote: QUOTE });
-        await act(async () => { window.dispatchEvent(new Event('touchstart')); });
+        await act(async () => {
+          window.dispatchEvent(new Event('touchstart'));
+        });
         await flush();
         runFrames();
         expect(said()).toHaveTextContent(/^Page 2$/);
@@ -1072,7 +1203,7 @@ describe('PdfReader', () => {
         expect(said()).toHaveTextContent(/^Page 2$/);
       });
 
-      it('still jumps when the page\'s text won\'t load', async () => {
+      it("still jumps when the page's text won't load", async () => {
         pdf.failPage = 2;
         await openAt(ROBBER, { page: 2, key: key(), quote: QUOTE });
         expect(scrolled).toMatchObject([{ page: '2' }]);
@@ -1090,7 +1221,11 @@ describe('PdfReader', () => {
       });
 
       it('moves to the next jump, and goes with one that has no words', async () => {
-        const view = await openAt([...ROBBER, ['Roll a 7 and move the robber at once.']], { page: 2, key: key(), quote: QUOTE });
+        const view = await openAt([...ROBBER, ['Roll a 7 and move the robber at once.']], {
+          page: 2,
+          key: key(),
+          quote: QUOTE,
+        });
         expect(cites()).toHaveLength(2);
         await jumpTo(view, { page: 3, key: key(), quote: QUOTE });
         expect(cites()).toEqual(['Roll a 7 and move the robber at once.']);
@@ -1146,14 +1281,16 @@ describe('PdfReader', () => {
         top = (p) => (p === '2' ? 400 : 0);
         marksAt(2000);
         await openAt(ROBBER, { page: 2, key: key(), quote: QUOTE });
-        await act(async () => { window.dispatchEvent(new Event('touchstart')); });
+        await act(async () => {
+          window.dispatchEvent(new Event('touchstart'));
+        });
         await act(async () => {});
         expect(cites()).toHaveLength(2);
         expect(scrolled).toHaveLength(1);
       });
     });
 
-    it('tells the page when the rulebook can\'t be shown', async () => {
+    it("tells the page when the rulebook can't be shown", async () => {
       pdf.fail = true;
       const onFail = vi.fn();
       render(<PdfReader src="/rules/x.pdf" title="X rules" onFail={onFail} />);
@@ -1166,7 +1303,9 @@ describe('PdfReader', () => {
   it('says the rulebook cannot be shown when the worker fails to start, and starts another for the next reader', async () => {
     pdf.pages = [['x']];
     render(<PdfReader src="/rules/x.pdf" title="X rules" />);
-    act(() => { ports[0].dispatchEvent(new Event('error')); });
+    act(() => {
+      ports[0].dispatchEvent(new Event('error'));
+    });
     expect(await screen.findByText(/couldn’t be shown here/)).toBeInTheDocument();
     // A reader opened afterwards (the rules page's, once the network is
     // back) doesn't inherit it, and fails only if its own worker does.
@@ -1176,7 +1315,9 @@ describe('PdfReader', () => {
     expect(ports).toHaveLength(2);
     expect(pdf.workers).toHaveLength(2);
     expect(screen.getAllByText(/couldn’t be shown here/)).toHaveLength(1);
-    act(() => { ports[1].dispatchEvent(new Event('error')); });
+    act(() => {
+      ports[1].dispatchEvent(new Event('error'));
+    });
     expect(await screen.findAllByText(/couldn’t be shown here/)).toHaveLength(2);
   });
 });

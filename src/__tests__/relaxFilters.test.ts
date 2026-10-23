@@ -11,7 +11,12 @@ describe('activeFilters', () => {
   });
 
   it('names each filter and what the state is without it', () => {
-    const state = at({ duration: 15, players: 4, keywords: new Set<KeywordId>(['strategy', 'party']), search: ' azul ' });
+    const state = at({
+      duration: 15,
+      players: 4,
+      keywords: new Set<KeywordId>(['strategy', 'party']),
+      search: ' azul ',
+    });
     const filters = activeFilters(state);
     expect(filters.map((f) => [f.id, f.label])).toEqual([
       ['duration', 'up to 15 min'],
@@ -26,7 +31,13 @@ describe('activeFilters', () => {
     expect(filters[4].without.search).toBe('');
     // Each change names its own field and nothing else, so dropping a filter
     // can't carry a stale sort, view or list along with it.
-    expect(filters.map((f) => Object.keys(f.without))).toEqual([['duration'], ['players'], ['keywords'], ['keywords'], ['search']]);
+    expect(filters.map((f) => Object.keys(f.without))).toEqual([
+      ['duration'],
+      ['players'],
+      ['keywords'],
+      ['keywords'],
+      ['search'],
+    ]);
     // The original is left alone.
     expect(state.keywords.size).toBe(2);
   });
@@ -40,14 +51,23 @@ describe('relaxations', () => {
   it('keeps the filters whose removal brings results back, most first', () => {
     const state = at({ duration: 15, players: 4 });
     const counts = (s: FilterState) => (s.duration === 'all' ? 3 : s.players === 0 ? 7 : 0);
-    expect(relaxations(state, counts).map((r) => [r.id, r.count])).toEqual([['players', 7], ['duration', 3]]);
+    expect(relaxations(state, counts).map((r) => [r.id, r.count])).toEqual([
+      ['players', 7],
+      ['duration', 3],
+    ]);
   });
 
   it('counts each with the rest of the state kept', () => {
     const state = at({ players: 4, search: 'azul', sort: 'group', baseSort: 'group', collection: 'want' });
     const seen: FilterState[] = [];
-    relaxations(state, (s) => { seen.push(s); return 1; });
-    expect(seen).toEqual([{ ...state, players: 0 }, { ...state, search: '' }]);
+    relaxations(state, (s) => {
+      seen.push(s);
+      return 1;
+    });
+    expect(seen).toEqual([
+      { ...state, players: 0 },
+      { ...state, search: '' },
+    ]);
   });
 
   it('is empty when no single filter is to blame', () => {

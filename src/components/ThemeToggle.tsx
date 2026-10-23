@@ -41,7 +41,9 @@ export default function ThemeToggle() {
       {OPTIONS.map((o, i) => (
         <button
           key={o.value}
-          ref={(el) => { refs.current[i] = el; }}
+          ref={(el) => {
+            refs.current[i] = el;
+          }}
           type="button"
           role="radio"
           aria-checked={theme === o.value}

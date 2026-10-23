@@ -1,6 +1,16 @@
 // First, so the methods pdf.js expects are there before its code runs.
 import '../pdfjs/polyfills';
-import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
 import { TextLayer, type PDFDocumentProxy, type RenderTask } from 'pdfjs-dist';
 import { findMatches, type Match } from '../utils/pdfSearch';
 import { planMarks } from '../utils/pdfMarks';
@@ -9,7 +19,15 @@ import { CANT_SHOW } from './cantShow';
 import { safeSessionStorage } from '../client/safeStorage';
 import { REDUCED_MOTION } from '../hooks/useMediaQuery';
 import { drawOrder, OFF_SCREEN, renderQueue, type RenderQueue } from '../pdfjs/renderQueue';
-import { heldDocument, openDocument, readerOpens, sharedWorker, textOf as readTextOf, warmPage, type PageTextData } from '../pdfjs/documents';
+import {
+  heldDocument,
+  openDocument,
+  readerOpens,
+  sharedWorker,
+  textOf as readTextOf,
+  warmPage,
+  type PageTextData,
+} from '../pdfjs/documents';
 
 // The rules page draws the rulebook itself with pdf.js rather than leaving
 // it to the browser's viewer (which a phone hasn't got: Android draws
@@ -96,7 +114,8 @@ function revealPassage(box: HTMLElement): boolean {
   const mark = box.querySelector<HTMLElement>('mark.pdf-hit--cited');
   if (!mark) return false;
   const { top, bottom } = mark.getBoundingClientRect();
-  if (top < scrollMargin(box) || bottom > window.innerHeight) mark.scrollIntoView({ block: 'center', behavior: scrollBehavior() });
+  if (top < scrollMargin(box) || bottom > window.innerHeight)
+    mark.scrollIntoView({ block: 'center', behavior: scrollBehavior() });
   return true;
 }
 
@@ -233,7 +252,26 @@ interface PageProps {
   onPlaced: () => void;
 }
 
-function PdfPage({ doc, n, width, pixels, ratio, textOf, matches, current, quoted, total, known, cited, onJump, onLanded, held, leads, queue, onPlaced }: PageProps) {
+function PdfPage({
+  doc,
+  n,
+  width,
+  pixels,
+  ratio,
+  textOf,
+  matches,
+  current,
+  quoted,
+  total,
+  known,
+  cited,
+  onJump,
+  onLanded,
+  held,
+  leads,
+  queue,
+  onPlaced,
+}: PageProps) {
   const boxRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
@@ -263,10 +301,13 @@ function PdfPage({ doc, n, width, pixels, ratio, textOf, matches, current, quote
   useEffect(() => {
     const box = boxRef.current;
     if (!box) return;
-    const io = new IntersectionObserver((entries) => {
-      setNear(entries[entries.length - 1].isIntersecting);
-      placed();
-    }, { rootMargin: NEAR });
+    const io = new IntersectionObserver(
+      (entries) => {
+        setNear(entries[entries.length - 1].isIntersecting);
+        placed();
+      },
+      { rootMargin: NEAR },
+    );
     io.observe(box);
     return () => io.disconnect();
   }, []);
@@ -299,36 +340,44 @@ function PdfPage({ doc, n, width, pixels, ratio, textOf, matches, current, quote
     let cancelled = false;
     let task: RenderTask | null = null;
     let over = () => {};
-    drawing.current = new Promise((resolve) => { over = () => resolve(undefined); });
+    drawing.current = new Promise((resolve) => {
+      over = () => resolve(undefined);
+    });
     // Called off while loading its page, before there is a drawing to
     // cancel, it gives its place in the queue back at once all the same.
     let stop = () => {};
-    const stopped = new Promise<void>((resolve) => { stop = resolve; });
+    const stopped = new Promise<void>((resolve) => {
+      stop = resolve;
+    });
     // A cancelled render rejects too; it leaves the promise to the drawing after it.
     const failed = () => {
       if (!cancelled) painted.current.resolve(false);
     };
-    const draw = () => doc.getPage(n).then((page) => {
-      if (cancelled) return;
-      const base = page.getViewport({ scale: 1 });
-      const viewport = page.getViewport({ scale: width / base.width });
-      setHeight(base.height / base.width);
-      const dpr = Math.min(pixels, 2, Math.sqrt(MAX_PIXELS / (viewport.width * viewport.height)));
-      canvas.width = Math.floor(viewport.width * dpr);
-      canvas.height = Math.floor(viewport.height * dpr);
-      task = page.render({ canvas, viewport, transform: dpr === 1 ? undefined : [dpr, 0, 0, dpr, 0, 0] });
-      // A failed render leaves the page blank, and the download link above
-      // the reader still works.
-      return task.promise.then(() => painted.current.resolve(true), failed);
-    }, failed);
+    const draw = () =>
+      doc.getPage(n).then((page) => {
+        if (cancelled) return;
+        const base = page.getViewport({ scale: 1 });
+        const viewport = page.getViewport({ scale: width / base.width });
+        setHeight(base.height / base.width);
+        const dpr = Math.min(pixels, 2, Math.sqrt(MAX_PIXELS / (viewport.width * viewport.height)));
+        canvas.width = Math.floor(viewport.width * dpr);
+        canvas.height = Math.floor(viewport.height * dpr);
+        task = page.render({ canvas, viewport, transform: dpr === 1 ? undefined : [dpr, 0, 0, dpr, 0, 0] });
+        // A failed render leaves the page blank, and the download link above
+        // the reader still works.
+        return task.promise.then(() => painted.current.resolve(true), failed);
+      }, failed);
     const dequeue = queue.add({
       order: () => order(),
       run: async () => {
         try {
-          await Promise.race([stopped, (async () => {
-            await draw();
-            if (!cancelled) await textOf(n);
-          })()]);
+          await Promise.race([
+            stopped,
+            (async () => {
+              await draw();
+              if (!cancelled) await textOf(n);
+            })(),
+          ]);
         } finally {
           over();
         }
@@ -513,7 +562,21 @@ export interface Warm {
  * `onFail` hears that the rulebook at `src` can't be shown, and `failNote`, if
  * given, is what is shown instead (null for nothing yet).
  */
-export default function PdfReader({ src, title, jump, warm, onFail, failNote = CANT_SHOW }: { src: string; title: string; jump?: Jump; warm?: readonly Warm[]; onFail?: (src: string) => void; failNote?: ReactNode }) {
+export default function PdfReader({
+  src,
+  title,
+  jump,
+  warm,
+  onFail,
+  failNote = CANT_SHOW,
+}: {
+  src: string;
+  title: string;
+  jump?: Jump;
+  warm?: readonly Warm[];
+  onFail?: (src: string) => void;
+  failNote?: ReactNode;
+}) {
   const [doc, setDoc] = useState<PDFDocumentProxy | null>(null);
   const [failed, setFailed] = useState(false);
   const failedNow = useEffectEvent(() => onFail?.(src));
@@ -559,12 +622,12 @@ export default function PdfReader({ src, title, jump, warm, onFail, failNote = C
     if (held) texts.current = held.texts;
     const loaded = held
       ? held.promise.catch(() => {
-        held.release();
-        if (cancelled) throw new Error('closed');
-        texts.current = new Map();
-        task = openDocument(src);
-        return task.promise;
-      })
+          held.release();
+          if (cancelled) throw new Error('closed');
+          texts.current = new Map();
+          task = openDocument(src);
+          return task.promise;
+        })
       : task!.promise;
     loaded
       .then(async (pdf) => {
@@ -650,9 +713,15 @@ export default function PdfReader({ src, title, jump, warm, onFail, failNote = C
     setSearching(true);
     setUnmarked(jumpId);
     // Every page's text at once: each may be its own download.
-    const pages = await Promise.all(Array.from({ length: doc.numPages }, (_, i) =>
-      // A page that won't load is left out; the rest are still searched.
-      textOf(i + 1).then(({ text }) => text.text, () => '')));
+    const pages = await Promise.all(
+      Array.from({ length: doc.numPages }, (_, i) =>
+        // A page that won't load is left out; the rest are still searched.
+        textOf(i + 1).then(
+          ({ text }) => text.text,
+          () => '',
+        ),
+      ),
+    );
     const found: Hit[] = pages.flatMap((text, i) => findMatches(text, q).map((match) => ({ page: i + 1, match })));
     const anyText = pages.some((text) => text.trim() !== '');
     if (id !== searchId.current) return;
@@ -695,23 +764,38 @@ export default function PdfReader({ src, title, jump, warm, onFail, failNote = C
   useEffect(() => {
     if (!doc || upTo === undefined || jumpId === null) return;
     let cancelled = false;
-    void Promise.all(Array.from({ length: upTo }, (_, i) => doc.getPage(i + 1).then((page) => {
-      const base = page.getViewport({ scale: 1 });
-      return base.height / base.width;
-    }, () => undefined))).then((ratios) => {
+    void Promise.all(
+      Array.from({ length: upTo }, (_, i) =>
+        doc.getPage(i + 1).then(
+          (page) => {
+            const base = page.getViewport({ scale: 1 });
+            return base.height / base.width;
+          },
+          () => undefined,
+        ),
+      ),
+    ).then((ratios) => {
       if (cancelled) return;
       setKnown((prev) => ({
         id: jumpId,
-        ratios: Array.from({ length: Math.max(prev.ratios.length, ratios.length) }, (_, i) => ratios[i] ?? prev.ratios[i]),
+        ratios: Array.from(
+          { length: Math.max(prev.ratios.length, ratios.length) },
+          (_, i) => ratios[i] ?? prev.ratios[i],
+        ),
       }));
     });
     if (quote) {
-      void textOf(upTo).then(({ runs, text }): Passage | null => {
-        const match = findCited(text.text, quote, lineBreaks(runs, text.starts));
-        return match && { match, start: passageStart(text.text.slice(...match)) };
-      }, () => null).then((passage) => {
-        if (!cancelled) setFound({ id: jumpId, passage });
-      });
+      void textOf(upTo)
+        .then(
+          ({ runs, text }): Passage | null => {
+            const match = findCited(text.text, quote, lineBreaks(runs, text.starts));
+            return match && { match, start: passageStart(text.text.slice(...match)) };
+          },
+          () => null,
+        )
+        .then((passage) => {
+          if (!cancelled) setFound({ id: jumpId, passage });
+        });
     }
     return () => {
       cancelled = true;
@@ -740,13 +824,16 @@ export default function PdfReader({ src, title, jump, warm, onFail, failNote = C
   const [landedId, setLandedId] = useState<string | null>(null);
   // Only the cited page calls these, so there is a jump.
   const onJump = useCallback(() => rememberJump(jumpId!), [jumpId]);
-  const onLanded = useCallback((takenOver: boolean) => {
-    setLandedId(jumpId);
-    if (told.current?.id === jumpId) return;
-    told.current = { id: jumpId!, more: marked === undefined && !takenOver };
-    const where = book ? `${book}, page ${upTo}` : `Page ${upTo}`;
-    say(marked ? `${where}. Highlighted: ${marked}` : where);
-  }, [jumpId, upTo, book, marked, say]);
+  const onLanded = useCallback(
+    (takenOver: boolean) => {
+      setLandedId(jumpId);
+      if (told.current?.id === jumpId) return;
+      told.current = { id: jumpId!, more: marked === undefined && !takenOver };
+      const where = book ? `${book}, page ${upTo}` : `Page ${upTo}`;
+      say(marked ? `${where}. Highlighted: ${marked}` : where);
+    },
+    [jumpId, upTo, book, marked, say],
+  );
   const going = target && landedId !== jumpId ? target.page : null;
   useEffect(() => {
     const jumped = told.current;
@@ -767,7 +854,8 @@ export default function PdfReader({ src, title, jump, warm, onFail, failNote = C
 
   let status = '';
   if (searching) status = 'Searching…';
-  else if (hits && scanned) status = 'This rulebook is a scanned image, so its text can’t be searched. Try asking the rules assistant.';
+  else if (hits && scanned)
+    status = 'This rulebook is a scanned image, so its text can’t be searched. Try asking the rules assistant.';
   else if (hits && hits.length === 0) status = `No matches for “${searched}”.`;
   else if (active) status = `${current + 1} of ${hits!.length} · page ${active.page}`;
   else if (missing !== null) status = noted;
@@ -786,48 +874,59 @@ export default function PdfReader({ src, title, jump, warm, onFail, failNote = C
               onChange={(e) => setQuery(e.target.value)}
               enterKeyHint="search"
             />
-            <button type="submit" disabled={!doc}>Search</button>
+            <button type="submit" disabled={!doc}>
+              Search
+            </button>
           </form>
           {/* Always in the page, so a screen reader hears its first message. */}
           <div className={status ? 'pdf-search-results' : 'pdf-search-results pdf-search-results--idle'}>
-            <p className="pdf-search-status" role="status">{status}</p>
+            <p className="pdf-search-status" role="status">
+              {status}
+            </p>
             {!searching && hits && hits.length > 1 && (
               <span className="pdf-search-nav">
-                <button type="button" aria-label="Previous match" onClick={() => step(-1)}>&uarr;</button>
-                <button type="button" aria-label="Next match" onClick={() => step(1)}>&darr;</button>
+                <button type="button" aria-label="Previous match" onClick={() => step(-1)}>
+                  &uarr;
+                </button>
+                <button type="button" aria-label="Next match" onClick={() => step(1)}>
+                  &darr;
+                </button>
               </span>
             )}
           </div>
         </div>
       )}
       {/* Not the status line, whose growing would move the pages mid-jump. */}
-      <div className="sr-only" aria-live="polite">{said}</div>
+      <div className="sr-only" aria-live="polite">
+        {said}
+      </div>
       {failed && failNote}
       {!failed && !doc && <p className="pdf-note">Loading the rulebook…</p>}
       <div className="pdf-pages" ref={pagesRef}>
-        {doc && Array.from({ length: doc.numPages }, (_, i) => (
-          <PdfPage
-            key={i + 1}
-            doc={doc}
-            n={i + 1}
-            width={width}
-            pixels={pixels}
-            ratio={ratio}
-            textOf={textOf}
-            matches={byPage.get(i + 1) ?? NO_MATCHES}
-            current={active?.page === i + 1 ? active.match : null}
-            quoted={cited?.page === i + 1 ? passage?.match ?? null : null}
-            total={doc.numPages}
-            known={known.ratios[i]}
-            cited={cited?.page === i + 1 ? cited.key : null}
-            onJump={onJump}
-            onLanded={onLanded}
-            held={going !== null}
-            leads={going === i + 1}
-            queue={queue}
-            onPlaced={onPlaced}
-          />
-        ))}
+        {doc &&
+          Array.from({ length: doc.numPages }, (_, i) => (
+            <PdfPage
+              key={i + 1}
+              doc={doc}
+              n={i + 1}
+              width={width}
+              pixels={pixels}
+              ratio={ratio}
+              textOf={textOf}
+              matches={byPage.get(i + 1) ?? NO_MATCHES}
+              current={active?.page === i + 1 ? active.match : null}
+              quoted={cited?.page === i + 1 ? (passage?.match ?? null) : null}
+              total={doc.numPages}
+              known={known.ratios[i]}
+              cited={cited?.page === i + 1 ? cited.key : null}
+              onJump={onJump}
+              onLanded={onLanded}
+              held={going !== null}
+              leads={going === i + 1}
+              queue={queue}
+              onPlaced={onPlaced}
+            />
+          ))}
       </div>
     </section>
   );

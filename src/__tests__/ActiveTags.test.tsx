@@ -12,7 +12,7 @@ function renderActiveTags() {
         <FilterBar />
         <ActiveTags />
       </FilterProvider>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 
@@ -23,7 +23,7 @@ describe('ActiveTags', () => {
         <FilterProvider>
           <ActiveTags />
         </FilterProvider>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
     const tags = container.querySelector('.atags');
     expect(tags).not.toHaveClass('show');

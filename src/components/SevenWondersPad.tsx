@@ -1,21 +1,40 @@
-import { breakdown, ordinal, scienceScore, standings, tieBreaks, treasuryScore, type Breakdown, type Tally } from '../utils/sevenWonders';
+import {
+  breakdown,
+  ordinal,
+  scienceScore,
+  standings,
+  tieBreaks,
+  treasuryScore,
+  type Breakdown,
+  type Tally,
+} from '../utils/sevenWonders';
 import { cleanInput, isBoxText, num } from '../utils/scoreInput';
 import PlayerScorePad, { ScoreSheet, type PadPlayer } from './PlayerScorePad';
 import ScoreInput, { SignButton } from './ScoreInput';
 import { ScoreIcon, type ScoreIconKind } from './ScoreIcons';
 
-const SCORE_FIELDS = ['military', 'coins', 'wonder', 'civilian', 'tablets', 'compasses', 'gears', 'commercial', 'guilds'] as const;
-type ScoreField = typeof SCORE_FIELDS[number];
+const SCORE_FIELDS = [
+  'military',
+  'coins',
+  'wonder',
+  'civilian',
+  'tablets',
+  'compasses',
+  'gears',
+  'commercial',
+  'guilds',
+] as const;
+type ScoreField = (typeof SCORE_FIELDS)[number];
 
 // Each field keeps the text as typed (utils/scoreInput.ts).
 type PlayerScores = PadPlayer & Record<ScoreField, string>;
 
 function blank(): Record<ScoreField, string> {
-  return Object.fromEntries(SCORE_FIELDS.map(f => [f, ''])) as Record<ScoreField, string>;
+  return Object.fromEntries(SCORE_FIELDS.map((f) => [f, ''])) as Record<ScoreField, string>;
 }
 
 function hasScores(p: PlayerScores): boolean {
-  return SCORE_FIELDS.some(f => num(p[f]) !== 0);
+  return SCORE_FIELDS.some((f) => num(p[f]) !== 0);
 }
 
 function tally(p: PlayerScores): Tally {
@@ -64,7 +83,7 @@ const SHEET_ROWS: { key: keyof Omit<Breakdown, 'total'>; label: string; icon: Sc
   { key: 'guilds', label: 'Guilds', icon: 'guilds' },
 ];
 
-const ICON_FOR: Record<typeof CATEGORIES[number]['key'], ScoreIconKind> = {
+const ICON_FOR: Record<(typeof CATEGORIES)[number]['key'], ScoreIconKind> = {
   military: 'military',
   coins: 'treasury',
   wonder: 'wonder',
@@ -73,7 +92,13 @@ const ICON_FOR: Record<typeof CATEGORIES[number]['key'], ScoreIconKind> = {
   guilds: 'guilds',
 };
 
-function Form({ player, update }: { player: PlayerScores; update: (patch: Partial<Record<ScoreField, string>>) => void }) {
+function Form({
+  player,
+  update,
+}: {
+  player: PlayerScores;
+  update: (patch: Partial<Record<ScoreField, string>>) => void;
+}) {
   const t = tally(player);
   const scienceVP = scienceScore(t.symbols);
   const treasuryVP = treasuryScore(t.coins);
@@ -82,12 +107,16 @@ function Form({ player, update }: { player: PlayerScores; update: (patch: Partia
       {CATEGORIES.map(({ key, label, unit, color }) => (
         <div key={key} className="sc-row">
           <label className="sc-label" htmlFor={`sc-${key}`}>
-            <span className="sc-label-icon" style={{ color }}><ScoreIcon kind={ICON_FOR[key]} /></span>
+            <span className="sc-label-icon" style={{ color }}>
+              <ScoreIcon kind={ICON_FOR[key]} />
+            </span>
             <span className="sc-label-text">
               <span>{label}</span>
               {/* Out of the box's name: its description reads it. */}
               {key === 'coins' && (
-                <span className="sc-vp-note sc-vp-pts" id="sc-coins-vp" aria-hidden="true">= {treasuryVP} VP</span>
+                <span className="sc-vp-note sc-vp-pts" id="sc-coins-vp" aria-hidden="true">
+                  = {treasuryVP} VP
+                </span>
               )}
             </span>
           </label>
@@ -114,14 +143,18 @@ function Form({ player, update }: { player: PlayerScores; update: (patch: Partia
 
       <div className="sc-science-section">
         <div className="sc-label">
-          <span className="sc-label-icon" style={{ color: COLORS.science }}><ScoreIcon kind="science" /></span>
+          <span className="sc-label-icon" style={{ color: COLORS.science }}>
+            <ScoreIcon kind="science" />
+          </span>
           <span className="sc-label-text">
             <span>Science (Green)</span>
             {/* The icons say which symbol; the unit is said once, here. */}
             <span className="sc-vp-note">
               <span id="sc-science-unit">symbols</span>
               <span aria-hidden="true"> · </span>
-              <span id="sc-science-vp" className="sc-vp-pts">= {scienceVP} VP</span>
+              <span id="sc-science-vp" className="sc-vp-pts">
+                = {scienceVP} VP
+              </span>
             </span>
           </span>
         </div>
@@ -146,26 +179,32 @@ function Form({ player, update }: { player: PlayerScores; update: (patch: Partia
 }
 
 function Results({ players }: { players: PlayerScores[] }) {
-  const sheet = players.map(p => breakdown(tally(p)));
+  const sheet = players.map((p) => breakdown(tally(p)));
   const places = standings(players.map((p, i) => ({ total: sheet[i].total, coins: num(p.coins) })));
-  const placeOf = new Map(places.map(s => [s.player, s.place]));
+  const placeOf = new Map(places.map((s) => [s.player, s.place]));
   // Before anyone has scored, everyone ties on 0: crown nobody yet.
   const scored = players.some(hasScores);
-  const notes = !scored ? [] : tieBreaks(places.map(s => ({
-    name: players[s.player].name,
-    total: sheet[s.player].total,
-    coins: num(players[s.player].coins),
-    place: s.place,
-  })));
+  const notes = !scored
+    ? []
+    : tieBreaks(
+        places.map((s) => ({
+          name: players[s.player].name,
+          total: sheet[s.player].total,
+          coins: num(players[s.player].coins),
+          place: s.place,
+        })),
+      );
   return (
     <>
       <ScoreSheet
         players={players}
-        rows={SHEET_ROWS.map(row => ({
+        rows={SHEET_ROWS.map((row) => ({
           key: row.key,
           label: (
             <>
-              <span className="sc-sheet-label" style={{ color: COLORS[row.key] }}><ScoreIcon kind={row.icon} /></span>
+              <span className="sc-sheet-label" style={{ color: COLORS[row.key] }}>
+                <ScoreIcon kind={row.icon} />
+              </span>
               {row.label}
             </>
           ),
@@ -173,16 +212,23 @@ function Results({ players }: { players: PlayerScores[] }) {
             <>
               {sheet[i][row.key]}
               {row.key === 'treasury' && num(p.coins) > 0 && (
-                <span className="sc-sheet-sub"><span className="sr-only">, from </span>{num(p.coins)} coins</span>
+                <span className="sc-sheet-sub">
+                  <span className="sr-only">, from </span>
+                  {num(p.coins)} coins
+                </span>
               )}
             </>
           )),
         }))}
-        totals={sheet.map(s => s.total)}
+        totals={sheet.map((s) => s.total)}
         places={players.map((_, i) => (scored ? ordinal(placeOf.get(i)!) : '–'))}
         won={players.map((_, i) => scored && placeOf.get(i) === 1)}
       />
-      {notes.map(note => <p key={note} className="sc-tie-note">{note}</p>)}
+      {notes.map((note) => (
+        <p key={note} className="sc-tie-note">
+          {note}
+        </p>
+      ))}
       <p className="sc-tie-rule">A tie on points goes to the player with more coins.</p>
     </>
   );
@@ -204,7 +250,7 @@ export default function SevenWondersPad() {
       minPlayers={2}
       maxPlayers={7}
       blank={blank}
-      valid={(r) => SCORE_FIELDS.every(f => isBoxText(r[f]))}
+      valid={(r) => SCORE_FIELDS.every((f) => isBoxText(r[f]))}
       hasScores={hasScores}
       form={(player, update) => <Form player={player} update={update} />}
       total={(p) => breakdown(tally(p)).total}

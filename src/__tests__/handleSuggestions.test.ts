@@ -36,10 +36,22 @@ function makeRes() {
     statusCode: 0,
     body: undefined as unknown,
     headers: {} as Record<string, string>,
-    status(code: number) { res.statusCode = code; return res as unknown as SuggestionsResponse; },
-    json(data: unknown) { res.body = data; return res as unknown as SuggestionsResponse; },
-    setHeader(name: string, value: string) { res.headers[name] = value; return res as unknown as SuggestionsResponse; },
-    send(body: string) { res.body = body; return res as unknown as SuggestionsResponse; },
+    status(code: number) {
+      res.statusCode = code;
+      return res as unknown as SuggestionsResponse;
+    },
+    json(data: unknown) {
+      res.body = data;
+      return res as unknown as SuggestionsResponse;
+    },
+    setHeader(name: string, value: string) {
+      res.headers[name] = value;
+      return res as unknown as SuggestionsResponse;
+    },
+    send(body: string) {
+      res.body = body;
+      return res as unknown as SuggestionsResponse;
+    },
   };
   return res;
 }
@@ -51,13 +63,25 @@ const makeRedis = (hashes: FakeRedisSeed['hashes'] = {}, lists: FakeRedisSeed['l
 // Deliberately low-entropy so secret scanners don't mistake them for keys.
 const TOKEN = 'test-token-' + 'a'.repeat(21);
 const NEW_TOKEN = 'test-token-' + 'b'.repeat(21);
-const pending = { id: 'sug-aaaaaa', game: 'Wingspan', name: 'Alex', note: 'Great engine builder', status: 'pending', createdAt: 1000, token: TOKEN };
+const pending = {
+  id: 'sug-aaaaaa',
+  game: 'Wingspan',
+  name: 'Alex',
+  note: 'Great engine builder',
+  status: 'pending',
+  createdAt: 1000,
+  token: TOKEN,
+};
 
 function deps(over: Partial<SuggestionsDeps> = {}): SuggestionsDeps & { sent: Mail[] } {
   const sent: Mail[] = [];
   return {
     redis: makeRedis(),
-    mailer: { send: vi.fn(async (m: Mail) => { sent.push(m); }) },
+    mailer: {
+      send: vi.fn(async (m: Mail) => {
+        sent.push(m);
+      }),
+    },
     baseUrl: () => 'https://games.example',
     now: () => 5000,
     randomId: () => 'sug-bbbbbb',
@@ -82,11 +106,14 @@ describe('handleSuggestions', () => {
 
   describe('GET list', () => {
     it('reads only the approved list, newest decision first, without tokens', async () => {
-      const redis = makeRedis({
-        'suggestions:sug-a': { ...pending, id: 'sug-a', status: 'approved', decidedAt: 10 },
-        'suggestions:sug-b': { ...pending, id: 'sug-b', game: 'Azul', status: 'approved', decidedAt: 20 },
-        'suggestions:sug-d': { ...pending, id: 'sug-d', game: 'Later' },
-      }, { 'suggestions:approved': ['sug-a', 'sug-b'], 'suggestions:active': ['sug-d', 'sug-b', 'sug-a'] });
+      const redis = makeRedis(
+        {
+          'suggestions:sug-a': { ...pending, id: 'sug-a', status: 'approved', decidedAt: 10 },
+          'suggestions:sug-b': { ...pending, id: 'sug-b', game: 'Azul', status: 'approved', decidedAt: 20 },
+          'suggestions:sug-d': { ...pending, id: 'sug-d', game: 'Later' },
+        },
+        { 'suggestions:approved': ['sug-a', 'sug-b'], 'suggestions:active': ['sug-d', 'sug-b', 'sug-a'] },
+      );
       const res = makeRes();
       await handleSuggestions(deps({ redis }), { method: 'GET', query: {} }, res);
       expect(res.statusCode).toBe(200);
@@ -97,36 +124,56 @@ describe('handleSuggestions', () => {
     });
 
     it('reads stored values as text, so a game called 1830 survives', async () => {
-      const redis = makeRedis({
-        'suggestions:sug-n': { ...pending, id: 'sug-n', game: 1830, name: 42, note: true, status: 'approved', decidedAt: 1 },
-      }, { 'suggestions:approved': ['sug-n'] });
+      const redis = makeRedis(
+        {
+          'suggestions:sug-n': {
+            ...pending,
+            id: 'sug-n',
+            game: 1830,
+            name: 42,
+            note: true,
+            status: 'approved',
+            decidedAt: 1,
+          },
+        },
+        { 'suggestions:approved': ['sug-n'] },
+      );
       const res = makeRes();
       await handleSuggestions(deps({ redis }), { method: 'GET', query: {} }, res);
-      expect((res.body as { items: Array<{ game: string; name: string; note: string }> }).items[0])
-        .toMatchObject({ game: '1830', name: '42', note: 'true' });
+      expect((res.body as { items: Array<{ game: string; name: string; note: string }> }).items[0]).toMatchObject({
+        game: '1830',
+        name: '42',
+        note: 'true',
+      });
     });
 
-    it.each(['null', 'true', '1.50', '007'])('keeps a game called %s as written, through the duplicate check, its links and the list', async (game) => {
-      const d = deps();
-      const post = async (body: Record<string, unknown>) => {
+    it.each(['null', 'true', '1.50', '007'])(
+      'keeps a game called %s as written, through the duplicate check, its links and the list',
+      async (game) => {
+        const d = deps();
+        const post = async (body: Record<string, unknown>) => {
+          const res = makeRes();
+          await handleSuggestions(d, { method: 'POST', query: {}, body }, res);
+          return res;
+        };
+        expect((await post({ game, name: 'Sam' })).statusCode).toBe(201);
+        expect((await post({ game, name: 'Kim' })).statusCode).toBe(409);
+        const approve = await post({ decision: 'approve', id: 'sug-bbbbbb', token: NEW_TOKEN });
+        expect(approve.statusCode).toBe(200);
+        expect(String(approve.body)).toContain(`${game} is now on the wishlist`);
         const res = makeRes();
-        await handleSuggestions(d, { method: 'POST', query: {}, body }, res);
-        return res;
-      };
-      expect((await post({ game, name: 'Sam' })).statusCode).toBe(201);
-      expect((await post({ game, name: 'Kim' })).statusCode).toBe(409);
-      const approve = await post({ decision: 'approve', id: 'sug-bbbbbb', token: NEW_TOKEN });
-      expect(approve.statusCode).toBe(200);
-      expect(String(approve.body)).toContain(`${game} is now on the wishlist`);
-      const res = makeRes();
-      await handleSuggestions(d, { method: 'GET', query: {} }, res);
-      expect((res.body as { items: Array<{ game: string }> }).items.map((i) => i.game)).toEqual([game]);
-    });
+        await handleSuggestions(d, { method: 'GET', query: {} }, res);
+        expect((res.body as { items: Array<{ game: string }> }).items.map((i) => i.game)).toEqual([game]);
+      },
+    );
 
     it('shows a game once even if its id is listed twice', async () => {
-      const redis = makeRedis({
-        'suggestions:sug-a': { ...pending, id: 'sug-a', status: 'approved', decidedAt: 10 },
-      }, { 'suggestions:approved': ['sug-a', 'sug-a'] });
+      const redis = makeRedis(
+        {
+          'suggestions:sug-a': { ...pending, id: 'sug-a', status: 'approved', decidedAt: 10 },
+        },
+        { 'suggestions:approved': ['sug-a', 'sug-a'] },
+      );
       const res = makeRes();
       await handleSuggestions(deps({ redis }), { method: 'GET', query: {} }, res);
       expect((res.body as { items: Array<{ id: string }> }).items.map((i) => i.id)).toEqual(['sug-a']);
@@ -155,10 +202,18 @@ describe('handleSuggestions', () => {
     it('404s for an unknown suggestion and 403s for a wrong token', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending });
       let res = makeRes();
-      await handleSuggestions(deps({ redis }), { method: 'GET', query: { action: 'approve', id: 'sug-zzzzzz', token: TOKEN } }, res);
+      await handleSuggestions(
+        deps({ redis }),
+        { method: 'GET', query: { action: 'approve', id: 'sug-zzzzzz', token: TOKEN } },
+        res,
+      );
       expect(res.statusCode).toBe(404);
       res = makeRes();
-      await handleSuggestions(deps({ redis }), { method: 'GET', query: { action: 'approve', id: 'sug-aaaaaa', token: 'test-token-' + 'z'.repeat(21) } }, res);
+      await handleSuggestions(
+        deps({ redis }),
+        { method: 'GET', query: { action: 'approve', id: 'sug-aaaaaa', token: 'test-token-' + 'z'.repeat(21) } },
+        res,
+      );
       expect(res.statusCode).toBe(403);
     });
 
@@ -182,7 +237,11 @@ describe('handleSuggestions', () => {
     it('never mutates on GET: renders a confirmation form carrying the decision', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending });
       const res = makeRes();
-      await handleSuggestions(deps({ redis }), { method: 'GET', query: { action: 'deny', id: 'sug-aaaaaa', token: TOKEN } }, res);
+      await handleSuggestions(
+        deps({ redis }),
+        { method: 'GET', query: { action: 'deny', id: 'sug-aaaaaa', token: TOKEN } },
+        res,
+      );
       expect(res.statusCode).toBe(200);
       expect(res.headers['Content-Type']).toContain('text/html');
       expect(redis.hset).not.toHaveBeenCalled();
@@ -197,7 +256,11 @@ describe('handleSuggestions', () => {
     it('tells a stale link the suggestion was already decided', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': { ...pending, status: 'approved', decidedAt: 10 } });
       const res = makeRes();
-      await handleSuggestions(deps({ redis }), { method: 'GET', query: { action: 'deny', id: 'sug-aaaaaa', token: TOKEN } }, res);
+      await handleSuggestions(
+        deps({ redis }),
+        { method: 'GET', query: { action: 'deny', id: 'sug-aaaaaa', token: TOKEN } },
+        res,
+      );
       expect(String(res.body)).toContain('Already approved');
       expect(String(res.body)).not.toContain('method="post"');
     });
@@ -205,7 +268,11 @@ describe('handleSuggestions', () => {
     it('escapes game and name in the page', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': { ...pending, game: '<b>x</b>', name: 'A&B' } });
       const res = makeRes();
-      await handleSuggestions(deps({ redis }), { method: 'GET', query: { action: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, res);
+      await handleSuggestions(
+        deps({ redis }),
+        { method: 'GET', query: { action: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+        res,
+      );
       expect(String(res.body)).toContain('&lt;b&gt;x&lt;/b&gt;');
       expect(String(res.body)).toContain('A&amp;B');
       expect(String(res.body)).not.toContain('<b>x</b>');
@@ -216,7 +283,11 @@ describe('handleSuggestions', () => {
     it('approves: flips status, adds to the approved list, keeps it active', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
       const res = makeRes();
-      await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, res);
+      await handleSuggestions(
+        deps({ redis }),
+        { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+        res,
+      );
       expect(res.statusCode).toBe(200);
       expect(redis.hset).toHaveBeenCalledWith('suggestions:sug-aaaaaa', { status: 'approved', decidedAt: 5000 });
       expect(redis.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
@@ -227,28 +298,67 @@ describe('handleSuggestions', () => {
 
     it('approving looks the game up and stores its details; the public list returns them', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
-      const lookup = vi.fn(async () => found({ bggId: 266192, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'] }));
-      await handleSuggestions(deps({ redis, lookup }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, makeRes());
+      const lookup = vi.fn(async () =>
+        found({
+          bggId: 266192,
+          name: 'Wingspan',
+          year: 2019,
+          min: 1,
+          max: 5,
+          mins: 70,
+          desc: 'Birds.',
+          kw: ['strategy'],
+        }),
+      );
+      await handleSuggestions(
+        deps({ redis, lookup }),
+        { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+        makeRes(),
+      );
       expect(lookup).toHaveBeenCalledWith('Wingspan');
       const res = makeRes();
       await handleSuggestions(deps({ redis }), { method: 'GET', query: {} }, res);
       const [item] = (res.body as { items: Array<{ details?: Record<string, unknown> }> }).items;
-      expect(item.details).toEqual({ bggId: 266192, year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'] });
+      expect(item.details).toEqual({
+        bggId: 266192,
+        year: 2019,
+        min: 1,
+        max: 5,
+        mins: 70,
+        desc: 'Birds.',
+        kw: ['strategy'],
+      });
     });
 
     it('lists the game as approved before the lookup runs, so a hung lookup cannot strand it', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
       let listedWhenLookedUp: string[] | undefined;
-      const lookup = vi.fn(async () => { listedWhenLookedUp = [...(redis.lists['suggestions:approved'] ?? [])]; return NO_MATCH; });
-      await handleSuggestions(deps({ redis, lookup }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, makeRes());
+      const lookup = vi.fn(async () => {
+        listedWhenLookedUp = [...(redis.lists['suggestions:approved'] ?? [])];
+        return NO_MATCH;
+      });
+      await handleSuggestions(
+        deps({ redis, lookup }),
+        { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+        makeRes(),
+      );
       expect(listedWhenLookedUp).toEqual(['sug-aaaaaa']);
     });
 
     it('still approves when the lookup finds nothing or throws', async () => {
-      for (const lookup of [vi.fn(async () => NO_MATCH), vi.fn(async () => { throw new Error('bgg down'); })]) {
+      for (const lookup of [
+        vi.fn(async () => NO_MATCH),
+        vi.fn(async () => {
+          throw new Error('bgg down');
+        }),
+      ]) {
         const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
         const res = makeRes();
-        await handleSuggestions(deps({ redis, lookup }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, res);
+        await handleSuggestions(
+          deps({ redis, lookup }),
+          { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+          res,
+        );
         expect(res.statusCode).toBe(200);
         expect(redis.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
         expect(redis.hashes['suggestions:sug-aaaaaa'].details).toBeUndefined();
@@ -256,9 +366,16 @@ describe('handleSuggestions', () => {
     });
 
     it('denies: flips status and drops it from the active list', async () => {
-      const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa', 'sug-other'] });
+      const redis = makeRedis(
+        { 'suggestions:sug-aaaaaa': pending },
+        { 'suggestions:active': ['sug-aaaaaa', 'sug-other'] },
+      );
       const res = makeRes();
-      await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { decision: 'deny', id: 'sug-aaaaaa', token: TOKEN } }, res);
+      await handleSuggestions(
+        deps({ redis }),
+        { method: 'POST', query: {}, body: { decision: 'deny', id: 'sug-aaaaaa', token: TOKEN } },
+        res,
+      );
       expect(redis.hset).toHaveBeenCalledWith('suggestions:sug-aaaaaa', { status: 'denied', decidedAt: 5000 });
       expect(redis.lists['suggestions:active']).toEqual(['sug-other']);
       expect(redis.lists['suggestions:approved']).toBeUndefined();
@@ -267,15 +384,43 @@ describe('handleSuggestions', () => {
 
     it('approves once when the same approval arrives twice at the same moment', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
-      const lookup = vi.fn(async () => found({ bggId: 266192, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'] }));
+      const lookup = vi.fn(async () =>
+        found({
+          bggId: 266192,
+          name: 'Wingspan',
+          year: 2019,
+          min: 1,
+          max: 5,
+          mins: 70,
+          desc: 'Birds.',
+          kw: ['strategy'],
+        }),
+      );
       const owner = { ...deps({ redis, lookup }), admin: async () => true };
       const byEmail = makeRes();
       const bySite = makeRes();
       const twice = makeRes();
       await Promise.all([
-        handleSuggestions(deps({ redis, lookup }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, byEmail),
-        handleSuggestions(deps({ redis, lookup }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, twice),
-        handleSuggestions(owner, { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa' }, headers: { 'content-type': 'application/json' } }, bySite),
+        handleSuggestions(
+          deps({ redis, lookup }),
+          { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+          byEmail,
+        ),
+        handleSuggestions(
+          deps({ redis, lookup }),
+          { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+          twice,
+        ),
+        handleSuggestions(
+          owner,
+          {
+            method: 'POST',
+            query: {},
+            body: { decision: 'approve', id: 'sug-aaaaaa' },
+            headers: { 'content-type': 'application/json' },
+          },
+          bySite,
+        ),
       ]);
       expect(String(byEmail.body)).toContain('is now on the wishlist');
       expect(String(twice.body)).toContain('Already');
@@ -289,8 +434,15 @@ describe('handleSuggestions', () => {
     });
 
     it('lists an id once even if the approved list already held it', async () => {
-      const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'], 'suggestions:approved': ['sug-aaaaaa'] });
-      await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, makeRes());
+      const redis = makeRedis(
+        { 'suggestions:sug-aaaaaa': pending },
+        { 'suggestions:active': ['sug-aaaaaa'], 'suggestions:approved': ['sug-aaaaaa'] },
+      );
+      await handleSuggestions(
+        deps({ redis }),
+        { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+        makeRes(),
+      );
       expect(redis.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
     });
 
@@ -299,16 +451,26 @@ describe('handleSuggestions', () => {
       const multi = redis.multi;
       redis.multi = vi.fn(() => {
         const tx = multi();
-        tx.exec = async () => { throw new Error('redis down'); };
+        tx.exec = async () => {
+          throw new Error('redis down');
+        };
         return tx;
       });
       const failed = makeRes();
-      await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, failed);
+      await handleSuggestions(
+        deps({ redis }),
+        { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+        failed,
+      );
       expect(failed.statusCode).toBe(500);
       expect(redis.hashes['suggestions:sug-aaaaaa'].decidedAt).toBeUndefined();
       redis.multi = multi;
       const retry = makeRes();
-      await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, retry);
+      await handleSuggestions(
+        deps({ redis }),
+        { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+        retry,
+      );
       expect(String(retry.body)).toContain('is now on the wishlist');
       expect(redis.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
     });
@@ -317,28 +479,49 @@ describe('handleSuggestions', () => {
       const stuck = { ...pending, decidedAt: 1000 };
       const fresh = makeRedis({ 'suggestions:sug-aaaaaa': stuck }, { 'suggestions:active': ['sug-aaaaaa'] });
       const held = makeRes();
-      await handleSuggestions(deps({ redis: fresh, now: () => 1000 + 59_999 }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, held);
+      await handleSuggestions(
+        deps({ redis: fresh, now: () => 1000 + 59_999 }),
+        { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+        held,
+      );
       expect(String(held.body)).toContain('Already');
       expect(fresh.lists['suggestions:approved']).toBeUndefined();
 
       const stale = makeRedis({ 'suggestions:sug-aaaaaa': stuck }, { 'suggestions:active': ['sug-aaaaaa'] });
       const res = makeRes();
-      await handleSuggestions(deps({ redis: stale, now: () => 1000 + 60_000 }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, res);
+      await handleSuggestions(
+        deps({ redis: stale, now: () => 1000 + 60_000 }),
+        { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+        res,
+      );
       expect(String(res.body)).toContain('is now on the wishlist');
       expect(stale.hashes['suggestions:sug-aaaaaa']).toMatchObject({ status: 'approved', decidedAt: 61_000 });
       expect(stale.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
     });
 
     it('lets only one of two requests take over the same abandoned claim', async () => {
-      const redis = makeRedis({ 'suggestions:sug-aaaaaa': { ...pending, decidedAt: 1000 } }, { 'suggestions:active': ['sug-aaaaaa'] });
+      const redis = makeRedis(
+        { 'suggestions:sug-aaaaaa': { ...pending, decidedAt: 1000 } },
+        { 'suggestions:active': ['sug-aaaaaa'] },
+      );
       const lookup = vi.fn(async () => NO_MATCH);
       const late = deps({ redis, lookup, now: () => 1000 + 60_000 });
       const [a, b] = [makeRes(), makeRes()];
       await Promise.all([
-        handleSuggestions(late, { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, a),
-        handleSuggestions(late, { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, b),
+        handleSuggestions(
+          late,
+          { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+          a,
+        ),
+        handleSuggestions(
+          late,
+          { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+          b,
+        ),
       ]);
-      expect([String(a.body), String(b.body)].filter((body) => body.includes('is now on the wishlist'))).toHaveLength(1);
+      expect([String(a.body), String(b.body)].filter((body) => body.includes('is now on the wishlist'))).toHaveLength(
+        1,
+      );
       expect([String(a.body), String(b.body)].filter((body) => body.includes('Already'))).toHaveLength(1);
       expect(lookup).toHaveBeenCalledTimes(1);
       expect(redis.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
@@ -347,7 +530,11 @@ describe('handleSuggestions', () => {
     it('does not change an already-decided suggestion', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': { ...pending, status: 'denied', decidedAt: 10 } });
       const res = makeRes();
-      await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, res);
+      await handleSuggestions(
+        deps({ redis }),
+        { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+        res,
+      );
       expect(redis.hset).not.toHaveBeenCalled();
       expect(String(res.body)).toContain('Already denied');
     });
@@ -355,10 +542,22 @@ describe('handleSuggestions', () => {
     it('rejects an unknown decision and a bad token', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending });
       let res = makeRes();
-      await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { decision: 'maybe', id: 'sug-aaaaaa', token: TOKEN } }, res);
+      await handleSuggestions(
+        deps({ redis }),
+        { method: 'POST', query: {}, body: { decision: 'maybe', id: 'sug-aaaaaa', token: TOKEN } },
+        res,
+      );
       expect(res.statusCode).toBe(400);
       res = makeRes();
-      await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: 'test-token-' + 'z'.repeat(21) } }, res);
+      await handleSuggestions(
+        deps({ redis }),
+        {
+          method: 'POST',
+          query: {},
+          body: { decision: 'approve', id: 'sug-aaaaaa', token: 'test-token-' + 'z'.repeat(21) },
+        },
+        res,
+      );
       expect(res.statusCode).toBe(403);
       expect(redis.hset).not.toHaveBeenCalled();
     });
@@ -370,7 +569,11 @@ describe('handleSuggestions', () => {
     it('still offers the confirmation form from the emailed link', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': unsent });
       const res = makeRes();
-      await handleSuggestions(deps({ redis }), { method: 'GET', query: { action: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, res);
+      await handleSuggestions(
+        deps({ redis }),
+        { method: 'GET', query: { action: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+        res,
+      );
       expect(String(res.body)).toContain('Approve Wingspan?');
       expect(String(res.body)).toContain('method="post"');
     });
@@ -378,7 +581,11 @@ describe('handleSuggestions', () => {
     it('approving puts it back on the active list as well as the approved list', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': unsent }, { 'suggestions:active': [] });
       const res = makeRes();
-      await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, res);
+      await handleSuggestions(
+        deps({ redis }),
+        { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+        res,
+      );
       expect(String(res.body)).toContain('Approved');
       expect(redis.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
       expect(redis.lists['suggestions:active']).toEqual(['sug-aaaaaa']);
@@ -387,7 +594,11 @@ describe('handleSuggestions', () => {
     it('denying leaves it out of both lists', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': unsent }, { 'suggestions:active': [] });
       const res = makeRes();
-      await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { decision: 'deny', id: 'sug-aaaaaa', token: TOKEN } }, res);
+      await handleSuggestions(
+        deps({ redis }),
+        { method: 'POST', query: {}, body: { decision: 'deny', id: 'sug-aaaaaa', token: TOKEN } },
+        res,
+      );
       expect(String(res.body)).toContain('Denied');
       expect(redis.lists['suggestions:active']).toEqual([]);
       expect(redis.lists['suggestions:approved']).toBeUndefined();
@@ -419,8 +630,16 @@ describe('handleSuggestions', () => {
     it('stores the suggestion before emailing, so the emailed links always resolve', async () => {
       const order: string[] = [];
       const redis = makeRedis();
-      redis.hset = vi.fn(async (key, fields) => { order.push(`hset:${key}`); redis.hashes[key] = { ...(redis.hashes[key] ?? {}), ...fields }; return 1; });
-      const mailer = { send: vi.fn(async () => { order.push('send'); }) };
+      redis.hset = vi.fn(async (key, fields) => {
+        order.push(`hset:${key}`);
+        redis.hashes[key] = { ...(redis.hashes[key] ?? {}), ...fields };
+        return 1;
+      });
+      const mailer = {
+        send: vi.fn(async () => {
+          order.push('send');
+        }),
+      };
       await handleSuggestions(deps({ redis, mailer }), { method: 'POST', query: {}, body: valid }, makeRes());
       expect(order).toEqual(['hset:suggestions:sug-bbbbbb', 'send']);
     });
@@ -430,22 +649,41 @@ describe('handleSuggestions', () => {
       const res = makeRes();
       await handleSuggestions(d, { method: 'POST', query: {}, body: { ...valid, game: '  Cascadia   ' } }, res);
       expect(res.statusCode).toBe(201);
-      expect(res.body).toEqual({ item: { id: 'sug-bbbbbb', game: 'Cascadia', name: 'Sam', note: 'Calm and quick', status: 'pending', createdAt: 5000, source: 'friend' } });
+      expect(res.body).toEqual({
+        item: {
+          id: 'sug-bbbbbb',
+          game: 'Cascadia',
+          name: 'Sam',
+          note: 'Calm and quick',
+          status: 'pending',
+          createdAt: 5000,
+          source: 'friend',
+        },
+      });
 
       expect(d.sent).toHaveLength(1);
       expect(d.sent[0].subject).toBe('Game suggestion: Cascadia (from Sam)');
-      expect(d.sent[0].html).toContain(`https://games.example/api/suggestions?action=approve&id=sug-bbbbbb&token=${NEW_TOKEN}`);
+      expect(d.sent[0].html).toContain(
+        `https://games.example/api/suggestions?action=approve&id=sug-bbbbbb&token=${NEW_TOKEN}`,
+      );
       expect(d.sent[0].html).toContain('action=deny&id=sug-bbbbbb');
       expect(d.sent[0].html).toContain('Calm and quick');
 
-      expect(d.redis.hset).toHaveBeenCalledWith('suggestions:sug-bbbbbb', expect.objectContaining({ game: 'Cascadia', name: 'Sam', status: 'pending', token: NEW_TOKEN }));
+      expect(d.redis.hset).toHaveBeenCalledWith(
+        'suggestions:sug-bbbbbb',
+        expect.objectContaining({ game: 'Cascadia', name: 'Sam', status: 'pending', token: NEW_TOKEN }),
+      );
       expect(d.redis.lpush).toHaveBeenCalledWith('suggestions:active', 'sug-bbbbbb');
       expect(d.redis.lpush).not.toHaveBeenCalledWith('suggestions:approved', expect.anything());
     });
 
     it('escapes suggester text in the email', async () => {
       const d = deps();
-      await handleSuggestions(d, { method: 'POST', query: {}, body: { ...valid, game: 'Tak <3', note: '<img src=x>' } }, makeRes());
+      await handleSuggestions(
+        d,
+        { method: 'POST', query: {}, body: { ...valid, game: 'Tak <3', note: '<img src=x>' } },
+        makeRes(),
+      );
       expect(d.sent[0].html).toContain('Tak &lt;3');
       expect(d.sent[0].html).toContain('&lt;img src=x&gt;');
     });
@@ -468,7 +706,14 @@ describe('handleSuggestions', () => {
 
     it('rolls the record out of the active list when the email fails, so a retry is not a duplicate', async () => {
       const redis = makeRedis();
-      const d = deps({ redis, mailer: { send: vi.fn(async () => { throw new Error('resend down'); }) } });
+      const d = deps({
+        redis,
+        mailer: {
+          send: vi.fn(async () => {
+            throw new Error('resend down');
+          }),
+        },
+      });
       let res = makeRes();
       await handleSuggestions(d, { method: 'POST', query: {}, body: valid }, res);
       expect(res.statusCode).toBe(500);
@@ -489,12 +734,19 @@ describe('handleSuggestions', () => {
       vi.stubEnv('SUGGESTIONS_TO', 'owner@example.com');
       try {
         // Answers only by failing once the mailer's timeout aborts it.
-        const hanging = vi.fn((_url: string | URL | Request, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
-          init?.signal?.addEventListener('abort', () => reject(init.signal?.reason));
-        }));
+        const hanging = vi.fn(
+          (_url: string | URL | Request, init?: RequestInit) =>
+            new Promise<Response>((_resolve, reject) => {
+              init?.signal?.addEventListener('abort', () => reject(init.signal?.reason));
+            }),
+        );
         const redis = makeRedis();
         const res = makeRes();
-        await handleSuggestions(deps({ redis, mailer: resendMailer(hanging, 10) }), { method: 'POST', query: {}, body: valid }, res);
+        await handleSuggestions(
+          deps({ redis, mailer: resendMailer(hanging, 10) }),
+          { method: 'POST', query: {}, body: valid },
+          res,
+        );
         expect(hanging).toHaveBeenCalledTimes(1);
         expect(res.statusCode).toBe(500);
         expect(redis.hashes['suggestions:sug-bbbbbb'].status).toBe('unsent');
@@ -507,7 +759,9 @@ describe('handleSuggestions', () => {
 
     it('does not email when the store itself fails', async () => {
       const redis = makeRedis();
-      redis.hset = vi.fn(async () => { throw new Error('redis down'); });
+      redis.hset = vi.fn(async () => {
+        throw new Error('redis down');
+      });
       const d = deps({ redis });
       const res = makeRes();
       await handleSuggestions(d, { method: 'POST', query: {}, body: valid }, res);
@@ -516,7 +770,9 @@ describe('handleSuggestions', () => {
     });
 
     it('never touches the base URL on reads, only when sending', async () => {
-      const baseUrl = vi.fn(() => { throw new Error('APP_URL must be set'); });
+      const baseUrl = vi.fn(() => {
+        throw new Error('APP_URL must be set');
+      });
       const res = makeRes();
       await handleSuggestions(deps({ baseUrl }), { method: 'GET', query: {} }, res);
       expect(res.statusCode).toBe(200);
@@ -524,13 +780,20 @@ describe('handleSuggestions', () => {
     });
 
     it('rejects a game already pending or approved, but allows one that was denied', async () => {
-      const redis = makeRedis({
-        'suggestions:sug-p': { ...pending, id: 'sug-p', game: 'Cascadia!' },
-        'suggestions:sug-a': { ...pending, id: 'sug-a', game: 'Azul', status: 'approved', decidedAt: 1 },
-        'suggestions:sug-d': { ...pending, id: 'sug-d', game: 'Root', status: 'denied', decidedAt: 1 },
-      }, { 'suggestions:active': ['sug-p', 'sug-a'], 'suggestions:approved': ['sug-a'] });
+      const redis = makeRedis(
+        {
+          'suggestions:sug-p': { ...pending, id: 'sug-p', game: 'Cascadia!' },
+          'suggestions:sug-a': { ...pending, id: 'sug-a', game: 'Azul', status: 'approved', decidedAt: 1 },
+          'suggestions:sug-d': { ...pending, id: 'sug-d', game: 'Root', status: 'denied', decidedAt: 1 },
+        },
+        { 'suggestions:active': ['sug-p', 'sug-a'], 'suggestions:approved': ['sug-a'] },
+      );
       let res = makeRes();
-      await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { ...valid, game: 'cascadia' } }, res);
+      await handleSuggestions(
+        deps({ redis }),
+        { method: 'POST', query: {}, body: { ...valid, game: 'cascadia' } },
+        res,
+      );
       expect(res.statusCode).toBe(409);
       expect((res.body as { error: string }).error).toContain('waiting for approval');
       res = makeRes();
@@ -575,10 +838,19 @@ describe('handleSuggestions', () => {
 
     it('trims game, name and note and collapses internal whitespace before storing', async () => {
       const d = deps();
-      const res = await post({ game: '  Terra   Mystica \t Rules ', name: '  Sam  ', note: ' so   good\n\nreally ' }, d);
+      const res = await post(
+        { game: '  Terra   Mystica \t Rules ', name: '  Sam  ', note: ' so   good\n\nreally ' },
+        d,
+      );
       expect(res.statusCode).toBe(201);
       expect(d.redis.hset).toHaveBeenCalledWith('suggestions:sug-bbbbbb', {
-        id: 'sug-bbbbbb', game: 'Terra Mystica Rules', name: 'Sam', note: 'so good really', status: 'pending', createdAt: 5000, token: NEW_TOKEN,
+        id: 'sug-bbbbbb',
+        game: 'Terra Mystica Rules',
+        name: 'Sam',
+        note: 'so good really',
+        status: 'pending',
+        createdAt: 5000,
+        token: NEW_TOKEN,
       });
     });
 
@@ -608,20 +880,30 @@ describe('handleSuggestions', () => {
 
   describe('POST new suggestion: duplicate check', () => {
     it('lets a denied game be suggested again even if its id lingers on the active list', async () => {
-      const redis = makeRedis({
-        'suggestions:sug-d': { ...pending, id: 'sug-d', game: 'Root', status: 'denied', decidedAt: 1 },
-      }, { 'suggestions:active': ['sug-d'] });
+      const redis = makeRedis(
+        {
+          'suggestions:sug-d': { ...pending, id: 'sug-d', game: 'Root', status: 'denied', decidedAt: 1 },
+        },
+        { 'suggestions:active': ['sug-d'] },
+      );
       const res = makeRes();
       await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { ...valid, game: 'Root' } }, res);
       expect(res.statusCode).toBe(201);
     });
 
     it('ignores punctuation and whitespace differences when spotting a duplicate', async () => {
-      const redis = makeRedis({
-        'suggestions:sug-w': { ...pending, id: 'sug-w', game: '7 Wonders' },
-      }, { 'suggestions:active': ['sug-w'] });
+      const redis = makeRedis(
+        {
+          'suggestions:sug-w': { ...pending, id: 'sug-w', game: '7 Wonders' },
+        },
+        { 'suggestions:active': ['sug-w'] },
+      );
       const res = makeRes();
-      await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { ...valid, game: '7 - Wonders!!' } }, res);
+      await handleSuggestions(
+        deps({ redis }),
+        { method: 'POST', query: {}, body: { ...valid, game: '7 - Wonders!!' } },
+        res,
+      );
       expect(res.statusCode).toBe(409);
       expect(res.body).toEqual({ error: '7 Wonders has already been suggested and is waiting for approval' });
     });
@@ -630,7 +912,11 @@ describe('handleSuggestions', () => {
   describe('decision links: authorisation edge cases', () => {
     const decide = async (redis: SuggestionsRedis, body: Record<string, unknown>) => {
       const res = makeRes();
-      await handleSuggestions(deps({ redis }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN, ...body } }, res);
+      await handleSuggestions(
+        deps({ redis }),
+        { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN, ...body } },
+        res,
+      );
       return res;
     };
 
@@ -641,7 +927,11 @@ describe('handleSuggestions', () => {
         expect(res.statusCode, id).toBe(400);
         expect(res.headers['Content-Type']).toContain('text/html');
         const link = makeRes();
-        await handleSuggestions(deps({ redis }), { method: 'GET', query: { action: 'approve', id, token: TOKEN } }, link);
+        await handleSuggestions(
+          deps({ redis }),
+          { method: 'GET', query: { action: 'approve', id, token: TOKEN } },
+          link,
+        );
         expect(link.statusCode, id).toBe(400);
       }
       expect(redis.hgetall).not.toHaveBeenCalled();
@@ -685,7 +975,11 @@ describe('handleSuggestions', () => {
       res = await decide(redis, { decision: 'maybe' });
       expect(res.body).toEqual({ error: 'unknown decision' });
       res = makeRes();
-      await handleSuggestions(deps({ redis }), { method: 'GET', query: { action: 'explode', id: 'sug-aaaaaa', token: TOKEN } }, res);
+      await handleSuggestions(
+        deps({ redis }),
+        { method: 'GET', query: { action: 'explode', id: 'sug-aaaaaa', token: TOKEN } },
+        res,
+      );
       expect(res.body).toEqual({ error: 'unknown action' });
     });
 
@@ -700,7 +994,11 @@ describe('handleSuggestions', () => {
     it('treats an unrecognised stored status as pending and offers the form', async () => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': { ...pending, status: 'weird' } });
       const res = makeRes();
-      await handleSuggestions(deps({ redis }), { method: 'GET', query: { action: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, res);
+      await handleSuggestions(
+        deps({ redis }),
+        { method: 'GET', query: { action: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+        res,
+      );
       expect(String(res.body)).toContain('method="post"');
       expect(String(res.body)).not.toContain('Already');
     });
@@ -714,43 +1012,56 @@ describe('handleSuggestions', () => {
       return (res.body as { items: Array<Record<string, unknown>> }).items;
     };
     const approved = { ...pending, status: 'approved', decidedAt: 10 };
-    const without = (o: Record<string, unknown>, key: string) => Object.fromEntries(Object.entries(o).filter(([k]) => k !== key));
+    const without = (o: Record<string, unknown>, key: string) =>
+      Object.fromEntries(Object.entries(o).filter(([k]) => k !== key));
 
     it('skips hashes missing an id, game or name, or with an empty game, instead of crashing', async () => {
-      const redis = makeRedis({
-        'suggestions:sug-1': without(approved, 'id'),
-        'suggestions:sug-2': without(approved, 'game'),
-        'suggestions:sug-3': without(approved, 'name'),
-        'suggestions:sug-4': { ...approved, id: 'sug-4', game: '' },
-        'suggestions:sug-5': { ...approved, id: 'sug-5', game: 'Kept' },
-      }, { 'suggestions:approved': ['sug-1', 'sug-2', 'sug-3', 'sug-4', 'sug-5', 'sug-missing'] });
+      const redis = makeRedis(
+        {
+          'suggestions:sug-1': without(approved, 'id'),
+          'suggestions:sug-2': without(approved, 'game'),
+          'suggestions:sug-3': without(approved, 'name'),
+          'suggestions:sug-4': { ...approved, id: 'sug-4', game: '' },
+          'suggestions:sug-5': { ...approved, id: 'sug-5', game: 'Kept' },
+        },
+        { 'suggestions:approved': ['sug-1', 'sug-2', 'sug-3', 'sug-4', 'sug-5', 'sug-missing'] },
+      );
       expect((await list(redis)).map((i) => i.game)).toEqual(['Kept']);
     });
 
     it('excludes listed ids whose hash is not approved, including unknown statuses', async () => {
-      const redis = makeRedis({
-        'suggestions:sug-1': { ...approved, id: 'sug-1', status: 'denied' },
-        'suggestions:sug-2': { ...approved, id: 'sug-2', status: 'weird' },
-        'suggestions:sug-3': { ...approved, id: 'sug-3', status: 'pending' },
-        'suggestions:sug-4': { ...approved, id: 'sug-4' },
-      }, { 'suggestions:approved': ['sug-1', 'sug-2', 'sug-3', 'sug-4'] });
+      const redis = makeRedis(
+        {
+          'suggestions:sug-1': { ...approved, id: 'sug-1', status: 'denied' },
+          'suggestions:sug-2': { ...approved, id: 'sug-2', status: 'weird' },
+          'suggestions:sug-3': { ...approved, id: 'sug-3', status: 'pending' },
+          'suggestions:sug-4': { ...approved, id: 'sug-4' },
+        },
+        { 'suggestions:approved': ['sug-1', 'sug-2', 'sug-3', 'sug-4'] },
+      );
       expect((await list(redis)).map((i) => i.id)).toEqual(['sug-4']);
     });
 
     it('orders by decidedAt descending whatever the list order', async () => {
-      const redis = makeRedis({
-        'suggestions:sug-1': { ...approved, id: 'sug-1', decidedAt: 1 },
-        'suggestions:sug-2': { ...approved, id: 'sug-2', decidedAt: 2 },
-        'suggestions:sug-3': { ...approved, id: 'sug-3', decidedAt: 3 },
-      }, { 'suggestions:approved': ['sug-1', 'sug-2', 'sug-3'] });
+      const redis = makeRedis(
+        {
+          'suggestions:sug-1': { ...approved, id: 'sug-1', decidedAt: 1 },
+          'suggestions:sug-2': { ...approved, id: 'sug-2', decidedAt: 2 },
+          'suggestions:sug-3': { ...approved, id: 'sug-3', decidedAt: 3 },
+        },
+        { 'suggestions:approved': ['sug-1', 'sug-2', 'sug-3'] },
+      );
       expect((await list(redis)).map((i) => i.id)).toEqual(['sug-3', 'sug-2', 'sug-1']);
     });
 
     it('keeps numeric timestamps, falls back to 0 for a garbled createdAt and leaves decidedAt unset when absent', async () => {
-      const redis = makeRedis({
-        'suggestions:sug-1': { ...approved, id: 'sug-1', createdAt: 1234 },
-        'suggestions:sug-2': { ...without(approved, 'decidedAt'), id: 'sug-2', createdAt: 'yesterday' },
-      }, { 'suggestions:approved': ['sug-1', 'sug-2'] });
+      const redis = makeRedis(
+        {
+          'suggestions:sug-1': { ...approved, id: 'sug-1', createdAt: 1234 },
+          'suggestions:sug-2': { ...without(approved, 'decidedAt'), id: 'sug-2', createdAt: 'yesterday' },
+        },
+        { 'suggestions:approved': ['sug-1', 'sug-2'] },
+      );
       const items = await list(redis);
       expect(items[0]).toMatchObject({ id: 'sug-1', createdAt: 1234, decidedAt: 10 });
       expect(items[1].createdAt).toBe(0);
@@ -766,7 +1077,10 @@ describe('handleSuggestions', () => {
 
     describe('details', () => {
       const withDetails = async (details: unknown) => {
-        const redis = makeRedis({ 'suggestions:sug-1': { ...approved, id: 'sug-1', details } }, { 'suggestions:approved': ['sug-1'] });
+        const redis = makeRedis(
+          { 'suggestions:sug-1': { ...approved, id: 'sug-1', details } },
+          { 'suggestions:approved': ['sug-1'] },
+        );
         return (await list(redis))[0].details;
       };
       const full = { bggId: 1, year: 2000, min: 2, max: 4, mins: 30, desc: 'Fun.', kw: ['party'] };
@@ -783,16 +1097,43 @@ describe('handleSuggestions', () => {
       });
 
       it('drops a stored img that is not an https link', async () => {
-        const redis = makeRedis({ 'suggestions:sug-ok': { ...pending, id: 'sug-ok', status: 'approved', details: JSON.stringify({ min: 2, max: 4, mins: 90, desc: '', kw: [], img: 'javascript:alert(1)' }) } }, { 'suggestions:approved': ['sug-ok'] });
+        const redis = makeRedis(
+          {
+            'suggestions:sug-ok': {
+              ...pending,
+              id: 'sug-ok',
+              status: 'approved',
+              details: JSON.stringify({ min: 2, max: 4, mins: 90, desc: '', kw: [], img: 'javascript:alert(1)' }),
+            },
+          },
+          { 'suggestions:approved': ['sug-ok'] },
+        );
         const res = makeRes();
         await handleSuggestions(deps({ redis }), { method: 'GET', query: {} }, res);
         expect((res.body as { items: Array<{ details?: { img?: string } }> }).items[0].details?.img).toBeUndefined();
       });
 
       it('falls back field by field on the wrong types: min 1, max 99, mins 0, desc empty, only string keywords', async () => {
-        const raw = '{"bggId":"1","year":"2000","min":"2","max":1e999,"mins":null,"desc":5,"kw":["party",1,null,"family"]}';
-        expect(await withDetails(raw)).toEqual({ bggId: undefined, year: undefined, min: 1, max: 99, mins: 0, desc: '', kw: ['party', 'family'] });
-        expect(await withDetails({})).toEqual({ bggId: undefined, year: undefined, min: 1, max: 99, mins: 0, desc: '', kw: [] });
+        const raw =
+          '{"bggId":"1","year":"2000","min":"2","max":1e999,"mins":null,"desc":5,"kw":["party",1,null,"family"]}';
+        expect(await withDetails(raw)).toEqual({
+          bggId: undefined,
+          year: undefined,
+          min: 1,
+          max: 99,
+          mins: 0,
+          desc: '',
+          kw: ['party', 'family'],
+        });
+        expect(await withDetails({})).toEqual({
+          bggId: undefined,
+          year: undefined,
+          min: 1,
+          max: 99,
+          mins: 0,
+          desc: '',
+          kw: [],
+        });
       });
     });
   });
@@ -800,7 +1141,14 @@ describe('handleSuggestions', () => {
   describe('owner actions (session instead of emailed token)', () => {
     const JSON_H = { 'content-type': 'application/json' };
     const asOwner = (over: Partial<SuggestionsDeps> = {}) => deps({ admin: async () => true, ...over });
-    const approvedItem = { ...pending, id: 'sug-ok', game: 'Root', status: 'approved', decidedAt: 2000, details: JSON.stringify({ min: 2, max: 4, mins: 90, desc: 'Woodland war.', kw: ['strategy'] }) };
+    const approvedItem = {
+      ...pending,
+      id: 'sug-ok',
+      game: 'Root',
+      status: 'approved',
+      decidedAt: 2000,
+      details: JSON.stringify({ min: 2, max: 4, mins: 90, desc: 'Woodland war.', kw: ['strategy'] }),
+    };
 
     describe('GET ?action=pending', () => {
       it('is refused without a session', async () => {
@@ -809,17 +1157,24 @@ describe('handleSuggestions', () => {
         expect(res.statusCode).toBe(403);
         expect(res.body).toEqual({ error: 'owner sign-in required' });
         const noAdmin = makeRes();
-        await handleSuggestions(deps({ admin: async () => false }), { method: 'GET', query: { action: 'pending' } }, noAdmin);
+        await handleSuggestions(
+          deps({ admin: async () => false }),
+          { method: 'GET', query: { action: 'pending' } },
+          noAdmin,
+        );
         expect(noAdmin.statusCode).toBe(403);
       });
 
       it('lists what still needs a decision, newest first, without tokens, including unsent ones', async () => {
-        const redis = makeRedis({
-          'suggestions:sug-old': { ...pending, id: 'sug-old', createdAt: 100 },
-          'suggestions:sug-new': { ...pending, id: 'sug-new', createdAt: 300 },
-          'suggestions:sug-unsent': { ...pending, id: 'sug-unsent', createdAt: 200, status: 'unsent' },
-          'suggestions:sug-ok': approvedItem,
-        }, { 'suggestions:active': ['sug-old', 'sug-ok', 'sug-new'], 'suggestions:unsent': ['sug-unsent', 'sug-old'] });
+        const redis = makeRedis(
+          {
+            'suggestions:sug-old': { ...pending, id: 'sug-old', createdAt: 100 },
+            'suggestions:sug-new': { ...pending, id: 'sug-new', createdAt: 300 },
+            'suggestions:sug-unsent': { ...pending, id: 'sug-unsent', createdAt: 200, status: 'unsent' },
+            'suggestions:sug-ok': approvedItem,
+          },
+          { 'suggestions:active': ['sug-old', 'sug-ok', 'sug-new'], 'suggestions:unsent': ['sug-unsent', 'sug-old'] },
+        );
         const res = makeRes();
         await handleSuggestions(asOwner({ redis }), { method: 'GET', query: { action: 'pending' } }, res);
         expect(res.statusCode).toBe(200);
@@ -831,9 +1186,16 @@ describe('handleSuggestions', () => {
       });
 
       it('drops an unsent record from the unsent list once the owner decides it', async () => {
-        const redis = makeRedis({ 'suggestions:sug-unsent': { ...pending, id: 'sug-unsent', status: 'unsent' } }, { 'suggestions:unsent': ['sug-unsent', 'sug-other'] });
+        const redis = makeRedis(
+          { 'suggestions:sug-unsent': { ...pending, id: 'sug-unsent', status: 'unsent' } },
+          { 'suggestions:unsent': ['sug-unsent', 'sug-other'] },
+        );
         const res = makeRes();
-        await handleSuggestions(asOwner({ redis }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-unsent' }, headers: JSON_H }, res);
+        await handleSuggestions(
+          asOwner({ redis }),
+          { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-unsent' }, headers: JSON_H },
+          res,
+        );
         expect(res.statusCode).toBe(200);
         expect(redis.lists['suggestions:unsent']).toEqual(['sug-other']);
         expect(redis.lists['suggestions:active']).toEqual(['sug-unsent']);
@@ -842,12 +1204,21 @@ describe('handleSuggestions', () => {
     });
 
     describe('POST decision from the site', () => {
-      const decideReq = (body: unknown, headers: Record<string, string> = JSON_H) => ({ method: 'POST', query: {}, body, headers });
+      const decideReq = (body: unknown, headers: Record<string, string> = JSON_H) => ({
+        method: 'POST',
+        query: {},
+        body,
+        headers,
+      });
 
       it('needs a JSON body as well as a session', async () => {
         const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
         const form = makeRes();
-        await handleSuggestions(asOwner({ redis }), decideReq({ decision: 'approve', id: 'sug-aaaaaa' }, { 'content-type': 'application/x-www-form-urlencoded' }), form);
+        await handleSuggestions(
+          asOwner({ redis }),
+          decideReq({ decision: 'approve', id: 'sug-aaaaaa' }, { 'content-type': 'application/x-www-form-urlencoded' }),
+          form,
+        );
         expect(form.statusCode).toBe(403);
         expect(form.body).toEqual({ error: 'owner actions must be sent as JSON' });
         const anon = makeRes();
@@ -858,12 +1229,31 @@ describe('handleSuggestions', () => {
 
       it('approves with enrichment, box art included, and answers JSON, not a page', async () => {
         const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
-        const lookup = vi.fn(async () => found({ bggId: 1, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'], img: 'https://cf.geekdo-images.com/w.jpg' }));
+        const lookup = vi.fn(async () =>
+          found({
+            bggId: 1,
+            name: 'Wingspan',
+            year: 2019,
+            min: 1,
+            max: 5,
+            mins: 70,
+            desc: 'Birds.',
+            kw: ['strategy'],
+            img: 'https://cf.geekdo-images.com/w.jpg',
+          }),
+        );
         const res = makeRes();
         await handleSuggestions(asOwner({ redis, lookup }), decideReq({ decision: 'approve', id: 'sug-aaaaaa' }), res);
         expect(res.statusCode).toBe(200);
         expect(res.headers['Content-Type']).toBeUndefined();
-        expect(res.body).toMatchObject({ item: { id: 'sug-aaaaaa', status: 'approved', decidedAt: 5000, details: { min: 1, max: 5, mins: 70, desc: 'Birds.', img: 'https://cf.geekdo-images.com/w.jpg' } } });
+        expect(res.body).toMatchObject({
+          item: {
+            id: 'sug-aaaaaa',
+            status: 'approved',
+            decidedAt: 5000,
+            details: { min: 1, max: 5, mins: 70, desc: 'Birds.', img: 'https://cf.geekdo-images.com/w.jpg' },
+          },
+        });
         expect((res.body as { item: Record<string, unknown> }).item.token).toBeUndefined();
         expect(redis.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
         expect(lookup).toHaveBeenCalledWith('Wingspan');
@@ -895,7 +1285,16 @@ describe('handleSuggestions', () => {
     describe('POST action=add (straight onto the wishlist)', () => {
       const add = async (body: Record<string, unknown>, d = asOwner()) => {
         const res = makeRes();
-        await handleSuggestions(d, { method: 'POST', query: {}, body: { action: 'add', game: 'Cascadia', name: 'Jess', ...body }, headers: JSON_H }, res);
+        await handleSuggestions(
+          d,
+          {
+            method: 'POST',
+            query: {},
+            body: { action: 'add', game: 'Cascadia', name: 'Jess', ...body },
+            headers: JSON_H,
+          },
+          res,
+        );
         return res;
       };
 
@@ -907,14 +1306,34 @@ describe('handleSuggestions', () => {
       });
 
       it('stores it approved, credited to the owner, listed and enriched, with the chosen section', async () => {
-        const lookup = vi.fn(async () => found({ bggId: 7, name: 'Cascadia', year: 2021, min: 1, max: 4, mins: 45, desc: 'Tile laying.', kw: ['family'] }));
+        const lookup = vi.fn(async () =>
+          found({
+            bggId: 7,
+            name: 'Cascadia',
+            year: 2021,
+            min: 1,
+            max: 4,
+            mins: 45,
+            desc: 'Tile laying.',
+            kw: ['family'],
+          }),
+        );
         const d = asOwner({ lookup });
         const res = await add({ type: 'strategy', note: 'Calm' }, d);
         expect(res.statusCode).toBe(201);
-        expect(res.body).toMatchObject({ item: {
-          id: 'sug-bbbbbb', game: 'Cascadia', name: 'Jess', note: 'Calm', status: 'approved', source: 'owner', createdAt: 5000, decidedAt: 5000,
-          details: { min: 1, max: 4, mins: 45, desc: 'Tile laying.', kw: ['family'], type: 'strategy' },
-        } });
+        expect(res.body).toMatchObject({
+          item: {
+            id: 'sug-bbbbbb',
+            game: 'Cascadia',
+            name: 'Jess',
+            note: 'Calm',
+            status: 'approved',
+            source: 'owner',
+            createdAt: 5000,
+            decidedAt: 5000,
+            details: { min: 1, max: 4, mins: 45, desc: 'Tile laying.', kw: ['family'], type: 'strategy' },
+          },
+        });
         const redis = d.redis as ReturnType<typeof makeRedis>;
         expect(redis.lists['suggestions:approved']).toEqual(['sug-bbbbbb']);
         expect(redis.lists['suggestions:active']).toEqual(['sug-bbbbbb']);
@@ -923,7 +1342,9 @@ describe('handleSuggestions', () => {
 
       it('keeps the chosen section even when BoardGameGeek has nothing, and no details otherwise', async () => {
         const typed = await add({ type: 'party' }, asOwner({ lookup: async () => NO_MATCH }));
-        expect(typed.body).toMatchObject({ item: { details: { min: 1, max: 99, mins: 0, desc: '', kw: [], type: 'party' } } });
+        expect(typed.body).toMatchObject({
+          item: { details: { min: 1, max: 99, mins: 0, desc: '', kw: [], type: 'party' } },
+        });
         const untyped = await add({}, asOwner({ lookup: async () => NO_MATCH }));
         expect((untyped.body as { item: { details?: unknown } }).item.details).toBeUndefined();
       });
@@ -945,7 +1366,11 @@ describe('handleSuggestions', () => {
       it('rejects an unknown action rather than treating it as a suggestion', async () => {
         const d = deps();
         const res = makeRes();
-        await handleSuggestions(d, { method: 'POST', query: {}, body: { action: 'x', game: 'Cascadia', name: 'Sam' } }, res);
+        await handleSuggestions(
+          d,
+          { method: 'POST', query: {}, body: { action: 'x', game: 'Cascadia', name: 'Sam' } },
+          res,
+        );
         expect(res.statusCode).toBe(400);
         expect(res.body).toEqual({ error: 'unknown action' });
         expect(d.sent).toHaveLength(0);
@@ -953,9 +1378,18 @@ describe('handleSuggestions', () => {
     });
 
     describe('PATCH (editing how a game reads)', () => {
-      const patch = async (body: Record<string, unknown>, d = asOwner({ redis: makeRedis({ 'suggestions:sug-ok': approvedItem }, { 'suggestions:approved': ['sug-ok'] }) })) => {
+      const patch = async (
+        body: Record<string, unknown>,
+        d = asOwner({
+          redis: makeRedis({ 'suggestions:sug-ok': approvedItem }, { 'suggestions:approved': ['sug-ok'] }),
+        }),
+      ) => {
         const res = makeRes();
-        await handleSuggestions(d, { method: 'PATCH', query: {}, body: { id: 'sug-ok', ...body }, headers: JSON_H }, res);
+        await handleSuggestions(
+          d,
+          { method: 'PATCH', query: {}, body: { id: 'sug-ok', ...body }, headers: JSON_H },
+          res,
+        );
         return { res, redis: d.redis as ReturnType<typeof makeRedis> };
       };
 
@@ -969,20 +1403,54 @@ describe('handleSuggestions', () => {
       });
 
       it('keeps the stored box art and ignores any img in the edit', async () => {
-        const redis = makeRedis({ 'suggestions:sug-ok': { ...approvedItem, details: JSON.stringify({ min: 2, max: 4, mins: 90, desc: '', kw: [], img: 'https://cf.geekdo-images.com/r.jpg' }) } });
+        const redis = makeRedis({
+          'suggestions:sug-ok': {
+            ...approvedItem,
+            details: JSON.stringify({
+              min: 2,
+              max: 4,
+              mins: 90,
+              desc: '',
+              kw: [],
+              img: 'https://cf.geekdo-images.com/r.jpg',
+            }),
+          },
+        });
         const res = makeRes();
-        await handleSuggestions(asOwner({ redis }), { method: 'PATCH', query: {}, body: { id: 'sug-ok', details: { mins: 60, img: 'https://evil.example/x.jpg' } }, headers: JSON_H }, res);
+        await handleSuggestions(
+          asOwner({ redis }),
+          {
+            method: 'PATCH',
+            query: {},
+            body: { id: 'sug-ok', details: { mins: 60, img: 'https://evil.example/x.jpg' } },
+            headers: JSON_H,
+          },
+          res,
+        );
         expect(res.body).toMatchObject({ item: { details: { mins: 60, img: 'https://cf.geekdo-images.com/r.jpg' } } });
       });
 
       it('merges the given details over the stored ones and renames', async () => {
-        const { res, redis } = await patch({ game: '  Root:  A Game  ', note: 'Mean', details: { mins: 60, kw: ['strategy', 'thematic', 'strategy'], type: 'heavy' } });
+        const { res, redis } = await patch({
+          game: '  Root:  A Game  ',
+          note: 'Mean',
+          details: { mins: 60, kw: ['strategy', 'thematic', 'strategy'], type: 'heavy' },
+        });
         expect(res.statusCode).toBe(200);
-        expect(res.body).toMatchObject({ item: { game: 'Root: A Game', note: 'Mean', details: { min: 2, max: 4, mins: 60, desc: 'Woodland war.', kw: ['strategy', 'thematic'], type: 'heavy' } } });
-        expect(JSON.parse(String(redis.hashes['suggestions:sug-ok'].details))).toMatchObject({ mins: 60, type: 'heavy' });
+        expect(res.body).toMatchObject({
+          item: {
+            game: 'Root: A Game',
+            note: 'Mean',
+            details: { min: 2, max: 4, mins: 60, desc: 'Woodland war.', kw: ['strategy', 'thematic'], type: 'heavy' },
+          },
+        });
+        expect(JSON.parse(String(redis.hashes['suggestions:sug-ok'].details))).toMatchObject({
+          mins: 60,
+          type: 'heavy',
+        });
       });
 
-      it('clears the section with null and folds the textarea\'s line breaks into the description', async () => {
+      it("clears the section with null and folds the textarea's line breaks into the description", async () => {
         const { res } = await patch({ details: { type: null, desc: '  Two \n\n lines. ' } });
         const details = (res.body as { item: { details: Record<string, unknown> } }).item.details;
         expect(details.type).toBeUndefined();
@@ -990,11 +1458,17 @@ describe('handleSuggestions', () => {
       });
 
       it('rejects out-of-range or malformed edits with the reason', async () => {
-        expect((await patch({ details: { min: 5, max: 2 } })).res.body).toEqual({ error: 'players must be whole numbers from 1 to 99, min at most max' });
-        expect((await patch({ details: { mins: 601 } })).res.body).toEqual({ error: 'minutes must be a whole number from 0 to 600' });
+        expect((await patch({ details: { min: 5, max: 2 } })).res.body).toEqual({
+          error: 'players must be whole numbers from 1 to 99, min at most max',
+        });
+        expect((await patch({ details: { mins: 601 } })).res.body).toEqual({
+          error: 'minutes must be a whole number from 0 to 600',
+        });
         expect((await patch({ details: { min: 1.5 } })).res.statusCode).toBe(400);
         expect((await patch({ details: { desc: 'x'.repeat(DESC_MAX + 1) } })).res.statusCode).toBe(400);
-        expect((await patch({ details: { kw: ['Not Valid'] } })).res.body).toEqual({ error: 'keywords must be a short list of keyword ids' });
+        expect((await patch({ details: { kw: ['Not Valid'] } })).res.body).toEqual({
+          error: 'keywords must be a short list of keyword ids',
+        });
         expect((await patch({ details: { kw: ['not-a-real-keyword'] } })).res.statusCode).toBe(400);
         expect((await patch({ details: { kw: [42] } })).res.statusCode).toBe(400);
         expect((await patch({ details: { type: 'suggested' } })).res.body).toEqual({ error: 'unknown wishlist type' });
@@ -1008,26 +1482,45 @@ describe('handleSuggestions', () => {
       it('starts from defaults when a game has no details yet', async () => {
         const redis = makeRedis({ 'suggestions:sug-bare': { ...pending, id: 'sug-bare', status: 'approved' } });
         const res = makeRes();
-        await handleSuggestions(asOwner({ redis }), { method: 'PATCH', query: {}, body: { id: 'sug-bare', details: { mins: 30 } }, headers: JSON_H }, res);
+        await handleSuggestions(
+          asOwner({ redis }),
+          { method: 'PATCH', query: {}, body: { id: 'sug-bare', details: { mins: 30 } }, headers: JSON_H },
+          res,
+        );
         expect(res.body).toMatchObject({ item: { details: { min: 1, max: 99, mins: 30, desc: '', kw: [] } } });
       });
 
       it('will not edit a removed or denied game, or one that does not exist', async () => {
         const redis = makeRedis({ 'suggestions:sug-gone': { ...pending, id: 'sug-gone', status: 'removed' } });
         const res = makeRes();
-        await handleSuggestions(asOwner({ redis }), { method: 'PATCH', query: {}, body: { id: 'sug-gone', game: 'Root' }, headers: JSON_H }, res);
+        await handleSuggestions(
+          asOwner({ redis }),
+          { method: 'PATCH', query: {}, body: { id: 'sug-gone', game: 'Root' }, headers: JSON_H },
+          res,
+        );
         expect(res.statusCode).toBe(409);
         const missing = makeRes();
-        await handleSuggestions(asOwner({ redis }), { method: 'PATCH', query: {}, body: { id: 'sug-nope', game: 'Root' }, headers: JSON_H }, missing);
+        await handleSuggestions(
+          asOwner({ redis }),
+          { method: 'PATCH', query: {}, body: { id: 'sug-nope', game: 'Root' }, headers: JSON_H },
+          missing,
+        );
         expect(missing.statusCode).toBe(404);
       });
     });
 
     describe('DELETE (taking a game off)', () => {
       it('drops it from both lists and marks it removed, keeping the hash', async () => {
-        const redis = makeRedis({ 'suggestions:sug-ok': approvedItem }, { 'suggestions:approved': ['sug-ok', 'sug-other'], 'suggestions:active': ['sug-ok'] });
+        const redis = makeRedis(
+          { 'suggestions:sug-ok': approvedItem },
+          { 'suggestions:approved': ['sug-ok', 'sug-other'], 'suggestions:active': ['sug-ok'] },
+        );
         const res = makeRes();
-        await handleSuggestions(asOwner({ redis }), { method: 'DELETE', query: {}, body: { id: 'sug-ok' }, headers: JSON_H }, res);
+        await handleSuggestions(
+          asOwner({ redis }),
+          { method: 'DELETE', query: {}, body: { id: 'sug-ok' }, headers: JSON_H },
+          res,
+        );
         expect(res.statusCode).toBe(200);
         expect(res.body).toEqual({ ok: true });
         expect(redis.lists['suggestions:approved']).toEqual(['sug-other']);
@@ -1042,16 +1535,27 @@ describe('handleSuggestions', () => {
       it('400s on an id that names one of the id lists, without reading it as a suggestion', async () => {
         const redis = makeRedis();
         const res = makeRes();
-        await handleSuggestions(asOwner({ redis }), { method: 'DELETE', query: {}, body: { id: 'approved' }, headers: JSON_H }, res);
+        await handleSuggestions(
+          asOwner({ redis }),
+          { method: 'DELETE', query: {}, body: { id: 'approved' }, headers: JSON_H },
+          res,
+        );
         expect(res.statusCode).toBe(400);
         expect(redis.hgetall).not.toHaveBeenCalled();
       });
 
       it('only removes what is on the wishlist: a pending or already-removed record answers 409 untouched', async () => {
         for (const status of ['pending', 'unsent', 'denied', 'removed']) {
-          const redis = makeRedis({ 'suggestions:sug-x': { ...pending, id: 'sug-x', status } }, { 'suggestions:active': ['sug-x'], 'suggestions:unsent': ['sug-x'] });
+          const redis = makeRedis(
+            { 'suggestions:sug-x': { ...pending, id: 'sug-x', status } },
+            { 'suggestions:active': ['sug-x'], 'suggestions:unsent': ['sug-x'] },
+          );
           const res = makeRes();
-          await handleSuggestions(asOwner({ redis }), { method: 'DELETE', query: {}, body: { id: 'sug-x' }, headers: JSON_H }, res);
+          await handleSuggestions(
+            asOwner({ redis }),
+            { method: 'DELETE', query: {}, body: { id: 'sug-x' }, headers: JSON_H },
+            res,
+          );
           expect(res.statusCode).toBe(409);
           expect(res.body).toEqual({ error: 'Wingspan is not on the wishlist' });
           expect(redis.hashes['suggestions:sug-x'].status).toBe(status);
@@ -1065,7 +1569,11 @@ describe('handleSuggestions', () => {
         await handleSuggestions(deps(), { method: 'DELETE', query: {}, body: { id: 'sug-ok' }, headers: JSON_H }, anon);
         expect(anon.statusCode).toBe(403);
         const missing = makeRes();
-        await handleSuggestions(asOwner(), { method: 'DELETE', query: {}, body: { id: 'sug-nope' }, headers: JSON_H }, missing);
+        await handleSuggestions(
+          asOwner(),
+          { method: 'DELETE', query: {}, body: { id: 'sug-nope' }, headers: JSON_H },
+          missing,
+        );
         expect(missing.statusCode).toBe(404);
       });
     });
@@ -1076,7 +1584,7 @@ describe('handleSuggestions', () => {
       expect([...WISHLIST_SECTION_IDS].sort()).toEqual([...WISHLIST_SECTIONS].sort());
     });
 
-    it('puts the same bounds on an entry as the client\'s forms', () => {
+    it("puts the same bounds on an entry as the client's forms", () => {
       const { NAME_MAX, ...bounds } = clientLimits;
       expect(bounds).toEqual({ GAME_MIN, GAME_MAX, NOTE_MAX, DESC_MAX, PLAYERS_MAX, MINS_MAX });
       // The name's bound lives in NAME_RE: the longest name it takes is the form's.
@@ -1085,10 +1593,18 @@ describe('handleSuggestions', () => {
     });
 
     it('recognises a removed status and a stored section when parsing', async () => {
-      const redis = makeRedis({
-        'suggestions:sug-gone': { ...approvedItem, id: 'sug-gone', status: 'removed' },
-        'suggestions:sug-typed': { ...approvedItem, id: 'sug-typed', source: 'owner', details: JSON.stringify({ min: 2, max: 4, mins: 30, desc: '', kw: [], type: 'party' }) },
-      }, { 'suggestions:approved': ['sug-gone', 'sug-typed'] });
+      const redis = makeRedis(
+        {
+          'suggestions:sug-gone': { ...approvedItem, id: 'sug-gone', status: 'removed' },
+          'suggestions:sug-typed': {
+            ...approvedItem,
+            id: 'sug-typed',
+            source: 'owner',
+            details: JSON.stringify({ min: 2, max: 4, mins: 30, desc: '', kw: [], type: 'party' }),
+          },
+        },
+        { 'suggestions:approved': ['sug-gone', 'sug-typed'] },
+      );
       const res = makeRes();
       await handleSuggestions(deps({ redis }), { method: 'GET', query: {} }, res);
       const items = (res.body as { items: Array<Record<string, unknown>> }).items;
@@ -1099,24 +1615,48 @@ describe('handleSuggestions', () => {
 
   describe('BoardGameGeek token problems', () => {
     const JSON_H = { 'content-type': 'application/json' };
-    const addReq = { method: 'POST', query: {}, body: { action: 'add', game: 'Magical Athlete', name: 'Jess' }, headers: JSON_H };
-    const reported = () => vi.mocked(reportError).mock.calls.map(([label, err]) => ({ label, message: (err as Error).message }));
+    const addReq = {
+      method: 'POST',
+      query: {},
+      body: { action: 'add', game: 'Magical Athlete', name: 'Jess' },
+      headers: JSON_H,
+    };
+    const reported = () =>
+      vi.mocked(reportError).mock.calls.map(([label, err]) => ({ label, message: (err as Error).message }));
 
     it('reports a missing token to Sentry by name, and still adds the game', async () => {
       vi.mocked(reportError).mockClear();
       const res = makeRes();
-      await handleSuggestions(deps({ admin: async () => true, lookup: async () => ({ outcome: 'no-token' }) }), addReq, res);
+      await handleSuggestions(
+        deps({ admin: async () => true, lookup: async () => ({ outcome: 'no-token' }) }),
+        addReq,
+        res,
+      );
       expect(res.statusCode).toBe(201);
-      expect(reported()).toEqual([{ label: 'suggestions: BoardGameGeek lookup skipped', message: expect.stringContaining('BGG_API_TOKEN is not set') }]);
+      expect(reported()).toEqual([
+        {
+          label: 'suggestions: BoardGameGeek lookup skipped',
+          message: expect.stringContaining('BGG_API_TOKEN is not set'),
+        },
+      ]);
     });
 
     it.each([401, 403])('reports a token BGG refused with %i, and still approves', async (status) => {
       vi.mocked(reportError).mockClear();
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
       const res = makeRes();
-      await handleSuggestions(deps({ redis, lookup: async () => ({ outcome: 'refused', status }) }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, res);
+      await handleSuggestions(
+        deps({ redis, lookup: async () => ({ outcome: 'refused', status }) }),
+        { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+        res,
+      );
       expect(String(res.body)).toContain('is now on the wishlist');
-      expect(reported()).toEqual([{ label: 'suggestions: BoardGameGeek lookup refused', message: expect.stringContaining(`BoardGameGeek refused BGG_API_TOKEN (HTTP ${status})`) }]);
+      expect(reported()).toEqual([
+        {
+          label: 'suggestions: BoardGameGeek lookup refused',
+          message: expect.stringContaining(`BoardGameGeek refused BGG_API_TOKEN (HTTP ${status})`),
+        },
+      ]);
     });
 
     it('does not report a plain miss or an outage as a token problem', async () => {
@@ -1130,24 +1670,49 @@ describe('handleSuggestions', () => {
 
   describe('telling the owner how the lookup went', () => {
     const JSON_H = { 'content-type': 'application/json' };
-    const WINGSPAN = { bggId: 266192, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'] };
+    const WINGSPAN = {
+      bggId: 266192,
+      name: 'Wingspan',
+      year: 2019,
+      min: 1,
+      max: 5,
+      mins: 70,
+      desc: 'Birds.',
+      kw: ['strategy'],
+    };
     const approveBySite = async (lookup: SuggestionsDeps['lookup'], decision = 'approve') => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
       const res = makeRes();
-      await handleSuggestions(deps({ redis, lookup, admin: async () => true }), { method: 'POST', query: {}, body: { decision, id: 'sug-aaaaaa' }, headers: JSON_H }, res);
+      await handleSuggestions(
+        deps({ redis, lookup, admin: async () => true }),
+        { method: 'POST', query: {}, body: { decision, id: 'sug-aaaaaa' }, headers: JSON_H },
+        res,
+      );
       return res.body as { item: unknown; lookup?: string };
     };
     const approveByEmail = async (lookup: SuggestionsDeps['lookup']) => {
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': pending }, { 'suggestions:active': ['sug-aaaaaa'] });
       const res = makeRes();
-      await handleSuggestions(deps({ redis, lookup }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, res);
+      await handleSuggestions(
+        deps({ redis, lookup }),
+        { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+        res,
+      );
       return String(res.body);
     };
 
     it('answers an add with the outcome beside the item', async () => {
-      for (const [result, outcome] of [[found(WINGSPAN), 'found'], [NO_MATCH, 'no-match'], [{ outcome: 'unavailable' }, 'unavailable']] as const) {
+      for (const [result, outcome] of [
+        [found(WINGSPAN), 'found'],
+        [NO_MATCH, 'no-match'],
+        [{ outcome: 'unavailable' }, 'unavailable'],
+      ] as const) {
         const res = makeRes();
-        await handleSuggestions(deps({ admin: async () => true, lookup: async () => result }), { method: 'POST', query: {}, body: { action: 'add', game: 'Wingspan', name: 'Jess' }, headers: JSON_H }, res);
+        await handleSuggestions(
+          deps({ admin: async () => true, lookup: async () => result }),
+          { method: 'POST', query: {}, body: { action: 'add', game: 'Wingspan', name: 'Jess' }, headers: JSON_H },
+          res,
+        );
         expect(res.statusCode).toBe(201);
         expect(res.body).toMatchObject({ item: { game: 'Wingspan' }, lookup: outcome });
       }
@@ -1155,22 +1720,31 @@ describe('handleSuggestions', () => {
 
     it('leaves the outcome out when no lookup ran', async () => {
       const res = makeRes();
-      await handleSuggestions(deps({ admin: async () => true, lookup: null }), { method: 'POST', query: {}, body: { action: 'add', game: 'Wingspan', name: 'Jess' }, headers: JSON_H }, res);
+      await handleSuggestions(
+        deps({ admin: async () => true, lookup: null }),
+        { method: 'POST', query: {}, body: { action: 'add', game: 'Wingspan', name: 'Jess' }, headers: JSON_H },
+        res,
+      );
       expect(JSON.parse(JSON.stringify(res.body))).not.toHaveProperty('lookup');
     });
 
     it('answers an on-site approval with the outcome, and a denial without one', async () => {
-      expect(await approveBySite(async () => ({ outcome: 'refused', status: 401 }))).toMatchObject({ item: { status: 'approved' }, lookup: 'refused' });
+      expect(await approveBySite(async () => ({ outcome: 'refused', status: 401 }))).toMatchObject({
+        item: { status: 'approved' },
+        lookup: 'refused',
+      });
       expect(await approveBySite(async () => found(WINGSPAN))).toMatchObject({ lookup: 'found' });
       const denied = await approveBySite(async () => found(WINGSPAN), 'deny');
       expect(denied).toMatchObject({ item: { status: 'denied' } });
       expect(denied).not.toHaveProperty('lookup');
     });
 
-    it('says on the emailed approval\'s page what the lookup could not fill in', async () => {
+    it("says on the emailed approval's page what the lookup could not fill in", async () => {
       expect(await approveByEmail(async () => NO_MATCH)).toContain('BoardGameGeek had no match for it');
       expect(await approveByEmail(async () => ({ outcome: 'no-token' }))).toContain("BGG_API_TOKEN isn't set");
-      expect(await approveByEmail(async () => ({ outcome: 'refused', status: 403 }))).toContain('BoardGameGeek refused the request (check BGG_API_TOKEN)');
+      expect(await approveByEmail(async () => ({ outcome: 'refused', status: 403 }))).toContain(
+        'BoardGameGeek refused the request (check BGG_API_TOKEN)',
+      );
       expect(await approveByEmail(async () => ({ outcome: 'unavailable' }))).toContain("BoardGameGeek didn't answer");
       const quiet = await approveByEmail(async () => found(WINGSPAN));
       expect(quiet).toContain('is now on the wishlist, credited to Alex.</p>');
@@ -1180,8 +1754,22 @@ describe('handleSuggestions', () => {
 
   describe('POST action=preview (looking a game up before adding it)', () => {
     const JSON_H = { 'content-type': 'application/json' };
-    const WINGSPAN = { bggId: 266192, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'], img: 'https://cf.geekdo-images.com/w.jpg' };
-    const preview = async (lookup: SuggestionsDeps['lookup'], body: Record<string, unknown> = { action: 'preview', game: 'Wingspan' }, over: Partial<SuggestionsDeps> = {}) => {
+    const WINGSPAN = {
+      bggId: 266192,
+      name: 'Wingspan',
+      year: 2019,
+      min: 1,
+      max: 5,
+      mins: 70,
+      desc: 'Birds.',
+      kw: ['strategy'],
+      img: 'https://cf.geekdo-images.com/w.jpg',
+    };
+    const preview = async (
+      lookup: SuggestionsDeps['lookup'],
+      body: Record<string, unknown> = { action: 'preview', game: 'Wingspan' },
+      over: Partial<SuggestionsDeps> = {},
+    ) => {
       const d = deps({ admin: async () => true, lookup, ...over });
       const res = makeRes();
       await handleSuggestions(d, { method: 'POST', query: {}, body, headers: JSON_H }, res);
@@ -1200,23 +1788,44 @@ describe('handleSuggestions', () => {
 
     it('answers why it found nothing, with no details and never the cause', async () => {
       expect((await preview(async () => NO_MATCH)).res.body).toEqual({ outcome: 'no-match' });
-      expect((await preview(async () => ({ outcome: 'refused', status: 401 }))).res.body).toEqual({ outcome: 'refused' });
-      expect((await preview(async () => ({ outcome: 'unavailable', cause: new Error('socket hang up') }))).res.body).toEqual({ outcome: 'unavailable' });
-      expect((await preview(async () => { throw new Error('bgg down'); })).res.body).toEqual({ outcome: 'unavailable' });
+      expect((await preview(async () => ({ outcome: 'refused', status: 401 }))).res.body).toEqual({
+        outcome: 'refused',
+      });
+      expect(
+        (await preview(async () => ({ outcome: 'unavailable', cause: new Error('socket hang up') }))).res.body,
+      ).toEqual({ outcome: 'unavailable' });
+      expect(
+        (
+          await preview(async () => {
+            throw new Error('bgg down');
+          })
+        ).res.body,
+      ).toEqual({ outcome: 'unavailable' });
       expect((await preview(null)).res.body).toEqual({ outcome: 'unavailable' });
     });
 
     it('reports a missing token to Sentry here too', async () => {
       vi.mocked(reportError).mockClear();
       expect((await preview(async () => ({ outcome: 'no-token' }))).res.body).toEqual({ outcome: 'no-token' });
-      expect(vi.mocked(reportError).mock.calls.map(([, err]) => (err as Error).message)).toEqual([expect.stringContaining('BGG_API_TOKEN')]);
+      expect(vi.mocked(reportError).mock.calls.map(([, err]) => (err as Error).message)).toEqual([
+        expect.stringContaining('BGG_API_TOKEN'),
+      ]);
     });
 
     it('is owner-only, JSON-only, and validates the name before looking anything up', async () => {
       const lookup = vi.fn(async () => found(WINGSPAN));
       expect((await preview(lookup, undefined, { admin: async () => false })).res.statusCode).toBe(403);
       const form = makeRes();
-      await handleSuggestions(deps({ admin: async () => true, lookup }), { method: 'POST', query: {}, body: { action: 'preview', game: 'Wingspan' }, headers: { 'content-type': 'application/x-www-form-urlencoded' } }, form);
+      await handleSuggestions(
+        deps({ admin: async () => true, lookup }),
+        {
+          method: 'POST',
+          query: {},
+          body: { action: 'preview', game: 'Wingspan' },
+          headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        },
+        form,
+      );
       expect(form.statusCode).toBe(403);
       const bad = await preview(lookup, { action: 'preview', game: 'X' });
       expect(bad.res.statusCode).toBe(400);
@@ -1227,15 +1836,38 @@ describe('handleSuggestions', () => {
 
   describe('POST action=add with previewed details', () => {
     const JSON_H = { 'content-type': 'application/json' };
-    const PREVIEWED = { bggId: 266192, year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'], img: 'https://cf.geekdo-images.com/w.jpg' };
+    const PREVIEWED = {
+      bggId: 266192,
+      year: 2019,
+      min: 1,
+      max: 5,
+      mins: 70,
+      desc: 'Birds.',
+      kw: ['strategy'],
+      img: 'https://cf.geekdo-images.com/w.jpg',
+    };
     const add = async (body: Record<string, unknown>) => {
       const lookup = vi.fn(async () => NO_MATCH);
       const d = deps({ admin: async () => true, lookup });
       const res = makeRes();
-      await handleSuggestions(d, { method: 'POST', query: {}, body: { action: 'add', game: 'Wingspan', name: 'Jess', ...body }, headers: JSON_H }, res);
+      await handleSuggestions(
+        d,
+        {
+          method: 'POST',
+          query: {},
+          body: { action: 'add', game: 'Wingspan', name: 'Jess', ...body },
+          headers: JSON_H,
+        },
+        res,
+      );
       const redis = d.redis as ReturnType<typeof makeRedis>;
       const raw = redis.hashes['suggestions:sug-bbbbbb']?.details;
-      return { res, lookup, redis, stored: raw === undefined ? undefined : JSON.parse(String(raw)) as Record<string, unknown> };
+      return {
+        res,
+        lookup,
+        redis,
+        stored: raw === undefined ? undefined : (JSON.parse(String(raw)) as Record<string, unknown>),
+      };
     };
 
     it('stores them with the section, without looking the game up again', async () => {
@@ -1259,9 +1891,15 @@ describe('handleSuggestions', () => {
     });
 
     it('adds what a preview answered for a BGG entry past the bounds (999 players, 720 minutes, a soft hyphen)', async () => {
-      const crowd = parseThing('<items><item type="boardgame" id="7"><name type="primary" value="Crowd"/><description>Every&#173;one plays.</description><minplayers value="3"/><maxplayers value="999"/><playingtime value="720"/></item></items>')!;
+      const crowd = parseThing(
+        '<items><item type="boardgame" id="7"><name type="primary" value="Crowd"/><description>Every&#173;one plays.</description><minplayers value="3"/><maxplayers value="999"/><playingtime value="720"/></item></items>',
+      )!;
       const previewed = makeRes();
-      await handleSuggestions(deps({ admin: async () => true, lookup: async () => found(crowd) }), { method: 'POST', query: {}, body: { action: 'preview', game: 'Crowd' }, headers: JSON_H }, previewed);
+      await handleSuggestions(
+        deps({ admin: async () => true, lookup: async () => found(crowd) }),
+        { method: 'POST', query: {}, body: { action: 'preview', game: 'Crowd' }, headers: JSON_H },
+        previewed,
+      );
       // Sent back as the client sends it: through JSON, as the add's details.
       const { details } = JSON.parse(JSON.stringify(previewed.body)) as { details: Record<string, unknown> };
       const { res, stored } = await add({ details });
@@ -1279,7 +1917,7 @@ describe('handleSuggestions', () => {
       expect(bare.res.statusCode).toBe(201);
     });
 
-    it('holds previewed details to an edit\'s rules and stores nothing when they fail', async () => {
+    it("holds previewed details to an edit's rules and stores nothing when they fail", async () => {
       for (const [details, error] of [
         ['nope', 'details must be an object'],
         [{ ...PREVIEWED, min: 5, max: 2 }, 'players must be whole numbers from 1 to 99, min at most max'],
@@ -1290,11 +1928,17 @@ describe('handleSuggestions', () => {
         [{ ...PREVIEWED, year: 2019.5 }, 'year must be a whole number'],
         [{ ...PREVIEWED, year: 10_000 }, 'year must be a whole number'],
         [{ ...PREVIEWED, img: 'http://insecure.example/x.jpg' }, 'img must be a BoardGameGeek image URL'],
-        [{ ...PREVIEWED, img: `https://cf.geekdo-images.com/${'x'.repeat(500)}` }, 'img must be a BoardGameGeek image URL'],
+        [
+          { ...PREVIEWED, img: `https://cf.geekdo-images.com/${'x'.repeat(500)}` },
+          'img must be a BoardGameGeek image URL',
+        ],
         [{ ...PREVIEWED, img: 42 }, 'img must be a BoardGameGeek image URL'],
         // Box art comes from BGG's image CDN only, never another https host.
         [{ ...PREVIEWED, img: 'https://evil.example/x.jpg' }, 'img must be a BoardGameGeek image URL'],
-        [{ ...PREVIEWED, img: 'https://cf.geekdo-images.com.evil.example/x.jpg' }, 'img must be a BoardGameGeek image URL'],
+        [
+          { ...PREVIEWED, img: 'https://cf.geekdo-images.com.evil.example/x.jpg' },
+          'img must be a BoardGameGeek image URL',
+        ],
         [[PREVIEWED], 'details must be an object'],
       ] as const) {
         const { res, redis } = await add({ details });
@@ -1313,15 +1957,36 @@ describe('handleSuggestions', () => {
 
   describe('approving with what the owner saw (a corrected name, previewed details)', () => {
     const JSON_H = { 'content-type': 'application/json' };
-    const ARKHAM_FOUND = { bggId: 15987, name: 'Arkham Horror', year: 2005, min: 1, max: 8, mins: 240, desc: 'Investigate Arkham.', kw: ['cooperative', 'thematic'], img: 'https://cf.geekdo-images.com/ah.jpg' };
-    const ARKHAM = { bggId: 15987, year: 2005, min: 1, max: 8, mins: 240, desc: 'Investigate Arkham.', kw: ['cooperative', 'thematic'], img: 'https://cf.geekdo-images.com/ah.jpg' };
+    const ARKHAM_FOUND = {
+      bggId: 15987,
+      name: 'Arkham Horror',
+      year: 2005,
+      min: 1,
+      max: 8,
+      mins: 240,
+      desc: 'Investigate Arkham.',
+      kw: ['cooperative', 'thematic'],
+      img: 'https://cf.geekdo-images.com/ah.jpg',
+    };
+    const ARKHAM = {
+      bggId: 15987,
+      year: 2005,
+      min: 1,
+      max: 8,
+      mins: 240,
+      desc: 'Investigate Arkham.',
+      kw: ['cooperative', 'thematic'],
+      img: 'https://cf.geekdo-images.com/ah.jpg',
+    };
     const misspelt = { ...pending, game: 'Arkham Horry', name: 'Robin', note: '' };
     const other = { ...pending, id: 'sug-cccccc', game: 'Arkham Horror', status: 'approved', decidedAt: 10 };
 
     function setup(seed: Record<string, unknown> = misspelt, extra: FakeRedisSeed['hashes'] = {}) {
       const ids = ['sug-aaaaaa', ...Object.keys(extra).map((k) => k.replace('suggestions:', ''))];
       const redis = makeRedis({ 'suggestions:sug-aaaaaa': seed, ...extra }, { 'suggestions:active': ids });
-      const lookup = vi.fn(async (name: string): Promise<LookupResult> => (name === 'Arkham Horror' ? found(ARKHAM_FOUND) : NO_MATCH));
+      const lookup = vi.fn(async (name: string): Promise<LookupResult> =>
+        name === 'Arkham Horror' ? found(ARKHAM_FOUND) : NO_MATCH,
+      );
       return { redis, lookup };
     }
     const stored = (redis: ReturnType<typeof makeRedis>) => redis.hashes['suggestions:sug-aaaaaa'];
@@ -1342,17 +2007,31 @@ describe('handleSuggestions', () => {
     describe('from the site', () => {
       const approve = async (body: Record<string, unknown>, ctx = setup()) => {
         const res = makeRes();
-        await handleSuggestions(deps({ redis: ctx.redis, lookup: ctx.lookup, admin: async () => true }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', ...body }, headers: JSON_H }, res);
+        await handleSuggestions(
+          deps({ redis: ctx.redis, lookup: ctx.lookup, admin: async () => true }),
+          { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', ...body }, headers: JSON_H },
+          res,
+        );
         return { res, ...ctx };
       };
 
       it('stores the previewed details and the corrected name with the status, without looking it up again', async () => {
-        const { res, redis, lookup } = await approve({ game: '  Arkham   Horror ', details: { ...ARKHAM, name: 'BGG name', type: 'party' } });
+        const { res, redis, lookup } = await approve({
+          game: '  Arkham   Horror ',
+          details: { ...ARKHAM, name: 'BGG name', type: 'party' },
+        });
         expect(res.statusCode).toBe(200);
         expect(lookup).not.toHaveBeenCalled();
         // One write: the name, the details and the status land together.
-        expect(oneWrite(redis)).toEqual({ status: 'approved', decidedAt: 5000, game: 'Arkham Horror', details: ARKHAM });
-        expect(res.body).toEqual({ item: expect.objectContaining({ game: 'Arkham Horror', status: 'approved', details: ARKHAM }) });
+        expect(oneWrite(redis)).toEqual({
+          status: 'approved',
+          decidedAt: 5000,
+          game: 'Arkham Horror',
+          details: ARKHAM,
+        });
+        expect(res.body).toEqual({
+          item: expect.objectContaining({ game: 'Arkham Horror', status: 'approved', details: ARKHAM }),
+        });
         expect(redis.lists['suggestions:approved']).toEqual(['sug-aaaaaa']);
       });
 
@@ -1372,7 +2051,7 @@ describe('handleSuggestions', () => {
         expect(stored(redis).game).toBe('Arkham Horror');
       });
 
-      it('holds the details to an add\'s rules, and the name to an add\'s, storing nothing when they fail', async () => {
+      it("holds the details to an add's rules, and the name to an add's, storing nothing when they fail", async () => {
         for (const [body, error] of [
           [{ details: { ...ARKHAM, min: 5, max: 2 } }, 'players must be whole numbers from 1 to 99, min at most max'],
           [{ details: { ...ARKHAM, img: 'http://insecure.example/x.jpg' } }, 'img must be a BoardGameGeek image URL'],
@@ -1391,7 +2070,10 @@ describe('handleSuggestions', () => {
       });
 
       it('refuses a correction onto a game another entry already lists', async () => {
-        const { res, redis } = await approve({ game: 'arkham horror', details: ARKHAM }, setup(misspelt, { 'suggestions:sug-cccccc': other }));
+        const { res, redis } = await approve(
+          { game: 'arkham horror', details: ARKHAM },
+          setup(misspelt, { 'suggestions:sug-cccccc': other }),
+        );
         expect(res.statusCode).toBe(409);
         expect(res.body).toEqual({ error: 'Arkham Horror is already on the list' });
         untouched(redis);
@@ -1416,7 +2098,11 @@ describe('handleSuggestions', () => {
       // post to the same path is still read as before.
       const approve = async (body: Record<string, unknown>, ctx = setup()) => {
         const res = makeRes();
-        await handleSuggestions(deps({ redis: ctx.redis, lookup: ctx.lookup }), { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN, ...body } }, res);
+        await handleSuggestions(
+          deps({ redis: ctx.redis, lookup: ctx.lookup }),
+          { method: 'POST', query: {}, body: { decision: 'approve', id: 'sug-aaaaaa', token: TOKEN, ...body } },
+          res,
+        );
         return { res, html: String(res.body), ...ctx };
       };
 
@@ -1425,7 +2111,12 @@ describe('handleSuggestions', () => {
           const { res, html, redis, lookup } = await approve({ game: 'Arkham Horror', details });
           expect(res.statusCode).toBe(200);
           expect(lookup).not.toHaveBeenCalled();
-          expect(oneWrite(redis)).toEqual({ status: 'approved', decidedAt: 5000, game: 'Arkham Horror', details: ARKHAM });
+          expect(oneWrite(redis)).toEqual({
+            status: 'approved',
+            decidedAt: 5000,
+            game: 'Arkham Horror',
+            details: ARKHAM,
+          });
           expect(html).toContain('Arkham Horror is now on the wishlist, credited to Robin.</p>');
         }
       });
@@ -1436,11 +2127,20 @@ describe('handleSuggestions', () => {
         expect(lookup).not.toHaveBeenCalled();
         expect(stored(redis)).toMatchObject({ status: 'approved', game: 'Arkham Horry' });
         expect(stored(redis).details).toBeUndefined();
-        expect(html).toContain('Arkham Horry is now on the wishlist, credited to Robin. It has no details yet: sign in on the site to fill them in with Edit.');
+        expect(html).toContain(
+          'Arkham Horry is now on the wishlist, credited to Robin. It has no details yet: sign in on the site to fill them in with Edit.',
+        );
       });
 
       it('answers bad details or a bad name with a page and a 400, storing nothing', async () => {
-        for (const body of [{ details: '{oops' }, { details: '"text"' }, { details: JSON.stringify([ARKHAM]) }, { details: JSON.stringify({ ...ARKHAM, kw: ['nope'] }) }, { game: 'X' }, { game: ['Arkham', 'Horror'] }]) {
+        for (const body of [
+          { details: '{oops' },
+          { details: '"text"' },
+          { details: JSON.stringify([ARKHAM]) },
+          { details: JSON.stringify({ ...ARKHAM, kw: ['nope'] }) },
+          { game: 'X' },
+          { game: ['Arkham', 'Horror'] },
+        ]) {
           const { res, html, redis } = await approve(body);
           expect(res.statusCode, JSON.stringify(body)).toBe(400);
           expect(res.headers['Content-Type']).toBe('text/html; charset=utf-8');
@@ -1451,7 +2151,10 @@ describe('handleSuggestions', () => {
       });
 
       it('refuses a correction onto a game already listed, with a page', async () => {
-        const { res, html, redis } = await approve({ game: 'Arkham Horror', details: 'null' }, setup(misspelt, { 'suggestions:sug-cccccc': other }));
+        const { res, html, redis } = await approve(
+          { game: 'Arkham Horror', details: 'null' },
+          setup(misspelt, { 'suggestions:sug-cccccc': other }),
+        );
         expect(res.statusCode).toBe(409);
         expect(html).toContain('<h1>Already on the list</h1>');
         expect(html).toContain('Arkham Horror is already on the list. Nothing changed.');
@@ -1468,19 +2171,33 @@ describe('handleSuggestions', () => {
     describe('the confirmation page', () => {
       const confirm = async (query: Record<string, unknown> = {}, ctx = setup()) => {
         const res = makeRes();
-        await handleSuggestions(deps({ redis: ctx.redis, lookup: ctx.lookup }), { method: 'GET', query: { action: 'approve', id: 'sug-aaaaaa', token: TOKEN, ...query } as SuggestionsRequest['query'] }, res);
+        await handleSuggestions(
+          deps({ redis: ctx.redis, lookup: ctx.lookup }),
+          {
+            method: 'GET',
+            query: { action: 'approve', id: 'sug-aaaaaa', token: TOKEN, ...query } as SuggestionsRequest['query'],
+          },
+          res,
+        );
         return { res, html: String(res.body), ...ctx };
       };
       const noWrites = (redis: ReturnType<typeof makeRedis>) => {
-        for (const write of [redis.hset, redis.hsetnx, redis.hdel, redis.lpush, redis.lrem, redis.multi]) expect(write).not.toHaveBeenCalled();
+        for (const write of [redis.hset, redis.hsetnx, redis.hdel, redis.lpush, redis.lrem, redis.multi])
+          expect(write).not.toHaveBeenCalled();
       };
-      const unescape = (s: string) => s.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+      const unescape = (s: string) =>
+        s
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&amp;/g, '&');
       const field = (html: string, name: string) => {
         const m = new RegExp(`<form method="post"[^]*?name="${name}" value="([^"]*)"`).exec(html);
         return m ? unescape(m[1]) : undefined;
       };
 
-      it('looks the friend\'s spelling up and shows what it found, posting it with the approval, without writing anything', async () => {
+      it("looks the friend's spelling up and shows what it found, posting it with the approval, without writing anything", async () => {
         const ctx = setup({ ...misspelt, game: 'Arkham Horror' });
         const { res, html, redis, lookup } = await confirm({}, ctx);
         expect(res.statusCode).toBe(200);
@@ -1498,7 +2215,13 @@ describe('handleSuggestions', () => {
       });
 
       it('escapes everything the lookup and the friend wrote', async () => {
-        const nasty = { ...ARKHAM_FOUND, name: '<script>x</script>', desc: 'Say "hi" & <b>run</b>', img: 'https://cf.geekdo-images.com/a"onerror="x.jpg', kw: ['not-a-keyword<i>'] };
+        const nasty = {
+          ...ARKHAM_FOUND,
+          name: '<script>x</script>',
+          desc: 'Say "hi" & <b>run</b>',
+          img: 'https://cf.geekdo-images.com/a"onerror="x.jpg',
+          kw: ['not-a-keyword<i>'],
+        };
         const ctx = setup({ ...misspelt, game: 'A&B <i>', name: 'Ro"bin', note: '<u>n</u>' });
         ctx.lookup.mockResolvedValue(found(nasty));
         const { html } = await confirm({}, ctx);
@@ -1516,7 +2239,10 @@ describe('handleSuggestions', () => {
         for (const [result, text] of [
           [NO_MATCH, 'BoardGameGeek had no match for “Arkham Horry”.'],
           [{ outcome: 'no-token' }, "“Arkham Horry” couldn't be looked up: BGG_API_TOKEN isn't set."],
-          [{ outcome: 'refused', status: 401 }, "“Arkham Horry” couldn't be looked up: BoardGameGeek refused the request (check BGG_API_TOKEN)."],
+          [
+            { outcome: 'refused', status: 401 },
+            "“Arkham Horry” couldn't be looked up: BoardGameGeek refused the request (check BGG_API_TOKEN).",
+          ],
         ] as const) {
           const ctx = setup();
           ctx.lookup.mockResolvedValue(result as LookupResult);
@@ -1532,12 +2258,14 @@ describe('handleSuggestions', () => {
         const ctx = setup();
         ctx.lookup.mockResolvedValue({ outcome: 'unavailable' });
         const { html } = await confirm({}, ctx);
-        expect(html).toContain("<p class=\"miss\">BoardGameGeek didn't answer for “Arkham Horry”. Approving tries again");
+        expect(html).toContain(
+          '<p class="miss">BoardGameGeek didn\'t answer for “Arkham Horry”. Approving tries again',
+        );
         expect(html).not.toContain('name="details"');
         expect(field(html, 'game')).toBe('Arkham Horry');
       });
 
-      it('sends no referrer, so the box art request never carries the link\'s token', async () => {
+      it("sends no referrer, so the box art request never carries the link's token", async () => {
         const { html } = await confirm({ game: 'Arkham Horror' });
         expect(html).toContain('<meta name="referrer" content="no-referrer">');
         expect(html).toContain('<img src="https://cf.geekdo-images.com/');
@@ -1556,13 +2284,16 @@ describe('handleSuggestions', () => {
         expect(JSON.parse(field(html, 'details')!)).toEqual(ARKHAM);
       });
 
-      it('corrects the name with a GET to this same page, keeping the link\'s id, token and action', async () => {
+      it("corrects the name with a GET to this same page, keeping the link's id, token and action", async () => {
         const { html } = await confirm();
-        const rename = /<form class="rename" method="get" action="\/api\/suggestions">(.*?)<\/form>/.exec(html)?.[1] ?? '';
+        const rename =
+          /<form class="rename" method="get" action="\/api\/suggestions">(.*?)<\/form>/.exec(html)?.[1] ?? '';
         expect(rename).toContain('<input type="hidden" name="action" value="approve">');
         expect(rename).toContain('<input type="hidden" name="id" value="sug-aaaaaa">');
         expect(rename).toContain(`<input type="hidden" name="token" value="${TOKEN}">`);
-        expect(rename).toContain(`<input id="game" name="game" value="Arkham Horry" required minlength="${GAME_MIN}" maxlength="${GAME_MAX}"`);
+        expect(rename).toContain(
+          `<input id="game" name="game" value="Arkham Horry" required minlength="${GAME_MIN}" maxlength="${GAME_MAX}"`,
+        );
         expect(rename).toContain('<label for="game">');
       });
 
@@ -1592,7 +2323,11 @@ describe('handleSuggestions', () => {
       it('posts no details when no lookup is configured, so the approval looks it up as before', async () => {
         const redis = makeRedis({ 'suggestions:sug-aaaaaa': misspelt });
         const res = makeRes();
-        await handleSuggestions(deps({ redis, lookup: null }), { method: 'GET', query: { action: 'approve', id: 'sug-aaaaaa', token: TOKEN } }, res);
+        await handleSuggestions(
+          deps({ redis, lookup: null }),
+          { method: 'GET', query: { action: 'approve', id: 'sug-aaaaaa', token: TOKEN } },
+          res,
+        );
         const html = String(res.body);
         expect(html).not.toContain('name="details"');
         expect(html).not.toContain('class="preview"');
@@ -1604,13 +2339,25 @@ describe('handleSuggestions', () => {
         const ctx = setup();
         const { html } = await confirm({ game: 'Arkham Horror' }, ctx);
         const res = makeRes();
-        const body = { decision: field(html, 'decision'), id: field(html, 'id'), token: field(html, 'token'), game: field(html, 'game'), details: field(html, 'details') };
-        await handleSuggestions(deps({ redis: ctx.redis, lookup: ctx.lookup }), { method: 'POST', query: {}, body, headers: { 'content-type': 'application/x-www-form-urlencoded' } }, res);
+        const body = {
+          decision: field(html, 'decision'),
+          id: field(html, 'id'),
+          token: field(html, 'token'),
+          game: field(html, 'game'),
+          details: field(html, 'details'),
+        };
+        await handleSuggestions(
+          deps({ redis: ctx.redis, lookup: ctx.lookup }),
+          { method: 'POST', query: {}, body, headers: { 'content-type': 'application/x-www-form-urlencoded' } },
+          res,
+        );
         expect(res.statusCode).toBe(200);
         expect(ctx.lookup).toHaveBeenCalledTimes(1);
         const approved = makeRes();
         await handleSuggestions(deps({ redis: ctx.redis }), { method: 'GET', query: {} }, approved);
-        expect((approved.body as { items: unknown[] }).items).toEqual([expect.objectContaining({ id: 'sug-aaaaaa', game: 'Arkham Horror', status: 'approved', details: ARKHAM })]);
+        expect((approved.body as { items: unknown[] }).items).toEqual([
+          expect.objectContaining({ id: 'sug-aaaaaa', game: 'Arkham Horror', status: 'approved', details: ARKHAM }),
+        ]);
       });
     });
   });

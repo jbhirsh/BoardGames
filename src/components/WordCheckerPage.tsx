@@ -10,7 +10,7 @@ import WordChecker from './WordChecker';
  * How a word is judged is WordChecker's.
  */
 export default function WordCheckerPage() {
-  const game = GAMES.find(g => g.slug === WORD_CHECKER_GAME);
+  const game = GAMES.find((g) => g.slug === WORD_CHECKER_GAME);
 
   if (!game) return null;
 

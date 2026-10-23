@@ -17,12 +17,28 @@ const PENDING = [
 ];
 
 const FARAWAY = {
-  bggId: 385761, name: 'Faraway', year: 2023, min: 2, max: 6, mins: 30,
-  desc: 'Explore Alula backwards.', kw: ['card-game', 'quick-play'], img: 'https://cf.geekdo-images.com/faraway.jpg',
+  bggId: 385761,
+  name: 'Faraway',
+  year: 2023,
+  min: 2,
+  max: 6,
+  mins: 30,
+  desc: 'Explore Alula backwards.',
+  kw: ['card-game', 'quick-play'],
+  img: 'https://cf.geekdo-images.com/faraway.jpg',
 };
 
 /** What an entry keeps of FARAWAY's preview: everything but BGG's name for it. */
-const FARAWAY_STORED = { bggId: 385761, year: 2023, min: 2, max: 6, mins: 30, desc: 'Explore Alula backwards.', kw: ['card-game', 'quick-play'], img: FARAWAY.img };
+const FARAWAY_STORED = {
+  bggId: 385761,
+  year: 2023,
+  min: 2,
+  max: 6,
+  mins: 30,
+  desc: 'Explore Alula backwards.',
+  kw: ['card-game', 'quick-play'],
+  img: FARAWAY.img,
+};
 
 type PreviewAnswer = Response | ((game: string, signal?: AbortSignal) => Response | Promise<Response>);
 
@@ -33,18 +49,32 @@ function mockApi(
 ) {
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
     const url = String(input);
-    if (url.startsWith('/api/suggestions?action=pending')) return pending instanceof Error ? Promise.reject(pending) : jsonResponse(pending);
+    if (url.startsWith('/api/suggestions?action=pending'))
+      return pending instanceof Error ? Promise.reject(pending) : jsonResponse(pending);
     const body = init?.method === 'POST' ? (JSON.parse(String(init.body)) as { action?: string; game?: string }) : {};
-    if (body.action === 'preview') return typeof preview === 'function' ? preview(body.game ?? '', init?.signal ?? undefined) : preview;
+    if (body.action === 'preview')
+      return typeof preview === 'function' ? preview(body.game ?? '', init?.signal ?? undefined) : preview;
     if (init?.method === 'POST') return mutation;
     return jsonResponse({});
   });
 }
 
 const HIDDEN: WishlistItem = {
-  id: 'sug-9', name: 'Glyphics', desc: 'Jess thinks we should try this one.', yt: '', players: '',
-  min: 1, max: 99, dur: '', mins: 0, kw: [], type: 'suggested', awards: [],
-  suggestedBy: 'Jess', source: 'friend', blurb: '',
+  id: 'sug-9',
+  name: 'Glyphics',
+  desc: 'Jess thinks we should try this one.',
+  yt: '',
+  players: '',
+  min: 1,
+  max: 99,
+  dur: '',
+  mins: 0,
+  kw: [],
+  type: 'suggested',
+  awards: [],
+  suggestedBy: 'Jess',
+  source: 'friend',
+  blurb: '',
 };
 
 function renderPanel(hidden: WishlistItem[] = []) {
@@ -52,18 +82,24 @@ function renderPanel(hidden: WishlistItem[] = []) {
   const auth = { admin: true, loaded: true, requestLink: vi.fn(), logout: vi.fn() };
   render(
     <AuthContext.Provider value={auth}>
-      <WishlistContext.Provider value={{ items: [], hidden, loaded: true, reload }}><AdminPanel /></WishlistContext.Provider>
+      <WishlistContext.Provider value={{ items: [], hidden, loaded: true, reload }}>
+        <AdminPanel />
+      </WishlistContext.Provider>
     </AuthContext.Provider>,
   );
   return reload;
 }
 
 const postBodies = (spy: ReturnType<typeof mockApi>) =>
-  spy.mock.calls.filter((c) => (c[1] as RequestInit | undefined)?.method === 'POST').map((c) => JSON.parse((c[1] as RequestInit).body as string));
+  spy.mock.calls
+    .filter((c) => (c[1] as RequestInit | undefined)?.method === 'POST')
+    .map((c) => JSON.parse((c[1] as RequestInit).body as string));
 // The queue looks each suggestion up as it loads, so its decisions are picked out of the posts.
 const decisions = (spy: ReturnType<typeof mockApi>) => postBodies(spy).filter((b) => 'decision' in b);
-const nameBox = (suggester: string, game: string) => screen.getByRole('textbox', { name: `Game name for ${suggester}'s suggestion “${game}”` });
-const lookUpButton = (suggester: string, game: string) => screen.getByRole('button', { name: `Look up the name for ${suggester}'s suggestion “${game}”` });
+const nameBox = (suggester: string, game: string) =>
+  screen.getByRole('textbox', { name: `Game name for ${suggester}'s suggestion “${game}”` });
+const lookUpButton = (suggester: string, game: string) =>
+  screen.getByRole('button', { name: `Look up the name for ${suggester}'s suggestion “${game}”` });
 
 describe('AdminPanel', () => {
   beforeEach(() => localStorage.clear());
@@ -136,13 +172,26 @@ describe('AdminPanel', () => {
     expect(await within(form).findByText('Explore Alula backwards.')).toBeInTheDocument();
     expect(within(form).getByText('(2023)')).toBeInTheDocument();
     expect(within(form).getByText('2–6 players · 30 min')).toBeInTheDocument();
-    expect(within(within(form).getByRole('list', { name: 'Keywords' })).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Card Game', 'Quick Play']);
+    expect(
+      within(within(form).getByRole('list', { name: 'Keywords' }))
+        .getAllByRole('listitem')
+        .map((li) => li.textContent),
+    ).toEqual(['Card Game', 'Quick Play']);
     expect(within(form).getByRole('presentation')).toHaveAttribute('src', FARAWAY.img);
     expect(reload).not.toHaveBeenCalled();
 
     fireEvent.click(within(form).getByRole('button', { name: 'Add to wishlist' }));
     await waitFor(() => expect(within(form).getByRole('status')).toHaveTextContent('Faraway is on the wishlist.'));
-    const stored = { bggId: 385761, year: 2023, min: 2, max: 6, mins: 30, desc: 'Explore Alula backwards.', kw: ['card-game', 'quick-play'], img: FARAWAY.img };
+    const stored = {
+      bggId: 385761,
+      year: 2023,
+      min: 2,
+      max: 6,
+      mins: 30,
+      desc: 'Explore Alula backwards.',
+      kw: ['card-game', 'quick-play'],
+      img: FARAWAY.img,
+    };
     expect(postBodies(spy)).toEqual([
       { action: 'preview', game: 'Faraway' },
       { action: 'add', game: 'Faraway', name: 'Jess H', note: 'Card drafting', type: 'heavy', details: stored },
@@ -186,8 +235,17 @@ describe('AdminPanel', () => {
     expect(reload).not.toHaveBeenCalled();
 
     fireEvent.click(within(form).getByRole('button', { name: 'Add anyway' }));
-    await waitFor(() => expect(within(form).getByRole('status')).toHaveTextContent('Magical Athlete is on the wishlist.'));
-    expect(postBodies(spy)[1]).toEqual({ action: 'add', game: 'Magical Athlete', name: 'Jess', note: '', type: 'strategy', details: null });
+    await waitFor(() =>
+      expect(within(form).getByRole('status')).toHaveTextContent('Magical Athlete is on the wishlist.'),
+    );
+    expect(postBodies(spy)[1]).toEqual({
+      action: 'add',
+      game: 'Magical Athlete',
+      name: 'Jess',
+      note: '',
+      type: 'strategy',
+      details: null,
+    });
     expect(within(form).queryByText(/had no match/)).not.toBeInTheDocument();
     expect(reload).toHaveBeenCalledTimes(1);
   });
@@ -200,7 +258,12 @@ describe('AdminPanel', () => {
     fireEvent.click(within(form).getByRole('button', { name: 'Look up' }));
     expect(await within(form).findByText(/^BoardGameGeek didn't answer for “Magical Athlete”/)).toBeInTheDocument();
     fireEvent.click(within(form).getByRole('button', { name: 'Look up again' }));
-    await waitFor(() => expect(postBodies(spy)).toEqual([{ action: 'preview', game: 'Magical Athlete' }, { action: 'preview', game: 'Magical Athlete' }]));
+    await waitFor(() =>
+      expect(postBodies(spy)).toEqual([
+        { action: 'preview', game: 'Magical Athlete' },
+        { action: 'preview', game: 'Magical Athlete' },
+      ]),
+    );
     await within(form).findByRole('button', { name: 'Add anyway' });
 
     fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Magical Athletes' } });
@@ -224,11 +287,17 @@ describe('AdminPanel', () => {
     form = await screen.findByRole('form', { name: 'Add a game' });
     fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Magical Athlete' } });
     fireEvent.click(within(form).getByRole('button', { name: 'Look up' }));
-    expect(await within(form).findByText(/BoardGameGeek refused the request \(check BGG_API_TOKEN\)/)).toBeInTheDocument();
+    expect(
+      await within(form).findByText(/BoardGameGeek refused the request \(check BGG_API_TOKEN\)/),
+    ).toBeInTheDocument();
   });
 
   it('shows the server reason when the lookup itself fails, and stores nothing', async () => {
-    const spy = mockApi({ items: [] }, jsonResponse({ item: {} }), jsonResponse({ error: 'owner sign-in required' }, false));
+    const spy = mockApi(
+      { items: [] },
+      jsonResponse({ item: {} }),
+      jsonResponse({ error: 'owner sign-in required' }, false),
+    );
     renderPanel();
     const form = await screen.findByRole('form', { name: 'Add a game' });
     fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Faraway' } });
@@ -239,7 +308,14 @@ describe('AdminPanel', () => {
   });
 
   it('says one player, and leaves out an unknown time', async () => {
-    mockApi({ items: [] }, jsonResponse({ item: {} }), jsonResponse({ outcome: 'found', details: { ...FARAWAY, min: 1, max: 1, mins: 0, year: undefined, img: undefined, kw: [], desc: '' } }));
+    mockApi(
+      { items: [] },
+      jsonResponse({ item: {} }),
+      jsonResponse({
+        outcome: 'found',
+        details: { ...FARAWAY, min: 1, max: 1, mins: 0, year: undefined, img: undefined, kw: [], desc: '' },
+      }),
+    );
     renderPanel();
     const form = await screen.findByRole('form', { name: 'Add a game' });
     fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Faraway' } });
@@ -310,17 +386,19 @@ describe('AdminPanel', () => {
     await waitFor(() => expect(screen.queryByText(/^Approved, but/)).not.toBeInTheDocument());
   });
 
-  describe('the queue\'s previews', () => {
+  describe("the queue's previews", () => {
     const ROOT_FOUND = { ...FARAWAY, bggId: 237182, name: 'Root', year: 2018, desc: 'Woodland war.', kw: ['strategy'] };
     const ROOT_STORED = { ...FARAWAY_STORED, bggId: 237182, year: 2018, desc: 'Woodland war.', kw: ['strategy'] };
-    const byGame = (answers: Record<string, unknown>) => (game: string) => jsonResponse(answers[game] ?? { outcome: 'no-match' });
+    const byGame = (answers: Record<string, unknown>) => (game: string) =>
+      jsonResponse(answers[game] ?? { outcome: 'no-match' });
 
     /** A preview that answers only when the test says, keeping the signal it was sent with. */
     function heldPreviews() {
       const held: Array<{ game: string; signal?: AbortSignal; answer: (body: unknown) => void }> = [];
-      const preview = (game: string, signal?: AbortSignal) => new Promise<Response>((resolve) => {
-        held.push({ game, signal, answer: (body) => resolve(jsonResponse(body)) });
-      });
+      const preview = (game: string, signal?: AbortSignal) =>
+        new Promise<Response>((resolve) => {
+          held.push({ game, signal, answer: (body) => resolve(jsonResponse(body)) });
+        });
       return { held, preview };
     }
 
@@ -337,10 +415,15 @@ describe('AdminPanel', () => {
       expect(screen.getByText('(2018)')).toBeInTheDocument();
       expect(screen.getByText('2–6 players · 30 min')).toBeInTheDocument();
       await waitFor(() => expect(held.map((h) => h.game)).toEqual(['Root', 'Ark Nova']));
-      expect(postBodies(spy)).toEqual([{ action: 'preview', game: 'Root' }, { action: 'preview', game: 'Ark Nova' }]);
+      expect(postBodies(spy)).toEqual([
+        { action: 'preview', game: 'Root' },
+        { action: 'preview', game: 'Ark Nova' },
+      ]);
 
       held[1].answer({ outcome: 'no-match' });
-      const notice = await screen.findByText(/^BoardGameGeek had no match for “Ark Nova”\. Check the name and look it up again, or approve it and fill in its details with Edit\.$/);
+      const notice = await screen.findByText(
+        /^BoardGameGeek had no match for “Ark Nova”\. Check the name and look it up again, or approve it and fill in its details with Edit\.$/,
+      );
       expect(notice.closest('.notice')).toHaveClass('notice-warning');
       // Every row's preview arrives on load, so none is announced: no live
       // region around it, and no role on the notice.
@@ -365,7 +448,11 @@ describe('AdminPanel', () => {
     });
 
     it('approves with what the preview found, or with no details when it found nothing', async () => {
-      const spy = mockApi({ items: PENDING }, jsonResponse({ item: {} }), byGame({ Root: { outcome: 'found', details: ROOT_FOUND } }));
+      const spy = mockApi(
+        { items: PENDING },
+        jsonResponse({ item: {} }),
+        byGame({ Root: { outcome: 'found', details: ROOT_FOUND } }),
+      );
       renderPanel();
       await screen.findByText('Woodland war.');
       await screen.findByText(/had no match for “Ark Nova”/);
@@ -379,8 +466,12 @@ describe('AdminPanel', () => {
       ]);
     });
 
-    it('leaves the lookup to the server at approval when BoardGameGeek didn\'t answer the preview', async () => {
-      const spy = mockApi({ items: [PENDING[0]] }, jsonResponse({ item: {} }), jsonResponse({ outcome: 'unavailable' }));
+    it("leaves the lookup to the server at approval when BoardGameGeek didn't answer the preview", async () => {
+      const spy = mockApi(
+        { items: [PENDING[0]] },
+        jsonResponse({ item: {} }),
+        jsonResponse({ outcome: 'unavailable' }),
+      );
       renderPanel();
       await screen.findByText(/BoardGameGeek didn't answer for “Root”/);
       fireEvent.click(screen.getByRole('button', { name: 'Approve Root' }));
@@ -400,7 +491,11 @@ describe('AdminPanel', () => {
     });
 
     it('says why the preview itself failed, and then leaves the lookup to the server', async () => {
-      const spy = mockApi({ items: [PENDING[0]] }, jsonResponse({ item: {} }), jsonResponse({ error: 'owner sign-in required' }, false));
+      const spy = mockApi(
+        { items: [PENDING[0]] },
+        jsonResponse({ item: {} }),
+        jsonResponse({ error: 'owner sign-in required' }, false),
+      );
       renderPanel();
       expect(await screen.findByText('owner sign-in required')).toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: 'Approve Root' }));
@@ -423,14 +518,27 @@ describe('AdminPanel', () => {
 
     it('corrects a misspelt name: sets the old preview aside, looks the new one up, and approves it under that name', async () => {
       const MISSPELT = { id: 'sug-3', game: 'Arkham Horry', name: 'Robin', note: '' };
-      const ARKHAM = { ...FARAWAY, bggId: 15987, name: 'Arkham Horror', year: 2005, desc: 'Investigate Arkham.', kw: ['cooperative'] };
-      const spy = mockApi({ items: [MISSPELT] }, jsonResponse({ item: {} }), byGame({ 'Arkham Horror': { outcome: 'found', details: ARKHAM } }));
+      const ARKHAM = {
+        ...FARAWAY,
+        bggId: 15987,
+        name: 'Arkham Horror',
+        year: 2005,
+        desc: 'Investigate Arkham.',
+        kw: ['cooperative'],
+      };
+      const spy = mockApi(
+        { items: [MISSPELT] },
+        jsonResponse({ item: {} }),
+        byGame({ 'Arkham Horror': { outcome: 'found', details: ARKHAM } }),
+      );
       const reload = renderPanel();
       await screen.findByText(/had no match for “Arkham Horry”/);
 
       fireEvent.change(nameBox('Robin', 'Arkham Horry'), { target: { value: ' Arkham Horror ' } });
       expect(screen.queryByText(/had no match/)).not.toBeInTheDocument();
-      expect(screen.getByText('Look the corrected name up to check its details; Approve does that first.')).toBeInTheDocument();
+      expect(
+        screen.getByText('Look the corrected name up to check its details; Approve does that first.'),
+      ).toBeInTheDocument();
       expect(screen.getByText(/from Robin as “Arkham Horry”/)).toBeInTheDocument();
 
       fireEvent.click(lookUpButton('Robin', 'Arkham Horry'));
@@ -443,13 +551,22 @@ describe('AdminPanel', () => {
       expect(postBodies(spy)).toEqual([
         { action: 'preview', game: 'Arkham Horry' },
         { action: 'preview', game: 'Arkham Horror' },
-        { decision: 'approve', id: 'sug-3', game: 'Arkham Horror', details: { ...FARAWAY_STORED, bggId: 15987, year: 2005, desc: 'Investigate Arkham.', kw: ['cooperative'] } },
+        {
+          decision: 'approve',
+          id: 'sug-3',
+          game: 'Arkham Horror',
+          details: { ...FARAWAY_STORED, bggId: 15987, year: 2005, desc: 'Investigate Arkham.', kw: ['cooperative'] },
+        },
       ]);
       expect(reload).toHaveBeenCalledTimes(1);
     });
 
     it('looks a corrected name up before approving it, rather than approve with the old preview', async () => {
-      const spy = mockApi({ items: [PENDING[0]] }, jsonResponse({ item: {} }), byGame({ Root: { outcome: 'found', details: ROOT_FOUND }, 'Root: Underworld': { outcome: 'no-match' } }));
+      const spy = mockApi(
+        { items: [PENDING[0]] },
+        jsonResponse({ item: {} }),
+        byGame({ Root: { outcome: 'found', details: ROOT_FOUND }, 'Root: Underworld': { outcome: 'no-match' } }),
+      );
       renderPanel();
       await screen.findByText('Woodland war.');
       fireEvent.change(nameBox('Alex', 'Root'), { target: { value: 'Root: Underworld' } });
@@ -500,10 +617,12 @@ describe('AdminPanel', () => {
       fireEvent.change(nameBox('Alex', 'Root'), { target: { value: 'Root: Marauder' } });
       fireEvent.submit(nameBox('Alex', 'Root').closest('form')!);
       fireEvent.click(screen.getByRole('button', { name: 'Approve Root: Marauder' }));
-      expect(await screen.findByText(/^Approved, but BoardGameGeek had no match for “Root: Marauder”/)).toBeInTheDocument();
+      expect(
+        await screen.findByText(/^Approved, but BoardGameGeek had no match for “Root: Marauder”/),
+      ).toBeInTheDocument();
     });
 
-    it('labels each row\'s name and buttons by the suggestion, so one friend\'s two stay apart, and bounds the name as the API does', async () => {
+    it("labels each row's name and buttons by the suggestion, so one friend's two stay apart, and bounds the name as the API does", async () => {
       mockApi({ items: [PENDING[1], { id: 'sug-4', game: 'Azul', name: 'Sam', note: '' }] });
       renderPanel();
       const box = await screen.findByRole('textbox', { name: "Game name for Sam's suggestion “Ark Nova”" });

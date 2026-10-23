@@ -49,7 +49,9 @@ function GameCard({ game }: Props) {
     <div id={gameAnchor(game.slug)} className={`game-card${moreOpen || (subsOpen && hasFitting) ? ' card-open' : ''}`}>
       <div className="card-head">
         <img src={game.img} alt={`${game.name} box art`} className="card-corner-img" loading="lazy" />
-        <h3 className="card-name" tabIndex={-1} data-focus-target="item">{game.name}</h3>
+        <h3 className="card-name" tabIndex={-1} data-focus-target="item">
+          {game.name}
+        </h3>
         <div className="card-meta">
           <span className="cmeta">
             <UserIcon /> {game.players}
@@ -59,7 +61,11 @@ function GameCard({ game }: Props) {
           </span>
           <DifficultyMeta item={game} />
         </div>
-        {game.arriving && <p className="card-arriving"><span className="expands-tag">Arriving {game.arriving}</span></p>}
+        {game.arriving && (
+          <p className="card-arriving">
+            <span className="expands-tag">Arriving {game.arriving}</span>
+          </p>
+        )}
         <div className="card-kw">
           {sortedKw(game.kw).map((kw) => (
             <KeywordPill
@@ -105,7 +111,7 @@ function GameCard({ game }: Props) {
               label={`${game.name}: ${subsLabel}`}
               title={`${game.name}: ${subsLabel}`}
               activate={{ onClick: () => setSubsOpen((o) => !o), expanded: subsOpen, controls: subsId }}
-              trigger={(
+              trigger={
                 <>
                   <span className="sub-pill-full">{subsLabel}</span>
                   <span className="sub-pill-short">+{fitting.length}</span>
@@ -113,10 +119,12 @@ function GameCard({ game }: Props) {
                     <path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" />
                   </svg>
                 </>
-              )}
+              }
             >
               <ul className="sub-tag-list">
-                {fitting.map((s) => <li key={s.slug}>{s.name}</li>)}
+                {fitting.map((s) => (
+                  <li key={s.slug}>{s.name}</li>
+                ))}
               </ul>
             </Popover>
           )}

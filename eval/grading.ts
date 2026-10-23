@@ -59,9 +59,7 @@ export function parseGoldenSet(data: unknown): GoldenSet {
     }
     const matchType = requireString(raw, 'matchType', index);
     if (!isMatchType(matchType)) {
-      throw new Error(
-        `golden set entry ${index}: matchType "${matchType}" is not one of ${MATCH_TYPES.join('|')}`,
-      );
+      throw new Error(`golden set entry ${index}: matchType "${matchType}" is not one of ${MATCH_TYPES.join('|')}`);
     }
     const notes = raw.notes;
     if (notes !== undefined && typeof notes !== 'string') {
@@ -75,7 +73,10 @@ export function parseGoldenSet(data: unknown): GoldenSet {
       throw new Error(`golden set entry ${index}: "sourceQuote" must be a string`);
     }
     const parts = raw.parts;
-    if (parts !== undefined && (!Array.isArray(parts) || !parts.every((p) => typeof p === 'string' && p.trim() !== ''))) {
+    if (
+      parts !== undefined &&
+      (!Array.isArray(parts) || !parts.every((p) => typeof p === 'string' && p.trim() !== ''))
+    ) {
       throw new Error(`golden set entry ${index}: "parts" must be a list of rulebook names when present`);
     }
     const entry: GoldenEntry = {
@@ -143,12 +144,7 @@ export interface JudgeVerdict {
  * as text it must recite. Optional `notes` are included as
  * accept-but-don't-require grading guidance.
  */
-export function buildJudgePrompt(
-  question: string,
-  reference: string,
-  answer: string,
-  notes?: string,
-): string {
+export function buildJudgePrompt(question: string, reference: string, answer: string, notes?: string): string {
   const lines = [
     "You are a strict grader for a board game rules assistant. Grade the assistant's " +
       'response against the reference answer below.',
@@ -228,9 +224,7 @@ export function gradeAnswer(
       const passed = gradeExact(entry.expected, withoutCitations(answer));
       return {
         passed,
-        reason: passed
-          ? 'normalized answer equals expected'
-          : 'normalized answer does not equal expected',
+        reason: passed ? 'normalized answer equals expected' : 'normalized answer does not equal expected',
       };
     }
     case 'contains': {
@@ -244,9 +238,7 @@ export function gradeAnswer(
       const passed = gradeRegex(entry.expected, withoutCitations(answer));
       return {
         passed,
-        reason: passed
-          ? 'answer matches expected pattern'
-          : 'answer does not match expected pattern',
+        reason: passed ? 'answer matches expected pattern' : 'answer does not match expected pattern',
       };
     }
     case 'citation': {

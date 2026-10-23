@@ -1,7 +1,18 @@
 import { describe, it, expect } from 'vitest';
 import {
-  bytes, fromBase64, getOrInsert, getOrInsertComputed, intersection, iteratorHelpers, promiseTry, sumPrecise,
-  toBase64, toHex, transferToFixedLength, urlParse, withResolvers,
+  bytes,
+  fromBase64,
+  getOrInsert,
+  getOrInsertComputed,
+  intersection,
+  iteratorHelpers,
+  promiseTry,
+  sumPrecise,
+  toBase64,
+  toHex,
+  transferToFixedLength,
+  urlParse,
+  withResolvers,
 } from '../pdfjs/polyfills';
 
 describe('pdf.js polyfills', () => {
@@ -38,7 +49,11 @@ describe('pdf.js polyfills', () => {
 
   it('promiseTry resolves a value and rejects a throw', async () => {
     await expect(promiseTry((a) => (a as number) + 1, 1)).resolves.toBe(2);
-    await expect(promiseTry(() => { throw new Error('no'); })).rejects.toThrow('no');
+    await expect(
+      promiseTry(() => {
+        throw new Error('no');
+      }),
+    ).rejects.toThrow('no');
   });
 
   it('urlParse returns null instead of throwing', () => {
@@ -72,7 +87,7 @@ describe('pdf.js polyfills', () => {
 
   it('bytes reads a body or blob as a Uint8Array', async () => {
     const blob = new Blob([new Uint8Array([5, 6])]);
-    expect([...await bytes.call(blob)]).toEqual([5, 6]);
+    expect([...(await bytes.call(blob))]).toEqual([5, 6]);
   });
 
   it('intersection keeps what both sets have', () => {

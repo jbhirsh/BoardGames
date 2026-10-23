@@ -35,7 +35,13 @@ function WishlistRow({ item, voteCount, voted, onVote, disabled, isOpen, onToggl
   const onToggle = () => toggleRow(item.id);
   return (
     <>
-      <tr id={wishAnchor(item.id)} className={`game-row${isOpen ? ' open' : ''}`} onClick={onToggle} data-testid="wishlist-item" data-item-id={item.id}>
+      <tr
+        id={wishAnchor(item.id)}
+        className={`game-row${isOpen ? ' open' : ''}`}
+        onClick={onToggle}
+        data-testid="wishlist-item"
+        data-item-id={item.id}
+      >
         <TableRowCells
           name={item.name}
           players={item.players}
@@ -47,17 +53,20 @@ function WishlistRow({ item, voteCount, voted, onVote, disabled, isOpen, onToggl
           subTag={item.expands && <ExpansionTag base={item.expands} />}
           isOpen={isOpen}
           onToggle={onToggle}
-          extra={(
+          extra={
             <td className="col-vote">
               <VoteButton
                 itemName={item.name}
                 voteCount={voteCount}
                 voted={voted}
-                onClick={(e) => { e.stopPropagation(); onVote(item.id); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onVote(item.id);
+                }}
                 disabled={disabled}
               />
             </td>
-          )}
+          }
         />
       </tr>
       <TableRowExpand colSpan={WISHLIST_COLUMNS} isOpen={isOpen}>

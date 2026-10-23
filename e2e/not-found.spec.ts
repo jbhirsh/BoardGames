@@ -21,7 +21,9 @@ const SCORE_CODE = /\/assets\/ScoreCalculatorPage-[^/]+\.js$/;
 
 test('a page whose code is gone since the tab loaded reloads once and opens', async ({ page }) => {
   let asked = 0;
-  await page.route(SCORE_CODE, (route) => (++asked === 1 ? route.fulfill({ status: 404, body: 'Not found' }) : route.fallback()));
+  await page.route(SCORE_CODE, (route) =>
+    ++asked === 1 ? route.fulfill({ status: 404, body: 'Not found' }) : route.fallback(),
+  );
   await page.goto('/rules/7-wonders');
   await page.getByRole('link', { name: 'Score calculator' }).click();
 
@@ -33,7 +35,10 @@ test('a page whose code is gone since the tab loaded reloads once and opens', as
 
 test('a page whose code never loads says so after one reload, not a loop', async ({ page }) => {
   let asked = 0;
-  await page.route(SCORE_CODE, (route) => { asked++; return route.fulfill({ status: 404, body: 'Not found' }); });
+  await page.route(SCORE_CODE, (route) => {
+    asked++;
+    return route.fulfill({ status: 404, body: 'Not found' });
+  });
   await page.goto('/rules/7-wonders');
   await page.getByRole('link', { name: 'Score calculator' }).click();
 

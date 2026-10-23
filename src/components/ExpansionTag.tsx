@@ -11,7 +11,8 @@ const OWNED = new Set(ALL_GAMES.map((g) => g.name));
 export default function ExpansionTag({ base }: { base: string }) {
   return (
     <span className="expands-tag">
-      Expansion for {base}{OWNED.has(base) && <span className="expands-owned"> (owned)</span>}
+      Expansion for {base}
+      {OWNED.has(base) && <span className="expands-owned"> (owned)</span>}
     </span>
   );
 }

@@ -60,9 +60,25 @@ function Probe() {
 }
 
 function renderHome(url: string) {
-  const router = createMemoryRouter([
-    { element: <App />, children: [{ path: '/', element: <><Probe /><HomePage /></> }] },
-  ], { initialEntries: [url] });
+  const router = createMemoryRouter(
+    [
+      {
+        element: <App />,
+        children: [
+          {
+            path: '/',
+            element: (
+              <>
+                <Probe />
+                <HomePage />
+              </>
+            ),
+          },
+        ],
+      },
+    ],
+    { initialEntries: [url] },
+  );
   render(<RouterProvider router={router} />);
 }
 
@@ -75,19 +91,24 @@ async function settled() {
 /** How many times each counted thing rendered since `before`, leaving out the ones that didn't. */
 function since(before: Map<string, number>) {
   return Object.fromEntries(
-    [...seen.renders].flatMap(([key, n]) => (n - (before.get(key) ?? 0) > 0 ? [[key, n - (before.get(key) ?? 0)]] : [])),
+    [...seen.renders].flatMap(([key, n]) =>
+      n - (before.get(key) ?? 0) > 0 ? [[key, n - (before.get(key) ?? 0)]] : [],
+    ),
   );
 }
 
-const search = () => within(document.querySelector('.filterbar') as HTMLElement).getByPlaceholderText('Search games...');
+const search = () =>
+  within(document.querySelector('.filterbar') as HTMLElement).getByPlaceholderText('Search games...');
 
 beforeEach(() => {
   seen.renders.clear();
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
     const url = String(input);
-    const body = url.startsWith('/api/suggestions') ? { items: [] }
-      : url.startsWith('/api/auth') ? { admin: false }
-      : { counts: {}, myVotes: [] };
+    const body = url.startsWith('/api/suggestions')
+      ? { items: [] }
+      : url.startsWith('/api/auth')
+        ? { admin: false }
+        : { counts: {}, myVotes: [] };
     return { ok: true, json: async () => body } as unknown as Response;
   });
 });
@@ -117,8 +138,9 @@ describe('what a filter change re-renders', () => {
     await settled();
     const before = new Map(seen.renders);
     act(() => send({ type: 'SET_SORT', payload: 'long' }));
-    expect([...document.querySelectorAll('#collection .card-name')].map((h) => h.textContent))
-      .toEqual(filterGames(GAMES, probe.state).map((g) => g.name));
+    expect([...document.querySelectorAll('#collection .card-name')].map((h) => h.textContent)).toEqual(
+      filterGames(GAMES, probe.state).map((g) => g.name),
+    );
     expect(since(before)).toEqual({});
   });
 
@@ -183,8 +205,9 @@ describe('every filter change still reaches the visible list', () => {
     // The wishlist, hidden until now, shows what the filters leave of it.
     act(() => send({ type: 'SET_SEARCH', payload: 'the' }));
     act(() => send({ type: 'SET_COLLECTION', payload: 'want' }));
-    const wished = [...document.getElementById('collection')!.querySelectorAll('[data-item-id]')]
-      .map((el) => el.getAttribute('data-item-id'));
+    const wished = [...document.getElementById('collection')!.querySelectorAll('[data-item-id]')].map((el) =>
+      el.getAttribute('data-item-id'),
+    );
     expect(wished).toEqual(filterWishlist(WISHLIST, probe.state).map((w) => w.id));
     expect(screen.getByText(`${wished.length} games`)).toBeInTheDocument();
   });

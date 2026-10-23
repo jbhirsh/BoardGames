@@ -100,10 +100,7 @@ describe('useStickyOffset', () => {
 
     renderHook(() => useStickyOffset(ref));
 
-    capturedCb!(
-      [{ target: div } as unknown as ResizeObserverEntry],
-      {} as ResizeObserver,
-    );
+    capturedCb!([{ target: div } as unknown as ResizeObserverEntry], {} as ResizeObserver);
     expect(document.documentElement.style.getPropertyValue('--thead-top')).toBe('91px');
 
     globalThis.ResizeObserver = OriginalRO;

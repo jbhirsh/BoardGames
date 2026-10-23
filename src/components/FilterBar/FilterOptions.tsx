@@ -113,9 +113,7 @@ export function KeywordOptions() {
               aria-pressed={sel}
               onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: id })}
             >
-              <span className="dd-chk">
-                {sel && <CheckIcon />}
-              </span>
+              <span className="dd-chk">{sel && <CheckIcon />}</span>
               {name}
               <span className="dd-opt-ct">{pool.filter((g) => g.kw.includes(id)).length}</span>
             </button>

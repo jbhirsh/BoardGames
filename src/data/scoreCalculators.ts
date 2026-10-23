@@ -18,10 +18,7 @@ export type CardGameId = 'uno' | 'rummy' | 'hearts' | 'golf' | 'spades' | 'euchr
 
 /** Which pad a game has. */
 export type ScorePad =
-  | { kind: 'seven-wonders' }
-  | { kind: 'ticket-to-ride' }
-  | { kind: 'dominion' }
-  | { kind: 'rounds'; game: CardGameId };
+  { kind: 'seven-wonders' } | { kind: 'ticket-to-ride' } | { kind: 'dominion' } | { kind: 'rounds'; game: CardGameId };
 
 /**
  * How a card game is won: the first to reach `to` points ends it, or it
@@ -60,7 +57,7 @@ export const CARD_GAMES: Record<CardGameId, CardGameRules> = {
     maxPlayers: 10,
     goal: { to: 500, low: false },
     round: 'Round',
-    rule: 'The player who goes out scores the cards left in everyone else\'s hands: number cards their face value, Draw Two, Reverse and Skip 20, Wild and Wild Draw Four 50. First to 500 wins.',
+    rule: "The player who goes out scores the cards left in everyone else's hands: number cards their face value, Draw Two, Reverse and Skip 20, Wild and Wild Draw Four 50. First to 500 wins.",
   },
   rummy: {
     name: 'Rummy',
@@ -69,7 +66,7 @@ export const CARD_GAMES: Record<CardGameId, CardGameRules> = {
     maxPlayers: 6,
     goal: { to: 100, low: false },
     round: 'Hand',
-    rule: 'The player who goes out scores the cards left in everyone else\'s hands: face cards 10, aces 1, the rest their face value. First to 100 wins. Gin Rummy scores differently and isn\'t on this pad.',
+    rule: "The player who goes out scores the cards left in everyone else's hands: face cards 10, aces 1, the rest their face value. First to 100 wins. Gin Rummy scores differently and isn't on this pad.",
   },
   hearts: {
     name: 'Hearts',
@@ -87,7 +84,7 @@ export const CARD_GAMES: Record<CardGameId, CardGameRules> = {
     maxPlayers: 6,
     goal: { rounds: 9, low: true },
     round: 'Hole',
-    rule: 'Enter each player\'s six cards as they score: ace 1, 2 is minus 2, number cards their face value, jacks and queens 10, kings 0, a pair in a column 0. Nine holes; the lowest total wins.',
+    rule: "Enter each player's six cards as they score: ace 1, 2 is minus 2, number cards their face value, jacks and queens 10, kings 0, a pair in a column 0. Nine holes; the lowest total wins.",
   },
   spades: {
     name: 'Spades',
@@ -96,7 +93,7 @@ export const CARD_GAMES: Record<CardGameId, CardGameRules> = {
     maxPlayers: 4,
     goal: { to: 500, low: false },
     round: 'Hand',
-    rule: 'A partnership that makes its contract (both bids added) scores 10 a trick bid and 1 a trick over (a bag); short of it, it loses 10 a trick bid. Every 10 bags costs 100. A bid of 0 is nil: 100 if you take no tricks, minus 100 if you take any. A nil bidder\'s tricks don\'t count toward the partner\'s bid; they score nothing but count as the partnership\'s bags. First partnership to 500 wins.',
+    rule: "A partnership that makes its contract (both bids added) scores 10 a trick bid and 1 a trick over (a bag); short of it, it loses 10 a trick bid. Every 10 bags costs 100. A bid of 0 is nil: 100 if you take no tricks, minus 100 if you take any. A nil bidder's tricks don't count toward the partner's bid; they score nothing but count as the partnership's bags. First partnership to 500 wins.",
   },
   euchre: {
     name: 'Euchre',
@@ -105,7 +102,7 @@ export const CARD_GAMES: Record<CardGameId, CardGameRules> = {
     maxPlayers: 4,
     goal: { to: 10, low: false },
     round: 'Hand',
-    rule: 'The makers (the team that chose trump) score 1 for 3 or 4 tricks and 2 for all 5, or 4 if one of them went alone and took all 5. Take fewer than 3 and they\'re euchred: the other team scores 2. First team to 10 wins.',
+    rule: "The makers (the team that chose trump) score 1 for 3 or 4 tricks and 2 for all 5, or 4 if one of them went alone and took all 5. Take fewer than 3 and they're euchred: the other team scores 2. First team to 10 wins.",
   },
 };
 

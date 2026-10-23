@@ -25,39 +25,27 @@ const SORTS: BaseSort[] = ['az', 'group', 'quick', 'long', 'votes'];
 // Compile-time completeness checks: if a new non-default value is added to
 // the underlying type and forgotten in one of the whitelists above, the
 // matching assertion fails to typecheck.
-type _KeywordModesExhaustive = Exclude<
-  Exclude<KeywordMode, 'or'>,
-  (typeof KEYWORD_MODES)[number]
-> extends never
-  ? true
-  : 'KEYWORD_MODES is missing a KeywordMode value';
+type _KeywordModesExhaustive =
+  Exclude<Exclude<KeywordMode, 'or'>, (typeof KEYWORD_MODES)[number]> extends never
+    ? true
+    : 'KEYWORD_MODES is missing a KeywordMode value';
 const _keywordModesExhaustive: _KeywordModesExhaustive = true;
 void _keywordModesExhaustive;
 
-type _ViewsExhaustive = Exclude<
-  Exclude<ViewMode, 'list'>,
-  (typeof VIEWS)[number]
-> extends never
-  ? true
-  : 'VIEWS is missing a ViewMode value';
+type _ViewsExhaustive =
+  Exclude<Exclude<ViewMode, 'list'>, (typeof VIEWS)[number]> extends never ? true : 'VIEWS is missing a ViewMode value';
 const _viewsExhaustive: _ViewsExhaustive = true;
 void _viewsExhaustive;
 
-type _CollectionsExhaustive = Exclude<
-  Exclude<CollectionMode, 'own'>,
-  (typeof COLLECTIONS)[number]
-> extends never
-  ? true
-  : 'COLLECTIONS is missing a CollectionMode value';
+type _CollectionsExhaustive =
+  Exclude<Exclude<CollectionMode, 'own'>, (typeof COLLECTIONS)[number]> extends never
+    ? true
+    : 'COLLECTIONS is missing a CollectionMode value';
 const _collectionsExhaustive: _CollectionsExhaustive = true;
 void _collectionsExhaustive;
 
-type _SortsExhaustive = Exclude<
-  BaseSort,
-  (typeof SORTS)[number]
-> extends never
-  ? true
-  : 'SORTS is missing a BaseSort value';
+type _SortsExhaustive =
+  Exclude<BaseSort, (typeof SORTS)[number]> extends never ? true : 'SORTS is missing a BaseSort value';
 const _sortsExhaustive: _SortsExhaustive = true;
 void _sortsExhaustive;
 
@@ -110,9 +98,7 @@ export function searchParamsToFilter(params: URLSearchParams): FilterState {
 
   const m = params.get('m');
   const keywordMode: KeywordMode =
-    m && (KEYWORD_MODES as readonly string[]).includes(m)
-      ? (m as KeywordMode)
-      : initialFilterState.keywordMode;
+    m && (KEYWORD_MODES as readonly string[]).includes(m) ? (m as KeywordMode) : initialFilterState.keywordMode;
 
   const search = params.get('q') ?? initialFilterState.search;
 
@@ -121,8 +107,7 @@ export function searchParamsToFilter(params: URLSearchParams): FilterState {
     s && (SORTS as readonly string[]).includes(s) ? (s as BaseSort) : initialFilterState.baseSort;
 
   const v = params.get('v');
-  const view: ViewMode =
-    v && (VIEWS as readonly string[]).includes(v) ? (v as ViewMode) : initialFilterState.view;
+  const view: ViewMode = v && (VIEWS as readonly string[]).includes(v) ? (v as ViewMode) : initialFilterState.view;
 
   const c = params.get('c');
   const collection: CollectionMode =

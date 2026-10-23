@@ -69,7 +69,9 @@ describe('getAnonId without storage', () => {
   });
 
   function blockStorage() {
-    const denied = () => { throw new DOMException('The operation is insecure.', 'SecurityError'); };
+    const denied = () => {
+      throw new DOMException('The operation is insecure.', 'SecurityError');
+    };
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(denied);
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(denied);
   }
@@ -96,7 +98,8 @@ describe('getAnonId without storage', () => {
 
   it('still loads and votes when storage is blocked', async () => {
     blockStorage();
-    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce(jsonResponse({ counts: { a: 1 }, myVotes: [] }))
       .mockResolvedValueOnce(jsonResponse({ itemId: 'a', count: 2, myVote: 1 }));
 
@@ -143,9 +146,9 @@ describe('useWishlistVotes', () => {
   });
 
   it('fetches counts and myVotes on mount', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      jsonResponse({ counts: { a: 3, b: 1 }, myVotes: ['b'] }),
-    );
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(jsonResponse({ counts: { a: 3, b: 1 }, myVotes: ['b'] }));
 
     const { result } = renderHook(() => useWishlistVotes(['a', 'b']));
 
@@ -160,7 +163,8 @@ describe('useWishlistVotes', () => {
   });
 
   it('toggle posts vote=1 when not yet voted and updates state optimistically', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce(jsonResponse({ counts: { a: 3 }, myVotes: [] }))
       .mockResolvedValueOnce(jsonResponse({ itemId: 'a', count: 4, myVote: 1 }));
 
@@ -183,7 +187,8 @@ describe('useWishlistVotes', () => {
   });
 
   it('toggle posts vote=0 when removing an existing vote', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce(jsonResponse({ counts: { a: 5 }, myVotes: ['a'] }))
       .mockResolvedValueOnce(jsonResponse({ itemId: 'a', count: 4, myVote: 0 }));
 

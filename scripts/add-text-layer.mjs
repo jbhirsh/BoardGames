@@ -7,15 +7,15 @@
 //   npm run rules-text-layer                 # every rulebook with no text
 //   npm run rules-text-layer -- suspicion.pdf
 
-import { readFile, readdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
-import { createWorker } from "tesseract.js";
+import { readFile, readdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { createWorker } from 'tesseract.js';
 // pdf.js's legacy build: it is the one pdf.js supports in Node, where it
 // sets up a canvas to draw on (the app uses the modern build, which needs a
 // browser's). This only runs on a developer's machine; nothing here ships.
 // One pdf.js does the rendering, the text check and the coordinates: two
 // copies in one process (unpdf's, pdf-to-img's) trip over each other.
-import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
+import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import {
   PDFDocument,
   StandardFonts,
@@ -28,9 +28,9 @@ import {
   setTextMatrix,
   setTextRenderingMode,
   showText,
-} from "pdf-lib";
+} from 'pdf-lib';
 
-const RULES_DIR = join(import.meta.dirname, "..", "public", "rules");
+const RULES_DIR = join(import.meta.dirname, '..', 'public', 'rules');
 // Render each page about this many pixels on its long side: small pages (One
 // Night's are 342pt wide) need it for tesseract to read their print.
 const TARGET_PX = 3000;
@@ -55,19 +55,21 @@ async function hasText(bytes) {
 async function renderPage(page, viewport, canvasFactory) {
   const { canvas } = canvasFactory.create(viewport.width, viewport.height);
   await page.render({ canvas, viewport }).promise;
-  return canvas.toBuffer("image/png");
+  return canvas.toBuffer('image/png');
 }
 
 /** The word with any character Helvetica's encoding can't write dropped. */
 function encodable(font, word) {
-  return [...word].filter((ch) => {
-    try {
-      font.encodeText(ch);
-      return true;
-    } catch {
-      return false;
-    }
-  }).join("");
+  return [...word]
+    .filter((ch) => {
+      try {
+        font.encodeText(ch);
+        return true;
+      } catch {
+        return false;
+      }
+    })
+    .join('');
 }
 
 /** Where a line's baseline sits at x, in image pixels. */
@@ -125,9 +127,12 @@ async function addTextLayer(file, worker) {
         ops.push(
           setFontAndSize(key, size),
           setTextMatrix(
-            ((ex - sx) / along) * stretch, ((ey - sy) / along) * stretch,
-            (tx - sx) / up, (ty - sy) / up,
-            sx, sy,
+            ((ex - sx) / along) * stretch,
+            ((ey - sy) / along) * stretch,
+            (tx - sx) / up,
+            (ty - sy) / up,
+            sx,
+            sy,
           ),
           showText(font.encodeText(text)),
         );
@@ -142,13 +147,16 @@ async function addTextLayer(file, worker) {
 
   await writeFile(path, await out.save());
   const after = await readFile(path);
-  console.log(`${file}: ${total} words, ${(bytes.length / 1e6).toFixed(2)} MB -> ${(after.length / 1e6).toFixed(2)} MB, text now ${await hasText(after) ? "found" : "MISSING"}`);
+  console.log(
+    `${file}: ${total} words, ${(bytes.length / 1e6).toFixed(2)} MB -> ${(after.length / 1e6).toFixed(2)} MB, text now ${(await hasText(after)) ? 'found' : 'MISSING'}`,
+  );
 }
 
-const files = process.argv.slice(2).length > 0
-  ? process.argv.slice(2)
-  : (await readdir(RULES_DIR)).filter((f) => f.endsWith(".pdf")).sort();
+const files =
+  process.argv.slice(2).length > 0
+    ? process.argv.slice(2)
+    : (await readdir(RULES_DIR)).filter((f) => f.endsWith('.pdf')).sort();
 
-const worker = await createWorker("eng");
+const worker = await createWorker('eng');
 for (const file of files) await addTextLayer(file, worker);
 await worker.terminate();

@@ -52,9 +52,18 @@ function makeRes() {
   const res = {
     statusCode: 0,
     body: undefined as unknown,
-    status(code: number) { res.statusCode = code; return res; },
-    json(data: unknown) { res.body = data; return res; },
-    send(data: unknown) { res.body = data; return res; },
+    status(code: number) {
+      res.statusCode = code;
+      return res;
+    },
+    json(data: unknown) {
+      res.body = data;
+      return res;
+    },
+    send(data: unknown) {
+      res.body = data;
+      return res;
+    },
     setHeader() {},
     write() {},
     end() {},
@@ -62,7 +71,13 @@ function makeRes() {
   return res;
 }
 
-async function call(handler: Handler, ip: string, method: string, body: unknown = {}, query: Record<string, unknown> = {}) {
+async function call(
+  handler: Handler,
+  ip: string,
+  method: string,
+  body: unknown = {},
+  query: Record<string, unknown> = {},
+) {
   const res = makeRes();
   const req = { method, body, query, headers: { 'x-real-ip': ip } } as unknown as VercelRequest;
   await handler(req, res as unknown as VercelResponse);
@@ -124,7 +139,9 @@ describe('the rules assistant daily cap', () => {
   });
 
   it('spends none of the budget on a game with no rules', async () => {
-    vi.mocked(assembleRulesText).mockImplementationOnce(() => { throw new Error('ENOENT'); });
+    vi.mocked(assembleRulesText).mockImplementationOnce(() => {
+      throw new Error('ENOENT');
+    });
     expect((await ask('1.2.3.4')).statusCode).toBe(404);
     expect(redis.counts.has('chat-global:global')).toBe(false);
   });
@@ -156,7 +173,11 @@ describe('the rules assistant daily cap', () => {
     vi.stubEnv('SUGGESTIONS_TO', undefined);
     // Each answer is the handler's own, past the limiter.
     expect((await call(votes, '1.2.3.4', 'GET')).body).toEqual({ error: 'ids query parameter is required' });
-    expect((await call(suggestions, '1.2.3.4', 'POST', { game: 'Azul' })).body).toEqual({ error: 'Suggestions are not open yet' });
-    expect((await call(auth, '1.2.3.4', 'POST', { email: 'a@b.c' })).body).toEqual({ error: 'Sign-in is not set up yet' });
+    expect((await call(suggestions, '1.2.3.4', 'POST', { game: 'Azul' })).body).toEqual({
+      error: 'Suggestions are not open yet',
+    });
+    expect((await call(auth, '1.2.3.4', 'POST', { email: 'a@b.c' })).body).toEqual({
+      error: 'Sign-in is not set up yet',
+    });
   });
 });

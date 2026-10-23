@@ -56,7 +56,13 @@ export default function Dropdown({ id, label, isActive, isOpen, onToggle, childr
         {label}
         <span className="dd-arrow">
           <svg className="row-chevron" viewBox="0 0 12 12" fill="none">
-            <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M2 4l4 4 4-4"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </span>
       </button>

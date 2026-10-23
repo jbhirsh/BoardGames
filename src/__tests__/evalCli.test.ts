@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  DEFAULT_GOLDEN_FILE,
-  DEFAULT_THRESHOLD,
-  parseCliArgs,
-  parseEnvFile,
-} from '../../eval/cli';
+import { DEFAULT_GOLDEN_FILE, DEFAULT_THRESHOLD, parseCliArgs, parseEnvFile } from '../../eval/cli';
 
 describe('parseCliArgs', () => {
   it('returns the documented defaults with no arguments', () => {

@@ -12,7 +12,7 @@ function renderHero(want = false) {
       <FilterProvider>
         <Hero want={want} />
       </FilterProvider>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 
@@ -29,7 +29,7 @@ describe('Hero', () => {
     renderHero();
     const { shortest, longest } = collectionSpan(GAMES);
     expect(
-      screen.getByText(`${GAMES.length} games, ${shortest} to ${longest}. What fits tonight?`)
+      screen.getByText(`${GAMES.length} games, ${shortest} to ${longest}. What fits tonight?`),
     ).toBeInTheDocument();
   });
 
@@ -42,7 +42,7 @@ describe('Hero', () => {
     expect(screen.getByRole('list', { name: 'Wishlist covers' })).toBeInTheDocument();
   });
 
-  it('shows the collection\'s covers under the subtitle', () => {
+  it("shows the collection's covers under the subtitle", () => {
     renderHero();
     expect(screen.getByRole('list', { name: 'Collection covers' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Pause cover carousel' })).toBeInTheDocument();

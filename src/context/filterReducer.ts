@@ -1,4 +1,14 @@
-import type { FilterState, DurationFilter, SortColumn, BaseSort, ViewMode, KeywordId, KeywordMode, CollectionMode, ColumnSort } from '../data/types';
+import type {
+  FilterState,
+  DurationFilter,
+  SortColumn,
+  BaseSort,
+  ViewMode,
+  KeywordId,
+  KeywordMode,
+  CollectionMode,
+  ColumnSort,
+} from '../data/types';
 import { initialFilterState } from '../data/initialFilterState';
 import { clearFilters, sortAllowed, withFilters, type FilterField, type FilterPatch } from '../utils/filterState';
 

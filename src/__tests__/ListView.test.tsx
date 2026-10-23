@@ -15,7 +15,7 @@ function renderListView() {
       <FilterProvider>
         <ListView />
       </FilterProvider>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 
@@ -116,9 +116,7 @@ describe('ListView', () => {
       const { dispatch } = useFilter();
       return (
         <>
-          <button onClick={() => dispatch({ type: 'SET_SORT', payload: 'group' })}>
-            Set Group
-          </button>
+          <button onClick={() => dispatch({ type: 'SET_SORT', payload: 'group' })}>Set Group</button>
           <ListView />
         </>
       );
@@ -129,7 +127,7 @@ describe('ListView', () => {
         <FilterProvider>
           <GroupListTest />
         </FilterProvider>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     fireEvent.click(screen.getByText('Set Group'));
@@ -141,9 +139,7 @@ describe('ListView', () => {
       const { dispatch } = useFilter();
       return (
         <>
-          <button onClick={() => dispatch({ type: 'SET_SEARCH', payload: 'zzzznotfound' })}>
-            Search
-          </button>
+          <button onClick={() => dispatch({ type: 'SET_SEARCH', payload: 'zzzznotfound' })}>Search</button>
           <ListView />
         </>
       );
@@ -154,7 +150,7 @@ describe('ListView', () => {
         <FilterProvider>
           <EmptyTest />
         </FilterProvider>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     fireEvent.click(screen.getByText('Search'));
@@ -166,9 +162,7 @@ describe('ListView', () => {
       const { dispatch } = useFilter();
       return (
         <>
-          <button onClick={() => dispatch({ type: 'SET_SEARCH', payload: 'zzzznotfound' })}>
-            Search
-          </button>
+          <button onClick={() => dispatch({ type: 'SET_SEARCH', payload: 'zzzznotfound' })}>Search</button>
           <ListView />
         </>
       );
@@ -179,7 +173,7 @@ describe('ListView', () => {
         <FilterProvider>
           <EmptyTest />
         </FilterProvider>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     fireEvent.click(screen.getByText('Search'));
@@ -204,21 +198,36 @@ function PlayersFilter() {
  */
 function renderListRoutes(entries: string[] = ['/']) {
   const router = createMemoryRouter(
-    [{
-      element: <FilterProvider><Outlet /></FilterProvider>,
-      children: [
-        { path: '/', element: <><PlayersFilter /><ListView /></> },
-        { path: '/rules/:slug/:part?', element: <BackLink /> },
-        { path: '/score/:slug', element: <BackLink /> },
-      ],
-    }],
+    [
+      {
+        element: (
+          <FilterProvider>
+            <Outlet />
+          </FilterProvider>
+        ),
+        children: [
+          {
+            path: '/',
+            element: (
+              <>
+                <PlayersFilter />
+                <ListView />
+              </>
+            ),
+          },
+          { path: '/rules/:slug/:part?', element: <BackLink /> },
+          { path: '/score/:slug', element: <BackLink /> },
+        ],
+      },
+    ],
     { initialEntries: entries },
   );
   render(<RouterProvider router={router} />);
   return router;
 }
 
-const toggleFor = (name: string) => screen.getByRole('button', { name: new RegExp(`^(Show|Hide) details for ${name}$`) });
+const toggleFor = (name: string) =>
+  screen.getByRole('button', { name: new RegExp(`^(Show|Hide) details for ${name}$`) });
 const back = () => screen.getByRole('link', { name: /Back to The Game Room/ });
 
 describe('ListView open row through a round trip', () => {
@@ -229,9 +238,11 @@ describe('ListView open row through a round trip', () => {
     }
   });
 
-  it('keeps the open row in the list\'s own history entry, not the URL', async () => {
+  it("keeps the open row in the list's own history entry, not the URL", async () => {
     const router = renderListRoutes(['/?p=4']);
-    await act(async () => { fireEvent.click(toggleFor('Catan')); });
+    await act(async () => {
+      fireEvent.click(toggleFor('Catan'));
+    });
     expect(toggleFor('Catan')).toHaveAttribute('aria-expanded', 'true');
     expect(router.state.historyAction).toBe('REPLACE');
     expect(router.state.location.pathname).toBe('/');
@@ -239,47 +250,73 @@ describe('ListView open row through a round trip', () => {
     expect(router.state.location.state).toEqual({ openRow: 'Catan' });
 
     // Another row takes its place; closing it leaves none recorded.
-    await act(async () => { fireEvent.click(toggleFor('Pandemic')); });
+    await act(async () => {
+      fireEvent.click(toggleFor('Pandemic'));
+    });
     expect(router.state.location.state).toEqual({ openRow: 'Pandemic' });
     expect(toggleFor('Catan')).toHaveAttribute('aria-expanded', 'false');
-    await act(async () => { fireEvent.click(toggleFor('Pandemic')); });
+    await act(async () => {
+      fireEvent.click(toggleFor('Pandemic'));
+    });
     expect(toggleFor('Pandemic')).toHaveAttribute('aria-expanded', 'false');
     expect(router.state.location.state).toEqual({});
   });
 
-  it('brings the row back open after its Rules and the page\'s Back link', async () => {
+  it("brings the row back open after its Rules and the page's Back link", async () => {
     const router = renderListRoutes();
-    await act(async () => { fireEvent.click(toggleFor('Catan')); });
-    await act(async () => { fireEvent.click(screen.getByRole('link', { name: 'Rules for Catan' })); });
+    await act(async () => {
+      fireEvent.click(toggleFor('Catan'));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('link', { name: 'Rules for Catan' }));
+    });
     expect(router.state.location.pathname).toBe('/rules/catan');
 
-    await act(async () => { fireEvent.click(back()); });
+    await act(async () => {
+      fireEvent.click(back());
+    });
     expect(router.state.historyAction).toBe('POP');
     expect(toggleFor('Catan')).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('link', { name: 'Rules for Catan' })).toBeInTheDocument();
   });
 
-  it('brings the row back open after its Score and the browser\'s Back', async () => {
+  it("brings the row back open after its Score and the browser's Back", async () => {
     const router = renderListRoutes();
-    await act(async () => { fireEvent.click(toggleFor('7 Wonders')); });
+    await act(async () => {
+      fireEvent.click(toggleFor('7 Wonders'));
+    });
     // Other games have a pad too: this row's own.
-    const score = screen.getAllByRole('link', { name: /Score/ }).find((link) => link.getAttribute('href') === '/score/7-wonders')!;
-    await act(async () => { fireEvent.click(score); });
+    const score = screen
+      .getAllByRole('link', { name: /Score/ })
+      .find((link) => link.getAttribute('href') === '/score/7-wonders')!;
+    await act(async () => {
+      fireEvent.click(score);
+    });
     expect(router.state.location.pathname).toBe('/score/7-wonders');
 
-    await act(async () => { await router.navigate(-1); });
+    await act(async () => {
+      await router.navigate(-1);
+    });
     expect(toggleFor('7 Wonders')).toHaveAttribute('aria-expanded', 'true');
   });
 
   it('keeps the row recorded when a filter rewrites the URL with it open', async () => {
     const router = renderListRoutes();
-    await act(async () => { fireEvent.click(toggleFor('Catan')); });
-    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '3 players' })); });
+    await act(async () => {
+      fireEvent.click(toggleFor('Catan'));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: '3 players' }));
+    });
     expect(router.state.location.search).toBe('?p=3');
     expect(router.state.location.state).toEqual({ openRow: 'Catan' });
 
-    await act(async () => { fireEvent.click(screen.getByRole('link', { name: 'Rules for Catan' })); });
-    await act(async () => { fireEvent.click(back()); });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('link', { name: 'Rules for Catan' }));
+    });
+    await act(async () => {
+      fireEvent.click(back());
+    });
     expect(toggleFor('Catan')).toHaveAttribute('aria-expanded', 'true');
   });
 
@@ -302,14 +339,22 @@ describe('ListView open row through a round trip', () => {
     expect(names.length).toBe(new Set(names).size);
     expect(names.length).toBeLessThan(GAMES.length);
 
-    await act(async () => { fireEvent.click(toggleFor('Pandemic')); });
+    await act(async () => {
+      fireEvent.click(toggleFor('Pandemic'));
+    });
     expect(toggleFor('Pandemic')).toHaveAttribute('aria-expanded', 'true');
     expect(toggleFor('Dominion')).toHaveAttribute('aria-expanded', 'false');
-    await act(async () => { fireEvent.click(screen.getByRole('link', { name: 'Rules for Pandemic' })); });
-    await act(async () => { await router.navigate(-1); });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('link', { name: 'Rules for Pandemic' }));
+    });
+    await act(async () => {
+      await router.navigate(-1);
+    });
     expect(router.state.location.search).toBe('?p=2&s=group');
     expect(toggleFor('Pandemic')).toHaveAttribute('aria-expanded', 'true');
-    await act(async () => { fireEvent.click(toggleFor('Pandemic')); });
+    await act(async () => {
+      fireEvent.click(toggleFor('Pandemic'));
+    });
     expect(toggleFor('Pandemic')).toHaveAttribute('aria-expanded', 'false');
   });
 
@@ -325,10 +370,16 @@ describe('ListView open row through a round trip', () => {
 
   it('opens nothing when the list is reached anew rather than by Back', async () => {
     const router = renderListRoutes();
-    await act(async () => { fireEvent.click(toggleFor('Catan')); });
-    await act(async () => { fireEvent.click(screen.getByRole('link', { name: 'Rules for Catan' })); });
+    await act(async () => {
+      fireEvent.click(toggleFor('Catan'));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('link', { name: 'Rules for Catan' }));
+    });
     // A fresh push to the home page, as from a deep link's Back.
-    await act(async () => { await router.navigate('/'); });
+    await act(async () => {
+      await router.navigate('/');
+    });
     expect(toggleFor('Catan')).toHaveAttribute('aria-expanded', 'false');
   });
 });

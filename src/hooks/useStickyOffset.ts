@@ -15,9 +15,7 @@ export function useStickyOffset(ref: RefObject<HTMLElement | null>) {
     if (!el) return;
 
     const ro = new ResizeObserver(([entry]) => {
-      const height =
-        entry.borderBoxSize?.[0]?.blockSize ??
-        entry.target.getBoundingClientRect().height;
+      const height = entry.borderBoxSize?.[0]?.blockSize ?? entry.target.getBoundingClientRect().height;
       document.documentElement.style.setProperty('--thead-top', `${height}px`);
     });
 

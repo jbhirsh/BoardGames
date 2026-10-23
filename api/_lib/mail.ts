@@ -50,11 +50,12 @@ export function baseUrl(): string {
 }
 
 const escapeHtml = (s: string) =>
-  s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+  s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
 
 export { escapeHtml };
 
-export const PAGE_STYLE = "body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:#F5F5F7;color:#1D1D1F;margin:0;padding:48px 20px;text-align:center}main{max-width:420px;margin:0 auto;background:#fff;border-radius:16px;padding:32px 24px;box-shadow:0 1px 3px rgba(0,0,0,.08)}h1{font-size:22px;margin:0 0 12px}p{color:#6E6E73;line-height:1.5;margin:0 0 20px}button{font:inherit;font-weight:600;padding:12px 22px;border-radius:10px;border:0;color:#fff;cursor:pointer}";
+export const PAGE_STYLE =
+  "body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:#F5F5F7;color:#1D1D1F;margin:0;padding:48px 20px;text-align:center}main{max-width:420px;margin:0 auto;background:#fff;border-radius:16px;padding:32px 24px;box-shadow:0 1px 3px rgba(0,0,0,.08)}h1{font-size:22px;margin:0 0 12px}p{color:#6E6E73;line-height:1.5;margin:0 0 20px}button{font:inherit;font-weight:600;padding:12px 22px;border-radius:10px;border:0;color:#fff;cursor:pointer}";
 
 /**
  * A small standalone page for the steps that happen outside the app (email

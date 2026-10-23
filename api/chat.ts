@@ -117,11 +117,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Validate the rulebooks of games inside this one to read alongside it.
   // Each picks a file, so it gets the same shape check as slug; a repeat would
   // only resend the same rulebook to a paid model, so none are allowed.
-  if (parts !== undefined && (
-    !Array.isArray(parts) || parts.length > MAX_PARTS ||
-    !parts.every((p) => typeof p === 'string' && SLUG_RE.test(p)) ||
-    new Set(parts).size !== parts.length
-  )) {
+  if (
+    parts !== undefined &&
+    (!Array.isArray(parts) ||
+      parts.length > MAX_PARTS ||
+      !parts.every((p) => typeof p === 'string' && SLUG_RE.test(p)) ||
+      new Set(parts).size !== parts.length)
+  ) {
     return res.status(400).json({ error: 'parts must be a list of rulebook names' });
   }
 
@@ -143,7 +145,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let total = 0;
     for (const entry of history) {
       if (
-        !entry || typeof entry !== 'object' ||
+        !entry ||
+        typeof entry !== 'object' ||
         (entry.role !== 'user' && entry.role !== 'model') ||
         typeof entry.content !== 'string'
       ) {
@@ -167,15 +170,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // The daily budget is checked last, after the per-IP limit and every 400 or
   // 404, so it counts only questions that will reach Gemini: one abuser's
   // per-IP refusals, or malformed requests, can't burn everyone's budget.
-  if (!(await enforceRateLimit(chatDailyLimiter, req, res, {
-    key: 'global',
-    refusal: DAILY_LIMIT_REFUSAL,
-    // If Redis can't answer, nothing would cap spend.
-    failClosed: true,
-  }))) return;
+  if (
+    !(await enforceRateLimit(chatDailyLimiter, req, res, {
+      key: 'global',
+      refusal: DAILY_LIMIT_REFUSAL,
+      // If Redis can't answer, nothing would cap spend.
+      failClosed: true,
+    }))
+  )
+    return;
 
-  Sentry.setTag("game_slug", slug);
-  Sentry.setContext("chat", { slug, messageLength: message.length, historyLength: history?.length ?? 0 });
+  Sentry.setTag('game_slug', slug);
+  Sentry.setContext('chat', { slug, messageLength: message.length, historyLength: history?.length ?? 0 });
 
   // Set once the first chunk is written: the 200 and its headers are then on
   // the wire, so a later failure can only end the response with a note.

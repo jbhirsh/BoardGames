@@ -9,7 +9,7 @@ function renderPage(path = '/score/7-wonders') {
       <Routes>
         <Route path="/score/:slug" element={<ScoreCalculatorPage />} />
       </Routes>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 
@@ -35,11 +35,12 @@ describe('ScoreCalculatorPage', () => {
     expect(screen.queryByRole('button', { name: 'Player 1' })).not.toBeInTheDocument();
   });
 
-  it('nudges the score boxes\' digits to the middle for the font in use', () => {
+  it("nudges the score boxes' digits to the middle for the font in use", () => {
     // The page lays out a hidden line: 17px tall, its cap-high marker
     // sitting on a baseline 13px down. jsdom lays out nothing, so fake it.
     vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
-      const rect = this.tagName === 'SPAN' ? { top: 101, bottom: 113, height: 12 } : { top: 100, bottom: 117, height: 17 };
+      const rect =
+        this.tagName === 'SPAN' ? { top: 101, bottom: 113, height: 12 } : { top: 100, bottom: 117, height: 17 };
       return { ...rect, left: 0, right: 0, width: 0, x: 0, y: rect.top, toJSON: () => ({}) } as DOMRect;
     });
     const { container } = renderPage();
@@ -107,7 +108,7 @@ describe('ScoreCalculatorPage', () => {
     expect(screen.getByText('26 VP')).toBeInTheDocument();
   });
 
-  it('shows treasury\'s VP note from the start, so the first coin moves nothing', () => {
+  it("shows treasury's VP note from the start, so the first coin moves nothing", () => {
     renderPage();
     const treasuryLabel = screen.getByLabelText(/Treasury/).closest('.sc-row');
     expect(treasuryLabel).not.toBeNull();
@@ -147,10 +148,15 @@ describe('ScoreCalculatorPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Results' }));
 
     const sheet = screen.getByRole('table', { name: 'Scores by category' });
-    const columns = within(sheet).getAllByRole('columnheader').map((th) => th.textContent);
+    const columns = within(sheet)
+      .getAllByRole('columnheader')
+      .map((th) => th.textContent);
     expect(columns).toEqual(['Category', 'Player 1', 'Player 2']);
     const row = (name: string) => within(sheet).getByRole('rowheader', { name }).closest('tr')!;
-    const cells = (name: string) => within(row(name)).getAllByRole('cell').map((td) => td.textContent);
+    const cells = (name: string) =>
+      within(row(name))
+        .getAllByRole('cell')
+        .map((td) => td.textContent);
     expect(cells('Civilian')).toEqual(['10', '25']);
     // Treasury shows its points, and the coins they came from.
     expect(cells('Treasury')).toEqual(['2, from 7 coins', '0']);
@@ -180,7 +186,9 @@ describe('ScoreCalculatorPage', () => {
     const sheet = screen.getByRole('table', { name: 'Scores by category' });
     const place = within(within(sheet).getByRole('rowheader', { name: 'Place' }).closest('tr')!).getAllByRole('cell');
     expect(place.map((td) => td.textContent)).toEqual(['1st', '2nd']);
-    expect(screen.getByText('Player 1 and Player 2 tie on 9 VP; coins break the tie: Player 1 5, Player 2 3.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Player 1 and Player 2 tie on 9 VP; coins break the tie: Player 1 5, Player 2 3.'),
+    ).toBeInTheDocument();
   });
 
   it('lets players level on points and coins share the place', () => {
@@ -193,8 +201,14 @@ describe('ScoreCalculatorPage', () => {
     const sheet = screen.getByRole('table', { name: 'Scores by category' });
     const place = within(within(sheet).getByRole('rowheader', { name: 'Place' }).closest('tr')!).getAllByRole('cell');
     expect(place.map((td) => td.textContent)).toEqual(['1st', '1st']);
-    expect(within(sheet).getAllByRole('columnheader').filter((th) => th.classList.contains('sc-win'))).toHaveLength(2);
-    expect(screen.getByText('Player 1 and Player 2 tie on 9 VP and 4 coins, so they share 1st place.')).toBeInTheDocument();
+    expect(
+      within(sheet)
+        .getAllByRole('columnheader')
+        .filter((th) => th.classList.contains('sc-win')),
+    ).toHaveLength(2);
+    expect(
+      screen.getByText('Player 1 and Player 2 tie on 9 VP and 4 coins, so they share 1st place.'),
+    ).toBeInTheDocument();
   });
 
   it('hands the phone to the next player, then shows the results', () => {
@@ -225,7 +239,11 @@ describe('ScoreCalculatorPage', () => {
     const sheet = screen.getByRole('table', { name: 'Scores by category' });
     const place = within(within(sheet).getByRole('rowheader', { name: 'Place' }).closest('tr')!).getAllByRole('cell');
     expect(place.map((td) => td.textContent)).toEqual(['–', '–']);
-    expect(within(sheet).getAllByRole('columnheader').filter((th) => th.classList.contains('sc-win'))).toHaveLength(0);
+    expect(
+      within(sheet)
+        .getAllByRole('columnheader')
+        .filter((th) => th.classList.contains('sc-win')),
+    ).toHaveLength(0);
     expect(screen.queryByText(/tie on \d+ VP/)).not.toBeInTheDocument();
   });
 
@@ -306,8 +324,23 @@ describe('ScoreCalculatorPage', () => {
   });
 
   it('starts fresh when the saved game repeats a player id', () => {
-    const player = { id: 3, name: 'Ann', military: '', coins: '', wonder: '', civilian: '5', tablets: '', compasses: '', gears: '', commercial: '', guilds: '' };
-    localStorage.setItem('gameroom:score:7-wonders', JSON.stringify({ players: [player, { ...player, name: 'Bo' }], active: 0 }));
+    const player = {
+      id: 3,
+      name: 'Ann',
+      military: '',
+      coins: '',
+      wonder: '',
+      civilian: '5',
+      tablets: '',
+      compasses: '',
+      gears: '',
+      commercial: '',
+      guilds: '',
+    };
+    localStorage.setItem(
+      'gameroom:score:7-wonders',
+      JSON.stringify({ players: [player, { ...player, name: 'Bo' }], active: 0 }),
+    );
     renderPage();
     expect(screen.getByRole('button', { name: 'Player 1' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Ann' })).not.toBeInTheDocument();
@@ -360,7 +393,7 @@ describe('ScoreCalculatorPage', () => {
     expect(screen.getByLabelText(/Civilian/)).toHaveValue(4);
   });
 
-  it('names each box\'s unit in its description, and the points a converted one is worth', () => {
+  it("names each box's unit in its description, and the points a converted one is worth", () => {
     renderPage();
     const box = (name: string) => screen.getByRole('spinbutton', { name });
     for (const name of ['Military', 'Wonder', 'Civilian (Blue)', 'Commercial (Yellow)', 'Guilds (Purple)']) {
@@ -383,7 +416,7 @@ describe('ScoreCalculatorPage', () => {
     expect(screen.getByText('= 10 VP')).toBeInTheDocument();
   });
 
-  it('puts a box\'s unit inside it, and a converted field\'s points on its label line', () => {
+  it("puts a box's unit inside it, and a converted field's points on its label line", () => {
     const { container } = renderPage();
     const box = (name: string) => screen.getByRole('spinbutton', { name });
     const unitIn = (input: HTMLElement) => input.parentElement!.querySelector('.sc-unit');
@@ -399,7 +432,7 @@ describe('ScoreCalculatorPage', () => {
     expect(scienceLabel).toHaveTextContent('symbols · = 4 VP');
   });
 
-  it('sets a box\'s score and unit as one line, the input as wide as the score', () => {
+  it("sets a box's score and unit as one line, the input as wide as the score", () => {
     renderPage();
     const box = (name: string) => screen.getByRole('spinbutton', { name });
     const chars = (input: HTMLElement) => input.style.getPropertyValue('--chars');
@@ -426,7 +459,7 @@ describe('ScoreCalculatorPage', () => {
     expect(screen.queryByText(/Wonder Stages/)).not.toBeInTheDocument();
   });
 
-  it('opens a phone\'s number pad for every score box', () => {
+  it("opens a phone's number pad for every score box", () => {
     renderPage();
     const boxes = screen.getAllByRole('spinbutton');
     expect(boxes).toHaveLength(9);
@@ -438,7 +471,9 @@ describe('ScoreCalculatorPage', () => {
   });
 
   it('keeps the screen on while scoring', async () => {
-    const request = vi.fn(async () => Object.assign(new EventTarget(), { released: false, release: vi.fn(async () => {}) }));
+    const request = vi.fn(async () =>
+      Object.assign(new EventTarget(), { released: false, release: vi.fn(async () => {}) }),
+    );
     Object.defineProperty(navigator, 'wakeLock', { configurable: true, value: { request } });
     try {
       const { unmount } = renderPage();

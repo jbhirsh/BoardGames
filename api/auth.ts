@@ -4,8 +4,16 @@ import { getRedis } from './_lib/redis.js';
 import { failWith500, initSentry, reportError } from './_lib/sentry.js';
 import { baseUrl, button, escapeHtml, mailLayout, ownerEmail, page, resendMailer, type Mailer } from './_lib/mail.js';
 import {
-  ID_RE, SESSION_TTL_S, isAdmin, isJsonRequest, newId, sessionCookie, sessionIdFrom, sessionKey,
-  type Headers, type SessionRedis,
+  ID_RE,
+  SESSION_TTL_S,
+  isAdmin,
+  isJsonRequest,
+  newId,
+  sessionCookie,
+  sessionIdFrom,
+  sessionKey,
+  type Headers,
+  type SessionRedis,
 } from './_lib/session.js';
 
 initSentry();
@@ -58,9 +66,12 @@ const normalizeEmail = (s: string) => s.trim().toLowerCase();
 function signInMail(link: string) {
   return {
     subject: 'Sign in to The Game Room',
-    html: mailLayout(`<h2 style="margin:0 0 12px">Your sign-in link</h2>
+    html: mailLayout(
+      `<h2 style="margin:0 0 12px">Your sign-in link</h2>
 <p style="margin:0 0 20px">Open this on the device you want to manage the wishlist from. It works once and expires in 15 minutes.</p>
-${button(link, 'Sign in', '#0071E3')}`, "If you didn't ask for this, ignore it; nothing happens until the link is used."),
+${button(link, 'Sign in', '#0071E3')}`,
+      "If you didn't ask for this, ignore it; nothing happens until the link is used.",
+    ),
   };
 }
 
@@ -68,10 +79,15 @@ const html = (res: AuthResponse) => res.setHeader('Content-Type', 'text/html; ch
 
 // The sign-in link and its confirmation form open in a browser, so a bad
 // token gets a page a person can read, not JSON.
-const badLink = (res: AuthResponse) => html(res).status(400).send(page(
-  'Link not recognised',
-  '<p>This sign-in link is incomplete or mistyped. Ask for a new one from the wishlist.</p>',
-));
+const badLink = (res: AuthResponse) =>
+  html(res)
+    .status(400)
+    .send(
+      page(
+        'Link not recognised',
+        '<p>This sign-in link is incomplete or mistyped. Ask for a new one from the wishlist.</p>',
+      ),
+    );
 
 export async function handleAuth(deps: AuthDeps, req: AuthRequest, res: AuthResponse): Promise<AuthResponse> {
   const { redis } = deps;
@@ -85,14 +101,25 @@ export async function handleAuth(deps: AuthDeps, req: AuthRequest, res: AuthResp
       const live = (await redis.get(magicKey(token))) !== null;
       html(res);
       if (!live) {
-        return res.status(200).send(page('Link expired', '<p>This sign-in link has expired or was already used. Ask for a new one from the wishlist.</p>'));
+        return res
+          .status(200)
+          .send(
+            page(
+              'Link expired',
+              '<p>This sign-in link has expired or was already used. Ask for a new one from the wishlist.</p>',
+            ),
+          );
       }
-      return res.status(200).send(page(
-        'Sign in to The Game Room?',
-        '<p>This signs this browser in as the owner for 30 days.</p>' +
-        `<form method="post" action="/api/auth"><input type="hidden" name="action" value="verify"><input type="hidden" name="token" value="${escapeHtml(token)}">` +
-        '<button type="submit" style="background:#0071E3">Sign in</button></form>',
-      ));
+      return res
+        .status(200)
+        .send(
+          page(
+            'Sign in to The Game Room?',
+            '<p>This signs this browser in as the owner for 30 days.</p>' +
+              `<form method="post" action="/api/auth"><input type="hidden" name="action" value="verify"><input type="hidden" name="token" value="${escapeHtml(token)}">` +
+              '<button type="submit" style="background:#0071E3">Sign in</button></form>',
+          ),
+        );
     }
 
     if (req.method === 'POST') {
@@ -104,7 +131,14 @@ export async function handleAuth(deps: AuthDeps, req: AuthRequest, res: AuthResp
         // getdel makes the link single-use even under a double submit.
         if ((await redis.getdel(magicKey(token))) === null) {
           html(res);
-          return res.status(403).send(page('Link expired', '<p>This sign-in link has expired or was already used. Ask for a new one from the wishlist.</p>'));
+          return res
+            .status(403)
+            .send(
+              page(
+                'Link expired',
+                '<p>This sign-in link has expired or was already used. Ask for a new one from the wishlist.</p>',
+              ),
+            );
         }
         const id = (deps.randomToken ?? newId)();
         await redis.set(sessionKey(id), '1', { ex: SESSION_TTL_S });

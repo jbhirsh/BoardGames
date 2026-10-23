@@ -35,17 +35,25 @@ export default function SignInPage() {
       </header>
       {loaded && admin && (
         <div className="signin-panel">
-          <p className="signin-status" role="status">You're signed in as the owner on this browser.</p>
+          <p className="signin-status" role="status">
+            You're signed in as the owner on this browser.
+          </p>
           <div className="signin-actions">
-            <Link to="/?c=want" className="signin-btn signin-link-btn">Go to the wishlist</Link>
-            <button type="button" className="signin-btn signin-btn--ghost" onClick={() => void logout()}>Sign out</button>
+            <Link to="/?c=want" className="signin-btn signin-link-btn">
+              Go to the wishlist
+            </Link>
+            <button type="button" className="signin-btn signin-btn--ghost" onClick={() => void logout()}>
+              Sign out
+            </button>
           </div>
         </div>
       )}
       {loaded && !admin && (
         <div className="signin-panel">
           <form className="signin-form" onSubmit={onSubmit} aria-label="Owner sign-in">
-            <label className="signin-label" htmlFor={`${uid}-email`}>Email</label>
+            <label className="signin-label" htmlFor={`${uid}-email`}>
+              Email
+            </label>
             <input
               id={`${uid}-email`}
               className="signin-input"
@@ -62,7 +70,8 @@ export default function SignInPage() {
               </button>
             </div>
             <p className="signin-status" role="status" aria-live="polite">
-              {status.kind === 'sent' && "If that's the owner's address, a link is on its way. It works once and expires in 15 minutes."}
+              {status.kind === 'sent' &&
+                "If that's the owner's address, a link is on its way. It works once and expires in 15 minutes."}
               {status.kind === 'error' && status.message}
             </p>
           </form>

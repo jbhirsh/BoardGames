@@ -12,7 +12,8 @@ function addThemeColors() {
     document.head.append(meta);
   }
 }
-const metas = () => Array.from(document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')).map((m) => m.content);
+const metas = () =>
+  Array.from(document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')).map((m) => m.content);
 
 describe('applyTheme', () => {
   beforeEach(() => {
@@ -47,7 +48,9 @@ describe('applyTheme', () => {
   });
 
   it('still applies the theme when storage is blocked', () => {
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
     applyTheme('dark');
     expect(document.documentElement.dataset.theme).toBe('dark');
   });
@@ -64,7 +67,11 @@ describe('ThemeToggle', () => {
     render(<ThemeToggle />);
     const group = screen.getByRole('radiogroup', { name: 'Colour theme' });
     expect(group).toBeInTheDocument();
-    expect(screen.getAllByRole('radio').map((r) => r.getAttribute('aria-label'))).toEqual(['Match system', 'Light', 'Dark']);
+    expect(screen.getAllByRole('radio').map((r) => r.getAttribute('aria-label'))).toEqual([
+      'Match system',
+      'Light',
+      'Dark',
+    ]);
     expect(screen.getByRole('radio', { name: 'Dark' })).toHaveAttribute('aria-checked', 'true');
     expect(screen.getByRole('radio', { name: 'Dark' })).toHaveClass('active');
 

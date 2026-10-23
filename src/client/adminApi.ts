@@ -10,9 +10,19 @@ export const GENERIC_ERROR = 'Something went wrong. Try again in a minute.';
 export type Outcome<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 
 /** One JSON request; a non-2xx answer, a network failure or an abort becomes a readable error. */
-export async function callJson<T>(url: string, method: string, body: unknown, signal?: AbortSignal): Promise<Outcome<T>> {
+export async function callJson<T>(
+  url: string,
+  method: string,
+  body: unknown,
+  signal?: AbortSignal,
+): Promise<Outcome<T>> {
   try {
-    const r = await fetch(url, { method, headers: JSON_HEADERS, body: JSON.stringify(body), ...(signal ? { signal } : {}) });
+    const r = await fetch(url, {
+      method,
+      headers: JSON_HEADERS,
+      body: JSON.stringify(body),
+      ...(signal ? { signal } : {}),
+    });
     const data = (await r.json().catch(() => ({}))) as T & { error?: string };
     if (!r.ok) return { ok: false, error: data.error ?? GENERIC_ERROR };
     return { ok: true, data };
@@ -21,11 +31,19 @@ export async function callJson<T>(url: string, method: string, body: unknown, si
   }
 }
 
-const call = <T,>(method: string, body: unknown, signal?: AbortSignal) => callJson<T>('/api/suggestions', method, body, signal);
+const call = <T>(method: string, body: unknown, signal?: AbortSignal) =>
+  callJson<T>('/api/suggestions', method, body, signal);
 
 /** The parts of a preview an entry keeps: BGG's name for the match was for the owner to see. */
 const storedDetails = (d: PreviewDetails) => ({
-  bggId: d.bggId, year: d.year, min: d.min, max: d.max, mins: d.mins, desc: d.desc, kw: d.kw, img: d.img,
+  bggId: d.bggId,
+  year: d.year,
+  min: d.min,
+  max: d.max,
+  mins: d.mins,
+  desc: d.desc,
+  kw: d.kw,
+  img: d.img,
 });
 
 export interface PendingSuggestion {
@@ -71,7 +89,8 @@ export interface Preview {
 }
 
 /** Looks a game up on BoardGameGeek without storing anything, for the add form and the queue to show. */
-export const previewGame = (game: string, signal?: AbortSignal) => call<Preview>('POST', { action: 'preview', game }, signal);
+export const previewGame = (game: string, signal?: AbortSignal) =>
+  call<Preview>('POST', { action: 'preview', game }, signal);
 
 export interface AddGameInput {
   game: string;
@@ -83,7 +102,14 @@ export interface AddGameInput {
 }
 
 export const addGame = ({ game, name, note, type, details }: AddGameInput) =>
-  call('POST', { action: 'add', game, name, note, ...(type ? { type } : {}), details: details && storedDetails(details) });
+  call('POST', {
+    action: 'add',
+    game,
+    name,
+    note,
+    ...(type ? { type } : {}),
+    details: details && storedDetails(details),
+  });
 
 export interface EditGameInput {
   id: string;

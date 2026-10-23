@@ -143,9 +143,18 @@ export function fakeRedis(seed: FakeRedisSeed = {}) {
     pipeline: (): FakePipeline => {
       const reads: Array<() => unknown> = [];
       const pipeline: FakePipeline = {
-        hgetall: (key) => { reads.push(() => hgetall(key)); return pipeline; },
-        scard: (key) => { reads.push(() => scard(key)); return pipeline; },
-        sismember: (key, member) => { reads.push(() => sismember(key, member)); return pipeline; },
+        hgetall: (key) => {
+          reads.push(() => hgetall(key));
+          return pipeline;
+        },
+        scard: (key) => {
+          reads.push(() => scard(key));
+          return pipeline;
+        },
+        sismember: (key, member) => {
+          reads.push(() => sismember(key, member));
+          return pipeline;
+        },
         exec: async () => reads.map((r) => r()),
       };
       return pipeline;
@@ -156,9 +165,18 @@ export function fakeRedis(seed: FakeRedisSeed = {}) {
     multi: vi.fn((): FakeTransaction => {
       const ops: Array<() => Promise<unknown>> = [];
       const tx: FakeTransaction = {
-        hset: (key, fields) => { ops.push(() => redis.hset(key, fields)); return tx; },
-        lpush: (key, value) => { ops.push(() => redis.lpush(key, value)); return tx; },
-        lrem: (key, count, value) => { ops.push(() => redis.lrem(key, count, value)); return tx; },
+        hset: (key, fields) => {
+          ops.push(() => redis.hset(key, fields));
+          return tx;
+        },
+        lpush: (key, value) => {
+          ops.push(() => redis.lpush(key, value));
+          return tx;
+        },
+        lrem: (key, count, value) => {
+          ops.push(() => redis.lrem(key, count, value));
+          return tx;
+        },
         exec: async () => Promise.all(ops.map((op) => op())),
       };
       return tx;

@@ -22,6 +22,8 @@ export default function GridView() {
         <div className="group-hd">{GROUPS[key]}</div>
         {grid}
       </div>
-    ) : grid;
+    ) : (
+      grid
+    );
   });
 }

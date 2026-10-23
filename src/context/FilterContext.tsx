@@ -30,10 +30,8 @@ function useSameSet<T>(next: Set<T>): ReadonlySet<T> {
 export function FilterProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
 
-  const [state, dispatch] = useReducer(
-    filterReducer,
-    location.search,
-    (search) => searchParamsToFilter(new URLSearchParams(search)),
+  const [state, dispatch] = useReducer(filterReducer, location.search, (search) =>
+    searchParamsToFilter(new URLSearchParams(search)),
   );
 
   useFilterUrlSync(state, dispatch);
@@ -51,9 +49,7 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     <FilterDispatchContext.Provider value={dispatch}>
       <FilterResultsContext.Provider value={results}>
         <FilterLayoutContext.Provider value={layout}>
-          <ItemFilterContext.Provider value={item}>
-            {children}
-          </ItemFilterContext.Provider>
+          <ItemFilterContext.Provider value={item}>{children}</ItemFilterContext.Provider>
         </FilterLayoutContext.Provider>
       </FilterResultsContext.Provider>
     </FilterDispatchContext.Provider>
