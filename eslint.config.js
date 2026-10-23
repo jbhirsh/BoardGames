@@ -80,6 +80,8 @@ export default defineConfig([
       'playwright/no-wait-for-selector': 'error',
       'playwright/no-force-option': 'error',
       'playwright/prefer-web-first-assertions': 'error',
+      // The visual specs assert through shoot() (e2e/visual.ts).
+      'playwright/expect-expect': ['warn', { assertFunctionNames: ['shoot'] }],
     },
   },
   {

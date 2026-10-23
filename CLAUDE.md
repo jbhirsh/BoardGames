@@ -36,6 +36,7 @@ npm run test:mutation                   # StrykerJS, full run (mutation.yml call
 # `vite preview` on port 4174, and drives it with every /api call stubbed
 npm run test:e2e
 npx playwright test e2e/home.spec.ts    # one spec file
+npx playwright test --project=visual-chromium   # one engine's screenshots
 npx playwright show-report              # open the last HTML report
 
 # A PR's before/after GIFs: builds main and this tree, plays a scenario
@@ -171,6 +172,13 @@ before changing the module.
   label, placeholder or text, never CSS (`playwright/no-raw-locators`); wait
   with web-first assertions, never a timer. A spec may import `src/data`,
   nothing else from the app. Add a test here for a new user-facing flow.
+- **Visual regression is part of e2e** (`e2e/visual.ts`, `visual*.spec.ts`):
+  screenshots against baselines, the core pages in Chromium, Firefox and
+  WebKit on a desktop and on phones, every state in both themes in desktop
+  Chromium. A new page or state gets a scenario there. Baselines are Linux
+  CI's: a change meant to move pixels reruns `e2e.yml` by hand with
+  `update_snapshots` (it commits them to the branch; push again after), and
+  any other diff is a regression.
 - **Pure utilities stay pure.** `src/utils/` and `src/context/filterReducer.ts`
   have no side effects and are directly unit-testable. dependency-cruiser
   enforces the layering (utils/data reach no React or app layer, `src/client`
@@ -215,7 +223,7 @@ before changing the module.
 | `ci` (`ci.yml`) | commit messages, lint, Prettier, depcruise, type-check, type coverage (100%), unit tests + coverage (axe suite included), build, `npm audit --omit=dev` (high+) |
 | Claude Review (`claude-review.yml`) | AI review, in its own file: claude-code-action skips a PR that edits its workflow |
 | StrykerJS (`mutation.yml`) | incremental mutation testing of the files a PR touched, failing below `break` |
-| E2E Tests (Playwright) (`e2e.yml`) | the e2e suite; passing only on retry still fails |
+| E2E Tests (Playwright) (`e2e.yml`) | the e2e suite and visual regression in three engines; passing only on retry still fails |
 | Answer-Quality Eval (`eval.yml`) | the assistant against `eval/golden-set.json` |
 | Secret scan, `semgrep-cloud-platform/scan`, Vercel, API smoke test | secrets, static analysis, the deploy and its live API |
 
