@@ -139,7 +139,13 @@ export const KEYWORD_IDS = [
   'portable',
   'quick-play',
 ] as const;
-/** What the client calls each keyword (KW's labels), for the emailed approval's preview. */
+/**
+ * What the client calls each keyword (KW's labels), for the emailed
+ * approval's preview. A copy of src/data/keywords.ts's, as api/ and src/
+ * can't import each other; a test holds the two equal, so the
+ * duplicate-code audit skips it.
+ */
+/* jscpd:ignore-start */
 export const KEYWORD_LABELS: Record<(typeof KEYWORD_IDS)[number], string> = {
   social: 'Social',
   bluffing: 'Bluffing',
@@ -162,6 +168,7 @@ export const KEYWORD_LABELS: Record<(typeof KEYWORD_IDS)[number], string> = {
   portable: 'Portable',
   'quick-play': 'Quick Play',
 };
+/* jscpd:ignore-end */
 // Defined with the lookup, which caps BGG's numbers and text to them.
 export { DESC_MAX, MINS_MAX, PLAYERS_MAX };
 const KW_MAX = 20;

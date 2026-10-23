@@ -1,0 +1,20 @@
+{
+  // Dead code for the weekly audit (weekly-audit.yml): files nothing
+  // reaches, exports nothing imports, dependencies nothing uses. Its plugins
+  // find most entry points (Vite, Vitest, Playwright, the package scripts,
+  // the workflows); these are the ones they can't see.
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    // Vercel Functions.
+    "api/*.ts",
+    // Run as a child process by extract-rules-text.mjs.
+    "scripts/ocr-pdfs.mjs",
+    // A scenario passed to `npm run pr-gif` on the command line.
+    "scripts/pr-gif-example.ts",
+  ],
+  // A system tool the GIF recorder runs, not an npm package.
+  "ignoreBinaries": ["ffmpeg"],
+  // e2e/theme.spec.ts loads axe's browser build by path
+  // (createRequire().resolve), which knip doesn't follow.
+  "ignoreDependencies": ["axe-core"],
+}
