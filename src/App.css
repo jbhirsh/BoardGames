@@ -3835,30 +3835,11 @@ a.rules-chat-toggle {
 .sc-player-tab-wrap:hover:not(.active) .sc-player-tab {
   background: transparent;
 }
-.sc-add-player {
-  flex: none;
-  padding: 8px 16px;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text3);
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
-  cursor: pointer;
-  font-family: inherit;
-  transition:
-    color 0.15s,
-    background 0.15s,
-    border-color 0.15s;
-}
-.sc-add-player:hover {
-  color: var(--text);
-  background: var(--bg3);
-}
+/* The pad's Add player and summary buttons, beside the player tabs. */
+.sc-add-player,
 .sc-summary-tab {
   flex: none;
   padding: 8px 16px;
-  font-size: 13px;
   font-weight: 600;
   color: var(--text3);
   background: var(--bg2);
@@ -3870,11 +3851,18 @@ a.rules-chat-toggle {
     color 0.15s,
     background 0.15s,
     border-color 0.15s;
-  margin-left: auto;
 }
+.sc-add-player:hover,
 .sc-summary-tab:hover {
   color: var(--text);
   background: var(--bg3);
+}
+.sc-add-player {
+  font-size: 16px;
+}
+.sc-summary-tab {
+  font-size: 13px;
+  margin-left: auto;
 }
 .sc-summary-tab.active {
   color: var(--blue);
