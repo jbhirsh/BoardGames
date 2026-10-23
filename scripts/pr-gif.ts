@@ -120,6 +120,10 @@ export async function drag(page: Page, from: Target, to: Target, ms = 800): Prom
  * over `ms`, at a person's pace, so the page glides and the overlay's ↓ or
  * ↑ shows throughout. page.mouse.wheel alone goes the whole way in one
  * turn, which the GIF sees as a leap. Glide over what scrolls first.
+ * Exported for scenarios, which knip can't see: they're named on the
+ * command line.
+ *
+ * @public
  */
 export async function scroll(page: Page, dy: number, ms = 700): Promise<void> {
   const start = Date.now();

@@ -5,7 +5,7 @@
 import type { LookupOutcome, PreviewDetails } from '../utils/lookupNotice';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
-export const GENERIC_ERROR = 'Something went wrong. Try again in a minute.';
+const GENERIC_ERROR = 'Something went wrong. Try again in a minute.';
 
 export type Outcome<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 

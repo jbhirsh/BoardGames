@@ -275,7 +275,7 @@ export default function PlayerScorePad<P extends PadPlayer>({
 }
 
 /** A row of the Results sheet: its heading cell's contents, then each player's cell. */
-export interface SheetRow {
+interface SheetRow {
   key: string;
   label: ReactNode;
   cells: ReactNode[];

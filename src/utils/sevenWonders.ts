@@ -1,7 +1,7 @@
 // 7 Wonders scoring, as the printed score pad adds it up.
 
 export const SCIENCE_SYMBOLS = ['tablets', 'compasses', 'gears'] as const;
-export type ScienceSymbol = (typeof SCIENCE_SYMBOLS)[number];
+type ScienceSymbol = (typeof SCIENCE_SYMBOLS)[number];
 export type Symbols = Record<ScienceSymbol, number>;
 
 /** Each symbol scores its count squared; each full set of three scores 7 more. */

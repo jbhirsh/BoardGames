@@ -26,11 +26,7 @@ import { anyFilterOn } from './filterState';
  * Apply the filter bar to any Filterable list. `groupIndex` orders items for
  * the "group" sort; each list decides what its groups are.
  */
-export function filterItems<T extends Filterable>(
-  items: T[],
-  state: FilterState,
-  groupIndex: (item: T) => number,
-): T[] {
+function filterItems<T extends Filterable>(items: T[], state: FilterState, groupIndex: (item: T) => number): T[] {
   // Players and time are checked together per game: a card deck stays when
   // one of its games fits both, not when one fits the players and another
   // the time. A deck is never played on its own, so its own players and time

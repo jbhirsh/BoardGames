@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { KeywordId, StoredWishlistItem, WishlistItem, WishlistSection } from '../data/types';
 import { KW, WISHLIST_TYPES } from '../data/keywords';
 
-export interface SuggestionDetails {
+interface SuggestionDetails {
   year?: number;
   min: number;
   max: number;

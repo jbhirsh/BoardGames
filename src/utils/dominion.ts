@@ -23,7 +23,7 @@ export const KINGDOM_CARDS = [
   { key: 'nobles', name: 'Nobles', worth: '2 VP' },
 ] as const;
 
-export type BaseCard = (typeof BASE_CARDS)[number]['key'];
+type BaseCard = (typeof BASE_CARDS)[number]['key'];
 export type KingdomCard = (typeof KINGDOM_CARDS)[number]['key'];
 
 /** How many of each card a player has at the end, and (for Gardens) how many cards in all. */
