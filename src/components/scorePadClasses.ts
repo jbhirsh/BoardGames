@@ -19,10 +19,16 @@ export const rowClass = 'flex items-center justify-between gap-3 [&>.sc-field]:f
 /** A row's label: an icon or not, then its text. */
 export const labelClass = 'flex items-center gap-2 text-[14px] font-medium text-text';
 /**
- * A label's text and its muted notes, which sit on its line and wrap under
- * it (in line with it) where the row is too narrow.
+ * A label's text and its muted notes. On a phone the notes are a quiet
+ * second line under the name, so every row's name starts on one edge and
+ * its notes on the next line, whatever their length; a wider screen has
+ * them on the name's line, wrapping under it (in line with it) where the
+ * row is too narrow.
  */
-export const labelTextClass = 'flex flex-wrap items-baseline gap-x-3';
+export const labelTextClass =
+  'flex flex-wrap items-baseline gap-x-3 max-sm:flex-col max-sm:items-start max-sm:gap-y-0.5';
+/** The notes on a label's second line: what one is worth, and what they come to. */
+export const notesClass = 'flex flex-wrap items-baseline gap-x-3';
 /** A muted note: what a row is worth, what a group comes to. */
 export const noteClass = 'text-[12px] font-normal text-text3';
 /** A muted note after a title's text, on its line. */
