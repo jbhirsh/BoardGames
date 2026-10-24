@@ -5,6 +5,7 @@ import {
   labelClass,
   labelNoteClass,
   labelTextClass,
+  notesClass,
   numberInputClass,
   pointsClass,
   rowClass,
@@ -97,7 +98,8 @@ interface CountProps {
 
 /**
  * A row of a pad that counts things (cards, routes): the name, what one is
- * worth and what they come to, then the box. The worth and points are out
+ * worth and what they come to (a quiet line under the name on a phone),
+ * then the box. The worth and points are out
  * of the box's name and in its description, as 7 Wonders' Treasury has.
  */
 export function CountRow({ id, label, worth, unit, value, points, className = '', onChange }: CountProps) {
@@ -106,11 +108,13 @@ export function CountRow({ id, label, worth, unit, value, points, className = ''
       <label className={labelClass} htmlFor={id}>
         <span className={labelTextClass}>
           {label}
-          <span className={labelNoteClass} id={`${id}-worth`} aria-hidden="true">
-            {worth}
-          </span>
-          <span className={`${labelNoteClass} ${pointsClass}`} id={`${id}-pts`} aria-hidden="true">
-            {points}
+          <span className={notesClass}>
+            <span className={labelNoteClass} id={`${id}-worth`} aria-hidden="true">
+              {worth}
+            </span>
+            <span className={`${labelNoteClass} ${pointsClass}`} id={`${id}-pts`} aria-hidden="true">
+              {points}
+            </span>
           </span>
         </span>
       </label>
