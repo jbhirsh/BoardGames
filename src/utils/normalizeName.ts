@@ -1,6 +1,6 @@
 /**
  * Loose game-name key for duplicate checks: case-insensitive, punctuation
- * and extra whitespace ignored. Mirrors `normalize` in api/suggestions.ts.
+ * and extra whitespace ignored. Mirrors `normalize` in api/_resolvers/suggestions.ts.
  */
 export function normalizeName(s: string): string {
   return s

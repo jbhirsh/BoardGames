@@ -1,7 +1,7 @@
 /**
  * Display names friends type once for suggestions: letters, digits, spaces
  * and a little punctuation, 1–30 characters. Mirrors NAME_RE in
- * api/suggestions.ts (the two trees can't import each other); keep them identical.
+ * api/_resolvers/suggestions.ts (the two trees can't import each other); keep them identical.
  */
 export const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} .'-]{0,29}$/u;
 

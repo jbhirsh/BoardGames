@@ -37,9 +37,9 @@ export interface FakeTransaction {
 }
 
 /**
- * An in-memory Redis behind the commands the API's handlers use, each a
- * spy, for the handlers' own small interfaces (AuthRedis, VotesRedis,
- * SuggestionsRedis). The keyspace is open for a test to read or change:
+ * An in-memory Redis behind the commands the API's resolvers use, each a
+ * spy, for their own small interfaces (AuthRedis, VotesRedis,
+ * SuggestionsRedis in api/_resolvers/). The keyspace is open for a test to read or change:
  * `strings` (with the `ttl` each SET gave), `hashes`, `lists` and `sets`.
  */
 export function fakeRedis(seed: FakeRedisSeed = {}) {

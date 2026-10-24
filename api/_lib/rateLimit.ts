@@ -15,15 +15,13 @@ import * as Sentry from '@sentry/node';
 import { Ratelimit } from '@upstash/ratelimit';
 import { getRedis } from './redis.js';
 
-/** Minimal shape of what enforceRateLimit needs — satisfied by `@upstash/ratelimit`. */
+/** Minimal shape of what rateLimitRefusal needs — satisfied by `@upstash/ratelimit`. */
 export interface RateLimiter {
   limit(identifier: string): Promise<{ success: boolean; reason?: string }>;
 }
 
 export interface RateLimitOptions {
-  /** The bucket to count against. Defaults to the client IP; a fixed key gives every caller one shared budget. */
-  key?: string;
-  /** The 429's body, for an endpoint that words its own refusal. */
+  /** The 429's message and code, for an operation that words its own refusal. */
   refusal?: { error: string; code?: string };
   /** Refuse with a 503 when the limiter can't answer, instead of allowing. */
   failClosed?: boolean;
@@ -32,11 +30,6 @@ export interface RateLimitOptions {
 interface MinimalReq {
   headers: Record<string, string | string[] | undefined>;
   socket?: { remoteAddress?: string };
-}
-
-interface MinimalRes {
-  status(code: number): MinimalRes;
-  json(body: unknown): MinimalRes;
 }
 
 function headerValue(v: string | string[] | undefined): string | undefined {
@@ -79,7 +72,7 @@ export interface Refusal {
 export async function rateLimitRefusal(
   limiter: RateLimiter | null,
   key: string,
-  options: Omit<RateLimitOptions, 'key'> = {},
+  options: RateLimitOptions = {},
 ): Promise<Refusal | null> {
   if (!limiter) return null;
   try {
@@ -109,24 +102,6 @@ export async function rateLimitRefusal(
     if (options.failClosed) return { status: 503, error: 'Temporarily unavailable. Please try again later.' };
     return null;
   }
-}
-
-/**
- * Enforce a limit for this request. Returns true if the request may proceed.
- * When it returns false it has already written the refusal (see
- * rateLimitRefusal).
- */
-export async function enforceRateLimit(
-  limiter: RateLimiter | null,
-  req: MinimalReq,
-  res: MinimalRes,
-  options: RateLimitOptions = {},
-): Promise<boolean> {
-  const refusal = await rateLimitRefusal(limiter, options.key ?? clientIp(req), options);
-  if (!refusal) return true;
-  const { status, ...body } = refusal;
-  res.status(status).json(body);
-  return false;
 }
 
 const cache = new Map<string, Ratelimit | null>();
