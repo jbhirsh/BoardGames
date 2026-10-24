@@ -6,7 +6,7 @@ import RulesChatProvider, { HISTORY_SENT, RulesChatToggle, RulesChatPanel } from
 import { FROM_LIST } from '../utils/fromList';
 import { renderRouted } from './routed';
 
-/** The body the chat posted to /api/chat on a fetch call. */
+/** The variables the chat sent with its askRules subscription on a fetch call. */
 interface ChatBody {
   slug: string;
   message: string;
@@ -15,19 +15,32 @@ interface ChatBody {
 }
 function sentBody(fetchMock: { mock: { calls: unknown[][] } }, call: number): ChatBody {
   const init = fetchMock.mock.calls[call][1] as RequestInit;
-  return JSON.parse(init.body as string) as ChatBody;
+  return (JSON.parse(init.body as string) as { variables: ChatBody }).variables;
 }
+
+/** One chunk of the answer as the API streams it: a server-sent `next` event. */
+const sse = (text: string) => `event: next\ndata: ${JSON.stringify({ data: { askRules: text } })}\n\n`;
+
+/** A refusal as the API streams it: the status and one `next` event carrying the error. */
+const refusal = (status: number, code: string, message = 'refused') =>
+  new Response(
+    `event: next\ndata: ${JSON.stringify({ errors: [{ message, extensions: { code } }] })}\n\nevent: complete\ndata:\n\n`,
+    {
+      status,
+      headers: { 'Content-Type': 'text/event-stream' },
+    },
+  );
 
 vi.mock('../client/sentry', () => ({
   captureMessage: vi.fn(),
   captureException: vi.fn(),
 }));
 
-/** A streamed reply; a string chunk is sent as its UTF-8 bytes, a byte array as is. */
+/** A streamed reply; a string chunk is sent as one event, as UTF-8 bytes, a byte array as is. */
 function streamResponse(chunks: (string | Uint8Array)[]): Response {
   const encoder = new TextEncoder();
   let i = 0;
-  const bytes = (c: string | Uint8Array) => (typeof c === 'string' ? encoder.encode(c) : c);
+  const bytes = (c: string | Uint8Array) => (typeof c === 'string' ? encoder.encode(sse(c)) : c);
   return {
     ok: true,
     body: {
@@ -97,8 +110,8 @@ describe('RulesChat', () => {
     // Four exchanges before the fifth question: eight messages, the newest kept.
     const body = sentBody(fetchMock, 4);
     expect(body.history).toHaveLength(HISTORY_SENT);
-    expect(body.history.at(-1)).toEqual({ role: 'model', content: 'Answer 4.' });
-    expect(body.history[0]).toEqual({ role: 'user', content: `Question ${5 - HISTORY_SENT / 2}?` });
+    expect(body.history.at(-1)).toEqual({ role: 'MODEL', content: 'Answer 4.' });
+    expect(body.history[0]).toEqual({ role: 'USER', content: `Question ${5 - HISTORY_SENT / 2}?` });
   });
 
   it('disables Send while the input is empty', () => {
@@ -120,7 +133,15 @@ describe('RulesChat', () => {
 
     expect(screen.getByText('How many players?')).toBeInTheDocument();
     expect(await screen.findByText('4 or more players.')).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith('/api/chat', expect.objectContaining({ method: 'POST' }));
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/graphql',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+      }),
+    );
+    const posted = (fetchMock.mock.calls as unknown[][])[0][1] as RequestInit;
+    expect((JSON.parse(String(posted.body)) as { operationName: string }).operationName).toBe('AskRules');
     const body = sentBody(fetchMock, 0);
     expect(body).toEqual({ slug: 'cranium', message: 'How many players?', history: [] });
     await waitFor(() => expect(screen.getByPlaceholderText('Ask a rules question...')).toBeEnabled());
@@ -141,10 +162,10 @@ describe('RulesChat', () => {
           getReader: () => ({
             read: async () => {
               i++;
-              if (i === 1) return { done: false, value: new TextEncoder().encode('Robber moves ') };
+              if (i === 1) return { done: false, value: new TextEncoder().encode(sse('Robber moves ')) };
               if (i === 2) {
                 await rest;
-                return { done: false, value: new TextEncoder().encode('(Catan p. 5).') };
+                return { done: false, value: new TextEncoder().encode(sse('(Catan p. 5).')) };
               }
               return { done: true, value: undefined };
             },
@@ -191,7 +212,7 @@ describe('RulesChat', () => {
   // The network splits the stream wherever it likes, including inside a
   // multi-byte character, which must be joined, not decoded half at a time.
   it('joins a character split across two chunks', async () => {
-    const bytes = new TextEncoder().encode('Lead the 10 of ♠ — café rules.');
+    const bytes = new TextEncoder().encode(sse('Lead the 10 of ♠ — café rules.'));
     const cut = bytes.indexOf(0xe2) + 1; // one byte into the three-byte ♠
     vi.stubGlobal(
       'fetch',
@@ -205,17 +226,55 @@ describe('RulesChat', () => {
     expect(screen.queryByText(/\uFFFD/)).toBeNull();
   });
 
-  it('marks a character the stream cut off at its end', async () => {
-    const bytes = new TextEncoder().encode('Spades ♠');
+  it('drops an answer whose stream breaks off partway through an event, and offers Retry', async () => {
+    const bytes = new TextEncoder().encode(sse('Spades ♠'));
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => streamResponse([bytes.slice(0, -1)])),
+      vi.fn(async () => streamResponse([sse('Lead '), bytes.slice(0, -4)])),
     );
     setup();
     openPanel();
     send('Which suit?');
 
-    expect(await screen.findByText('Spades \uFFFD')).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Sorry, something went wrong. Please try again.');
+    expect(screen.queryByText(/Lead/)).toBeNull();
+    expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(expect.any(SyntaxError), {
+      tags: { slug: 'cranium' },
+    });
+  });
+
+  it('reads the answer whole however the reads split the events, ignoring keep-alives, until it completes', async () => {
+    const text = `:\n\n${sse('Four ')}${sse('to ')}${sse('eight.')}event: complete\ndata:\n\n${sse('never read')}`;
+    const bytes = new TextEncoder().encode(text);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => streamResponse([bytes.slice(0, 7), bytes.slice(7, 61), bytes.slice(61)])),
+    );
+    setup();
+    openPanel();
+    send('How many?');
+    expect(await screen.findByText('Four to eight.')).toBeInTheDocument();
+    expect(screen.queryByText(/never read/)).toBeNull();
+  });
+
+  it('treats an error inside the stream as a fault of ours', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        streamResponse([
+          new TextEncoder().encode(
+            `event: next\ndata: ${JSON.stringify({ errors: [{ message: 'boom', extensions: { code: 'X' } }] })}\n\n`,
+          ),
+        ]),
+      ),
+    );
+    setup();
+    openPanel();
+    send('How many?');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Sorry, something went wrong. Please try again.');
+    expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(new Error('rules chat stream error: X'), {
+      tags: { slug: 'cranium' },
+    });
   });
 
   it('says what it is reading when told, and nothing when not', () => {
@@ -436,7 +495,7 @@ describe('RulesChat', () => {
                     release = resolve;
                   });
                 return i < chunks.length
-                  ? { done: false, value: encoder.encode(chunks[i++]) }
+                  ? { done: false, value: encoder.encode(sse(chunks[i++])) }
                   : { done: true, value: undefined };
               },
             }),
@@ -612,14 +671,7 @@ describe('RulesChat', () => {
   it('says the assistant is resting for the day when the daily cap answers, by the box and not as an error', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(
-        async () =>
-          ({
-            ok: false,
-            status: 429,
-            json: async () => ({ error: 'Daily cap.', code: 'daily-limit' }),
-          }) as Response,
-      ),
+      vi.fn(async () => refusal(429, 'DAILY_LIMIT', 'Daily cap.')),
     );
     setup();
     openPanel();
@@ -639,17 +691,10 @@ describe('RulesChat', () => {
     expect(vi.mocked(Sentry.captureMessage)).not.toHaveBeenCalled();
   });
 
-  it('keeps the per-minute notice for a 429 whose body has no daily code', async () => {
+  it('keeps the per-minute notice for a 429 whose code is not the daily cap', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(
-        async () =>
-          ({
-            ok: false,
-            status: 429,
-            json: async () => ({ error: 'Too many requests. Please slow down.' }),
-          }) as Response,
-      ),
+      vi.fn(async () => refusal(429, 'RATE_LIMITED', 'Too many requests. Please slow down.')),
     );
     setup();
     openPanel();
@@ -673,7 +718,7 @@ describe('RulesChat', () => {
               getReader: () => ({
                 read: () =>
                   calls++ === 0
-                    ? Promise.resolve({ done: false, value: encoder.encode('Partial ans') })
+                    ? Promise.resolve({ done: false, value: encoder.encode(sse('Partial ans')) })
                     : Promise.reject(new Error('connection reset')),
               }),
             },
@@ -744,7 +789,7 @@ describe('RulesChat', () => {
                         () =>
                           resolve(
                             i < chunks.length
-                              ? { done: false, value: encoder.encode(chunks[i++]) }
+                              ? { done: false, value: encoder.encode(sse(chunks[i++])) }
                               : { done: true, value: undefined },
                           ),
                         20_000,
@@ -969,7 +1014,7 @@ describe("RulesChat when the assistant can't answer", () => {
   it('keeps pointing to the rulebook at the cap while the page asks whether it is saved', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => ({ ok: false, status: 429, json: async () => ({ code: 'daily-limit' }) }) as Response),
+      vi.fn(async () => refusal(429, 'DAILY_LIMIT')),
     );
     withStarters({ rulebookSaved: 'asking' });
     fireEvent.click(screen.getByRole('button', { name: 'How do you win?' }));
@@ -1104,14 +1149,7 @@ describe("RulesChat when the assistant can't answer", () => {
   it("keeps the cap's notice when the browser comes back online", async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(
-        async () =>
-          ({
-            ok: false,
-            status: 429,
-            json: async () => ({ code: 'daily-limit' }),
-          }) as Response,
-      ),
+      vi.fn(async () => refusal(429, 'DAILY_LIMIT')),
     );
     setup();
     openPanel();
@@ -1154,7 +1192,7 @@ describe("RulesChat when the assistant can't answer", () => {
               getReader: () => ({
                 read: () =>
                   calls++ === 0
-                    ? Promise.resolve({ done: false, value: encoder.encode('Seven') })
+                    ? Promise.resolve({ done: false, value: encoder.encode(sse('Seven')) })
                     : Promise.reject(new TypeError('network error')),
               }),
             },

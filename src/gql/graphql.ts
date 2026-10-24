@@ -30,6 +30,11 @@ export type DetailsInput = {
   year?: number | null | undefined;
 };
 
+export type HistoryEntry = {
+  content: string;
+  role: Role;
+};
+
 /** How a BoardGameGeek lookup went. */
 export type LookupOutcome =
   | 'FOUND'
@@ -39,6 +44,10 @@ export type LookupOutcome =
   /** BoardGameGeek refused the token. */
   | 'REFUSED'
   | 'UNAVAILABLE';
+
+export type Role =
+  | 'MODEL'
+  | 'USER';
 
 export type Source =
   | 'FRIEND'
@@ -155,6 +164,16 @@ export type VerifySignInMutationVariables = Exact<{
 
 
 export type VerifySignInMutation = { verifySignIn: { admin: boolean } };
+
+export type AskRulesSubscriptionVariables = Exact<{
+  slug: string;
+  message: string;
+  history?: Array<HistoryEntry> | HistoryEntry | null | undefined;
+  parts?: Array<string> | string | null | undefined;
+}>;
+
+
+export type AskRulesSubscription = { askRules: string };
 
 export type WishlistVotesQueryVariables = Exact<{
   ids: Array<string> | string;
@@ -350,6 +369,11 @@ export const VerifySignInDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<VerifySignInMutation, VerifySignInMutationVariables>;
+export const AskRulesDocument = new TypedDocumentString(`
+    subscription AskRules($slug: String!, $message: String!, $history: [HistoryEntry!], $parts: [String!]) {
+  askRules(slug: $slug, message: $message, history: $history, parts: $parts)
+}
+    `) as unknown as TypedDocumentString<AskRulesSubscription, AskRulesSubscriptionVariables>;
 export const WishlistVotesDocument = new TypedDocumentString(`
     query WishlistVotes($ids: [String!]!, $anonId: String) {
   wishlistVotes(ids: $ids, anonId: $anonId) {

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { test, expect } from './fixtures';
+import { test, expect, stubOperation, answerStream } from './fixtures';
 import { settle } from './visual';
 
 /**
@@ -40,10 +40,9 @@ test('list view', async ({ page }) => {
 });
 
 test('rules assistant', async ({ page }) => {
-  await page.route('**/api/chat', (route) =>
-    route.fulfill({
-      contentType: 'text/plain; charset=utf-8',
-      body: [
+  await stubOperation(page, 'AskRules', () =>
+    answerStream(
+      [
         'When a **7** is rolled, three things happen:',
         '',
         '1. Every player holding **more than 7 resource cards** must discard half (rounded down).',
@@ -52,7 +51,7 @@ test('rules assistant', async ({ page }) => {
         '',
         'The robber stays put until the next 7 is rolled or a Knight card moves it.',
       ].join('\n'),
-    }),
+    ),
   );
   await page.goto('/rules/catan');
   await page.getByRole('button', { name: 'AI Rules Assistant' }).click();

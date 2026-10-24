@@ -4,8 +4,11 @@
 // its data or to a message a form can show: a GraphQL error's own (the
 // API words its refusals for people), or a generic one for anything else
 // (a network failure, an abort, a 500). Nothing here throws into React.
-// Documents are sent as the strings codegen wrote, so no GraphQL library
-// reaches the browser.
+// openStream() asks for a subscription over server-sent events (GraphQL
+// Yoga's distinct-connection mode: the same JSON POST, answered as an event
+// stream), readEvents() reads its answers as they arrive and errorCode()
+// says why one was refused, for the rules chat. Documents are sent as the
+// strings codegen wrote, so no GraphQL library reaches the browser.
 
 import type { TypedDocumentString } from '../gql/graphql';
 
@@ -23,7 +26,7 @@ interface ApiError {
 }
 
 /** One GraphQL answer: its data and its errors. */
-interface Answer<T> {
+export interface Answer<T> {
   data: T | null;
   errors: ApiError[];
 }
@@ -66,6 +69,76 @@ function settle<T>(answer: Answer<T>, ok: boolean): Result<T> {
   if (error) return { ok: false, error: error.message, code: error.code, status: error.status };
   if (!ok || answer.data === null) return { ok: false, error: GENERIC_ERROR };
   return { ok: true, data: answer.data };
+}
+
+/**
+ * Opens a subscription: the document POSTed as JSON, asking for server-sent
+ * events. Resolves once the answer's headers are in; fetch's own failures
+ * (no network, an abort) reject, as they would for any request.
+ */
+export function openStream<TResult, TVariables>(
+  document: TypedDocumentString<TResult, TVariables>,
+  variables: TVariables,
+  signal: AbortSignal,
+): Promise<Response> {
+  return fetch(ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+    body: body(document, variables),
+    signal,
+  });
+}
+
+/** The `data:` of each event in a server-sent stream's text, by event name. */
+function events(text: string): Array<{ event: string; data: string }> {
+  return text
+    .split('\n\n')
+    .filter((block) => block.trim() !== '')
+    .map((block) => {
+      let event = 'message';
+      const data: string[] = [];
+      for (const line of block.split('\n')) {
+        if (line.startsWith('event:')) event = line.slice(6).trim();
+        else if (line.startsWith('data:')) data.push(line.slice(5).replace(/^ /, ''));
+      }
+      return { event, data: data.join('\n') };
+    });
+}
+
+/**
+ * The answers a subscription's stream carries, one per `next` event, read
+ * from `reader` as the bytes arrive (a character split between two reads is
+ * joined, not garbled), until `complete` or the end. Keep-alive comments
+ * carry no answer. A failed read rejects, as the read itself did.
+ */
+export async function* readEvents<T>(reader: ReadableStreamDefaultReader<Uint8Array>): AsyncGenerator<Answer<T>, void> {
+  const decoder = new TextDecoder();
+  let buffer = '';
+  for (;;) {
+    const { done, value } = await reader.read();
+    buffer += done ? decoder.decode() : decoder.decode(value, { stream: true });
+    // Only whole events: the rest waits for the next read.
+    const cut = buffer.lastIndexOf('\n\n');
+    const end = done ? buffer.length : cut < 0 ? 0 : cut + 2;
+    const ready = buffer.slice(0, end);
+    buffer = buffer.slice(end);
+    for (const { event, data } of events(ready)) {
+      if (event === 'complete') return;
+      if (event === 'next') yield readAnswer<T>(JSON.parse(data));
+    }
+    if (done) return;
+  }
+}
+
+/** The code of the error a refused request or stream answered with, if it said one. */
+export async function errorCode(response: Response): Promise<string | undefined> {
+  try {
+    const text = await response.text();
+    const next = events(text).find((e) => e.event === 'next');
+    return readAnswer(JSON.parse(next ? next.data : text)).errors[0]?.code;
+  } catch {
+    return undefined;
+  }
 }
 
 /** Sends one query or mutation. */
