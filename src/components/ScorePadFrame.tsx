@@ -32,7 +32,8 @@ interface Props {
 /**
  * What every score pad sits in: the page's title, the header (Back, the box
  * art, "Score Calculator" and the game's name), and the boxes' digits set
- * in the middle (--digit-nudge). While the page is open it holds a screen
+ * in the middle (--digit-nudge), the pad itself 720px at most so its rows'
+ * labels stay near their boxes. While the page is open it holds a screen
  * wake lock (useWakeLock), so a phone on the table doesn't lock between
  * turns.
  */
@@ -43,7 +44,9 @@ export default function ScorePadFrame({ name, art, children }: Props) {
     <div className={pageClass} style={{ '--digit-nudge': `${nudge}px` } as CSSProperties}>
       <title>{`${name} score · The Game Room`}</title>
       <PageHeader title="Score Calculator" desc={name} art={art} />
-      {children}
+      {/* 720px at most: across the page's whole 960px a row's label sat
+          some 870px from its box. A phone's pads are narrower anyway. */}
+      <div className="max-w-180">{children}</div>
     </div>
   );
 }
