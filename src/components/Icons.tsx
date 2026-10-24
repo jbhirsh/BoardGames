@@ -1,6 +1,11 @@
-export function ChevronIcon() {
+/** The chevron that opens a list row or phone line, turned and blue while `open`. */
+export function ChevronIcon({ open = false }: { open?: boolean }) {
   return (
-    <svg className="row-chevron" viewBox="0 0 12 12" fill="none">
+    <svg
+      className={`row-chevron size-4 align-middle [transition:transform_0.22s_cubic-bezier(0.16,1,0.3,1),color_0.15s] ${open ? 'transform-[rotate(180deg)] text-blue' : 'text-text3'}`}
+      viewBox="0 0 12 12"
+      fill="none"
+    >
       <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );

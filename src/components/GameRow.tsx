@@ -10,6 +10,7 @@ import GameDetail from './GameDetail';
 import { fittingSubgames, hasSubgames, subgameTitle } from '../utils/subgames';
 import { gameAnchor } from '../utils/heroCovers';
 import { useItemFilter } from '../context/useFilter';
+import { detailHeadingClass, detailSectionClass } from './sharedClasses';
 
 interface Props {
   game: Game;
@@ -38,7 +39,11 @@ function GameRow({ game, isOpen, onToggle: toggleRow }: Props) {
   const hasFitting = game.subgames !== undefined && fittingSubgames(game.subgames, filter).length > 0;
   return (
     <>
-      <tr id={gameAnchor(game.slug)} className={`game-row${isOpen ? ' open' : ''}`} onClick={onToggle}>
+      <tr
+        id={gameAnchor(game.slug)}
+        className={`game-row group/row cursor-pointer scroll-mt-[calc(var(--thead-top,91px)+48px)] ${isOpen ? 'open' : ''}`}
+        onClick={onToggle}
+      >
         <TableRowCells
           name={game.name}
           players={game.players}
@@ -56,9 +61,9 @@ function GameRow({ game, isOpen, onToggle: toggleRow }: Props) {
       <TableRowExpand colSpan={COLLECTION_COLUMNS} isOpen={isOpen}>
         <GameDetail sections={game.detail} />
         {isOpen && hasSubgames(game) && hasFitting && (
-          <div className="detail-section row-subgames">
-            <h3>{subgameTitle(game.subgames)}</h3>
-            <SubGameList game={game} />
+          <div className={`${detailSectionClass} row-subgames`}>
+            <h3 className={detailHeadingClass}>{subgameTitle(game.subgames)}</h3>
+            <SubGameList game={game} inRow />
           </div>
         )}
         <AwardsSection awards={game.awards} />

@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { WISHLIST_TYPES } from '../data/keywords';
 import type { WishlistGroup } from '../utils/filterGames';
 import WishLine from './WishLine';
+import { groupHeadingClass, linesClass, wishGroupClass } from './sharedClasses';
 
 interface Props {
   groups: WishlistGroup[];
@@ -22,9 +23,9 @@ export default function WishlistPhoneListView({ groups, counts, myVotes, onVote,
   const toggleRow = useCallback((id: string) => setOpenRow((open) => (open === id ? null : id)), []);
 
   return groups.map(({ key, items }) => (
-    <div className="wish-group" key={key ?? 'all'}>
-      {key && <h3 className="group-hd">{WISHLIST_TYPES[key]}</h3>}
-      <ul className="lines">
+    <div className={`wish-group ${wishGroupClass}`} key={key ?? 'all'}>
+      {key && <h3 className={groupHeadingClass}>{WISHLIST_TYPES[key]}</h3>}
+      <ul className={linesClass}>
         {items.map((item) => (
           <WishLine
             key={item.id}

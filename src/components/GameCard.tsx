@@ -12,6 +12,21 @@ import Popover from './Popover';
 import { fittingSubgames, hasSubgames, subgameLabel } from '../utils/subgames';
 import { gameAnchor } from '../utils/heroCovers';
 import { UserIcon, ClockIcon } from './Icons';
+import {
+  cardBodyClass,
+  cardClass,
+  cardDescClass,
+  cardFootClass,
+  cardFootStartClass,
+  cardHeadClass,
+  cardMetaClass,
+  cardMoreClass,
+  cardNameClass,
+  cornerArtClass,
+  labelPillClass,
+  metaClass,
+  tagsClass,
+} from './sharedClasses';
 
 interface Props {
   game: Game;
@@ -19,7 +34,8 @@ interface Props {
 
 /**
  * A collection game in the grid. The card spans four subgrid rows of the
- * grid (App.css), so heads and footers line up across a row. More opens the
+ * grid (sharedClasses.ts' cardClass), so heads and footers line up across a
+ * row. More opens the
  * write-up and awards. A game with games inside it has a button bottom left,
  * beside the award count, named by kind ("+2 expansions", "1 of 12 games
  * fit" under a filter; just "+N" on a narrow card), that lists the names on
@@ -46,27 +62,31 @@ function GameCard({ game }: Props) {
     // own, so the cards that share its subgrid rows aren't stretched. The
     // id is where the hero's cover for this game leads, and the name takes
     // focus there.
-    <div id={gameAnchor(game.slug)} className={`game-card${moreOpen || (subsOpen && hasFitting) ? ' card-open' : ''}`}>
-      <div className="card-head">
-        <img src={game.img} alt={`${game.name} box art`} className="card-corner-img" loading="lazy" />
-        <h3 className="card-name" tabIndex={-1} data-focus-target="item">
+    // It takes the full row, the cards after it keeping their order.
+    <div
+      id={gameAnchor(game.slug)}
+      className={`game-card ${cardClass} ${moreOpen || (subsOpen && hasFitting) ? 'card-open col-span-full' : ''}`}
+    >
+      <div className={cardHeadClass}>
+        <img src={game.img} alt={`${game.name} box art`} className={cornerArtClass} loading="lazy" />
+        <h3 className={`${cardNameClass} pr-(--corner-clear)`} tabIndex={-1} data-focus-target="item">
           {game.name}
         </h3>
-        <div className="card-meta">
-          <span className="cmeta">
+        <div className={`${cardMetaClass} pr-(--corner-clear)`}>
+          <span className={metaClass}>
             <UserIcon /> {game.players}
           </span>
-          <span className="cmeta">
+          <span className={metaClass}>
             <ClockIcon /> {game.dur}
           </span>
           <DifficultyMeta item={game} />
         </div>
         {game.arriving && (
-          <p className="card-arriving">
-            <span className="expands-tag">Arriving {game.arriving}</span>
+          <p className="pt-2 pr-(--corner-clear)">
+            <span className={`${labelPillClass} rounded-[999px]`}>Arriving {game.arriving}</span>
           </p>
         )}
-        <div className="card-kw">
+        <div className={`${tagsClass} pt-2 pr-(--corner-clear)`}>
           {sortedKw(game.kw).map((kw) => (
             <KeywordPill
               key={kw}
@@ -77,13 +97,13 @@ function GameCard({ game }: Props) {
           ))}
         </div>
       </div>
-      <div className="card-body">
+      <div className={cardBodyClass}>
         {/* More opens the long write-up a list row shows when expanded. */}
-        <p className="card-desc">
+        <p className={cardDescClass}>
           {game.short}{' '}
           <button
             type="button"
-            className="card-more"
+            className={cardMoreClass}
             aria-expanded={moreOpen}
             aria-controls={moreId}
             aria-label={`${moreOpen ? 'Less' : 'More'} about ${game.name}`}
@@ -93,35 +113,50 @@ function GameCard({ game }: Props) {
           </button>
         </p>
         {moreOpen && (
-          <div className="card-detail" id={moreId}>
+          // With the full row to fill, the write-up runs in columns of a
+          // comfortable line length, as many as the row holds (one on a phone).
+          <div
+            className="mt-2.5 columns-[36ch] gap-x-10 border-t border-border pt-3 *:break-inside-avoid [&>.detail-section]:mb-3 [&>.detail-section:last-child]:mb-0"
+            id={moreId}
+          >
             <GameDetail sections={game.detail} />
             <AwardsSection awards={game.awards} />
           </div>
         )}
       </div>
-      <div className="card-foot">
+      <div className={cardFootClass}>
         {/* What the card holds besides its own game sits bottom left, so
             every card's head carries the same things and lines up. */}
-        <div className="card-foot-start">
+        <div className={cardFootStartClass}>
           <AwardsBadge itemName={game.name} awards={game.awards} />
           {game.subgames && hasFitting && (
             <Popover
-              className="sub-pill-wrap"
-              buttonClassName="sub-pill"
+              className="inline-flex"
+              buttonClassName={() =>
+                'group/pill inline-flex cursor-pointer items-center gap-1.5 rounded-[999px] border border-blue-tint/25 bg-blue-bg px-2.75 py-1.25 text-[11.5px] font-semibold text-blue [transition:background_0.15s,border-color_0.15s] hover:border-blue-tint/40 hover:bg-blue-bg2'
+              }
               label={`${game.name}: ${subsLabel}`}
               title={`${game.name}: ${subsLabel}`}
               activate={{ onClick: () => setSubsOpen((o) => !o), expanded: subsOpen, controls: subsId }}
               trigger={
                 <>
-                  <span className="sub-pill-full">{subsLabel}</span>
-                  <span className="sub-pill-short">+{fitting.length}</span>
-                  <svg className="sub-pill-chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+                  {/* On a footer too narrow for the full label beside the award
+                      count and the actions, just the count. */}
+                  <span className="sub-pill-full [@container_(max-width:323px)]:hidden">{subsLabel}</span>
+                  <span className="sub-pill-short hidden [@container_(max-width:323px)]:inline">+{fitting.length}</span>
+                  <svg
+                    className="[transition:transform_0.2s] group-aria-expanded/pill:transform-[rotate(180deg)]"
+                    width="10"
+                    height="10"
+                    viewBox="0 0 10 10"
+                    aria-hidden="true"
+                  >
                     <path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" />
                   </svg>
                 </>
               }
             >
-              <ul className="sub-tag-list">
+              <ul className="flex flex-col gap-0.75 text-[12px] leading-normal text-text2">
                 {fitting.map((s) => (
                   <li key={s.slug}>{s.name}</li>
                 ))}
@@ -132,7 +167,7 @@ function GameCard({ game }: Props) {
         <GameActions game={game} variant="card" />
       </div>
       {hasSubgames(game) && hasFitting && subsOpen && (
-        <div className="sub-panel" id={subsId}>
+        <div className="row-4 self-start border-t border-border bg-bg2 p-2" id={subsId}>
           <SubGameList game={game} />
         </div>
       )}

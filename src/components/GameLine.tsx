@@ -11,6 +11,7 @@ import GameDetail from './GameDetail';
 import SubGameList from './SubGameList';
 import { AwardsSection } from './AwardsBadge';
 import GameActions from './GameActions';
+import { detailHeadingClass, detailSectionClass, tagsClass } from './sharedClasses';
 
 interface Props {
   game: Game;
@@ -25,7 +26,7 @@ interface Props {
  * games inside that fit the filters, the awards, then Rules and the other
  * actions), after its one-line pitch and tags, which the line has no room
  * for. The count says "players" where the line has room for it on one
- * line (App.css), as on an iPhone Pro. Rules waits there rather than on the line, where thirty of it in a
+ * line (a container query on the line's text), as on an iPhone Pro. Rules waits there rather than on the line, where thirty of it in a
  * column read as one repeated word and took the room a name and its
  * players, time and weight need. Memoized: a filter change that leaves this
  * game as it was doesn't redraw it.
@@ -46,7 +47,10 @@ function GameLine({ game, isOpen, onToggle }: Props) {
       meta={
         <>
           {game.players}
-          <span className="line-unit"> {game.players === '1' ? 'player' : 'players'}</span>
+          {/* "2–4 players" where every line's players, time and weight fit on
+              one line with the word (232px of text on a 402px iPhone Pro, where
+              Card Deck's, the longest, takes 224px), "2–4" where they wouldn't. */}
+          <span className="[@container_(max-width:225px)]:hidden"> {game.players === '1' ? 'player' : 'players'}</span>
           {[game.dur, difficulty]
             .filter(Boolean)
             .map((part) => ` · ${part}`)
@@ -56,8 +60,8 @@ function GameLine({ game, isOpen, onToggle }: Props) {
       isOpen={isOpen}
       onToggle={() => onToggle(game.name)}
     >
-      <p className="line-desc">{game.short}</p>
-      <div className="card-kw">
+      <p className="mb-2.5 text-[14px] leading-[1.55] text-text2">{game.short}</p>
+      <div className={`${tagsClass} mb-3.5`}>
         {sortedKw(game.kw).map((kw) => (
           <KeywordPill
             key={kw}
@@ -69,9 +73,9 @@ function GameLine({ game, isOpen, onToggle }: Props) {
       </div>
       <GameDetail sections={game.detail} />
       {isOpen && hasSubgames(game) && hasFitting && (
-        <div className="detail-section row-subgames">
-          <h3>{subgameTitle(game.subgames)}</h3>
-          <SubGameList game={game} />
+        <div className={`${detailSectionClass} row-subgames`}>
+          <h3 className={detailHeadingClass}>{subgameTitle(game.subgames)}</h3>
+          <SubGameList game={game} inRow />
         </div>
       )}
       <AwardsSection awards={game.awards} />

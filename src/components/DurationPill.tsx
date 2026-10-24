@@ -12,7 +12,8 @@ interface Props {
 }
 
 export default function DurationPill({ cat, className, label, budget, onClick }: Props) {
-  const cls = className ? `${className} dur-${cat}` : `dur-pill dur-${cat}`;
+  // Every bucket looks alike; the dur-* hook names it. A caller's className gives its shape.
+  const cls = `${className ?? 'shrink-0 rounded-[20px] px-2.25 py-0.75 text-[11px] font-medium tracking-[0.4px]'} dur-${cat} border border-border bg-bg2 text-text2`;
   const interactive = typeof onClick === 'function';
   return (
     <span

@@ -11,6 +11,7 @@ import ExpansionTag from './ExpansionTag';
 import { AwardsSection } from './AwardsBadge';
 import AdminItemControls from './AdminItemControls';
 import WishlistLinks from './WishlistLinks';
+import { creditClass, rowFootClass, tagsClass } from './sharedClasses';
 
 interface Props {
   item: WishlistItem;
@@ -57,15 +58,15 @@ function WishLine({ item, voteCount, voted, onVote, disabled, isOpen, onToggle, 
       onToggle={() => onToggle(item.id)}
       data={{ 'data-testid': 'wishlist-item', 'data-item-id': item.id }}
     >
-      <p className="line-desc">{item.desc}</p>
+      <p className="mb-2.5 text-[14px] leading-[1.55] text-text2">{item.desc}</p>
       {item.expands && (
-        <p className="card-expands">
+        <p className="mb-2.5">
           <ExpansionTag base={item.expands} />
         </p>
       )}
-      {item.suggestedBy && <p className="card-credit">Suggested by {item.suggestedBy}</p>}
+      {item.suggestedBy && <p className={`${creditClass} mb-2.5`}>Suggested by {item.suggestedBy}</p>}
       {item.kw.length > 0 && (
-        <div className="card-kw">
+        <div className={`${tagsClass} mb-3.5`}>
           {sortedKw(item.kw).map((kw) => (
             <KeywordPill
               key={kw}
@@ -78,7 +79,7 @@ function WishLine({ item, voteCount, voted, onVote, disabled, isOpen, onToggle, 
       )}
       <AwardsSection awards={item.awards} />
       <AdminItemControls item={item} />
-      <div className="row-expand-foot">
+      <div className={rowFootClass}>
         <WishlistLinks item={item} />
       </div>
     </PhoneLine>

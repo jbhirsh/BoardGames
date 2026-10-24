@@ -59,7 +59,9 @@ describe('TableRowCells', () => {
 
   it('renders the shared cells in header order with the table classes', () => {
     const { row } = renderCells({ awards: [{ name: 'Spiel des Jahres', year: 2020 }] });
-    const cells = Array.from(row.children).map((td) => td.className);
+    // The column hooks; the rest of each class list is its utilities.
+    const hooks = (td: Element) => [...td.classList].filter((c) => c.startsWith('col-')).join(' ');
+    const cells = Array.from(row.children).map(hooks);
     expect(cells).toEqual([
       'col-name',
       'col-hide col-players-h col-players',
@@ -97,7 +99,9 @@ describe('TableRowCells', () => {
 
   it('slots the extra cell in just before the actions cell', () => {
     const { row } = renderCells({ extra: <td className="col-vote">7</td> });
-    const classes = Array.from(row.children).map((td) => td.className);
+    const classes = Array.from(row.children).map((td) =>
+      [...td.classList].filter((c) => c.startsWith('col-')).join(' '),
+    );
     expect(classes.slice(-2)).toEqual(['col-vote', 'col-actions']);
     expect(row.children).toHaveLength(7);
     expect(row.querySelector('.col-vote')).toHaveTextContent('7');

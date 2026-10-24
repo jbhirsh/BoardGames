@@ -15,7 +15,8 @@ describe('GameDetail', () => {
       </div>,
     );
     const host = screen.getByTestId('host');
-    expect([...host.children].map((el) => el.className)).toEqual(['detail-section', 'detail-section']);
+    expect(host.children).toHaveLength(2);
+    for (const section of host.children) expect(section).toHaveClass('detail-section');
     expect(container.querySelector('.detail-section .detail-section')).toBeNull();
     expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual([
       'How It Works',
