@@ -5,7 +5,8 @@ import { expect, CHAT_ANSWER } from './fixtures';
  * Visual regression's pages and states (the visual*.spec.ts files), and how
  * each is shot. The visual-* projects in playwright.config.ts decide which
  * spec runs where: visual.spec.ts, the core pages in the light theme, in
- * every engine on a desktop and on phones; visual-full.spec.ts, everything
+ * every engine on a desktop and on phones; visual-desktop.spec.ts, what
+ * only a desktop lays out differently, in every engine; visual-full.spec.ts, everything
  * in both themes, in desktop Chromium; visual-phone.spec.ts, what only a
  * phone shows.
  *
@@ -86,13 +87,6 @@ export const CORE: Scenario[] = [
     },
   },
   {
-    name: 'home-grid',
-    open: async (page) => {
-      await page.goto('/?v=grid');
-      await expect(page.getByRole('heading', { level: 2, name: 'Our Collection' })).toBeVisible();
-    },
-  },
-  {
     name: 'rules',
     open: async (page) => {
       await page.goto('/rules/catan');
@@ -111,6 +105,17 @@ export const CORE: Scenario[] = [
     open: async (page) => {
       await page.goto('/word-checker');
       await expect(page.getByRole('heading', { level: 1, name: 'Word Checker' })).toBeVisible();
+    },
+  },
+];
+
+/** The pages only a desktop draws differently: a phone shows the grid as its list. */
+export const WIDE: Scenario[] = [
+  {
+    name: 'home-grid',
+    open: async (page) => {
+      await page.goto('/?v=grid');
+      await expect(page.getByRole('heading', { level: 2, name: 'Our Collection' })).toBeVisible();
     },
   },
 ];

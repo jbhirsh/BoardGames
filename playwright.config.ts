@@ -5,10 +5,11 @@ import { defineConfig, devices } from '@playwright/test';
 const PORT = 4174;
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 const CI = !!process.env.CI;
-// Visual regression (e2e/visual.ts): the core pages everywhere, the full set
-// in desktop Chromium, the phone-only states on phones.
-const VISUAL = /visual(-full|-phone)?\.spec\.ts$/;
-const CORE = /visual\.spec\.ts$/;
+// Visual regression (e2e/visual.ts): the core pages everywhere, the
+// desktop-only ones on desktops, the full set in desktop Chromium, the
+// phone-only states on phones.
+const VISUAL = /visual(-full|-desktop|-phone)?\.spec\.ts$/;
+const CORE = /visual(-desktop)?\.spec\.ts$/;
 const DESKTOP = { viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' } as const;
 // For machines whose preinstalled Chromium doesn't match this Playwright
 // release; CI installs the matching browsers instead.
@@ -55,7 +56,7 @@ export default defineConfig({
     // the hero's row of covers still.
     {
       name: 'visual-chromium',
-      testMatch: /visual(-full)?\.spec\.ts$/,
+      testMatch: /visual(-full|-desktop)?\.spec\.ts$/,
       use: { ...devices['Desktop Chrome'], ...DESKTOP, launchOptions: chromiumLaunch },
     },
     { name: 'visual-firefox', testMatch: CORE, use: { ...devices['Desktop Firefox'], ...DESKTOP } },
