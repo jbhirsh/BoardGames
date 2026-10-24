@@ -150,6 +150,9 @@ before changing the module.
 - **Prettier owns layout** (`.prettierrc.json`); ESLint's layout rules are
   off (`eslint-config-prettier`, last in the config). `.prettierignore` keeps
   it off prose (`*.md`) and off what a script writes.
+  `.git-blame-ignore-revs` lists the one-time reformat (#265) by its SHA on
+  main, so blame skips it (locally once `git config blame.ignoreRevsFile
+  .git-blame-ignore-revs` is set).
 - **No exact version pins.** Every dependency in `package.json` takes a range
   (`^`, `~`); the lockfile fixes what gets installed.
   `dependencyRanges.test.ts` fails on an exact version.
