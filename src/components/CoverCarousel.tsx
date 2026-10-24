@@ -22,7 +22,8 @@ import { PauseIcon, PlayIcon } from './Icons';
 // The first covers on screen load with the page. The rest wait (lazy)
 // until it has settled, then all load: a lazy image in the clipped row
 // only starts once it is already gliding into view, and would show its
-// blank matte for a moment.
+// blank matte for a moment. The row's list carries data-warm once they
+// have all been asked for, which the screenshot tests wait on.
 const EAGER = 8;
 const WARM_MS = 1500;
 // How far a press must move sideways before it drags the row rather than
@@ -264,6 +265,7 @@ export default function CoverCarousel({ want }: { want: boolean }) {
       className="hero-reel-list"
       aria-label={copy ? undefined : want ? 'Wishlist covers' : 'Collection covers'}
       aria-hidden={copy || undefined}
+      data-warm={(!copy && warm) || undefined}
     >
       {shown.map((c, i) => (
         <li key={c.id}>

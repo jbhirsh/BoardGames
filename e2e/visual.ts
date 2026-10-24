@@ -34,7 +34,7 @@ export async function prepare(page: Page, theme: Theme): Promise<void> {
 
 /**
  * Shoots the window, or the whole page, once it has stopped changing: the
- * hero's late covers asked for, every image loaded (lazy ones too, which a full-page shot
+ * hero warmed up, every image loaded (lazy ones too, which a full-page shot
  * never scrolls to) and the fonts in. The projects' reduced motion holds the hero's row still.
  */
 export async function shoot(page: Page, name: string, fullPage = false): Promise<void> {
@@ -46,9 +46,11 @@ export async function shoot(page: Page, name: string, fullPage = false): Promise
 
 /** Waits until the page has stopped changing on its own (see shoot), for any screenshot. */
 export async function settle(page: Page): Promise<void> {
-  // The hero starts loading its later covers 1.5 s after it mounts
-  // (WARM_MS in CoverCarousel); past that, nothing new starts on its own.
-  await page.waitForFunction(() => performance.now() > 2_000);
+  // The hero asks for its later covers once the page has settled, and says
+  // so on its list (data-warm, CoverCarousel); past that, nothing new
+  // starts on its own. Pages without the hero have no such list.
+  const reel = page.getByRole('list', { name: /^(Collection|Wishlist) covers$/ });
+  if ((await reel.count()) > 0) await expect(reel).toHaveAttribute('data-warm', 'true');
   await page.evaluate(async () => {
     for (const img of document.querySelectorAll('img')) img.loading = 'eager';
     await Promise.all([...document.images].map((img) => img.decode().catch(() => undefined)));
@@ -61,10 +63,9 @@ async function firstPageDrawn(page: Page): Promise<void> {
   const first = page.getByRole('group', { name: /^Page 1 of \d+$/ });
   await expect(first).toBeVisible();
   await expect(page.getByRole('button', { name: 'Search', exact: true })).toBeEnabled();
-  // Its text is laid over the drawing once that is done.
-  await expect
-    .poll(() => first.evaluate((el) => el.querySelector('.textLayer')?.childElementCount ?? 0), { timeout: 15_000 })
-    .toBeGreaterThan(0);
+  // Its text is laid over the drawing once that is done (the canvas is
+  // hidden from the accessibility tree, so the text is all the page holds).
+  await expect(first.getByText(/\S/).first()).toBeAttached({ timeout: 15_000 });
 }
 
 /** Answers every dictionary lookup with one English noun sense. */
