@@ -102,7 +102,12 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
   );
 
   return (
-    <section className="wishlist" id={hidden ? undefined : 'collection'} ref={sectionRef} hidden={hidden}>
+    <section
+      className="wishlist scroll-mt-(--thead-top,91px)"
+      id={hidden ? undefined : 'collection'}
+      ref={sectionRef}
+      hidden={hidden}
+    >
       <div className={sectionHeadClass}>
         <div className={sectionNameClass}>
           <h2 className={sectionTitleClass} tabIndex={-1} data-focus-target="title">

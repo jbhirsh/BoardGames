@@ -53,7 +53,7 @@ export default function SubGameList({ game, inRow = false }: Props) {
  * expansion's full description and what it adds) opens in place to show it.
  */
 // An add-on's kind: an expansion's amber, an extension's green, a version's blue.
-const KIND_CLASS: Record<string, string> = {
+const kindClasses: Record<string, string> = {
   expansion: 'bg-expansion-tint/12 text-expansion-fg',
   extension: 'bg-extension-tint/12 text-extension-fg',
   version: 'bg-blue-tint/10 text-version-fg',
@@ -75,7 +75,7 @@ function SubGameRow({ parent, sub, inRow }: { parent: string; sub: SubGame; inRo
           {sub.name}
           {kind && (
             <span
-              className={`kind-chip kind-${kind} rounded-[5px] px-1.5 py-0.5 text-[9.5px] leading-[1.3] font-bold tracking-[0.6px] whitespace-nowrap uppercase ${KIND_CLASS[kind]}`}
+              className={`kind-chip kind-${kind} rounded-[5px] px-1.5 py-0.5 text-[9.5px] leading-[1.3] font-bold tracking-[0.6px] whitespace-nowrap uppercase ${kindClasses[kind]}`}
             >
               {kind}
             </span>

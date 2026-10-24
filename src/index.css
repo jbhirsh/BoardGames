@@ -97,6 +97,8 @@
   --color-danger-fg: #b42318;
   --color-danger-bg: #fdecec;
   --color-danger-border: #f4c1bd;
+  /* The owner's Remove confirmation, filled under --color-on-fill text. */
+  --color-danger-fill: #c62828;
   /* The play glyph on the outlined video buttons: YouTube's red, lifted in
      the dark theme to keep it as legible on --color-surface and --color-bg2. */
   --color-yt-red: #cc0000;
