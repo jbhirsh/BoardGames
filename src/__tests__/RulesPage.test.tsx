@@ -69,11 +69,15 @@ function controlledBy(postMessage: (message: never, transfer: Transferable[]) =>
   Object.defineProperty(navigator, 'serviceWorker', { value: container, configurable: true });
 }
 
-/** The question a fetch mock was sent: the POST, since the PDF's size is asked (HEAD) first. */
+/** The question a fetch mock was sent: the POST's variables, since the PDF's size is asked (HEAD) first. */
 function body(fetchMock: { mock: { calls: unknown[][] } }) {
   const post = (fetchMock.mock.calls as [string, RequestInit][]).find(([, init]) => init?.method === 'POST')!;
-  return JSON.parse(post[1].body as string) as { slug: string; message: string; parts?: string[] };
+  return (JSON.parse(post[1].body as string) as { variables: { slug: string; message: string; parts?: string[] } })
+    .variables;
 }
+
+/** One chunk of the assistant's answer as the API streams it: a server-sent `next` event. */
+const sse = (text: string) => `event: next\ndata: ${JSON.stringify({ data: { askRules: text } })}\n\n`;
 
 describe('RulesPage', () => {
   it('shows a not-found message when the slug matches no game', () => {
@@ -414,7 +418,7 @@ describe('RulesPage', () => {
     });
 
     it('opens a tab the assistant names in place too, keeping the way back to the list', async () => {
-      const answer = new TextEncoder().encode("That's in the Cities & Knights rules.");
+      const answer = new TextEncoder().encode(sse("That's in the Cities & Knights rules."));
       let read = false;
       vi.stubGlobal(
         'fetch',
@@ -451,7 +455,7 @@ describe('RulesPage', () => {
     });
 
     it("links an answer's citations to their rulebooks, each named with what it shows", async () => {
-      const answer = new TextEncoder().encode('Robber (Catan p. 11, 12), knights (Cities And Knights p. 4).');
+      const answer = new TextEncoder().encode(sse('Robber (Catan p. 11, 12), knights (Cities And Knights p. 4).'));
       let read = false;
       vi.stubGlobal(
         'fetch',
@@ -848,7 +852,7 @@ describe("RulesPage's reader", () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
       if (init?.method === 'HEAD') return { ok: false, headers: new Headers() } as Response;
       let read = false;
-      const value = new TextEncoder().encode(answer);
+      const value = new TextEncoder().encode(sse(answer));
       return {
         ok: true,
         body: {

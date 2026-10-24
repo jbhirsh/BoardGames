@@ -62,7 +62,7 @@ export function operationOf(request: Request): Operation | null {
 }
 
 /** A whole reply rather than `data`: GraphQL errors, another status, or a body of the stub's own. */
-export class Reply {
+class Reply {
   readonly status: number;
   readonly contentType: string;
   readonly body: string;
@@ -73,9 +73,16 @@ export class Reply {
   }
 }
 
-/** A GraphQL error as the API sends one, with its HTTP status. */
-export const gqlError = (message: string, code: string, status: number) =>
-  new Reply(status, JSON.stringify({ errors: [{ message, extensions: { code } }] }));
+const sse = (data: unknown) => `event: next\ndata: ${JSON.stringify(data)}\n\n`;
+const COMPLETE = 'event: complete\ndata:\n\n';
+
+/** The rules assistant's answer as the API streams it: one server-sent event per chunk, then complete. */
+export const answerStream = (...chunks: string[]) =>
+  new Reply(200, chunks.map((text) => sse({ data: { askRules: text } })).join('') + COMPLETE, 'text/event-stream');
+
+/** A refused question as the API streams it: its status and one event carrying the error. */
+export const streamRefusal = (status: number, code: string, message: string) =>
+  new Reply(status, sse({ errors: [{ message, extensions: { code } }] }) + COMPLETE, 'text/event-stream');
 
 /** Answers with the operation's `data`, or with a whole Reply. */
 async function answer(route: Route, out: unknown): Promise<void> {
@@ -155,13 +162,7 @@ async function stubBackend(page: Page, baseURL: string, unexpected: string[]): P
     vote: { count: (VOTE_COUNTS[String(itemId)] ?? 0) + Number(vote) },
   }));
 
-  await page.route(
-    (url) => isApi(url, '/api/chat'),
-    (route) =>
-      route.request().method() === 'POST'
-        ? route.fulfill({ status: 200, contentType: 'text/plain; charset=utf-8', body: CHAT_ANSWER })
-        : route.fallback(),
-  );
+  await stubOperation(page, 'AskRules', () => answerStream(CHAT_ANSWER));
 }
 
 export const test = base.extend<{ api: ApiStubs }>({
@@ -185,11 +186,6 @@ export const test = base.extend<{ api: ApiStubs }>({
 });
 
 export { expect };
-
-/** Resolves with the next POST the page sends to `path`; start it before the click that sends it. */
-export function nextPost(page: Page, path: string): Promise<Request> {
-  return page.waitForRequest((req) => req.method() === 'POST' && new URL(req.url()).pathname === path);
-}
 
 /** Resolves with the variables of the next `name` operation the page sends; start it before the click that sends it. */
 export async function nextOperation(page: Page, name: string): Promise<Record<string, unknown>> {
