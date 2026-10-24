@@ -70,6 +70,14 @@
   --color-art-matte: #ffffff;
   /* 4.5:1 or better on the award pill's gold tint; #8A6D12 was 4.46:1. */
   --color-award-fg: #7a600f;
+  /* The award pill's gold, an add-on's kind chips (an expansion's amber, an
+     extension's green) and the cart button's Amazon orange, by modifier:
+     bg-gold/12. The same in both themes. */
+  --color-gold: rgb(201 162 39);
+  --color-expansion-tint: rgb(176 108 0);
+  --color-extension-tint: rgb(30 123 75);
+  --color-amazon: rgb(255 153 0);
+  --color-amazon-edge: rgb(230 138 0);
   --color-expansion-fg: #8a5200;
   --color-extension-fg: #1a6b41;
   --color-version-fg: #0058b0;
@@ -158,6 +166,8 @@
   /* Pick for us: its card pops in, and the box art shakes while it spins. */
   --animate-pick-pop: pick-pop 0.22s ease-out;
   --animate-pick-shake: pick-shake 0.3s ease-in-out infinite;
+  /* A popover's list (the awards, the add-ons) popping in. */
+  --animate-pop-in: pick-pop 0.16s ease-out;
   /* The phone's filter sheet rising from the bottom. */
   --animate-sheet-up: sheet-up 0.22s ease-out;
 

@@ -5,6 +5,7 @@ import GroupedRows from './GroupedRows';
 import { GROUPS } from '../data/keywords';
 import GameRow from './GameRow';
 import { useOpenRow } from '../hooks/useOpenRow';
+import { tableClass, tableWrapClass } from './tableClasses';
 
 export default function ListView() {
   const { filteredGames, gameGroups } = useFilterResults();
@@ -14,8 +15,8 @@ export default function ListView() {
   if (filteredGames.length === 0) return <NoResults kind="games" />;
 
   return (
-    <div className="table-wrap">
-      <table className="games-list">
+    <div className={tableWrapClass}>
+      <table className={tableClass}>
         <GamesTableHead difficulty />
         <tbody>
           <GroupedRows

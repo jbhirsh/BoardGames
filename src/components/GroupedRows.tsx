@@ -19,8 +19,13 @@ export default function GroupedRows<T, K extends string>({ groups, labels, colum
   return groups.map(({ key, items }) => (
     <Fragment key={key ?? 'all'}>
       {key && (
-        <tr className="list-group-row">
-          <td colSpan={columns}>{labels[key]}</td>
+        <tr className="list-group-row group/heading">
+          <td
+            colSpan={columns}
+            className="border-y border-border bg-bg2 px-3.5 py-1.75 text-[9.5px] font-semibold tracking-[2px] text-text3 uppercase group-first/heading:border-t-0 sm:px-5 sm:pt-2 sm:pb-1.25"
+          >
+            {labels[key]}
+          </td>
         </tr>
       )}
       {items.map(row)}

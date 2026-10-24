@@ -4,8 +4,8 @@ import { createPortal } from 'react-dom';
 interface Props {
   /** Class on the wrapper around the button. */
   className: string;
-  /** Classes on the button itself; `open` is added while the panel shows. */
-  buttonClassName: string;
+  /** The button's classes, open (the panel showing) or not. */
+  buttonClassName: (open: boolean) => string;
   /** What the button says to a screen reader. */
   label: string;
   /** The panel's heading. */
@@ -96,7 +96,7 @@ export default function Popover({ className, buttonClassName, label, title, trig
       <button
         ref={btnRef}
         type="button"
-        className={`${buttonClassName}${open ? ' open' : ''}`}
+        className={buttonClassName(open)}
         aria-label={label}
         aria-expanded={activate ? activate.expanded : open}
         aria-controls={activate ? activate.controls : open ? id : undefined}
@@ -123,12 +123,15 @@ export default function Popover({ className, buttonClassName, label, title, trig
             <div
               id={id}
               ref={popRef}
-              className="pop"
+              className="z-400 animate-pop-in rounded-control border border-border bg-surface px-3 py-2.5 text-left font-normal whitespace-normal shadow-(--shadow-lg)"
               role={activate ? 'tooltip' : 'group'}
               aria-labelledby={activate ? undefined : `${id}-title`}
               style={pos}
             >
-              <div id={`${id}-title`} className="pop-title">
+              <div
+                id={`${id}-title`}
+                className="mb-1.5 text-[11px] font-semibold tracking-[0.6px] text-text3 uppercase"
+              >
                 {title}
               </div>
               {children}

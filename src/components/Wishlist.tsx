@@ -25,6 +25,7 @@ import { goToSuggest } from '../client/suggest';
 import { DoneIcon, ShareIcon } from './Icons';
 import {
   cardGridClass,
+  wishGroupClass,
   groupHeadingClass,
   iconButtonClass,
   pickButtonClass,
@@ -186,7 +187,7 @@ function WishlistBody({
 
   const renderGrid = () =>
     groups.map(({ key, items: entries }) => (
-      <div className="wish-group" key={key ?? 'all'}>
+      <div className={`wish-group ${wishGroupClass}`} key={key ?? 'all'}>
         {key && <h3 className={groupHeadingClass}>{WISHLIST_TYPES[key]}</h3>}
         <div className={`games-grid wish-grid ${cardGridClass}`}>
           {entries.map((item) => (

@@ -4,6 +4,7 @@ import type { WishlistGroup } from '../utils/filterGames';
 import GamesTableHead from './GamesTableHead';
 import GroupedRows from './GroupedRows';
 import WishlistRow, { WISHLIST_COLUMNS } from './WishlistRow';
+import { headCellClass, tableClass, tableWrapClass } from './tableClasses';
 
 interface Props {
   groups: WishlistGroup[];
@@ -27,11 +28,11 @@ export default function WishlistListView({ groups, counts, myVotes, onVote, disa
   const toggleRow = useCallback((id: string) => setOpenRow((open) => (open === id ? null : id)), []);
 
   return (
-    <div className="table-wrap">
-      <table className="games-list">
+    <div className={tableWrapClass}>
+      <table className={tableClass}>
         <GamesTableHead
           extra={
-            <th className="col-vote">
+            <th className={`col-vote ${headCellClass} w-[1%] sm:max-xl:w-22.5`}>
               <span className="sr-only">Votes</span>
             </th>
           }

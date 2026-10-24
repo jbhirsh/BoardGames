@@ -1,6 +1,7 @@
 import type { Filterable } from '../data/types';
 import { difficultyOf } from '../utils/difficulty';
 import { GaugeIcon } from './Icons';
+import { metaClass } from './sharedClasses';
 
 /**
  * How hard a game is to learn, beside its players and time on a card or in
@@ -11,7 +12,7 @@ export default function DifficultyMeta({ item }: { item: Pick<Filterable, 'weigh
   const label = difficultyOf(item);
   if (!label) return null;
   return (
-    <span className="cmeta">
+    <span className={metaClass}>
       <GaugeIcon /> <span className="sr-only">Difficulty: </span>
       {label}
     </span>

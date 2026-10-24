@@ -308,7 +308,9 @@ describe('GameRow', () => {
       expect(within(badges).getByRole('button', { name: 'Island: +1 expansion, show which' })).toHaveTextContent(
         '+1 expansion',
       );
-      expect(Array.from(badges.children).map((c) => c.className)).toEqual(['sub-tag-wrap', 'awards']);
+      expect(badges.children).toHaveLength(2);
+      expect(badges.children[0]).toHaveClass('sub-tag-wrap');
+      expect(badges.children[1]).toHaveClass('awards');
       expect(badges.parentElement!.firstChild!.textContent).toBe(addonGame.short);
     }
     // The name stands alone.

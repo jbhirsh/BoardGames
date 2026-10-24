@@ -3,6 +3,7 @@ import { useOpenRow } from '../hooks/useOpenRow';
 import { GROUPS } from '../data/keywords';
 import NoResults from './NoResults';
 import GameLine from './GameLine';
+import { groupHeadingClass, linesClass } from './sharedClasses';
 
 /**
  * The collection's list on a phone, a GameLine a game, under the group
@@ -18,7 +19,7 @@ export default function PhoneListView() {
 
   return gameGroups.map(({ key, items }) => {
     const list = (
-      <ul className="lines" key="all">
+      <ul className={linesClass} key="all">
         {items.map((g) => (
           <GameLine key={g.name} game={g} isOpen={openRow === g.name} onToggle={toggleRow} />
         ))}
@@ -26,7 +27,7 @@ export default function PhoneListView() {
     );
     return key ? (
       <div key={key}>
-        <div className="group-hd">{GROUPS[key]}</div>
+        <div className={groupHeadingClass}>{GROUPS[key]}</div>
         {list}
       </div>
     ) : (
