@@ -249,8 +249,9 @@ before changing the module.
   window unless the scenario names another; `--publish` hosts them on
   `pr-screenshots` and prints the table, linked by commit SHA.
   `PR visuals` (`.github/scripts/pr-visuals.mjs`) fails one with no picture
-  unless "No visible UI change" is ticked; it can't see changes through
-  `src/data`, `public/` or `index.html`, so show those too.
+  unless "No visible UI change" is ticked. It counts components,
+  stylesheets, the `*Classes.ts` class modules and `index.html` as UI; it
+  can't see changes through `src/data` or `public/`, so show those too.
 - **Review before raising a PR.** Review the full diff (e.g. a review subagent
   reading it) before opening the PR — review gates PR creation, rather than
   opening first and reviewing after.
