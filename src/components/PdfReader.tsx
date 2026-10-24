@@ -507,7 +507,7 @@ function PdfPage({
   return (
     <div
       ref={boxRef}
-      className="pdf-page relative w-full scroll-mt-[130px] overflow-hidden rounded-sm bg-paper shadow-[0_0_0_1px_var(--color-border),var(--shadow-sm)] outline-3 outline-offset-2 outline-transparent [--scale-round-x:1px] [--scale-round-y:1px] [transition:outline-color_0.8s_ease] focus-visible:outline-cite-ring focus-visible:[transition:none] [&_canvas]:block [&_canvas]:size-full [&.pdf-page--cited]:outline-cite-ring [&.pdf-page--cited]:[transition:none]"
+      className="pdf-page relative w-full scroll-mt-32.5 overflow-hidden rounded-sm bg-paper shadow-[0_0_0_1px_var(--color-border),var(--shadow-sm)] outline-3 outline-offset-2 outline-transparent [--scale-round-x:1px] [--scale-round-y:1px] [transition:outline-color_0.8s_ease] focus-visible:outline-cite-ring focus-visible:[transition:none] [&_canvas]:block [&_canvas]:size-full [&.pdf-page--cited]:outline-cite-ring [&.pdf-page--cited]:[transition:none]"
       data-page={n}
       role="group"
       aria-label={`Page ${n} of ${total}`}
