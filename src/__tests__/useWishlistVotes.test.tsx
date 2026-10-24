@@ -2,9 +2,26 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { ANON_ID_RE, getAnonId, useWishlistVotes, VOTES_BATCH } from '../hooks/useWishlistVotes';
 import { ANON_RE } from '../../api/_lib/ids';
+import { gqlError, operations, stubGraphql, type Handlers } from './helpers/graphqlFetch';
 
-function jsonResponse(body: unknown, ok = true): Response {
-  return { ok, json: async () => body } as unknown as Response;
+/** The votes API answering from stored counts, this browser's votes, and a vote's new count. */
+function votesApi(
+  counts: Record<string, number>,
+  mine: string[] = [],
+  vote: Handlers[string] = () => ({ vote: { count: 0 } }),
+) {
+  return stubGraphql({
+    WishlistVotes: ({ ids }) => {
+      const asked = ids as string[];
+      return {
+        wishlistVotes: {
+          counts: asked.map((id) => ({ id, count: counts[id] ?? 0 })),
+          myVotes: mine.filter((id) => asked.includes(id)),
+        },
+      };
+    },
+    Vote: vote,
+  });
 }
 
 describe('getAnonId', () => {
@@ -98,11 +115,7 @@ describe('getAnonId without storage', () => {
 
   it('still loads and votes when storage is blocked', async () => {
     blockStorage();
-    const fetchSpy = vi
-      .spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce(jsonResponse({ counts: { a: 1 }, myVotes: [] }))
-      .mockResolvedValueOnce(jsonResponse({ itemId: 'a', count: 2, myVote: 1 }));
-
+    const spy = votesApi({ a: 1 }, [], () => ({ vote: { count: 2 } }));
     const { result } = renderHook(() => freshUseWishlistVotes(['a']));
     await waitFor(() => expect(result.current.loaded).toBe(true));
     expect(result.current.counts).toEqual({ a: 1 });
@@ -111,10 +124,9 @@ describe('getAnonId without storage', () => {
       await result.current.toggle('a');
     });
     expect(result.current.counts.a).toBe(2);
-    const getUrl = new URL(String(fetchSpy.mock.calls[0][0]), 'http://x');
-    const postBody = JSON.parse(String(fetchSpy.mock.calls[1][1]?.body)) as { anonId: string };
-    expect(getUrl.searchParams.get('anonId')).toMatch(ANON_RE);
-    expect(postBody.anonId).toBe(getUrl.searchParams.get('anonId'));
+    const [read, cast] = operations(spy);
+    expect(read.variables.anonId).toMatch(ANON_RE);
+    expect(cast.variables.anonId).toBe(read.variables.anonId);
   });
 });
 
@@ -130,15 +142,10 @@ describe('useWishlistVotes', () => {
 
   it('splits large id sets into batches the API accepts and merges the results', async () => {
     const ids = Array.from({ length: VOTES_BATCH + 5 }, (_, i) => `g${i}`);
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
-      const url = String(input);
-      const got = decodeURIComponent(url.split('ids=')[1].split('&')[0]).split(',');
-      const counts = Object.fromEntries(got.map((id) => [id, id === 'g0' || id === `g${VOTES_BATCH}` ? 2 : 0]));
-      return jsonResponse({ counts, myVotes: got.includes(`g${VOTES_BATCH}`) ? [`g${VOTES_BATCH}`] : [] });
-    });
+    const spy = votesApi({ g0: 2, [`g${VOTES_BATCH}`]: 2 }, [`g${VOTES_BATCH}`]);
     const { result } = renderHook(() => useWishlistVotes(ids));
     await waitFor(() => expect(result.current.loaded).toBe(true));
-    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(operations(spy).map((o) => (o.variables.ids as string[]).length)).toEqual([VOTES_BATCH, 5]);
     expect(result.current.counts.g0).toBe(2);
     expect(result.current.counts[`g${VOTES_BATCH}`]).toBe(2);
     expect(result.current.myVotes.has(`g${VOTES_BATCH}`)).toBe(true);
@@ -146,28 +153,20 @@ describe('useWishlistVotes', () => {
   });
 
   it('fetches counts and myVotes on mount', async () => {
-    const fetchSpy = vi
-      .spyOn(globalThis, 'fetch')
-      .mockResolvedValue(jsonResponse({ counts: { a: 3, b: 1 }, myVotes: ['b'] }));
-
+    const spy = votesApi({ a: 3, b: 1 }, ['b']);
     const { result } = renderHook(() => useWishlistVotes(['a', 'b']));
-
     await waitFor(() => expect(result.current.loaded).toBe(true));
     expect(result.current.counts).toEqual({ a: 3, b: 1 });
     expect(result.current.myVotes.has('b')).toBe(true);
     expect(result.current.myVotes.has('a')).toBe(false);
-    expect(fetchSpy).toHaveBeenCalledWith(
-      expect.stringContaining('/api/votes?ids=a%2Cb'),
-      expect.objectContaining({ signal: expect.any(AbortSignal) as unknown }),
-    );
+    expect(operations(spy)).toMatchObject([
+      { operationName: 'WishlistVotes', variables: { ids: ['a', 'b'], anonId: 'anon-abcdefgh' } },
+    ]);
+    expect(spy.mock.calls[0][1]?.signal).toEqual(expect.any(AbortSignal));
   });
 
-  it('toggle posts vote=1 when not yet voted and updates state optimistically', async () => {
-    const fetchSpy = vi
-      .spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce(jsonResponse({ counts: { a: 3 }, myVotes: [] }))
-      .mockResolvedValueOnce(jsonResponse({ itemId: 'a', count: 4, myVote: 1 }));
-
+  it('toggle votes 1 when not yet voted and takes the count the API answers', async () => {
+    const spy = votesApi({ a: 3 }, [], () => ({ vote: { count: 4 } }));
     const { result } = renderHook(() => useWishlistVotes(['a']));
     await waitFor(() => expect(result.current.loaded).toBe(true));
 
@@ -177,21 +176,38 @@ describe('useWishlistVotes', () => {
 
     expect(result.current.counts.a).toBe(4);
     expect(result.current.myVotes.has('a')).toBe(true);
-    const postCall = fetchSpy.mock.calls[1];
-    expect(postCall[0]).toBe('/api/votes');
-    expect(JSON.parse(postCall[1]!.body as string)).toEqual({
-      itemId: 'a',
-      anonId: 'anon-abcdefgh',
-      vote: 1,
+    expect(operations(spy)[1]).toMatchObject({
+      operationName: 'Vote',
+      variables: { itemId: 'a', anonId: 'anon-abcdefgh', vote: 1 },
     });
   });
 
-  it('toggle posts vote=0 when removing an existing vote', async () => {
-    const fetchSpy = vi
-      .spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce(jsonResponse({ counts: { a: 5 }, myVotes: ['a'] }))
-      .mockResolvedValueOnce(jsonResponse({ itemId: 'a', count: 4, myVote: 0 }));
+  it('shows the vote at once, before the API answers, and ignores a second press meanwhile', async () => {
+    let answer = () => {};
+    const spy = votesApi(
+      { a: 3 },
+      [],
+      () => new Promise((resolve) => (answer = () => resolve({ vote: { count: 9 } }))),
+    );
+    const { result } = renderHook(() => useWishlistVotes(['a']));
+    await waitFor(() => expect(result.current.loaded).toBe(true));
+    let first: Promise<void> = Promise.resolve();
+    act(() => {
+      first = result.current.toggle('a');
+    });
+    expect(result.current.counts.a).toBe(4);
+    await act(async () => {
+      await result.current.toggle('a');
+    });
+    await vi.waitFor(() => expect(operations(spy)).toHaveLength(2));
+    answer();
+    await act(() => first);
+    expect(result.current.counts.a).toBe(9);
+    expect(operations(spy)).toHaveLength(2);
+  });
 
+  it('toggle votes 0 when removing an existing vote', async () => {
+    const spy = votesApi({ a: 5 }, ['a'], () => ({ vote: { count: 4 } }));
     const { result } = renderHook(() => useWishlistVotes(['a']));
     await waitFor(() => expect(result.current.loaded).toBe(true));
 
@@ -201,31 +217,39 @@ describe('useWishlistVotes', () => {
 
     expect(result.current.myVotes.has('a')).toBe(false);
     expect(result.current.counts.a).toBe(4);
-    expect(JSON.parse(fetchSpy.mock.calls[1][1]!.body as string)).toMatchObject({ vote: 0 });
+    expect(operations(spy)[1].variables).toMatchObject({ vote: 0 });
   });
 
-  it('reverts optimistic update when POST fails', async () => {
-    vi.spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce(jsonResponse({ counts: { a: 3 }, myVotes: [] }))
-      .mockResolvedValueOnce(jsonResponse({ error: 'nope' }, false));
-
-    const { result } = renderHook(() => useWishlistVotes(['a']));
-    await waitFor(() => expect(result.current.loaded).toBe(true));
-
-    await act(async () => {
-      await result.current.toggle('a');
-    });
-
-    expect(result.current.counts.a).toBe(3);
-    expect(result.current.myVotes.has('a')).toBe(false);
+  it('reverts the optimistic update when the vote is refused or lost', async () => {
+    for (const refused of [true, false]) {
+      votesApi({ a: 3 }, [], () => gqlError('unknown itemId', 'NOT_FOUND', 404));
+      const { result } = renderHook(() => useWishlistVotes(['a']));
+      await waitFor(() => expect(result.current.loaded).toBe(true));
+      if (!refused) vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new TypeError('Failed to fetch'));
+      await act(async () => {
+        await result.current.toggle('a');
+      });
+      expect(result.current.counts.a).toBe(3);
+      expect(result.current.myVotes.has('a')).toBe(false);
+    }
   });
 
-  it('marks loaded=true even when fetch rejects', async () => {
+  it('marks loaded=true even when the counts cannot be read, and says so', async () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network'));
-
     const { result } = renderHook(() => useWishlistVotes(['a']));
     await waitFor(() => expect(result.current.loaded).toBe(true));
     expect(result.current.counts).toEqual({});
+    expect(errSpy).toHaveBeenCalledWith('votes: could not load vote counts', expect.any(Error));
+  });
+
+  it('says nothing about a read cut short by leaving the page', async () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    votesApi({ a: 1 });
+    const { unmount } = renderHook(() => useWishlistVotes(['a']));
+    unmount();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(errSpy).not.toHaveBeenCalled();
   });
 
   it('marks loaded=true immediately when no ids provided', async () => {
