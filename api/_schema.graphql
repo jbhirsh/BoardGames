@@ -1,0 +1,218 @@
+"""
+The Game Room's API, served by one Vercel function (api/graphql.ts, GraphQL
+Yoga) and read by the client's codegen (codegen.ts) into src/gql/. Each
+field's rules are in its resolver's header (api/_resolvers/*).
+
+Errors carry `extensions.code`: BAD_REQUEST, FORBIDDEN, NOT_FOUND, CONFLICT,
+RATE_LIMITED, DAILY_LIMIT, UNAVAILABLE, INTERNAL_SERVER_ERROR or TIMEOUT,
+and the HTTP status that goes with it. Mutations are POST only, and every
+POST must be JSON.
+"""
+type Query {
+  "Whether the request's cookie names a live owner session."
+  session: Session!
+
+  "Vote counts for up to 100 wishlist ids (malformed ones are dropped), and which of them this browser voted for."
+  wishlistVotes(ids: [String!]!, anonId: String): WishlistVotes!
+
+  "Approved suggestions, newest decision first: the wishlist's \"Suggested by friends\"."
+  suggestions: [Suggestion!]!
+
+  "Owner: everything waiting on a decision, newest first, the ones whose email never went out included."
+  pendingSuggestions: [Suggestion!]!
+
+  "Owner, as JSON: what BoardGameGeek has for a game, or why it has nothing. Stores nothing."
+  previewGame(game: String!): Preview!
+
+  "Whether an emailed sign-in link can still be used. Reading it doesn't use it up."
+  signInLinkLive(token: String!): Boolean!
+
+  "The suggestion behind an emailed approve or deny link, checked against the link's token. Changes nothing."
+  emailedSuggestion(id: String!, token: String!): EmailedSuggestion!
+}
+
+type Mutation {
+  "Adds (1) or takes back (0) this browser's vote for a wishlist entry or an approved suggestion."
+  vote(itemId: String!, anonId: String!, vote: Int!): VoteResult!
+
+  "A friend's suggestion: stored as pending, then emailed to the owner with approve and deny links."
+  suggestGame(game: String!, name: String!, note: String): Suggestion!
+
+  """
+  Approves or denies a waiting suggestion: with `token`, from an emailed
+  link; without, as the signed-in owner (JSON). An approval may bring a
+  corrected name and the details previewed for it (null for none); without
+  `details` the game is looked up here.
+  """
+  decideSuggestion(id: String!, decision: Decision!, token: String, game: String, details: DetailsInput): Decided!
+
+  "Owner: puts a game straight on the wishlist. `details` previewed, null for none, or absent to look it up here."
+  addGame(game: String!, name: String!, note: String, type: String, details: DetailsInput): Decided!
+
+  "Owner: changes how an entry reads on the wishlist."
+  editSuggestion(id: String!, game: String, note: String, details: DetailsEdit): Suggestion
+
+  "Owner: takes an approved game off the wishlist."
+  removeSuggestion(id: String!): Boolean!
+
+  "Emails the owner a single-use sign-in link if `email` is theirs. The answer is the same for any address."
+  requestSignInLink(email: String!): Boolean!
+
+  "Uses an emailed sign-in link's token up and sets the owner's session cookie."
+  verifySignIn(token: String!): Session!
+
+  "Ends this browser's owner session and clears its cookie."
+  logout: Boolean!
+}
+
+type Subscription {
+  """
+  The AI rules assistant's answer to `message` about the game `slug` (and
+  the rulebooks named in `parts`), streamed over server-sent events one
+  text chunk at a time. An answer Gemini fails partway through ends with a
+  note that it was cut off.
+  """
+  askRules(slug: String!, message: String!, history: [HistoryEntry!], parts: [String!]): String!
+}
+
+type Session {
+  admin: Boolean!
+}
+
+type WishlistVotes {
+  counts: [VoteCount!]!
+  "The ids this browser (anonId) voted for."
+  myVotes: [String!]!
+}
+
+type VoteCount {
+  id: String!
+  count: Int!
+}
+
+type VoteResult {
+  itemId: String!
+  count: Int!
+  myVote: Int!
+}
+
+enum SuggestionStatus {
+  PENDING
+  APPROVED
+  DENIED
+  "Stored, but the email to the owner failed: off the active list, still in the owner's queue."
+  UNSENT
+  "The owner took it off the wishlist."
+  REMOVED
+}
+
+enum Source {
+  FRIEND
+  OWNER
+}
+
+enum Decision {
+  APPROVE
+  DENY
+}
+
+"How a BoardGameGeek lookup went."
+enum LookupOutcome {
+  FOUND
+  NO_MATCH
+  "BGG_API_TOKEN isn't set, so BoardGameGeek wasn't asked."
+  NO_TOKEN
+  "BoardGameGeek refused the token."
+  REFUSED
+  UNAVAILABLE
+}
+
+enum Role {
+  USER
+  MODEL
+}
+
+type Suggestion {
+  id: String!
+  game: String!
+  name: String!
+  note: String!
+  status: SuggestionStatus!
+  "Milliseconds since the epoch."
+  createdAt: Float!
+  decidedAt: Float
+  details: SuggestionDetails
+  source: Source!
+}
+
+"What an entry shows: filled in from BoardGameGeek, editable by the owner."
+type SuggestionDetails {
+  bggId: Int
+  year: Int
+  min: Int!
+  max: Int!
+  mins: Int!
+  desc: String!
+  kw: [String!]!
+  "The wishlist section the owner filed it under; null means \"Suggested by friends\"."
+  type: String
+  img: String
+}
+
+"What BoardGameGeek has for a game."
+type GameDetails {
+  bggId: Int!
+  "BoardGameGeek's name for the match, which may differ from the one looked up."
+  name: String!
+  year: Int
+  min: Int!
+  max: Int!
+  mins: Int!
+  desc: String!
+  kw: [String!]!
+  img: String
+}
+
+type Preview {
+  outcome: LookupOutcome!
+  details: GameDetails
+}
+
+type EmailedSuggestion {
+  suggestion: Suggestion!
+  "What BoardGameGeek has for the suggestion, or for `game` when the owner corrects its name; null once it is decided."
+  preview(game: String): Preview
+}
+
+type Decided {
+  item: Suggestion
+  "How the lookup went; null when none ran."
+  lookup: LookupOutcome
+}
+
+"Details previewed before an approval or an add, sent back so the game isn't looked up twice."
+input DetailsInput {
+  bggId: Int
+  year: Int
+  min: Int
+  max: Int
+  mins: Int
+  desc: String
+  kw: [String!]
+  img: String
+}
+
+"The owner's edits; a field left out keeps what is stored, and `type: null` files it back under \"Suggested by friends\"."
+input DetailsEdit {
+  min: Int
+  max: Int
+  mins: Int
+  desc: String
+  kw: [String!]
+  type: String
+}
+
+input HistoryEntry {
+  role: Role!
+  content: String!
+}
