@@ -7,9 +7,13 @@ import { tapTargetClass } from './sharedClasses';
  * muted lines are here too.
  */
 
-/** Labels and fields in two columns, one on a phone. */
+/**
+ * Labels and fields in two columns, one on a phone. In one column each
+ * label sits 6px over its field and 16px under the field before, so it
+ * reads as that field's, not the one above's.
+ */
 export const fieldsClass =
-  'grid max-w-130 grid-cols-[1fr] items-center gap-x-3.5 gap-y-2.5 sm:grid-cols-[max-content_1fr]';
+  'grid max-w-130 grid-cols-[1fr] items-center gap-x-3.5 gap-y-1.5 sm:grid-cols-[max-content_1fr] sm:gap-y-2.5 max-sm:[&>label:not(:first-child)]:mt-2.5';
 /** A field's label. */
 export const fieldLabelClass = 'text-[12px] font-medium text-text2';
 /** "(optional)" after a label. */
