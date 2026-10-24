@@ -25,6 +25,7 @@ import {
   inputWrapClass,
   labelClass,
   nameInputClass,
+  newGameClass,
   nextClass,
   panelClass,
   quietButtonClass,
@@ -677,7 +678,7 @@ export default function RoundScorePad({ game }: { game: CardGameId }) {
 
       <p className={`mt-3 leading-normal ${ruleClass}`}>{rules.rule}</p>
       <div className={actionsClass}>
-        <button type="button" className={quietButtonClass} onClick={newGame}>
+        <button type="button" className={newGameClass} onClick={newGame}>
           New game
         </button>
       </div>
