@@ -31,8 +31,8 @@ export const submitClass = `h-8.5 cursor-pointer rounded-lg border border-blue-f
 /** What a form says after a submit. */
 export const formStatusClass = 'text-[12.5px] text-text2';
 
-const adminButtonBaseClass =
-  'cursor-pointer rounded-lg border px-3 text-[12px] font-semibold [transition:background_0.15s,border-color_0.15s,color_0.15s] disabled:cursor-wait disabled:opacity-60';
+// 30px and 34px tall, each takes taps out to 44px on a phone.
+const adminButtonBaseClass = `cursor-pointer rounded-lg border px-3 text-[12px] font-semibold [transition:background_0.15s,border-color_0.15s,color_0.15s] disabled:cursor-wait disabled:opacity-60 ${tapTargetClass}`;
 const quietClass =
   'border-border2 bg-surface text-text2 hover:not-disabled:border-blue-tint/40 hover:not-disabled:text-blue';
 /** The owner's buttons: Approve and Save filled, the rest quiet, Remove's confirmation in red. */
