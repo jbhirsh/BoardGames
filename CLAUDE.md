@@ -222,7 +222,7 @@ before changing the module.
 | --- | --- |
 | `ci` (`ci.yml`) | commit messages, lint, Prettier, depcruise, type-check, type coverage (100%), unit tests + coverage (axe suite included), build, `npm audit --omit=dev` (high+) |
 | Claude Review (`claude-review.yml`) | AI review, in its own file: claude-code-action skips a PR that edits its workflow |
-| StrykerJS (`mutation.yml`) | incremental mutation testing of the files a PR touched, failing below `break` |
+| StrykerJS (`mutation.yml`) | incremental mutation testing of the files a PR touched (a formatting-only change left out), failing below `break` |
 | E2E Tests (Playwright) (`e2e.yml`) | the e2e suite and visual regression in three engines; passing only on retry still fails |
 | Answer-Quality Eval (`eval.yml`) | the assistant against `eval/golden-set.json` |
 | Secret scan, `semgrep-cloud-platform/scan`, Vercel, API smoke test | secrets, static analysis, the deploy and its live API |
