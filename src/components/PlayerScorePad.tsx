@@ -276,14 +276,16 @@ export default function PlayerScorePad<P extends PadPlayer>({
       ) : (
         <div className={panelClass} key={current.id} ref={panelRef}>
           <div className={formClass}>
-            <div className="flex items-center justify-between gap-3">
+            {/* On a phone the name's box spans the form under its label, its
+                edges on the rows' edges; a wider screen has it beside. */}
+            <div className="flex items-center justify-between gap-3 max-sm:flex-col max-sm:items-stretch max-sm:gap-1.5">
               <label className={labelClass} htmlFor="sc-player-name">
                 Player Name
               </label>
               <input
                 ref={nameRef}
                 id="sc-player-name"
-                className={`${nameInputClass} max-w-50 text-center`}
+                className={`${nameInputClass} text-left max-sm:w-full max-sm:flex-none sm:max-w-50 sm:text-center`}
                 type="text"
                 value={current.name}
                 onChange={(e) => updateName(e.target.value)}
