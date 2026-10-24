@@ -106,8 +106,11 @@ export const setupClass = 'mb-3 flex min-w-0 flex-col gap-3 rounded-panel border
 const setupTitleBaseClass = 'flex flex-wrap gap-x-2.5 gap-y-1 text-[14px] font-semibold text-text';
 /** The setup's heading. */
 export const setupTitleClass = `${setupTitleBaseClass} items-baseline`;
-/** The setup's heading as the summary that folds it away. */
-export const setupSummaryClass = `${setupTitleBaseClass} min-h-11 cursor-pointer items-center`;
+/**
+ * The setup's heading as the summary that folds it away (in a details with
+ * group/setup), ending in the chevron House rules has, turned up while open.
+ */
+export const setupSummaryClass = `${setupTitleBaseClass} min-h-11 cursor-pointer list-none items-center after:ml-auto after:size-1.75 after:flex-none after:transform-[rotate(45deg)] after:border-r-2 after:border-b-2 after:border-text3 after:content-[''] after:[transition:transform_0.15s] group-open/setup:after:transform-[rotate(-135deg)] [&::-webkit-details-marker]:hidden`;
 /** A line of help. */
 export const hintClass = 'text-[13px] leading-normal text-text2';
 /** A group of boxes (a fieldset), its legend groupTitleClass. */
