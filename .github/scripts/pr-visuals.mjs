@@ -7,15 +7,17 @@
 // judgment call, so Claude Review makes it (see claude-review.yml), not this
 // script.
 //
-// It only knows components and stylesheets under src/ (not the context
-// providers or main.tsx, which draw nothing): UI that changes through a .ts
-// module (the games data, a label map), index.html or public/ isn't caught,
-// nor is a reference-style markdown image (![alt][ref]). Reviewers cover
-// those.
+// It knows components and stylesheets under src/ (not the context
+// providers or main.tsx, which draw nothing), the class modules beside the
+// components (src/**/*Classes.ts: the Tailwind classes they share are
+// styles) and index.html, whose classes style the page itself. UI that
+// changes through another .ts module (the games data, a label map) or
+// public/ isn't caught, nor is a reference-style markdown image
+// (![alt][ref]). Reviewers cover those.
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
-const UI_FILE = /^src\/.+\.(tsx|css)$/;
+const UI_FILE = /^(src\/.+\.(tsx|css)|src\/.*Classes\.ts|index\.html)$/;
 const NOT_UI = /(\.test\.tsx$|^src\/__tests__\/|^src\/context\/|^src\/main\.tsx$)/;
 
 // Markdown or HTML images (GIFs included), HTML video, and the bare

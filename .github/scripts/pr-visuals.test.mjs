@@ -11,6 +11,24 @@ describe('uiFiles', () => {
     ).toEqual(['src/components/GameCard.tsx', 'src/App.css']);
   });
 
+  it('keeps the class modules and index.html, whose classes are styles', () => {
+    expect(
+      uiFiles([
+        'src/components/sharedClasses.ts',
+        'src/components/FilterBar/pillClasses.ts',
+        'src/components/FilterBar/optionClasses.ts',
+        'index.html',
+        'src/utils/classNames.ts',
+        'public/index.html',
+      ]),
+    ).toEqual([
+      'src/components/sharedClasses.ts',
+      'src/components/FilterBar/pillClasses.ts',
+      'src/components/FilterBar/optionClasses.ts',
+      'index.html',
+    ]);
+  });
+
   it('drops tests and the files that draw nothing', () => {
     expect(
       uiFiles(['src/__tests__/GameCard.test.tsx', 'src/__tests__/testData.ts', 'src/Foo.test.tsx', 'README.md']),
