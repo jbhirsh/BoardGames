@@ -5,6 +5,7 @@ import { request } from '../client/graphql';
 import { SignInLinkLiveDocument, VerifySignInDocument } from '../gql/graphql';
 import { linkProblem } from '../utils/emailedLinks';
 import EmailedLinkPage from './EmailedLinkPage';
+import { signInActionsClass, signInButtonClass, signInPrimaryClass, signInStatusClass } from './signInClasses';
 
 const EXPIRED = 'This sign-in link has expired or was already used. Ask for a new one from the wishlist.';
 
@@ -59,17 +60,22 @@ export default function SignInConfirmPage() {
   if (state.kind === 'said') title = state.title;
   return (
     <EmailedLinkPage title={title}>
-      {state.kind === 'loading' && <p className="signin-status">Loading…</p>}
+      {state.kind === 'loading' && <p className={signInStatusClass}>Loading…</p>}
       {state.kind === 'said' && (
-        <p className="signin-status" role="status">
+        <p className={signInStatusClass} role="status">
           {state.text}
         </p>
       )}
       {state.kind === 'live' && (
         <>
-          <p className="signin-status">This signs this browser in as the owner for 30 days.</p>
-          <div className="signin-actions">
-            <button type="button" className="signin-btn" disabled={state.sending} onClick={() => void signIn()}>
+          <p className={signInStatusClass}>This signs this browser in as the owner for 30 days.</p>
+          <div className={`mt-1.5 ${signInActionsClass}`}>
+            <button
+              type="button"
+              className={`h-10 ${signInButtonClass} ${signInPrimaryClass}`}
+              disabled={state.sending}
+              onClick={() => void signIn()}
+            >
               {state.sending ? 'Signing in…' : 'Sign in'}
             </button>
           </div>
