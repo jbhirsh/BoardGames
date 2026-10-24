@@ -138,62 +138,67 @@ function Form({
         ))}
       </fieldset>
 
-      <fieldset className={`${groupClass} ${dividedClass}`}>
-        <legend className={groupTitleClass}>
-          Destination tickets <span className={titleNoteClass}>= {pts(b.made + b.missed)}</span>
-        </legend>
-        {player.tickets.length === 0 && (
-          <p className={hintClass}>Add each ticket you kept, with the points printed on it.</p>
-        )}
-        {player.tickets.map((t, i) => (
-          <div key={i} className="flex flex-wrap items-center gap-2">
-            <ScoreInput
-              id={`sc-ticket-${i}`}
-              label={`Ticket ${i + 1} points`}
-              unit="pts"
-              value={t.points}
-              onChange={(e) => setTicket(i, { points: cleanInput(e.target.value, false, 99) })}
-            />
-            <div
-              className="flex flex-1 flex-nowrap gap-1.5 min-[600px]:flex-[0_1_auto]"
-              role="group"
-              aria-label={`Ticket ${i + 1}`}
-            >
+      {/* The rule is above the group, not its border: a fieldset draws its
+          top border through the middle of its legend, so the line ran only
+          beside the heading. */}
+      <div className={dividedClass}>
+        <fieldset className={groupClass}>
+          <legend className={groupTitleClass}>
+            Destination tickets <span className={titleNoteClass}>= {pts(b.made + b.missed)}</span>
+          </legend>
+          {player.tickets.length === 0 && (
+            <p className={hintClass}>Add each ticket you kept, with the points printed on it.</p>
+          )}
+          {player.tickets.map((t, i) => (
+            <div key={i} className="flex flex-wrap items-center gap-2">
+              <ScoreInput
+                id={`sc-ticket-${i}`}
+                label={`Ticket ${i + 1} points`}
+                unit="pts"
+                value={t.points}
+                onChange={(e) => setTicket(i, { points: cleanInput(e.target.value, false, 99) })}
+              />
+              <div
+                className="flex flex-1 flex-nowrap gap-1.5 min-[600px]:flex-[0_1_auto]"
+                role="group"
+                aria-label={`Ticket ${i + 1}`}
+              >
+                <button
+                  type="button"
+                  className={sharedSegButtonClass}
+                  aria-pressed={t.made}
+                  onClick={() => setTicket(i, { made: true })}
+                >
+                  Made
+                </button>
+                <button
+                  type="button"
+                  className={sharedSegButtonClass}
+                  aria-pressed={!t.made}
+                  onClick={() => setTicket(i, { made: false })}
+                >
+                  Missed
+                </button>
+              </div>
               <button
                 type="button"
-                className={sharedSegButtonClass}
-                aria-pressed={t.made}
-                onClick={() => setTicket(i, { made: true })}
+                className={removeClass}
+                aria-label={`Remove ticket ${i + 1}`}
+                onClick={() => update({ tickets: player.tickets.filter((_, j) => j !== i) })}
               >
-                Made
-              </button>
-              <button
-                type="button"
-                className={sharedSegButtonClass}
-                aria-pressed={!t.made}
-                onClick={() => setTicket(i, { made: false })}
-              >
-                Missed
+                &times;
               </button>
             </div>
-            <button
-              type="button"
-              className={removeClass}
-              aria-label={`Remove ticket ${i + 1}`}
-              onClick={() => update({ tickets: player.tickets.filter((_, j) => j !== i) })}
-            >
-              &times;
-            </button>
-          </div>
-        ))}
-        <button
-          type="button"
-          className={addRowClass}
-          onClick={() => update({ tickets: [...player.tickets, { points: '', made: true }] })}
-        >
-          + Add ticket
-        </button>
-      </fieldset>
+          ))}
+          <button
+            type="button"
+            className={addRowClass}
+            onClick={() => update({ tickets: [...player.tickets, { points: '', made: true }] })}
+          >
+            + Add ticket
+          </button>
+        </fieldset>
+      </div>
 
       <label className={`${checkClass} ${dividedClass}`}>
         <input
