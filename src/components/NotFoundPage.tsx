@@ -3,6 +3,7 @@ import { isChunkLoadError, mayReload, reloadOnce } from '../utils/chunkReload';
 import { Link, isRouteErrorResponse, useRouteError } from 'react-router';
 import * as Sentry from '../client/sentry';
 import { heroClass, heroSubClass, heroTitleClass } from './heroClasses';
+import { pickButtonClass } from './sharedClasses';
 
 interface Props {
   title?: string;
@@ -26,10 +27,7 @@ export default function NotFoundPage({
       <h1 className={heroTitleClass}>{title ?? 'This box is empty'}</h1>
       <p className={heroSubClass}>{message}</p>
       <div className="relative flex flex-wrap justify-center gap-2.5">
-        <Link
-          to="/"
-          className="inline-flex h-12 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl bg-blue-fill px-6 text-[15px] font-semibold whitespace-nowrap text-on-fill [transition:background_0.15s,transform_0.15s,opacity_0.15s] can-hover:hover:transform-[translateY(-1px)] can-hover:hover:bg-blue-fill-hover"
-        >
+        <Link to="/" className={`${pickButtonClass} h-12 gap-1.5 rounded-xl px-6 text-[15px]`}>
           Browse the collection
         </Link>
       </div>

@@ -1,5 +1,5 @@
 import { pillClass } from './pillClasses';
-import { tapTargetClass } from '../tapTarget';
+import { tapTargetClass } from '../sharedClasses';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useFilter } from '../../context/useFilter';
 import { useFilteredWishlist } from '../../context/useFilteredWishlist';

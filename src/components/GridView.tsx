@@ -2,6 +2,7 @@ import { useFilterResults } from '../context/useFilter';
 import NoResults from './NoResults';
 import { GROUPS } from '../data/keywords';
 import GameCard from './GameCard';
+import { cardGridClass, groupHeadingClass } from './sharedClasses';
 
 export default function GridView() {
   const { filteredGames, gameGroups } = useFilterResults();
@@ -11,7 +12,7 @@ export default function GridView() {
   // The flat list is one grid; each group gets a heading over its own.
   return gameGroups.map(({ key, items }) => {
     const grid = (
-      <div className="games-grid" key="all">
+      <div className={`games-grid ${cardGridClass}`} key="all">
         {items.map((g) => (
           <GameCard key={g.name} game={g} />
         ))}
@@ -19,7 +20,7 @@ export default function GridView() {
     );
     return key ? (
       <div key={key}>
-        <div className="group-hd">{GROUPS[key]}</div>
+        <div className={groupHeadingClass}>{GROUPS[key]}</div>
         {grid}
       </div>
     ) : (

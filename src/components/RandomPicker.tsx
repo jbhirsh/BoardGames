@@ -13,6 +13,7 @@ import { FROM_LIST } from '../utils/fromList';
 import { useDialogFocus } from '../hooks/useDialogFocus';
 import { useScrollLock } from '../hooks/useScrollLock';
 import { DiceIcon } from './Icons';
+import { phoneActionClass, pickButtonClass, pickHeaderClass } from './sharedClasses';
 
 const SPIN_MS = 1400;
 const TICK_MS = 75;
@@ -152,7 +153,7 @@ export default function RandomPicker({
       <button
         ref={triggerRef}
         type="button"
-        className={variant === 'bar' ? 'pick-btn phone-action' : 'pick-btn'}
+        className={`pick-btn ${pickButtonClass} ${variant === 'bar' ? `phone-action ${phoneActionClass}` : pickHeaderClass}`}
         onClick={pick}
         disabled={disabled}
         hidden={hidden}
@@ -170,7 +171,7 @@ export default function RandomPicker({
       {open &&
         current &&
         createPortal(
-          <div className="pick-modal">
+          <div className="fixed inset-0 z-1000 flex items-center justify-center overflow-y-auto overscroll-contain p-6">
             <Backdrop onClick={close} />
             <div
               ref={cardRef}
@@ -180,37 +181,47 @@ export default function RandomPicker({
               aria-label={spinning ? undefined : `Tonight, play — ${spokenName}`}
               aria-busy={spinning}
               tabIndex={-1}
-              className={`pick-card${spinning ? ' spinning' : ''}`}
+              className="pick-card relative w-full max-w-95 animate-pick-pop rounded-panel border border-border bg-surface px-7 pt-7 pb-6 text-center shadow-(--shadow-dialog)"
             >
-              <div id="pick-eyebrow" className="pick-eyebrow">
+              <div id="pick-eyebrow" className="mb-3 text-[11px] font-semibold tracking-[2px] text-text3 uppercase">
                 {spinning ? 'Spinning…' : 'Tonight, play'}
               </div>
-              <img src={current.img} alt="" className="pick-img" />
-              <div className="pick-name">{spinning ? current.name : playName}</div>
+              <img
+                src={current.img}
+                alt=""
+                className={`mx-auto mb-3.5 block size-30 rounded-[14px] bg-art-matte object-cover filter-(--art-dim) [transition:transform_0.25s_ease] ${spinning ? 'animate-pick-shake' : ''}`}
+              />
+              <div className="mb-1.5 font-display text-[24px] font-bold tracking-[-0.3px] text-dark">
+                {spinning ? current.name : playName}
+              </div>
               {!spinning && sub && (
-                <div className="pick-with">
+                <div className="-mt-0.5 mb-2 text-[13px] font-semibold text-blue">
                   {sub.kind === 'card-game' ? `Played with the ${current.name}` : `with the ${sub.name}`}
                 </div>
               )}
-              <div className="pick-meta">
+              <div className="mb-3 flex items-center justify-center gap-2 text-[13px] text-text3">
                 <span>{shown!.players === '1' ? '1 player' : `${shown!.players} players`}</span>
                 <span aria-hidden="true">•</span>
                 <span>{shown!.dur}</span>
               </div>
               {!spinning && shown && result && (
                 <>
-                  <p className="pick-short">{shown.short}</p>
-                  <p className="pick-why">{result.why}</p>
+                  <p className="mx-auto mb-2 max-w-[36ch] text-[13.5px] leading-[1.55] text-text2">{shown.short}</p>
+                  <p className="mb-4.5 text-[11.5px] text-text3">{result.why}</p>
                 </>
               )}
               {!spinning && (
-                <div className="pick-actions">
-                  <button type="button" className="pick-secondary" onClick={pick}>
+                <div className="flex justify-center gap-2.5">
+                  <button
+                    type="button"
+                    className="h-9 cursor-pointer rounded-control border border-border px-4 text-[13px] font-semibold text-text [transition:background_0.15s,border-color_0.15s] hover:border-text3"
+                    onClick={pick}
+                  >
                     Pick again
                   </button>
                   <button
                     type="button"
-                    className="pick-primary"
+                    className="h-9 cursor-pointer rounded-control bg-blue-fill px-4 text-[13px] font-semibold text-on-fill [transition:background_0.15s,border-color_0.15s] hover:bg-blue-fill-hover"
                     onClick={() => {
                       const to = rulebookPath(current.slug, sub?.rules ? sub.slug : undefined);
                       // Closed at once, before leaving: the scroll lock's
@@ -225,7 +236,12 @@ export default function RandomPicker({
                   </button>
                 </div>
               )}
-              <button type="button" className="pick-close" onClick={close} aria-label="Close">
+              <button
+                type="button"
+                className="absolute top-2.5 right-2.5 size-7 cursor-pointer rounded-[50%] text-[14px] text-text3 [transition:background_0.15s,color_0.15s] hover:bg-bg2 hover:text-text"
+                onClick={close}
+                aria-label="Close"
+              >
                 ✕
               </button>
             </div>
