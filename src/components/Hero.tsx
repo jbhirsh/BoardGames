@@ -2,6 +2,7 @@ import { GAMES } from '../data/games';
 import { collectionSpan } from '../utils/collectionStats';
 import ThemeToggle from './ThemeToggle';
 import CoverCarousel from './CoverCarousel';
+import { heroClass, heroSubClass, heroTitleClass } from './heroClasses';
 
 /**
  * The page's title and subtitle over a moving row of box covers. `want` is
@@ -9,18 +10,18 @@ import CoverCarousel from './CoverCarousel';
  * shared wishlist link lands: the subtitle then speaks to the friend who
  * opened it, and the covers are the wishlist's. On a phone the title shares
  * a line with the theme picker and the covers run small under the subtitle
- * (App.css), so four games show under Safari's bars where three did.
+ * (heroClasses.ts), so four games show under Safari's bars where three did.
  */
 export default function Hero({ want }: { want: boolean }) {
   const { shortest, longest } = collectionSpan(GAMES);
 
   return (
-    <header className="hero">
+    <header className={`${heroClass} border-b border-border`}>
       <ThemeToggle />
-      <h1>
-        Our <em>Game</em> Room
+      <h1 className={heroTitleClass}>
+        Our <em className="text-blue italic">Game</em> Room
       </h1>
-      <p className="hero-sub">
+      <p className={heroSubClass}>
         {want
           ? 'Help us pick our next game from the wishlist below.'
           : `${GAMES.length} games, ${shortest} to ${longest}. What fits tonight?`}

@@ -77,10 +77,10 @@ function jumpTo(anchor: string) {
  * new row afresh). A press that hardly moves is still a click on its
  * cover. For
  * people who ask for less motion it doesn't move at all: the list's first
- * STILL_COUNT covers (the favourites, in Own mode; App.css shows five on a
+ * STILL_COUNT covers (the favourites, in Own mode; the list shows five on a
  * phone) stand in a still row, as the shelf did, and there is nothing to
  * pause or drag. A lap takes SECONDS_PER_COVER a cover, and the row's ends
- * fade (App.css's --reel-fade). A cover whose game the filters hide clears
+ * fade (the reel's --reel-fade). A cover whose game the filters hide clears
  * them first, so it has a card or row to land on.
  */
 export default function CoverCarousel({ want }: { want: boolean }) {
@@ -159,7 +159,7 @@ export default function CoverCarousel({ want }: { want: boolean }) {
     const li = e.currentTarget.parentElement!;
     const view = viewRef.current!.getBoundingClientRect();
     const box = li.getBoundingClientRect();
-    // The faded ends: App.css's --reel-fade, clamp(40px, 12vw, 200px), on a
+    // The faded ends: the reel's --reel-fade, clamp(40px, 12vw, 200px), on a
     // row as wide as the screen.
     const fade = Math.min(200, Math.max(40, view.width * 0.12));
     if (box.left >= view.left + fade && box.right <= view.right - fade) return;
@@ -262,16 +262,19 @@ export default function CoverCarousel({ want }: { want: boolean }) {
 
   const list = (copy: boolean) => (
     <ul
-      className="hero-reel-list"
+      className={`hero-reel-list flex gap-(--cover-gap) ${still ? 'flex-1 justify-center' : 'pr-(--cover-gap)'}`}
       aria-label={copy ? undefined : want ? 'Wishlist covers' : 'Collection covers'}
       aria-hidden={copy || undefined}
       data-warm={(!copy && warm) || undefined}
     >
       {shown.map((c, i) => (
-        <li key={c.id}>
+        <li
+          key={c.id}
+          className={`group/cover w-(--cover) ${still ? 'min-w-0 flex-[0_1_var(--cover)] max-sm:nth-[n+7]:hidden' : 'flex-none'}`}
+        >
           <button
             type="button"
-            className="hero-reel-cover"
+            className={`hero-reel-cover block w-full rounded-(--cover-r) [transition:transform_0.15s] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-blue data-twin-focused:outline-2 data-twin-focused:outline-offset-3 data-twin-focused:outline-blue can-hover:group-hover/cover:transform-[translateY(-3px)] ${dragging ? 'cursor-grabbing' : 'cursor-pointer'}`}
             aria-label={`Show ${c.name} in the list`}
             title={c.name}
             tabIndex={copy || i !== stop ? -1 : 0}
@@ -284,6 +287,7 @@ export default function CoverCarousel({ want }: { want: boolean }) {
             onKeyDown={copy ? undefined : (e) => move(e, i)}
           >
             <img
+              className="block aspect-[1] h-auto w-full rounded-(--cover-r) bg-art-matte object-cover shadow-(--shadow-cover-sm) filter-(--art-dim) sm:shadow-(--shadow-cover)"
               src={c.img}
               alt=""
               width={120}
@@ -300,8 +304,8 @@ export default function CoverCarousel({ want }: { want: boolean }) {
 
   const lap = { '--reel-lap': `${covers.length * SECONDS_PER_COVER}s` } as CSSProperties;
   const classes = [
-    'hero-reel',
-    still && 'hero-reel--still',
+    'hero-reel relative mt-3 flow-root [--cover-gap:8px] [--cover-r:11px] [--cover:48px] [--reel-fade:clamp(40px,12vw,200px)] max-sm:col-span-full sm:mt-0 sm:[--cover-gap:18px] sm:[--cover-r:20px] sm:[--cover:104px]',
+    still ? 'hero-reel--still' : '-mx-gutter',
     paused && 'is-paused',
     idle && 'is-idle',
     held && 'is-held',
@@ -312,11 +316,11 @@ export default function CoverCarousel({ want }: { want: boolean }) {
 
   return (
     <div ref={reelRef} className={classes} style={lap}>
-      {/* First in the Tab order, ahead of the covers; App.css sets it under the row. */}
+      {/* First in the Tab order, ahead of the covers; set under the row's right end (over it on a phone). */}
       {!still && (
         <button
           type="button"
-          className="hero-reel-toggle"
+          className="absolute top-1/2 right-gutter z-1 inline-flex size-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-[50%] border border-border bg-surface text-text2 opacity-100 shadow-(--shadow-md) [transition:opacity_0.15s,color_0.15s] hover:text-text hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue max-sm:before:absolute max-sm:before:-inset-2.5 max-sm:before:rounded-[50%] max-sm:before:content-[''] sm:top-[calc(100%+8px)] sm:size-6.5 sm:translate-y-0 sm:opacity-[0.85] sm:shadow-(--shadow-sm) xl:top-[calc(100%+16px)]"
           aria-label={paused ? 'Play cover carousel' : 'Pause cover carousel'}
           title={paused ? 'Play' : 'Pause'}
           onClick={() => setPaused((p) => !p)}
@@ -326,7 +330,11 @@ export default function CoverCarousel({ want }: { want: boolean }) {
       )}
       <div
         ref={viewRef}
-        className="hero-reel-view"
+        className={`hero-reel-view group/view select-none ${
+          still
+            ? 'overflow-visible'
+            : `-mt-1.5 -mb-3.5 touch-pan-y touch-pinch-zoom overflow-clip mask-[linear-gradient(90deg,transparent,var(--color-black)_var(--reel-fade),var(--color-black)_calc(100%-var(--reel-fade)),transparent)] pt-1.5 pb-3.5 sm:-mt-3 sm:-mb-8 sm:pt-3 sm:pb-8 ${dragging ? 'cursor-grabbing' : 'cursor-grab'}`
+        }`}
         {...(!still && {
           onPointerDown: grab,
           onPointerMove: drag,
@@ -337,7 +345,11 @@ export default function CoverCarousel({ want }: { want: boolean }) {
         })}
       >
         {/* Keyed on the list, so a switch starts the new row from its first cover. */}
-        <div ref={trackRef} className="hero-reel-track" key={want ? 'want' : 'own'}>
+        <div
+          ref={trackRef}
+          className={`hero-reel-track relative flex will-change-transform group-focus-within/view:[animation-play-state:paused] can-hover:has-[li:hover]:[animation-play-state:paused] ${still ? 'w-auto' : 'w-max animate-hero-reel'} ${paused || idle || held ? '[animation-play-state:paused]' : ''}`}
+          key={want ? 'want' : 'own'}
+        >
           {list(false)}
           {!still && list(true)}
         </div>

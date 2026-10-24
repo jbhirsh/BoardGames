@@ -35,14 +35,18 @@ export function HomePage() {
     <AuthProvider>
       <WishlistProvider>
         <title>The Game Room</title>
-        <div className="clip-wrap">
+        <div className="clip-wrap overflow-x-clip">
           <Hero want={collection === 'want'} />
-          <div className="sticky-header" ref={stickyRef} data-sticky-header>
+          <div
+            className="sticky-header sticky top-[env(safe-area-inset-top,0px)] z-200"
+            ref={stickyRef}
+            data-sticky-header
+          >
             <FilterBar />
             {!isPhone && <ActiveTags />}
           </div>
           {isPhone && <ActiveTags />}
-          <main className="main">
+          <main className="mx-auto max-w-340 px-gutter pt-3.5 pb-12 sm:pt-13">
             <GameCollection hidden={collection !== 'own'} />
             <Wishlist hidden={collection !== 'want'} />
           </main>

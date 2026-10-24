@@ -27,7 +27,11 @@ export default function ThemeToggle() {
   };
 
   return (
-    <div className="theme-toggle" role="radiogroup" aria-label="Colour theme">
+    <div
+      className="static top-4 right-gutter z-1 m-0 flex w-max gap-0.5 rounded-[999px] border border-border bg-surface p-0.75 shadow-(--shadow-sm) max-sm:col-2 max-sm:row-1 sm:mb-6 sm:ml-auto xl:absolute xl:mb-0 xl:ml-0 xl:w-auto"
+      role="radiogroup"
+      aria-label="Colour theme"
+    >
       {OPTIONS.map((o, i) => (
         <button
           key={o.value}
@@ -40,7 +44,7 @@ export default function ThemeToggle() {
           aria-label={o.label}
           title={o.label}
           tabIndex={theme === o.value ? 0 : -1}
-          className={`theme-opt${theme === o.value ? ' active' : ''}`}
+          className={`inline-flex size-7.5 cursor-pointer items-center justify-center rounded-[50%] [transition:background_0.15s,color_0.15s] max-sm:relative max-sm:after:absolute max-sm:after:-inset-x-px max-sm:after:-inset-y-1.75 max-sm:after:content-[''] ${theme === o.value ? 'active bg-blue-bg2 text-blue' : 'text-text2 hover:text-text'}`}
           onClick={() => choose(o.value)}
           onKeyDown={(e) => onKeyDown(e, i)}
         >
