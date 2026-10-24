@@ -8,6 +8,8 @@ import playwright from 'eslint-plugin-playwright';
 import eslintComments from '@eslint-community/eslint-plugin-eslint-comments';
 import eslintConfigPrettier from 'eslint-config-prettier/flat';
 import jsdoc from 'eslint-plugin-jsdoc';
+import betterTailwindcss from 'eslint-plugin-better-tailwindcss';
+import { getDefaultSelectors } from 'eslint-plugin-better-tailwindcss/defaults';
 import { defineConfig, globalIgnores } from 'eslint/config';
 
 // JSDoc is checked where it's written, never demanded where it isn't: a tag
@@ -28,6 +30,38 @@ const JSDOC_OPTIONAL = {
   // Blank lines between tags are layout, not accuracy.
   'jsdoc/tag-lines': 'off',
 };
+
+// Class names that style nothing: tests, e2e specs and scripts find
+// elements by them, and a few parent variants key on them
+// ([&_.rules-box-art]:…). Every style is a Tailwind class, so a name
+// Tailwind doesn't know is one of these or a typo.
+const HOOK_CLASSES = `
+  active admin-queue atag atags awards awards-list back-link card-corner-img
+  card-credit card-desc card-foot card-foot-end card-foot-start card-head
+  card-kw card-name card-open clip-wrap cmeta col-actions col-diff col-hide
+  col-kw col-name col-name-wrap col-players col-players-h col-short col-tags
+  col-vote coming-soon dd-opt dd-opt-ct detail-section diff-none fade-end
+  fade-start filterbar game-card game-row games-grid games-list group-hd
+  hero-reel-cover hero-reel-list hero-reel-track hero-reel-view kind-chip
+  kw-pill line line-art line-art--none line-detail line-meta line-toggle lines
+  list-group-row lit mobile-short no-art notice notice-text open pdf-hit
+  pdf-hit--current pdf-page pdf-reader pdf-search pdf-search-results
+  pdf-search-results--idle phone-action pick-backdrop pick-btn pick-card
+  row-art row-awards row-badges row-chevron row-credit row-dur row-expand
+  row-expand-content row-expand-foot row-expand-inner row-subgames row-toggle
+  row-yt rules-book rules-books rules-box-art rules-btn rules-btn--primary
+  rules-chat-bubble rules-chat-panel rules-chat-panel-fresh rules-chat-scope
+  rules-chat-toggle rules-download rules-game-desc rules-game-name
+  rules-header rules-more rules-page rules-pdf-links rules-save
+  rules-save-status rules-short rules-title-info rules-title-row rules-wide
+  sc-field sc-label sc-row sc-science-section sc-unit sc-win sec-hd show
+  skeleton-text sortable sticky-header sub-desc sub-link sub-links sub-name
+  sub-pill-full sub-pill-short sub-tag sub-tag-wrap sub-yt table-wrap vote-btn
+  vote-btn--compact vote-btn--on vote-label wish-card wish-grid wish-group
+  wishlist
+`
+  .trim()
+  .split(/\s+/);
 
 export default defineConfig([
   // src/gql is written by `npm run codegen`.
@@ -100,6 +134,58 @@ export default defineConfig([
     files: ['.github/scripts/**/*.mjs', 'scripts/**/*.mjs'],
     extends: [js.configs.recommended],
     languageOptions: { globals: globals.node },
+  },
+  {
+    // Tailwind's classes (src/index.css is its entry and theme): no
+    // conflicting (`text-text text-blue`), duplicate, unknown or deprecated
+    // classes, and no literal colour in an arbitrary value (colours are
+    // tokens). One class order, variant order, `!` position and variable
+    // syntax, and the canonical or shorthand spelling (`w-4 h-4` → `size-4`,
+    // `[16px]` → its scale step), all fixed by `npm run lint:fix`; collapse:
+    // false keeps two tokens that happen to share a value as written. Besides
+    // className, the strings in a variable named …Class or …Classes are
+    // checked: the class modules beside the components.
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/__tests__/**'],
+    plugins: { 'better-tailwindcss': betterTailwindcss },
+    settings: {
+      'better-tailwindcss': {
+        entryPoint: 'src/index.css',
+        selectors: [
+          ...getDefaultSelectors(),
+          { kind: 'variable', name: '^\\w*(Class|Classes)$', match: [{ type: 'strings' }, { type: 'objectValues' }] },
+        ],
+      },
+    },
+    rules: {
+      'better-tailwindcss/no-conflicting-classes': 'error',
+      'better-tailwindcss/no-duplicate-classes': 'error',
+      'better-tailwindcss/no-unknown-classes': [
+        'error',
+        // pdf.js's text layer is styled in index.css, as pdf.js names it.
+        { ignore: ['^textLayer$', ...HOOK_CLASSES.map((name) => `^${name}$`)] },
+      ],
+      'better-tailwindcss/no-deprecated-classes': 'error',
+      'better-tailwindcss/no-restricted-classes': [
+        'error',
+        {
+          restrict: [
+            {
+              pattern: '\\[[^\\]]*(#[0-9a-fA-F]{3,8}\\b|\\b(rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\\()',
+              message:
+                'A literal colour in an arbitrary value: colours are tokens (src/index.css), tinted by modifier (bg-gold/12).',
+            },
+          ],
+        },
+      ],
+      'better-tailwindcss/no-unnecessary-whitespace': 'error',
+      'better-tailwindcss/enforce-consistent-class-order': 'error',
+      'better-tailwindcss/enforce-consistent-variant-order': 'error',
+      'better-tailwindcss/enforce-consistent-important-position': 'error',
+      'better-tailwindcss/enforce-consistent-variable-syntax': 'error',
+      'better-tailwindcss/enforce-canonical-classes': ['error', { collapse: false }],
+      'better-tailwindcss/enforce-shorthand-classes': 'error',
+    },
   },
   {
     // backdrop <div> uses onClick for mouse dismiss; Escape + close button cover keyboard
