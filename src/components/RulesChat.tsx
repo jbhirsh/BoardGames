@@ -427,14 +427,14 @@ export function RulesChatPanel({
     >
       {scope && (
         <p
-          className="rules-chat-scope border-b border-border bg-bg px-5 py-2.5 text-[12.5px] font-medium text-text2"
+          className="rules-chat-scope border-b border-border bg-bg px-4 py-2.5 text-[12.5px] font-medium text-text2 sm:px-5"
           aria-live="polite"
         >
           {scope}
         </p>
       )}
       <div
-        className={`flex flex-col gap-3 overflow-y-auto p-3.5 sm:p-5 ${fresh ? 'flex-none' : 'flex-1'}`}
+        className={`flex flex-col gap-3 overflow-y-auto p-4 sm:p-5 ${fresh ? 'flex-none' : 'flex-1'}`}
         ref={messagesContainerRef}
       >
         {messages.map((msg, i) => (
@@ -514,7 +514,7 @@ export function RulesChatPanel({
           empty, it takes no room but stays in the page, a live region. */}
       <div
         id={statusId}
-        className="border-t border-border bg-bg px-3 pt-2.5 empty:border-t-0 empty:p-0 sm:px-4 sm:pt-3"
+        className="border-t border-border bg-bg px-4 pt-2.5 empty:border-t-0 empty:p-0 sm:px-5 sm:pt-3"
         aria-live="polite"
       >
         {shown && !holding && (
@@ -536,7 +536,7 @@ export function RulesChatPanel({
         )}
       </div>
       <form
-        className={`${fieldRowClass} px-3 pt-2.5 pb-[max(10px,env(safe-area-inset-bottom))] sm:px-4 sm:py-3 ${shown && !holding ? '' : 'border-t border-border'}`}
+        className={`${fieldRowClass} px-4 pt-2.5 pb-[max(10px,env(safe-area-inset-bottom))] sm:px-5 sm:py-3 ${shown && !holding ? '' : 'border-t border-border'}`}
         onSubmit={handleSend}
       >
         <input
