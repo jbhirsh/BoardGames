@@ -5,6 +5,7 @@ import { goToSuggest } from '../client/suggest';
 import type { CollectionMode } from '../data/types';
 import RandomPicker from './RandomPicker';
 import { HeartIcon, PlusIcon, ShelfIcon } from './Icons';
+import { phoneActionClass, pickButtonClass } from './sharedClasses';
 
 const TABS: { mode: CollectionMode; label: string; Icon: ComponentType }[] = [
   { mode: 'own', label: 'We own', Icon: ShelfIcon },
@@ -31,7 +32,7 @@ export default function PhoneNav() {
     <button
       key={mode}
       type="button"
-      className="phone-tab"
+      className="flex h-13 cursor-pointer flex-col items-center justify-center gap-0.75 rounded-xl text-[11.5px] font-semibold tracking-[0.2px] whitespace-nowrap text-text2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue aria-pressed:text-blue"
       aria-pressed={collection === mode}
       onClick={() => dispatch({ type: 'SET_COLLECTION', payload: mode })}
     >
@@ -41,13 +42,17 @@ export default function PhoneNav() {
   );
 
   return (
-    <nav className="phone-nav" aria-label="Which games to show">
+    <nav
+      className="sticky bottom-0 z-150 grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-bg px-gutter pt-2 pb-[calc(8px+env(safe-area-inset-bottom,0px))] before:pointer-events-none before:absolute before:inset-x-0 before:bottom-full before:h-6 before:bg-[linear-gradient(to_bottom,transparent,var(--color-bg))] before:content-[''] [body:has(:is(input:not([type=checkbox],[type=radio]),textarea):focus)_&]:invisible"
+      aria-label="Which games to show"
+      data-phone-nav
+    >
       {tab(TABS[0])}
-      <div className="phone-nav-mid">
+      <div className="flex justify-center">
         <RandomPicker variant="bar" hidden={collection !== 'own'} />
         <button
           type="button"
-          className="pick-btn phone-action"
+          className={`pick-btn phone-action ${pickButtonClass} ${phoneActionClass}`}
           hidden={collection !== 'want'}
           disabled={!loaded}
           onClick={goToSuggest}

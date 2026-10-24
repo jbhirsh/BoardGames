@@ -10,6 +10,13 @@ import ListView from './ListView';
 import PhoneListView from './PhoneListView';
 import RandomPicker from './RandomPicker';
 import ComingSoon from './ComingSoon';
+import {
+  sectionCountClass,
+  sectionHeadClass,
+  sectionNameClass,
+  sectionSwitchClass,
+  sectionTitleClass,
+} from './sharedClasses';
 
 /**
  * The "We own" view, with what's on its way listed under it (ComingSoon, a
@@ -31,18 +38,18 @@ export default function GameCollection({ hidden = false }: { hidden?: boolean })
   return (
     <>
       <section id={hidden ? undefined : 'collection'} ref={sectionRef} hidden={hidden}>
-        <div className="sec-hd">
-          <div className="sec-name">
-            <h2 className="sec-title" tabIndex={-1} data-focus-target="title">
+        <div className={sectionHeadClass}>
+          <div className={sectionNameClass}>
+            <h2 className={sectionTitleClass} tabIndex={-1} data-focus-target="title">
               Our Collection
             </h2>
-            <span className="sec-count">
+            <span className={sectionCountClass}>
               {filteredGames.length} {filteredGames.length === 1 ? 'game' : 'games'}
             </span>
           </div>
           {/* On the heading's line, beside the count it picks from. */}
           {!isPhone && <RandomPicker />}
-          <div className="sec-switch">
+          <div className={sectionSwitchClass}>
             {!isPhone && <CollectionToggle />}
             {isPhone ? <ViewFlip /> : <ViewToggle />}
           </div>

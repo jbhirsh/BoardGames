@@ -23,6 +23,18 @@ import { buildShareUrl } from '../utils/filterUrl';
 import { initialFilterState } from '../data/initialFilterState';
 import { goToSuggest } from '../client/suggest';
 import { DoneIcon, ShareIcon } from './Icons';
+import {
+  cardGridClass,
+  groupHeadingClass,
+  iconButtonClass,
+  pickButtonClass,
+  pickHeaderClass,
+  sectionCountClass,
+  sectionHeadClass,
+  sectionNameClass,
+  sectionSwitchClass,
+  sectionTitleClass,
+} from './sharedClasses';
 
 /**
  * The "We want" view: the static wishlist plus approved friend suggestions,
@@ -55,42 +67,56 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
   const { copied, copy } = useCopyLink();
   const shareLink = () => copy(buildShareUrl({ ...initialFilterState, collection: 'want' }, window.location.origin));
   // data-label sizes the button to its longer label, so "Copied!" doesn't
-  // shrink it (see .share-btn::before). On a phone, an icon, which turns to
-  // a tick and "Copied" for a moment.
+  // shrink it (an invisible ::before holding it, in the label's grid cell).
+  // On a phone, an icon, which turns to a tick and "Copied" for a moment.
   const share = isPhone ? (
-    <button type="button" className="icon-btn" aria-label="Share wishlist" title="Share wishlist" onClick={shareLink}>
+    <button
+      type="button"
+      className={iconButtonClass}
+      aria-label="Share wishlist"
+      title="Share wishlist"
+      onClick={shareLink}
+    >
       {copied ? (
         <>
           <DoneIcon />
-          <span className="icon-btn-note">Copied</span>
+          <span className="text-ok-fg">Copied</span>
         </>
       ) : (
         <ShareIcon />
       )}
     </button>
   ) : (
-    <button type="button" className="share-btn" data-label="Share wishlist" onClick={shareLink}>
-      <span className="share-btn-label">{copied ? 'Copied!' : 'Share wishlist'}</span>
+    // The longer label, invisible, in the same cell as the one showing, so
+    // "Copied!" keeps the button's width. The "/ ''" keeps it out of the
+    // button's accessible name.
+    <button
+      type="button"
+      className="inline-grid h-8.5 cursor-pointer place-items-center rounded-control border border-border2 bg-surface px-3.5 text-[13px] font-semibold whitespace-nowrap text-text [transition:background_0.15s,border-color_0.15s] before:invisible before:content-[attr(data-label)/''] before:[grid-area:1/1] can-hover:hover:border-border-hover can-hover:hover:bg-bg2"
+      data-label="Share wishlist"
+      onClick={shareLink}
+    >
+      <span className="[grid-area:1/1]">{copied ? 'Copied!' : 'Share wishlist'}</span>
     </button>
   );
 
   return (
     <section className="wishlist" id={hidden ? undefined : 'collection'} ref={sectionRef} hidden={hidden}>
-      <div className="sec-hd">
-        <div className="sec-name">
-          <h2 className="sec-title" tabIndex={-1} data-focus-target="title">
+      <div className={sectionHeadClass}>
+        <div className={sectionNameClass}>
+          <h2 className={sectionTitleClass} tabIndex={-1} data-focus-target="title">
             Wishlist
           </h2>
-          <span className="sec-count">
+          <span className={sectionCountClass}>
             {filtered.length} {filtered.length === 1 ? 'game' : 'games'}
           </span>
         </div>
         {/* The wishlist's counterpart to the collection's Pick for us, on
             the heading's line: the form sits below every entry. */}
         {loaded && !isPhone && (
-          <div className="sec-actions">
+          <div className="flex items-center gap-2">
             {share}
-            <button type="button" className="pick-btn" onClick={goToSuggest}>
+            <button type="button" className={`pick-btn ${pickButtonClass} ${pickHeaderClass}`} onClick={goToSuggest}>
               Suggest a game
             </button>
           </div>
@@ -98,14 +124,16 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
         <span className="sr-only" aria-live="polite" aria-atomic="true">
           {copied ? 'Link copied to clipboard' : ''}
         </span>
-        <div className="sec-switch">
+        <div className={sectionSwitchClass}>
           {!isPhone && <CollectionToggle />}
           {loaded && isPhone && share}
           {isPhone ? <ViewFlip /> : <ViewToggle />}
         </div>
       </div>
       {/* What a vote does, for the friend a shared link brought here. */}
-      <p className="wish-purpose">Heart the games you'd play. The top pick is what we buy next.</p>
+      <p className="-mt-1 mb-4 text-[14px] leading-normal text-pretty text-text2 sm:-mt-3.5 sm:mb-6 sm:text-[15px]">
+        Heart the games you'd play. The top pick is what we buy next.
+      </p>
       {loaded && <WishlistBody items={items} filtered={filtered} isPhone={isPhone} />}
     </section>
   );
@@ -159,8 +187,8 @@ function WishlistBody({
   const renderGrid = () =>
     groups.map(({ key, items: entries }) => (
       <div className="wish-group" key={key ?? 'all'}>
-        {key && <h3 className="group-hd">{WISHLIST_TYPES[key]}</h3>}
-        <div className="games-grid wish-grid">
+        {key && <h3 className={groupHeadingClass}>{WISHLIST_TYPES[key]}</h3>}
+        <div className={`games-grid wish-grid ${cardGridClass}`}>
           {entries.map((item) => (
             <WishlistCard
               key={item.id}

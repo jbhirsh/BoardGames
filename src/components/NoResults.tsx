@@ -43,23 +43,23 @@ export default function NoResults({ kind }: Props) {
   const arriving = kind === 'games' ? filterGames(COMING_SOON, state).length : 0;
 
   return (
-    <div className="no-results">
-      <p>No {noun} match your filters.</p>
+    <div className="col-span-full rounded-panel border border-border bg-surface px-10 py-16 text-center">
+      <p className="mb-4 text-[15px] text-text2">No {noun} match your filters.</p>
       {arriving > 0 && (
-        <p className="no-results-which">
+        <p className="-mt-2.5 mb-4 text-[13px] text-text2">
           {plural(arriving)} on the way {fit(arriving)}, under Coming Soon below.
         </p>
       )}
       {filters.length > 0 && (
-        <p className="no-results-which">Filtering for {listFilters(filters, state.keywordMode)}.</p>
+        <p className="-mt-2.5 mb-4 text-[13px] text-text2">Filtering for {listFilters(filters, state.keywordMode)}.</p>
       )}
       {options.length > 0 && (
-        <ul className="no-results-options" aria-label="Loosen the filters">
+        <ul className="mb-4 flex flex-wrap justify-center gap-2" aria-label="Loosen the filters">
           {options.map((r) => (
             <li key={r.id}>
               <button
                 type="button"
-                className="no-results-opt"
+                className="cursor-pointer rounded-[20px] border border-blue-tint/30 bg-blue-bg px-3.5 py-2 text-[13px] font-semibold text-blue hover:bg-blue-bg2"
                 aria-label={`Drop ${r.label}, ${plural(r.count)}`}
                 onClick={() => dispatch({ type: 'SET_FILTERS', payload: r.without })}
               >
@@ -69,14 +69,18 @@ export default function NoResults({ kind }: Props) {
           ))}
         </ul>
       )}
-      <div className="no-results-actions">
-        <button type="button" className="no-results-btn" onClick={() => dispatch({ type: 'CLEAR_ALL' })}>
+      <div className="flex flex-wrap items-center justify-center gap-3.5">
+        <button
+          type="button"
+          className="inline-block cursor-pointer rounded-[20px] bg-blue-fill px-5.5 py-2.25 text-[13px] text-on-fill [transition:background_0.2s] hover:bg-blue-fill-hover"
+          onClick={() => dispatch({ type: 'CLEAR_ALL' })}
+        >
           Clear filters
         </button>
         {otherCount > 0 && (
           <button
             type="button"
-            className="no-results-other"
+            className="cursor-pointer px-0.5 py-1.5 text-[13px] font-semibold text-blue hover:underline"
             onClick={() => dispatch({ type: 'SET_COLLECTION', payload: kind === 'games' ? 'want' : 'own' })}
           >
             {kind === 'games'

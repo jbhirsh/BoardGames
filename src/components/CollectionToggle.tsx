@@ -2,6 +2,14 @@ import { useFilterDispatch, useFilterLayout } from '../context/useFilter';
 import { focusSection } from '../client/focus';
 import type { CollectionMode } from '../data/types';
 
+const collectionButtonBaseClass =
+  'h-8 cursor-pointer px-2.5 text-[11.5px] font-semibold tracking-[0.2px] [transition:background_0.15s,color_0.15s]';
+
+/** We own or We want, the shown one raised in its track (with the `active` hook). */
+function collectionButtonClass(on: boolean): string {
+  return `${collectionButtonBaseClass} ${on ? 'active bg-surface text-dark shadow-(--shadow-sm)' : 'text-text3 hover:text-text'}`;
+}
+
 /** Own / Want segmented control. The filter bar applies to whichever is selected. */
 export default function CollectionToggle() {
   const { collection: mode } = useFilterLayout();
@@ -16,10 +24,14 @@ export default function CollectionToggle() {
   }
 
   return (
-    <div className="coll-toggle" role="group" aria-label="Which games to show">
+    <div
+      className="flex overflow-hidden rounded-lg border border-border bg-bg2"
+      role="group"
+      aria-label="Which games to show"
+    >
       <button
         type="button"
-        className={`coll-btn${mode === 'own' ? ' active' : ''}`}
+        className={collectionButtonClass(mode === 'own')}
         aria-pressed={mode === 'own'}
         data-focus-target="own-toggle"
         onClick={() => choose('own')}
@@ -28,7 +40,7 @@ export default function CollectionToggle() {
       </button>
       <button
         type="button"
-        className={`coll-btn${mode === 'want' ? ' active' : ''}`}
+        className={collectionButtonClass(mode === 'want')}
         aria-pressed={mode === 'want'}
         data-focus-target="want-toggle"
         onClick={() => choose('want')}

@@ -1,5 +1,6 @@
 import { useFilterDispatch, useFilterLayout } from '../context/useFilter';
 import { GridIcon, ListIcon } from './Icons';
+import { iconButtonClass } from './sharedClasses';
 
 /**
  * A phone's rows-or-cards switch: one quiet icon button at the end of the
@@ -13,7 +14,7 @@ export default function ViewFlip() {
   return (
     <button
       type="button"
-      className="icon-btn"
+      className={iconButtonClass}
       aria-label={toCards ? 'Show as cards' : 'Show as rows'}
       title={toCards ? 'Show as cards' : 'Show as rows'}
       onClick={() => dispatch({ type: 'SET_VIEW', payload: toCards ? 'grid' : 'list' })}

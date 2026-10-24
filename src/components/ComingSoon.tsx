@@ -3,6 +3,7 @@ import { COMING_SOON } from '../data/games';
 import { useFilterResults } from '../context/useFilter';
 import { filterGames } from '../utils/filterGames';
 import GameCard from './GameCard';
+import { cardGridClass, groupHeadingClass } from './sharedClasses';
 
 /**
  * Games we've bought that haven't come yet (`arriving` in games.ts), as cards
@@ -18,11 +19,11 @@ export default function ComingSoon({ hidden = false }: { hidden?: boolean }) {
   if (games.length === 0) return null;
 
   return (
-    <section className="coming-soon" hidden={hidden} aria-labelledby={headingId}>
-      <h2 className="group-hd" id={headingId}>
+    <section className="coming-soon mt-7" hidden={hidden} aria-labelledby={headingId}>
+      <h2 className={groupHeadingClass} id={headingId}>
         Coming Soon
       </h2>
-      <div className="soon-grid">
+      <div className={cardGridClass}>
         {games.map((g) => (
           <GameCard key={g.name} game={g} />
         ))}
