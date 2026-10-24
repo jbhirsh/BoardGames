@@ -154,7 +154,8 @@ export default function DominionPad() {
             Kingdom cards that score
           </h2>
           <p className={hintClass}>Tick the ones in this game&apos;s Supply.</p>
-          <div className="flex flex-wrap gap-2">
+          {/* Two to a row on a phone, so the chips line up in columns. */}
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
             {KINGDOM_CARDS.map((c) => (
               <label key={c.key} className={chipClass}>
                 <input
