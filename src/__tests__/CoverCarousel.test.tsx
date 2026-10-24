@@ -182,6 +182,8 @@ describe('CoverCarousel', () => {
     vi.useFakeTimers();
     const { container } = renderReel();
     const imgs = [...container.querySelectorAll('img')];
+    const list = screen.getByRole('list', { name: 'Collection covers' });
+    expect(list).not.toHaveAttribute('data-warm');
     expect(imgs.slice(0, 8).every((i) => !i.hasAttribute('loading'))).toBe(true);
     expect(imgs.slice(8).every((i) => i.getAttribute('loading') === 'lazy')).toBe(true);
     expect(
@@ -196,6 +198,10 @@ describe('CoverCarousel', () => {
       vi.advanceTimersByTime(1500);
     });
     expect(imgs.every((i) => !i.hasAttribute('loading'))).toBe(true);
+    // Said on the row's list, for the screenshot tests to wait on; the
+    // hidden copy says nothing.
+    expect(list).toHaveAttribute('data-warm', 'true');
+    expect(container.querySelectorAll('[data-warm]')).toHaveLength(1);
   });
 
   it('pauses and plays from its toggle', () => {
