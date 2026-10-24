@@ -12,6 +12,8 @@ interface Props {
 
 /**
  * A page for an address that leads nowhere, set like the home page's hero.
+ * On a phone, where the hero is a grid, its heading, line and button sit
+ * together in the middle of the screen, on the left edge like the hero's.
  * A caller's title names the tab too; the default heading is playful, so
  * the tab says plainly what happened instead.
  */
@@ -20,13 +22,13 @@ export default function NotFoundPage({
   message = "There's nothing at this address. The link may be old, or it has a typo.",
 }: Props) {
   return (
-    <main className={`${heroClass} flex min-h-svh flex-col justify-center`}>
+    <main className={`${heroClass} flex min-h-svh flex-col justify-center max-sm:content-center`}>
       <title>{`${title ?? 'Page not found'} · The Game Room`}</title>
       {/* The SPA answers every path with 200, so keep these pages out of search. */}
       <meta name="robots" content="noindex" />
       <h1 className={heroTitleClass}>{title ?? 'This box is empty'}</h1>
       <p className={heroSubClass}>{message}</p>
-      <div className="relative flex flex-wrap justify-center gap-2.5">
+      <div className="relative flex flex-wrap justify-center gap-2.5 max-sm:col-span-full max-sm:mt-6 max-sm:justify-start">
         <Link to="/" className={`${pickButtonClass} h-12 gap-1.5 rounded-xl px-6 text-[15px]`}>
           Browse the collection
         </Link>
