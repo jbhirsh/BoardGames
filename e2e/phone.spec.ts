@@ -146,7 +146,7 @@ test('the bar steps aside while the keyboard is up for the search', async ({ pag
 
 /**
  * How far a control takes taps each way: its own box, and the invisible
- * area a smaller one carries around it (App.css). Probes out from its
+ * area a smaller one carries around it (tapTargetClass). Probes out from its
  * centre, a pixel at a time, for the element a tap there would reach.
  */
 const tapArea = (control: Locator) =>

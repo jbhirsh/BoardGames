@@ -19,6 +19,7 @@ npm run build        # npm run typecheck, then vite build -> dist/
 npm run typecheck    # TypeScript 7 `tsc -b` across the project refs
 npm run typecov      # type-coverage: every tsconfig project at 100%
 npm run lint         # eslint . (flat config; includes jsx-a11y static checks)
+npm run lint:fix     # eslint . --fix (Tailwind class order and spelling, among others)
 npm run format       # prettier --write . (format:check is CI's read-only check)
 npm run depcruise    # dependency-cruiser: layering rules (.dependency-cruiser.cjs)
 npm run codegen      # typed GraphQL documents into src/gql/ (codegen.ts); commit the output
@@ -80,8 +81,10 @@ before changing the module.
   side-effecting browser modules, `graphql.ts` the one way to the API (typed
   documents POSTed as JSON, and the rules chat's server-sent events) with
   its operations in `client/operations/*.graphql`; **`src/gql/`** the typed
-  documents codegen writes from them and the SDL; **`src/pdfjs/`** the reader's pdf.js;
-  **`src/sw/`** the service worker; **`src/App.css`** every style.
+  documents codegen writes from them and the SDL; **`src/pdfjs/`** the
+  reader's pdf.js; **`src/sw/`** the service worker; **`src/index.css`** the
+  one stylesheet (Tailwind's entry and theme); `src/components/*Classes.ts`
+  the class strings components share.
 - **`api/`** — one Vercel Function, `graphql.ts`: GraphQL Yoga serving the
   SDL in `_schema.graphql` with the resolvers in `_resolvers/` (`votes`,
   `suggestions`, `auth`, `chat` (Gemini, a subscription over server-sent
@@ -151,9 +154,12 @@ before changing the module.
   through codegen reading `api/_schema.graphql`.
 - **Never hand-edit the generated `src/data/gameWeights.ts` and
   `wishlistArt.ts`**; re-run their scripts.
-- **Colours are tokens, never literals**; `e2e/theme.spec.ts` holds both
-  themes to AA. Messages use `Notice`, not a one-off coloured box. Focus is
-  handed over by `data-focus-target`, never a class (`src/client/focus.ts`).
+- **Colours are tokens, never literals**: `--color-*` in `src/index.css`'s
+  `@theme`, redefined for dark, used as classes (`text-text2`, a tint by
+  modifier: `bg-gold/12`); lint fails a literal colour in a class.
+  `e2e/theme.spec.ts` holds both themes to AA. Messages use `Notice`, not
+  a one-off coloured box. Focus is handed over by `data-focus-target`,
+  never a class (`src/client/focus.ts`).
 - **Don't mix a filter `dispatch` with `navigate()`** in one handler: the
   dispatch wins and the navigation's params are dropped.
 
@@ -161,12 +167,37 @@ before changing the module.
 
 - **Phone first.** Design a change for a phone (402px, the newest iPhone
   Pro) before widening it: 44px touch targets (an invisible tap area
-  around a smaller control rather than a bigger box, App.css), the main
-  actions in reach of a thumb, as much on a screen as reads well. Styles
-  for what only a phone renders need no media query; new rules that differ
-  by width start from the phone's and add `min-width` breakpoints (the
-  older `max-width` blocks convert when next touched). Show a UI change at
-  phone size in the PR first.
+  around a smaller control rather than a bigger box, `tapTargetClass` in
+  `sharedClasses.ts`), the main actions in reach of a thumb, as much on a
+  screen as reads well. Unprefixed classes are the phone's, and what only
+  a phone renders needs no variant; wider screens add breakpoint variants
+  (`sm:` from 521px up to `2xl:` from 1081px, in `src/index.css`). The
+  `max-sm:` and other `max-*` variants carried over from the old
+  `max-width` blocks convert when next touched. Show a UI change at phone
+  size in the PR first.
+- **Every style is a Tailwind class** (v4, through `@tailwindcss/vite`),
+  written on the element; there is no other stylesheet. `src/index.css`
+  holds the `@theme` (colours, fonts, radii, the gutter, breakpoints,
+  animations; Tailwind's own colours, fonts, type scale, line heights,
+  letter spacings, easings, container widths, blurs and shadows are
+  dropped, so a class can only reach these, and all of it is px, spacing
+  a 4px step), the dark theme's overrides, and only what no class can
+  reach: `@keyframes`, the font faces, reduced motion for every element,
+  the page's scrollbars, the browser's placeholder grey, tap flash and
+  text-size adjusting (kept over preflight's) and pdf.js's text layer.
+  Text sizes are px in the class (`text-[13px]`). Shadows are
+  `:root` variables the dark theme changes (`shadow-(--shadow-md)`). Class
+  strings components share live in a module beside them
+  (`sharedClasses.ts`, `formClasses.ts`, `scorePadClasses.ts`, …), in
+  variables named `…Class` so lint reads them; a child styled by where it
+  sits takes a prop (`small`, `inRow`) or its parent's variant
+  (`[&_.rules-box-art]:…`). A class name a test or script finds an element
+  by stays on it, unstyled, and is listed in `eslint.config.js`'s
+  `HOOK_CLASSES`. `eslint-plugin-better-tailwindcss` fails conflicting,
+  duplicate, unknown and deprecated classes and literal colours, and
+  enforces one class order and the canonical spelling (`size-4` for
+  `w-4 h-4`, a scale step for an arbitrary value it equals): `npm run
+  lint:fix` rewrites them.
 - **TypeScript strict everywhere.** One solution of configs, each extending
   `tsconfig.base.json` (the shared strict options): `tsconfig.{app,api,node,
   eval,sw,e2e}.json` for `src` (DOM), `api` (Node), `vite.config.ts`, `eval`,

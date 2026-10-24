@@ -19,7 +19,7 @@ const TABS: { mode: CollectionMode; label: string; Icon: ComponentType }[] = [
  * action, Pick for us under the collection and Suggest a game under the
  * wishlist. It stays on screen down the list (sticky, last in the page, so
  * the page's end scrolls clear of it rather than under it) and steps aside
- * while a text field has focus (App.css), when the on-screen keyboard
+ * while a text field has focus (a variant on the page's body), when the on-screen keyboard
  * leaves no room for it. Its buttons stay where they are on a switch, so
  * focus needs no handing over as the toggle's does. Suggest a game waits,
  * disabled, for the wishlist's entries, which bring the form it goes to.

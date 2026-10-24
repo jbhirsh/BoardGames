@@ -1094,7 +1094,7 @@ describe("RulesPage's reader", () => {
     expect(open).toHaveAttribute('target', '_blank');
     expect(open).not.toHaveAttribute('download');
     expect(screen.getByText(/To print this rulebook, use Open PDF/)).toBeInTheDocument();
-    // On a phone (App.css) just Download and Open, "PDF" still read out.
+    // On a phone (fewerWordsClass) just Download and Open, "PDF" still read out.
     for (const link of [screen.getByRole('link', { name: 'Download PDF' }), open]) {
       expect(within(link).getByText('PDF')).toHaveClass('rules-more');
     }

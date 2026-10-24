@@ -11,7 +11,7 @@
 # (docs, workflows, hooks, the e2e suite, the data scripts) need no tests.
 # Anything else runs the whole suite, still without coverage: dependencies
 # and config, but also the files tests read rather than import (the rules
-# text, PDFs and word lists, App.css's theme tokens, vercel.json, the
+# text, PDFs and word lists, index.css's theme tokens, vercel.json, the
 # Stryker config, the eval's golden set, the PR template, test fixtures).
 #
 # No-op in CI (see pre-commit).

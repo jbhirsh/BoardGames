@@ -7,8 +7,8 @@ import { checkPrVisuals, report, uiFiles } from './pr-visuals.mjs';
 describe('uiFiles', () => {
   it('keeps components and stylesheets under src', () => {
     expect(
-      uiFiles(['src/components/GameCard.tsx', 'src/App.css', 'src/utils/filterGames.ts', 'api/graphql.ts']),
-    ).toEqual(['src/components/GameCard.tsx', 'src/App.css']);
+      uiFiles(['src/components/GameCard.tsx', 'src/index.css', 'src/utils/filterGames.ts', 'api/graphql.ts']),
+    ).toEqual(['src/components/GameCard.tsx', 'src/index.css']);
   });
 
   it('keeps the class modules and index.html, whose classes are styles', () => {
@@ -119,12 +119,15 @@ describe('report', () => {
   });
 
   it('fails as a GitHub error naming each UI file, from padded, blank-separated lines', () => {
-    const { code, message } = report('  src/App.css \n\nsrc/components/GameCard.tsx\napi/graphql.ts\n', 'No pictures.');
+    const { code, message } = report(
+      '  src/index.css \n\nsrc/components/GameCard.tsx\napi/graphql.ts\n',
+      'No pictures.',
+    );
     expect(code).toBe(1);
     expect(message.split('\n').slice(0, 4)).toEqual([
       '::error::This PR changes the UI but its description shows none of it.',
       'Changed UI files:',
-      '  src/App.css',
+      '  src/index.css',
       '  src/components/GameCard.tsx',
     ]);
     expect(message).toContain('tick "No visible UI change"');

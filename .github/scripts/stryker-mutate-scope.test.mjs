@@ -50,7 +50,7 @@ describe('mutateScope with the repo config', () => {
     'src/__tests__/filterGames.test.ts',
     'src/types/vitest-axe.d.ts',
     'src/data/games.ts',
-    'src/App.css',
+    'src/index.css',
     'stryker.config.json',
     '.github/workflows/mutation.yml',
   ].join('\n');
