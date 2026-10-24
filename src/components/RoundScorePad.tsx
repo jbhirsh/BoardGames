@@ -348,7 +348,7 @@ export default function RoundScorePad({ game }: { game: CardGameId }) {
 
   return (
     <>
-      <details className={`${setupClass} not-open:gap-0`} open={rounds.length === 0 || undefined}>
+      <details className={`group/setup ${setupClass} not-open:gap-0`} open={rounds.length === 0 || undefined}>
         <summary className={setupSummaryClass}>
           {game === 'euchre' ? 'Partnerships' : 'Players'}
           <span className={titleNoteClass}>{shown.join(', ')}</span>
