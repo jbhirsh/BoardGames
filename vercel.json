@@ -3,6 +3,10 @@
   "framework": "vite",
   "devCommand": "npx vite --port $PORT",
   "functions": {
+    "api/graphql.ts": {
+      "includeFiles": "rules-text/**",
+      "maxDuration": 60
+    },
     "api/chat.ts": {
       "includeFiles": "rules-text/**",
       "maxDuration": 60
