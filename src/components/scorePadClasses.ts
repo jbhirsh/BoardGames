@@ -83,13 +83,23 @@ export const fieldInputClass = `${numberClass} ${boxTextClass} pointer-events-au
 /** The player's total under their boxes. */
 export const totalClass =
   'mt-1 flex items-center justify-between border-t-2 border-border pt-3 text-[16px] font-bold text-text';
-/** Hands the pad on (Next, See results), or adds a round; filled, at the end of its row. */
-export const nextClass = `cursor-pointer self-end rounded-control bg-blue-fill px-4.5 py-2.5 text-[14px] font-semibold text-on-fill hover:not-disabled:brightness-108 ${focusOutlineClass} ${tapTargetClass}`;
-/** The row under a pad holding New game. */
-export const actionsClass = 'mt-3 flex justify-end';
+/**
+ * Hands the pad on (Next, See results), or adds a round; filled. At the
+ * end of its row, and on a phone the form's whole width, in reach of
+ * either thumb.
+ */
+export const nextClass = `cursor-pointer self-end rounded-control bg-blue-fill px-4.5 py-2.5 text-[14px] font-semibold text-on-fill hover:not-disabled:brightness-108 max-sm:w-full ${focusOutlineClass} ${tapTargetClass}`;
+/**
+ * The row under a pad holding New game. On a phone it ends the page apart
+ * from the pad (24px clear of it), as wide as the panels, and clear of
+ * the home indicator.
+ */
+export const actionsClass = 'mt-3 flex justify-end max-sm:mt-6 max-sm:pb-[env(safe-area-inset-bottom,0px)]';
 /** New game, and a round's Delete and Cancel: quiet. */
 export const quietButtonClass =
   'min-h-11 cursor-pointer rounded-control border border-border bg-bg2 px-4 py-2 text-[13px] font-semibold text-text2 hover:bg-bg3 hover:text-text';
+/** New game, in actionsClass' row. */
+export const newGameClass = `${quietButtonClass} max-sm:w-full`;
 
 /** What the whole table shares, above the players: the map played, the Kingdom, the players' names. */
 export const setupClass = 'mb-3 flex min-w-0 flex-col gap-3 rounded-panel border border-border bg-surface p-4';

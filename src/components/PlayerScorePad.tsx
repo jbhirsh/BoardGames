@@ -8,9 +8,9 @@ import {
   formClass,
   labelClass,
   nameInputClass,
+  newGameClass,
   nextClass,
   panelClass,
-  quietButtonClass,
   sheetCellClass,
   sheetClass,
   sheetCornerClass,
@@ -309,7 +309,7 @@ export default function PlayerScorePad<P extends PadPlayer>({
       )}
 
       <div className={actionsClass}>
-        <button type="button" className={quietButtonClass} onClick={startNewGame}>
+        <button type="button" className={newGameClass} onClick={startNewGame}>
           New game
         </button>
       </div>
