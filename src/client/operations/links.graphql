@@ -1,0 +1,36 @@
+# The pages the owner's emails link to (components/EmailedDecisionPage.tsx,
+# components/SignInConfirmPage.tsx): each reads with a query, which changes
+# nothing, and acts only with a mutation when its button is pressed.
+
+query EmailedSuggestion($id: String!, $token: String!, $game: String) {
+  emailedSuggestion(id: $id, token: $token) {
+    suggestion {
+      game
+      name
+      note
+      status
+    }
+    preview(game: $game) {
+      ...Preview
+    }
+  }
+}
+
+mutation DecideByLink($id: String!, $token: String!, $decision: Decision!, $game: String, $details: DetailsInput) {
+  decideSuggestion(id: $id, token: $token, decision: $decision, game: $game, details: $details) {
+    item {
+      game
+    }
+    lookup
+  }
+}
+
+query SignInLinkLive($token: String!) {
+  signInLinkLive(token: $token)
+}
+
+mutation VerifySignIn($token: String!) {
+  verifySignIn(token: $token) {
+    admin
+  }
+}

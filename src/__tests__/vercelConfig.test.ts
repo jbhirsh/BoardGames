@@ -27,6 +27,16 @@ describe('vercel.json headers', () => {
   });
 });
 
+describe('vercel.json referrers', () => {
+  it("sends no referrer from the pages an emailed link opens, before the page's code has loaded", () => {
+    const rule = config.headers?.find((r) => r.headers.some((h) => h.key === 'Referrer-Policy'));
+    expect(rule?.headers).toEqual([{ key: 'Referrer-Policy', value: 'no-referrer' }]);
+    const source = new RegExp(`^${rule?.source ?? '$^'}$`);
+    for (const path of ['/approve', '/deny', '/sign-in/confirm']) expect(path).toMatch(source);
+    for (const path of ['/', '/sign-in', '/rules/catan', '/approved']) expect(path).not.toMatch(source);
+  });
+});
+
 describe('vercel.json functions', () => {
   it('gives every API function its own time limit, of at most 60 s', () => {
     const functions = readdirSync(join(process.cwd(), 'api'))

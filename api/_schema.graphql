@@ -3,10 +3,12 @@ The Game Room's API, served by one Vercel function (api/graphql.ts, GraphQL
 Yoga) and read by the client's codegen (codegen.ts) into src/gql/. Each
 field's rules are in its resolver's header (api/_resolvers/*).
 
-Errors carry `extensions.code`: BAD_REQUEST, FORBIDDEN, NOT_FOUND, CONFLICT,
-RATE_LIMITED, DAILY_LIMIT, UNAVAILABLE, INTERNAL_SERVER_ERROR or TIMEOUT,
-and the HTTP status that goes with it. Mutations are POST only, and every
-POST must be JSON.
+Errors carry `extensions.code` and the HTTP status that goes with it:
+BAD_REQUEST and BAD_NAME (a corrected name the approve page can't look
+up) 400, FORBIDDEN 403, NOT_FOUND 404, CONFLICT and ALREADY_DECIDED (with
+`extensions.status`, what it was decided as) 409, RATE_LIMITED and
+DAILY_LIMIT 429, INTERNAL_SERVER_ERROR 500, UNAVAILABLE 503, TIMEOUT 504.
+Mutations are POST only, and every POST must be JSON.
 """
 type Query {
   "Whether the request's cookie names a live owner session."

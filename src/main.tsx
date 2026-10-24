@@ -3,7 +3,14 @@ import { StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import App, { HomePage } from './App';
-import { RulesPage, ScoreCalculatorPage, WordCheckerPage, SignInPage } from './lazyPages';
+import {
+  RulesPage,
+  ScoreCalculatorPage,
+  WordCheckerPage,
+  SignInPage,
+  SignInConfirmPage,
+  EmailedDecisionPage,
+} from './lazyPages';
 import NotFoundPage, { RouteError } from './components/NotFoundPage';
 import RouteFallback, { RulesFallback } from './components/RouteFallback';
 import { AuthProvider } from './context/AuthContext';
@@ -21,6 +28,12 @@ import { SIGN_IN_INTRO, SIGN_IN_TITLE } from './data/signIn';
 //   /word-checker        components/WordCheckerPage.tsx
 //   /sign-in             the owner's magic-link sign-in (components/SignInPage.tsx),
 //                        which nothing on the home page links to
+//   /sign-in/confirm     where the emailed sign-in link leads
+//                        (components/SignInConfirmPage.tsx)
+//   /approve, /deny      where a suggestion email's links lead
+//                        (components/EmailedDecisionPage.tsx)
+// The emailed links' pages read with a query and act only when their button
+// is pressed, since mail scanners follow every link.
 // Only the home page, and the not-found page the router's error page needs,
 // are in the main bundle. The rest load on first open (lazyPages.ts) behind
 // their header in grey (components/RouteFallback.tsx; the sign-in page's
@@ -66,6 +79,22 @@ const router = createBrowserRouter([
           </AuthProvider>
         ),
       },
+      {
+        path: '/sign-in/confirm',
+        element: (
+          <Suspense fallback={<RouteFallback title={SIGN_IN_TITLE} art={false} />}>
+            <SignInConfirmPage />
+          </Suspense>
+        ),
+      },
+      ...(['approve', 'deny'] as const).map((decision) => ({
+        path: `/${decision}`,
+        element: (
+          <Suspense fallback={<RouteFallback title={decision === 'approve' ? 'Approve' : 'Deny'} art={false} />}>
+            <EmailedDecisionPage />
+          </Suspense>
+        ),
+      })),
       { path: '*', element: <NotFoundPage /> },
     ],
   },

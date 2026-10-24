@@ -5311,6 +5311,81 @@ select.suggest-input {
   text-decoration: none;
 }
 
+/* ---- The pages an emailed link opens (EmailedLinkPage) ----
+   The heading and panel share one centred column, the panel's width; the
+   back link stays at the page's left edge, as on every page. */
+.emailed-column {
+  max-width: 440px;
+  margin-inline: auto;
+}
+
+/* ---- The page an emailed approve or deny link opens ----
+   One column with even gaps: who suggested it and their note, the
+   preview, the decision (thumb-wide on a phone), then the rename form,
+   set apart with its field and button on one row. */
+.emailed-decision {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.emailed-decision .admin-preview,
+.emailed-decision .signin-actions {
+  margin-top: 0;
+}
+.emailed-decision .signin-btn,
+.emailed-decision .signin-input {
+  height: 44px;
+}
+.emailed-from {
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--text);
+}
+.emailed-from strong {
+  font-weight: 600;
+  color: var(--dark);
+}
+.emailed-note {
+  margin: 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--blue);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  background: var(--bg2);
+  font-size: 15px;
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--text);
+}
+.emailed-decide {
+  width: 100%;
+}
+/* Deny is the page's one action too, so it's as wide and as plain, in
+   the Notice danger tones (4.5:1 or better in both themes). */
+.emailed-decide--deny,
+.emailed-decide--deny:hover:not(:disabled) {
+  border: 1px solid var(--danger-border);
+  background: var(--danger-bg);
+  color: var(--danger-fg);
+}
+.emailed-rename {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.emailed-rename-row {
+  display: flex;
+  gap: 8px;
+}
+.emailed-rename-row .signin-input {
+  flex: 1;
+  min-width: 0;
+}
+.emailed-rename-row .signin-btn {
+  flex: none;
+}
+
 /* ══ SCORE PADS ══════════════════════════════════════════════
    What the pads past 7 Wonders add (ScoreCalculatorPage.tsx): the
    table's own choices (a map, a Kingdom), groups of boxes, ticket rows,
