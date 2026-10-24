@@ -311,6 +311,9 @@
   border: 0;
 }
 html {
+  /* The page's colour behind everything, so a browser that colours its own
+     bars from the page (Safari under its toolbar) finds the theme's. */
+  background: var(--bg);
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
 }
@@ -4733,10 +4736,19 @@ a.rules-chat-toggle {
   align-items: center;
   gap: 8px;
   padding: 8px var(--gutter) calc(8px + env(safe-area-inset-bottom, 0px));
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  border-top: 1px solid var(--border);
+  /* Solid, in the page's colour, the top's in either theme: Safari colours
+     the strip under its toolbar from the bar at the page's foot, which it
+     can't take from a see-through, blurred one (it showed white there in
+     the dark theme). The list fades into it rather than meeting a line. */
+  background: var(--bg);
+}
+.phone-nav::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 100%;
+  height: 24px;
+  background: linear-gradient(to bottom, transparent, var(--bg));
+  pointer-events: none;
 }
 html:has(.phone-nav) {
   scroll-padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
