@@ -424,7 +424,7 @@ export default function RoundScorePad({ game }: { game: CardGameId }) {
 
       {(!result.over || editing !== null) && (
         <section className={`${panelClass} mt-3`} id={formId} aria-labelledby={`${formId}-title`}>
-          <h2 className="mb-3.5 text-[17px] font-bold text-text" id={`${formId}-title`} ref={titleRef} tabIndex={-1}>
+          <h2 className="mb-3 text-[17px] font-bold text-text" id={`${formId}-title`} ref={titleRef} tabIndex={-1}>
             {editing === null ? roundName(rounds.length) : `Fix ${roundName(editing).toLowerCase()}`}
           </h2>
           <div className={formClass}>
@@ -620,7 +620,8 @@ export default function RoundScorePad({ game }: { game: CardGameId }) {
       </p>
 
       {rounds.length > 0 && (
-        <div className={panelClass}>
+        // Its own gap: the live region before it keeps it from following a panel.
+        <div className={`${panelClass} mt-3`}>
           <div className={sheetWrapClass}>
             <table className={sheetClass}>
               <caption className="sr-only">Scores by {rules.round.toLowerCase()}</caption>
