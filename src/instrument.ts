@@ -4,6 +4,7 @@
 // below, sending what was reported before it came.
 import * as Sentry from '@sentry/react';
 import type { ErrorEvent } from '@sentry/react';
+import { withoutToken } from './utils/emailedLinks';
 
 export { captureException, captureMessage } from '@sentry/react';
 
@@ -95,15 +96,33 @@ function resumeReplay(): void {
   }
 }
 
+/** The event with any emailed link's token taken out of the address it records. */
+function scrubbed<E extends { request?: { url?: string } }>(event: E): E {
+  if (event.request?.url) event.request.url = withoutToken(event.request.url);
+  return event;
+}
+
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
   integrations: [Sentry.browserTracingIntegration()],
   tracesSampleRate: 0.1,
   replaysSessionSampleRate: 0,
   replaysOnErrorSampleRate: 1.0,
+  // An emailed link's page carries its token in the address; no event,
+  // transaction or breadcrumb takes it to Sentry.
+  beforeSendTransaction: scrubbed,
+  beforeBreadcrumb(breadcrumb) {
+    const data: Record<string, unknown> | undefined = breadcrumb.data;
+    for (const key of ['from', 'to', 'url']) {
+      const value = data?.[key];
+      if (data && typeof value === 'string') data[key] = withoutToken(value);
+    }
+    return breadcrumb;
+  },
   // Called for error events only, never for transactions. The one that
   // starts replay waits for it (briefly), so it is linked to the replay.
   async beforeSend(event) {
+    scrubbed(event);
     if (!startsReplay(event)) return event;
     let timer: ReturnType<typeof setTimeout> | undefined;
     await Promise.race([

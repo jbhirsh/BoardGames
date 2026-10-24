@@ -44,6 +44,15 @@ export type Source =
   | 'FRIEND'
   | 'OWNER';
 
+export type SuggestionStatus =
+  | 'APPROVED'
+  | 'DENIED'
+  | 'PENDING'
+  /** The owner took it off the wishlist. */
+  | 'REMOVED'
+  /** Stored, but the email to the owner failed: off the active list, still in the owner's queue. */
+  | 'UNSENT';
+
 export type PendingSuggestionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -111,6 +120,41 @@ export type LogoutMutationVariables = Exact<{ [key: string]: never; }>;
 
 
 export type LogoutMutation = { logout: boolean };
+
+export type EmailedSuggestionQueryVariables = Exact<{
+  id: string;
+  token: string;
+  game?: string | null | undefined;
+  withPreview: boolean;
+}>;
+
+
+export type EmailedSuggestionQuery = { emailedSuggestion: { suggestion: { game: string, name: string, note: string, status: SuggestionStatus }, preview?: { outcome: LookupOutcome, details: { bggId: number, name: string, year: number | null, min: number, max: number, mins: number, desc: string, kw: Array<string>, img: string | null } | null } | null } };
+
+export type DecideByLinkMutationVariables = Exact<{
+  id: string;
+  token: string;
+  decision: Decision;
+  game?: string | null | undefined;
+  details?: DetailsInput | null | undefined;
+}>;
+
+
+export type DecideByLinkMutation = { decideSuggestion: { lookup: LookupOutcome | null, item: { game: string } | null } };
+
+export type SignInLinkLiveQueryVariables = Exact<{
+  token: string;
+}>;
+
+
+export type SignInLinkLiveQuery = { signInLinkLive: boolean };
+
+export type VerifySignInMutationVariables = Exact<{
+  token: string;
+}>;
+
+
+export type VerifySignInMutation = { verifySignIn: { admin: boolean } };
 
 export type WishlistVotesQueryVariables = Exact<{
   ids: Array<string> | string;
@@ -250,6 +294,62 @@ export const LogoutDocument = new TypedDocumentString(`
   logout
 }
     `) as unknown as TypedDocumentString<LogoutMutation, LogoutMutationVariables>;
+export const EmailedSuggestionDocument = new TypedDocumentString(`
+    query EmailedSuggestion($id: String!, $token: String!, $game: String, $withPreview: Boolean!) {
+  emailedSuggestion(id: $id, token: $token) {
+    suggestion {
+      game
+      name
+      note
+      status
+    }
+    preview(game: $game) @include(if: $withPreview) {
+      ...Preview
+    }
+  }
+}
+    fragment Preview on Preview {
+  outcome
+  details {
+    bggId
+    name
+    year
+    min
+    max
+    mins
+    desc
+    kw
+    img
+  }
+}`) as unknown as TypedDocumentString<EmailedSuggestionQuery, EmailedSuggestionQueryVariables>;
+export const DecideByLinkDocument = new TypedDocumentString(`
+    mutation DecideByLink($id: String!, $token: String!, $decision: Decision!, $game: String, $details: DetailsInput) {
+  decideSuggestion(
+    id: $id
+    token: $token
+    decision: $decision
+    game: $game
+    details: $details
+  ) {
+    item {
+      game
+    }
+    lookup
+  }
+}
+    `) as unknown as TypedDocumentString<DecideByLinkMutation, DecideByLinkMutationVariables>;
+export const SignInLinkLiveDocument = new TypedDocumentString(`
+    query SignInLinkLive($token: String!) {
+  signInLinkLive(token: $token)
+}
+    `) as unknown as TypedDocumentString<SignInLinkLiveQuery, SignInLinkLiveQueryVariables>;
+export const VerifySignInDocument = new TypedDocumentString(`
+    mutation VerifySignIn($token: String!) {
+  verifySignIn(token: $token) {
+    admin
+  }
+}
+    `) as unknown as TypedDocumentString<VerifySignInMutation, VerifySignInMutationVariables>;
 export const WishlistVotesDocument = new TypedDocumentString(`
     query WishlistVotes($ids: [String!]!, $anonId: String) {
   wishlistVotes(ids: $ids, anonId: $anonId) {

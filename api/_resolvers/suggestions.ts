@@ -663,7 +663,7 @@ export async function previewEmailed(
   let name = item.game;
   if (game !== undefined && game !== null) {
     const g = validateGame(game);
-    if (!g.ok) throw new ApiError(400, `Nothing was looked up: the ${g.error}.`);
+    if (!g.ok) throw new ApiError(400, `Nothing was looked up: the ${g.error}.`, { code: 'BAD_NAME' });
     name = g.game;
   }
   return lookUp(deps, name);
