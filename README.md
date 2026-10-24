@@ -53,7 +53,8 @@ A sortable list view is also available:
 
 ## Tech stack
 
-- **Frontend:** React 19, TypeScript 7 (strict), React Router 7, Vite 8
+- **Frontend:** React 19, TypeScript 7 (strict), React Router 7, Vite 8,
+  Tailwind CSS 4 (every style a utility class; the tokens in `src/index.css`)
 - **Content:** `react-markdown` for AI answers; rule PDFs rendered inline
 - **Backend:** Vercel serverless functions (`@vercel/node`)
 - **AI:** Google Gemini via `@google/genai` (`gemini-2.5-flash`, streamed)
@@ -65,7 +66,7 @@ A sortable list view is also available:
   pure-logic and component code; Playwright end-to-end tests in Chromium
   against the production build, with the API stubbed
 - **Tooling:** ESLint 10 (flat config, `typescript-eslint`, `jsx-a11y-x`,
-  `react-hooks`), Node 24
+  `react-hooks`, `better-tailwindcss` for the classes), Prettier, Node 24
 - **Rules pipeline:** `unpdf` for text extraction with a `tesseract.js` OCR
   fallback for image-only PDFs
 
@@ -94,7 +95,8 @@ suggestion emails). Real secrets live in `.env.local`, which is gitignored.
 | `npm run dev` | Start the Vite dev server |
 | `npm run build` | Type-check (`tsc -b`) and build to `dist/` |
 | `npm run preview` | Serve the production build locally |
-| `npm run lint` | Run ESLint (includes static a11y checks) |
+| `npm run lint` | Run ESLint (includes static a11y checks and the Tailwind classes) |
+| `npm run lint:fix` | Fix what ESLint can (Tailwind class order and spelling, among others) |
 | `npx vitest run` | Run the test suite once (`--coverage` to enforce thresholds) |
 | `npm run test:mutation` | Run StrykerJS mutation testing (see below) |
 | `npm run test:e2e` | Build, serve and run the Playwright end-to-end suite in `e2e/` |

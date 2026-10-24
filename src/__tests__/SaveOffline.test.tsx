@@ -79,7 +79,7 @@ describe('SaveOffline', () => {
     );
   });
 
-  // On a phone (App.css, 600px and narrower) the row's three items keep one
+  // On a phone (fewerWordsClass, 600px and narrower) the row's three items keep one
   // line in fewer words: rules-more goes from sight but is still read out,
   // rules-short stands in for it unread, and rules-wide goes altogether, so
   // a button's name holds the words it shows.
