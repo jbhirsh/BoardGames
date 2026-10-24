@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate, type Location } from 'react-router';
 import { cameFromList } from '../utils/fromList';
+import { tapTargetClass } from './sharedClasses';
 
 /**
  * "Back to The Game Room" on every sub-page. Reached from the list (a link
@@ -19,7 +20,7 @@ export default function BackLink() {
   return (
     <Link
       to="/"
-      className="back-link"
+      className={`back-link mb-6 inline-flex items-center gap-1 text-[13px] font-medium text-blue [transition:opacity_0.15s] hover:opacity-70 ${tapTargetClass}`}
       onClick={(e) => {
         if (!fromList || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
         e.preventDefault();

@@ -12,7 +12,7 @@ import DifficultyMeta from './DifficultyMeta';
 import GameDetail from './GameDetail';
 import { FROM_LIST } from '../utils/fromList';
 import { scorePadPath } from '../data/scoreCalculators';
-import { detailTextClass, metaClass, tapTargetClass } from './sharedClasses';
+import { detailTextClass, kindChipClass, kindClasses, metaClass, tapTargetClass } from './sharedClasses';
 
 interface Props {
   game: GameWithSubgames;
@@ -52,13 +52,6 @@ export default function SubGameList({ game, inRow = false }: Props) {
  * One game in the list. One that has more to say than its line (an
  * expansion's full description and what it adds) opens in place to show it.
  */
-// An add-on's kind: an expansion's amber, an extension's green, a version's blue.
-const kindClasses: Record<string, string> = {
-  expansion: 'bg-expansion-tint/12 text-expansion-fg',
-  extension: 'bg-extension-tint/12 text-extension-fg',
-  version: 'bg-blue-tint/10 text-version-fg',
-};
-
 function SubGameRow({ parent, sub, inRow }: { parent: string; sub: SubGame; inRow: boolean }) {
   const [open, setOpen] = useState(false);
   const moreId = useId();
@@ -73,13 +66,7 @@ function SubGameRow({ parent, sub, inRow }: { parent: string; sub: SubGame; inRo
       <div className="contents">
         <span className="sub-name col-1 row-1 flex flex-wrap items-center gap-1.75 self-center text-[13.5px] font-semibold text-dark">
           {sub.name}
-          {kind && (
-            <span
-              className={`kind-chip kind-${kind} rounded-[5px] px-1.5 py-0.5 text-[9.5px] leading-[1.3] font-bold tracking-[0.6px] whitespace-nowrap uppercase ${kindClasses[kind]}`}
-            >
-              {kind}
-            </span>
-          )}
+          {kind && <span className={`kind-chip kind-${kind} ${kindChipClass} ${kindClasses[kind]}`}>{kind}</span>}
         </span>
         <span className="col-span-full flex flex-wrap gap-x-3 gap-y-1">
           <span className={metaClass}>

@@ -55,6 +55,14 @@
   --color-on-fill: #ffffff;
   /* Opaque, for the edges a mask fades and the scrim behind a dialog. */
   --color-black: #000000;
+  /* A rulebook page is paper: white in both themes. Its marks: the search's
+     matches in yellow, the one it's on in orange, and a citation's passage
+     opaque orange with a darker underline. */
+  --color-paper: #ffffff;
+  --color-search-hit: rgba(255, 196, 0, 0.45);
+  --color-search-current: rgba(255, 120, 0, 0.6);
+  --color-cite-hit: #ffa033;
+  --color-cite-edge: #b3470b;
   --color-blue-bg: rgba(var(--blue-rgb), 0.08);
   --color-blue-bg2: rgba(var(--blue-rgb), 0.15);
   /* The hero's soft glow, falling from its top centre. */
@@ -83,6 +91,12 @@
   --color-version-fg: #0058b0;
   /* 4.5:1 or better on the word checker's green verdict tint; #2D8A4E was 3.9:1. */
   --color-ok-fg: #297e48;
+  /* The word checker's verdict tints, by modifier (bg-ok-tint/12): a word's
+     green, no word's red, and grey for one nothing could check. The same in
+     both themes. */
+  --color-ok-tint: rgb(52 199 89);
+  --color-bad-tint: rgb(255 59 48);
+  --color-gray-tint: rgb(142 142 147);
   --color-bad-fg: #d42020;
   --color-error-fg: #c0392b;
   /* The Notice component's tones (src/components/Notice.tsx): text, fill
@@ -170,6 +184,8 @@
   --animate-pick-shake: pick-shake 0.3s ease-in-out infinite;
   /* A popover's list (the awards, the add-ons) popping in. */
   --animate-pop-in: pick-pop 0.16s ease-out;
+  /* A page's header pulsing grey while its code loads (RouteFallback). */
+  --animate-fallback-pulse: fallback-pulse 1.6s ease-in-out infinite;
   /* The phone's filter sheet rising from the bottom. */
   --animate-sheet-up: sheet-up 0.22s ease-out;
 
@@ -205,6 +221,11 @@
     }
     75% {
       transform: translateX(3px) rotate(2deg);
+    }
+  }
+  @keyframes fallback-pulse {
+    50% {
+      opacity: 0.6;
     }
   }
   @keyframes sheet-up {
@@ -500,5 +521,78 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* Every scrollbar, the page's own included, thin and in the theme's
+   hairline colour where the browser lets a page style it. No element's
+   class can reach the page's own scrollbar. */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border2);
+  border-radius: 3px;
+}
+
+/* pdf.js's text layer (from its pdf_viewer.css): transparent text that
+   pdf.js places over a rulebook page's image (PdfReader), so it can be
+   selected and searched. The spans are pdf.js's, set out by its own inline
+   custom properties, so these are pdf.js's rules rather than classes. The
+   search's marks inside it are PdfReader's, and carry their own classes. */
+@layer components {
+  .textLayer {
+    position: absolute;
+    inset: 0;
+    overflow: clip;
+    line-height: 1;
+    text-align: initial;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+    forced-color-adjust: none;
+    transform-origin: 0 0;
+    z-index: 0;
+    mix-blend-mode: multiply;
+    --min-font-size: 1;
+    --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+    --min-font-size-inv: calc(1 / var(--min-font-size));
+  }
+  .textLayer :is(span, br) {
+    color: transparent;
+    position: absolute;
+    white-space: pre;
+    cursor: text;
+    transform-origin: 0% 0%;
+  }
+  .textLayer > :not(.markedContent),
+  .textLayer .markedContent span:not(.markedContent) {
+    z-index: 1;
+    --font-height: 0;
+    font-size: calc(var(--text-scale-factor) * var(--font-height));
+    --scale-x: 1;
+    --rotate: 0deg;
+    transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+  }
+  .textLayer .markedContent {
+    display: contents;
+  }
+  /* The layer is laid out on the unrotated page; a page stored rotated
+     (Suspicion's) turns it to match, as pdf.js's viewer does. */
+  .textLayer[data-main-rotation="90"] {
+    transform: rotate(90deg) translateY(-100%);
+  }
+  .textLayer[data-main-rotation="180"] {
+    transform: rotate(180deg) translate(-100%, -100%);
+  }
+  .textLayer[data-main-rotation="270"] {
+    transform: rotate(270deg) translateX(-100%);
+  }
+  .textLayer ::selection {
+    background: rgba(var(--blue-rgb), 0.25);
+    color: transparent;
   }
 }

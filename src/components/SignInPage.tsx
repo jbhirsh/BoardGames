@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { useAuth } from '../context/useAuth';
 import BackLink from './BackLink';
 import { SIGN_IN_INTRO, SIGN_IN_TITLE } from '../data/signIn';
+import { pageClass, pageDescClass, pageHeaderClass, pageTitleClass, tapTargetClass } from './sharedClasses';
 
 type Status = { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent' } | { kind: 'error'; message: string };
 
@@ -11,6 +12,12 @@ type Status = { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent' } | { kind
  * link in the inbox, and this browser is signed in for 30 days. Nothing on
  * the home page points here; the owner knows the address.
  */
+const panelClass = 'max-w-110 rounded-panel border border-border bg-surface p-6 shadow-(--shadow-md)';
+const statusClass = 'min-h-[1.5em] text-[13px] leading-normal text-text2';
+const buttonClass = `h-10 cursor-pointer rounded-control px-4.5 text-[14px] font-semibold [transition:background_0.15s] disabled:cursor-wait disabled:opacity-60 ${tapTargetClass}`;
+const primaryClass = 'bg-blue-fill text-on-fill hover:not-disabled:bg-blue-fill-hover';
+const ghostClass = 'border border-border2 bg-surface text-text hover:not-disabled:bg-bg2';
+
 export default function SignInPage() {
   const { admin, loaded, requestLink, logout } = useAuth();
   const [email, setEmail] = useState('');
@@ -26,37 +33,37 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="rules-page">
+    <div className={pageClass}>
       <title>Sign in · The Game Room</title>
-      <header className="rules-header">
+      <header className={pageHeaderClass}>
         <BackLink />
-        <h1 className="rules-game-name">{SIGN_IN_TITLE}</h1>
-        <p className="rules-game-desc">{SIGN_IN_INTRO}</p>
+        <h1 className={pageTitleClass}>{SIGN_IN_TITLE}</h1>
+        <p className={pageDescClass}>{SIGN_IN_INTRO}</p>
       </header>
       {loaded && admin && (
-        <div className="signin-panel">
-          <p className="signin-status" role="status">
+        <div className={panelClass}>
+          <p className={statusClass} role="status">
             You're signed in as the owner on this browser.
           </p>
-          <div className="signin-actions">
-            <Link to="/?c=want" className="signin-btn signin-link-btn">
+          <div className="mt-1.5 flex flex-wrap items-center gap-2.5">
+            <Link to="/?c=want" className={`${buttonClass} ${primaryClass} inline-flex items-center`}>
               Go to the wishlist
             </Link>
-            <button type="button" className="signin-btn signin-btn--ghost" onClick={() => void logout()}>
+            <button type="button" className={`${buttonClass} ${ghostClass}`} onClick={() => void logout()}>
               Sign out
             </button>
           </div>
         </div>
       )}
       {loaded && !admin && (
-        <div className="signin-panel">
-          <form className="signin-form" onSubmit={onSubmit} aria-label="Owner sign-in">
-            <label className="signin-label" htmlFor={`${uid}-email`}>
+        <div className={panelClass}>
+          <form className="flex flex-col gap-2.5" onSubmit={onSubmit} aria-label="Owner sign-in">
+            <label className="text-[12px] font-medium text-text2" htmlFor={`${uid}-email`}>
               Email
             </label>
             <input
               id={`${uid}-email`}
-              className="signin-input"
+              className="h-10 rounded-control border border-border2 bg-bg px-3.5 text-[16px] text-text outline-none [transition:border-color_0.15s,box-shadow_0.15s] focus:border-blue focus:shadow-[0_0_0_3px_var(--color-blue-bg2)]"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -64,12 +71,12 @@ export default function SignInPage() {
               autoComplete="email"
               placeholder="you@example.com"
             />
-            <div className="signin-actions">
-              <button type="submit" className="signin-btn" disabled={status.kind === 'sending'}>
+            <div className="mt-1.5 flex flex-wrap items-center gap-2.5">
+              <button type="submit" className={`${buttonClass} ${primaryClass}`} disabled={status.kind === 'sending'}>
                 {status.kind === 'sending' ? 'Sending…' : 'Email me a sign-in link'}
               </button>
             </div>
-            <p className="signin-status" role="status" aria-live="polite">
+            <p className={statusClass} role="status" aria-live="polite">
               {status.kind === 'sent' &&
                 "If that's the owner's address, a link is on its way. It works once and expires in 15 minutes."}
               {status.kind === 'error' && status.message}

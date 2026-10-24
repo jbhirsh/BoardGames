@@ -31,6 +31,16 @@ import { useOnline } from '../hooks/useOnline';
 import { useOfflineSave } from '../hooks/useOfflineSave';
 import { CANT_SHOW } from './cantShow';
 import SaveOffline from './SaveOffline';
+import {
+  headerButtonClass,
+  headerButtonLiveClass,
+  kindChipClass,
+  kindClasses,
+  pageClass,
+  pdfNoteClass,
+  rulesLinkClass,
+  fewerWordsClass,
+} from './sharedClasses';
 
 // The page draws the rulebook itself, searchable, on every screen: phones
 // can't show an embedded PDF (Android Chrome shows nothing, iOS Safari only
@@ -45,7 +55,7 @@ const PdfReader = lazy(() => import('./PdfReader'));
 // are gone too. Opening one with signal saves it, unless it is a large one
 // (or the browser saves data), which waits for its Save for offline button.
 const notSaved = (pdf: string) => (
-  <div className="pdf-offline">
+  <div className={`pb-6 ${fewerWordsClass}`}>
     <Notice tone="info">
       {waitsForSave(pdf) ? (
         // Named as its button reads: "Save offline" on a phone.
@@ -128,9 +138,20 @@ function useSaved(pdf: string, online: boolean): boolean | 'asking' {
 }
 
 // How far the tab strip's edges fade; a tab within this of either side is
-// partly hidden. The strip hands it to App.css's .rules-books as
-// --strip-fade, so the fade and the scrolling here can't disagree.
+// partly hidden. The strip takes it as --strip-fade, for its fade and its
+// scroll padding, so the fade and the scrolling here can't disagree.
 const STRIP_FADE = 48;
+
+// The strip fades at an end with more tabs past it: without it, a tab cut at
+// the edge ("Monster Box 2 EXPA") gave no sign the strip scrolls. A mask's
+// black is only opacity, not a colour, so it holds in both themes.
+function stripFade({ start, end }: { start: boolean; end: boolean }): string {
+  if (start && end)
+    return '[mask-image:linear-gradient(to_right,transparent,var(--color-black)_var(--strip-fade),var(--color-black)_calc(100%-var(--strip-fade)),transparent)]';
+  if (end) return '[mask-image:linear-gradient(to_right,var(--color-black)_calc(100%-var(--strip-fade)),transparent)]';
+  if (start) return '[mask-image:linear-gradient(to_left,var(--color-black)_calc(100%-var(--strip-fade)),transparent)]';
+  return '';
+}
 
 /** Scrolls the tab strip sideways to its chosen tab, clear of the faded edge. */
 function scrollToChosenTab(strip: HTMLElement) {
@@ -314,17 +335,20 @@ export default function RulesPage() {
 
   return (
     <RulesChatProvider>
-      <div className="rules-page">
+      <div className={pageClass}>
         <title>{`${book.name} rules · The Game Room`}</title>
         <PageHeader title={game.name} desc={book.short} art={game}>
           <RulesChatToggle />
           {scorePath && (
-            <Link className="rules-chat-toggle" to={scorePath}>
+            <Link className={`${headerButtonClass} ${headerButtonLiveClass}`} to={scorePath}>
               <CalculatorIcon /> Score calculator
             </Link>
           )}
           {game.slug === WORD_CHECKER_GAME && (
-            <button className="rules-chat-toggle" onClick={() => setWordCheckerOpen((o) => !o)}>
+            <button
+              className={`${headerButtonClass} ${headerButtonLiveClass}`}
+              onClick={() => setWordCheckerOpen((o) => !o)}
+            >
               {wordCheckerOpen ? 'Close Word Checker' : 'Word Checker'}
             </button>
           )}
@@ -334,7 +358,7 @@ export default function RulesPage() {
             ref={stripRef}
             // Faded at an end with more tabs past it, so a cut-off strip
             // reads as one that scrolls.
-            className={`rules-books${edges.start ? ' fade-start' : ''}${edges.end ? ' fade-end' : ''}`}
+            className={`rules-books mb-3.5 flex snap-x snap-proximity scroll-px-(--strip-fade) scrollbar-thin gap-1.5 overflow-x-auto pb-1 ${edges.start ? 'fade-start' : ''} ${edges.end ? 'fade-end' : ''} ${stripFade(edges)}`}
             style={{ '--strip-fade': `${STRIP_FADE}px` } as CSSProperties}
             aria-label="Rulebooks"
             // A tab reached by keyboard is brought clear of the faded edges:
@@ -348,30 +372,38 @@ export default function RulesPage() {
                 to={rulebookPath(game.slug, b.part)}
                 replace
                 state={arrival}
-                className="rules-book"
+                className={`rules-book inline-flex shrink-0 snap-start items-center gap-1.75 rounded-control border px-3.5 py-2 text-[13px] font-medium whitespace-nowrap [transition:background_0.15s,color_0.15s,border-color_0.15s] ${b === book ? 'border-dark bg-dark text-surface' : 'border-border bg-bg2 text-text2 hover:border-blue-tint/30 hover:bg-blue-bg hover:text-blue'}`}
                 aria-current={b === book ? 'page' : undefined}
               >
                 {b.label}
-                {b.kind && shownKind(b.label, b.kind) && <span className={`kind-chip kind-${b.kind}`}>{b.kind}</span>}
+                {b.kind && shownKind(b.label, b.kind) && (
+                  <span
+                    className={`kind-chip kind-${b.kind} ${kindChipClass} ${b === book ? 'bg-surface/18 text-surface' : kindClasses[b.kind]}`}
+                  >
+                    {b.kind}
+                  </span>
+                )}
               </Link>
             ))}
           </nav>
         )}
         {game.houseRules && (
           // Folded so the rulebook stays in view; the count says it's there.
-          <details className="house-rules">
-            <summary>
+          <details className="group/rules mb-4 rounded-control border border-border bg-surface">
+            {/* The browser's own triangle hidden (Safari draws it with its own
+                pseudo-element), and one drawn that turns when open. */}
+            <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-[14px] font-semibold text-text after:ml-auto after:size-1.75 after:flex-none after:transform-[rotate(45deg)] after:border-r-2 after:border-b-2 after:border-text3 after:content-[''] after:[transition:transform_0.15s] group-open/rules:after:transform-[rotate(-135deg)] hover:text-blue focus-visible:rounded-control focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue [&::-webkit-details-marker]:hidden">
               House rules{' '}
-              <span className="house-rules-count">
+              <span className="rounded-control bg-bg3 px-1.75 py-px text-[11px] font-bold text-text2">
                 {game.houseRules.length}
                 <span className="sr-only"> rules</span>
               </span>
             </summary>
-            <dl>
+            <dl className="flex flex-col gap-3 px-4 pt-1 pb-4">
               {game.houseRules.map((r) => (
-                <div key={r.name} className="house-rule">
-                  <dt>{r.name}</dt>
-                  <dd>{r.text}</dd>
+                <div key={r.name}>
+                  <dt className="mb-0.5 text-[13px] font-semibold text-text">{r.name}</dt>
+                  <dd className="text-[13px] leading-[1.6] text-text2">{r.text}</dd>
                 </div>
               ))}
             </dl>
@@ -409,11 +441,13 @@ export default function RulesPage() {
             from sight (rules-more), not from their names: Download, Open. */}
         {!unreachable && (
           <>
-            <div className="rules-pdf-links">
+            <div
+              className={`rules-pdf-links mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 max-xs:gap-x-3.5 ${fewerWordsClass}`}
+            >
               <a
                 href={book.pdf}
                 download
-                className="rules-download"
+                className={rulesLinkClass}
                 aria-label="Download PDF"
                 aria-describedby="rules-download-size"
               >
@@ -422,16 +456,16 @@ export default function RulesPage() {
                 </span>
                 {size !== null && (
                   <>
-                    <span className="rules-download-size" aria-hidden="true">
+                    <span className="font-normal text-text2" aria-hidden="true">
                       ·
                     </span>
-                    <span className="rules-download-size" id="rules-download-size">
+                    <span className="font-normal text-text2" id="rules-download-size">
                       {formatSize(size)}
                     </span>
                   </>
                 )}
               </a>
-              <a href={book.pdf} target="_blank" rel="noopener noreferrer" className="rules-download">
+              <a href={book.pdf} target="_blank" rel="noopener noreferrer" className={rulesLinkClass}>
                 <span>
                   Open <span className="rules-more">PDF</span>
                 </span>
@@ -448,13 +482,13 @@ export default function RulesPage() {
             </div>
             {/* The reader's pages draw only near the screen, so a printout of
                 this page would be empty boxes: it prints this instead. */}
-            <p className="rules-print-note">
+            <p className="hidden text-[13px] text-text2 print:block">
               To print this rulebook, use Open PDF and print it from the browser’s PDF viewer.
             </p>
           </>
         )}
         <ReaderBoundary key={`${book.pdf}#${attempt}`} pdf={book.pdf} note={failNote} onFail={readerFails}>
-          <Suspense fallback={<p className="pdf-note">Loading the rulebook…</p>}>
+          <Suspense fallback={<p className={pdfNoteClass}>Loading the rulebook…</p>}>
             <PdfReader
               src={book.pdf}
               title={`${book.name} rules`}
