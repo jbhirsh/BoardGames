@@ -16,7 +16,6 @@
 @source '../index.html';
 @source '.';
 @source not './__tests__';
-@import "./App.css" layer(components);
 
 /* The theme. `static`, so every token is in the page whether or not a class
    names it: the dark blocks below redefine them, and a few are read by
@@ -82,6 +81,10 @@
      extension's green) and the cart button's Amazon orange, by modifier:
      bg-gold/12. The same in both themes. */
   --color-gold: rgb(201 162 39);
+  /* The score sheet's winner: the crown over their column, and the
+     column's tint, by modifier (bg-win/10). The same in both themes. */
+  --color-crown: #ca8a04;
+  --color-win: rgb(234 179 8);
   --color-expansion-tint: rgb(176 108 0);
   --color-extension-tint: rgb(30 123 75);
   --color-amazon: rgb(255 153 0);

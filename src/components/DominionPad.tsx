@@ -4,6 +4,11 @@ import { cleanInput, isBoxText, num, showScore } from '../utils/scoreInput';
 import { ordinal, places, tieNotes } from '../utils/standings';
 import PlayerScorePad, { ScoreSheet, type PadPlayer } from './PlayerScorePad';
 import { CountRow } from './ScoreInput';
+import { checkboxClass, hintClass, ruleClass, setupClass, setupTitleClass, tieNoteClass } from './scorePadClasses';
+
+/** A Kingdom card's chip: a checkbox and its name, blue while ticked. */
+const chipClass =
+  'inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-control border border-border bg-bg2 px-3.5 text-[14px] font-medium text-text has-checked:border-blue-tint/40 has-checked:bg-blue-bg has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-blue';
 
 const FIELDS = [
   'estates',
@@ -105,11 +110,11 @@ function Results({ kingdom, players }: { kingdom: ReadonlySet<KingdomCard>; play
           [],
           (place) => `so they share ${place} place, unless one of them had fewer turns`,
         ).map((note) => (
-          <p key={note} className="sc-tie-note">
+          <p key={note} className={tieNoteClass}>
             {note}
           </p>
         ))}
-      <p className="sc-tie-rule">
+      <p className={`mt-2 ${ruleClass}`}>
         A tie on points goes to the player who had fewer turns; tied on turns too, they share the win.
       </p>
     </>
@@ -144,15 +149,20 @@ export default function DominionPad() {
       valid={(r) => FIELDS.every((f) => isBoxText(r[f]))}
       hasScores={hasScores}
       setup={
-        <section className="sc-setup" aria-labelledby="sc-kingdom-title">
-          <h2 className="sc-setup-title" id="sc-kingdom-title">
+        <section className={setupClass} aria-labelledby="sc-kingdom-title">
+          <h2 className={setupTitleClass} id="sc-kingdom-title">
             Kingdom cards that score
           </h2>
-          <p className="sc-hint">Tick the ones in this game&apos;s Supply.</p>
-          <div className="sc-chips">
+          <p className={hintClass}>Tick the ones in this game&apos;s Supply.</p>
+          <div className="flex flex-wrap gap-2">
             {KINGDOM_CARDS.map((c) => (
-              <label key={c.key} className="sc-chip">
-                <input type="checkbox" checked={inPlay.has(c.key)} onChange={(e) => toggle(c.key, e.target.checked)} />
+              <label key={c.key} className={chipClass}>
+                <input
+                  type="checkbox"
+                  className={checkboxClass}
+                  checked={inPlay.has(c.key)}
+                  onChange={(e) => toggle(c.key, e.target.checked)}
+                />
                 {c.name}
               </label>
             ))}

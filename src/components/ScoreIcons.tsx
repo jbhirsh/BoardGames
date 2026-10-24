@@ -62,10 +62,11 @@ const PATHS = {
 
 export type ScoreIconKind = keyof typeof PATHS;
 
-export function ScoreIcon({ kind }: { kind: ScoreIconKind }) {
+/** A score pad's icon, 20px unless `className` sizes it (with any colour or margin). */
+export function ScoreIcon({ kind, className = 'size-5' }: { kind: ScoreIconKind; className?: string }) {
   return (
     <svg
-      className={`sc-icon sc-icon--${kind}`}
+      className={`block flex-none ${className}`}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
