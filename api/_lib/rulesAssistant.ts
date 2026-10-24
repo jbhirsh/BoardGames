@@ -1,5 +1,5 @@
 // Core ask-a-question pipeline for the AI rules assistant, extracted from
-// api/chat.ts so it can be called from plain Node (e.g. the eval harness in
+// api/_resolvers/chat.ts so it can be called from plain Node (e.g. the eval harness in
 // eval/run-eval.ts) without going through HTTP. Files under api/_lib are not
 // exposed as Vercel endpoints (underscore-prefixed paths are ignored).
 
@@ -73,7 +73,7 @@ export function loadRulesText(slug: string, parts: string[] = []): string {
   const dir = join(process.cwd(), 'rules-text');
   // Only names from the directory's own listing ever reach a path, so the
   // slug and parts (request input, already shape-checked by SLUG_RE in
-  // chat.ts) are compared against file names and never joined into one.
+  // _resolvers/chat.ts) are compared against file names and never joined into one.
   const files = readdirSync(dir);
   const own = files.find((f) => f === slug + '.txt');
   if (!own) throw new Error(`ENOENT: no rules text for ${slug}`);

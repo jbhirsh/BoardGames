@@ -1,32 +1,30 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { parseIds, optionalAnonId, ANON_RE, MAX_IDS } from '../../api/_lib/ids';
+import { parseIdList, optionalAnonId, ANON_RE, MAX_IDS } from '../../api/_lib/ids';
 import { getRawRedis, getRedis, resetRedisForTests } from '../../api/_lib/redis';
 import { NAME_RE as CLIENT_NAME_RE } from '../utils/displayName';
 
-const errorOf = (v: unknown) => {
-  const r = parseIds(v);
+const errorOf = (v: string[]) => {
+  const r = parseIdList(v);
   return r.ok ? undefined : r.error;
 };
-const idsOf = (v: unknown) => {
-  const r = parseIds(v);
+const idsOf = (v: string[]) => {
+  const r = parseIdList(v);
   return r.ok ? r.ids : undefined;
 };
 
-describe('parseIds', () => {
-  it('requires a non-empty string', () => {
-    expect(errorOf(undefined)).toMatch(/required/);
-    expect(errorOf('')).toMatch(/required/);
+describe('parseIdList', () => {
+  it('requires at least one id', () => {
+    expect(errorOf([])).toMatch(/required/);
   });
 
-  it('drops malformed slugs and errors when none remain', () => {
-    expect(idsOf(' azul , Bad Slug ,catan')).toEqual(['azul', 'catan']);
-    expect(errorOf('Bad!')).toMatch(/valid slug/);
+  it('trims ids, drops malformed slugs and errors when none remain', () => {
+    expect(idsOf([' azul ', 'Bad Slug', 'catan'])).toEqual(['azul', 'catan']);
+    expect(errorOf(['Bad!'])).toMatch(/valid slug/);
   });
 
   it('caps the list', () => {
-    const ids = Array.from({ length: MAX_IDS + 1 }, (_, i) => `g${i}`).join(',');
-    expect(errorOf(ids)).toMatch(/too many/);
-    expect(idsOf(Array.from({ length: MAX_IDS }, (_, i) => `g${i}`).join(','))).toHaveLength(MAX_IDS);
+    expect(errorOf(Array.from({ length: MAX_IDS + 1 }, (_, i) => `g${i}`))).toMatch(/too many/);
+    expect(idsOf(Array.from({ length: MAX_IDS }, (_, i) => `g${i}`))).toHaveLength(MAX_IDS);
   });
 });
 

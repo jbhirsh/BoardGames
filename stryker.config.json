@@ -11,6 +11,7 @@
     "src/App.tsx",
     "src/sw/shell.ts",
     "src/pdfjs/saved.ts",
+    "src/client/graphql.ts",
     "api/**/*.ts",
     "!**/*.d.ts"
   ],

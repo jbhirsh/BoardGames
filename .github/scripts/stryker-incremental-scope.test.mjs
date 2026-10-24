@@ -10,7 +10,7 @@ const report = {
   files: {
     'src/utils/urls.ts': { mutants: [{ id: '1' }] },
     'src/utils/filterUrl.ts': { mutants: [{ id: '2' }] },
-    'api/chat.ts': { mutants: [{ id: '3' }] },
+    'api/graphql.ts': { mutants: [{ id: '3' }] },
   },
   testFiles: { 'src/__tests__/urls.test.ts': { tests: [{ id: '0', name: 'a' }] } },
 };
@@ -32,8 +32,8 @@ describe('narrow', () => {
   });
 
   it('matches a report that names its files by absolute path', () => {
-    const abs = { files: { '/repo/api/chat.ts': { mutants: [] }, '/repo/src/x.ts': { mutants: [] } } };
-    expect(Object.keys(narrow(abs, ['api/chat.ts'], '/repo').files)).toEqual(['/repo/api/chat.ts']);
+    const abs = { files: { '/repo/api/graphql.ts': { mutants: [] }, '/repo/src/x.ts': { mutants: [] } } };
+    expect(Object.keys(narrow(abs, ['api/graphql.ts'], '/repo').files)).toEqual(['/repo/api/graphql.ts']);
   });
 
   it('copes with a report that has no files', () => {
@@ -50,10 +50,10 @@ describe('narrowFile', () => {
     const file = path.join(scratch(), 'incremental.json');
     writeFileSync(file, JSON.stringify(report));
     const log = vi.fn();
-    narrowFile(file, ['src/utils/filterUrl.ts', 'api/chat.ts'], log);
+    narrowFile(file, ['src/utils/filterUrl.ts', 'api/graphql.ts'], log);
     expect(Object.keys(JSON.parse(readFileSync(file, 'utf8')).files)).toEqual([
       'src/utils/filterUrl.ts',
-      'api/chat.ts',
+      'api/graphql.ts',
     ]);
     expect(log).toHaveBeenCalledWith("Kept 2 of 3 file(s) from the incremental file for this run's scope.");
   });
@@ -89,8 +89,8 @@ describe('main', () => {
     try {
       const file = path.join(dir, 'incremental.json');
       writeFileSync(file, JSON.stringify(report));
-      expect(main([file, 'api/chat.ts,'], vi.fn(), vi.fn())).toBe(0);
-      expect(Object.keys(JSON.parse(readFileSync(file, 'utf8')).files)).toEqual(['api/chat.ts']);
+      expect(main([file, 'api/graphql.ts,'], vi.fn(), vi.fn())).toBe(0);
+      expect(Object.keys(JSON.parse(readFileSync(file, 'utf8')).files)).toEqual(['api/graphql.ts']);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

@@ -20,7 +20,7 @@ export interface GameDetails {
 }
 
 // The bounds an entry's details are held to. They live here, not in
-// suggestions.ts (which imports this module), so a lookup produces details
+// _resolvers/suggestions.ts (which imports this module), so a lookup produces details
 // an owner edit would also accept: a preview the owner adds is checked
 // against them.
 /** The most players an entry can list (BGG has party games at 100 and more). */

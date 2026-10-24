@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { baseUrl, button, escapeHtml, ownerEmail, page, resendMailer } from '../../api/_lib/mail';
+import { baseUrl, button, escapeHtml, ownerEmail, resendMailer } from '../../api/_lib/mail';
 import { abortReason } from './helpers/abortReason';
 
 const ENV = [
@@ -77,17 +77,10 @@ describe('mail helpers', () => {
     expect(baseUrl()).toBe('http://localhost:5173');
   });
 
-  it('escapes HTML in pages and titles', () => {
+  it('escapes HTML for the emails', () => {
     expect(escapeHtml(`<a href="x">Tom & Jerry's</a>`)).toBe(
       '&lt;a href=&quot;x&quot;&gt;Tom &amp; Jerry&#39;s&lt;/a&gt;',
     );
-    const html = page('<Title>', '<p>body</p>');
-    expect(html).toContain('<title>&lt;Title&gt;</title>');
-    expect(html).toContain('<h1>&lt;Title&gt;</h1><p>body</p>');
-    expect(html).toContain('name="robots" content="noindex"');
-    // The pages' URLs carry emailed tokens; nothing they load may see them.
-    expect(html).toContain('<meta name="referrer" content="no-referrer">');
-    expect(page('T', '', '.x{color:red}')).toContain('.x{color:red}</style>');
     expect(button('https://x', 'Go', '#000')).toContain('href="https://x"');
   });
 });

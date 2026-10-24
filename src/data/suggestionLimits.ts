@@ -1,4 +1,4 @@
-// The bounds api/suggestions.ts puts on a wishlist entry, for the forms that
+// The bounds api/_resolvers/suggestions.ts puts on a wishlist entry, for the forms that
 // send one. The two trees can't import each other, so these are mirrored by
 // hand and a test keeps them in step: a form looser than the API lets the
 // API reject what was typed, a stricter one blocks what the API would take.

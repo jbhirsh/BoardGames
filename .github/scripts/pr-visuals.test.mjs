@@ -6,10 +6,9 @@ import { checkPrVisuals, report, uiFiles } from './pr-visuals.mjs';
 
 describe('uiFiles', () => {
   it('keeps components and stylesheets under src', () => {
-    expect(uiFiles(['src/components/GameCard.tsx', 'src/App.css', 'src/utils/filterGames.ts', 'api/chat.ts'])).toEqual([
-      'src/components/GameCard.tsx',
-      'src/App.css',
-    ]);
+    expect(
+      uiFiles(['src/components/GameCard.tsx', 'src/App.css', 'src/utils/filterGames.ts', 'api/graphql.ts']),
+    ).toEqual(['src/components/GameCard.tsx', 'src/App.css']);
   });
 
   it('drops tests and the files that draw nothing', () => {
@@ -25,7 +24,7 @@ describe('checkPrVisuals', () => {
   const template = readFileSync(new URL('../pull_request_template.md', import.meta.url), 'utf8');
 
   it('passes a PR with no UI files, whatever the description', () => {
-    expect(checkPrVisuals({ files: ['api/chat.ts'], body: '' }).ok).toBe(true);
+    expect(checkPrVisuals({ files: ['api/graphql.ts'], body: '' }).ok).toBe(true);
     expect(checkPrVisuals({ files: ['package-lock.json'], body: undefined }).ok).toBe(true);
   });
 
@@ -98,11 +97,11 @@ describe('checkPrVisuals', () => {
 
 describe('report', () => {
   it('passes with a reason', () => {
-    expect(report('api/chat.ts\n', '')).toEqual({ code: 0, message: 'PR visuals: ok (no UI files changed).' });
+    expect(report('api/graphql.ts\n', '')).toEqual({ code: 0, message: 'PR visuals: ok (no UI files changed).' });
   });
 
   it('fails as a GitHub error naming each UI file, from padded, blank-separated lines', () => {
-    const { code, message } = report('  src/App.css \n\nsrc/components/GameCard.tsx\napi/chat.ts\n', 'No pictures.');
+    const { code, message } = report('  src/App.css \n\nsrc/components/GameCard.tsx\napi/graphql.ts\n', 'No pictures.');
     expect(code).toBe(1);
     expect(message.split('\n').slice(0, 4)).toEqual([
       '::error::This PR changes the UI but its description shows none of it.',
