@@ -1447,6 +1447,7 @@ describe('approving with what the owner saw (a corrected name, previewed details
         const ctx = setup();
         expect(await refusal(previewEmailed(ctx.d, await open(ctx), game))).toMatchObject({
           status: 400,
+          extensions: { code: 'BAD_NAME' },
           message: `Nothing was looked up: the game must be ${GAME_MIN}–${GAME_MAX} characters.`,
         });
         expect(ctx.lookup).not.toHaveBeenCalled();

@@ -16,10 +16,10 @@
 //
 // The links open the app's /approve and /deny pages, which read the
 // suggestion with its token (emailedSuggestion, openEmailed) and change
-// nothing: mail link-scanners follow every URL. The approve page also looks
-// the game up (read-only, one lookup per read; previewEmailed) and shows
-// what BoardGameGeek has, or why it has nothing, with a field to correct a
-// misspelt name, which is only looked up again. Only the page's button
+// nothing: mail link-scanners follow every URL. Both pages also look the
+// game up (read-only, one lookup per read; previewEmailed) and show what
+// BoardGameGeek has; the approve page also says why it has nothing, with a
+// field to correct a misspelt name, which is only looked up again. Only the page's button
 // decides, sending decideSuggestion with the token, the name and the
 // previewed details (null for none, left out when BGG didn't answer).
 // approvedList lists the approved suggestions, which the wishlist shows
@@ -649,7 +649,7 @@ export async function openEmailed(
 }
 
 /**
- * What the approve page shows before the owner decides: the lookup for the
+ * What the approve and deny pages show before the owner decides: the lookup for the
  * friend's name, or for `game` when the owner corrects it. Still a read
  * that changes nothing, the correction included; null once the suggestion
  * is decided, or with no lookup configured.
@@ -663,7 +663,7 @@ export async function previewEmailed(
   let name = item.game;
   if (game !== undefined && game !== null) {
     const g = validateGame(game);
-    if (!g.ok) throw new ApiError(400, `Nothing was looked up: the ${g.error}.`);
+    if (!g.ok) throw new ApiError(400, `Nothing was looked up: the ${g.error}.`, { code: 'BAD_NAME' });
     name = g.game;
   }
   return lookUp(deps, name);

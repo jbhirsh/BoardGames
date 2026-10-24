@@ -1,5 +1,6 @@
 // The owner's calls to the API (api/graphql.ts, through client/graphql.ts),
-// each a typed document from src/gql/. Every failure resolves to a message
+// each a typed document from src/gql/: on the site, signed in, and from the
+// pages the emailed approve and deny links open, with the link's token. Every failure resolves to a message
 // the form can show rather than throwing into React. The API's shapes are
 // turned into the ones the admin controls work with: BoardGameGeek's
 // outcome in utils/lookupNotice.ts's words, and absent fields undefined
@@ -7,13 +8,16 @@
 
 import {
   AddGameDocument,
+  DecideByLinkDocument,
   DecideSuggestionDocument,
+  EmailedSuggestionDocument,
   EditSuggestionDocument,
   PendingSuggestionsDocument,
   PreviewGameDocument,
   RemoveSuggestionDocument,
   type LookupOutcome as ApiOutcome,
   type PreviewFragment,
+  type SuggestionStatus,
 } from '../gql/graphql';
 import type { LookupOutcome, PreviewDetails } from '../utils/lookupNotice';
 import { request, type Result } from './graphql';
@@ -141,3 +145,60 @@ export const editGame = async ({ id, game, details }: EditGameInput): Promise<Ou
 
 export const removeGame = async (id: string): Promise<Outcome> =>
   map(await request(RemoveSuggestionDocument, { id }), done);
+
+/** An emailed link's suggestion, and what BoardGameGeek has for it (or for `game`). */
+export interface Emailed {
+  game: string;
+  name: string;
+  note: string;
+  /** Lower case, as the pages say it: pending, approved, denied, unsent, removed. */
+  status: string;
+  /** Still waiting on a decision. */
+  open: boolean;
+  /** Null once decided, or with no lookup configured. */
+  preview: Preview | null;
+}
+
+/** Why an emailed link can't be used, or what went wrong: the API's message and code. */
+export type LinkOutcome<T> = { ok: true; data: T } | { ok: false; error: string; code?: string; status?: string };
+
+const OPEN: SuggestionStatus[] = ['PENDING', 'UNSENT'];
+
+/** Reads an emailed link's suggestion; changes nothing. */
+export async function openEmailed(
+  { id, token, game }: { id: string; token: string; game?: string },
+  signal?: AbortSignal,
+): Promise<LinkOutcome<Emailed>> {
+  const result = await request(EmailedSuggestionDocument, { id, token, game }, signal);
+  if (!result.ok) return result;
+  const { suggestion, preview } = result.data.emailedSuggestion;
+  return {
+    ok: true,
+    data: {
+      game: suggestion.game,
+      name: suggestion.name,
+      note: suggestion.note,
+      status: suggestion.status.toLowerCase(),
+      open: OPEN.includes(suggestion.status),
+      preview: preview ? toPreview(preview) : null,
+    },
+  };
+}
+
+/** Decides from an emailed link, with what its page showed. */
+export async function decideByLink({
+  id,
+  token,
+  decision,
+  game,
+  details,
+}: { id: string; token: string; decision: 'approve' | 'deny' } & ApprovalChoice): Promise<LinkOutcome<LookedUp>> {
+  const result = await request(DecideByLinkDocument, {
+    id,
+    token,
+    decision: decision === 'approve' ? 'APPROVE' : 'DENY',
+    game,
+    ...(details !== undefined ? { details: details && storedDetails(details) } : {}),
+  });
+  return result.ok ? { ok: true, data: lookedUp(result.data.decideSuggestion.lookup) } : result;
+}
