@@ -1,0 +1,53 @@
+# The owner's queue and edits (client/adminApi.ts).
+
+query PendingSuggestions {
+  pendingSuggestions {
+    id
+    game
+    name
+    note
+  }
+}
+
+query PreviewGame($game: String!) {
+  previewGame(game: $game) {
+    ...Preview
+  }
+}
+
+mutation DecideSuggestion($id: String!, $decision: Decision!, $game: String, $details: DetailsInput) {
+  decideSuggestion(id: $id, decision: $decision, game: $game, details: $details) {
+    lookup
+  }
+}
+
+mutation AddGame($game: String!, $name: String!, $note: String, $type: String, $details: DetailsInput) {
+  addGame(game: $game, name: $name, note: $note, type: $type, details: $details) {
+    lookup
+  }
+}
+
+mutation EditSuggestion($id: String!, $game: String!, $details: DetailsEdit!) {
+  editSuggestion(id: $id, game: $game, details: $details) {
+    id
+  }
+}
+
+mutation RemoveSuggestion($id: String!) {
+  removeSuggestion(id: $id)
+}
+
+fragment Preview on Preview {
+  outcome
+  details {
+    bggId
+    name
+    year
+    min
+    max
+    mins
+    desc
+    kw
+    img
+  }
+}

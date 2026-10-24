@@ -250,7 +250,8 @@ export default defineConfig({
       // vitest's defaults plus Cobertura, which ci.yml uploads to GitHub for
       // the code coverage rule on main.
       reporter: ['text', 'html', 'clover', 'json', 'cobertura'],
-      exclude: ['e2e/**', 'playwright.config.ts'],
+      // src/gql is generated (npm run codegen), its documents tested through their callers.
+      exclude: ['e2e/**', 'playwright.config.ts', 'src/gql/**'],
       thresholds: {
         perFile: true,
         lines: 80,

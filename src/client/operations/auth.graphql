@@ -1,0 +1,15 @@
+# The owner's session (hooks/useAuth.ts).
+
+query Session {
+  session {
+    admin
+  }
+}
+
+mutation RequestSignInLink($email: String!) {
+  requestSignInLink(email: $email)
+}
+
+mutation Logout {
+  logout
+}

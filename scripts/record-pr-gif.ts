@@ -41,7 +41,7 @@ import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { chromium, type Browser, type Page } from '@playwright/test';
+import { chromium, type Browser, type Page, type Request } from '@playwright/test';
 import { framesToGif, recordFrames, showPointer, sideBySide, waitForPictures, type Scenario } from './pr-gif.ts';
 import { PHONE, defaultWidth, markdown, parseOptions, repoFromRemote, type Options } from './record-pr-gif-options.ts';
 
@@ -107,9 +107,25 @@ function json(body: unknown) {
   return { status: 200, contentType: 'application/json', body: JSON.stringify(body) };
 }
 
+/** The GraphQL operation a request to /api/graphql names, and its variables. */
+function operation(request: Request): { name: string; variables: Record<string, unknown> } | null {
+  const body: unknown = request.method() === 'POST' ? request.postDataJSON() : null;
+  if (typeof body !== 'object' || body === null || !('operationName' in body)) return null;
+  const { operationName, variables }: { operationName?: unknown; variables?: unknown } = body;
+  if (typeof operationName !== 'string') return null;
+  return {
+    name: operationName,
+    variables: typeof variables === 'object' && variables !== null ? { ...variables } : {},
+  };
+}
+
+/** The reads a recording takes from the live site: the wishlist's suggestions and vote counts. */
+const LIVE_READS = new Set(['Suggestions', 'WishlistVotes']);
+
 /**
- * The app's API. Playwright tries the newest route first, so the catch-alls
- * go in first and a scenario's own routes, added after these, win.
+ * The app's API (GraphQL at /api/graphql, answered by operation name).
+ * Playwright tries the newest route first, so the catch-alls go in first and
+ * a scenario's own routes, added after these, win.
  *   - Off this origin, only pictures load (the BoardGameGeek art), unless
  *     `fixtures`; anything else is aborted. They're fetched from Node rather
  *     than by the browser: BoardGameGeek's image server answers headless
@@ -118,11 +134,10 @@ function json(body: unknown) {
  *   - The wishlist and its vote counts are read from the live site, unless
  *     `fixtures` (or the live site can't be reached, which it warns of):
  *     then nothing is on the wishlist and every count is 0.
- *   - Not signed in. Any other call (a vote, a suggestion) is refused.
+ *   - Not signed in. Any other operation (a vote, a suggestion) is refused.
  */
 async function stubApi(page: Page, origin: string, fixtures: boolean): Promise<void> {
-  const api = (url: URL, path: string) => url.origin === origin && url.pathname === path;
-  const read = (route: Parameters<Parameters<Page['route']>[1]>[0]) => route.request().method() === 'GET';
+  const api = (url: URL) => url.origin === origin && url.pathname === '/api/graphql';
   await page.route(
     (url) => url.origin !== origin,
     async (route) => {
@@ -142,44 +157,35 @@ async function stubApi(page: Page, origin: string, fixtures: boolean): Promise<v
     (url) => url.origin === origin && url.pathname.startsWith('/_vercel/'),
     (route) => route.fulfill({ status: 200, contentType: 'text/javascript', body: '' }),
   );
-  await page.route(
-    (url) => api(url, '/api/auth'),
-    (route) => (read(route) ? route.fulfill(json({ admin: false })) : route.fallback()),
-  );
-  await page.route(
-    (url) => api(url, '/api/suggestions'),
-    (route) => (read(route) ? route.fulfill(json({ items: [] })) : route.fallback()),
-  );
-  await page.route(
-    (url) => api(url, '/api/votes'),
-    (route) => {
-      if (!read(route)) return route.fallback();
-      const ids = new URL(route.request().url()).searchParams.get('ids')?.split(',') ?? [];
-      return route.fulfill(json({ counts: Object.fromEntries(ids.map((id) => [id, 0])), myVotes: [] }));
-    },
-  );
+  await page.route(api, (route) => {
+    const op = operation(route.request());
+    if (op?.name === 'Session') return route.fulfill(json({ data: { session: { admin: false } } }));
+    if (op?.name === 'Suggestions') return route.fulfill(json({ data: { suggestions: [] } }));
+    if (op?.name === 'WishlistVotes') {
+      const ids = Array.isArray(op.variables.ids) ? op.variables.ids : [];
+      return route.fulfill(
+        json({ data: { wishlistVotes: { counts: ids.map((id: unknown) => ({ id, count: 0 })), myVotes: [] } } }),
+      );
+    }
+    return route.fallback();
+  });
   if (fixtures) return;
   let warned = false;
-  await page.route(
-    (url) => api(url, '/api/suggestions') || api(url, '/api/votes'),
-    async (route) => {
-      if (!read(route)) return route.fallback();
-      const url = new URL(route.request().url());
-      try {
-        const response = await route.fetch({ url: LIVE + url.pathname + url.search });
-        if (response.ok()) return await route.fulfill({ response });
-      } catch {
-        // Out of reach: the stub's empty answer.
-      }
-      // Said once, so a recording that isn't of the live data is never taken for it.
-      if (!warned)
-        console.warn(
-          `pr-gif: ${LIVE} didn't answer ${url.pathname}, so this recording shows the stub's empty wishlist`,
-        );
-      warned = true;
-      return route.fallback();
-    },
-  );
+  await page.route(api, async (route) => {
+    const op = operation(route.request());
+    if (!op || !LIVE_READS.has(op.name)) return route.fallback();
+    try {
+      const response = await route.fetch({ url: `${LIVE}/api/graphql` });
+      if (response.ok()) return await route.fulfill({ response });
+    } catch {
+      // Out of reach: the stub's empty answer.
+    }
+    // Said once, so a recording that isn't of the live data is never taken for it.
+    if (!warned)
+      console.warn(`pr-gif: ${LIVE} didn't answer ${op.name}, so this recording shows the stub's empty wishlist`);
+    warned = true;
+    return route.fallback();
+  });
 }
 
 /** Plays the scenario against the app at `origin`, leaving its frames in `dir`. */

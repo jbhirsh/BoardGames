@@ -10,6 +10,7 @@ import { GAMES } from '../data/games';
 import { WISHLIST } from '../data/wishlist';
 import { filterGames, filterWishlist } from '../utils/filterGames';
 import { gameAnchor } from '../utils/heroCovers';
+import { stubGraphql } from './helpers/graphqlFetch';
 
 // Each game's actions and each wishlist entry's links render once per
 // render of the card or row they sit in, so counting them counts those.
@@ -102,14 +103,10 @@ const search = () =>
 
 beforeEach(() => {
   seen.renders.clear();
-  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
-    const url = String(input);
-    const body = url.startsWith('/api/suggestions')
-      ? { items: [] }
-      : url.startsWith('/api/auth')
-        ? { admin: false }
-        : { counts: {}, myVotes: [] };
-    return { ok: true, json: async () => body } as unknown as Response;
+  stubGraphql({
+    Suggestions: () => ({ suggestions: [] }),
+    Session: () => ({ session: { admin: false } }),
+    WishlistVotes: () => ({ wishlistVotes: { counts: [], myVotes: [] } }),
   });
 });
 

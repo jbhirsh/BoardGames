@@ -7,7 +7,7 @@ import { AuthContext } from './authContextValue';
  * the page (SignInPage, AdminPanel, AdminItemControls), which switch admin
  * mode on. It wraps only the home page and the /sign-in route, each with
  * an instance of its own, so the rules, score and word-checker pages never
- * call /api/auth.
+ * ask the API for the session.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useAuthState();

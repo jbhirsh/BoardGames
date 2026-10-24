@@ -30,7 +30,17 @@ const JSDOC_OPTIONAL = {
 };
 
 export default defineConfig([
-  globalIgnores(['dist', 'coverage', '.stryker-tmp', 'reports', 'test-results', 'playwright-report', 'blob-report']),
+  // src/gql is written by `npm run codegen`.
+  globalIgnores([
+    'dist',
+    'coverage',
+    'src/gql',
+    '.stryker-tmp',
+    'reports',
+    'test-results',
+    'playwright-report',
+    'blob-report',
+  ]),
   {
     files: ['**/*.{ts,tsx}'],
     // The Playwright suite runs in Node and has its own block below; React's

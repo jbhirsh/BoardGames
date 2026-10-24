@@ -1,14 +1,11 @@
-import { describe, it, expect, vi, afterEach, type MockInstance } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import AdminItemControls from '../components/AdminItemControls';
 import { AuthContext } from '../context/authContextValue';
 import { WishlistContext } from '../context/wishlistContextValue';
 import type { StoredWishlistItem, WishlistItem } from '../data/types';
 import { DESC_MAX, GAME_MAX, GAME_MIN, MINS_MAX, PLAYERS_MAX } from '../data/suggestionLimits';
-
-function jsonResponse(body: unknown, ok = true): Response {
-  return { ok, json: async () => body } as unknown as Response;
-}
+import { gqlError, operations, stubGraphql } from './helpers/graphqlFetch';
 
 const item: StoredWishlistItem = {
   id: 'sug-1',
@@ -41,10 +38,10 @@ function renderControls(over: Partial<WishlistItem> = {}, admin = true) {
   return { reload, container };
 }
 
-const lastBody = (spy: MockInstance<typeof fetch>) => {
-  const init = spy.mock.calls[spy.mock.calls.length - 1][1];
-  const body: unknown = JSON.parse(init?.body as string);
-  return { method: init?.method, body };
+/** The last operation sent: its name and variables. */
+const lastSent = (spy: ReturnType<typeof stubGraphql>) => {
+  const op = operations(spy).at(-1);
+  return { op: op?.operationName, variables: op?.variables };
 };
 
 describe('AdminItemControls', () => {
@@ -55,8 +52,8 @@ describe('AdminItemControls', () => {
     expect(renderControls({ source: undefined }).container).toBeEmptyDOMElement();
   });
 
-  it('opens an edit form prefilled from the entry and saves the changes as a PATCH', async () => {
-    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({ item: {} }));
+  it('opens an edit form prefilled from the entry and saves the changes', async () => {
+    const spy = stubGraphql({ EditSuggestion: () => ({ editSuggestion: { id: 'sug-1' } }) });
     const { reload } = renderControls();
     fireEvent.click(screen.getByRole('button', { name: 'Edit Root' }));
     const form = screen.getByRole('form', { name: 'Edit Root' });
@@ -77,9 +74,9 @@ describe('AdminItemControls', () => {
     fireEvent.click(within(form).getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
-    expect(lastBody(spy)).toEqual({
-      method: 'PATCH',
-      body: {
+    expect(lastSent(spy)).toEqual({
+      op: 'EditSuggestion',
+      variables: {
         id: 'sug-1',
         game: 'Root: Riverfolk',
         details: { min: 2, max: 4, mins: 60, desc: 'Asymmetric.', kw: ['thematic'], type: 'heavy' },
@@ -102,7 +99,7 @@ describe('AdminItemControls', () => {
   });
 
   it('keeps the form open and shows the reason when saving fails, and cancels cleanly', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({ error: 'unknown wishlist type' }, false));
+    stubGraphql({ EditSuggestion: () => gqlError('unknown wishlist type') });
     const { reload } = renderControls({ type: 'party', source: 'owner', suggestedBy: undefined });
     fireEvent.click(screen.getByRole('button', { name: 'Edit Root' }));
     const form = screen.getByRole('form', { name: 'Edit Root' });
@@ -120,8 +117,8 @@ describe('AdminItemControls', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('asks before removing, then DELETEs and reloads', async () => {
-    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({ ok: true }));
+  it('asks before removing, then removes it and reloads', async () => {
+    const spy = stubGraphql({ RemoveSuggestion: () => ({ removeSuggestion: true }) });
     const { reload } = renderControls();
     fireEvent.click(screen.getByRole('button', { name: 'Remove Root' }));
     const confirm = screen.getByRole('group', { name: 'Remove Root?' });
@@ -132,11 +129,11 @@ describe('AdminItemControls', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Remove Root' }));
     fireEvent.click(screen.getByRole('button', { name: 'Yes, remove' }));
     await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
-    expect(lastBody(spy)).toEqual({ method: 'DELETE', body: { id: 'sug-1' } });
+    expect(lastSent(spy)).toEqual({ op: 'RemoveSuggestion', variables: { id: 'sug-1' } });
   });
 
   it('reports a failed removal', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({ error: 'owner sign-in required' }, false));
+    stubGraphql({ RemoveSuggestion: () => gqlError('owner sign-in required', 'FORBIDDEN', 403) });
     const { reload } = renderControls();
     fireEvent.click(screen.getByRole('button', { name: 'Remove Root' }));
     fireEvent.click(screen.getByRole('button', { name: 'Yes, remove' }));

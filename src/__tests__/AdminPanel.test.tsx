@@ -6,10 +6,7 @@ import { WishlistContext } from '../context/wishlistContextValue';
 import { WISHLIST } from '../data/wishlist';
 import { GAME_MAX, GAME_MIN, NAME_MAX, NOTE_MAX } from '../data/suggestionLimits';
 import type { WishlistItem } from '../data/types';
-
-function jsonResponse(body: unknown, ok = true): Response {
-  return { ok, json: async () => body } as unknown as Response;
-}
+import { gqlError, operations, stubGraphql, type Reply } from './helpers/graphqlFetch';
 
 const PENDING = [
   { id: 'sug-1', game: 'Root', name: 'Alex', note: 'Mean fun' },
@@ -40,22 +37,33 @@ const FARAWAY_STORED = {
   img: FARAWAY.img,
 };
 
-type PreviewAnswer = Response | ((game: string, signal?: AbortSignal) => Response | Promise<Response>);
+/** A preview as the API answers one: its outcome, and what BoardGameGeek has when it found the game. */
+interface PreviewBody {
+  outcome: string;
+  details?: object;
+}
+type PreviewAnswer =
+  PreviewBody | Reply | ((game: string, signal?: AbortSignal) => PreviewBody | Reply | Promise<PreviewBody | Reply>);
 
+/** The API: the queue (or a lost network), what every mutation answers, and how previews go. */
 function mockApi(
-  pending: unknown = { items: PENDING },
-  mutation: Response = jsonResponse({ item: {} }),
-  preview: PreviewAnswer = jsonResponse({ outcome: 'found', details: FARAWAY }),
+  pending: unknown[] | Error = PENDING,
+  mutation: { lookup?: string } | Reply = {},
+  preview: PreviewAnswer = { outcome: 'FOUND', details: FARAWAY },
 ) {
-  return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
-    const url = String(input);
-    if (url.startsWith('/api/suggestions?action=pending'))
-      return pending instanceof Error ? Promise.reject(pending) : jsonResponse(pending);
-    const body = init?.method === 'POST' ? (JSON.parse(String(init.body)) as { action?: string; game?: string }) : {};
-    if (body.action === 'preview')
-      return typeof preview === 'function' ? preview(body.game ?? '', init?.signal ?? undefined) : preview;
-    if (init?.method === 'POST') return mutation;
-    return jsonResponse({});
+  const lookup = 'lookup' in mutation ? mutation.lookup : null;
+  const answer = (field: string) => () => ('status' in mutation ? mutation : { [field]: { lookup } });
+  const asPreview = (body: PreviewBody | Reply) =>
+    'status' in body ? body : { previewGame: { outcome: body.outcome, details: body.details ?? null } };
+  return stubGraphql({
+    PendingSuggestions: () => {
+      if (pending instanceof Error) throw pending;
+      return { pendingSuggestions: pending };
+    },
+    PreviewGame: async ({ game }, init) =>
+      asPreview(typeof preview === 'function' ? await preview(String(game), init?.signal ?? undefined) : preview),
+    DecideSuggestion: answer('decideSuggestion'),
+    AddGame: answer('addGame'),
   });
 }
 
@@ -90,12 +98,13 @@ function renderPanel(hidden: WishlistItem[] = []) {
   return reload;
 }
 
-const postBodies = (spy: ReturnType<typeof mockApi>) =>
-  spy.mock.calls
-    .filter((c) => (c[1] as RequestInit | undefined)?.method === 'POST')
-    .map((c) => JSON.parse((c[1] as RequestInit).body as string) as Record<string, unknown>);
-// The queue looks each suggestion up as it loads, so its decisions are picked out of the posts.
-const decisions = (spy: ReturnType<typeof mockApi>) => postBodies(spy).filter((b) => 'decision' in b);
+/** What was sent besides the queue: each operation's name and its variables. */
+const sent = (spy: ReturnType<typeof mockApi>) =>
+  operations(spy)
+    .filter((o) => o.operationName !== 'PendingSuggestions')
+    .map((o) => ({ op: o.operationName, ...o.variables }));
+// The queue looks each suggestion up as it loads, so its decisions are picked out of what was sent.
+const decisions = (spy: ReturnType<typeof mockApi>) => sent(spy).filter((b) => b.op === 'DecideSuggestion');
 const nameBox = (suggester: string, game: string) =>
   screen.getByRole('textbox', { name: `Game name for ${suggester}'s suggestion “${game}”` });
 const lookUpButton = (suggester: string, game: string) =>
@@ -120,22 +129,24 @@ describe('AdminPanel', () => {
     await waitFor(() => expect(screen.getAllByText('Explore Alula backwards.')).toHaveLength(2));
     fireEvent.click(screen.getByRole('button', { name: 'Approve Root' }));
     await waitFor(() => expect(screen.queryByDisplayValue('Root')).not.toBeInTheDocument());
-    expect(decisions(spy)).toEqual([{ decision: 'approve', id: 'sug-1', details: FARAWAY_STORED }]);
+    expect(decisions(spy)).toEqual([
+      { op: 'DecideSuggestion', decision: 'APPROVE', id: 'sug-1', details: FARAWAY_STORED },
+    ]);
     expect(reload).toHaveBeenCalledTimes(1);
     expect(screen.getByDisplayValue('Ark Nova')).toBeInTheDocument();
   });
 
   it('denies without reloading, and says when the queue is empty', async () => {
-    const spy = mockApi({ items: [PENDING[0]] });
+    const spy = mockApi([PENDING[0]]);
     const reload = renderPanel();
     fireEvent.click(await screen.findByRole('button', { name: 'Deny Root' }));
     expect(await screen.findByText('Nothing waiting.')).toBeInTheDocument();
-    expect(decisions(spy)).toEqual([{ decision: 'deny', id: 'sug-1' }]);
+    expect(decisions(spy)).toEqual([{ op: 'DecideSuggestion', decision: 'DENY', id: 'sug-1' }]);
     expect(reload).not.toHaveBeenCalled();
   });
 
   it('reports a failed decision and a failed queue load', async () => {
-    mockApi({ items: PENDING }, jsonResponse({ error: 'Root was already denied' }, false));
+    mockApi(PENDING, gqlError('Root was already denied'));
     renderPanel();
     fireEvent.click(await screen.findByRole('button', { name: 'Approve Root' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Root was already denied');
@@ -148,7 +159,7 @@ describe('AdminPanel', () => {
   });
 
   it('bounds each field of the add form as the API does', async () => {
-    mockApi({ items: [] });
+    mockApi([]);
     renderPanel();
     const form = await screen.findByRole('form', { name: 'Add a game' });
     expect(within(form).getByLabelText('Game')).toHaveAttribute('minlength', String(GAME_MIN));
@@ -159,7 +170,7 @@ describe('AdminPanel', () => {
 
   it('looks a game up first, shows what BoardGameGeek has, then adds it with those details', async () => {
     localStorage.setItem('gameroom:name', 'Jess H');
-    const spy = mockApi({ items: [] });
+    const spy = mockApi([]);
     const reload = renderPanel();
     const form = await screen.findByRole('form', { name: 'Add a game' });
     expect(within(form).getByLabelText('Added by')).toHaveValue('Jess H');
@@ -192,9 +203,9 @@ describe('AdminPanel', () => {
       kw: ['card-game', 'quick-play'],
       img: FARAWAY.img,
     };
-    expect(postBodies(spy)).toEqual([
-      { action: 'preview', game: 'Faraway' },
-      { action: 'add', game: 'Faraway', name: 'Jess H', note: 'Card drafting', type: 'heavy', details: stored },
+    expect(sent(spy)).toEqual([
+      { op: 'PreviewGame', game: 'Faraway' },
+      { op: 'AddGame', game: 'Faraway', name: 'Jess H', note: 'Card drafting', type: 'heavy', details: stored },
     ]);
     expect(reload).toHaveBeenCalledTimes(1);
     expect(within(form).getByLabelText('Game')).toHaveValue('');
@@ -203,7 +214,7 @@ describe('AdminPanel', () => {
   });
 
   it('can file a game under the friends section, and refuses a bad name before posting', async () => {
-    const spy = mockApi({ items: [] });
+    const spy = mockApi([]);
     renderPanel();
     const form = await screen.findByRole('form', { name: 'Add a game' });
     fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Faraway' } });
@@ -211,19 +222,19 @@ describe('AdminPanel', () => {
     fireEvent.change(within(form).getByLabelText('Added by'), { target: { value: '!!' } });
     fireEvent.submit(form);
     expect(within(form).getByRole('status')).toHaveTextContent('Use 1–30 letters');
-    expect(postBodies(spy)).toEqual([]);
+    expect(sent(spy)).toEqual([]);
 
     fireEvent.change(within(form).getByLabelText('Added by'), { target: { value: 'Jess' } });
     fireEvent.submit(form);
     await within(form).findByRole('button', { name: 'Add to wishlist' });
     fireEvent.submit(form);
-    await waitFor(() => expect(postBodies(spy)).toHaveLength(2));
-    expect(postBodies(spy)[1]).toMatchObject({ action: 'add', game: 'Faraway', name: 'Jess', note: '' });
-    expect(postBodies(spy)[1]).not.toHaveProperty('type');
+    await waitFor(() => expect(sent(spy)).toHaveLength(2));
+    expect(sent(spy)[1]).toMatchObject({ op: 'AddGame', game: 'Faraway', name: 'Jess', note: '' });
+    expect(sent(spy)[1]).not.toHaveProperty('type');
   });
 
   it('says on the form why BoardGameGeek found nothing, and can add the game anyway without details', async () => {
-    const spy = mockApi({ items: [] }, jsonResponse({ item: {} }), jsonResponse({ outcome: 'no-match' }));
+    const spy = mockApi([], {}, { outcome: 'NO_MATCH' });
     const reload = renderPanel();
     const form = await screen.findByRole('form', { name: 'Add a game' });
     fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Magical Athlete' } });
@@ -238,8 +249,8 @@ describe('AdminPanel', () => {
     await waitFor(() =>
       expect(within(form).getByRole('status')).toHaveTextContent('Magical Athlete is on the wishlist.'),
     );
-    expect(postBodies(spy)[1]).toEqual({
-      action: 'add',
+    expect(sent(spy)[1]).toEqual({
+      op: 'AddGame',
       game: 'Magical Athlete',
       name: 'Jess',
       note: '',
@@ -251,7 +262,7 @@ describe('AdminPanel', () => {
   });
 
   it('looks up again on request, and sets an answer aside once the name changes', async () => {
-    const spy = mockApi({ items: [] }, jsonResponse({ item: {} }), jsonResponse({ outcome: 'unavailable' }));
+    const spy = mockApi([], {}, { outcome: 'UNAVAILABLE' });
     renderPanel();
     const form = await screen.findByRole('form', { name: 'Add a game' });
     fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Magical Athlete' } });
@@ -259,9 +270,9 @@ describe('AdminPanel', () => {
     expect(await within(form).findByText(/^BoardGameGeek didn't answer for “Magical Athlete”/)).toBeInTheDocument();
     fireEvent.click(within(form).getByRole('button', { name: 'Look up again' }));
     await waitFor(() =>
-      expect(postBodies(spy)).toEqual([
-        { action: 'preview', game: 'Magical Athlete' },
-        { action: 'preview', game: 'Magical Athlete' },
+      expect(sent(spy)).toEqual([
+        { op: 'PreviewGame', game: 'Magical Athlete' },
+        { op: 'PreviewGame', game: 'Magical Athlete' },
       ]),
     );
     await within(form).findByRole('button', { name: 'Add anyway' });
@@ -273,7 +284,7 @@ describe('AdminPanel', () => {
   });
 
   it('names a missing or refused token on the form', async () => {
-    mockApi({ items: [] }, jsonResponse({ item: {} }), jsonResponse({ outcome: 'no-token' }));
+    mockApi([], {}, { outcome: 'NO_TOKEN' });
     renderPanel();
     let form = await screen.findByRole('form', { name: 'Add a game' });
     fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Magical Athlete' } });
@@ -282,7 +293,7 @@ describe('AdminPanel', () => {
     vi.restoreAllMocks();
     cleanup();
 
-    mockApi({ items: [] }, jsonResponse({ item: {} }), jsonResponse({ outcome: 'refused' }));
+    mockApi([], {}, { outcome: 'REFUSED' });
     renderPanel();
     form = await screen.findByRole('form', { name: 'Add a game' });
     fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Magical Athlete' } });
@@ -293,28 +304,24 @@ describe('AdminPanel', () => {
   });
 
   it('shows the server reason when the lookup itself fails, and stores nothing', async () => {
-    const spy = mockApi(
-      { items: [] },
-      jsonResponse({ item: {} }),
-      jsonResponse({ error: 'owner sign-in required' }, false),
-    );
+    const spy = mockApi([], {}, gqlError('owner sign-in required'));
     renderPanel();
     const form = await screen.findByRole('form', { name: 'Add a game' });
     fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Faraway' } });
     fireEvent.click(within(form).getByRole('button', { name: 'Look up' }));
     await waitFor(() => expect(within(form).getByRole('status')).toHaveTextContent('owner sign-in required'));
     expect(within(form).getByRole('button', { name: 'Look up' })).toBeEnabled();
-    expect(postBodies(spy)).toEqual([{ action: 'preview', game: 'Faraway' }]);
+    expect(sent(spy)).toEqual([{ op: 'PreviewGame', game: 'Faraway' }]);
   });
 
   it('says one player, and leaves out an unknown time', async () => {
     mockApi(
-      { items: [] },
-      jsonResponse({ item: {} }),
-      jsonResponse({
-        outcome: 'found',
+      [],
+      {},
+      {
+        outcome: 'FOUND',
         details: { ...FARAWAY, min: 1, max: 1, mins: 0, year: undefined, img: undefined, kw: [], desc: '' },
-      }),
+      },
     );
     renderPanel();
     const form = await screen.findByRole('form', { name: 'Add a game' });
@@ -326,7 +333,7 @@ describe('AdminPanel', () => {
   });
 
   it('shows the server reason when adding fails', async () => {
-    mockApi({ items: [] }, jsonResponse({ error: 'Root is already on the list' }, false));
+    mockApi([], gqlError('Root is already on the list'));
     renderPanel();
     const form = await screen.findByRole('form', { name: 'Add a game' });
     fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Root' } });
@@ -337,7 +344,7 @@ describe('AdminPanel', () => {
   });
 
   it('lists a stored entry the compiled wishlist already covers, with its controls', async () => {
-    mockApi({ items: [] });
+    mockApi([]);
     renderPanel([HIDDEN]);
     expect(await screen.findByText('Already on the wishlist')).toBeInTheDocument();
     expect(screen.getByText(/Stored entry for a game the wishlist already lists/)).toBeInTheDocument();
@@ -347,7 +354,7 @@ describe('AdminPanel', () => {
   });
 
   it('reads as a list when more than one entry is held back', async () => {
-    mockApi({ items: [] });
+    mockApi([]);
     renderPanel([HIDDEN, { ...HIDDEN, id: 'sug-8', name: 'Lovestruck', suggestedBy: undefined }]);
     expect(await screen.findByText(/Stored entries for games the wishlist already lists/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Remove Lovestruck' })).toBeInTheDocument();
@@ -355,24 +362,24 @@ describe('AdminPanel', () => {
   });
 
   it('refuses to add a game the wishlist already lists, before posting', async () => {
-    const spy = mockApi({ items: [] });
+    const spy = mockApi([]);
     renderPanel();
     const form = await screen.findByRole('form', { name: 'Add a game' });
     fireEvent.change(within(form).getByLabelText('Game'), { target: { value: WISHLIST[0].name.toUpperCase() } });
     fireEvent.submit(form);
     expect(within(form).getByRole('status')).toHaveTextContent(`${WISHLIST[0].name} is already on the wishlist.`);
-    expect(postBodies(spy)).toEqual([]);
+    expect(sent(spy)).toEqual([]);
   });
 
   it('says nothing about duplicates when there are none', async () => {
-    mockApi({ items: [] });
+    mockApi([]);
     renderPanel();
     expect(await screen.findByText('Nothing waiting.')).toBeInTheDocument();
     expect(screen.queryByText('Already on the wishlist')).not.toBeInTheDocument();
   });
 
   it('says when an approved suggestion got no details, and clears it on the next decision', async () => {
-    mockApi({ items: PENDING }, jsonResponse({ item: {}, lookup: 'unavailable' }));
+    mockApi(PENDING, { lookup: 'UNAVAILABLE' });
     renderPanel();
     fireEvent.click(await screen.findByRole('button', { name: 'Approve Root' }));
     const notice = await screen.findByText(/^Approved, but BoardGameGeek didn't answer for “Root”/);
@@ -390,37 +397,37 @@ describe('AdminPanel', () => {
     const ROOT_FOUND = { ...FARAWAY, bggId: 237182, name: 'Root', year: 2018, desc: 'Woodland war.', kw: ['strategy'] };
     const ROOT_STORED = { ...FARAWAY_STORED, bggId: 237182, year: 2018, desc: 'Woodland war.', kw: ['strategy'] };
     const byGame = (answers: Record<string, unknown>) => (game: string) =>
-      jsonResponse(answers[game] ?? { outcome: 'no-match' });
+      (answers[game] ?? { outcome: 'NO_MATCH' }) as PreviewBody;
 
     /** A preview that answers only when the test says, keeping the signal it was sent with. */
     function heldPreviews() {
-      const held: Array<{ game: string; signal?: AbortSignal; answer: (body: unknown) => void }> = [];
+      const held: Array<{ game: string; signal?: AbortSignal; answer: (body: PreviewBody) => void }> = [];
       const preview = (game: string, signal?: AbortSignal) =>
-        new Promise<Response>((resolve) => {
-          held.push({ game, signal, answer: (body) => resolve(jsonResponse(body)) });
+        new Promise<PreviewBody>((resolve) => {
+          held.push({ game, signal, answer: resolve });
         });
       return { held, preview };
     }
 
     it('looks the pending games up one at a time in row order, showing each as it comes back, without announcing them', async () => {
       const { held, preview } = heldPreviews();
-      const spy = mockApi({ items: PENDING }, jsonResponse({ item: {} }), preview);
+      const spy = mockApi(PENDING, {}, preview);
       renderPanel();
       await waitFor(() => expect(held.map((h) => h.game)).toEqual(['Root']));
       expect(screen.getByText('Looking up “Root” on BoardGameGeek…')).toBeInTheDocument();
       expect(screen.getByText('Looking up “Ark Nova” on BoardGameGeek…')).toBeInTheDocument();
 
-      held[0].answer({ outcome: 'found', details: ROOT_FOUND });
+      held[0].answer({ outcome: 'FOUND', details: ROOT_FOUND });
       expect(await screen.findByText('Woodland war.')).toBeInTheDocument();
       expect(screen.getByText('(2018)')).toBeInTheDocument();
       expect(screen.getByText('2–6 players · 30 min')).toBeInTheDocument();
       await waitFor(() => expect(held.map((h) => h.game)).toEqual(['Root', 'Ark Nova']));
-      expect(postBodies(spy)).toEqual([
-        { action: 'preview', game: 'Root' },
-        { action: 'preview', game: 'Ark Nova' },
+      expect(sent(spy)).toEqual([
+        { op: 'PreviewGame', game: 'Root' },
+        { op: 'PreviewGame', game: 'Ark Nova' },
       ]);
 
-      held[1].answer({ outcome: 'no-match' });
+      held[1].answer({ outcome: 'NO_MATCH' });
       const notice = await screen.findByText(
         /^BoardGameGeek had no match for “Ark Nova”\. Check the name and look it up again, or approve it and fill in its details with Edit\.$/,
       );
@@ -434,25 +441,21 @@ describe('AdminPanel', () => {
 
     it('lets a row look its name up while it still waits its turn', async () => {
       const { held, preview } = heldPreviews();
-      mockApi({ items: PENDING }, jsonResponse({ item: {} }), preview);
+      mockApi(PENDING, {}, preview);
       renderPanel();
       await waitFor(() => expect(held).toHaveLength(1));
       fireEvent.click(lookUpButton('Sam', 'Ark Nova'));
       await waitFor(() => expect(held.map((h) => h.game)).toEqual(['Root', 'Ark Nova']));
-      held[1].answer({ outcome: 'found', details: FARAWAY });
+      held[1].answer({ outcome: 'FOUND', details: FARAWAY });
       expect(await screen.findByText('Explore Alula backwards.')).toBeInTheDocument();
       // Its turn in the line was given up, so Root's answer sends nothing more.
-      held[0].answer({ outcome: 'no-match' });
+      held[0].answer({ outcome: 'NO_MATCH' });
       await screen.findByText(/had no match for “Root”/);
       expect(held).toHaveLength(2);
     });
 
     it('approves with what the preview found, or with no details when it found nothing', async () => {
-      const spy = mockApi(
-        { items: PENDING },
-        jsonResponse({ item: {} }),
-        byGame({ Root: { outcome: 'found', details: ROOT_FOUND } }),
-      );
+      const spy = mockApi(PENDING, {}, byGame({ Root: { outcome: 'FOUND', details: ROOT_FOUND } }));
       renderPanel();
       await screen.findByText('Woodland war.');
       await screen.findByText(/had no match for “Ark Nova”/);
@@ -461,57 +464,49 @@ describe('AdminPanel', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Approve Ark Nova' }));
       expect(await screen.findByText('Nothing waiting.')).toBeInTheDocument();
       expect(decisions(spy)).toEqual([
-        { decision: 'approve', id: 'sug-1', details: ROOT_STORED },
-        { decision: 'approve', id: 'sug-2', details: null },
+        { op: 'DecideSuggestion', decision: 'APPROVE', id: 'sug-1', details: ROOT_STORED },
+        { op: 'DecideSuggestion', decision: 'APPROVE', id: 'sug-2', details: null },
       ]);
     });
 
     it("leaves the lookup to the server at approval when BoardGameGeek didn't answer the preview", async () => {
-      const spy = mockApi(
-        { items: [PENDING[0]] },
-        jsonResponse({ item: {} }),
-        jsonResponse({ outcome: 'unavailable' }),
-      );
+      const spy = mockApi([PENDING[0]], {}, { outcome: 'UNAVAILABLE' });
       renderPanel();
       await screen.findByText(/BoardGameGeek didn't answer for “Root”/);
       fireEvent.click(screen.getByRole('button', { name: 'Approve Root' }));
       expect(await screen.findByText('Nothing waiting.')).toBeInTheDocument();
-      expect(decisions(spy)).toEqual([{ decision: 'approve', id: 'sug-1' }]);
+      expect(decisions(spy)).toEqual([{ op: 'DecideSuggestion', decision: 'APPROVE', id: 'sug-1' }]);
     });
 
     it('can approve while the preview is still loading, leaving the lookup to the server', async () => {
       const { held, preview } = heldPreviews();
-      const spy = mockApi({ items: [PENDING[0]] }, jsonResponse({ item: {} }), preview);
+      const spy = mockApi([PENDING[0]], {}, preview);
       renderPanel();
       await waitFor(() => expect(held).toHaveLength(1));
       expect(screen.getByRole('button', { name: 'Approve Root' })).toBeEnabled();
       fireEvent.click(screen.getByRole('button', { name: 'Approve Root' }));
       expect(await screen.findByText('Nothing waiting.')).toBeInTheDocument();
-      expect(decisions(spy)).toEqual([{ decision: 'approve', id: 'sug-1' }]);
+      expect(decisions(spy)).toEqual([{ op: 'DecideSuggestion', decision: 'APPROVE', id: 'sug-1' }]);
     });
 
     it('says why the preview itself failed, and then leaves the lookup to the server', async () => {
-      const spy = mockApi(
-        { items: [PENDING[0]] },
-        jsonResponse({ item: {} }),
-        jsonResponse({ error: 'owner sign-in required' }, false),
-      );
+      const spy = mockApi([PENDING[0]], {}, gqlError('owner sign-in required'));
       renderPanel();
       expect(await screen.findByText('owner sign-in required')).toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: 'Approve Root' }));
       expect(await screen.findByText('Nothing waiting.')).toBeInTheDocument();
-      expect(decisions(spy)).toEqual([{ decision: 'approve', id: 'sug-1' }]);
+      expect(decisions(spy)).toEqual([{ op: 'DecideSuggestion', decision: 'APPROVE', id: 'sug-1' }]);
     });
 
     it('aborts the preview still out when the queue goes away, and sends none of those waiting', async () => {
       const { held, preview } = heldPreviews();
-      mockApi({ items: PENDING }, jsonResponse({ item: {} }), preview);
+      mockApi(PENDING, {}, preview);
       renderPanel();
       await waitFor(() => expect(held).toHaveLength(1));
       expect(held[0].signal?.aborted).toBe(false);
       cleanup();
       expect(held[0].signal?.aborted).toBe(true);
-      held[0].answer({ outcome: 'no-match' });
+      held[0].answer({ outcome: 'NO_MATCH' });
       await new Promise((r) => setTimeout(r, 0));
       expect(held).toHaveLength(1);
     });
@@ -526,11 +521,7 @@ describe('AdminPanel', () => {
         desc: 'Investigate Arkham.',
         kw: ['cooperative'],
       };
-      const spy = mockApi(
-        { items: [MISSPELT] },
-        jsonResponse({ item: {} }),
-        byGame({ 'Arkham Horror': { outcome: 'found', details: ARKHAM } }),
-      );
+      const spy = mockApi([MISSPELT], {}, byGame({ 'Arkham Horror': { outcome: 'FOUND', details: ARKHAM } }));
       const reload = renderPanel();
       await screen.findByText(/had no match for “Arkham Horry”/);
 
@@ -548,11 +539,12 @@ describe('AdminPanel', () => {
       expect(screen.getByRole('button', { name: 'Deny Arkham Horror' })).toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: 'Approve Arkham Horror' }));
       expect(await screen.findByText('Nothing waiting.')).toBeInTheDocument();
-      expect(postBodies(spy)).toEqual([
-        { action: 'preview', game: 'Arkham Horry' },
-        { action: 'preview', game: 'Arkham Horror' },
+      expect(sent(spy)).toEqual([
+        { op: 'PreviewGame', game: 'Arkham Horry' },
+        { op: 'PreviewGame', game: 'Arkham Horror' },
         {
-          decision: 'approve',
+          op: 'DecideSuggestion',
+          decision: 'APPROVE',
           id: 'sug-3',
           game: 'Arkham Horror',
           details: { ...FARAWAY_STORED, bggId: 15987, year: 2005, desc: 'Investigate Arkham.', kw: ['cooperative'] },
@@ -563,9 +555,9 @@ describe('AdminPanel', () => {
 
     it('looks a corrected name up before approving it, rather than approve with the old preview', async () => {
       const spy = mockApi(
-        { items: [PENDING[0]] },
-        jsonResponse({ item: {} }),
-        byGame({ Root: { outcome: 'found', details: ROOT_FOUND }, 'Root: Underworld': { outcome: 'no-match' } }),
+        [PENDING[0]],
+        {},
+        byGame({ Root: { outcome: 'FOUND', details: ROOT_FOUND }, 'Root: Underworld': { outcome: 'NO_MATCH' } }),
       );
       renderPanel();
       await screen.findByText('Woodland war.');
@@ -576,12 +568,14 @@ describe('AdminPanel', () => {
 
       fireEvent.click(screen.getByRole('button', { name: 'Approve Root: Underworld' }));
       expect(await screen.findByText('Nothing waiting.')).toBeInTheDocument();
-      expect(decisions(spy)).toEqual([{ decision: 'approve', id: 'sug-1', game: 'Root: Underworld', details: null }]);
+      expect(decisions(spy)).toEqual([
+        { op: 'DecideSuggestion', decision: 'APPROVE', id: 'sug-1', game: 'Root: Underworld', details: null },
+      ]);
     });
 
     it('sends a corrected name whose lookup is still out without details, so the server looks it up', async () => {
       const { held, preview } = heldPreviews();
-      const spy = mockApi({ items: [PENDING[0]] }, jsonResponse({ item: {} }), preview);
+      const spy = mockApi([PENDING[0]], {}, preview);
       renderPanel();
       await waitFor(() => expect(held).toHaveLength(1));
       fireEvent.change(nameBox('Alex', 'Root'), { target: { value: 'Root: Marauder' } });
@@ -592,18 +586,20 @@ describe('AdminPanel', () => {
       expect(screen.getByText('Looking up “Root: Marauder” on BoardGameGeek…')).toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: 'Approve Root: Marauder' }));
       expect(await screen.findByText('Nothing waiting.')).toBeInTheDocument();
-      expect(decisions(spy)).toEqual([{ decision: 'approve', id: 'sug-1', game: 'Root: Marauder' }]);
+      expect(decisions(spy)).toEqual([
+        { op: 'DecideSuggestion', decision: 'APPROVE', id: 'sug-1', game: 'Root: Marauder' },
+      ]);
     });
 
     it('refuses a correction the wishlist already lists, before posting', async () => {
-      const spy = mockApi({ items: [PENDING[0]] });
+      const spy = mockApi([PENDING[0]]);
       renderPanel();
       await screen.findByText('Explore Alula backwards.');
       fireEvent.change(nameBox('Alex', 'Root'), { target: { value: WISHLIST[0].name.toLowerCase() } });
       fireEvent.click(screen.getByRole('button', { name: `Approve ${WISHLIST[0].name.toLowerCase()}` }));
       expect(screen.getByText(`${WISHLIST[0].name} is already on the wishlist.`)).toBeInTheDocument();
       expect(decisions(spy)).toEqual([]);
-      expect(postBodies(spy)).toEqual([{ action: 'preview', game: 'Root' }]);
+      expect(sent(spy)).toEqual([{ op: 'PreviewGame', game: 'Root' }]);
       // Editing the name again clears it.
       fireEvent.change(nameBox('Alex', 'Root'), { target: { value: 'Root: The Riverfolk' } });
       expect(screen.queryByText(/is already on the wishlist/)).not.toBeInTheDocument();
@@ -611,7 +607,7 @@ describe('AdminPanel', () => {
 
     it('names the corrected game when its approval got no details', async () => {
       const { held, preview } = heldPreviews();
-      mockApi({ items: [PENDING[0]] }, jsonResponse({ item: {}, lookup: 'no-match' }), preview);
+      mockApi([PENDING[0]], { lookup: 'NO_MATCH' }, preview);
       renderPanel();
       await waitFor(() => expect(held).toHaveLength(1));
       fireEvent.change(nameBox('Alex', 'Root'), { target: { value: 'Root: Marauder' } });
@@ -623,7 +619,7 @@ describe('AdminPanel', () => {
     });
 
     it("labels each row's name and buttons by the suggestion, so one friend's two stay apart, and bounds the name as the API does", async () => {
-      mockApi({ items: [PENDING[1], { id: 'sug-4', game: 'Azul', name: 'Sam', note: '' }] });
+      mockApi([PENDING[1], { id: 'sug-4', game: 'Azul', name: 'Sam', note: '' }]);
       renderPanel();
       const box = await screen.findByRole('textbox', { name: "Game name for Sam's suggestion “Ark Nova”" });
       expect(box).toHaveValue('Ark Nova');

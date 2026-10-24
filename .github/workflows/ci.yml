@@ -66,6 +66,16 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
+      # The client's typed GraphQL documents (src/gql/, committed) come from
+      # api/_schema.graphql and src/client/operations/. Regenerate and fail if
+      # the checked-in output differs, so a schema or operation change that
+      # wasn't re-generated can't merge.
+      - name: GraphQL codegen drift
+        run: |
+          npm run codegen
+          git diff --exit-code src/gql/
+          test -z "$(git status --porcelain src/gql/)"
+
       # No `any` anywhere: every identifier in every tsconfig project has a
       # type (type-coverage at 100%).
       - name: Type coverage

@@ -1,0 +1,44 @@
+# The wishlist's votes and friends' suggestions (hooks/useWishlistVotes.ts,
+# hooks/useSuggestions.ts, components/SuggestForm.tsx).
+
+query WishlistVotes($ids: [String!]!, $anonId: String) {
+  wishlistVotes(ids: $ids, anonId: $anonId) {
+    counts {
+      id
+      count
+    }
+    myVotes
+  }
+}
+
+mutation Vote($itemId: String!, $anonId: String!, $vote: Int!) {
+  vote(itemId: $itemId, anonId: $anonId, vote: $vote) {
+    count
+  }
+}
+
+query Suggestions {
+  suggestions {
+    id
+    game
+    name
+    note
+    source
+    details {
+      year
+      min
+      max
+      mins
+      desc
+      kw
+      type
+      img
+    }
+  }
+}
+
+mutation SuggestGame($game: String!, $name: String!, $note: String) {
+  suggestGame(game: $game, name: $name, note: $note) {
+    id
+  }
+}
