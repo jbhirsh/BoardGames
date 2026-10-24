@@ -1,0 +1,6 @@
+# The AI rules assistant (components/RulesChat.tsx), streamed over
+# server-sent events.
+
+subscription AskRules($slug: String!, $message: String!, $history: [HistoryEntry!], $parts: [String!]) {
+  askRules(slug: $slug, message: $message, history: $history, parts: $parts)
+}
