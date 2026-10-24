@@ -5,9 +5,22 @@ import { DESC_MAX, GAME_MAX, GAME_MIN, MINS_MAX, PLAYERS_MAX } from '../data/sug
 import { useAuth } from '../context/useAuth';
 import { useWishlistItems } from '../context/useWishlistItems';
 import { editGame, removeGame } from '../client/adminApi';
+import {
+  adminActionsClass,
+  adminButtonClass,
+  adminDangerClass,
+  adminErrorClass,
+  adminGhostClass,
+  adminMutedClass,
+  fieldClass,
+  fieldLabelClass,
+  fieldsClass,
+} from './formClasses';
 
 interface Props {
   item: WishlistItem;
+  /** In the owner's list of hidden duplicates, beside the entry's name (a full line while editing). */
+  inQueue?: boolean;
 }
 
 interface StoredProps {
@@ -19,15 +32,15 @@ interface StoredProps {
  * compiled-in list (those are edited in the source) or when not signed in,
  * and holds no state until it does.
  */
-export default function AdminItemControls({ item }: Props) {
+export default function AdminItemControls({ item, inQueue = false }: Props) {
   const { admin } = useAuth();
   if (!admin || !item.source) return null;
-  return <Controls item={item} />;
+  return <Controls item={item} inQueue={inQueue} />;
 }
 
 type Mode = 'idle' | 'editing' | 'confirming';
 
-function Controls({ item }: StoredProps) {
+function Controls({ item, inQueue }: StoredProps & { inQueue: boolean }) {
   const { reload } = useWishlistItems();
   const [mode, setMode] = useState<Mode>('idle');
   const [busy, setBusy] = useState(false);
@@ -47,12 +60,12 @@ function Controls({ item }: StoredProps) {
   };
 
   return (
-    <div className="admin-controls">
+    <div className={inQueue ? (mode === 'editing' ? 'basis-full' : '') : 'mt-2.5'}>
       {mode === 'idle' && (
-        <div className="admin-actions">
+        <div className={adminActionsClass}>
           <button
             type="button"
-            className="admin-btn admin-btn--ghost"
+            className={adminGhostClass}
             onClick={() => {
               setError(null);
               setMode('editing');
@@ -62,7 +75,7 @@ function Controls({ item }: StoredProps) {
           </button>
           <button
             type="button"
-            className="admin-btn admin-btn--ghost"
+            className={adminGhostClass}
             onClick={() => {
               setError(null);
               setMode('confirming');
@@ -73,12 +86,12 @@ function Controls({ item }: StoredProps) {
         </div>
       )}
       {mode === 'confirming' && (
-        <div className="admin-actions" role="group" aria-label={`Remove ${item.name}?`}>
-          <span className="admin-muted">Remove {item.name} from the wishlist?</span>
-          <button type="button" className="admin-btn admin-btn--danger" disabled={busy} onClick={() => void remove()}>
+        <div className={adminActionsClass} role="group" aria-label={`Remove ${item.name}?`}>
+          <span className={adminMutedClass}>Remove {item.name} from the wishlist?</span>
+          <button type="button" className={adminDangerClass} disabled={busy} onClick={() => void remove()}>
             Yes, remove
           </button>
-          <button type="button" className="admin-btn admin-btn--ghost" disabled={busy} onClick={() => setMode('idle')}>
+          <button type="button" className={adminGhostClass} disabled={busy} onClick={() => setMode('idle')}>
             Keep it
           </button>
         </div>
@@ -86,7 +99,7 @@ function Controls({ item }: StoredProps) {
       {/* Mounted only while open, so every Edit starts from the entry as it is now. */}
       {mode === 'editing' && <EditForm item={item} onDone={() => setMode('idle')} />}
       {error && (
-        <p className="admin-error" role="alert">
+        <p className={adminErrorClass} role="alert">
           {error}
         </p>
       )}
@@ -142,24 +155,33 @@ function EditForm({ item, onDone }: StoredProps & { onDone: () => void }) {
   };
 
   return (
-    <form className="admin-edit" onSubmit={save} aria-label={`Edit ${item.name}`}>
-      <div className="suggest-fields">
-        <label className="suggest-label" htmlFor={`${uid}-game`}>
+    <form
+      className="mt-2 rounded-lg border border-border bg-bg2 p-3.5"
+      onSubmit={save}
+      aria-label={`Edit ${item.name}`}
+    >
+      <div className={fieldsClass}>
+        <label className={fieldLabelClass} htmlFor={`${uid}-game`}>
           Name
         </label>
         <input
           id={`${uid}-game`}
-          className="suggest-input"
+          className={`${fieldClass} h-8.5`}
           value={game}
           onChange={(e) => setGame(e.target.value)}
           required
           minLength={GAME_MIN}
           maxLength={GAME_MAX}
         />
-        <label className="suggest-label" htmlFor={`${uid}-type`}>
+        <label className={fieldLabelClass} htmlFor={`${uid}-type`}>
           Section
         </label>
-        <select id={`${uid}-type`} className="suggest-input" value={type} onChange={(e) => setType(e.target.value)}>
+        <select
+          id={`${uid}-type`}
+          className={`${fieldClass} h-8.5 appearance-auto`}
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+        >
           <option value="">{WISHLIST_TYPES.suggested}</option>
           {WISHLIST_SECTIONS.map((t) => (
             <option key={t} value={t}>
@@ -167,13 +189,13 @@ function EditForm({ item, onDone }: StoredProps & { onDone: () => void }) {
             </option>
           ))}
         </select>
-        <label className="suggest-label" htmlFor={`${uid}-min`}>
+        <label className={fieldLabelClass} htmlFor={`${uid}-min`}>
           Players
         </label>
-        <div className="admin-range">
+        <div className="flex items-center gap-2">
           <input
             id={`${uid}-min`}
-            className="suggest-input admin-num"
+            className={`${fieldClass} h-8.5 w-20`}
             type="number"
             min={1}
             max={PLAYERS_MAX}
@@ -182,9 +204,9 @@ function EditForm({ item, onDone }: StoredProps & { onDone: () => void }) {
             aria-label="Minimum players"
             required
           />
-          <span className="admin-muted">to</span>
+          <span className={adminMutedClass}>to</span>
           <input
-            className="suggest-input admin-num"
+            className={`${fieldClass} h-8.5 w-20`}
             type="number"
             min={1}
             max={PLAYERS_MAX}
@@ -194,12 +216,12 @@ function EditForm({ item, onDone }: StoredProps & { onDone: () => void }) {
             required
           />
         </div>
-        <label className="suggest-label" htmlFor={`${uid}-mins`}>
+        <label className={fieldLabelClass} htmlFor={`${uid}-mins`}>
           Minutes
         </label>
         <input
           id={`${uid}-mins`}
-          className="suggest-input admin-num"
+          className={`${fieldClass} h-8.5 w-20`}
           type="number"
           min={0}
           max={MINS_MAX}
@@ -207,36 +229,36 @@ function EditForm({ item, onDone }: StoredProps & { onDone: () => void }) {
           onChange={(e) => setMins(e.target.value)}
           required
         />
-        <label className="suggest-label" htmlFor={`${uid}-desc`}>
+        <label className={fieldLabelClass} htmlFor={`${uid}-desc`}>
           Description
         </label>
         <textarea
           id={`${uid}-desc`}
-          className="suggest-input admin-desc"
+          className={`${fieldClass} h-auto resize-y py-2`}
           value={desc}
           onChange={(e) => setDesc(e.target.value)}
           maxLength={DESC_MAX}
           rows={3}
         />
       </div>
-      <fieldset className="admin-kw">
-        <legend className="suggest-label">Keywords</legend>
+      <fieldset className="mt-3 flex flex-wrap gap-x-3.5 gap-y-1.5">
+        <legend className={`${fieldLabelClass} mb-1.5 p-0`}>Keywords</legend>
         {(Object.entries(KW) as [KeywordId, string][]).map(([id, label]) => (
-          <label key={id} className="admin-kw-opt">
+          <label key={id} className="inline-flex items-center gap-1 text-[12px] text-text2">
             <input type="checkbox" checked={kw.has(id)} onChange={() => toggleKw(id)} /> {label}
           </label>
         ))}
       </fieldset>
-      <div className="admin-actions">
-        <button type="submit" className="admin-btn" disabled={busy}>
+      <div className={adminActionsClass}>
+        <button type="submit" className={adminButtonClass} disabled={busy}>
           {busy ? 'Saving…' : 'Save'}
         </button>
-        <button type="button" className="admin-btn admin-btn--ghost" disabled={busy} onClick={onDone}>
+        <button type="button" className={adminGhostClass} disabled={busy} onClick={onDone}>
           Cancel
         </button>
       </div>
       {error && (
-        <p className="admin-error" role="alert">
+        <p className={adminErrorClass} role="alert">
           {error}
         </p>
       )}

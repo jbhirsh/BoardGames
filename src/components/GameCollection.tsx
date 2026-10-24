@@ -37,7 +37,15 @@ export default function GameCollection({ hidden = false }: { hidden?: boolean })
 
   return (
     <>
-      <section id={hidden ? undefined : 'collection'} ref={sectionRef} hidden={hidden}>
+      {/* A #collection link lands here, clear of the sticky header: its 91px
+          fallback, before useStickyOffset has measured it, is the phone bar's
+          height, as landing a little low is better than under the bar. */}
+      <section
+        id={hidden ? undefined : 'collection'}
+        className="scroll-mt-(--thead-top,91px)"
+        ref={sectionRef}
+        hidden={hidden}
+      >
         <div className={sectionHeadClass}>
           <div className={sectionNameClass}>
             <h2 className={sectionTitleClass} tabIndex={-1} data-focus-target="title">

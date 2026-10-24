@@ -17,6 +17,22 @@ import {
 import AdminItemControls from './AdminItemControls';
 import Notice from './Notice';
 import PreviewCard from './PreviewCard';
+import {
+  adminActionsClass,
+  adminButtonClass,
+  adminErrorClass,
+  adminGhostClass,
+  adminLookUpClass,
+  adminMutedClass,
+  adminSubtitleClass,
+  fieldClass,
+  fieldLabelClass,
+  fieldsClass,
+  formActionsClass,
+  formStatusClass,
+  optionalClass,
+  submitClass,
+} from './formClasses';
 
 type Queue = { kind: 'loading' } | { kind: 'ready'; items: PendingSuggestion[] } | { kind: 'error' };
 
@@ -109,17 +125,17 @@ function QueueRow({
 
   const notice = current && !current.details ? lookupNotice(current.outcome, current.game, 'queue') : null;
   return (
-    <li className="admin-item admin-item--pending">
-      <div className="admin-item-head">
+    <li className="flex flex-col flex-nowrap items-stretch justify-between gap-1.5 rounded-lg border border-border bg-surface px-3 py-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <form
-          className="admin-rename"
+          className="flex min-w-0 flex-[1_1_220px] items-center gap-2"
           onSubmit={(e) => {
             e.preventDefault();
             lookUp(typed);
           }}
         >
           <input
-            className="suggest-input admin-rename-input"
+            className={`${fieldClass} h-8.5 flex-1 font-semibold`}
             aria-label={`Game name for ${item.name}'s suggestion “${item.game}”`}
             value={game}
             onChange={(e) => {
@@ -132,16 +148,16 @@ function QueueRow({
           />
           <button
             type="submit"
-            className="admin-btn admin-btn--ghost"
+            className={adminLookUpClass}
             aria-label={`Look up the name for ${item.name}'s suggestion “${item.game}”`}
           >
             Look up
           </button>
         </form>
-        <div className="admin-actions">
+        <div className={adminActionsClass}>
           <button
             type="button"
-            className="admin-btn"
+            className={adminButtonClass}
             aria-label={`Approve ${typed || item.game}`}
             disabled={busy}
             onClick={approve}
@@ -150,7 +166,7 @@ function QueueRow({
           </button>
           <button
             type="button"
-            className="admin-btn admin-btn--ghost"
+            className={adminGhostClass}
             aria-label={`Deny ${typed || item.game}`}
             disabled={busy}
             onClick={() => onDecide(item, 'deny')}
@@ -159,23 +175,23 @@ function QueueRow({
           </button>
         </div>
       </div>
-      <p className="admin-muted">
+      <p className={adminMutedClass}>
         from {item.name}
         {renamed && ` as “${item.game}”`}
         {item.note ? `: “${item.note}”` : ''}
       </p>
-      <div className="admin-item-preview">
-        {lookingUp && <p className="admin-muted">Looking up “{typed}” on BoardGameGeek…</p>}
-        {!lookingUp && current?.details && <PreviewCard details={current.details} />}
+      <div className="empty:hidden">
+        {lookingUp && <p className={adminMutedClass}>Looking up “{typed}” on BoardGameGeek…</p>}
+        {!lookingUp && current?.details && <PreviewCard details={current.details} queued />}
         {!lookingUp && notice && (
-          <Notice tone="warning" live={false}>
+          <Notice tone="warning" live={false} className="mt-0.5">
             {notice}
           </Notice>
         )}
         {!lookingUp && !current && renamed && !error && (
-          <p className="admin-muted">Look the corrected name up to check its details; Approve does that first.</p>
+          <p className={adminMutedClass}>Look the corrected name up to check its details; Approve does that first.</p>
         )}
-        {error && <p className="admin-error">{error}</p>}
+        {error && <p className={adminErrorClass}>{error}</p>}
       </div>
     </li>
   );
@@ -228,12 +244,14 @@ function PendingQueue() {
 
   return (
     <div className="admin-queue">
-      <h4 className="admin-subtitle">Waiting for a decision</h4>
-      {queue.kind === 'loading' && <p className="admin-muted">Loading…</p>}
-      {queue.kind === 'error' && <p className="admin-muted">Couldn't load the queue. Reload the page to try again.</p>}
-      {queue.kind === 'ready' && queue.items.length === 0 && <p className="admin-muted">Nothing waiting.</p>}
+      <h4 className={adminSubtitleClass}>Waiting for a decision</h4>
+      {queue.kind === 'loading' && <p className={adminMutedClass}>Loading…</p>}
+      {queue.kind === 'error' && (
+        <p className={adminMutedClass}>Couldn't load the queue. Reload the page to try again.</p>
+      )}
+      {queue.kind === 'ready' && queue.items.length === 0 && <p className={adminMutedClass}>Nothing waiting.</p>}
       {queue.kind === 'ready' && queue.items.length > 0 && (
-        <ul className="admin-list">
+        <ul className="flex flex-col gap-2.5">
           {queue.items.map((item) => (
             <QueueRow
               key={item.id}
@@ -249,12 +267,12 @@ function PendingQueue() {
           region does it, so the notice doesn't announce itself too. */}
       <div aria-live="polite">
         {notice && (
-          <Notice tone="warning" live={false}>
+          <Notice tone="warning" live={false} className="mt-2.5">
             {notice}
           </Notice>
         )}
         {error && (
-          <p className="admin-error" role="alert">
+          <p className={adminErrorClass} role="alert">
             {error}
           </p>
         )}
@@ -353,17 +371,17 @@ function AddGameForm() {
   else if (current) label = found ? 'Add to wishlist' : 'Add anyway';
 
   return (
-    <form className="admin-add" onSubmit={onSubmit} aria-labelledby={`${uid}-title`}>
-      <h4 id={`${uid}-title`} className="admin-subtitle">
+    <form className="mt-2" onSubmit={onSubmit} aria-labelledby={`${uid}-title`}>
+      <h4 id={`${uid}-title`} className={adminSubtitleClass}>
         Add a game
       </h4>
-      <div className="suggest-fields">
-        <label className="suggest-label" htmlFor={`${uid}-game`}>
+      <div className={fieldsClass}>
+        <label className={fieldLabelClass} htmlFor={`${uid}-game`}>
           Game
         </label>
         <input
           id={`${uid}-game`}
-          className="suggest-input"
+          className={`${fieldClass} h-8.5`}
           value={game}
           onChange={(e) => setGame(e.target.value)}
           required
@@ -371,10 +389,15 @@ function AddGameForm() {
           maxLength={GAME_MAX}
           placeholder="Ark Nova"
         />
-        <label className="suggest-label" htmlFor={`${uid}-type`}>
+        <label className={fieldLabelClass} htmlFor={`${uid}-type`}>
           Section
         </label>
-        <select id={`${uid}-type`} className="suggest-input" value={type} onChange={(e) => setType(e.target.value)}>
+        <select
+          id={`${uid}-type`}
+          className={`${fieldClass} h-8.5 appearance-auto`}
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+        >
           {WISHLIST_SECTIONS.map((t) => (
             <option key={t} value={t}>
               {WISHLIST_TYPES[t]}
@@ -382,23 +405,23 @@ function AddGameForm() {
           ))}
           <option value="">{WISHLIST_TYPES.suggested}</option>
         </select>
-        <label className="suggest-label" htmlFor={`${uid}-name`}>
+        <label className={fieldLabelClass} htmlFor={`${uid}-name`}>
           Added by
         </label>
         <input
           id={`${uid}-name`}
-          className="suggest-input"
+          className={`${fieldClass} h-8.5`}
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
           maxLength={NAME_MAX}
         />
-        <label className="suggest-label" htmlFor={`${uid}-note`}>
-          Note <span className="suggest-opt">(optional)</span>
+        <label className={fieldLabelClass} htmlFor={`${uid}-note`}>
+          Note <span className={optionalClass}>(optional)</span>
         </label>
         <input
           id={`${uid}-note`}
-          className="suggest-input"
+          className={`${fieldClass} h-8.5`}
           value={note}
           onChange={(e) => setNote(e.target.value)}
           maxLength={NOTE_MAX}
@@ -409,21 +432,21 @@ function AddGameForm() {
       <div aria-live="polite">
         {found && <PreviewCard details={found} />}
         {notice && (
-          <Notice tone="warning" live={false}>
+          <Notice tone="warning" live={false} className="mt-2.5">
             {notice}
           </Notice>
         )}
       </div>
-      <div className="suggest-actions">
-        <button type="submit" className="suggest-btn" disabled={busy}>
+      <div className={formActionsClass}>
+        <button type="submit" className={submitClass} disabled={busy}>
           {label}
         </button>
         {current && !found && (
-          <button type="button" className="admin-btn admin-btn--ghost" disabled={busy} onClick={() => void lookUp()}>
+          <button type="button" className={adminGhostClass} disabled={busy} onClick={() => void lookUp()}>
             Look up again
           </button>
         )}
-        <span className="suggest-status" role="status" aria-live="polite">
+        <span className={formStatusClass} role="status" aria-live="polite">
           {status.kind === 'added' && `${status.game} is on the wishlist.`}
           {status.kind === 'error' && status.message}
         </span>
@@ -442,20 +465,23 @@ function HiddenDuplicates() {
   if (hidden.length === 0) return null;
   return (
     <div className="admin-queue" aria-live="polite">
-      <h4 className="admin-subtitle">Already on the wishlist</h4>
-      <p className="admin-muted">
+      <h4 className={adminSubtitleClass}>Already on the wishlist</h4>
+      <p className={adminMutedClass}>
         {hidden.length === 1
           ? 'Stored entry for a game the wishlist already lists, so it is hidden from the page. Remove it to clear the record, or rename it if it is really a different game.'
           : 'Stored entries for games the wishlist already lists, so they are hidden from the page. Remove them to clear the records, or rename one if it is really a different game.'}
       </p>
-      <ul className="admin-list">
+      <ul className="flex flex-col gap-2.5">
         {hidden.map((item) => (
-          <li key={item.id} className="admin-item">
-            <div className="admin-item-main">
-              <span className="admin-item-game">{item.name}</span>
-              {item.suggestedBy && <span className="admin-muted"> from {item.suggestedBy}</span>}
+          <li
+            key={item.id}
+            className="flex flex-wrap items-center justify-between gap-2.5 rounded-lg border border-border bg-surface px-3 py-2.5"
+          >
+            <div>
+              <span className="text-[13.5px] font-semibold text-dark">{item.name}</span>
+              {item.suggestedBy && <span className={adminMutedClass}> from {item.suggestedBy}</span>}
             </div>
-            <AdminItemControls item={item} />
+            <AdminItemControls item={item} inQueue />
           </li>
         ))}
       </ul>
@@ -466,8 +492,11 @@ function HiddenDuplicates() {
 /** Everything the signed-in owner can do that isn't tied to one card. */
 export default function AdminPanel() {
   return (
-    <section className="admin-panel" aria-label="Owner tools">
-      <h3 className="admin-title">Owner tools</h3>
+    <section
+      className="mb-7 rounded-panel border border-blue-tint/18 bg-blue-tint/4 px-6 py-5"
+      aria-label="Owner tools"
+    >
+      <h3 className="mb-3 font-display text-[19px] font-bold text-dark">Owner tools</h3>
       <PendingQueue />
       <HiddenDuplicates />
       <AddGameForm />
