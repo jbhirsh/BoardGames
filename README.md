@@ -103,10 +103,12 @@ suggestion emails). Real secrets live in `.env.local`, which is gitignored.
 
 - `src/` — the React SPA: static data layer (`src/data/`), filter state and URL
   sync (`src/context/`), pure helpers (`src/utils/`), and UI (`src/components/`).
-- `api/` — Vercel serverless functions: `chat.ts` (Gemini rules assistant),
-  `votes.ts` (wishlist voting), `suggestions.ts` (friend suggestions with
-  email approval and the owner's on-site edits) and `auth.ts` (magic-link
-  sign-in), all on Upstash Redis.
+- `api/` — one Vercel serverless function, `graphql.ts`: a GraphQL API
+  (GraphQL Yoga; schema in `_schema.graphql`, resolvers in `_resolvers/`) for
+  the Gemini rules assistant (streamed over server-sent events), wishlist
+  voting, friend suggestions with email approval and the owner's on-site
+  edits, and magic-link sign-in, all on Upstash Redis. The client's typed
+  documents are generated from the schema into `src/gql/`.
 - `scripts/` — the PDF-to-text pipeline that generates `rules-text/` from
   `public/rules/*.pdf` for the AI assistant.
 - CI runs lint, type-check, accessibility tests, unit tests with coverage, and a
@@ -133,8 +135,8 @@ guess) and questions that mean different things in different games
 GEMINI_API_KEY=... npm run eval
 ```
 
-The harness runs every golden-set question through the real `api/chat.ts`
-pipeline, so it needs a `GEMINI_API_KEY` and makes real Gemini calls. It exits
+The harness runs every golden-set question through the real rules-assistant
+pipeline (`api/_lib/rulesAssistant.ts`, which the chat uses), so it needs a `GEMINI_API_KEY` and makes real Gemini calls. It exits
 nonzero if the pass rate falls below the threshold, which defaults to **90%**
 and is configurable — see [`eval/run-eval.ts`](eval/run-eval.ts).
 
@@ -222,7 +224,8 @@ each covering a failure class the others can't see:
   reject at runtime (the incident's root cause) fail `tsc -b` in CI instead.
 - **Deploy-time:** [`smoke.yml`](.github/workflows/smoke.yml) triggers on every
   Vercel deployment — preview and production — and probes the deployed API for
-  real: a `POST /api/chat` rules question and a `GET /api/votes` read. A
+  real: a rules question (the `askRules` subscription, over server-sent
+  events) and a votes query, both POSTed to `/api/graphql`. A
   function that dies at module load, a missing bundled file, or a broken env
   var becomes a red check on the PR, not a silent 500.
 - **Steady-state:** the same workflow runs on a twice-daily schedule against
@@ -245,6 +248,6 @@ Authentication on preview deployments).
 ## Deployment
 
 Deployed on **Vercel** (`vercel.json`): the Vite build is served from `dist/`,
-SPA routes fall back to `index.html`, and `api/*` maps to the serverless
-functions. The `api/chat.ts` function bundles `rules-text/**` so it can read a
+SPA routes fall back to `index.html`, and `/api/graphql` is the one serverless
+function. It bundles `rules-text/**` so the rules chat can read a
 game's rules at request time.

@@ -3,23 +3,7 @@ import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 vi.mock('@sentry/node', () => ({ captureException: vi.fn() }));
 
 import * as Sentry from '@sentry/node';
-import { clientIp, enforceRateLimit, getLimiter, type RateLimiter } from '../../api/_lib/rateLimit';
-
-function makeRes() {
-  const res = {
-    statusCode: 0,
-    body: undefined as unknown,
-    status: vi.fn((code: number) => {
-      res.statusCode = code;
-      return res;
-    }),
-    json: vi.fn((data: unknown) => {
-      res.body = data;
-      return res;
-    }),
-  };
-  return res;
-}
+import { clientIp, getLimiter, rateLimitRefusal, type RateLimiter } from '../../api/_lib/rateLimit';
 
 const reqWith = (headers: Record<string, string | string[] | undefined>, remote?: string) => ({
   headers,
@@ -45,100 +29,57 @@ describe('clientIp', () => {
   });
 });
 
-describe('enforceRateLimit', () => {
+describe('rateLimitRefusal', () => {
   beforeEach(() => vi.mocked(Sentry.captureException).mockClear());
-
-  it('allows and writes nothing when the limiter is null (fail open)', async () => {
-    const res = makeRes();
-    const ok = await enforceRateLimit(null, reqWith({}), res);
-    expect(ok).toBe(true);
-    expect(res.status).not.toHaveBeenCalled();
+  const throwing = (boom: Error): RateLimiter => ({
+    limit: vi.fn(async () => {
+      throw boom;
+    }),
   });
 
-  it('allows when the limiter reports success', async () => {
-    const res = makeRes();
+  it('allows when the limiter is null (fail open), even failing closed', async () => {
+    expect(await rateLimitRefusal(null, '1.1.1.1')).toBeNull();
+    expect(await rateLimitRefusal(null, '1.1.1.1', { failClosed: true })).toBeNull();
+  });
+
+  it('counts against the key it is given and allows when the limiter reports success', async () => {
     const limiter: RateLimiter = { limit: vi.fn(async () => ({ success: true })) };
-    expect(await enforceRateLimit(limiter, reqWith({ 'x-forwarded-for': '1.1.1.1' }), res)).toBe(true);
-    expect(limiter.limit).toHaveBeenCalledWith('1.1.1.1');
-    expect(res.status).not.toHaveBeenCalled();
+    expect(await rateLimitRefusal(limiter, '1.1.1.1')).toBeNull();
+    expect(await rateLimitRefusal(limiter, 'global', { failClosed: true })).toBeNull();
+    expect(limiter.limit).toHaveBeenNthCalledWith(1, '1.1.1.1');
+    expect(limiter.limit).toHaveBeenNthCalledWith(2, 'global');
   });
 
-  it('blocks with 429 when the limiter reports failure', async () => {
-    const res = makeRes();
+  it('refuses with a 429 when the limiter reports failure, in its own words when given some', async () => {
     const limiter: RateLimiter = { limit: vi.fn(async () => ({ success: false })) };
-    expect(await enforceRateLimit(limiter, reqWith({}), res)).toBe(false);
-    expect(res.statusCode).toBe(429);
-    expect(res.body).toEqual({ error: 'Too many requests. Please slow down.' });
+    expect(await rateLimitRefusal(limiter, 'k')).toEqual({
+      status: 429,
+      error: 'Too many requests. Please slow down.',
+    });
+    const refusal = { error: 'Done for today.', code: 'DAILY_LIMIT' };
+    expect(await rateLimitRefusal(limiter, 'k', { refusal })).toEqual({ status: 429, ...refusal });
   });
 
   it('fails open when the limiter throws, but reports it to Sentry', async () => {
-    const res = makeRes();
     const boom = new Error('redis down');
-    const limiter: RateLimiter = {
-      limit: vi.fn(async () => {
-        throw boom;
-      }),
-    };
-    expect(await enforceRateLimit(limiter, reqWith({}), res)).toBe(true);
-    expect(res.status).not.toHaveBeenCalled();
+    expect(await rateLimitRefusal(throwing(boom), 'k')).toBeNull();
     expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(boom);
-  });
-
-  it('counts against a fixed key when given one, instead of the client IP', async () => {
-    const limiter: RateLimiter = { limit: vi.fn(async () => ({ success: true })) };
-    await enforceRateLimit(limiter, reqWith({ 'x-real-ip': '1.1.1.1' }), makeRes(), { key: 'global' });
-    expect(limiter.limit).toHaveBeenCalledWith('global');
-  });
-
-  it("answers a 429 with the caller's own refusal when given one", async () => {
-    const res = makeRes();
-    const limiter: RateLimiter = { limit: vi.fn(async () => ({ success: false })) };
-    const refusal = { error: 'Done for today.', code: 'daily-limit' };
-    expect(await enforceRateLimit(limiter, reqWith({}), res, { refusal })).toBe(false);
-    expect(res.statusCode).toBe(429);
-    expect(res.body).toEqual(refusal);
   });
 
   it('fails closed with a 503 when asked to and the limiter throws, still reporting it', async () => {
-    const res = makeRes();
     const boom = new Error('redis down');
-    const limiter: RateLimiter = {
-      limit: vi.fn(async () => {
-        throw boom;
-      }),
-    };
-    expect(await enforceRateLimit(limiter, reqWith({}), res, { failClosed: true })).toBe(false);
-    expect(res.statusCode).toBe(503);
-    expect(res.body).toEqual({ error: 'Temporarily unavailable. Please try again later.' });
+    expect(await rateLimitRefusal(throwing(boom), 'k', { failClosed: true })).toEqual({
+      status: 503,
+      error: 'Temporarily unavailable. Please try again later.',
+    });
     expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(boom);
   });
 
-  it('treats an Upstash timeout as a failure when failing closed', async () => {
-    const res = makeRes();
+  it('treats an Upstash timeout as a failure only when failing closed', async () => {
     const limiter: RateLimiter = { limit: vi.fn(async () => ({ success: true, reason: 'timeout' })) };
-    expect(await enforceRateLimit(limiter, reqWith({}), res, { failClosed: true })).toBe(false);
-    expect(res.statusCode).toBe(503);
+    expect(await rateLimitRefusal(limiter, 'k', { failClosed: true })).toMatchObject({ status: 503 });
     expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(new Error('rate limiter timed out'));
-  });
-
-  it('lets an Upstash timeout through when failing open', async () => {
-    const res = makeRes();
-    const limiter: RateLimiter = { limit: vi.fn(async () => ({ success: true, reason: 'timeout' })) };
-    expect(await enforceRateLimit(limiter, reqWith({}), res)).toBe(true);
-    expect(res.status).not.toHaveBeenCalled();
-  });
-
-  it('allows a fail-closed request when no limiter is configured (no Redis env)', async () => {
-    const res = makeRes();
-    expect(await enforceRateLimit(null, reqWith({}), res, { failClosed: true })).toBe(true);
-    expect(res.status).not.toHaveBeenCalled();
-  });
-
-  it('allows a fail-closed request the limiter passes', async () => {
-    const res = makeRes();
-    const limiter: RateLimiter = { limit: vi.fn(async () => ({ success: true })) };
-    expect(await enforceRateLimit(limiter, reqWith({}), res, { failClosed: true })).toBe(true);
-    expect(res.status).not.toHaveBeenCalled();
+    expect(await rateLimitRefusal(limiter, 'k')).toBeNull();
   });
 });
 

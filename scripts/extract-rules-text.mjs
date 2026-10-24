@@ -1,7 +1,7 @@
 // The rules assistant's text: every rulebook in public/rules/*.pdf, extracted
 // with unpdf (or, for an image-only PDF, OCR'd with tesseract.js by
 // ./ocr-pdfs.mjs), to rules-text/*.txt, which vercel.json bundles into the
-// api/chat.ts function.
+// api/graphql.ts function (the rules chat, api/_resolvers/chat.ts).
 //
 //   npm run rules-text
 //

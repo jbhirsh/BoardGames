@@ -312,9 +312,7 @@ describe('Wishlist', () => {
       const vote = await screen.findByRole('button', { name: `Vote for ${item.name} (0 votes)` });
       await waitFor(() => expect(vote).toBeEnabled());
       fireEvent.click(vote);
-      await waitFor(() =>
-        expect(fetchSpy).toHaveBeenCalledWith('/api/votes', expect.objectContaining({ method: 'POST' })),
-      );
+      await waitFor(() => expect(operations(fetchSpy).some((op) => op.operationName === 'Vote')).toBe(true));
       const toggle = screen.getByRole('button', { name: `Show details for ${item.name}` });
       expect(toggle).toHaveAttribute('aria-expanded', 'false');
       fireEvent.click(toggle);

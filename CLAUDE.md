@@ -21,6 +21,7 @@ npm run typecov      # type-coverage: every tsconfig project at 100%
 npm run lint         # eslint . (flat config; includes jsx-a11y static checks)
 npm run format       # prettier --write . (format:check is CI's read-only check)
 npm run depcruise    # dependency-cruiser: layering rules (.dependency-cruiser.cjs)
+npm run codegen      # typed GraphQL documents into src/gql/ (codegen.ts); commit the output
 npm run preview      # serve the production build locally
 # `npm install` also runs `prepare`, pointing core.hooksPath at .githooks/
 
@@ -71,18 +72,28 @@ before changing the module.
   `filterReducer.ts`, `useFilterUrlSync.ts`), wishlist, owner session.
 - **`src/components/`** — pages `RulesPage` (`PdfReader`, `RulesChat`,
   `SaveOffline`), `ScoreCalculatorPage` (its pads listed in
-  `data/scoreCalculators.ts`), `WordCheckerPage`, `SignInPage`;
-  home `Hero`, `FilterBar/`, `GameCard`, `GameRow`, `Wishlist`.
+  `data/scoreCalculators.ts`), `WordCheckerPage`, `SignInPage`, and the
+  pages the owner's emails link to, `EmailedDecisionPage` (/approve, /deny)
+  and `SignInConfirmPage`; home `Hero`, `FilterBar/`, `GameCard`, `GameRow`,
+  `Wishlist`.
 - **`src/hooks/`** hooks; **`src/utils/`** pure helpers; **`src/client/`**
-  side-effecting browser modules; **`src/pdfjs/`** the reader's pdf.js;
+  side-effecting browser modules, `graphql.ts` the one way to the API (typed
+  documents POSTed as JSON, and the rules chat's server-sent events) with
+  its operations in `client/operations/*.graphql`; **`src/gql/`** the typed
+  documents codegen writes from them and the SDL; **`src/pdfjs/`** the reader's pdf.js;
   **`src/sw/`** the service worker; **`src/App.css`** every style.
-- **`api/`** — Vercel Functions `chat.ts` (Gemini), `votes.ts`,
-  `suggestions.ts`, `auth.ts`, each headed by its routes and rules;
+- **`api/`** — one Vercel Function, `graphql.ts`: GraphQL Yoga serving the
+  SDL in `_schema.graphql` with the resolvers in `_resolvers/` (`votes`,
+  `suggestions`, `auth`, `chat` (Gemini, a subscription over server-sent
+  events), each headed by its rules; `index.ts` the server and its CSRF
+  guards, `limits.ts` the bounds on one request (tokens, aliases, depth; GET
+  only for a query; no introspection in production), `context.ts` the owner
+  check and rate limits, `errors.ts` refusals);
   `api/_lib/` what they share (Redis, Resend, BGG, sessions, limits).
 - **`scripts/`** — `npm run rules-text` (`extract-rules-text.mjs`, into
   `rules-text/`), `game-weights`, `wishlist-art`, `collection-art`;
   **`eval/`** the assistant's eval; **`vite.config.ts`** the build.
-- **External services** — Gemini (`api/chat.ts`), Upstash Redis
+- **External services** — Gemini (`api/_resolvers/chat.ts`), Upstash Redis
   (`api/_lib/redis.ts`), Resend (`api/_lib/mail.ts`), Sentry
   (`src/client/sentry.ts`, `src/instrument.ts`, `api/_lib/sentry.ts`),
   BoardGameGeek (`api/_lib/bgg.ts`, the art and weight scripts), Wiktionary
@@ -107,9 +118,17 @@ before changing the module.
   skip the expensive step (a skipped step still reports success).
 - **Owner mutations must be JSON.** CSRF protection is the session cookie's
   SameSite=Lax, then the JSON media type (`api/_lib/session.ts`), which a
-  cross-site form can't send without a preflight.
+  cross-site form can't send without a preflight: every POST to
+  `/api/graphql` must be JSON (checked on the headers as they arrived, in
+  `api/graphql.ts`), Yoga's CSRF plugin refuses a GET without its header,
+  only a query is served over GET, and CORS stays off.
 - **Emailed links never change state on a GET**: mail scanners follow every
-  URL, so approve/deny and sign-in links open a page whose form POSTs.
+  URL, so approve/deny and sign-in links open app pages that only read (a
+  query) until their button sends the mutation.
+- **The client's GraphQL documents are generated**: change an operation in
+  `src/client/operations/` or the SDL, then `npm run codegen` and commit
+  `src/gql/` (CI's "GraphQL codegen drift" fails a stale one). Documents go
+  out as plain strings: no GraphQL library in the browser bundle.
 - **Report errors through `src/client/sentry.ts`, never `@sentry/react`**:
   it queues what comes before the SDK loads, after the first paint. A static
   import of Sentry puts it back in every visit's bundle, and fails the build.
@@ -121,14 +140,15 @@ before changing the module.
 - **Tests that run git must not inherit the hooks' `GIT_*` variables**, or
   they act on this repository: pre-push unsets them, and such a test strips
   them itself (`.github/scripts/eval-should-grade.test.mjs`).
-- **`rules-text/**` reaches `api/chat.ts` only via `vercel.json`'s
+- **`rules-text/**` reaches `api/graphql.ts` only via `vercel.json`'s
   `includeFiles`**, by the slug-named paths `games.ts` gives each rulebook.
   Re-run `npm run rules-text` after changing a PDF (a newly added scan
   first gets `npm run rules-text-layer`, its OCR text layer); keep the
   quality test's allowlist short, with a reason for each file.
 - **`api` and `src` can't import each other; `sw.ts` imports no module the
   app also imports** (the build fails otherwise). Values both sides need are
-  written twice, kept in step by tests.
+  written twice, kept in step by tests; the API's shapes reach `src` only
+  through codegen reading `api/_schema.graphql`.
 - **Never hand-edit the generated `src/data/gameWeights.ts` and
   `wishlistArt.ts`**; re-run their scripts.
 - **Colours are tokens, never literals**; `e2e/theme.spec.ts` holds both
@@ -172,13 +192,16 @@ before changing the module.
   A CI helper's test sits beside it (`.github/scripts/*.test.mjs`), as a
   script's does (`scripts/*.test.ts`, or here if it needs the DOM's types),
   in the same suite and gate. Shared fakes: `src/__tests__/helpers/`
-  (`fakeRedis`, with `raw` for the raw client; `stubMatchMedia`).
+  (`fakeRedis`, with `raw` for the raw client; `stubMatchMedia`; `api`,
+  the whole GraphQL API in process over fakes; `graphqlFetch`, a fetch
+  answering the client's operations by name).
   Property tests (`*.property.test.ts`, fast-check) state an invariant over
   generated inputs, for pure code with one (share links, places, the
   number boxes); a failure prints the seed and shrunk input to replay.
 - **End-to-end tests live in `e2e/`** (Playwright, Chromium, the production
   build): a real browser, still no real network. `e2e/fixtures.ts` stubs
-  every `/api/*` call, fails a test making an unstubbed one and aborts
+  every `/api/*` call (GraphQL by operation name, `stubOperation`, the
+  rules chat as an event stream), fails a test making an unstubbed one and aborts
   requests off the preview origin (a spec needing the dictionary stubs it).
   Import `test` and `expect` from `./fixtures`. Find elements by role,
   label, placeholder or text, never CSS (`playwright/no-raw-locators`); wait
@@ -236,12 +259,12 @@ before changing the module.
 
 | Required check (workflow) | What it runs |
 | --- | --- |
-| `ci` (`ci.yml`) | commit messages, lint, Prettier, depcruise, type-check, type coverage (100%), unit tests + coverage (axe suite included), build, `npm audit --omit=dev` (high+) |
+| `ci` (`ci.yml`) | commit messages, lint, Prettier, depcruise, type-check, GraphQL codegen drift, type coverage (100%), unit tests + coverage (axe suite included), build, `npm audit --omit=dev` (high+) |
 | Claude Review (`claude-review.yml`) | AI review, in its own file: claude-code-action skips a PR that edits its workflow |
 | StrykerJS (`mutation.yml`) | incremental mutation testing of the files a PR touched (a formatting-only change left out), failing below `break` |
 | E2E Tests (Playwright) (`e2e.yml`) | the e2e suite and visual regression in three engines; passing only on retry still fails |
 | Answer-Quality Eval (`eval.yml`) | the assistant against `eval/golden-set.json` |
-| Secret scan, `semgrep-cloud-platform/scan`, Vercel, API smoke test | secrets, static analysis, the deploy and its live API |
+| Secret scan, `semgrep-cloud-platform/scan`, Vercel, API smoke test | secrets, static analysis, the deploy and its live API (`smoke.yml`: a rules question over SSE and a votes query to `/api/graphql`) |
 
 **The weekly audit** (`weekly-audit.yml`, Mondays, not a PR check) runs knip
 (`knip.jsonc`: dead files, exports and dependencies), jscpd (`.jscpd.json`:
@@ -251,7 +274,7 @@ dependency-cruiser's whole graph as an artifact. Each kind of finding keeps
 one issue labelled `weekly-audit` (`.github/scripts/tracking-issue.mjs`),
 rewritten each week and closed when clean. Each tool reports nothing
 today: keep it that way, fixing a finding rather than ignoring it; a
-deliberate copy (the dark theme's second block, the API's keyword labels)
+deliberate copy (the dark theme's second block)
 says why beside its `jscpd:ignore` marker, and an export only a command-line
 caller uses is tagged `@public`.
 
@@ -277,8 +300,12 @@ resolved; `claude-autofix.yml` works review comments on bots' PRs and fixes
 mechanical breakage from a bump (one attempt per head, two per PR), leaving
 behaviour changes (privacy, auth, features, a test's expected values) to
 the owner in a comment, and a person's PR to its author. Vercel
-(`vercel.json`): SPA rewrites, `maxDuration` per function (chat 60 s, the
-rest 10–15 s, none over 60), `/assets/` immutable for a year.
+(`vercel.json`): SPA rewrites, the one function's `maxDuration` (60 s, the
+chat's; every other operation keeps its old 10–15 s limit in its resolver)
+and `includeFiles`, `/assets/` immutable for a year, no referrer from the
+emailed links' pages, and temporary redirects from the old emailed
+`/api/suggestions` and `/api/auth` links to those pages (why: the test,
+`vercelConfig.test.ts`).
 
 ## Environment variables
 
@@ -288,13 +315,13 @@ secrets belong in tracked source.
 | Variable | Where | Purpose |
 | --- | --- | --- |
 | `VITE_SENTRY_DSN` | client (`src/client/sentry.ts`, `src/instrument.ts`) | Sentry browser DSN (must be `VITE_`-prefixed to reach the browser) |
-| `SENTRY_DSN` | serverless (`api/_lib/sentry.ts`, every endpoint) | Sentry Node DSN |
-| `GEMINI_API_KEY` | serverless (`api/chat.ts`) | Google Gemini key (server-only) |
-| `KV_REST_API_URL` | serverless (`api/_lib/redis.ts`, every endpoint) | Upstash Redis REST URL |
-| `KV_REST_API_TOKEN` | serverless (`api/_lib/redis.ts`, every endpoint) | Upstash Redis REST token |
+| `SENTRY_DSN` | serverless (`api/_lib/sentry.ts`, `api/graphql.ts`) | Sentry Node DSN |
+| `GEMINI_API_KEY` | serverless (`api/graphql.ts`, for `api/_resolvers/chat.ts`) | Google Gemini key (server-only) |
+| `KV_REST_API_URL` | serverless (`api/_lib/redis.ts`, `api/graphql.ts`) | Upstash Redis REST URL |
+| `KV_REST_API_TOKEN` | serverless (`api/_lib/redis.ts`, `api/graphql.ts`) | Upstash Redis REST token |
 | `SENTRY_AUTH_TOKEN` | build (optional) | enables Sentry source-map upload during `vite build` |
 | `RESEND_API_KEY` | serverless (`api/_lib/mail.ts`) | Resend key for the suggestion and sign-in emails; suggestions are refused until set |
 | `SUGGESTIONS_TO` | serverless (`api/_lib/mail.ts`) | address that receives approve/deny emails; the only address that can sign in as the owner |
 | `SUGGESTIONS_FROM` | serverless (optional) | sender; defaults to `The Game Room <onboarding@resend.dev>` |
 | `APP_URL` | serverless (optional) | origin for the emailed links; defaults to the Vercel production URL |
-| `BGG_API_TOKEN` | serverless (`api/suggestions.ts`) | BoardGameGeek XML API token; unset (BGG isn't called) or refused, adds and approvals still go through with no details or art, the owner is told why (on the add form, in the on-site queue and on the emailed approval page) and Sentry gets an error naming the variable |
+| `BGG_API_TOKEN` | serverless (`api/graphql.ts`, for `api/_resolvers/suggestions.ts`) | BoardGameGeek XML API token; unset (BGG isn't called) or refused, adds and approvals still go through with no details or art, the owner is told why (on the add form, in the on-site queue and on the emailed approval page) and Sentry gets an error naming the variable |

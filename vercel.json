@@ -6,30 +6,69 @@
     "api/graphql.ts": {
       "includeFiles": "rules-text/**",
       "maxDuration": 60
-    },
-    "api/chat.ts": {
-      "includeFiles": "rules-text/**",
-      "maxDuration": 60
-    },
-    "api/suggestions.ts": {
-      "maxDuration": 15
-    },
-    "api/auth.ts": {
-      "maxDuration": 15
-    },
-    "api/votes.ts": {
-      "maxDuration": 10
     }
   },
   "headers": [
     {
       "source": "/(approve|deny|sign-in/confirm)",
-      "headers": [{ "key": "Referrer-Policy", "value": "no-referrer" }]
+      "headers": [
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        }
+      ]
     },
     {
       "source": "/assets/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     }
   ],
-  "rewrites": [{ "source": "/((?!api/)(?!.*\\..*).*)", "destination": "/index.html" }]
+  "redirects": [
+    {
+      "source": "/api/suggestions",
+      "has": [
+        {
+          "type": "query",
+          "key": "action",
+          "value": "approve"
+        }
+      ],
+      "destination": "/approve",
+      "permanent": false
+    },
+    {
+      "source": "/api/suggestions",
+      "has": [
+        {
+          "type": "query",
+          "key": "action",
+          "value": "deny"
+        }
+      ],
+      "destination": "/deny",
+      "permanent": false
+    },
+    {
+      "source": "/api/auth",
+      "has": [
+        {
+          "type": "query",
+          "key": "token"
+        }
+      ],
+      "destination": "/sign-in/confirm",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/((?!api/)(?!.*\\..*).*)",
+      "destination": "/index.html"
+    }
+  ]
 }
