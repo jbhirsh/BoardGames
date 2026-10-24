@@ -235,7 +235,8 @@ describe('CoverCarousel', () => {
     const { container, unmount } = renderReel();
     const reel = container.querySelector('.hero-reel')!;
     expect(observe).toHaveBeenCalledWith(reel);
-    expect(reel.className).toBe('hero-reel');
+    // No state yet: its styles are classes beside the hook, so name the states.
+    for (const state of ['is-paused', 'is-idle', 'is-held', 'is-dragging']) expect(reel).not.toHaveClass(state);
     // On screen until told otherwise.
     act(() => {
       document.dispatchEvent(new Event('visibilitychange'));

@@ -1,5 +1,8 @@
 <!doctype html>
-<html lang="en" class="leading-[normal]">
+<html
+  lang="en"
+  class="scroll-smooth bg-bg leading-[normal] [-webkit-font-smoothing:antialiased] motion-reduce:scroll-auto"
+>
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
@@ -45,7 +48,17 @@
     <!-- The headings' font (src/index.css), fetched beside the code rather than once the page has drawn. -->
     <link rel="preload" href="/fonts/playfair-display-latin.woff2" as="font" type="font/woff2" crossorigin />
   </head>
-  <body>
+  <!-- The page runs to the screen's edges (viewport-fit=cover), so an
+       installed app's bottom bar reaches under the home indicator and pads
+       itself clear of it (PhoneNav), as the filter sheet's buttons and the
+       rules chat's field do. The page keeps clear of a landscape phone's
+       notch at the sides and of anything over its top, where the pinned
+       search bar and the rulebook's search stop under a band in the page's
+       colour (the ::before). Each inset is 0 where nothing is there, as on a
+       desktop. -->
+  <body
+    class="min-h-svh bg-bg pt-[env(safe-area-inset-top,0px)] pr-[env(safe-area-inset-right,0px)] pl-[env(safe-area-inset-left,0px)] font-sans font-normal text-text before:fixed before:inset-x-0 before:top-0 before:z-250 before:h-[env(safe-area-inset-top,0px)] before:bg-bg before:content-['']"
+  >
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
