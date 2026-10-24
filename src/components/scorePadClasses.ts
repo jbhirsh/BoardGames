@@ -5,15 +5,18 @@ import { tapTargetClass } from './sharedClasses';
  * the pads they hold): panels, rows of boxes, the table's own choices
  * (a map, a Kingdom), groups, choice buttons and the Results sheet.
  * Written for a phone first: every control is 44px or takes taps out to
- * 44px, and wider screens only add room.
+ * 44px, and wider screens only add room. One spacing scale: 12px between
+ * a form's rows and the pad's panels, 16px inside a panel on a phone
+ * (20px wider), so every panel's content starts on one edge.
  */
 
 const focusOutlineClass = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue';
 
 /** A panel: a player's form, the standings, a round's entry, a sheet. */
-export const panelClass = 'overflow-hidden rounded-panel border border-border bg-surface p-5 shadow-(--shadow-md)';
+export const panelClass =
+  'overflow-hidden rounded-panel border border-border bg-surface p-4 shadow-(--shadow-md) sm:p-5';
 /** The boxes in a panel, in a column. */
-export const formClass = 'flex flex-col gap-3.5';
+export const formClass = 'flex flex-col gap-3';
 /** A row of a form: its label, then its box at the far end (which never shrinks). */
 export const rowClass = 'flex items-center justify-between gap-3 [&>.sc-field]:flex-none';
 /** A row's label: an icon or not, then its text. */
@@ -40,7 +43,7 @@ export const pointsClass = 'inline-block min-w-[7ch]';
 /** A box and the ± button before it. */
 export const inputWrapClass = 'flex items-center gap-1.5';
 /** A rule between a group and the next thing in the form. */
-export const dividedClass = 'border-t border-border pt-3.5';
+export const dividedClass = 'border-t border-border pt-3';
 
 /** A box's frame: its category's colour (--box-color) or the plain border. */
 const boxFrameClass =
@@ -79,7 +82,7 @@ export const fieldInputClass = `${numberClass} ${boxTextClass} pointer-events-au
 
 /** The player's total under their boxes. */
 export const totalClass =
-  'mt-1 flex items-center justify-between border-t-2 border-border pt-3.5 text-[16px] font-bold text-text';
+  'mt-1 flex items-center justify-between border-t-2 border-border pt-3 text-[16px] font-bold text-text';
 /** Hands the pad on (Next, See results), or adds a round; filled, at the end of its row. */
 export const nextClass = `cursor-pointer self-end rounded-control bg-blue-fill px-4.5 py-2.5 text-[14px] font-semibold text-on-fill hover:not-disabled:brightness-108 ${focusOutlineClass} ${tapTargetClass}`;
 /** The row under a pad holding New game. */
@@ -89,8 +92,7 @@ export const quietButtonClass =
   'min-h-11 cursor-pointer rounded-control border border-border bg-bg2 px-4 py-2 text-[13px] font-semibold text-text2 hover:bg-bg3 hover:text-text';
 
 /** What the whole table shares, above the players: the map played, the Kingdom, the players' names. */
-export const setupClass =
-  'mb-3 flex min-w-0 flex-col gap-2.5 rounded-panel border border-border bg-surface px-4 py-3.5';
+export const setupClass = 'mb-3 flex min-w-0 flex-col gap-3 rounded-panel border border-border bg-surface p-4';
 const setupTitleBaseClass = 'flex flex-wrap gap-x-2.5 gap-y-1 text-[14px] font-semibold text-text';
 /** The setup's heading. */
 export const setupTitleClass = `${setupTitleBaseClass} items-baseline`;
@@ -100,7 +102,7 @@ export const setupSummaryClass = `${setupTitleBaseClass} min-h-11 cursor-pointer
 export const hintClass = 'text-[13px] leading-normal text-text2';
 /** A group of boxes (a fieldset), its legend groupTitleClass. */
 export const groupClass = 'flex min-w-0 flex-col gap-3';
-export const groupTitleClass = 'mb-0.5 text-[15px] font-bold text-text';
+export const groupTitleClass = 'mb-2 text-[15px] font-bold text-text';
 
 /** A row of choice buttons, one pressed at a time. */
 export const segClass = 'flex flex-wrap gap-1.5';
