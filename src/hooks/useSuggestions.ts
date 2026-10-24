@@ -1,28 +1,32 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { KeywordId, StoredWishlistItem, WishlistItem, WishlistSection } from '../data/types';
 import { KW, WISHLIST_TYPES } from '../data/keywords';
+import { request } from '../client/graphql';
+import { SuggestionsDocument, type Source } from '../gql/graphql';
 
-interface SuggestionDetails {
-  year?: number;
-  min: number;
-  max: number;
-  mins: number;
-  desc: string;
-  kw: string[];
-  /** Wishlist section the owner filed it under; absent means "Suggested by friends". */
-  type?: string;
-  /** Box-art thumbnail URL from BoardGameGeek. */
-  img?: string;
-}
-
+/**
+ * An approved suggestion as the API answers it (Query.suggestions), which
+ * fills every field; the ones a card can do without may be left out.
+ */
 export interface ApprovedSuggestion {
   id: string;
   game: string;
   name: string;
   note: string;
-  details?: SuggestionDetails;
-  /** Absent on records written before the owner could add games directly. */
-  source?: 'friend' | 'owner';
+  details?: {
+    year?: number | null;
+    min: number;
+    max: number;
+    mins: number;
+    desc: string;
+    kw: string[];
+    /** Wishlist section the owner filed it under; none means "Suggested by friends". */
+    type?: string | null;
+    /** Box-art thumbnail URL from BoardGameGeek. */
+    img?: string | null;
+  } | null;
+  /** Who put it on the list: a friend's suggestion, or the owner directly. */
+  source?: Source;
 }
 
 const isSection = (v: unknown): v is WishlistSection =>
@@ -36,7 +40,7 @@ function playersLabel(min: number, max: number): string {
 /** Shape an approved suggestion like a wishlist entry so the same cards render it. */
 export function suggestionToItem(s: ApprovedSuggestion): StoredWishlistItem {
   const d = s.details;
-  const owner = s.source === 'owner';
+  const owner = s.source === 'OWNER';
   // A friend's note shows, quoted. Their name doesn't go in the text: the
   // card and row already say "Suggested by" them under it.
   const credit = s.note ? `“${s.note}”` : '';
@@ -60,7 +64,7 @@ export function suggestionToItem(s: ApprovedSuggestion): StoredWishlistItem {
     awards: [],
     suggestedBy: owner ? undefined : s.name,
     source: owner ? 'owner' : 'friend',
-    img: d?.img,
+    img: d?.img ?? undefined,
   };
 }
 
@@ -80,16 +84,10 @@ export function useSuggestions(): SuggestionsState & { reload: () => void } {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/suggestions', { signal: controller.signal })
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('fetch failed'))))
-      .then((data: { items?: ApprovedSuggestion[] }) => {
-        const items = Array.isArray(data.items) ? data.items.map(suggestionToItem) : [];
-        setState({ items, loaded: true });
-      })
-      .catch((err: Error) => {
-        if (err.name === 'AbortError') return;
-        setState({ items: [], loaded: true });
-      });
+    void request(SuggestionsDocument, {}, controller.signal).then((result) => {
+      if (controller.signal.aborted) return;
+      setState({ items: result.ok ? result.data.suggestions.map(suggestionToItem) : [], loaded: true });
+    });
     return () => controller.abort();
   }, [generation]);
 

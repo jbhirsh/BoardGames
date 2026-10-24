@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { safeStorage } from '../client/safeStorage';
+import { request } from '../client/graphql';
+import { VoteDocument, WishlistVotesDocument } from '../gql/graphql';
 
 const ANON_KEY = 'wishlist:anonId';
 
@@ -46,12 +48,10 @@ async function fetchVotes(ids: readonly string[], anonId: string, signal: AbortS
   const myVotes = new Set<string>();
   for (let i = 0; i < ids.length; i += VOTES_BATCH) {
     const batch = ids.slice(i, i + VOTES_BATCH);
-    const url = `/api/votes?ids=${encodeURIComponent(batch.join(','))}&anonId=${encodeURIComponent(anonId)}`;
-    const r = await fetch(url, { signal });
-    if (!r.ok) throw new Error('fetch failed');
-    const data = (await r.json()) as { counts?: Record<string, number>; myVotes?: string[] };
-    Object.assign(counts, data.counts ?? {});
-    for (const id of data.myVotes ?? []) myVotes.add(id);
+    const result = await request(WishlistVotesDocument, { ids: batch, anonId }, signal);
+    if (!result.ok) throw new Error(signal.aborted ? 'aborted' : result.error);
+    for (const { id, count } of result.data.wishlistVotes.counts) counts[id] = count;
+    for (const id of result.data.wishlistVotes.myVotes) myVotes.add(id);
   }
   return { counts, myVotes, loaded: true };
 }
@@ -100,7 +100,7 @@ export function useWishlistVotes(itemIds: readonly string[]): UseWishlistVotesRe
     fetchVotes(idsKey.split(','), anonId, controller.signal)
       .then(setSnapshot)
       .catch((err: Error) => {
-        if (err.name === 'AbortError') return;
+        if (controller.signal.aborted) return;
         console.error('votes: could not load vote counts', err);
         setSnapshot((s) => ({ ...s, loaded: true }));
       });
@@ -131,33 +131,22 @@ export function useWishlistVotes(itemIds: readonly string[]): UseWishlistVotesRe
       return { ...s, myVotes: nextMy, counts: nextCounts };
     });
 
-    try {
-      const r = await fetch('/api/votes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemId, anonId, vote: nextVote }),
-      });
-      if (!r.ok) throw new Error('vote request failed');
-      try {
-        const data: { count?: number } = await r.json();
-        if (typeof data.count === 'number') {
-          setSnapshot((s) => ({ ...s, counts: { ...s.counts, [itemId]: data.count as number } }));
-        }
-      } catch {
-        // Body parse failed but the vote was committed server-side. Keep the optimistic state.
-      }
-    } catch {
-      setSnapshot((s) => {
-        const revMy = new Set(s.myVotes);
-        if (wasVoted) revMy.add(itemId);
-        else revMy.delete(itemId);
-        const revCounts = { ...s.counts };
-        revCounts[itemId] = Math.max(0, (revCounts[itemId] ?? 0) - delta);
-        return { ...s, myVotes: revMy, counts: revCounts };
-      });
-    } finally {
-      inFlight.current.delete(itemId);
+    const result = await request(VoteDocument, { itemId, anonId, vote: nextVote });
+    inFlight.current.delete(itemId);
+    if (result.ok) {
+      const { count } = result.data.vote;
+      setSnapshot((s) => ({ ...s, counts: { ...s.counts, [itemId]: count } }));
+      return;
     }
+    // Refused or lost: take the optimistic change back.
+    setSnapshot((s) => {
+      const revMy = new Set(s.myVotes);
+      if (wasVoted) revMy.add(itemId);
+      else revMy.delete(itemId);
+      const revCounts = { ...s.counts };
+      revCounts[itemId] = Math.max(0, (revCounts[itemId] ?? 0) - delta);
+      return { ...s, myVotes: revMy, counts: revCounts };
+    });
   }, []);
 
   return { ...(idsKey ? snapshot : EMPTY_SNAPSHOT), toggle };

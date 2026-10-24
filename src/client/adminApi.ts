@@ -1,38 +1,39 @@
-// The owner's calls to the API. Every mutation is JSON, which is what the
-// server's CSRF check requires, and every failure resolves to a message the
-// form can show rather than throwing into React.
+// The owner's calls to the API (api/graphql.ts, through client/graphql.ts),
+// each a typed document from src/gql/. Every failure resolves to a message
+// the form can show rather than throwing into React. The API's shapes are
+// turned into the ones the admin controls work with: BoardGameGeek's
+// outcome in utils/lookupNotice.ts's words, and absent fields undefined
+// rather than null.
 
+import {
+  AddGameDocument,
+  DecideSuggestionDocument,
+  EditSuggestionDocument,
+  PendingSuggestionsDocument,
+  PreviewGameDocument,
+  RemoveSuggestionDocument,
+  type LookupOutcome as ApiOutcome,
+  type PreviewFragment,
+} from '../gql/graphql';
 import type { LookupOutcome, PreviewDetails } from '../utils/lookupNotice';
-
-const JSON_HEADERS = { 'Content-Type': 'application/json' };
-const GENERIC_ERROR = 'Something went wrong. Try again in a minute.';
+import { request, type Result } from './graphql';
 
 export type Outcome<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 
-/** One JSON request; a non-2xx answer, a network failure or an abort becomes a readable error. */
-export async function callJson<T>(
-  url: string,
-  method: string,
-  body: unknown,
-  signal?: AbortSignal,
-): Promise<Outcome<T>> {
-  try {
-    const r = await fetch(url, {
-      method,
-      headers: JSON_HEADERS,
-      body: JSON.stringify(body),
-      ...(signal ? { signal } : {}),
-    });
-    const data = (await r.json().catch(() => ({}))) as T & { error?: string };
-    if (!r.ok) return { ok: false, error: data.error ?? GENERIC_ERROR };
-    return { ok: true, data };
-  } catch {
-    return { ok: false, error: GENERIC_ERROR };
-  }
+const OUTCOMES: Record<ApiOutcome, LookupOutcome> = {
+  FOUND: 'found',
+  NO_MATCH: 'no-match',
+  NO_TOKEN: 'no-token',
+  REFUSED: 'refused',
+  UNAVAILABLE: 'unavailable',
+};
+
+/** A request's result with its data reshaped, or its error as it came. */
+function map<T, U>(result: Result<T>, shape: (data: T) => U): Outcome<U> {
+  return result.ok ? { ok: true, data: shape(result.data) } : { ok: false, error: result.error };
 }
 
-const call = <T>(method: string, body: unknown, signal?: AbortSignal) =>
-  callJson<T>('/api/suggestions', method, body, signal);
+const done = () => undefined;
 
 /** The parts of a preview an entry keeps: BGG's name for the match was for the owner to see. */
 const storedDetails = (d: PreviewDetails) => ({
@@ -54,16 +55,17 @@ export interface PendingSuggestion {
 }
 
 export async function fetchPending(signal?: AbortSignal): Promise<PendingSuggestion[]> {
-  const r = await fetch('/api/suggestions?action=pending', { signal });
-  if (!r.ok) throw new Error('fetch failed');
-  const data = (await r.json()) as { items?: PendingSuggestion[] };
-  return Array.isArray(data.items) ? data.items : [];
+  const result = await request(PendingSuggestionsDocument, {}, signal);
+  if (!result.ok) throw new Error('fetch failed');
+  return result.data.pendingSuggestions;
 }
 
 /** What an approval answers besides the item: how its BoardGameGeek lookup went. */
 export interface LookedUp {
   lookup?: LookupOutcome;
 }
+
+const lookedUp = (lookup: ApiOutcome | null): LookedUp => (lookup ? { lookup: OUTCOMES[lookup] } : {});
 
 /**
  * What the owner settled on before approving: a corrected name, and what the
@@ -75,22 +77,37 @@ export interface ApprovalChoice {
   details?: PreviewDetails | null;
 }
 
-export const decideSuggestion = (id: string, decision: 'approve' | 'deny', { game, details }: ApprovalChoice = {}) =>
-  call<LookedUp>('POST', {
-    decision,
-    id,
-    ...(game !== undefined ? { game } : {}),
-    ...(details !== undefined ? { details: details && storedDetails(details) } : {}),
-  });
+export const decideSuggestion = async (
+  id: string,
+  decision: 'approve' | 'deny',
+  { game, details }: ApprovalChoice = {},
+): Promise<Outcome<LookedUp>> =>
+  map(
+    await request(DecideSuggestionDocument, {
+      id,
+      decision: decision === 'approve' ? 'APPROVE' : 'DENY',
+      game,
+      ...(details !== undefined ? { details: details && storedDetails(details) } : {}),
+    }),
+    (data) => lookedUp(data.decideSuggestion.lookup),
+  );
 
 export interface Preview {
   outcome: LookupOutcome;
   details?: PreviewDetails;
 }
 
+/** A preview as the admin controls read it. */
+function toPreview({ outcome, details }: PreviewFragment): Preview {
+  return {
+    outcome: OUTCOMES[outcome],
+    ...(details ? { details: { ...details, year: details.year ?? undefined, img: details.img ?? undefined } } : {}),
+  };
+}
+
 /** Looks a game up on BoardGameGeek without storing anything, for the add form and the queue to show. */
-export const previewGame = (game: string, signal?: AbortSignal) =>
-  call<Preview>('POST', { action: 'preview', game }, signal);
+export const previewGame = async (game: string, signal?: AbortSignal): Promise<Outcome<Preview>> =>
+  map(await request(PreviewGameDocument, { game }, signal), (data) => toPreview(data.previewGame));
 
 export interface AddGameInput {
   game: string;
@@ -101,15 +118,17 @@ export interface AddGameInput {
   details: PreviewDetails | null;
 }
 
-export const addGame = ({ game, name, note, type, details }: AddGameInput) =>
-  call('POST', {
-    action: 'add',
-    game,
-    name,
-    note,
-    ...(type ? { type } : {}),
-    details: details && storedDetails(details),
-  });
+export const addGame = async ({ game, name, note, type, details }: AddGameInput): Promise<Outcome> =>
+  map(
+    await request(AddGameDocument, {
+      game,
+      name,
+      note,
+      ...(type ? { type } : {}),
+      details: details && storedDetails(details),
+    }),
+    done,
+  );
 
 export interface EditGameInput {
   id: string;
@@ -117,6 +136,8 @@ export interface EditGameInput {
   details: { min: number; max: number; mins: number; desc: string; kw: string[]; type: string | null };
 }
 
-export const editGame = ({ id, game, details }: EditGameInput) => call('PATCH', { id, game, details });
+export const editGame = async ({ id, game, details }: EditGameInput): Promise<Outcome> =>
+  map(await request(EditSuggestionDocument, { id, game, details }), done);
 
-export const removeGame = (id: string) => call('DELETE', { id });
+export const removeGame = async (id: string): Promise<Outcome> =>
+  map(await request(RemoveSuggestionDocument, { id }), done);

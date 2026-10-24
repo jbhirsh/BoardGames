@@ -1,5 +1,5 @@
 import type { BrowserContext, Locator, Page, Route } from '@playwright/test';
-import { test, expect } from './fixtures';
+import { test, expect, operationOf } from './fixtures';
 
 // The service worker (src/sw/sw.ts) is blocked for every other spec.
 test.use({ serviceWorkers: 'allow' });
@@ -436,7 +436,7 @@ test('the API goes to the network, never the service worker', async ({ page }) =
   // Once the worker is in charge, the app's code comes from it and the
   // votes (stubbed by the fixtures, so offline can't show it) still don't.
   const [votes, code] = await Promise.all([
-    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/votes'),
+    page.waitForResponse((response) => operationOf(response.request())?.operationName === 'WishlistVotes'),
     page.waitForResponse((response) => /\/assets\/index-[^/]+\.js$/.test(response.url())),
     page.reload(),
   ]);

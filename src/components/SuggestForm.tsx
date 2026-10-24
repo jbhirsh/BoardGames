@@ -3,13 +3,14 @@ import { getDisplayName, setDisplayName } from '../client/displayName';
 import { isValidDisplayName, NAME_HINT } from '../utils/displayName';
 import { alreadyListed } from '../utils/alreadyListed';
 import { GAME_MAX, GAME_MIN, NAME_MAX, NOTE_MAX } from '../data/suggestionLimits';
-import { callJson } from '../client/adminApi';
+import { request } from '../client/graphql';
+import { SuggestGameDocument } from '../gql/graphql';
 
 type Status =
   { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent'; game: string } | { kind: 'error'; message: string };
 
 /**
- * "Suggest a game": posts to /api/suggestions, which emails the owner an
+ * "Suggest a game": sends suggestGame to the API, which emails the owner an
  * approve/deny link. Approved games show up on the wishlist on next load.
  */
 export default function SuggestForm() {
@@ -33,7 +34,7 @@ export default function SuggestForm() {
       return;
     }
     setStatus({ kind: 'sending' });
-    const result = await callJson('/api/suggestions', 'POST', {
+    const result = await request(SuggestGameDocument, {
       game: game.trim(),
       name: trimmedName,
       note: note.trim(),

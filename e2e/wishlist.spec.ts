@@ -1,29 +1,27 @@
-import { test, expect, nextPost, ANON_ID, SUGGESTION } from './fixtures';
+import { test, expect, nextOperation, ANON_ID, SUGGESTION } from './fixtures';
 
 test('voting on a wishlist game posts the vote and shows the new count', async ({ page }) => {
-  const votesLoaded = page.waitForRequest(
-    (req) => req.method() === 'GET' && new URL(req.url()).pathname === '/api/votes',
-  );
+  const votesLoaded = nextOperation(page, 'WishlistVotes');
   await page.goto('/?c=want');
 
-  const query = new URL((await votesLoaded).url()).searchParams;
-  expect(query.get('anonId')).toBe(ANON_ID);
-  expect(query.get('ids')?.split(',')).toEqual(expect.arrayContaining(['splendor', SUGGESTION.id]));
+  const asked = await votesLoaded;
+  expect(asked.anonId).toBe(ANON_ID);
+  expect(asked.ids).toEqual(expect.arrayContaining(['splendor', SUGGESTION.id]));
 
   // Enabled once the counts have loaded.
   const vote = page.getByRole('button', { name: 'Vote for Splendor (3 votes)' });
   await expect(vote).toBeEnabled();
 
-  const cast = nextPost(page, '/api/votes');
+  const cast = nextOperation(page, 'Vote');
   await vote.click();
-  expect((await cast).postDataJSON()).toEqual({ itemId: 'splendor', anonId: ANON_ID, vote: 1 });
+  expect(await cast).toEqual({ itemId: 'splendor', anonId: ANON_ID, vote: 1 });
 
   const unvote = page.getByRole('button', { name: 'Voted for Splendor (4 votes)' });
   await expect(unvote).toHaveAttribute('aria-pressed', 'true');
 
-  const withdrawn = nextPost(page, '/api/votes');
+  const withdrawn = nextOperation(page, 'Vote');
   await unvote.click();
-  expect((await withdrawn).postDataJSON()).toEqual({ itemId: 'splendor', anonId: ANON_ID, vote: 0 });
+  expect(await withdrawn).toEqual({ itemId: 'splendor', anonId: ANON_ID, vote: 0 });
   await expect(page.getByRole('button', { name: 'Vote for Splendor (3 votes)' })).toHaveAttribute(
     'aria-pressed',
     'false',
@@ -70,7 +68,7 @@ test('a friend opening the wishlist link is asked to vote, and sees the vote lan
   await expect(vote).toBeEnabled();
   await expect(vote).toHaveText('♡Vote · 3');
   const voteWidth = (await vote.boundingBox())!.width;
-  const cast = nextPost(page, '/api/votes');
+  const cast = nextOperation(page, 'Vote');
   await vote.click();
   await cast;
   const voted = page.getByRole('button', { name: 'Voted for Splendor (4 votes)' });

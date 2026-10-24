@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { callJson } from '../client/adminApi';
+import { request } from '../client/graphql';
+import { LogoutDocument, RequestSignInLinkDocument, SessionDocument } from '../gql/graphql';
 
 interface AuthState {
   /** True when this browser holds a live owner session. */
@@ -19,25 +20,22 @@ export function useAuthState(): Auth {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/auth', { signal: controller.signal })
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('fetch failed'))))
-      .then((data: { admin?: unknown }) => setState({ admin: data.admin === true, loaded: true }))
-      .catch((err: Error) => {
-        if (err.name === 'AbortError') return;
-        setState({ admin: false, loaded: true });
-      });
+    void request(SessionDocument, {}, controller.signal).then((result) => {
+      if (controller.signal.aborted) return;
+      setState({ admin: result.ok && result.data.session.admin, loaded: true });
+    });
     return () => controller.abort();
   }, []);
 
   const requestLink = useCallback(async (email: string) => {
-    const result = await callJson('/api/auth', 'POST', { email });
-    return result.ok ? { ok: true as const } : result;
+    const result = await request(RequestSignInLinkDocument, { email });
+    return result.ok ? { ok: true as const } : { ok: false as const, error: result.error };
   }, []);
 
   const logout = useCallback(async () => {
     // A failed call means the cookie clear may not have reached the server;
     // the UI still drops admin mode.
-    await callJson('/api/auth', 'POST', { action: 'logout' });
+    await request(LogoutDocument, {});
     setState({ admin: false, loaded: true });
   }, []);
 

@@ -12,6 +12,7 @@ src/data/wishlistArt.ts
 rules-text/
 eval/results.json
 src/__tests__/fixtures/
+src/gql/
 
 # Not ours, or not source.
 patches/
