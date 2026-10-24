@@ -35,7 +35,10 @@ export function HomePage() {
     <AuthProvider>
       <WishlistProvider>
         <title>The Game Room</title>
-        <div className="clip-wrap overflow-x-clip">
+        {/* On a phone the page fills the screen at least, its list taking the
+            room, so the bar along the bottom stays at the screen's foot when
+            the list is short (no matches, a narrow filter). */}
+        <div className="clip-wrap flex min-h-[calc(100svh-env(safe-area-inset-top,0px))] flex-col overflow-x-clip sm:block sm:min-h-0">
           <Hero want={collection === 'want'} />
           <div
             className="sticky-header sticky top-[env(safe-area-inset-top,0px)] z-200"
@@ -46,7 +49,7 @@ export function HomePage() {
             {!isPhone && <ActiveTags />}
           </div>
           {isPhone && <ActiveTags />}
-          <main className="mx-auto max-w-340 px-gutter pt-3.5 pb-12 sm:pt-13">
+          <main className="mx-auto w-full max-w-340 flex-1 px-gutter pt-3.5 pb-12 sm:pt-13">
             <GameCollection hidden={collection !== 'own'} />
             <Wishlist hidden={collection !== 'want'} />
           </main>
