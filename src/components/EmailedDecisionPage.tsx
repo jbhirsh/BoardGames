@@ -5,6 +5,22 @@ import { GAME_MAX, GAME_MIN } from '../data/suggestionLimits';
 import { approvalDetails, approvedText, linkProblem, missText } from '../utils/emailedLinks';
 import EmailedLinkPage from './EmailedLinkPage';
 import PreviewCard from './PreviewCard';
+import {
+  signInActionsClass,
+  signInButtonClass,
+  signInGhostClass,
+  signInInputClass,
+  signInLabelClass,
+  signInPrimaryClass,
+  signInStatusClass,
+} from './signInClasses';
+
+// A decision is the page's one action, as wide as the panel and a thumb's
+// height. Deny is as wide and as plain, in Notice's danger tones (4.5:1 or
+// better in both themes).
+const decideClass = `h-11 w-full ${signInButtonClass}`;
+const approveClass = `${decideClass} ${signInPrimaryClass}`;
+const denyClass = `${decideClass} border border-danger-border bg-danger-bg text-danger-fg`;
 import { useLinkToken } from '../hooks/useLinkToken';
 
 type Decision = 'approve' | 'deny';
@@ -112,7 +128,7 @@ export default function EmailedDecisionPage() {
   const waiting = outcome?.ok && outcome.data.open ? outcome.data : null;
   let title = said?.title ?? '';
   let body: ReactNode = said && (
-    <p className="signin-status" role="status">
+    <p className={signInStatusClass} role="status">
       {said.text}
     </p>
   );
@@ -122,25 +138,29 @@ export default function EmailedDecisionPage() {
     title = decision === 'approve' ? `Approve ${shown}?` : `Deny ${data.game}?`;
     const sending = result?.kind === 'sending';
     body = (
-      <div className="emailed-decision">
-        <p className="emailed-from">
-          Suggested by <strong>{data.name}</strong>
+      <div className="flex flex-col gap-4">
+        <p className="text-[15px] leading-[1.4] text-text">
+          Suggested by <strong className="font-semibold text-dark">{data.name}</strong>
           {decision === 'approve' && renamed && ` as “${data.game}”`}
         </p>
-        {data.note && <blockquote className="emailed-note">“{data.note}”</blockquote>}
+        {data.note && (
+          <blockquote className="rounded-r-control border-l-3 border-blue bg-bg2 px-3.5 py-2.5 text-[15px] leading-[1.45] text-text italic">
+            “{data.note}”
+          </blockquote>
+        )}
         {data.preview &&
           (data.preview.outcome === 'found' && data.preview.details ? (
-            <PreviewCard details={data.preview.details} />
+            <PreviewCard details={data.preview.details} className="mt-0" />
           ) : (
             decision === 'approve' &&
-            data.preview.outcome !== 'found' && <p className="signin-status">{missText(shown, data.preview.outcome)}</p>
+            data.preview.outcome !== 'found' && (
+              <p className={signInStatusClass}>{missText(shown, data.preview.outcome)}</p>
+            )
           ))}
-        <div className="signin-actions">
+        <div className={signInActionsClass}>
           <button
             type="button"
-            className={
-              decision === 'approve' ? 'signin-btn emailed-decide' : 'signin-btn emailed-decide emailed-decide--deny'
-            }
+            className={decision === 'approve' ? approveClass : denyClass}
             disabled={sending}
             onClick={() => void decide()}
           >
@@ -170,14 +190,14 @@ function RenameForm({ uid, game, onLookUp }: { uid: string; game: string; onLook
     onLookUp(name.trim().replace(/\s+/g, ' '));
   };
   return (
-    <form className="emailed-rename" onSubmit={onSubmit} aria-label="Correct the name">
-      <label className="signin-label" htmlFor={`${uid}-game`}>
+    <form className="flex flex-col gap-2 border-t border-border pt-4" onSubmit={onSubmit} aria-label="Correct the name">
+      <label className={signInLabelClass} htmlFor={`${uid}-game`}>
         Wrong game? Correct the name and look it up again.
       </label>
-      <div className="emailed-rename-row">
+      <div className="flex gap-2">
         <input
           id={`${uid}-game`}
-          className="signin-input"
+          className={`h-11 min-w-0 flex-1 ${signInInputClass}`}
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
@@ -185,7 +205,7 @@ function RenameForm({ uid, game, onLookUp }: { uid: string; game: string; onLook
           maxLength={GAME_MAX}
           autoComplete="off"
         />
-        <button type="submit" className="signin-btn signin-btn--ghost">
+        <button type="submit" className={`h-11 flex-none ${signInButtonClass} ${signInGhostClass}`}>
           Look up
         </button>
       </div>
