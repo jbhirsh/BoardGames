@@ -1,3 +1,4 @@
+import { dotClass, markClass, markOffClass, markOnClass, optionClass } from './optionClasses';
 import { useRef, type KeyboardEvent } from 'react';
 import { radioMove } from '../../utils/radioMove';
 
@@ -12,6 +13,8 @@ interface Props<T> {
   options: readonly Option<T>[];
   selected: T;
   onSelect: (value: T) => void;
+  /** Laid out as wrapping chips (the phone's filter sheet) rather than a list. */
+  chips?: boolean;
 }
 
 /**
@@ -22,7 +25,13 @@ interface Props<T> {
  * options and Enter or Space picks one. Unlike a standalone radio group,
  * moving doesn't pick, because picking closes the dropdown.
  */
-export default function RadioOptions<T extends string | number>({ label, options, selected, onSelect }: Props<T>) {
+export default function RadioOptions<T extends string | number>({
+  label,
+  options,
+  selected,
+  onSelect,
+  chips = false,
+}: Props<T>) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   const chosen = options.findIndex((opt) => opt.value === selected);
   const tabStop = chosen === -1 ? 0 : chosen;
@@ -35,7 +44,7 @@ export default function RadioOptions<T extends string | number>({ label, options
   };
 
   return (
-    <div role="radiogroup" aria-label={label}>
+    <div role="radiogroup" aria-label={label} className={chips ? 'flex flex-wrap gap-1.5' : undefined}>
       {options.map((opt, i) => {
         const isSel = opt.value === selected;
         return (
@@ -48,11 +57,11 @@ export default function RadioOptions<T extends string | number>({ label, options
             role="radio"
             aria-checked={isSel}
             tabIndex={i === tabStop ? 0 : -1}
-            className={`dd-opt${isSel ? ' sel' : ''}`}
+            className={optionClass(isSel, chips)}
             onClick={() => onSelect(opt.value)}
             onKeyDown={(e) => onKeyDown(e, i)}
           >
-            <span className="dd-chk dd-radio" />
+            <span className={`${markClass} rounded-[50%] ${isSel ? `${markOnClass} ${dotClass}` : markOffClass}`} />
             {opt.label}
           </button>
         );
