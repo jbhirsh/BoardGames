@@ -1,3 +1,5 @@
+import { pillClass } from './pillClasses';
+import { tapTargetClass } from '../tapTarget';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useFilter } from '../../context/useFilter';
 import { useFilteredWishlist } from '../../context/useFilteredWishlist';
@@ -61,8 +63,8 @@ export default function FilterSheet() {
   }
 
   const section = (title: string, body: React.ReactNode) => (
-    <section className="sheet-sec">
-      <h3 className="sheet-sec-title">{title}</h3>
+    <section>
+      <h3 className="mt-4 mb-2 text-[11px] font-semibold tracking-[1.5px] text-text3 uppercase">{title}</h3>
       {body}
     </section>
   );
@@ -72,7 +74,7 @@ export default function FilterSheet() {
       <button
         ref={triggerRef}
         type="button"
-        className={`dd-btn fb-filters${on > 0 ? ' active' : ''}`}
+        className={`${pillClass(on > 0, false)} shrink-0 ${tapTargetClass}`}
         aria-haspopup="dialog"
         onClick={() => {
           openedWith.current = filterToSearchParams(state).toString();
@@ -89,37 +91,51 @@ export default function FilterSheet() {
       </button>
 
       {open && (
-        <div className="sheet-modal">
+        <div className="fixed inset-0 z-1000 flex items-end">
           <Backdrop onClick={close} />
           <div
             ref={sheetRef}
-            className="filter-sheet"
+            className="relative flex max-h-[85svh] w-full animate-sheet-up flex-col rounded-t-panel bg-surface shadow-(--shadow-sheet) focus:outline-none"
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
             tabIndex={-1}
           >
-            <div className="sheet-hd">
-              <h2 id={titleId} className="sheet-title">
+            <div className="flex items-center justify-between border-b border-border px-gutter pt-3.5 pb-2.5">
+              <h2 id={titleId} className="font-display text-[20px] font-bold text-dark">
                 Filters
               </h2>
-              <button type="button" className="sheet-close" aria-label="Close filters" onClick={close}>
+              <button
+                type="button"
+                className="size-9 cursor-pointer rounded-[50%] bg-bg2 text-[15px] text-text2"
+                aria-label="Close filters"
+                onClick={close}
+              >
                 {'✕'}
               </button>
             </div>
-            <div className="sheet-body">
-              {section('Time', <DurationOptions />)}
-              {section('Players', <PlayersOptions />)}
-              {section('Keywords', <KeywordOptions />)}
-              {section('Sort', <SortOptions />)}
+            <div className="overflow-y-auto overscroll-contain px-gutter pb-3">
+              {section('Time', <DurationOptions chips />)}
+              {section('Players', <PlayersOptions chips />)}
+              {section('Keywords', <KeywordOptions chips />)}
+              {section('Sort', <SortOptions chips />)}
             </div>
-            <div className="sheet-ft">
+            <div className="flex gap-2.5 border-t border-border px-gutter pt-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))]">
               {on > 0 && (
-                <button type="button" className="sheet-clear" onClick={clearFilters}>
+                <button
+                  type="button"
+                  className="h-11 cursor-pointer rounded-xl border border-border bg-bg2 px-4 text-[14px] font-semibold text-text"
+                  onClick={clearFilters}
+                >
                   Clear all
                 </button>
               )}
-              <button ref={doneRef} type="button" className="sheet-done" onClick={close}>
+              <button
+                ref={doneRef}
+                type="button"
+                className="h-11 flex-1 cursor-pointer rounded-xl bg-blue-fill text-[14px] font-semibold text-on-fill"
+                onClick={close}
+              >
                 {`Show ${shown} ${shown === 1 ? 'game' : 'games'}`}
               </button>
             </div>

@@ -155,6 +155,8 @@
      go. (The hero's glide is below.) */
   --animate-card-arrive: card-arrive 1.4s ease-out 0.6s backwards;
   --animate-row-arrive: row-arrive 1.4s ease-out 0.6s backwards;
+  /* The phone's filter sheet rising from the bottom. */
+  --animate-sheet-up: sheet-up 0.22s ease-out;
 
   @keyframes hero-reel {
     to {
@@ -166,6 +168,14 @@
       box-shadow:
         0 0 0 3px rgba(var(--blue-rgb), 0.45),
         var(--shadow-lg);
+    }
+  }
+  @keyframes sheet-up {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: none;
     }
   }
   @keyframes row-arrive {
@@ -198,6 +208,8 @@
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.04);
   --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.05);
+  /* The phone's filter sheet, cast up over the page. */
+  --shadow-sheet: 0 -12px 40px rgba(0, 0, 0, 0.2);
   /* The hero's covers, and their smaller row on a phone. */
   --shadow-cover: 0 8px 24px rgba(0, 0, 0, 0.12);
   --shadow-cover-sm: 0 4px 12px rgba(0, 0, 0, 0.12);

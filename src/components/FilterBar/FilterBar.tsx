@@ -30,7 +30,7 @@ export default function FilterBar() {
   // button opens a sheet holding all of them.
   if (isPhone) {
     return (
-      <div className="filterbar">
+      <div className="filterbar relative flex flex-nowrap items-center gap-2 border-b border-border bg-bg px-gutter py-2 sm:static sm:flex-wrap sm:py-2.5">
         <SearchInput />
         <FilterSheet />
       </div>
@@ -38,7 +38,7 @@ export default function FilterBar() {
   }
 
   return (
-    <div className="filterbar">
+    <div className="filterbar relative flex flex-nowrap items-center gap-2 border-b border-border bg-bg px-gutter py-2 sm:static sm:flex-wrap sm:py-2.5">
       {/* Search leads: it is the fastest way to a known game, and the pills
           read as refinements beneath it. */}
       <SearchInput />
