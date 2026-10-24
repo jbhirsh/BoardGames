@@ -21,3 +21,5 @@ export const RulesPage = page(() => import('./components/RulesPage'));
 export const ScoreCalculatorPage = page(() => import('./components/ScoreCalculatorPage'));
 export const WordCheckerPage = page(() => import('./components/WordCheckerPage'));
 export const SignInPage = page(() => import('./components/SignInPage'));
+export const SignInConfirmPage = page(() => import('./components/SignInConfirmPage'));
+export const EmailedDecisionPage = page(() => import('./components/EmailedDecisionPage'));

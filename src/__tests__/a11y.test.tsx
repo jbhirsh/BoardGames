@@ -11,6 +11,7 @@ import RulesPage from '../components/RulesPage';
 import SaveOffline from '../components/SaveOffline';
 import { WISHLIST } from '../data/wishlist';
 import { stubMatchMedia } from './helpers/stubMatchMedia';
+import { graphqlFetch } from './helpers/graphqlFetch';
 
 expect.extend(matchers);
 
@@ -199,25 +200,20 @@ describe('accessibility', () => {
   it(
     'home page (wishlist, signed in as the owner) has no axe violations',
     async () => {
-      const json = (body: unknown) => ({ ok: true, json: async () => body }) as unknown as Response;
-      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
-        const url = String(input);
-        if (url.startsWith('/api/auth')) return json({ admin: true });
-        if (url.startsWith('/api/suggestions?action=pending'))
-          return json({
-            items: [
-              { id: 'sug-p', game: 'Ark Nova', name: 'Sam', note: 'Zoo building' },
-              { id: 'sug-m', game: 'Arkham Horry', name: 'Robin', note: '' },
-            ],
-          });
+      const fetchSpy = graphqlFetch({
+        Session: () => ({ session: { admin: true } }),
+        PendingSuggestions: () => ({
+          pendingSuggestions: [
+            { id: 'sug-p', game: 'Ark Nova', name: 'Sam', note: 'Zoo building' },
+            { id: 'sug-m', game: 'Arkham Horry', name: 'Robin', note: '' },
+          ],
+        }),
         // The queue looks each one up: a preview card for one row, a miss notice for the other.
-        const body =
-          init?.method === 'POST' ? (JSON.parse(String(init.body)) as { action?: string; game?: string }) : {};
-        if (body.action === 'preview') {
-          return json(
-            body.game === 'Ark Nova'
+        PreviewGame: ({ game }) => ({
+          previewGame:
+            game === 'Ark Nova'
               ? {
-                  outcome: 'found',
+                  outcome: 'FOUND',
                   details: {
                     bggId: 342942,
                     name: 'Ark Nova',
@@ -230,26 +226,35 @@ describe('accessibility', () => {
                     img: 'https://cf.geekdo-images.com/ark.jpg',
                   },
                 }
-              : { outcome: 'no-match' },
-          );
-        }
-        if (url.startsWith('/api/suggestions'))
-          return json({
-            items: [
-              {
-                id: 'sug-r',
-                game: 'Root',
-                name: 'Alex',
-                note: '',
-                details: { min: 2, max: 4, mins: 90, desc: 'Woodland war.', kw: ['strategy'] },
+              : { outcome: 'NO_MATCH', details: null },
+        }),
+        Suggestions: () => ({
+          suggestions: [
+            {
+              id: 'sug-r',
+              game: 'Root',
+              name: 'Alex',
+              note: '',
+              source: 'FRIEND',
+              details: {
+                min: 2,
+                max: 4,
+                mins: 90,
+                desc: 'Woodland war.',
+                kw: ['strategy'],
+                year: null,
+                type: null,
+                img: null,
               },
-              // Duplicates a compiled entry, so it renders in the owner tools
-              // instead of on a card; scan that list too.
-              { id: 'sug-d', game: WISHLIST[0].name, name: 'Alex', note: '' },
-            ],
-          });
-        return json({ counts: {}, myVotes: [] });
+            },
+            // Duplicates a compiled entry, so it renders in the owner tools
+            // instead of on a card; scan that list too.
+            { id: 'sug-d', game: WISHLIST[0].name, name: 'Alex', note: '', source: 'FRIEND', details: null },
+          ],
+        }),
+        WishlistVotes: () => ({ wishlistVotes: { counts: [], myVotes: [] } }),
       });
+      vi.spyOn(globalThis, 'fetch').mockImplementation(fetchSpy);
       try {
         const router = createMemoryRouter([{ element: <App />, children: [{ path: '/', element: <HomePage /> }] }], {
           initialEntries: ['/?c=want'],
@@ -266,7 +271,7 @@ describe('accessibility', () => {
         const results = await axe(container, axeOptions);
         expect(results).toHaveNoViolations();
       } finally {
-        fetchSpy.mockRestore();
+        vi.restoreAllMocks();
       }
     },
     OWNER_TIMEOUT_MS,

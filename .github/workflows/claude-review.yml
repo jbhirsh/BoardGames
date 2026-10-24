@@ -119,14 +119,17 @@ jobs:
 
             ## Server API (`api/`)
 
-            The serverless handlers are the trust boundary. Flag:
-              - An owner-only action (listing the queue, deciding, adding,
-                editing or removing) that doesn't go through `requireAdmin` in
-                `suggestions.ts`, or, in `auth.ts`, through `isAdmin` and
-                `isJsonRequest` from `_lib/session.ts`: the session check, plus a
-                JSON-only body for mutations. Requiring JSON is the CSRF
-                protection: a cross-site form can post urlencoded data with the
-                cookie attached but can't send JSON without a preflight.
+            The GraphQL resolvers (`api/_resolvers/`, served by `api/graphql.ts`)
+            are the trust boundary. Flag:
+              - An owner-only operation (listing the queue, previewing,
+                deciding without a token, adding, editing or removing) that
+                doesn't go through `requireAdmin` in `_resolvers/context.ts`:
+                the session check, plus a JSON POST for mutations. Requiring
+                JSON is the CSRF protection (with the `jsonOnly` guard and
+                Yoga's CSRF plugin in `_resolvers/index.ts`): a cross-site form
+                can post urlencoded data with the cookie attached but can't
+                send JSON without a preflight. Mutations must never be served
+                over GET, and CORS stays off.
               - An emailed-link flow (approve/deny, magic-link sign-in) that
                 changes state on a plain GET, since mail scanners follow every
                 link, or that doesn't verify its token. Sign-in tokens must stay

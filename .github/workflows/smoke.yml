@@ -37,7 +37,7 @@ jobs:
     if: github.event_name != 'deployment_status' || github.event.deployment_status.state == 'success'
     runs-on: ubuntu-latest
     steps:
-      - name: Probe /api/chat and /api/votes on the target deployment
+      - name: Probe the GraphQL API's rules chat and votes on the target deployment
         env:
           TARGET_URL: ${{ github.event.deployment_status.environment_url }}
           ENVIRONMENT: ${{ github.event.deployment_status.environment }}
@@ -96,8 +96,14 @@ jobs:
           }
 
           fail=0
-          probe "chat" "" -X POST "$TARGET_URL/api/chat" \
+          # The API is GraphQL at /api/graphql (api/graphql.ts): the rules chat
+          # is a subscription answered as server-sent events, each chunk a
+          # "next" event naming askRules; votes are a query. Both are JSON
+          # POSTs, as every POST to it must be.
+          probe "chat" '"askRules"' -X POST "$TARGET_URL/api/graphql" \
+            -H 'Content-Type: application/json' -H 'Accept: text/event-stream' \
+            -d '{"query":"subscription Smoke($slug: String!, $message: String!) { askRules(slug: $slug, message: $message) }","variables":{"slug":"cranium","message":"How many players can play this game?"}}' || fail=1
+          probe "votes" '"counts"' -X POST "$TARGET_URL/api/graphql" \
             -H 'Content-Type: application/json' \
-            -d '{"slug":"cranium","message":"How many players can play this game?"}' || fail=1
-          probe "votes" '"counts"' "$TARGET_URL/api/votes?ids=lost-cities" || fail=1
+            -d '{"query":"query Smoke { wishlistVotes(ids: [\"lost-cities\"]) { counts { id count } } }"}' || fail=1
           exit $fail

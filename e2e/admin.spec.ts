@@ -1,8 +1,8 @@
 import type { Page } from '@playwright/test';
-import { test, expect, nextPost } from './fixtures';
+import { test, expect, nextOperation, stubOperation } from './fixtures';
 
 // The owner's tools, signed in. These stubs go in after the fixture's, so
-// Playwright tries them first: /api/auth says admin, the queue holds what
+// Playwright tries them first: the session says admin, the queue holds what
 // the test gives it (nothing by default), and a preview answers whatever the
 // test gives it, for every name or name by name.
 
@@ -17,52 +17,38 @@ const FOUND = {
   kw: ['card-game', 'quick-play'],
 };
 
-type PreviewStub = unknown | ((game: string) => unknown);
+interface Preview {
+  outcome: string;
+  details?: object;
+}
+type PreviewStub = Preview | ((game: string) => Preview);
 
 async function signInWithPreview(page: Page, preview: PreviewStub, pending: unknown[] = []): Promise<void> {
-  await page.route(
-    (url) => url.pathname === '/api/auth',
-    (route) => (route.request().method() === 'GET' ? route.fulfill({ json: { admin: true } }) : route.fallback()),
-  );
-  await page.route(
-    (url) => url.pathname === '/api/suggestions',
-    (route) => {
-      const request = route.request();
-      if (request.method() === 'GET' && new URL(request.url()).searchParams.get('action') === 'pending') {
-        return route.fulfill({ json: { items: pending } });
-      }
-      if (request.method() === 'POST') {
-        const body = request.postDataJSON() as { action?: string; game?: string; decision?: string; id?: string };
-        if (body.action === 'preview')
-          return route.fulfill({
-            json: typeof preview === 'function' ? (preview as (game: string) => unknown)(body.game ?? '') : preview,
-          });
-        if (body.decision === 'approve')
-          return route.fulfill({ json: { item: { id: body.id, game: body.game, status: 'approved' } } });
-        if (body.action === 'add')
-          return route.fulfill({ status: 201, json: { item: { id: 'sug-0e2eadd0e2ea', game: body.game } } });
-      }
-      return route.fallback();
-    },
-  );
+  await stubOperation(page, 'Session', () => ({ session: { admin: true } }));
+  await stubOperation(page, 'PendingSuggestions', () => ({ pendingSuggestions: pending }));
+  await stubOperation(page, 'PreviewGame', ({ game }) => {
+    const { outcome, details } = typeof preview === 'function' ? preview(String(game)) : preview;
+    return { previewGame: { outcome, details: details ? { year: null, img: null, ...details } : null } };
+  });
+  await stubOperation(page, 'DecideSuggestion', () => ({ decideSuggestion: { lookup: null } }));
+  await stubOperation(page, 'AddGame', () => ({ addGame: { lookup: null } }));
 }
 
 test('the owner sees what BoardGameGeek found before adding a game', async ({ page }) => {
-  await signInWithPreview(page, { outcome: 'found', details: FOUND });
+  await signInWithPreview(page, { outcome: 'FOUND', details: FOUND });
   await page.goto('/?c=want');
   const form = page.getByRole('form', { name: 'Add a game' });
   await form.getByLabel('Game').fill('Faraway');
 
-  const looked = nextPost(page, '/api/suggestions');
+  const looked = nextOperation(page, 'PreviewGame');
   await form.getByRole('button', { name: 'Look up' }).click();
-  expect((await looked).postDataJSON()).toEqual({ action: 'preview', game: 'Faraway' });
+  expect(await looked).toEqual({ game: 'Faraway' });
   await expect(form.getByText('Explore Alula backwards.')).toBeVisible();
   await expect(form.getByText('2–6 players · 30 min')).toBeVisible();
 
-  const added = nextPost(page, '/api/suggestions');
+  const added = nextOperation(page, 'AddGame');
   await form.getByRole('button', { name: 'Add to wishlist' }).click();
-  expect((await added).postDataJSON()).toMatchObject({
-    action: 'add',
+  expect(await added).toMatchObject({
     game: 'Faraway',
     details: { bggId: 385761, mins: 30 },
   });
@@ -70,16 +56,16 @@ test('the owner sees what BoardGameGeek found before adding a game', async ({ pa
 });
 
 test('the owner is told on the form when BoardGameGeek has no match, and can add it anyway', async ({ page }) => {
-  await signInWithPreview(page, { outcome: 'no-match' });
+  await signInWithPreview(page, { outcome: 'NO_MATCH' });
   await page.goto('/?c=want');
   const form = page.getByRole('form', { name: 'Add a game' });
   await form.getByLabel('Game').fill('Magical Athlete');
   await form.getByRole('button', { name: 'Look up' }).click();
   await expect(form.getByText(/BoardGameGeek had no match for “Magical Athlete”/)).toBeVisible();
 
-  const added = nextPost(page, '/api/suggestions');
+  const added = nextOperation(page, 'AddGame');
   await form.getByRole('button', { name: 'Add anyway' }).click();
-  expect((await added).postDataJSON()).toMatchObject({ action: 'add', game: 'Magical Athlete', details: null });
+  expect(await added).toMatchObject({ game: 'Magical Athlete', details: null });
   await expect(form.getByRole('status')).toHaveText('Magical Athlete is on the wishlist.');
 });
 
@@ -96,11 +82,11 @@ test('the owner corrects a misspelt suggestion, sees what BoardGameGeek has for 
     desc: 'Investigate the mysteries of Arkham.',
     kw: ['cooperative', 'thematic'],
   };
-  const byName: Record<string, unknown> = {
-    Faraway: { outcome: 'found', details: FOUND },
-    'Arkham Horror': { outcome: 'found', details: ARKHAM },
+  const byName: Record<string, Preview> = {
+    Faraway: { outcome: 'FOUND', details: FOUND },
+    'Arkham Horror': { outcome: 'FOUND', details: ARKHAM },
   };
-  await signInWithPreview(page, (game: string) => byName[game] ?? { outcome: 'no-match' }, [
+  await signInWithPreview(page, (game: string) => byName[game] ?? { outcome: 'NO_MATCH' }, [
     { id: 'sug-0e2efar00001', game: 'Faraway', name: 'Sam', note: '' },
     { id: 'sug-0e2earkh0001', game: 'Arkham Horry', name: 'Robin', note: 'Spooky' },
   ]);
@@ -111,10 +97,10 @@ test('the owner corrects a misspelt suggestion, sees what BoardGameGeek has for 
   await expect(queue.getByText('Explore Alula backwards.')).toBeVisible();
   await expect(queue.getByText(/BoardGameGeek had no match for “Arkham Horry”/)).toBeVisible();
 
-  const approvedFaraway = nextPost(page, '/api/suggestions');
+  const approvedFaraway = nextOperation(page, 'DecideSuggestion');
   await queue.getByRole('button', { name: 'Approve Faraway' }).click();
-  expect((await approvedFaraway).postDataJSON()).toEqual({
-    decision: 'approve',
+  expect(await approvedFaraway).toEqual({
+    decision: 'APPROVE',
     id: 'sug-0e2efar00001',
     details: {
       bggId: 385761,
@@ -132,17 +118,17 @@ test('the owner corrects a misspelt suggestion, sees what BoardGameGeek has for 
   await expect(name).toHaveValue('Arkham Horry');
   await name.fill('Arkham Horror');
   await expect(queue.getByText(/had no match/)).toBeHidden();
-  const looked = nextPost(page, '/api/suggestions');
+  const looked = nextOperation(page, 'PreviewGame');
   await queue.getByRole('button', { name: "Look up the name for Robin's suggestion “Arkham Horry”" }).click();
-  expect((await looked).postDataJSON()).toEqual({ action: 'preview', game: 'Arkham Horror' });
+  expect(await looked).toEqual({ game: 'Arkham Horror' });
   await expect(queue.getByText('Investigate the mysteries of Arkham.')).toBeVisible();
   await expect(queue.getByText('1–8 players · 240 min')).toBeVisible();
 
-  const approved = nextPost(page, '/api/suggestions');
+  const approved = nextOperation(page, 'DecideSuggestion');
   // Approve is named by the corrected name now.
   await queue.getByRole('button', { name: 'Approve Arkham Horror' }).click();
-  expect((await approved).postDataJSON()).toEqual({
-    decision: 'approve',
+  expect(await approved).toEqual({
+    decision: 'APPROVE',
     id: 'sug-0e2earkh0001',
     game: 'Arkham Horror',
     details: {

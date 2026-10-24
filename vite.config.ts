@@ -239,11 +239,19 @@ export default defineConfig({
     // e2e/ holds the Playwright suite (`npm run test:e2e`), which drives a
     // real browser; its *.spec.ts files are not Vitest tests.
     exclude: [...configDefaults.exclude, 'e2e/**'],
+    // graphql's package picks a development build for Vite's resolver but
+    // its production one for Node, which loads GraphQL Yoga in tests; two
+    // copies would answer `instanceof GraphQLError` differently, so the
+    // API's code gets the one Node (and Vercel) loads.
+    alias: [
+      { find: /^graphql$/, replacement: fileURLToPath(new URL('./node_modules/graphql/index.mjs', import.meta.url)) },
+    ],
     coverage: {
       // vitest's defaults plus Cobertura, which ci.yml uploads to GitHub for
       // the code coverage rule on main.
       reporter: ['text', 'html', 'clover', 'json', 'cobertura'],
-      exclude: ['e2e/**', 'playwright.config.ts'],
+      // src/gql is generated (npm run codegen), its documents tested through their callers.
+      exclude: ['e2e/**', 'playwright.config.ts', 'src/gql/**'],
       thresholds: {
         perFile: true,
         lines: 80,

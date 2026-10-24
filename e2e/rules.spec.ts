@@ -1,6 +1,6 @@
 import { GAMES } from '../src/data/games';
 import type { Locator } from '@playwright/test';
-import { test, expect, nextPost, CHAT_ANSWER } from './fixtures';
+import { test, expect, nextOperation, stubOperation, answerStream, streamRefusal, CHAT_ANSWER } from './fixtures';
 
 const GAME = 'Far-Out Questions';
 const SLUG = 'far-out-questions';
@@ -29,10 +29,10 @@ test('a rules page shows the rulebook and the assistant answers a question', asy
 
   const question = 'Does everyone answer each question?';
   await page.getByPlaceholder('Ask a rules question...').fill(question);
-  const sent = nextPost(page, '/api/chat');
+  const sent = nextOperation(page, 'AskRules');
   await page.getByRole('button', { name: 'Send' }).click();
 
-  expect((await sent).postDataJSON()).toEqual({ slug: SLUG, message: question, history: [] });
+  expect(await sent).toEqual({ slug: SLUG, message: question, history: [] });
   await expect(page.getByText(question)).toBeVisible();
   // The reply's Markdown is rendered, not shown raw.
   await expect(page.getByText('Yes. Every player answers each question, then you vote.')).toBeVisible();
@@ -61,10 +61,8 @@ test("a game's house rules open above its rulebook, on every tab", async ({ page
 test('a rate-limited question comes back to the box and Retry asks it again', async ({ page }) => {
   // The first ask is rate limited; the retry falls through to the fixture's answer.
   let asked = 0;
-  await page.route('**/api/chat', (route) =>
-    asked++ === 0
-      ? route.fulfill({ status: 429, contentType: 'application/json', body: '{"error":"Too many requests."}' })
-      : route.fallback(),
+  await stubOperation(page, 'AskRules', () =>
+    asked++ === 0 ? streamRefusal(429, 'RATE_LIMITED', 'Too many requests.') : answerStream(CHAT_ANSWER),
   );
   await page.goto(`/rules/${SLUG}`);
   await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
@@ -84,12 +82,8 @@ test('a rate-limited question comes back to the box and Retry asks it again', as
 });
 
 test('the daily cap says the assistant is resting for today, by the box, not to wait a minute', async ({ page }) => {
-  await page.route('**/api/chat', (route) =>
-    route.fulfill({
-      status: 429,
-      contentType: 'application/json',
-      body: '{"error":"The rules assistant has reached its limit for today.","code":"daily-limit"}',
-    }),
+  await stubOperation(page, 'AskRules', () =>
+    streamRefusal(429, 'DAILY_LIMIT', 'The rules assistant has reached its limit for today.'),
   );
   await page.goto(`/rules/${SLUG}`);
   await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
@@ -113,13 +107,7 @@ test('under a players filter, Rules opens the add-on the game fits through', asy
 });
 
 test('an answer that names another rulebook links to its tab', async ({ page }) => {
-  await page.route('**/api/chat', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'text/plain; charset=utf-8',
-      body: "That's in the 5 6 Player Extension.",
-    }),
-  );
+  await stubOperation(page, 'AskRules', () => answerStream("That's in the 5 6 Player Extension."));
   await page.goto('/rules/catan');
   await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
   await page.getByPlaceholder('Ask a rules question...').fill('How do we play with five?');
@@ -133,10 +121,10 @@ test('a starter question asks itself, and a game with a calculator links to it',
   await page.goto('/rules/7-wonders');
   await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
   const starters = page.getByRole('group', { name: 'Try asking' });
-  const sent = nextPost(page, '/api/chat');
+  const sent = nextOperation(page, 'AskRules');
   await starters.getByRole('button', { name: 'How does a turn go?' }).click();
 
-  expect((await sent).postDataJSON()).toEqual({ slug: '7-wonders', message: 'How does a turn go?', history: [] });
+  expect(await sent).toEqual({ slug: '7-wonders', message: 'How does a turn go?', history: [] });
   await expect(page.getByText('Yes. Every player answers each question, then you vote.')).toBeVisible();
   await expect(starters).toHaveCount(0);
 
@@ -214,12 +202,10 @@ test("a tab opened from a link sits clear of the strip's faded edge", async ({ p
 });
 
 test("an answer's page citations open their rulebook at that page", async ({ page, request }) => {
-  await page.route('**/api/chat', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'text/plain; charset=utf-8',
-      body: 'Three stations at most (Europe p. 4), built instead of claiming a route (Ticket To Ride p. 3), as before (p. 5).',
-    }),
+  await stubOperation(page, 'AskRules', () =>
+    answerStream(
+      'Three stations at most (Europe p. 4), built instead of claiming a route (Ticket To Ride p. 3), as before (p. 5).',
+    ),
   );
   await page.goto('/rules/ticket-to-ride/europe');
   await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
@@ -252,9 +238,7 @@ test("on a phone a citation of another tab's rulebook opens that tab at the page
   await page.setViewportSize({ width: 390, height: 844 });
   const answer =
     'Knights hold off the barbarians (Cities And Knights p. 4), and a 7 still moves the robber (Catan p. 5).';
-  await page.route('**/api/chat', (route) =>
-    route.fulfill({ status: 200, contentType: 'text/plain; charset=utf-8', body: answer }),
-  );
+  await stubOperation(page, 'AskRules', () => answerStream(answer));
   await page.goto('/rules/catan/cities-and-knights');
   await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
   await page.getByPlaceholder('Ask a rules question...').fill('What happens on a 7?');
@@ -286,9 +270,7 @@ test('on a phone a jump lands on its page in a rulebook of mixed page sizes', as
   await page.setViewportSize({ width: 390, height: 844 });
   // Cranium's pages run tall, short and wide: sized like the first until
   // drawn, the pages above would move page 7 as the scroll passed them.
-  await page.route('**/api/chat', (route) =>
-    route.fulfill({ status: 200, contentType: 'text/plain; charset=utf-8', body: 'Roll the die to move (p. 7).' }),
-  );
+  await stubOperation(page, 'AskRules', () => answerStream('Roll the die to move (p. 7).'));
   await page.goto('/rules/cranium');
   await expect(
     page.getByRole('region', { name: 'Cranium rules' }).getByRole('button', { name: 'Search' }),
@@ -321,9 +303,7 @@ const ROBBER_ANSWER =
   'If you roll a 7, nobody gets resources and anyone holding more than 7 cards returns half of them (p. 5).';
 
 test('on a desktop a citation opens its page in place and marks the passage it points to', async ({ page }) => {
-  await page.route('**/api/chat', (route) =>
-    route.fulfill({ status: 200, contentType: 'text/plain; charset=utf-8', body: ROBBER_ANSWER }),
-  );
+  await stubOperation(page, 'AskRules', () => answerStream(ROBBER_ANSWER));
   await page.goto('/rules/catan');
   await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
   await page.getByPlaceholder('Ask a rules question...').fill('What happens on a 7?');
@@ -356,13 +336,7 @@ test('on a desktop a citation opens its page in place and marks the passage it p
 
 test("on a phone a citation marks the passage it points to, on another tab's rulebook", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.route('**/api/chat', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'text/plain; charset=utf-8',
-      body: ROBBER_ANSWER.replace('(p. 5)', '(Catan p. 5)'),
-    }),
-  );
+  await stubOperation(page, 'AskRules', () => answerStream(ROBBER_ANSWER.replace('(p. 5)', '(Catan p. 5)')));
   await page.goto('/rules/catan/cities-and-knights');
   await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
   await page.getByPlaceholder('Ask a rules question...').fill('What happens on a 7?');
@@ -379,9 +353,7 @@ test("on a phone a citation marks the passage it points to, on another tab's rul
 });
 
 test('the cited mark covers the words it marks on the page image', async ({ page }) => {
-  await page.route('**/api/chat', (route) =>
-    route.fulfill({ status: 200, contentType: 'text/plain; charset=utf-8', body: ROBBER_ANSWER }),
-  );
+  await stubOperation(page, 'AskRules', () => answerStream(ROBBER_ANSWER));
   await page.goto('/rules/catan');
   await page.getByRole('button', { name: 'AI Rules Assistant' }).click();
   await page.getByPlaceholder('Ask a rules question...').fill('What happens on a 7?');

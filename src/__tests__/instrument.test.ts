@@ -62,6 +62,29 @@ describe('instrument', () => {
     vi.useRealTimers();
   });
 
+  it("keeps an emailed link's token out of every event, transaction and breadcrumb", async () => {
+    const { options, beforeSend } = await instrument();
+    const url = 'https://games.example/approve?id=sug-1&token=secret';
+    const event = await beforeSend({ ...warning, request: { url } });
+    expect(event?.request?.url).toBe('https://games.example/approve?id=sug-1');
+    const transaction = { type: 'transaction' as const, request: { url } };
+    expect(options.beforeSendTransaction!(transaction, {})).toEqual({
+      type: 'transaction',
+      request: { url: 'https://games.example/approve?id=sug-1' },
+    });
+    expect(options.beforeSendTransaction!({ type: 'transaction' }, {})).toEqual({ type: 'transaction' });
+    const crumb = { category: 'navigation', data: { from: '/', to: '/sign-in/confirm?token=secret', url } };
+    expect(options.beforeBreadcrumb!(crumb)).toEqual({
+      category: 'navigation',
+      data: { from: '/', to: '/sign-in/confirm', url: 'https://games.example/approve?id=sug-1' },
+    });
+    expect(options.beforeBreadcrumb!({ category: 'ui.click' })).toEqual({ category: 'ui.click' });
+    expect(options.beforeBreadcrumb!({ category: 'fetch', data: { status_code: 200 } })).toEqual({
+      category: 'fetch',
+      data: { status_code: 200 },
+    });
+  });
+
   it('traces a tenth of sessions and records replay only after an error', async () => {
     const { options } = await instrument();
     expect(options.tracesSampleRate).toBe(0.1);

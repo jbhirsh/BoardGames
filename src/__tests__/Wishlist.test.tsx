@@ -9,18 +9,31 @@ import { useFilter } from '../context/useFilter';
 import { WISHLIST } from '../data/wishlist';
 import { WISHLIST_TYPES, WISHLIST_TYPE_ORDER } from '../data/keywords';
 import { stubMatchMedia } from './helpers/stubMatchMedia';
-
-function jsonResponse(body: unknown, ok = true): Response {
-  return { ok, json: async () => body } as unknown as Response;
-}
+import { operations, stubGraphql } from './helpers/graphqlFetch';
 
 type Suggested = { id: string; game: string; name: string; note: string };
 
-function mockVotes(counts: Record<string, number>, myVotes: string[] = [], suggestions: Suggested[] = []) {
-  return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
-    const url = String(input);
-    if (url.startsWith('/api/suggestions')) return jsonResponse({ items: suggestions });
-    return jsonResponse({ counts, myVotes });
+/**
+ * The API for the wishlist: stored vote counts and this browser's votes,
+ * approved suggestions, the owner's queue, and what a vote's count becomes.
+ */
+function mockVotes(
+  counts: Record<string, number>,
+  myVotes: string[] = [],
+  suggestions: Suggested[] = [],
+  { pending = [] as Suggested[], voted = 1 } = {},
+) {
+  return stubGraphql({
+    Suggestions: () => ({ suggestions: suggestions.map((s) => ({ source: 'FRIEND', details: null, ...s })) }),
+    PendingSuggestions: () => ({ pendingSuggestions: pending }),
+    PreviewGame: () => ({ previewGame: { outcome: 'NO_MATCH', details: null } }),
+    WishlistVotes: ({ ids }) => ({
+      wishlistVotes: {
+        counts: (ids as string[]).map((id) => ({ id, count: counts[id] ?? 0 })),
+        myVotes: myVotes.filter((id) => (ids as string[]).includes(id)),
+      },
+    }),
+    Vote: () => ({ vote: { count: voted } }),
   });
 }
 
@@ -299,9 +312,7 @@ describe('Wishlist', () => {
       const vote = await screen.findByRole('button', { name: `Vote for ${item.name} (0 votes)` });
       await waitFor(() => expect(vote).toBeEnabled());
       fireEvent.click(vote);
-      await waitFor(() =>
-        expect(fetchSpy).toHaveBeenCalledWith('/api/votes', expect.objectContaining({ method: 'POST' })),
-      );
+      await waitFor(() => expect(operations(fetchSpy).some((op) => op.operationName === 'Vote')).toBe(true));
       const toggle = screen.getByRole('button', { name: `Show details for ${item.name}` });
       expect(toggle).toHaveAttribute('aria-expanded', 'false');
       fireEvent.click(toggle);
@@ -317,13 +328,8 @@ describe('Wishlist', () => {
   });
 
   it('POSTs a vote when the vote button is clicked', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
-      const url = String(input);
-      if (url.startsWith('/api/suggestions')) return jsonResponse({ items: [] });
-      if (init?.method === 'POST') return jsonResponse({ itemId: WISHLIST[0].id, count: 1, myVote: 1 });
-      return jsonResponse({ counts: { [WISHLIST[0].id]: 0 }, myVotes: [] });
-    });
-    const postCalls = () => fetchSpy.mock.calls.filter((c) => (c[1] as RequestInit | undefined)?.method === 'POST');
+    const fetchSpy = mockVotes({ [WISHLIST[0].id]: 0 });
+    const votes = () => operations(fetchSpy).filter((o) => o.operationName === 'Vote');
 
     renderWishlist();
     await screen.findByText(WISHLIST[0].name);
@@ -336,17 +342,12 @@ describe('Wishlist', () => {
 
     fireEvent.click(voteBtn);
 
-    await waitFor(() => expect(postCalls()).toHaveLength(1));
-    const postCall = postCalls()[0];
-    expect(postCall[0]).toBe('/api/votes');
-    expect(JSON.parse(postCall[1]!.body as string)).toMatchObject({
-      itemId: WISHLIST[0].id,
-      vote: 1,
-    });
+    await waitFor(() => expect(votes()).toHaveLength(1));
+    expect(votes()[0].variables).toMatchObject({ itemId: WISHLIST[0].id, vote: 1 });
   });
 
   it('renders approved friend suggestions in their own group with the suggester credited', async () => {
-    mockVotes({}, [], [{ id: 'sug-abc123', game: 'Root', name: 'Alex', note: 'Mean fun' }]);
+    const fetchSpy = mockVotes({}, [], [{ id: 'sug-abc123', game: 'Root', name: 'Alex', note: 'Mean fun' }]);
     renderWishlist('/?c=want&s=group&v=grid');
     await waitFor(() => expect(screen.getByText('Root')).toBeInTheDocument());
     expect(screen.getByRole('heading', { level: 3, name: 'Suggested by friends' })).toBeInTheDocument();
@@ -356,12 +357,9 @@ describe('Wishlist', () => {
     // Votes were requested for the suggestion too. The request goes out
     // from a passive effect after the body mounts, so wait for it rather
     // than reading the calls the instant the name appears.
-    const voteCall = () =>
-      (globalThis.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls
-        .map((c) => String(c[0]))
-        .find((u) => u.startsWith('/api/votes?'));
+    const voteCall = () => operations(fetchSpy).find((o) => o.operationName === 'WishlistVotes');
     await waitFor(() => expect(voteCall()).toBeDefined());
-    expect(voteCall()).toContain('sug-abc123');
+    expect(voteCall()?.variables.ids).toContain('sug-abc123');
   });
 
   it('filters the header count while suggestions are still loading', async () => {
@@ -392,14 +390,8 @@ describe('Wishlist', () => {
   });
 
   it('shows the owner tools and per-entry controls for stored entries when signed in', async () => {
-    const fetchSpy = mockVotes({}, [], [{ id: 'sug-abc123', game: 'Root', name: 'Alex', note: '' }]);
-    fetchSpy.mockImplementation(async (input) => {
-      const url = String(input);
-      if (url.startsWith('/api/suggestions?action=pending'))
-        return jsonResponse({ items: [{ id: 'sug-p', game: 'Ark Nova', name: 'Sam', note: '' }] });
-      if (url.startsWith('/api/suggestions'))
-        return jsonResponse({ items: [{ id: 'sug-abc123', game: 'Root', name: 'Alex', note: '' }] });
-      return jsonResponse({ counts: {}, myVotes: [] });
+    mockVotes({}, [], [{ id: 'sug-abc123', game: 'Root', name: 'Alex', note: '' }], {
+      pending: [{ id: 'sug-p', game: 'Ark Nova', name: 'Sam', note: '' }],
     });
     renderWishlist('/?c=want', false, true);
     expect(await screen.findByRole('region', { name: 'Owner tools' })).toBeInTheDocument();
@@ -424,14 +416,7 @@ describe('Wishlist', () => {
 
   it('offers the owner controls for a suggestion the compiled list already covers', async () => {
     const compiled = WISHLIST[0];
-    const fetchSpy = mockVotes({}, [], []);
-    fetchSpy.mockImplementation(async (input) => {
-      const url = String(input);
-      if (url.startsWith('/api/suggestions?action=pending')) return jsonResponse({ items: [] });
-      if (url.startsWith('/api/suggestions'))
-        return jsonResponse({ items: [{ id: 'sug-dup', game: compiled.name, name: 'Alex', note: '' }] });
-      return jsonResponse({ counts: {}, myVotes: [] });
-    });
+    mockVotes({}, [], [{ id: 'sug-dup', game: compiled.name, name: 'Alex', note: '' }]);
     renderWishlist('/?c=want', false, true);
     expect(await screen.findByText('Already on the wishlist')).toBeInTheDocument();
     // The compiled entry keeps its card; only the stored record gets controls.
@@ -470,12 +455,7 @@ describe('Wishlist engagement', () => {
   it('holds the vote order while votes are cast, picking it up again on a new sort', async () => {
     const ids = () =>
       Array.from(document.querySelectorAll('[data-item-id]')).map((el) => el.getAttribute('data-item-id'));
-    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
-      const url = String(input);
-      if (url.startsWith('/api/suggestions')) return jsonResponse({ items: [] });
-      if (init?.method === 'POST') return jsonResponse({ itemId: 'zombie-burrito', count: 9, myVote: 1 });
-      return jsonResponse({ counts: { splendor: 3 }, myVotes: [] });
-    });
+    mockVotes({ splendor: 3 }, [], [], { voted: 9 });
     renderWishlist('/?c=want&s=votes&v=grid');
     const vote = await screen.findByRole('button', { name: 'Vote for Zombie Burrito (0 votes)' });
     await waitFor(() => expect(vote).toBeEnabled());

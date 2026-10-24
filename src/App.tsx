@@ -15,6 +15,7 @@ import Wishlist from './components/Wishlist';
 import PhoneNav from './components/PhoneNav';
 import InstantRouteScroll from './components/InstantRouteScroll';
 import { Analytics } from '@vercel/analytics/react';
+import { withoutToken } from './utils/emailedLinks';
 
 export function HomePage() {
   // Measured here, not inside FilterBar, so ActiveTags counts toward the offset.
@@ -58,7 +59,7 @@ export function HomePage() {
  * mirrored to the URL so a view can be shared and Back restores it), scroll
  * restoration with smooth scrolling held off while the router moves the
  * page (InstantRouteScroll, which must come just before ScrollRestoration),
- * and Vercel Analytics.
+ * and Vercel Analytics, which never records an emailed link's token.
  */
 export default function App() {
   return (
@@ -66,7 +67,7 @@ export default function App() {
       <InstantRouteScroll />
       <ScrollRestoration />
       <Outlet />
-      <Analytics />
+      <Analytics beforeSend={(event) => ({ ...event, url: withoutToken(event.url) })} />
     </FilterProvider>
   );
 }

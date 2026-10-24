@@ -45,7 +45,7 @@ describe('mutateScope with the repo config', () => {
     'src/sw/sw.ts',
     'src/pdfjs/saved.ts',
     'src/pdfjs/worker.ts',
-    'api/chat.ts',
+    'api/graphql.ts',
     'api/_lib/slug.ts',
     'src/__tests__/filterGames.test.ts',
     'src/types/vitest-axe.d.ts',
@@ -63,7 +63,7 @@ describe('mutateScope with the repo config', () => {
       'src/App.tsx',
       'src/sw/shell.ts',
       'src/pdfjs/saved.ts',
-      'api/chat.ts',
+      'api/graphql.ts',
       'api/_lib/slug.ts',
     ]);
   });
@@ -83,7 +83,7 @@ describe('mutateScope with the repo config', () => {
 
 describe('main', () => {
   it('prints the in-scope files one per line', async () => {
-    expect(await main('src/App.tsx\nREADME.md\napi/votes.ts\n', configText)).toBe('src/App.tsx\napi/votes.ts\n');
+    expect(await main('src/App.tsx\nREADME.md\napi/graphql.ts\n', configText)).toBe('src/App.tsx\napi/graphql.ts\n');
   });
 
   it('prints nothing when no file is in scope', async () => {
@@ -96,7 +96,7 @@ describe('main', () => {
       now: () => 'A',
       format: async (text) => text.toUpperCase(),
     };
-    expect(await main('src/App.tsx\napi/votes.ts\n', configText, io)).toBe('');
+    expect(await main('src/App.tsx\napi/graphql.ts\n', configText, io)).toBe('');
   });
 });
 
@@ -141,9 +141,9 @@ describe('command line', () => {
   const run = (input) => spawnSync(process.execPath, [script], { input, encoding: 'utf8' });
 
   it('reads the diff on stdin and stryker.config.json from the cwd', () => {
-    const out = run('src/App.tsx\nREADME.md\napi/votes.ts\n');
+    const out = run('src/App.tsx\nREADME.md\napi/graphql.ts\n');
     expect(out.status).toBe(0);
-    expect(out.stdout).toBe('src/App.tsx\napi/votes.ts\n');
+    expect(out.stdout).toBe('src/App.tsx\napi/graphql.ts\n');
   });
 
   it('succeeds with no output when no file is in scope', () => {

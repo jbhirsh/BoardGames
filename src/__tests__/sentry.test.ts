@@ -7,7 +7,7 @@ vi.mock('@sentry/node', () => ({
 }));
 
 import * as Sentry from '@sentry/node';
-import { failWith500, initSentry, reportError } from '../../api/_lib/sentry';
+import { initSentry, reportError } from '../../api/_lib/sentry';
 
 describe('api Sentry helpers', () => {
   const env = { ...process.env };
@@ -52,29 +52,5 @@ describe('api Sentry helpers', () => {
     expect(vi.mocked(Sentry.flush)).toHaveBeenCalledWith(2000);
     expect(consoleError).toHaveBeenCalledWith('votes api error:', boom);
     expect(order).toEqual(['capture', 'flush', 'log']);
-  });
-
-  it('failWith500 reports the error and answers 500 with the generic body', async () => {
-    const boom = new Error('boom');
-    const res = {
-      statusCode: 0,
-      body: undefined as unknown,
-      status(code: number) {
-        res.statusCode = code;
-        return res;
-      },
-      json(body: unknown) {
-        res.body = body;
-        return res;
-      },
-    };
-
-    const returned = await failWith500(res, 'auth api error:', boom);
-
-    expect(returned).toBe(res);
-    expect(res.statusCode).toBe(500);
-    expect(res.body).toEqual({ error: 'Server error' });
-    expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(boom);
-    expect(consoleError).toHaveBeenCalledWith('auth api error:', boom);
   });
 });

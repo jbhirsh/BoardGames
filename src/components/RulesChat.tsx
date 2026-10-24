@@ -7,6 +7,8 @@ import { AiRulesIcon } from './Icons';
 import Notice from './Notice';
 import { citingClause } from '../utils/citeMatch';
 import { useOnline } from '../hooks/useOnline';
+import { errorCode, openStream, readEvents } from '../client/graphql';
+import { AskRulesDocument, type AskRulesSubscription } from '../gql/graphql';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -24,8 +26,8 @@ interface Message {
 const STALL_MS = 30_000;
 
 // The most earlier messages sent with a question (the last three
-// exchanges), as context for a follow-up. api/chat.ts refuses more than
-// its MAX_HISTORY, and a test keeps this within it.
+// exchanges), as context for a follow-up. The API (api/_resolvers/chat.ts)
+// refuses more than its MAX_HISTORY, and a test keeps this within it.
 export const HISTORY_SENT = 6;
 
 const FAILED = 'Sorry, something went wrong. Please try again.';
@@ -35,7 +37,7 @@ const TIMED_OUT = 'That took too long to answer. Please try again.';
 /**
  * Why the assistant can't answer at all just now, as against a question
  * that failed: no network (the browser says so, or a request found none),
- * or the site's daily cap (api/chat.ts). Said by the box, not in the
+ * or the site's daily cap (api/_resolvers/chat.ts). Said by the box, not in the
  * conversation, and nothing to report.
  */
 type Unavailable = 'offline' | 'resting';
@@ -48,16 +50,6 @@ const UNAVAILABLE: Record<Unavailable, string> = {
 // either; offline, only a rulebook saved on this device, since one opened
 // online but not saved can't draw the pages it hasn't fetched.
 const STILL_WORKS = ' The rulebook below still works.';
-
-/** Whether a 429 is the site-wide daily cap rather than the per-minute limit. */
-async function isDailyLimit(response: Response): Promise<boolean> {
-  try {
-    const body = (await response.json()) as { code?: unknown } | null;
-    return body?.code === 'daily-limit';
-  } catch {
-    return false;
-  }
-}
 
 interface RulesChatContext {
   isOpen: boolean;
@@ -267,7 +259,7 @@ export function RulesChatPanel({
     const history = prior
       .slice(1)
       .map((msg) => ({
-        role: msg.role === 'assistant' ? 'model' : 'user',
+        role: msg.role === 'assistant' ? ('MODEL' as const) : ('USER' as const),
         content: msg.content,
       }))
       .slice(-HISTORY_SENT);
@@ -315,19 +307,21 @@ export function RulesChatPanel({
       });
 
     try {
+      // The rules chat's subscription (Subscription.askRules) over
+      // server-sent events: one text chunk per event. A refusal, or a
+      // failure before the answer starts, comes back with its status.
       const response = await network(
-        fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ slug, message: userMsg, history, ...(parts.length > 0 ? { parts } : {}) }),
-          signal: controller.signal,
-        }),
+        openStream(
+          AskRulesDocument,
+          { slug, message: userMsg, history, ...(parts.length > 0 ? { parts } : {}) },
+          controller.signal,
+        ),
       );
 
       if (!response.ok) {
         // A 429 is the rate limiter doing its job, not a fault to report.
         if (response.status === 429) {
-          if (await isDailyLimit(response)) refuse('resting');
+          if ((await errorCode(response)) === 'DAILY_LIMIT') refuse('resting');
           else fail(RATE_LIMITED);
         } else {
           Sentry.captureMessage(`rules chat request failed: HTTP ${response.status}`, {
@@ -339,8 +333,7 @@ export function RulesChatPanel({
         return;
       }
 
-      const reader = response.body!.getReader();
-      const decoder = new TextDecoder();
+      const answers = readEvents<AskRulesSubscription>(response.body!.getReader());
 
       setMessages((prev) => [...prev, { role: 'assistant', content: '', tab }]);
 
@@ -352,18 +345,17 @@ export function RulesChatPanel({
           return updated;
         });
 
-      // A chunk can end partway through a multi-byte character; `stream`
-      // holds those bytes for the next chunk instead of garbling them, and
-      // the final decode() flushes any the stream cut off.
+      // Each event is a chunk of the answer (readEvents joins a character a
+      // read cut in two). An error in the stream is a fault of ours.
       while (true) {
-        const { done, value } = await network(reader.read());
+        const { done, value } = await network(answers.next());
         if (done) break;
         stillAlive();
+        const [error] = value.errors;
+        if (error) throw new Error(`rules chat stream error: ${error.code ?? error.message}`);
         received = true;
-        append(decoder.decode(value, { stream: true }));
+        append(value.data?.askRules ?? '');
       }
-      const tail = decoder.decode();
-      if (tail) append(tail);
     } catch (err) {
       // Aborted by leaving the page: nobody is waiting for an answer.
       if (controller.signal.aborted && !timedOut) return;

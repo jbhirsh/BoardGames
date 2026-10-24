@@ -1,10 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { useSuggestions, suggestionToItem } from '../hooks/useSuggestions';
-
-function jsonResponse(body: unknown, ok = true): Response {
-  return { ok, json: async () => body } as unknown as Response;
-}
+import { gqlError, operations, stubGraphql } from './helpers/graphqlFetch';
 
 describe('suggestionToItem', () => {
   it('quotes the note as the description and credits the suggester', () => {
@@ -67,7 +64,7 @@ describe('suggestionToItem', () => {
       game: 'Ark Nova',
       name: 'Jess',
       note: '',
-      source: 'owner',
+      source: 'OWNER',
       details: { min: 1, max: 4, mins: 150, desc: 'Zoo building.', kw: ['strategy'], type: 'heavy' },
     });
     expect(item).toMatchObject({ type: 'heavy', source: 'owner', desc: 'Zoo building.', blurb: 'Zoo building.' });
@@ -89,16 +86,16 @@ describe('suggestionToItem', () => {
         game: 'G',
         name: 'Jess',
         note: 'Big',
-        source: 'owner',
+        source: 'OWNER',
         details: { min: 1, max: 4, mins: 0, desc: '', kw: [], type: 'suggested' },
       }),
     ).toMatchObject({ desc: '“Big”', type: 'suggested', blurb: '' });
-    expect(suggestionToItem({ id: 's', game: 'G', name: 'Alex', note: '', source: 'friend' })).toMatchObject({
+    expect(suggestionToItem({ id: 's', game: 'G', name: 'Alex', note: '', source: 'FRIEND' })).toMatchObject({
       suggestedBy: 'Alex',
       source: 'friend',
     });
     // No BGG match and no note: the card still says something rather than showing a blank line.
-    expect(suggestionToItem({ id: 's', game: 'G', name: 'Jess', note: '', source: 'owner' }).desc).toBe(
+    expect(suggestionToItem({ id: 's', game: 'G', name: 'Jess', note: '', source: 'OWNER' }).desc).toBe(
       'Jess added this one.',
     );
   });
@@ -120,33 +117,41 @@ describe('suggestionToItem', () => {
 describe('useSuggestions', () => {
   afterEach(() => vi.restoreAllMocks());
 
+  const ROOT = { id: 'sug-1', game: 'Root', name: 'Alex', note: '', source: 'FRIEND' as const, details: null };
+
   it('loads approved suggestions as wishlist items', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      jsonResponse({ items: [{ id: 'sug-1', game: 'Root', name: 'Alex', note: '' }] }),
-    );
+    const spy = stubGraphql({ Suggestions: () => ({ suggestions: [ROOT] }) });
     const { result } = renderHook(() => useSuggestions());
     expect(result.current.loaded).toBe(false);
     await waitFor(() => expect(result.current.loaded).toBe(true));
     expect(result.current.items.map((i) => i.name)).toEqual(['Root']);
+    expect(operations(spy).map((o) => o.operationName)).toEqual(['Suggestions']);
   });
 
   it('fetches again on reload', async () => {
-    const fetchSpy = vi
-      .spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce(jsonResponse({ items: [] }))
-      .mockResolvedValueOnce(jsonResponse({ items: [{ id: 'sug-1', game: 'Root', name: 'Alex', note: '' }] }));
+    let answer: unknown[] = [];
+    const spy = stubGraphql({ Suggestions: () => ({ suggestions: answer }) });
     const { result } = renderHook(() => useSuggestions());
     await waitFor(() => expect(result.current.loaded).toBe(true));
     expect(result.current.items).toEqual([]);
+    answer = [ROOT];
     act(() => result.current.reload());
     await waitFor(() => expect(result.current.items.map((i) => i.name)).toEqual(['Root']));
-    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
   });
 
-  it('yields an empty loaded list when the fetch fails or has no items', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(jsonResponse({}, false));
+  it('yields an empty loaded list when the fetch fails', async () => {
+    stubGraphql({ Suggestions: () => gqlError('Server error', 'INTERNAL_SERVER_ERROR', 500) });
     const { result } = renderHook(() => useSuggestions());
     await waitFor(() => expect(result.current.loaded).toBe(true));
     expect(result.current.items).toEqual([]);
+  });
+
+  it('keeps the box art only when there is some', () => {
+    const details = { min: 1, max: 4, mins: 60, desc: '', kw: [], img: null };
+    expect(suggestionToItem({ ...ROOT, details }).img).toBeUndefined();
+    expect(suggestionToItem({ ...ROOT, details: { ...details, img: 'https://cf.geekdo-images.com/r.jpg' } }).img).toBe(
+      'https://cf.geekdo-images.com/r.jpg',
+    );
   });
 });

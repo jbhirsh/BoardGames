@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { expect, CHAT_ANSWER } from './fixtures';
+import { expect, CHAT_ANSWER, stubOperation } from './fixtures';
 
 /**
  * Visual regression's pages and states (the visual*.spec.ts files), and how
@@ -116,6 +116,59 @@ export const WIDE: Scenario[] = [
     open: async (page) => {
       await page.goto('/?v=grid');
       await expect(page.getByRole('heading', { level: 2, name: 'Our Collection' })).toBeVisible();
+    },
+  },
+];
+
+const LINK_TOKEN = 'e2e-token-0000000000000000000001';
+
+/** Answers every call of one operation with the same data. */
+const answer = (page: Page, operation: string, data: unknown) => stubOperation(page, operation, () => data);
+
+/** The pages the owner's emails open, each read stubbed: in MORE, and on phones. */
+export const LINKS: Scenario[] = [
+  {
+    name: 'approve-link',
+    open: async (page) => {
+      await answer(page, 'EmailedSuggestion', {
+        emailedSuggestion: {
+          suggestion: { game: 'Faraway', name: 'Sam', note: 'Quick and clever', status: 'PENDING' },
+          preview: {
+            outcome: 'FOUND',
+            details: {
+              bggId: 385761,
+              name: 'Faraway',
+              year: 2023,
+              min: 2,
+              max: 6,
+              mins: 30,
+              desc: 'Explore Alula backwards, then remember it forwards.',
+              kw: ['card-game'],
+              img: null,
+            },
+          },
+        },
+      });
+      await page.goto(`/approve?id=sug-0e2eappr0001&token=${LINK_TOKEN}`);
+      await expect(page.getByRole('heading', { name: 'Approve Faraway?' })).toBeVisible();
+    },
+  },
+  {
+    name: 'deny-link',
+    open: async (page) => {
+      await answer(page, 'EmailedSuggestion', {
+        emailedSuggestion: { suggestion: { game: 'Faraway', name: 'Sam', note: '', status: 'PENDING' } },
+      });
+      await page.goto(`/deny?id=sug-0e2eappr0001&token=${LINK_TOKEN}`);
+      await expect(page.getByRole('heading', { name: 'Deny Faraway?' })).toBeVisible();
+    },
+  },
+  {
+    name: 'sign-in-link',
+    open: async (page) => {
+      await answer(page, 'SignInLinkLive', { signInLinkLive: true });
+      await page.goto(`/sign-in/confirm?token=${LINK_TOKEN}`);
+      await expect(page.getByRole('heading', { name: 'Sign in to The Game Room?' })).toBeVisible();
     },
   },
 ];
@@ -245,4 +298,5 @@ export const MORE: Scenario[] = [
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     },
   },
+  ...LINKS,
 ];
