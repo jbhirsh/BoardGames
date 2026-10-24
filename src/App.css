@@ -1,304 +1,5 @@
-/* Every colour is a token here; the dark theme below redefines them, under
-   prefers-color-scheme: dark (unless data-theme="light") and under
-   [data-theme="dark"]. So use a token, never a literal, and
-   rgba(var(--blue-rgb), a) for a blue tint. PDF pages stay white, and box
-   art stays on a light matte (--art-matte, a little dimmed in the dark
-   theme). e2e/theme.spec.ts runs axe's colour-contrast rule over the main
-   pages in both themes, so a new colour has to pass AA in each. */
-:root {
-  --bg: #fbfbfd;
-  --bg2: #f5f5f7;
-  --bg3: #ebebed;
-  --surface: #ffffff;
-  --surface2: #f5f5f7;
-  --dark: #1d1d1f;
-  --dark2: #2d2d2f;
-  /* --blue is the accent for text, links, borders and tints; a filled
-     button uses --blue-fill under --on-fill text, which keeps 4.5:1 in
-     both themes where the dark theme's lighter --blue would not. */
-  /* #0066CC rather than the fill's #0071E3: blue text sits on blue tints
-     (pills, the active tab, the chat toggle), where #0071E3 fell to 4.1:1. */
-  --blue: #0066cc;
-  --blue2: #0077ed;
-  --blue-rgb: 0, 113, 227;
-  --blue-fill: #0071e3;
-  --blue-fill-hover: #0062c2;
-  /* The ring on a rulebook page a citation jumped to (.pdf-page--cited). It
-     sits between the white page and --bg, so it keeps 3:1 against both:
-     here 5.6:1 and 5.4:1. The dark theme's --blue is 3.0:1 on the white
-     page, so it takes a deeper blue, 4.0:1 on the page, 4.7:1 on --bg. */
-  --cite-ring: #0066cc;
-  --on-fill: #ffffff;
-  --blue-bg: rgba(var(--blue-rgb), 0.08);
-  --blue-bg2: rgba(var(--blue-rgb), 0.15);
-  --border: rgba(0, 0, 0, 0.08);
-  --border2: rgba(0, 0, 0, 0.12);
-  --border-hover: rgba(0, 0, 0, 0.2);
-  --row-hover: #f9f9fb;
-  --code-bg: rgba(0, 0, 0, 0.06);
-  --hero-top: #ffffff;
-  /* Box art tiles: the matte behind the art and a filter over it. White and
-     untouched here; the dark theme dims both (see .card-corner-img). */
-  --art-matte: #ffffff;
-  --art-dim: none;
-  /* 4.5:1 or better on the award pill's gold tint; #8A6D12 was 4.46:1. */
-  --award-fg: #7a600f;
-  --expansion-fg: #8a5200;
-  --extension-fg: #1a6b41;
-  --version-fg: #0058b0;
-  /* 4.5:1 or better on the word checker's green verdict tint; #2D8A4E was 3.9:1. */
-  --ok-fg: #297e48;
-  --bad-fg: #d42020;
-  --error-fg: #c0392b;
-  /* The Notice component's tones (src/components/Notice.tsx): text, fill
-     and border. Each text colour is 4.5:1 or better on its fill, in both
-     themes (src/__tests__/noticeTokens.test.ts). */
-  --info-fg: #0058b0;
-  --info-bg: #eef5fd;
-  --info-border: #c4dcf6;
-  --warn-fg: #8a4b00;
-  --warn-bg: #fff4e0;
-  --warn-border: #f2d49b;
-  --danger-fg: #b42318;
-  --danger-bg: #fdecec;
-  --danger-border: #f4c1bd;
-  /* The play glyph on the outlined video buttons: YouTube's red, lifted in
-     the dark theme to keep it as legible on --surface and --bg2. */
-  --yt-red: #cc0000;
-  /* The vote button's red, the same in both themes: --on-fill text keeps
-     4.7:1 on it filled (#D63C48 was 4.57:1, too close to the line). */
-  --vote: #d33945;
-  --vote-hover: #c02f3b;
-  --vote-rgb: 211, 57, 69;
-  --text: #1d1d1f;
-  --text2: #6e6e73;
-  /* 4.5:1 or better on --bg and --bg2 (WCAG AA); #86868B was 3.5:1. */
-  --text3: #707075;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.05);
-  --r: 18px;
-  --r-sm: 10px;
-  /* One horizontal gutter for every full-width section. Overriding this in a
-     breakpoint keeps the hero, filter bar, tags and main content on a single
-     left edge; setting them individually is what let them drift apart. */
-  --gutter: 48px;
-  color-scheme: light;
-}
-
-/* ══ DARK THEME ═══════════════════════════════════════════
-   Follows the system unless the toggle chose a theme (html[data-theme],
-   set before first paint by index.html's script and kept by useTheme).
-   Fills that sit on each other differ (--bg2 is a step above --surface, so
-   the chat's answer bubble, the sheet's close button and the dropdown's
-   fills show on their panels) but no lighter, or --blue would drop below
-   4.5:1 on its 8% tint over it (the active filter chips). --text3 sits a
-   step below --text2 while keeping 4.5:1 on every fill it is drawn on,
-   --bg3 included. The pairs are listed in src/__tests__/themeLayers.test.ts. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #111113;
-    --bg2: #242428;
-    --bg3: #2c2c2e;
-    --surface: #1c1c1e;
-    --surface2: #2c2c2e;
-    --dark: #f5f5f7;
-    --dark2: #e5e5ea;
-    --text: #f5f5f7;
-    --text2: #a1a1a6;
-    --text3: #939398;
-    --blue: #2997ff;
-    --blue2: #47a6ff;
-    --blue-rgb: 41, 151, 255;
-    --cite-ring: #1a7fe6;
-    --border: rgba(255, 255, 255, 0.1);
-    --border2: rgba(255, 255, 255, 0.16);
-    --border-hover: rgba(255, 255, 255, 0.28);
-    --row-hover: #232326;
-    --code-bg: rgba(255, 255, 255, 0.1);
-    --hero-top: #1c1c1e;
-    --art-matte: #e5e5ea;
-    --art-dim: brightness(0.94);
-    --award-fg: #e3c35a;
-    --expansion-fg: #f0b35a;
-    --extension-fg: #5fd39a;
-    --version-fg: #6cb4ff;
-    --ok-fg: #4ade80;
-    --bad-fg: #ff6b6b;
-    --error-fg: #ff6b6b;
-    --info-fg: #7dbdff;
-    --info-bg: #16263a;
-    --info-border: #24476e;
-    --warn-fg: #ffc266;
-    --warn-bg: #2e2414;
-    --warn-border: #5c4520;
-    --danger-fg: #ff8f8a;
-    --danger-bg: #3a1d1d;
-    --danger-border: #6a2e2c;
-    --yt-red: #ff4e45;
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.6);
-    color-scheme: dark;
-  }
-}
-/* The toggle's dark theme repeats the system's: one sits in a media query,
-   the other on an attribute, and CSS has no way to share a block between
-   them. themeLayers.test.ts holds the two equal, so the duplicate-code
-   audit skips this copy. */
-/* jscpd:ignore-start */
-:root[data-theme="dark"] {
-  --bg: #111113;
-  --bg2: #242428;
-  --bg3: #2c2c2e;
-  --surface: #1c1c1e;
-  --surface2: #2c2c2e;
-  --dark: #f5f5f7;
-  --dark2: #e5e5ea;
-  --text: #f5f5f7;
-  --text2: #a1a1a6;
-  --text3: #939398;
-  --blue: #2997ff;
-  --blue2: #47a6ff;
-  --blue-rgb: 41, 151, 255;
-  --cite-ring: #1a7fe6;
-  --border: rgba(255, 255, 255, 0.1);
-  --border2: rgba(255, 255, 255, 0.16);
-  --border-hover: rgba(255, 255, 255, 0.28);
-  --row-hover: #232326;
-  --code-bg: rgba(255, 255, 255, 0.1);
-  --hero-top: #1c1c1e;
-  --art-matte: #e5e5ea;
-  --art-dim: brightness(0.94);
-  --award-fg: #e3c35a;
-  --expansion-fg: #f0b35a;
-  --extension-fg: #5fd39a;
-  --version-fg: #6cb4ff;
-  --ok-fg: #4ade80;
-  --bad-fg: #ff6b6b;
-  --error-fg: #ff6b6b;
-  --info-fg: #7dbdff;
-  --info-bg: #16263a;
-  --info-border: #24476e;
-  --warn-fg: #ffc266;
-  --warn-bg: #2e2414;
-  --warn-border: #5c4520;
-  --danger-fg: #ff8f8a;
-  --danger-bg: #3a1d1d;
-  --danger-border: #6a2e2c;
-  --yt-red: #ff4e45;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.6);
-  color-scheme: dark;
-}
-/* jscpd:ignore-end */
-@media (max-width: 900px) {
-  :root {
-    --gutter: 24px;
-  }
-}
-@media (max-width: 520px) {
-  :root {
-    --gutter: 16px;
-  }
-}
-/* Playfair Display, the headings' face, served from public/fonts (SIL Open
-   Font License, OFL.txt there) and saved for offline use with the app. The
-   Latin subset, which every name in the collection fits. The roman file is
-   variable, so it draws both 700 and 900. Text shows at once in the
-   fallback (font-display: swap), which is Times New Roman Bold (or Liberation
-   Serif, its metric twin on Linux), or on Android Noto Serif Bold (Droid
-   Serif on older ones), each scaled to Playfair's width on the collection's
-   names and to its line height, per weight, so the swap barely moves a
-   line. Noto's metrics differ from Times's, so it is a family of its own:
-   a face whose local() font isn't there is skipped for the next family.
-   index.html preloads the roman file. Body text is the system font. */
-@font-face {
-  font-family: "Playfair Display";
-  font-style: normal;
-  font-weight: 400 900;
-  font-display: swap;
-  src: url(/fonts/playfair-display-latin.woff2) format("woff2");
-}
-@font-face {
-  font-family: "Playfair Display";
-  font-style: italic;
-  font-weight: 700;
-  font-display: swap;
-  src: url(/fonts/playfair-display-latin-italic.woff2) format("woff2");
-}
-@font-face {
-  font-family: "Playfair Fallback";
-  font-weight: 700;
-  src:
-    local("Times New Roman Bold"), local("TimesNewRomanPS-BoldMT"), local("Liberation Serif Bold"),
-    local("LiberationSerif-Bold");
-  size-adjust: 106.57%;
-  ascent-override: 101.53%;
-  descent-override: 23.55%;
-  line-gap-override: 0%;
-}
-@font-face {
-  font-family: "Playfair Fallback";
-  font-weight: 900;
-  src:
-    local("Times New Roman Bold"), local("TimesNewRomanPS-BoldMT"), local("Liberation Serif Bold"),
-    local("LiberationSerif-Bold");
-  size-adjust: 107.4%;
-  ascent-override: 100.75%;
-  descent-override: 23.37%;
-  line-gap-override: 0%;
-}
-@font-face {
-  font-family: "Playfair Fallback";
-  font-style: italic;
-  font-weight: 700;
-  src:
-    local("Times New Roman Bold Italic"), local("TimesNewRomanPS-BoldItalicMT"), local("Liberation Serif Bold Italic"),
-    local("LiberationSerif-BoldItalic");
-  size-adjust: 107.29%;
-  ascent-override: 100.85%;
-  descent-override: 23.39%;
-  line-gap-override: 0%;
-}
-@font-face {
-  font-family: "Playfair Fallback Noto";
-  font-weight: 700;
-  src: local("Noto Serif Bold"), local("NotoSerif-Bold"), local("Droid Serif Bold"), local("DroidSerif-Bold");
-  size-adjust: 90.72%;
-  ascent-override: 119.27%;
-  descent-override: 27.67%;
-  line-gap-override: 0%;
-}
-@font-face {
-  font-family: "Playfair Fallback Noto";
-  font-weight: 900;
-  src: local("Noto Serif Bold"), local("NotoSerif-Bold"), local("Droid Serif Bold"), local("DroidSerif-Bold");
-  size-adjust: 94.83%;
-  ascent-override: 114.1%;
-  descent-override: 26.47%;
-  line-gap-override: 0%;
-}
-@font-face {
-  font-family: "Playfair Fallback Noto";
-  font-style: italic;
-  font-weight: 700;
-  src:
-    local("Noto Serif Bold Italic"), local("NotoSerif-BoldItalic"), local("Droid Serif Bold Italic"),
-    local("DroidSerif-BoldItalic");
-  size-adjust: 88.43%;
-  ascent-override: 122.36%;
-  descent-override: 28.38%;
-  line-gap-override: 0%;
-}
-*,
-*::before,
-*::after {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* Being moved into the components as utility classes, a group at a time
+   (src/index.css has the tokens). */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -313,13 +14,13 @@
 html {
   /* The page's colour behind everything, so a browser that colours its own
      bars from the page (Safari under its toolbar) finds the theme's. */
-  background: var(--bg);
+  background: var(--color-bg);
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
 }
 body {
-  background: var(--bg);
-  color: var(--text);
+  background: var(--color-bg);
+  color: var(--color-text);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
   font-weight: 400;
   min-height: 100svh;
@@ -340,7 +41,7 @@ body::before {
   inset: 0 0 auto;
   height: env(safe-area-inset-top, 0px);
   z-index: 250;
-  background: var(--bg);
+  background: var(--color-bg);
 }
 .clip-wrap {
   overflow-x: clip;
@@ -351,14 +52,14 @@ body::before {
 .theme-toggle {
   position: absolute;
   top: 16px;
-  right: var(--gutter);
+  right: var(--spacing-gutter);
   z-index: 1;
   display: flex;
   gap: 2px;
   padding: 3px;
   border-radius: 999px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   box-shadow: var(--shadow-sm);
 }
 .theme-opt {
@@ -370,24 +71,24 @@ body::before {
   border: none;
   border-radius: 50%;
   background: none;
-  color: var(--text2);
+  color: var(--color-text2);
   cursor: pointer;
   transition:
     background 0.15s,
     color 0.15s;
 }
 .theme-opt:hover {
-  color: var(--text);
+  color: var(--color-text);
 }
 .theme-opt.active {
-  background: var(--blue-bg2);
-  color: var(--blue);
+  background: var(--color-blue-bg2);
+  color: var(--color-blue);
 }
 .hero {
   text-align: center;
-  padding: 96px var(--gutter) 80px;
-  background: linear-gradient(180deg, var(--hero-top) 0%, var(--bg) 100%);
-  border-bottom: 1px solid var(--border);
+  padding: 96px var(--spacing-gutter) 80px;
+  background: linear-gradient(180deg, var(--color-hero-top) 0%, var(--color-bg) 100%);
+  border-bottom: 1px solid var(--color-border);
   position: relative;
   overflow: hidden;
 }
@@ -404,16 +105,16 @@ body::before {
   font-weight: 900;
   line-height: 1;
   letter-spacing: -0.022em;
-  color: var(--dark);
+  color: var(--color-dark);
   margin-bottom: 12px;
 }
 .hero h1 em {
   font-style: italic;
-  color: var(--blue);
+  color: var(--color-blue);
 }
 .hero-sub {
   font-size: 17px;
-  color: var(--text2);
+  color: var(--color-text2);
   line-height: 1.5;
   max-width: 440px;
   margin: 0 auto 24px;
@@ -453,7 +154,7 @@ body::before {
   --reel-fade: clamp(40px, 12vw, 200px);
   display: flow-root;
   position: relative;
-  margin: 0 calc(-1 * var(--gutter));
+  margin: 0 calc(-1 * var(--spacing-gutter));
 }
 .hero-reel-view {
   overflow: hidden;
@@ -527,7 +228,7 @@ body::before {
    (CoverCarousel's reveal). */
 .hero-reel-cover:focus-visible,
 .hero-reel-cover[data-twin-focused] {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--color-blue);
   outline-offset: 3px;
 }
 .hero-reel-cover img {
@@ -560,7 +261,7 @@ body::before {
    at the top. */
 .hero-reel-toggle {
   position: absolute;
-  right: var(--gutter);
+  right: var(--spacing-gutter);
   top: calc(100% + 16px);
   z-index: 1;
   display: inline-flex;
@@ -569,9 +270,9 @@ body::before {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text2);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text2);
   box-shadow: var(--shadow-sm);
   cursor: pointer;
   opacity: 0.85;
@@ -581,11 +282,11 @@ body::before {
 }
 .hero-reel-toggle:hover {
   opacity: 1;
-  color: var(--text);
+  color: var(--color-text);
 }
 .hero-reel-toggle:focus-visible {
   opacity: 1;
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--color-blue);
   outline-offset: 2px;
 }
 /* Less motion: the favourites stand still in a centred row, as the shelf
@@ -668,7 +369,7 @@ body::before {
   max-height: 85svh;
   display: flex;
   flex-direction: column;
-  background: var(--surface);
+  background: var(--color-surface);
   border-radius: 18px 18px 0 0;
   box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.2);
   animation: sheet-up 0.22s ease-out;
@@ -680,36 +381,36 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px var(--gutter) 10px;
-  border-bottom: 1px solid var(--border);
+  padding: 14px var(--spacing-gutter) 10px;
+  border-bottom: 1px solid var(--color-border);
 }
 .sheet-title {
   font-family: "Playfair Display", "Playfair Fallback", "Playfair Fallback Noto", serif;
   font-size: 20px;
   font-weight: 700;
-  color: var(--dark);
+  color: var(--color-dark);
 }
 .sheet-close {
   width: 36px;
   height: 36px;
   border: none;
   border-radius: 50%;
-  background: var(--bg2);
-  color: var(--text2);
+  background: var(--color-bg2);
+  color: var(--color-text2);
   font-size: 15px;
   cursor: pointer;
 }
 .sheet-body {
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 0 var(--gutter) 12px;
+  padding: 0 var(--spacing-gutter) 12px;
 }
 .sheet-sec-title {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--text3);
+  color: var(--color-text3);
   margin: 16px 0 8px;
 }
 .filter-sheet [role="radiogroup"],
@@ -724,7 +425,7 @@ body::before {
 .filter-sheet .dd-opt {
   width: auto;
   padding: 7px 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--color-border);
   border-radius: 20px;
 }
 .filter-sheet .dd-opt.sel {
@@ -738,8 +439,8 @@ body::before {
 .sheet-ft {
   display: flex;
   gap: 10px;
-  padding: 12px var(--gutter) calc(12px + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid var(--border);
+  padding: 12px var(--spacing-gutter) calc(12px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--color-border);
 }
 .sheet-clear,
 .sheet-done {
@@ -752,14 +453,14 @@ body::before {
 }
 .sheet-clear {
   padding: 0 16px;
-  background: var(--bg2);
-  color: var(--text);
-  border: 1px solid var(--border);
+  background: var(--color-bg2);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
 }
 .sheet-done {
   flex: 1;
-  background: var(--blue-fill);
-  color: var(--on-fill);
+  background: var(--color-blue-fill);
+  color: var(--color-on-fill);
   border: none;
 }
 @keyframes sheet-up {
@@ -775,9 +476,9 @@ body::before {
 .filterbar {
   /* Solid: when it was see-through, rows scrolling under the bar showed
      through wherever the blur didn't apply. */
-  background: var(--bg);
-  border-bottom: 1px solid var(--border);
-  padding: 10px var(--gutter);
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+  padding: 10px var(--spacing-gutter);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -793,13 +494,13 @@ body::before {
   gap: 7px;
   height: 34px;
   padding: 0 14px;
-  background: var(--surface);
-  border: 1px solid var(--border2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border2);
   border-radius: 20px;
   font-family: inherit;
   font-size: 13px;
   font-weight: 400;
-  color: var(--text2);
+  color: var(--color-text2);
   cursor: pointer;
   box-shadow: var(--shadow-sm);
   transition:
@@ -810,22 +511,22 @@ body::before {
   user-select: none;
 }
 .dd-btn:hover {
-  color: var(--text);
-  border-color: var(--border-hover);
+  color: var(--color-text);
+  border-color: var(--color-border-hover);
 }
 .dd-btn.open {
-  border-color: var(--blue);
-  color: var(--dark);
-  box-shadow: 0 0 0 3px var(--blue-bg2);
+  border-color: var(--color-blue);
+  color: var(--color-dark);
+  box-shadow: 0 0 0 3px var(--color-blue-bg2);
 }
 .dd-btn.active {
-  background: var(--blue-bg);
+  background: var(--color-blue-bg);
   border-color: rgba(var(--blue-rgb), 0.4);
-  color: var(--blue);
+  color: var(--color-blue);
   font-weight: 500;
 }
 .dd-btn.active.open {
-  box-shadow: 0 0 0 3px var(--blue-bg2);
+  box-shadow: 0 0 0 3px var(--color-blue-bg2);
 }
 .dd-arrow {
   display: inline-flex;
@@ -853,9 +554,9 @@ body::before {
   top: calc(100% + 7px);
   left: 0;
   min-width: 220px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
   opacity: 0;
@@ -876,15 +577,15 @@ body::before {
   display: flex;
   gap: 4px;
   padding: 8px 8px 4px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--color-border);
 }
 .kw-mode-btn {
   flex: 1;
   padding: 5px 0;
-  border: 1px solid var(--border);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
-  background: var(--bg2);
-  color: var(--text2);
+  background: var(--color-bg2);
+  color: var(--color-text2);
   font-size: 12px;
   font-family: inherit;
   cursor: pointer;
@@ -894,12 +595,12 @@ body::before {
     border-color 0.15s;
 }
 .kw-mode-btn:hover {
-  background: var(--bg3);
-  color: var(--text);
+  background: var(--color-bg3);
+  color: var(--color-text);
 }
 .kw-mode-btn.active {
-  background: var(--blue-bg);
-  color: var(--blue);
+  background: var(--color-blue-bg);
+  color: var(--color-blue);
   border-color: rgba(var(--blue-rgb), 0.3);
   font-weight: 500;
 }
@@ -912,7 +613,7 @@ body::before {
   width: 4px;
 }
 .dd-opts::-webkit-scrollbar-thumb {
-  background: var(--border2);
+  background: var(--color-border2);
   border-radius: 2px;
 }
 .dd-opt {
@@ -924,7 +625,7 @@ body::before {
   border-radius: 8px;
   cursor: pointer;
   font-size: 13px;
-  color: var(--text2);
+  color: var(--color-text2);
   text-align: left;
   border: none;
   background: transparent;
@@ -935,18 +636,18 @@ body::before {
   user-select: none;
 }
 .dd-opt:hover {
-  background: var(--bg2);
-  color: var(--text);
+  background: var(--color-bg2);
+  color: var(--color-text);
 }
 .dd-opt.sel {
-  background: var(--blue-bg);
-  color: var(--blue);
+  background: var(--color-blue-bg);
+  color: var(--color-blue);
   font-weight: 500;
 }
 .dd-chk {
   width: 15px;
   height: 15px;
-  border: 1.5px solid var(--border2);
+  border: 1.5px solid var(--color-border2);
   border-radius: 4px;
   flex-shrink: 0;
   display: flex;
@@ -957,13 +658,13 @@ body::before {
     border-color 0.13s;
 }
 .dd-opt.sel .dd-chk {
-  background: var(--blue-fill);
-  border-color: var(--blue-fill);
+  background: var(--color-blue-fill);
+  border-color: var(--color-blue-fill);
 }
 .dd-chk svg {
   width: 9px;
   height: 9px;
-  stroke: var(--on-fill);
+  stroke: var(--color-on-fill);
   fill: none;
   opacity: 0;
   transition: opacity 0.13s;
@@ -980,17 +681,17 @@ body::before {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--on-fill);
+  background: var(--color-on-fill);
 }
 .dd-opt-ct {
   margin-left: auto;
   font-size: 11px;
-  color: var(--text3);
+  color: var(--color-text3);
   font-weight: 400;
 }
 /* --text3 drops below 4.5:1 on the selected option's blue tint. */
 .dd-opt.sel .dd-opt-ct {
-  color: var(--text2);
+  color: var(--color-text2);
 }
 
 /* Text search — own row, above the pills. */
@@ -1004,7 +705,7 @@ body::before {
   left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--text3);
+  color: var(--color-text3);
   pointer-events: none;
 }
 /* Same material as .dd-btn: opaque surface, --border2 hairline, capsule
@@ -1018,12 +719,12 @@ body::before {
   width: 100%;
   height: 36px;
   padding: 0 14px 0 38px;
-  background: var(--surface);
-  border: 1px solid var(--border2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border2);
   border-radius: 999px;
   font-family: inherit;
   font-size: 16px;
-  color: var(--text);
+  color: var(--color-text);
   outline: none;
   box-shadow: var(--shadow-sm);
   transition:
@@ -1031,21 +732,21 @@ body::before {
     box-shadow 0.18s;
 }
 .fb-search-input::placeholder {
-  color: var(--text3);
+  color: var(--color-text3);
 }
 .fb-search-input:hover {
-  border-color: var(--border-hover);
+  border-color: var(--color-border-hover);
 }
 .fb-search-input:focus {
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-bg2);
+  border-color: var(--color-blue);
+  box-shadow: 0 0 0 3px var(--color-blue-bg2);
 }
 
 /* Active tag row */
 .atags {
-  background: var(--bg2);
-  border-bottom: 1px solid var(--border);
-  padding: 8px var(--gutter);
+  background: var(--color-bg2);
+  border-bottom: 1px solid var(--color-border);
+  padding: 8px var(--spacing-gutter);
   display: none;
   align-items: center;
   gap: 7px;
@@ -1055,12 +756,13 @@ body::before {
   display: flex;
 }
 .atag {
+  line-height: 14px;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: var(--blue-bg);
+  background: var(--color-blue-bg);
   border: 1px solid rgba(var(--blue-rgb), 0.2);
-  color: var(--blue);
+  color: var(--color-blue);
   font-size: 12px;
   font-weight: 500;
   padding: 4px 12px;
@@ -1085,13 +787,13 @@ body::before {
   font-family: inherit;
   font-size: 12px;
   font-weight: 500;
-  color: var(--blue);
+  color: var(--color-blue);
   cursor: pointer;
   padding: 4px 8px;
   transition: color 0.15s;
 }
 .share-link:hover {
-  color: var(--dark);
+  color: var(--color-dark);
 }
 .share-link + .clear-all {
   margin-left: 0;
@@ -1102,19 +804,19 @@ body::before {
   border: none;
   font-family: inherit;
   font-size: 12px;
-  color: var(--text3);
+  color: var(--color-text3);
   cursor: pointer;
   transition: color 0.15s;
 }
 .clear-all:hover {
-  color: var(--text);
+  color: var(--color-text);
 }
 
 /* ══ MAIN ═════════════════════════════════════════════════ */
 .main {
   max-width: 1360px;
   margin: 0 auto;
-  padding: 52px var(--gutter) 48px;
+  padding: 52px var(--spacing-gutter) 48px;
 }
 /* One line, its items centred on one another: the title and its count at
    the start (.sec-name, taking the slack), then the list's actions and the
@@ -1146,12 +848,12 @@ body::before {
   font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.5px;
-  color: var(--dark);
+  color: var(--color-dark);
   line-height: 1.15;
 }
 .sec-count {
   font-size: 11px;
-  color: var(--text3);
+  color: var(--color-text3);
   letter-spacing: 1.5px;
   text-transform: uppercase;
 }
@@ -1188,9 +890,9 @@ body::before {
   place-items: center;
   height: 32px;
   padding: 0 14px;
-  background: var(--surface);
-  color: var(--text);
-  border: 1px solid var(--border2);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border2);
   border-radius: 10px;
   font-family: inherit;
   font-size: 13px;
@@ -1203,8 +905,8 @@ body::before {
 }
 @media (hover: hover) and (pointer: fine) {
   .share-btn:hover {
-    background: var(--bg2);
-    border-color: var(--border-hover);
+    background: var(--color-bg2);
+    border-color: var(--color-border-hover);
   }
 }
 /* The longer label, invisible, in the same cell as the one showing, so
@@ -1224,7 +926,7 @@ body::before {
   margin: -14px 0 24px;
   font-size: 15px;
   line-height: 1.5;
-  color: var(--text2);
+  color: var(--color-text2);
   text-wrap: pretty;
 }
 
@@ -1235,8 +937,8 @@ body::before {
   gap: 6px;
   height: 32px;
   padding: 0 14px;
-  background: var(--blue-fill);
-  color: var(--on-fill);
+  background: var(--color-blue-fill);
+  color: var(--color-on-fill);
   border: none;
   border-radius: 10px;
   font-family: inherit;
@@ -1252,7 +954,7 @@ body::before {
 }
 @media (hover: hover) and (pointer: fine) {
   .pick-btn:hover:not(:disabled) {
-    background: var(--blue-fill-hover);
+    background: var(--color-blue-fill-hover);
     transform: translateY(-1px);
   }
 }
@@ -1280,8 +982,8 @@ body::before {
 }
 .pick-card {
   position: relative;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 18px;
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.25);
   padding: 28px 28px 24px;
@@ -1295,7 +997,7 @@ body::before {
   font-weight: 600;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: var(--text3);
+  color: var(--color-text3);
   margin-bottom: 12px;
 }
 .pick-img {
@@ -1314,7 +1016,7 @@ body::before {
   font-family: "Playfair Display", "Playfair Fallback", "Playfair Fallback Noto", serif;
   font-size: 24px;
   font-weight: 700;
-  color: var(--dark);
+  color: var(--color-dark);
   margin-bottom: 6px;
   letter-spacing: -0.3px;
 }
@@ -1324,25 +1026,25 @@ body::before {
   justify-content: center;
   gap: 8px;
   font-size: 13px;
-  color: var(--text3);
+  color: var(--color-text3);
   margin-bottom: 12px;
 }
 .pick-with {
   font-size: 13px;
   font-weight: 600;
-  color: var(--blue);
+  color: var(--color-blue);
   margin: -2px 0 8px;
 }
 .pick-short {
   font-size: 13.5px;
   line-height: 1.55;
-  color: var(--text2);
+  color: var(--color-text2);
   margin: 0 auto 8px;
   max-width: 36ch;
 }
 .pick-why {
   font-size: 11.5px;
-  color: var(--text3);
+  color: var(--color-text3);
   margin-bottom: 18px;
 }
 .pick-actions {
@@ -1364,20 +1066,20 @@ body::before {
     border-color 0.15s;
 }
 .pick-primary {
-  background: var(--blue-fill);
-  color: var(--on-fill);
+  background: var(--color-blue-fill);
+  color: var(--color-on-fill);
   border: none;
 }
 .pick-primary:hover {
-  background: var(--blue-fill-hover);
+  background: var(--color-blue-fill-hover);
 }
 .pick-secondary {
   background: none;
-  color: var(--text);
-  border: 1px solid var(--border);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
 }
 .pick-secondary:hover {
-  border-color: var(--text3);
+  border-color: var(--color-text3);
 }
 .pick-close {
   position: absolute;
@@ -1388,7 +1090,7 @@ body::before {
   background: none;
   border: none;
   font-size: 14px;
-  color: var(--text3);
+  color: var(--color-text3);
   cursor: pointer;
   border-radius: 50%;
   transition:
@@ -1396,8 +1098,8 @@ body::before {
     color 0.15s;
 }
 .pick-close:hover {
-  background: var(--bg2);
-  color: var(--text);
+  background: var(--color-bg2);
+  color: var(--color-text);
 }
 @keyframes pick-pop {
   from {
@@ -1425,8 +1127,8 @@ body::before {
 /* View toggle */
 .coll-toggle {
   display: flex;
-  background: var(--bg2);
-  border: 1px solid var(--border);
+  background: var(--color-bg2);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -1436,7 +1138,7 @@ body::before {
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--text3);
+  color: var(--color-text3);
   font-family: inherit;
   font-size: 11.5px;
   font-weight: 600;
@@ -1446,17 +1148,17 @@ body::before {
     color 0.15s;
 }
 .coll-btn:hover {
-  color: var(--text);
+  color: var(--color-text);
 }
 .coll-btn.active {
-  background: var(--surface);
-  color: var(--dark);
+  background: var(--color-surface);
+  color: var(--color-dark);
   box-shadow: var(--shadow-sm);
 }
 .view-btns {
   display: flex;
-  background: var(--bg2);
-  border: 1px solid var(--border);
+  background: var(--color-bg2);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   overflow: hidden;
 }
@@ -1469,17 +1171,17 @@ body::before {
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--text3);
+  color: var(--color-text3);
   transition:
     background 0.15s,
     color 0.15s;
 }
 .view-btn:hover {
-  color: var(--text);
+  color: var(--color-text);
 }
 .view-btn.active {
-  background: var(--surface);
-  color: var(--dark);
+  background: var(--color-surface);
+  color: var(--color-dark);
   box-shadow: var(--shadow-sm);
 }
 
@@ -1494,13 +1196,13 @@ body::before {
   font-weight: 600;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: var(--text3);
+  color: var(--color-text3);
 }
 .group-hd::after {
   content: "";
   flex: 1;
   height: 1px;
-  background: var(--border);
+  background: var(--color-border);
 }
 .group-hd:first-child {
   margin-top: 0;
@@ -1525,9 +1227,9 @@ body::before {
    row whatever wraps inside them. The last row is the add-ons panel under
    the footer's button, empty until a card opens it. */
 .game-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
   overflow: hidden;
   display: grid;
   grid-row: span 4;
@@ -1549,7 +1251,7 @@ body::before {
   .game-card:hover {
     transform: translateY(-3px);
     box-shadow: var(--shadow-lg);
-    border-color: var(--border-hover);
+    border-color: var(--color-border-hover);
   }
   .game-card:hover .card-corner-img {
     border-color: rgba(var(--blue-rgb), 0.25);
@@ -1558,7 +1260,7 @@ body::before {
 .game-card:has(:focus-visible) {
   transform: translateY(-3px);
   box-shadow: var(--shadow-lg);
-  border-color: var(--border-hover);
+  border-color: var(--color-border-hover);
 }
 .game-card:has(:focus-visible) .card-corner-img {
   border-color: rgba(var(--blue-rgb), 0.25);
@@ -1567,9 +1269,9 @@ body::before {
 .dur-quick,
 .dur-medium,
 .dur-long {
-  background: var(--bg2);
-  color: var(--text2);
-  border: 1px solid var(--border);
+  background: var(--color-bg2);
+  color: var(--color-text2);
+  border: 1px solid var(--color-border);
 }
 .dur-pill {
   font-size: 11px;
@@ -1585,7 +1287,7 @@ body::before {
    10px leaves 14px between them. */
 .card-head {
   padding: 16px 18px 12px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--color-border);
   position: relative;
   --corner-art: 76px;
   --corner-clear: calc(var(--corner-art) + 10px);
@@ -1596,7 +1298,7 @@ body::before {
   font-weight: 700;
   line-height: 1.2;
   margin-bottom: 8px;
-  color: var(--dark);
+  color: var(--color-dark);
   padding-right: var(--corner-clear);
 }
 .card-meta {
@@ -1611,7 +1313,7 @@ body::before {
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: var(--text3);
+  color: var(--color-text3);
 }
 .cmeta svg {
   flex-shrink: 0;
@@ -1636,20 +1338,20 @@ body::before {
   font-size: 11.5px;
   font-weight: 600;
   line-height: 1.5;
-  color: var(--text2);
-  background: var(--bg2);
-  border: 1px solid var(--border);
+  color: var(--color-text2);
+  background: var(--color-bg2);
+  border: 1px solid var(--color-border);
   border-radius: 999px;
   padding: 1px 8px;
 }
 .expands-owned {
-  color: var(--dark);
+  color: var(--color-dark);
 }
 .kw-pill {
   font-size: 11.5px;
-  color: var(--text2);
-  background: var(--bg2);
-  border: 1px solid var(--border);
+  color: var(--color-text2);
+  background: var(--color-bg2);
+  border: 1px solid var(--color-border);
   padding: 2px 8px;
   border-radius: 20px;
   cursor: pointer;
@@ -1669,16 +1371,16 @@ body::before {
 }
 @media (hover: hover) and (pointer: fine) {
   .kw-pill:hover {
-    background: var(--blue-bg);
+    background: var(--color-blue-bg);
     border-color: rgba(var(--blue-rgb), 0.25);
-    color: var(--blue);
+    color: var(--color-blue);
     transform: scale(1.05);
   }
 }
 .kw-pill.lit {
-  background: var(--blue-bg);
+  background: var(--color-blue-bg);
   border-color: rgba(var(--blue-rgb), 0.35);
-  color: var(--blue);
+  color: var(--color-blue);
   font-weight: 500;
 }
 .card-head {
@@ -1717,7 +1419,7 @@ body::before {
 .card-desc {
   font-size: 13px;
   line-height: 1.68;
-  color: var(--text2);
+  color: var(--color-text2);
 }
 .card-more {
   display: inline;
@@ -1725,7 +1427,7 @@ body::before {
   font-size: inherit;
   line-height: inherit;
   font-weight: 600;
-  color: var(--blue);
+  color: var(--color-blue);
   background: none;
   border: none;
   cursor: pointer;
@@ -1736,14 +1438,14 @@ body::before {
   text-decoration: underline;
 }
 .card-more:focus-visible {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--color-blue);
   outline-offset: 2px;
   border-radius: 4px;
 }
 .card-detail {
   margin-top: 10px;
   padding-top: 12px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--color-border);
   max-width: 72ch;
 }
 .card-detail .detail-section {
@@ -1758,14 +1460,14 @@ body::before {
 /* group header rows */
 .list-group-row td {
   padding: 8px 20px 5px;
-  background: var(--bg2);
-  border-bottom: 1px solid var(--border);
-  border-top: 1px solid var(--border);
+  background: var(--color-bg2);
+  border-bottom: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-border);
   font-size: 9.5px;
   font-weight: 600;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: var(--text3);
+  color: var(--color-text3);
 }
 .list-group-row:first-child td {
   border-top: none;
@@ -1776,14 +1478,14 @@ body::before {
   cursor: pointer;
 }
 .game-row:hover td {
-  background: var(--row-hover);
+  background: var(--color-row-hover);
 }
 .game-row.open td {
   background: rgba(var(--blue-rgb), 0.04);
 }
 .game-row td {
   vertical-align: middle;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--color-border);
   padding: 12px 14px;
   transition: background 0.14s;
 }
@@ -1808,7 +1510,7 @@ body::before {
   font-weight: 700;
   line-height: 1.2;
   text-wrap: balance;
-  color: var(--dark);
+  color: var(--color-dark);
 }
 @media (min-width: 901px) {
   .games-list th.col-name-h {
@@ -1849,8 +1551,8 @@ body::before {
   font-size: 11.5px;
   font-weight: 600;
   line-height: 1.5;
-  color: var(--blue);
-  background: var(--blue-bg);
+  color: var(--color-blue);
+  background: var(--color-blue-bg);
   border: 1px solid rgba(var(--blue-rgb), 0.2);
   border-radius: 999px;
   padding: 1px 8px;
@@ -1867,14 +1569,14 @@ body::before {
   box-shadow: inset 0 0 0 1px rgba(var(--blue-rgb), 0.45);
 }
 .sub-tag:focus-visible {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--color-blue);
   outline-offset: 2px;
 }
 .sub-tag-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  color: var(--text2);
+  color: var(--color-text2);
   font-size: 12px;
   line-height: 1.5;
   display: flex;
@@ -1885,7 +1587,7 @@ body::before {
   display: none;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
   font-size: 11.5px;
-  color: var(--text2);
+  color: var(--color-text2);
   line-height: 1.35;
   white-space: normal;
   font-weight: 400;
@@ -1895,18 +1597,18 @@ body::before {
 .col-players {
   white-space: nowrap;
   font-size: 12.5px;
-  color: var(--text2);
+  color: var(--color-text2);
 }
 
 /* col: difficulty (the collection's): BoardGameGeek's weight */
 .col-diff {
   white-space: nowrap;
   font-size: 12.5px;
-  color: var(--text2);
+  color: var(--color-text2);
 }
 /* BoardGameGeek doesn't rate it: a dash, not an empty cell. */
 .diff-none {
-  color: var(--text3);
+  color: var(--color-text3);
 }
 /* Under 1080px the table has no room for it (it would run past the page);
    the cards still show it. */
@@ -1930,9 +1632,9 @@ body::before {
     border-color 0.15s,
     transform 0.12s;
   display: inline-block;
-  background: var(--bg2);
-  color: var(--text2);
-  border: 1px solid var(--border);
+  background: var(--color-bg2);
+  color: var(--color-text2);
+  border: 1px solid var(--color-border);
 }
 /* Only a pill that filters looks it: a game longer than every time budget
    has none to filter to, and its pill is plain text. */
@@ -1941,8 +1643,8 @@ body::before {
 }
 @media (hover: hover) and (pointer: fine) {
   .row-dur[role="button"]:hover {
-    background: var(--blue-bg);
-    color: var(--blue);
+    background: var(--color-blue-bg);
+    color: var(--color-blue);
     border-color: rgba(var(--blue-rgb), 0.3);
     transform: scale(1.05);
   }
@@ -1951,7 +1653,7 @@ body::before {
 /* col: short desc */
 .col-short {
   font-size: 12.5px;
-  color: var(--text2);
+  color: var(--color-text2);
   line-height: 1.45;
   word-break: normal;
   overflow-wrap: break-word;
@@ -1989,7 +1691,7 @@ body::before {
   border-radius: 6px;
 }
 .row-toggle:focus-visible {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--color-blue);
   outline-offset: 2px;
 }
 .rules-btn {
@@ -2000,9 +1702,9 @@ body::before {
   padding: 6px 10px;
   height: 32px;
   border-radius: 8px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text2);
   text-decoration: none;
   flex-shrink: 0;
   font-size: 12px;
@@ -2015,13 +1717,13 @@ body::before {
     transform 0.12s;
 }
 .rules-btn:hover {
-  background: var(--blue-bg);
+  background: var(--color-blue-bg);
   border-color: rgba(var(--blue-rgb), 0.3);
-  color: var(--blue);
+  color: var(--color-blue);
   box-shadow: var(--shadow-md);
 }
 .rules-btn:focus-visible {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--color-blue);
   outline-offset: 2px;
 }
 .rules-btn svg {
@@ -2034,29 +1736,29 @@ body::before {
    filled button; the plain one (Score, Word Checker) is the same quiet
    outline as the video button beside it. */
 .rules-btn--primary {
-  background: var(--blue-fill);
-  border-color: var(--blue-fill);
-  color: var(--on-fill);
+  background: var(--color-blue-fill);
+  border-color: var(--color-blue-fill);
+  color: var(--color-on-fill);
   font-weight: 600;
 }
 /* The Rules icon's lines and spark are cut in the colour behind it
    (--icon-cut, the page's surface by default), so they show on the filled
    button too, in its blue. */
 .rules-btn--primary {
-  --icon-cut: var(--blue-fill);
+  --icon-cut: var(--color-blue-fill);
 }
 .rules-btn--primary:hover {
-  --icon-cut: var(--blue-fill-hover);
+  --icon-cut: var(--color-blue-fill-hover);
 }
 .rules-btn--primary:hover {
-  background: var(--blue-fill-hover);
-  border-color: var(--blue-fill-hover);
-  color: var(--on-fill);
+  background: var(--color-blue-fill-hover);
+  border-color: var(--color-blue-fill-hover);
+  color: var(--color-on-fill);
 }
 .row-chevron {
   width: 16px;
   height: 16px;
-  color: var(--text3);
+  color: var(--color-text3);
   transition:
     transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
     color 0.15s;
@@ -2064,20 +1766,20 @@ body::before {
 }
 .game-row.open .row-chevron {
   transform: rotate(180deg);
-  color: var(--blue);
+  color: var(--color-blue);
 }
 
 /* clip-path rounds corners WITHOUT breaking position:sticky on thead */
 .table-wrap {
-  border-radius: var(--r);
-  clip-path: inset(0 round var(--r));
+  border-radius: var(--radius-panel);
+  clip-path: inset(0 round var(--radius-panel));
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border);
+  border: 1px solid var(--color-border);
 }
 table.games-list {
   width: 100%;
   border-collapse: collapse;
-  background: var(--surface);
+  background: var(--color-surface);
   table-layout: auto;
 }
 table.games-list thead tr th {
@@ -2089,9 +1791,9 @@ table.games-list thead tr th {
   font-weight: 600;
   letter-spacing: 1.8px;
   text-transform: uppercase;
-  color: var(--text3);
-  border-bottom: 1px solid var(--border);
-  background: var(--bg2);
+  color: var(--color-text3);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg2);
   white-space: nowrap;
   vertical-align: middle;
   text-align: left;
@@ -2109,8 +1811,8 @@ table.games-list thead tr th.sortable {
   user-select: none;
 }
 table.games-list thead tr th.sortable:hover {
-  color: var(--dark);
-  background: var(--bg3);
+  color: var(--color-dark);
+  background: var(--color-bg3);
 }
 table.games-list thead tr th .sort-icon {
   display: inline-block;
@@ -2121,13 +1823,13 @@ table.games-list thead tr th .sort-icon {
 table.games-list thead tr th.sort-asc .sort-icon,
 table.games-list thead tr th.sort-desc .sort-icon {
   opacity: 1;
-  color: var(--blue);
+  color: var(--color-blue);
 }
 
 .row-expand td {
   padding: 0;
-  background: var(--bg2);
-  border-bottom: 1px solid var(--border);
+  background: var(--color-bg2);
+  border-bottom: 1px solid var(--color-border);
 }
 .row-expand-inner {
   display: grid;
@@ -2153,14 +1855,14 @@ table.games-list thead tr th.sort-desc .sort-icon {
   font-family: "Playfair Display", "Playfair Fallback", "Playfair Fallback Noto", serif;
   font-size: 13px;
   font-weight: 700;
-  color: var(--dark);
+  color: var(--color-dark);
   margin-bottom: 6px;
   letter-spacing: -0.2px;
 }
 .detail-section p {
   font-size: 13px;
   line-height: 1.75;
-  color: var(--text2);
+  color: var(--color-text2);
 }
 .row-expand-foot {
   display: flex;
@@ -2169,7 +1871,7 @@ table.games-list thead tr th.sort-desc .sort-icon {
   gap: 8px;
   padding: 12px 4px 4px;
   margin-top: 4px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--color-border);
   position: relative;
   z-index: 1;
 }
@@ -2190,9 +1892,9 @@ table.games-list thead tr th.sort-desc .sort-icon {
   height: 32px;
   border-radius: 8px;
   text-decoration: none;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text2);
   transition:
     background 0.15s,
     color 0.15s,
@@ -2206,29 +1908,29 @@ table.games-list thead tr th.sort-desc .sort-icon {
   height: 14px;
   flex-shrink: 0;
   display: block;
-  fill: var(--yt-red);
+  fill: var(--color-yt-red);
 }
 @media (hover: hover) and (pointer: fine) {
   .row-yt:hover,
   .wish-yt:hover {
-    background: var(--bg2);
-    border-color: var(--border-hover);
+    background: var(--color-bg2);
+    border-color: var(--color-border-hover);
     transform: scale(1.05);
   }
   /* An add-on's video doesn't grow, like the Rules button beside it. */
   .sub-yt:hover {
-    background: var(--bg2);
-    border-color: var(--border-hover);
+    background: var(--color-bg2);
+    border-color: var(--color-border-hover);
   }
   .wish-amz:hover {
     background: rgba(255, 153, 0, 0.1);
     border-color: rgba(230, 138, 0, 0.5);
-    color: var(--text);
+    color: var(--color-text);
     transform: scale(1.05);
   }
   .wish-track:hover {
-    background: var(--blue-bg);
-    color: var(--blue);
+    background: var(--color-blue-bg);
+    color: var(--color-blue);
     border-color: rgba(var(--blue-rgb), 0.3);
     transform: scale(1.05);
   }
@@ -2239,12 +1941,12 @@ table.games-list thead tr th.sort-desc .sort-icon {
   grid-column: 1/-1;
   text-align: center;
   padding: 64px 40px;
-  background: var(--surface);
-  border-radius: var(--r);
-  border: 1px solid var(--border);
+  background: var(--color-surface);
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--color-border);
 }
 .no-results p {
-  color: var(--text2);
+  color: var(--color-text2);
   font-size: 15px;
   margin-bottom: 16px;
 }
@@ -2254,8 +1956,8 @@ table.games-list thead tr th.sort-desc .sort-icon {
 }
 .no-results-btn {
   display: inline-block;
-  background: var(--blue-fill);
-  color: var(--on-fill);
+  background: var(--color-blue-fill);
+  color: var(--color-on-fill);
   border: none;
   padding: 9px 22px;
   border-radius: 20px;
@@ -2265,7 +1967,7 @@ table.games-list thead tr th.sort-desc .sort-icon {
   transition: background 0.2s;
 }
 .no-results-btn:hover {
-  background: var(--blue-fill-hover);
+  background: var(--color-blue-fill-hover);
 }
 .no-results-options {
   list-style: none;
@@ -2280,15 +1982,15 @@ table.games-list thead tr th.sort-desc .sort-icon {
   padding: 8px 14px;
   border-radius: 20px;
   border: 1px solid rgba(var(--blue-rgb), 0.3);
-  background: var(--blue-bg);
-  color: var(--blue);
+  background: var(--color-blue-bg);
+  color: var(--color-blue);
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
 }
 .no-results-opt:hover {
-  background: var(--blue-bg2);
+  background: var(--color-blue-bg2);
 }
 .no-results-actions {
   display: flex;
@@ -2301,7 +2003,7 @@ table.games-list thead tr th.sort-desc .sort-icon {
   background: none;
   border: none;
   padding: 6px 2px;
-  color: var(--blue);
+  color: var(--color-blue);
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -2325,8 +2027,8 @@ table.games-list thead tr th.sort-desc .sort-icon {
   padding: 5px 11px;
   font-size: 11.5px;
   font-weight: 600;
-  color: var(--blue);
-  background: var(--blue-bg);
+  color: var(--color-blue);
+  background: var(--color-blue-bg);
   border: 1px solid rgba(var(--blue-rgb), 0.25);
   border-radius: 999px;
   cursor: pointer;
@@ -2336,7 +2038,7 @@ table.games-list thead tr th.sort-desc .sort-icon {
     border-color 0.15s;
 }
 .sub-pill:hover {
-  background: var(--blue-bg2);
+  background: var(--color-blue-bg2);
   border-color: rgba(var(--blue-rgb), 0.4);
 }
 .sub-pill-chev {
@@ -2346,9 +2048,9 @@ table.games-list thead tr th.sort-desc .sort-icon {
   transform: rotate(180deg);
 }
 .sub-panel {
-  background: var(--bg2);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+  background: var(--color-bg2);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
   padding: 8px;
   margin-bottom: 14px;
 }
@@ -2372,9 +2074,9 @@ table.games-list thead tr th.sort-desc .sort-icon {
   row-gap: 3px;
   align-items: start;
   padding: 9px 10px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
 }
 .sub-main {
   display: contents;
@@ -2397,7 +2099,7 @@ table.games-list thead tr th.sort-desc .sort-icon {
   gap: 7px;
   font-size: 13.5px;
   font-weight: 600;
-  color: var(--dark);
+  color: var(--color-dark);
 }
 .sub-meta {
   display: flex;
@@ -2407,7 +2109,7 @@ table.games-list thead tr th.sort-desc .sort-icon {
 .sub-short {
   font-size: 12px;
   line-height: 1.55;
-  color: var(--text2);
+  color: var(--color-text2);
 }
 .sub-more-btn {
   align-self: flex-start;
@@ -2418,7 +2120,7 @@ table.games-list thead tr th.sort-desc .sort-icon {
   font-family: inherit;
   font-size: 11.5px;
   font-weight: 600;
-  color: var(--blue);
+  color: var(--color-blue);
   cursor: pointer;
 }
 .sub-more-btn:hover {
@@ -2427,12 +2129,12 @@ table.games-list thead tr th.sort-desc .sort-icon {
 .sub-more {
   margin-top: 6px;
   padding-top: 8px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--color-border);
 }
 .sub-desc {
   font-size: 12.5px;
   line-height: 1.65;
-  color: var(--text);
+  color: var(--color-text);
   margin-bottom: 10px;
 }
 .sub-detail .detail-section {
@@ -2462,18 +2164,18 @@ table.games-list thead tr th.sort-desc .sort-icon {
   display: grid;
   place-items: center;
   border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text2);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text2);
   transition:
     color 0.15s,
     border-color 0.15s,
     background 0.15s;
 }
 .sub-link:not(.sub-yt):hover {
-  color: var(--blue);
+  color: var(--color-blue);
   border-color: rgba(var(--blue-rgb), 0.3);
-  background: var(--blue-bg);
+  background: var(--color-blue-bg);
 }
 .sub-link svg {
   width: 14px;
@@ -2481,7 +2183,7 @@ table.games-list thead tr th.sort-desc .sort-icon {
   display: block;
 }
 .row-subgames .sub-row {
-  background: var(--bg);
+  background: var(--color-bg);
 }
 /* Awards and add-ons bottom left, the links bottom right; on a card too
    narrow for both, the links drop to their own line together. */
@@ -2534,12 +2236,12 @@ table.games-list thead tr th.sort-desc .sort-icon {
 }
 .card-credit {
   font-size: 12px;
-  color: var(--text3);
+  color: var(--color-text3);
   margin-top: 8px;
 }
 .row-credit {
   font-size: 12.5px;
-  color: var(--text3);
+  color: var(--color-text3);
   margin-top: 6px;
 }
 .row-art {
@@ -2549,7 +2251,7 @@ table.games-list thead tr th.sort-desc .sort-icon {
   margin: 0 0 8px 14px;
   border-radius: 12px;
   object-fit: cover;
-  border: 1px solid var(--border);
+  border: 1px solid var(--color-border);
 }
 .col-vote {
   white-space: nowrap;
@@ -2568,9 +2270,9 @@ table.games-list thead tr th.sort-desc .sort-icon {
   height: 32px;
   padding: 0 12px;
   background: rgba(var(--vote-rgb), 0.1);
-  border: 1px solid var(--vote);
+  border: 1px solid var(--color-vote);
   border-radius: 8px;
-  color: var(--text);
+  color: var(--color-text);
   font-family: inherit;
   font-size: 12.5px;
   font-weight: 700;
@@ -2590,28 +2292,28 @@ table.games-list thead tr th.sort-desc .sort-icon {
   cursor: not-allowed;
 }
 .vote-btn--on {
-  background: var(--vote);
-  border-color: var(--vote);
-  color: var(--on-fill);
+  background: var(--color-vote);
+  border-color: var(--color-vote);
+  color: var(--color-on-fill);
 }
 .vote-btn--on .vote-heart {
-  color: var(--on-fill);
+  color: var(--color-on-fill);
 }
 .vote-btn--on:hover:not(:disabled) {
-  background: var(--vote-hover);
-  border-color: var(--vote-hover);
+  background: var(--color-vote-hover);
+  border-color: var(--color-vote-hover);
 }
 .vote-heart {
   font-size: 14px;
   line-height: 1;
-  color: var(--vote);
+  color: var(--color-vote);
 }
 .vote-label {
   font-variant-numeric: tabular-nums;
 }
 .awards {
   font-size: 11.5px;
-  color: var(--award-fg);
+  color: var(--color-award-fg);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
   font-weight: 600;
   white-space: nowrap;
@@ -2641,7 +2343,7 @@ table.games-list thead tr th.sort-desc .sort-icon {
   border-color: rgba(201, 162, 39, 0.65);
 }
 .awards-toggle:focus-visible {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--color-blue);
   outline-offset: 2px;
 }
 .awards-trophy {
@@ -2655,9 +2357,9 @@ table.games-list thead tr th.sort-desc .sort-icon {
 .pop {
   z-index: 400;
   padding: 10px 12px;
-  border-radius: var(--r-sm);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   box-shadow: var(--shadow-lg);
   text-align: left;
   white-space: normal;
@@ -2669,14 +2371,14 @@ table.games-list thead tr th.sort-desc .sort-icon {
   font-weight: 600;
   letter-spacing: 0.6px;
   text-transform: uppercase;
-  color: var(--text3);
+  color: var(--color-text3);
   margin-bottom: 6px;
 }
 .awards-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  color: var(--text2);
+  color: var(--color-text2);
   font-size: 12px;
   line-height: 1.5;
   display: flex;
@@ -2684,7 +2386,7 @@ table.games-list thead tr th.sort-desc .sort-icon {
   gap: 3px;
 }
 .awards-year {
-  color: var(--text3);
+  color: var(--color-text3);
   margin-left: 4px;
 }
 /* In an open card or row, the wins sit side by side where there's room. */
@@ -2692,8 +2394,8 @@ table.games-list thead tr th.sort-desc .sort-icon {
   margin-top: 6px;
   padding: 8px 10px;
   border-radius: 8px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
   gap: 3px 24px;
@@ -2705,21 +2407,21 @@ table.games-list thead tr th.sort-desc .sort-icon {
 .suggest {
   margin-top: 36px;
   padding: 24px;
-  border-radius: var(--r);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   box-shadow: var(--shadow-sm);
 }
 .suggest-title {
   font-family: "Playfair Display", "Playfair Fallback", "Playfair Fallback Noto", serif;
   font-size: 19px;
   font-weight: 700;
-  color: var(--dark);
+  color: var(--color-dark);
   margin-bottom: 6px;
 }
 .suggest-sub {
   font-size: 12.5px;
-  color: var(--text2);
+  color: var(--color-text2);
   margin-bottom: 16px;
 }
 .suggest-fields {
@@ -2731,32 +2433,32 @@ table.games-list thead tr th.sort-desc .sort-icon {
 }
 .suggest-label {
   font-size: 12px;
-  color: var(--text2);
+  color: var(--color-text2);
   font-weight: 500;
 }
 .suggest-opt {
-  color: var(--text3);
+  color: var(--color-text3);
   font-weight: 400;
 }
 .suggest-input {
   height: 34px;
   padding: 0 12px;
-  border: 1px solid var(--border2);
+  border: 1px solid var(--color-border2);
   border-radius: 8px;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--color-bg);
+  color: var(--color-text);
   font-family: inherit;
   font-size: 16px;
   min-width: 0;
 }
 .suggest-input::placeholder {
-  color: var(--text3);
+  color: var(--color-text3);
   opacity: 1;
 }
 .suggest-input:focus {
   outline: none;
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-bg2);
+  border-color: var(--color-blue);
+  box-shadow: 0 0 0 3px var(--color-blue-bg2);
 }
 .suggest-actions {
   display: flex;
@@ -2769,9 +2471,9 @@ table.games-list thead tr th.sort-desc .sort-icon {
   height: 34px;
   padding: 0 16px;
   border-radius: 8px;
-  border: 1px solid var(--blue-fill);
-  background: var(--blue-fill);
-  color: var(--on-fill);
+  border: 1px solid var(--color-blue-fill);
+  background: var(--color-blue-fill);
+  color: var(--color-on-fill);
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -2779,7 +2481,7 @@ table.games-list thead tr th.sort-desc .sort-icon {
   transition: background 0.15s;
 }
 .suggest-btn:hover:not(:disabled) {
-  background: var(--blue-fill-hover);
+  background: var(--color-blue-fill-hover);
 }
 .suggest-btn:disabled {
   opacity: 0.6;
@@ -2787,7 +2489,7 @@ table.games-list thead tr th.sort-desc .sort-icon {
 }
 .suggest-status {
   font-size: 12.5px;
-  color: var(--text2);
+  color: var(--color-text2);
 }
 
 ::-webkit-scrollbar {
@@ -2798,7 +2500,7 @@ table.games-list thead tr th.sort-desc .sort-icon {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border2);
+  background: var(--color-border2);
   border-radius: 3px;
 }
 
@@ -2820,7 +2522,7 @@ table.games-list thead tr th.sort-desc .sort-icon {
   height: var(--corner-art);
   border-radius: 14px;
   object-fit: contain;
-  border: 1px solid var(--border);
+  border: 1px solid var(--color-border);
   box-shadow: var(--shadow-sm);
   flex-shrink: 0;
 }
@@ -2836,7 +2538,7 @@ table.games-list thead tr th.sort-desc .sort-icon {
 .hero-reel-cover img,
 .pick-img,
 .rules-box-art {
-  background: var(--art-matte);
+  background: var(--color-art-matte);
   filter: var(--art-dim);
 }
 
@@ -2846,7 +2548,7 @@ table.games-list thead tr th.sort-desc .sort-icon {
 .rules-page {
   max-width: 960px;
   margin: 0 auto;
-  padding: 32px min(var(--gutter), 24px) 64px;
+  padding: 32px min(var(--spacing-gutter), 24px) 64px;
 }
 .rules-header {
   margin-bottom: 32px;
@@ -2857,7 +2559,7 @@ table.games-list thead tr th.sort-desc .sort-icon {
   gap: 4px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--blue);
+  color: var(--color-blue);
   text-decoration: none;
   margin-bottom: 24px;
   transition: opacity 0.15s;
@@ -2878,15 +2580,15 @@ table.games-list thead tr th.sort-desc .sort-icon {
   width: 80px;
   height: 80px;
   object-fit: cover;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 .rules-game-name {
   font-family: "Playfair Display", "Playfair Fallback", "Playfair Fallback Noto", serif;
   font-size: clamp(24px, 4vw, 36px);
   font-weight: 700;
-  color: var(--dark);
+  color: var(--color-dark);
   line-height: 1.2;
   margin-bottom: 4px;
   overflow: hidden;
@@ -2895,10 +2597,11 @@ table.games-list thead tr th.sort-desc .sort-icon {
 }
 .rules-game-desc {
   font-size: 14px;
-  color: var(--text2);
+  color: var(--color-text2);
   line-height: 1.5;
 }
 .rules-title-row .rules-chat-toggle {
+  line-height: 16px;
   flex-shrink: 0;
 }
 /* A page's header while its code loads (RouteFallback): its text and
@@ -2908,18 +2611,18 @@ table.games-list thead tr th.sort-desc .sort-icon {
   animation: fallback-pulse 1.6s ease-in-out infinite;
 }
 .route-fallback .rules-box-art {
-  background: var(--bg3);
+  background: var(--color-bg3);
 }
 .skeleton-text {
   color: transparent;
-  background: var(--bg3);
+  background: var(--color-bg3);
   border-radius: 6px;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
 .route-fallback .rules-chat-toggle {
   color: transparent;
-  background: var(--bg3);
+  background: var(--color-bg3);
   border-color: transparent;
   cursor: default;
 }
@@ -2990,10 +2693,10 @@ table.games-list thead tr th.sort-desc .sort-icon {
   padding: 8px 14px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--text2);
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
+  color: var(--color-text2);
+  background: var(--color-bg2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
   text-decoration: none;
   white-space: nowrap;
   transition:
@@ -3002,14 +2705,14 @@ table.games-list thead tr th.sort-desc .sort-icon {
     border-color 0.15s;
 }
 .rules-book:hover {
-  color: var(--blue);
+  color: var(--color-blue);
   border-color: rgba(var(--blue-rgb), 0.3);
-  background: var(--blue-bg);
+  background: var(--color-blue-bg);
 }
 .rules-book[aria-current="page"] {
-  background: var(--dark);
-  border-color: var(--dark);
-  color: var(--surface);
+  background: var(--color-dark);
+  border-color: var(--color-dark);
+  color: var(--color-surface);
 }
 .kind-chip {
   font-size: 9.5px;
@@ -3023,25 +2726,25 @@ table.games-list thead tr th.sort-desc .sort-icon {
 }
 .kind-expansion {
   background: rgba(176, 108, 0, 0.12);
-  color: var(--expansion-fg);
+  color: var(--color-expansion-fg);
 }
 .kind-extension {
   background: rgba(30, 123, 75, 0.12);
-  color: var(--extension-fg);
+  color: var(--color-extension-fg);
 }
 .kind-version {
   background: rgba(var(--blue-rgb), 0.1);
-  color: var(--version-fg);
+  color: var(--color-version-fg);
 }
 .rules-book[aria-current="page"] .kind-chip {
-  background: color-mix(in srgb, var(--surface) 18%, transparent);
-  color: var(--surface);
+  background: color-mix(in srgb, var(--color-surface) 18%, transparent);
+  color: var(--color-surface);
 }
 .house-rules {
   margin-bottom: 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
-  background: var(--surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
 }
 .house-rules summary {
   list-style: none;
@@ -3051,16 +2754,16 @@ table.games-list thead tr th.sort-desc .sort-icon {
   padding: 12px 16px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--text);
+  color: var(--color-text);
   cursor: pointer;
 }
 .house-rules summary:hover {
-  color: var(--blue);
+  color: var(--color-blue);
 }
 .house-rules summary:focus-visible {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--color-blue);
   outline-offset: 2px;
-  border-radius: var(--r-sm);
+  border-radius: var(--radius-control);
 }
 /* Hide the native disclosure triangle (Safari draws it with its own pseudo-element) and draw one that turns when open. */
 .house-rules summary::-webkit-details-marker {
@@ -3072,8 +2775,8 @@ table.games-list thead tr th.sort-desc .sort-icon {
   width: 7px;
   height: 7px;
   margin-left: auto;
-  border-right: 2px solid var(--text3);
-  border-bottom: 2px solid var(--text3);
+  border-right: 2px solid var(--color-text3);
+  border-bottom: 2px solid var(--color-text3);
   transform: rotate(45deg);
   transition: transform 0.15s;
 }
@@ -3085,8 +2788,8 @@ table.games-list thead tr th.sort-desc .sort-icon {
   font-weight: 700;
   padding: 1px 7px;
   border-radius: 10px;
-  background: var(--bg3);
-  color: var(--text2);
+  background: var(--color-bg3);
+  color: var(--color-text2);
 }
 .house-rules dl {
   display: flex;
@@ -3098,14 +2801,14 @@ table.games-list thead tr th.sort-desc .sort-icon {
 .house-rule dt {
   font-size: 13px;
   font-weight: 600;
-  color: var(--text);
+  color: var(--color-text);
   margin-bottom: 2px;
 }
 .house-rule dd {
   margin: 0;
   font-size: 13px;
   line-height: 1.6;
-  color: var(--text2);
+  color: var(--color-text2);
 }
 .rules-pdf-links {
   display: flex;
@@ -3120,7 +2823,7 @@ table.games-list thead tr th.sort-desc .sort-icon {
   gap: 6px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--blue);
+  color: var(--color-blue);
   text-decoration: none;
   transition: opacity 0.15s;
 }
@@ -3132,7 +2835,7 @@ table.games-list thead tr th.sort-desc .sort-icon {
    file's size above it. */
 .rules-download-size {
   font-weight: 400;
-  color: var(--text2);
+  color: var(--color-text2);
 }
 /* Save for offline (SaveOffline), the row's third item: a button styled as
    the links beside it, or once it stands for nothing to do, a status in
@@ -3155,7 +2858,7 @@ button.rules-save {
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: var(--text2);
+  color: var(--color-text2);
 }
 .rules-save-status:focus {
   outline: none;
@@ -3166,7 +2869,7 @@ button.rules-save {
   height: 14px;
 }
 .rules-save-saved svg {
-  color: var(--ok-fg);
+  color: var(--color-ok-fg);
 }
 .rules-save .spin {
   animation: spin 1s linear infinite;
@@ -3223,7 +2926,7 @@ button.rules-save {
   .rules-print-note {
     display: block;
     font-size: 13px;
-    color: var(--text2);
+    color: var(--color-text2);
   }
 }
 .pdf-reader {
@@ -3231,7 +2934,7 @@ button.rules-save {
 }
 .pdf-note {
   font-size: 14px;
-  color: var(--text2);
+  color: var(--color-text2);
   padding: 24px 0;
   text-align: center;
 }
@@ -3248,7 +2951,7 @@ button.rules-save {
   z-index: 2;
   padding: 8px 0;
   margin-bottom: 8px;
-  background: var(--bg);
+  background: var(--color-bg);
 }
 .pdf-search-form {
   display: flex;
@@ -3261,13 +2964,13 @@ button.rules-save {
   padding: 0 12px;
   font: inherit;
   font-size: 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
-  background: var(--surface);
-  color: var(--text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 .pdf-search-form input:focus-visible {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--color-blue);
   outline-offset: 1px;
 }
 .pdf-search-form button,
@@ -3277,10 +2980,10 @@ button.rules-save {
   font: inherit;
   font-size: 14px;
   font-weight: 600;
-  border-radius: var(--r-sm);
+  border-radius: var(--radius-control);
   border: 1px solid rgba(var(--blue-rgb), 0.25);
-  background: var(--blue-bg);
-  color: var(--blue);
+  background: var(--color-blue-bg);
+  color: var(--color-blue);
   cursor: pointer;
 }
 .pdf-search-form button:disabled {
@@ -3303,7 +3006,7 @@ button.rules-save {
 }
 .pdf-search-status {
   font-size: 13px;
-  color: var(--text2);
+  color: var(--color-text2);
 }
 .pdf-search-nav {
   display: flex;
@@ -3328,7 +3031,7 @@ button.rules-save {
   border-radius: 4px;
   overflow: hidden;
   box-shadow:
-    0 0 0 1px var(--border),
+    0 0 0 1px var(--color-border),
     var(--shadow-sm);
   scroll-margin-top: 130px;
   --scale-round-x: 1px;
@@ -3342,7 +3045,7 @@ button.rules-save {
    this file makes that instant. Focus from the keyboard keeps the ring. */
 .pdf-page.pdf-page--cited,
 .pdf-page:focus-visible {
-  outline-color: var(--cite-ring);
+  outline-color: var(--color-cite-ring);
   transition: none;
 }
 /* The edge is a shadow, not a border, so the page image and its text layer
@@ -3432,10 +3135,10 @@ button.rules-save {
   padding: 10px 20px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--blue);
-  background: var(--blue-bg);
+  color: var(--color-blue);
+  background: var(--color-blue-bg);
   border: 1px solid rgba(var(--blue-rgb), 0.2);
-  border-radius: var(--r-sm);
+  border-radius: var(--radius-control);
   cursor: pointer;
   transition:
     background 0.15s,
@@ -3451,9 +3154,9 @@ a.rules-chat-toggle {
 
 .rules-chat-panel {
   margin-bottom: 20px;
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  background: var(--surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
   box-shadow: var(--shadow-md);
   overflow: hidden;
   display: flex;
@@ -3465,9 +3168,9 @@ a.rules-chat-toggle {
   padding: 10px 20px;
   font-size: 12.5px;
   font-weight: 500;
-  color: var(--text2);
-  background: var(--bg);
-  border-bottom: 1px solid var(--border);
+  color: var(--color-text2);
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
 }
 .rules-chat-messages {
   flex: 1;
@@ -3493,8 +3196,8 @@ a.rules-chat-toggle {
   padding: 7px 12px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--blue);
-  background: var(--surface);
+  color: var(--color-blue);
+  background: var(--color-surface);
   border: 1px solid rgba(var(--blue-rgb), 0.3);
   border-radius: 999px;
   cursor: pointer;
@@ -3502,7 +3205,7 @@ a.rules-chat-toggle {
   text-align: left;
 }
 .rules-chat-starter:hover:not(:disabled) {
-  background: var(--blue-bg);
+  background: var(--color-blue-bg);
 }
 /* Offline: dimmed as Send is, the notice by the box says why. */
 .rules-chat-starter:disabled {
@@ -3535,7 +3238,7 @@ a.rules-chat-toggle {
   display: inline-block;
   margin-top: 8px;
   font-weight: 600;
-  color: var(--blue);
+  color: var(--color-blue);
   text-decoration: none;
 }
 .rules-chat-tablink:hover {
@@ -3562,29 +3265,29 @@ a.rules-chat-toggle {
   font-weight: 600;
 }
 .rules-chat-bubble code {
-  background: var(--code-bg);
+  background: var(--color-code-bg);
   padding: 1px 4px;
   border-radius: 3px;
   font-size: 13px;
 }
 /* Page citations: the site's link blue, underlined in running text. */
 .rules-chat-bubble a {
-  color: var(--blue);
+  color: var(--color-blue);
   text-underline-offset: 2px;
 }
 .rules-chat-msg-user .rules-chat-bubble {
-  background: var(--blue-fill);
-  color: var(--on-fill);
+  background: var(--color-blue-fill);
+  color: var(--color-on-fill);
   border-bottom-right-radius: 4px;
 }
 .rules-chat-msg-assistant .rules-chat-bubble {
-  background: var(--bg2);
-  color: var(--text);
+  background: var(--color-bg2);
+  color: var(--color-text);
   border-bottom-left-radius: 4px;
 }
 
 .rules-chat-thinking {
-  color: var(--text3);
+  color: var(--color-text3);
   font-style: italic;
 }
 .rules-chat-error {
@@ -3597,15 +3300,15 @@ a.rules-chat-toggle {
   padding: 6px 14px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--blue);
-  background: var(--surface);
+  color: var(--color-blue);
+  background: var(--color-surface);
   border: 1px solid rgba(var(--blue-rgb), 0.35);
-  border-radius: var(--r-sm);
+  border-radius: var(--radius-control);
   cursor: pointer;
   font-family: inherit;
 }
 .rules-chat-retry:hover:not(:disabled) {
-  background: var(--blue-bg);
+  background: var(--color-blue-bg);
 }
 .rules-chat-retry:disabled {
   opacity: 0.5;
@@ -3617,8 +3320,8 @@ a.rules-chat-toggle {
    a live region. */
 .rules-chat-status {
   padding: 12px 16px 0;
-  border-top: 1px solid var(--border);
-  background: var(--bg);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg);
 }
 .rules-chat-status:empty {
   padding: 0;
@@ -3631,24 +3334,25 @@ a.rules-chat-toggle {
   display: flex;
   gap: 8px;
   padding: 12px 16px;
-  border-top: 1px solid var(--border);
-  background: var(--bg);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg);
 }
 /* 16px is a functional minimum, not a style choice: iOS Safari zooms the
    whole page when a focused input computes below it, and does not zoom back. */
 .rules-chat-input input {
+  line-height: 18px;
   flex: 1;
   padding: 10px 14px;
   font-size: 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
-  background: var(--surface);
-  color: var(--text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-text);
   outline: none;
   transition: border-color 0.15s;
 }
 .rules-chat-input input:focus {
-  border-color: var(--blue);
+  border-color: var(--color-blue);
 }
 .rules-chat-input input:disabled {
   opacity: 0.6;
@@ -3657,10 +3361,10 @@ a.rules-chat-toggle {
   padding: 10px 18px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--on-fill);
-  background: var(--blue-fill);
+  color: var(--color-on-fill);
+  background: var(--color-blue-fill);
   border: none;
-  border-radius: var(--r-sm);
+  border-radius: var(--radius-control);
   cursor: pointer;
   transition: opacity 0.15s;
 }
@@ -3680,7 +3384,7 @@ a.rules-chat-toggle {
 }
 .word-checker-panel .rules-chat-input {
   border-top: none;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--color-border);
 }
 .word-checker-body {
   flex: 1;
@@ -3691,7 +3395,7 @@ a.rules-chat-toggle {
   gap: 16px;
 }
 .word-checker-empty {
-  color: var(--text3);
+  color: var(--color-text3);
   font-size: 14px;
   text-align: center;
   padding: 40px 20px;
@@ -3701,7 +3405,7 @@ a.rules-chat-toggle {
   align-items: center;
   gap: 10px;
   padding: 12px 16px;
-  border-radius: var(--r-sm);
+  border-radius: var(--radius-control);
   font-size: 14px;
 }
 .word-badge-icon {
@@ -3725,26 +3429,26 @@ a.rules-chat-toggle {
   margin: 8px 2px 0;
   font-size: 12.5px;
   line-height: 1.5;
-  color: var(--text2);
+  color: var(--color-text2);
 }
 .word-valid {
   background: rgba(52, 199, 89, 0.12);
-  color: var(--ok-fg);
+  color: var(--color-ok-fg);
   border: 1px solid rgba(52, 199, 89, 0.25);
 }
 .word-invalid {
   background: rgba(255, 59, 48, 0.1);
-  color: var(--bad-fg);
+  color: var(--color-bad-fg);
   border: 1px solid rgba(255, 59, 48, 0.2);
 }
 .word-unlisted {
-  background: var(--info-bg);
-  color: var(--info-fg);
-  border: 1px solid var(--info-border);
+  background: var(--color-info-bg);
+  color: var(--color-info-fg);
+  border: 1px solid var(--color-info-border);
 }
 .word-unchecked {
   background: rgba(142, 142, 147, 0.12);
-  color: var(--text2);
+  color: var(--color-text2);
   border: 1px solid rgba(142, 142, 147, 0.25);
 }
 .word-result .notice {
@@ -3758,7 +3462,7 @@ a.rules-chat-toggle {
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: var(--r-sm);
+  border-radius: var(--radius-control);
   border: 1px solid;
   font-size: 13px;
   line-height: 1.45;
@@ -3786,19 +3490,19 @@ a.rules-chat-toggle {
   background: color-mix(in srgb, currentColor 10%, transparent);
 }
 .notice-info {
-  color: var(--info-fg);
-  background: var(--info-bg);
-  border-color: var(--info-border);
+  color: var(--color-info-fg);
+  background: var(--color-info-bg);
+  border-color: var(--color-info-border);
 }
 .notice-warning {
-  color: var(--warn-fg);
-  background: var(--warn-bg);
-  border-color: var(--warn-border);
+  color: var(--color-warn-fg);
+  background: var(--color-warn-bg);
+  border-color: var(--color-warn-border);
 }
 .notice-error {
-  color: var(--danger-fg);
-  background: var(--danger-bg);
-  border-color: var(--danger-border);
+  color: var(--color-danger-fg);
+  background: var(--color-danger-bg);
+  border-color: var(--color-danger-border);
 }
 .word-meanings {
   display: flex;
@@ -3809,10 +3513,11 @@ a.rules-chat-toggle {
   margin: 0;
   font-size: 12.5px;
   line-height: 1.5;
-  color: var(--text2);
+  color: var(--color-text2);
 }
 .word-source a {
   color: inherit;
+  text-decoration: underline;
   text-underline-offset: 2px;
 }
 .word-meaning {
@@ -3825,21 +3530,21 @@ a.rules-chat-toggle {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--blue);
+  color: var(--color-blue);
 }
 .word-def {
   font-size: 14px;
   line-height: 1.5;
-  color: var(--text);
+  color: var(--color-text);
   padding-left: 4px;
 }
 .word-def-num {
-  color: var(--text3);
+  color: var(--color-text3);
   font-weight: 600;
 }
 .word-example {
   font-style: italic;
-  color: var(--text3);
+  color: var(--color-text3);
   font-size: 13px;
   margin-top: 2px;
   padding-left: 16px;
@@ -3869,9 +3574,9 @@ a.rules-chat-toggle {
 .sc-player-tab-wrap {
   display: inline-flex;
   align-items: stretch;
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
-  background: var(--bg2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-bg2);
   overflow: hidden;
   transition:
     color 0.15s,
@@ -3879,14 +3584,14 @@ a.rules-chat-toggle {
     border-color 0.15s;
 }
 .sc-player-tab-wrap.active {
-  background: var(--blue-bg);
+  background: var(--color-blue-bg);
   border-color: rgba(var(--blue-rgb), 0.3);
 }
 .sc-player-tab {
   padding: 8px 16px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--text3);
+  color: var(--color-text3);
   background: transparent;
   border: none;
   cursor: pointer;
@@ -3896,15 +3601,15 @@ a.rules-chat-toggle {
     background 0.15s;
 }
 .sc-player-tab:hover {
-  color: var(--text);
-  background: var(--bg3);
+  color: var(--color-text);
+  background: var(--color-bg3);
 }
 .sc-player-tab.active {
-  color: var(--blue);
+  color: var(--color-blue);
   background: transparent;
 }
 .sc-player-tab-wrap:hover:not(.active) {
-  background: var(--bg3);
+  background: var(--color-bg3);
 }
 .sc-player-tab-wrap:hover:not(.active) .sc-player-tab {
   background: transparent;
@@ -3915,10 +3620,10 @@ a.rules-chat-toggle {
   flex: none;
   padding: 8px 16px;
   font-weight: 600;
-  color: var(--text3);
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
+  color: var(--color-text3);
+  background: var(--color-bg2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
   cursor: pointer;
   font-family: inherit;
   transition:
@@ -3928,8 +3633,8 @@ a.rules-chat-toggle {
 }
 .sc-add-player:hover,
 .sc-summary-tab:hover {
-  color: var(--text);
-  background: var(--bg3);
+  color: var(--color-text);
+  background: var(--color-bg3);
 }
 .sc-add-player {
   font-size: 16px;
@@ -3939,8 +3644,8 @@ a.rules-chat-toggle {
   margin-left: auto;
 }
 .sc-summary-tab.active {
-  color: var(--blue);
-  background: var(--blue-bg);
+  color: var(--color-blue);
+  background: var(--color-blue-bg);
   border-color: rgba(var(--blue-rgb), 0.3);
 }
 .sc-player-remove {
@@ -3958,12 +3663,12 @@ a.rules-chat-toggle {
 }
 .sc-player-remove:hover {
   opacity: 1;
-  background: var(--bg3);
+  background: var(--color-bg3);
 }
 .sc-panel {
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  background: var(--surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
   box-shadow: var(--shadow-md);
   overflow: hidden;
   padding: 20px;
@@ -3995,7 +3700,7 @@ a.rules-chat-toggle {
   gap: 8px;
   font-size: 14px;
   font-weight: 500;
-  color: var(--text);
+  color: var(--color-text);
 }
 .sc-icon {
   width: 20px;
@@ -4008,7 +3713,7 @@ a.rules-chat-toggle {
 }
 .sc-vp-note {
   font-size: 12px;
-  color: var(--text3);
+  color: var(--color-text3);
   font-weight: 400;
   margin-left: 4px;
 }
@@ -4017,10 +3722,10 @@ a.rules-chat-toggle {
   width: 80px;
   padding: 8px 10px;
   font-size: 16px;
-  border: 2px solid var(--box-color, var(--border));
-  border-radius: var(--r-sm);
-  background: var(--bg);
-  color: var(--text);
+  border: 2px solid var(--box-color, var(--color-border));
+  border-radius: var(--radius-control);
+  background: var(--color-bg);
+  color: var(--color-text);
   text-align: center;
   font-family: inherit;
   outline: none;
@@ -4030,8 +3735,8 @@ a.rules-chat-toggle {
 }
 .sc-input:focus,
 .sc-field:focus-within {
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-bg2);
+  border-color: var(--color-blue);
+  box-shadow: 0 0 0 3px var(--color-blue-bg2);
 }
 /* A label's muted note sits on its line, and wraps under the label's text
    (in line with it) where the row is too narrow. It keeps room for two
@@ -4067,9 +3772,9 @@ a.rules-chat-toggle {
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
-  border: 2px solid var(--box-color, var(--border));
-  border-radius: var(--r-sm);
-  background: var(--bg);
+  border: 2px solid var(--box-color, var(--color-border));
+  border-radius: var(--radius-control);
+  background: var(--color-bg);
   pointer-events: none;
   transition:
     border-color 0.15s,
@@ -4095,7 +3800,7 @@ a.rules-chat-toggle {
   }
 }
 .sc-unit {
-  color: var(--text3);
+  color: var(--color-text3);
 }
 /* The science boxes match them where they sit in a row; a phone shares
    their row out in thirds (below). */
@@ -4139,15 +3844,15 @@ a.rules-chat-toggle {
   align-items: center;
   justify-content: space-between;
   padding: 14px 0 0;
-  border-top: 2px solid var(--border);
+  border-top: 2px solid var(--color-border);
   margin-top: 4px;
   font-size: 16px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--color-text);
 }
 .sc-total-num {
   font-size: 22px;
-  color: var(--blue);
+  color: var(--color-blue);
 }
 .sc-input-wrap {
   display: flex;
@@ -4159,16 +3864,16 @@ a.rules-chat-toggle {
   height: 44px;
   font-size: 18px;
   font-weight: 600;
-  color: var(--text2);
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
+  color: var(--color-text2);
+  background: var(--color-bg2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
   cursor: pointer;
   font-family: inherit;
 }
 .sc-sign:hover:not(:disabled) {
-  color: var(--text);
-  background: var(--bg3);
+  color: var(--color-text);
+  background: var(--color-bg3);
 }
 .sc-sign:disabled {
   opacity: 0.45;
@@ -4182,18 +3887,18 @@ a.rules-chat-toggle {
 .sc-new-game {
   min-height: 44px;
   padding: 8px 16px;
-  font-size: 13px;
   font-weight: 600;
-  color: var(--text2);
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
+  font-size: 13px;
+  color: var(--color-text2);
+  background: var(--color-bg2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
   cursor: pointer;
   font-family: inherit;
 }
 .sc-new-game:hover {
-  color: var(--text);
-  background: var(--bg3);
+  color: var(--color-text);
+  background: var(--color-bg3);
 }
 .sc-science-field .sc-icon {
   width: 30px;
@@ -4205,17 +3910,17 @@ a.rules-chat-toggle {
   font: inherit;
   font-size: 14px;
   font-weight: 600;
-  color: var(--on-fill);
-  background: var(--blue-fill);
+  color: var(--color-on-fill);
+  background: var(--color-blue-fill);
   border: none;
-  border-radius: var(--r-sm);
+  border-radius: var(--radius-control);
   cursor: pointer;
 }
 .sc-next:hover {
   filter: brightness(1.08);
 }
 .sc-next:focus-visible {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--color-blue);
   outline-offset: 2px;
 }
 /* Results: the printed pad's sheet. The category column stays put while
@@ -4233,13 +3938,13 @@ a.rules-chat-toggle {
 .sc-sheet th,
 .sc-sheet td {
   padding: 9px 12px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--color-border);
   white-space: nowrap;
 }
 .sc-sheet thead th {
   font-size: 13px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--color-text);
   text-align: center;
   vertical-align: bottom;
 }
@@ -4253,14 +3958,14 @@ a.rules-chat-toggle {
 .sc-sheet tfoot th {
   text-align: left;
   font-weight: 500;
-  color: var(--text);
+  color: var(--color-text);
 }
 .sc-sheet th[scope="row"],
 .sc-sheet thead th:first-child {
   position: sticky;
   left: 0;
   z-index: 1;
-  background: var(--surface);
+  background: var(--color-surface);
 }
 .sc-sheet-label {
   display: inline-flex;
@@ -4269,12 +3974,12 @@ a.rules-chat-toggle {
 }
 .sc-sheet td {
   text-align: center;
-  color: var(--text);
+  color: var(--color-text);
 }
 .sc-sheet-sub {
   display: block;
   font-size: 11px;
-  color: var(--text3);
+  color: var(--color-text3);
 }
 .sc-sheet .sc-win {
   background: rgba(234, 179, 8, 0.1);
@@ -4283,33 +3988,33 @@ a.rules-chat-toggle {
 .sc-sheet-total td {
   font-weight: 700;
   font-size: 16px;
-  border-top: 2px solid var(--border);
+  border-top: 2px solid var(--color-border);
 }
 .sc-sheet-total td {
-  color: var(--blue);
+  color: var(--color-blue);
 }
 .sc-sheet-place th,
 .sc-sheet-place td {
   border-bottom: none;
   font-size: 13px;
-  color: var(--text2);
+  color: var(--color-text2);
 }
 .sc-tie-note {
   margin-top: 12px;
   font-size: 13px;
-  color: var(--text);
+  color: var(--color-text);
 }
 .sc-tie-rule {
   margin-top: 8px;
   font-size: 12px;
-  color: var(--text3);
+  color: var(--color-text3);
 }
 
 @media (max-width: 900px) {
   /* The toggle leaves the corner for its own line, above the title, before
      the narrowing title can run under it. */
   .hero {
-    padding: 16px var(--gutter) 40px;
+    padding: 16px var(--spacing-gutter) 40px;
   }
   .theme-toggle {
     position: static;
@@ -4430,7 +4135,7 @@ a.rules-chat-toggle {
   .filterbar {
     flex-wrap: nowrap;
     gap: 8px;
-    padding: 8px var(--gutter);
+    padding: 8px var(--spacing-gutter);
   }
   .filterbar .fb-search {
     flex: 1;
@@ -4537,8 +4242,8 @@ a.rules-chat-toggle {
     position: static;
   }
   .dd-panel {
-    left: var(--gutter);
-    right: var(--gutter);
+    left: var(--spacing-gutter);
+    right: var(--spacing-gutter);
     width: auto;
     min-width: 0;
     transform-origin: top center;
@@ -4576,7 +4281,7 @@ a.rules-chat-toggle {
     align-items: center;
     column-gap: 12px;
     text-align: left;
-    padding: 14px var(--gutter) 16px;
+    padding: 14px var(--spacing-gutter) 16px;
   }
   .theme-toggle {
     grid-column: 2;
@@ -4735,19 +4440,19 @@ a.rules-chat-toggle {
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 8px;
-  padding: 8px var(--gutter) calc(8px + env(safe-area-inset-bottom, 0px));
+  padding: 8px var(--spacing-gutter) calc(8px + env(safe-area-inset-bottom, 0px));
   /* Solid, in the page's colour, the top's in either theme: Safari colours
      the strip under its toolbar from the bar at the page's foot, which it
      can't take from a see-through, blurred one (it showed white there in
      the dark theme). The list fades into it rather than meeting a line. */
-  background: var(--bg);
+  background: var(--color-bg);
 }
 .phone-nav::before {
   content: "";
   position: absolute;
   inset: auto 0 100%;
   height: 24px;
-  background: linear-gradient(to bottom, transparent, var(--bg));
+  background: linear-gradient(to bottom, transparent, var(--color-bg));
   pointer-events: none;
 }
 html:has(.phone-nav) {
@@ -4763,7 +4468,7 @@ html:has(.phone-nav) {
   border: none;
   border-radius: 12px;
   background: none;
-  color: var(--text2);
+  color: var(--color-text2);
   cursor: pointer;
   font-family: inherit;
   font-size: 11.5px;
@@ -4772,10 +4477,10 @@ html:has(.phone-nav) {
   white-space: nowrap;
 }
 .phone-tab[aria-pressed="true"] {
-  color: var(--blue);
+  color: var(--color-blue);
 }
 .phone-tab:focus-visible {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--color-blue);
   outline-offset: -2px;
 }
 .phone-nav-mid {
@@ -4813,7 +4518,7 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
   border: none;
   border-radius: 12px;
   background: none;
-  color: var(--text2);
+  color: var(--color-text2);
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -4824,25 +4529,25 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
   height: 20px;
 }
 .icon-btn:focus-visible {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--color-blue);
   outline-offset: -2px;
 }
 .icon-btn-note {
-  color: var(--ok-fg);
+  color: var(--color-ok-fg);
 }
 
 /* A phone's list (PhoneListView, the wishlist's): a line a game in one
    rounded box, each line opening in place (PhoneLine). */
 .lines {
   list-style: none;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
 }
 .line + .line {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--color-border);
 }
 .line {
   scroll-margin-top: calc(var(--thead-top, 91px) + 16px);
@@ -4872,12 +4577,12 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
   flex-shrink: 0;
   border-radius: 10px;
   object-fit: contain;
-  border: 1px solid var(--border);
-  background: var(--art-matte);
+  border: 1px solid var(--color-border);
+  background: var(--color-art-matte);
   filter: var(--art-dim);
 }
 .line-art--none {
-  background: var(--bg2);
+  background: var(--color-bg2);
   filter: none;
 }
 .line-text {
@@ -4899,14 +4604,14 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
   font-weight: 700;
   line-height: 1.25;
   letter-spacing: -0.2px;
-  color: var(--dark);
+  color: var(--color-dark);
   overflow-wrap: anywhere;
 }
 .line-meta {
   margin-top: 3px;
   font-size: 12.5px;
   line-height: 1.35;
-  color: var(--text2);
+  color: var(--color-text2);
 }
 /* Wide enough for "♥ 12", so a vote landing doesn't narrow the name. */
 .line .vote-btn--compact {
@@ -4924,7 +4629,7 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
 }
 .line.open .row-chevron {
   transform: rotate(180deg);
-  color: var(--blue);
+  color: var(--color-blue);
 }
 .line-detail {
   display: grid;
@@ -4945,7 +4650,7 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
   margin-bottom: 10px;
   font-size: 14px;
   line-height: 1.55;
-  color: var(--text2);
+  color: var(--color-text2);
 }
 .line-detail-inner .card-kw {
   padding: 0;
@@ -4982,7 +4687,7 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
 .admin-panel {
   margin-bottom: 28px;
   padding: 20px 24px;
-  border-radius: var(--r);
+  border-radius: var(--radius-panel);
   background: rgba(var(--blue-rgb), 0.04);
   border: 1px solid rgba(var(--blue-rgb), 0.18);
 }
@@ -4990,24 +4695,24 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
   font-family: "Playfair Display", "Playfair Fallback", "Playfair Fallback Noto", serif;
   font-size: 19px;
   font-weight: 700;
-  color: var(--dark);
+  color: var(--color-dark);
   margin-bottom: 12px;
 }
 .admin-subtitle {
   font-size: 11px;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: var(--text3);
+  color: var(--color-text3);
   font-weight: 600;
   margin: 16px 0 10px;
 }
 .admin-muted {
   font-size: 12.5px;
-  color: var(--text2);
+  color: var(--color-text2);
 }
 .admin-error {
   font-size: 12.5px;
-  color: var(--error-fg);
+  color: var(--color-error-fg);
   margin-top: 8px;
 }
 .admin-list {
@@ -5026,12 +4731,12 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
   gap: 10px;
   padding: 10px 12px;
   border-radius: 8px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
 }
 .admin-item-game {
   font-weight: 600;
-  color: var(--dark);
+  color: var(--color-dark);
   font-size: 13.5px;
 }
 .admin-actions {
@@ -5044,9 +4749,9 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
   height: 30px;
   padding: 0 12px;
   border-radius: 8px;
-  border: 1px solid var(--blue-fill);
-  background: var(--blue-fill);
-  color: var(--on-fill);
+  border: 1px solid var(--color-blue-fill);
+  background: var(--color-blue-fill);
+  color: var(--color-on-fill);
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
@@ -5057,13 +4762,13 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
     color 0.15s;
 }
 .admin-btn--ghost {
-  background: var(--surface);
-  border-color: var(--border2);
-  color: var(--text2);
+  background: var(--color-surface);
+  border-color: var(--color-border2);
+  color: var(--color-text2);
 }
 .admin-btn--ghost:hover:not(:disabled) {
   border-color: rgba(var(--blue-rgb), 0.4);
-  color: var(--blue);
+  color: var(--color-blue);
 }
 .admin-btn--danger {
   background: #c62828;
@@ -5087,8 +4792,8 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
   margin-top: 14px;
   padding: 12px;
   border-radius: 8px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
 }
 .admin-preview-art {
   flex: none;
@@ -5096,7 +4801,7 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
   height: 64px;
   object-fit: cover;
   border-radius: 6px;
-  background: var(--bg2);
+  background: var(--color-bg2);
 }
 .admin-preview-main {
   flex: 1;
@@ -5107,13 +4812,13 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
 }
 .admin-preview-name {
   font-weight: 600;
-  color: var(--dark);
+  color: var(--color-dark);
   font-size: 13.5px;
 }
 /* A preview shows four lines; the whole description is what gets saved. */
 .admin-preview-desc {
   font-size: 12.5px;
-  color: var(--text);
+  color: var(--color-text);
   line-height: 1.45;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -5131,9 +4836,9 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
 }
 .admin-preview-kw li {
   font-size: 11.5px;
-  color: var(--text2);
-  background: var(--bg2);
-  border: 1px solid var(--border);
+  color: var(--color-text2);
+  background: var(--color-bg2);
+  border: 1px solid var(--color-border);
   padding: 2px 8px;
   border-radius: 20px;
 }
@@ -5173,7 +4878,7 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
 }
 .admin-item-preview .admin-preview {
   margin-top: 2px;
-  background: var(--bg2);
+  background: var(--color-bg2);
 }
 .admin-item-preview .notice {
   margin-top: 2px;
@@ -5185,8 +4890,8 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
   margin-top: 8px;
   padding: 14px;
   border-radius: 8px;
-  background: var(--bg2);
-  border: 1px solid var(--border);
+  background: var(--color-bg2);
+  border: 1px solid var(--color-border);
 }
 .admin-range {
   display: flex;
@@ -5215,7 +4920,7 @@ body:has(:is(input:not([type="checkbox"], [type="radio"]), textarea):focus) .pho
 }
 .admin-kw-opt {
   font-size: 12px;
-  color: var(--text2);
+  color: var(--color-text2);
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -5231,9 +4936,9 @@ select.suggest-input {
 .signin-panel {
   max-width: 440px;
   padding: 24px;
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  background: var(--surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
   box-shadow: var(--shadow-md);
 }
 .signin-form {
@@ -5244,15 +4949,15 @@ select.suggest-input {
 .signin-label {
   font-size: 12px;
   font-weight: 500;
-  color: var(--text2);
+  color: var(--color-text2);
 }
 .signin-input {
   height: 40px;
   padding: 0 14px;
-  border: 1px solid var(--border2);
-  border-radius: var(--r-sm);
-  background: var(--bg);
-  color: var(--text);
+  border: 1px solid var(--color-border2);
+  border-radius: var(--radius-control);
+  background: var(--color-bg);
+  color: var(--color-text);
   font-family: inherit;
   font-size: 16px;
   outline: none;
@@ -5261,16 +4966,16 @@ select.suggest-input {
     box-shadow 0.15s;
 }
 .signin-input:focus {
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-bg2);
+  border-color: var(--color-blue);
+  box-shadow: 0 0 0 3px var(--color-blue-bg2);
 }
 .signin-btn {
   height: 40px;
   padding: 0 18px;
-  border-radius: var(--r-sm);
+  border-radius: var(--radius-control);
   border: none;
-  background: var(--blue-fill);
-  color: var(--on-fill);
+  background: var(--color-blue-fill);
+  color: var(--color-on-fill);
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
@@ -5278,23 +4983,23 @@ select.suggest-input {
   transition: background 0.15s;
 }
 .signin-btn:hover:not(:disabled) {
-  background: var(--blue-fill-hover);
+  background: var(--color-blue-fill-hover);
 }
 .signin-btn:disabled {
   opacity: 0.6;
   cursor: wait;
 }
 .signin-btn--ghost {
-  background: var(--surface);
-  border: 1px solid var(--border2);
-  color: var(--text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border2);
+  color: var(--color-text);
 }
 .signin-btn--ghost:hover:not(:disabled) {
-  background: var(--bg2);
+  background: var(--color-bg2);
 }
 .signin-status {
   font-size: 13px;
-  color: var(--text2);
+  color: var(--color-text2);
   line-height: 1.5;
   min-height: 1.5em;
 }
@@ -5395,9 +5100,9 @@ select.suggest-input {
 .sc-setup {
   margin: 0 0 12px;
   padding: 14px 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  background: var(--surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -5409,7 +5114,7 @@ select.suggest-input {
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
-  color: var(--text);
+  color: var(--color-text);
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -5425,7 +5130,7 @@ details.sc-setup:not([open]) {
 }
 .sc-hint {
   font-size: 13px;
-  color: var(--text2);
+  color: var(--color-text2);
   line-height: 1.5;
 }
 .sc-group {
@@ -5442,13 +5147,13 @@ details.sc-setup:not([open]) {
   margin-bottom: 2px;
   font-size: 15px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--color-text);
 }
 .sc-group + .sc-group,
 .sc-group + .sc-check,
 .sc-check + .sc-row {
   padding-top: 14px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--color-border);
 }
 .sc-seg {
   display: flex;
@@ -5462,10 +5167,10 @@ details.sc-setup:not([open]) {
   font: inherit;
   font-size: 14px;
   font-weight: 600;
-  color: var(--text2);
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
+  color: var(--color-text2);
+  background: var(--color-bg2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
   cursor: pointer;
   transition:
     color 0.15s,
@@ -5473,15 +5178,15 @@ details.sc-setup:not([open]) {
     border-color 0.15s;
 }
 .sc-seg-btn[aria-pressed="true"] {
-  color: var(--blue);
-  background: var(--blue-bg);
+  color: var(--color-blue);
+  background: var(--color-blue-bg);
   border-color: rgba(var(--blue-rgb), 0.4);
 }
 .sc-seg-btn:focus-visible,
 .sc-remove:focus-visible,
 .sc-add-row:focus-visible,
 .rp-round-btn:focus-visible {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--color-blue);
   outline-offset: 2px;
 }
 .sc-ticket {
@@ -5503,10 +5208,10 @@ details.sc-setup:not([open]) {
   height: 44px;
   flex: none;
   font-size: 20px;
-  color: var(--text2);
+  color: var(--color-text2);
   background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
   cursor: pointer;
   font-family: inherit;
 }
@@ -5517,10 +5222,10 @@ details.sc-setup:not([open]) {
   font: inherit;
   font-size: 14px;
   font-weight: 600;
-  color: var(--blue);
+  color: var(--color-blue);
   background: transparent;
   border: 1px dashed rgba(var(--blue-rgb), 0.45);
-  border-radius: var(--r-sm);
+  border-radius: var(--radius-control);
   cursor: pointer;
 }
 .sc-check {
@@ -5530,7 +5235,7 @@ details.sc-setup:not([open]) {
   min-height: 44px;
   font-size: 14px;
   font-weight: 500;
-  color: var(--text);
+  color: var(--color-text);
   cursor: pointer;
 }
 .sc-check > span {
@@ -5546,7 +5251,7 @@ details.sc-setup:not([open]) {
   height: 22px;
   flex: none;
   margin: 0;
-  accent-color: var(--blue-fill);
+  accent-color: var(--color-blue-fill);
 }
 .sc-chips {
   display: flex;
@@ -5561,18 +5266,18 @@ details.sc-setup:not([open]) {
   padding: 0 14px;
   font-size: 14px;
   font-weight: 500;
-  color: var(--text);
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
+  color: var(--color-text);
+  background: var(--color-bg2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
   cursor: pointer;
 }
 .sc-chip:has(input:checked) {
-  background: var(--blue-bg);
+  background: var(--color-blue-bg);
   border-color: rgba(var(--blue-rgb), 0.4);
 }
 .sc-chip:has(input:focus-visible) {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--color-blue);
   outline-offset: 2px;
 }
 .sc-panel + .sc-panel {
@@ -5607,13 +5312,13 @@ details.sc-setup:not([open]) {
   flex-direction: column;
   gap: 2px;
   padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
   min-width: 0;
 }
 .rp-total.sc-win {
-  background: color-mix(in srgb, var(--award-fg) 10%, transparent);
-  border-color: color-mix(in srgb, var(--award-fg) 40%, transparent);
+  background: color-mix(in srgb, var(--color-award-fg) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-award-fg) 40%, transparent);
 }
 .rp-total-name {
   display: flex;
@@ -5621,24 +5326,24 @@ details.sc-setup:not([open]) {
   gap: 6px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--text2);
+  color: var(--color-text2);
   overflow-wrap: anywhere;
 }
 .rp-total-name .sc-icon {
   width: 18px;
   height: 18px;
-  color: var(--award-fg);
+  color: var(--color-award-fg);
 }
 .rp-total-num {
   font-size: 24px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--color-text);
   font-variant-numeric: tabular-nums;
 }
 .rp-status {
   margin-top: 12px;
   font-size: 14px;
-  color: var(--text);
+  color: var(--color-text);
 }
 .rp-standings .sc-next {
   margin-top: 12px;
@@ -5648,7 +5353,7 @@ details.sc-setup:not([open]) {
   font-family: inherit;
   font-size: 17px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--color-text);
 }
 .rp-question {
   display: flex;
@@ -5675,13 +5380,13 @@ details.sc-setup:not([open]) {
 .rp-col-head {
   font-size: 12px;
   font-weight: 600;
-  color: var(--text2);
+  color: var(--color-text2);
   text-align: center;
 }
 .rp-preview {
   font-size: 14px;
   font-weight: 600;
-  color: var(--blue);
+  color: var(--color-blue);
   font-variant-numeric: tabular-nums;
 }
 .rp-actions {
@@ -5711,9 +5416,9 @@ details.sc-setup:not([open]) {
   min-height: 44px;
   font: inherit;
   font-weight: 600;
-  color: var(--blue);
+  color: var(--color-blue);
   background: transparent;
-  border: 1px solid var(--border);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   cursor: pointer;
 }
@@ -5722,7 +5427,7 @@ details.sc-setup:not([open]) {
 }
 .rp-sheet .rp-editing th,
 .rp-sheet .rp-editing td {
-  background: var(--blue-bg);
+  background: var(--color-blue-bg);
 }
 .rp-rule {
   margin-top: 12px;

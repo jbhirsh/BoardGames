@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
 import { configDefaults } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import { sentryVitePlugin } from '@sentry/vite-plugin';
 import { PDFJS_DECODERS, savedWhen, WISHLIST_ART_DIR } from './src/utils/precache.ts';
 
@@ -216,6 +217,8 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    // The styles: utility classes in the components, built from src/index.css.
+    tailwindcss(),
     pdfjsAssets(),
     serviceWorker(),
     sentryVitePlugin({

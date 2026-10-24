@@ -1,20 +1,21 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-// App.css's theme blocks, for the token tests: the light :root, the system
-// dark theme and the toggle's dark theme. The toggle's block ends at the
-// first width breakpoint, found whatever the spacing Prettier gives it.
-const css = readFileSync(join(process.cwd(), 'src/App.css'), 'utf8');
-const firstBreakpoint = css.search(/@media\s*\(max-width:\s*900px\)/);
+// index.css's theme blocks, for the token tests: the light theme (Tailwind's
+// @theme and the :root after it), the system dark theme and the toggle's dark
+// theme, which ends where the duplicate-code audit's skip does. A colour is
+// `--color-<name>` there; the r,g,b triples and shadows keep their own names,
+// so `name` is either.
+const css = readFileSync(join(process.cwd(), 'src/index.css'), 'utf8');
 export const BLOCKS = {
   light: css.slice(0, css.indexOf('/* ══ DARK THEME')),
   'system dark': css.slice(css.indexOf('@media (prefers-color-scheme: dark)'), css.indexOf(':root[data-theme="dark"]')),
-  'toggled dark': css.slice(css.indexOf(':root[data-theme="dark"]'), firstBreakpoint),
+  'toggled dark': css.slice(css.indexOf(':root[data-theme="dark"]'), css.indexOf('/* jscpd:ignore-end */')),
 };
 
-/** The six-digit hex a block gives `--name`. */
+/** The six-digit hex a block gives `--color-name` (or `--name`). */
 export function token(block: string, name: string): string {
-  const m = new RegExp(`--${name}:\\s*(#[0-9A-Fa-f]{6})`).exec(block);
+  const m = new RegExp(`--(?:color-)?${name}:\\s*(#[0-9A-Fa-f]{6})`).exec(block);
   if (!m) throw new Error(`--${name} not set`);
   return m[1];
 }
@@ -53,7 +54,9 @@ export function mix(rgb: readonly [number, number, number], alpha: number, base:
   );
 }
 
-/** Every custom property a block declares, name to value. */
+/** Every custom property a block declares, name (without `color-`) to value. */
 export function declarations(block: string): Map<string, string> {
-  return new Map([...block.matchAll(/--([\w-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
+  return new Map(
+    [...block.matchAll(/--(?:color-)?([\w-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()] as [string, string]),
+  );
 }

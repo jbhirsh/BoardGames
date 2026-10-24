@@ -1,0 +1,397 @@
+/* The app's one stylesheet: Tailwind, the design tokens it builds its
+   utilities from, and the little that can't be a class. Every style lives
+   in the components, as utility classes.
+
+   Every colour is a token here (`--color-*`, so `bg-surface`, `text-text2`,
+   `border-border`); the dark theme below redefines them, under
+   prefers-color-scheme: dark (unless data-theme="light") and under
+   [data-theme="dark"]. So use a token, never a literal (eslint.config.js
+   refuses an arbitrary colour in a class), and a modifier for a tint:
+   `bg-blue-tint/12` is the old rgba(var(--blue-rgb), 0.12). PDF pages stay
+   white, and box art stays on a light matte (--color-art-matte, a little
+   dimmed in the dark theme). e2e/theme.spec.ts runs axe's colour-contrast
+   rule over the main pages in both themes, so a new colour has to pass AA in
+   each. */
+@import "tailwindcss" source(none);
+@source '../index.html';
+@source '.';
+@source not './__tests__';
+@import "./App.css" layer(components);
+
+/* The theme. `static`, so every token is in the page whether or not a class
+   names it: the dark blocks below redefine them, and a few are read by
+   name (the box art's matte, the citation ring). Tailwind's own colours,
+   fonts, type scale, line heights, letter spacings, easings, container
+   widths, blurs and shadows are dropped, so a class can only reach these;
+   the two line heights and five small radii the app uses are redefined,
+   and everything is in px, as the old stylesheet was (spacing too, a 4px
+   step), so a larger browser font enlarges the text but not the layout. */
+@theme static {
+  --color-*: initial;
+  --color-bg: #fbfbfd;
+  --color-bg2: #f5f5f7;
+  --color-bg3: #ebebed;
+  --color-surface: #ffffff;
+  --color-surface2: #f5f5f7;
+  --color-dark: #1d1d1f;
+  --color-dark2: #2d2d2f;
+  /* --color-blue is the accent for text, links, borders and tints; a filled
+     button uses --color-blue-fill under --color-on-fill text, which keeps
+     4.5:1 in both themes where the dark theme's lighter blue would not. */
+  /* #0066CC rather than the fill's #0071E3: blue text sits on blue tints
+     (pills, the active tab, the chat toggle), where #0071E3 fell to 4.1:1. */
+  --color-blue: #0066cc;
+  --color-blue2: #0077ed;
+  /* The accent's tints, by modifier: bg-blue-tint/12. The fill's blue here,
+     the dark theme's lighter accent there (--blue-rgb). */
+  --color-blue-tint: rgb(var(--blue-rgb));
+  --color-blue-fill: #0071e3;
+  --color-blue-fill-hover: #0062c2;
+  /* The ring on a rulebook page a citation jumped to. It sits between the
+     white page and --color-bg, so it keeps 3:1 against both: here 5.6:1 and
+     5.4:1. The dark theme's blue is 3.0:1 on the white page, so it takes a
+     deeper blue, 4.0:1 on the page, 4.7:1 on --color-bg. */
+  --color-cite-ring: #0066cc;
+  --color-on-fill: #ffffff;
+  --color-blue-bg: rgba(var(--blue-rgb), 0.08);
+  --color-blue-bg2: rgba(var(--blue-rgb), 0.15);
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-border2: rgba(0, 0, 0, 0.12);
+  --color-border-hover: rgba(0, 0, 0, 0.2);
+  --color-row-hover: #f9f9fb;
+  --color-code-bg: rgba(0, 0, 0, 0.06);
+  --color-hero-top: #ffffff;
+  /* Box art tiles: the matte behind the art (and --art-dim, a filter over
+     it). White and untouched here; the dark theme dims both. */
+  --color-art-matte: #ffffff;
+  /* 4.5:1 or better on the award pill's gold tint; #8A6D12 was 4.46:1. */
+  --color-award-fg: #7a600f;
+  --color-expansion-fg: #8a5200;
+  --color-extension-fg: #1a6b41;
+  --color-version-fg: #0058b0;
+  /* 4.5:1 or better on the word checker's green verdict tint; #2D8A4E was 3.9:1. */
+  --color-ok-fg: #297e48;
+  --color-bad-fg: #d42020;
+  --color-error-fg: #c0392b;
+  /* The Notice component's tones (src/components/Notice.tsx): text, fill
+     and border. Each text colour is 4.5:1 or better on its fill, in both
+     themes (src/__tests__/noticeTokens.test.ts). */
+  --color-info-fg: #0058b0;
+  --color-info-bg: #eef5fd;
+  --color-info-border: #c4dcf6;
+  --color-warn-fg: #8a4b00;
+  --color-warn-bg: #fff4e0;
+  --color-warn-border: #f2d49b;
+  --color-danger-fg: #b42318;
+  --color-danger-bg: #fdecec;
+  --color-danger-border: #f4c1bd;
+  /* The play glyph on the outlined video buttons: YouTube's red, lifted in
+     the dark theme to keep it as legible on --color-surface and --color-bg2. */
+  --color-yt-red: #cc0000;
+  /* The vote button's red, the same in both themes: --color-on-fill text
+     keeps 4.7:1 on it filled (#D63C48 was 4.57:1, too close to the line).
+     Its tints by modifier: bg-vote/10. */
+  --color-vote: #d33945;
+  --color-vote-hover: #c02f3b;
+  --color-text: #1d1d1f;
+  --color-text2: #6e6e73;
+  /* 4.5:1 or better on --color-bg and --color-bg2 (WCAG AA); #86868B was 3.5:1. */
+  --color-text3: #707075;
+
+  /* Body text is the system font; headings are Playfair Display (its faces
+     below), with a metric-matched fallback while it loads. */
+  --font-*: initial;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  --font-display: "Playfair Display", "Playfair Fallback", "Playfair Fallback Noto", serif;
+
+  /* Corners: a card or panel, and a control inside one; then Tailwind's
+     small steps, in px. */
+  --radius-*: initial;
+  --radius-panel: 18px;
+  --radius-control: 10px;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  /* The spacing step every p-*, gap-*, size-* and the like multiplies. */
+  --spacing: 4px;
+
+  /* Text sizes are each px in the class (text-[13px]); two line heights. */
+  --text-*: initial;
+  --leading-*: initial;
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --tracking-*: initial;
+  --ease-*: initial;
+  --container-*: initial;
+  --blur-*: initial;
+  --perspective-*: initial;
+  --aspect-*: initial;
+
+  /* One horizontal gutter for every full-width section (px-gutter). Widening
+     it at a breakpoint (below) keeps the hero, filter bar, tags and main
+     content on a single left edge; setting them individually is what let
+     them drift apart. A phone's here, wider screens' below. */
+  --spacing-gutter: 16px;
+
+  /* Widths, phone first: no prefix is a phone, and each step up is where
+     the layout widens, one pixel past the old max-width blocks (so max-sm:
+     is the old max-width: 520px, xl: the old min-width: 901px). */
+  --breakpoint-*: initial;
+  --breakpoint-xs: 360px;
+  --breakpoint-sm: 521px;
+  --breakpoint-md: 601px;
+  --breakpoint-lg: 721px;
+  --breakpoint-xl: 901px;
+  --breakpoint-2xl: 1081px;
+
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --text-shadow-*: initial;
+}
+
+/* What isn't a Tailwind namespace: the accent's and the vote's r,g,b (for
+   the tint tokens above and the theme tests), the box art's dimming filter
+   and the shadows, which Tailwind would copy into its shadow-* classes, so
+   the dark theme couldn't change them. Use them as shadow-(--shadow-sm). */
+:root {
+  --blue-rgb: 0, 113, 227;
+  --vote-rgb: 211, 57, 69;
+  --art-dim: none;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.05);
+  color-scheme: light;
+}
+
+/* ══ DARK THEME ═══════════════════════════════════════════
+   Follows the system unless the toggle chose a theme (html[data-theme],
+   set before first paint by index.html's script and kept by useTheme).
+   Fills that sit on each other differ (--color-bg2 is a step above
+   --color-surface, so the chat's answer bubble, the sheet's close button and
+   the dropdown's fills show on their panels) but no lighter, or the blue
+   would drop below 4.5:1 on its 8% tint over it (the active filter chips).
+   --color-text3 sits a step below --color-text2 while keeping 4.5:1 on every
+   fill it is drawn on, --color-bg3 included. The pairs are listed in
+   src/__tests__/themeLayers.test.ts. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: #111113;
+    --color-bg2: #242428;
+    --color-bg3: #2c2c2e;
+    --color-surface: #1c1c1e;
+    --color-surface2: #2c2c2e;
+    --color-dark: #f5f5f7;
+    --color-dark2: #e5e5ea;
+    --color-text: #f5f5f7;
+    --color-text2: #a1a1a6;
+    --color-text3: #939398;
+    --color-blue: #2997ff;
+    --color-blue2: #47a6ff;
+    --blue-rgb: 41, 151, 255;
+    --color-cite-ring: #1a7fe6;
+    --color-border: rgba(255, 255, 255, 0.1);
+    --color-border2: rgba(255, 255, 255, 0.16);
+    --color-border-hover: rgba(255, 255, 255, 0.28);
+    --color-row-hover: #232326;
+    --color-code-bg: rgba(255, 255, 255, 0.1);
+    --color-hero-top: #1c1c1e;
+    --color-art-matte: #e5e5ea;
+    --art-dim: brightness(0.94);
+    --color-award-fg: #e3c35a;
+    --color-expansion-fg: #f0b35a;
+    --color-extension-fg: #5fd39a;
+    --color-version-fg: #6cb4ff;
+    --color-ok-fg: #4ade80;
+    --color-bad-fg: #ff6b6b;
+    --color-error-fg: #ff6b6b;
+    --color-info-fg: #7dbdff;
+    --color-info-bg: #16263a;
+    --color-info-border: #24476e;
+    --color-warn-fg: #ffc266;
+    --color-warn-bg: #2e2414;
+    --color-warn-border: #5c4520;
+    --color-danger-fg: #ff8f8a;
+    --color-danger-bg: #3a1d1d;
+    --color-danger-border: #6a2e2c;
+    --color-yt-red: #ff4e45;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+}
+/* The toggle's dark theme repeats the system's: one sits in a media query,
+   the other on an attribute, and CSS has no way to share a block between
+   them. themeLayers.test.ts holds the two equal, so the duplicate-code
+   audit skips this copy. */
+/* jscpd:ignore-start */
+:root[data-theme="dark"] {
+  --color-bg: #111113;
+  --color-bg2: #242428;
+  --color-bg3: #2c2c2e;
+  --color-surface: #1c1c1e;
+  --color-surface2: #2c2c2e;
+  --color-dark: #f5f5f7;
+  --color-dark2: #e5e5ea;
+  --color-text: #f5f5f7;
+  --color-text2: #a1a1a6;
+  --color-text3: #939398;
+  --color-blue: #2997ff;
+  --color-blue2: #47a6ff;
+  --blue-rgb: 41, 151, 255;
+  --color-cite-ring: #1a7fe6;
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-border2: rgba(255, 255, 255, 0.16);
+  --color-border-hover: rgba(255, 255, 255, 0.28);
+  --color-row-hover: #232326;
+  --color-code-bg: rgba(255, 255, 255, 0.1);
+  --color-hero-top: #1c1c1e;
+  --color-art-matte: #e5e5ea;
+  --art-dim: brightness(0.94);
+  --color-award-fg: #e3c35a;
+  --color-expansion-fg: #f0b35a;
+  --color-extension-fg: #5fd39a;
+  --color-version-fg: #6cb4ff;
+  --color-ok-fg: #4ade80;
+  --color-bad-fg: #ff6b6b;
+  --color-error-fg: #ff6b6b;
+  --color-info-fg: #7dbdff;
+  --color-info-bg: #16263a;
+  --color-info-border: #24476e;
+  --color-warn-fg: #ffc266;
+  --color-warn-bg: #2e2414;
+  --color-warn-border: #5c4520;
+  --color-danger-fg: #ff8f8a;
+  --color-danger-bg: #3a1d1d;
+  --color-danger-border: #6a2e2c;
+  --color-yt-red: #ff4e45;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+/* jscpd:ignore-end */
+
+/* The gutter widens with the screen (see --spacing-gutter). */
+@media (min-width: 521px) {
+  :root {
+    --spacing-gutter: 24px;
+  }
+}
+@media (min-width: 901px) {
+  :root {
+    --spacing-gutter: 48px;
+  }
+}
+
+/* Every field's placeholder in the browser's own grey, as before Tailwind,
+   whose reset draws it at half the text's colour (lighter, and off AA's
+   mark the browser's meets). A field that sets its own keeps it. Every
+   placeholder, which no one class reaches. */
+@layer base {
+  ::placeholder {
+    color: revert;
+  }
+  /* Tailwind's reset also drops a phone's grey flash on a tapped link or
+     button and its own text-size adjusting, and sets tabs 4 wide; the
+     browser's are kept, as before. */
+  html {
+    -webkit-tap-highlight-color: revert;
+    -webkit-text-size-adjust: revert;
+    tab-size: revert;
+  }
+}
+
+/* Playfair Display, the headings' face, served from public/fonts (SIL Open
+   Font License, OFL.txt there) and saved for offline use with the app. The
+   Latin subset, which every name in the collection fits. The roman file is
+   variable, so it draws both 700 and 900. Text shows at once in the
+   fallback (font-display: swap), which is Times New Roman Bold (or Liberation
+   Serif, its metric twin on Linux), or on Android Noto Serif Bold (Droid
+   Serif on older ones), each scaled to Playfair's width on the collection's
+   names and to its line height, per weight, so the swap barely moves a
+   line. Noto's metrics differ from Times's, so it is a family of its own:
+   a face whose local() font isn't there is skipped for the next family.
+   index.html preloads the roman file. */
+@font-face {
+  font-family: "Playfair Display";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url(/fonts/playfair-display-latin.woff2) format("woff2");
+}
+@font-face {
+  font-family: "Playfair Display";
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/fonts/playfair-display-latin-italic.woff2) format("woff2");
+}
+@font-face {
+  font-family: "Playfair Fallback";
+  font-weight: 700;
+  src:
+    local("Times New Roman Bold"), local("TimesNewRomanPS-BoldMT"), local("Liberation Serif Bold"),
+    local("LiberationSerif-Bold");
+  size-adjust: 106.57%;
+  ascent-override: 101.53%;
+  descent-override: 23.55%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Playfair Fallback";
+  font-weight: 900;
+  src:
+    local("Times New Roman Bold"), local("TimesNewRomanPS-BoldMT"), local("Liberation Serif Bold"),
+    local("LiberationSerif-Bold");
+  size-adjust: 107.4%;
+  ascent-override: 100.75%;
+  descent-override: 23.37%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Playfair Fallback";
+  font-style: italic;
+  font-weight: 700;
+  src:
+    local("Times New Roman Bold Italic"), local("TimesNewRomanPS-BoldItalicMT"), local("Liberation Serif Bold Italic"),
+    local("LiberationSerif-BoldItalic");
+  size-adjust: 107.29%;
+  ascent-override: 100.85%;
+  descent-override: 23.39%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Playfair Fallback Noto";
+  font-weight: 700;
+  src: local("Noto Serif Bold"), local("NotoSerif-Bold"), local("Droid Serif Bold"), local("DroidSerif-Bold");
+  size-adjust: 90.72%;
+  ascent-override: 119.27%;
+  descent-override: 27.67%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Playfair Fallback Noto";
+  font-weight: 900;
+  src: local("Noto Serif Bold"), local("NotoSerif-Bold"), local("Droid Serif Bold"), local("DroidSerif-Bold");
+  size-adjust: 94.83%;
+  ascent-override: 114.1%;
+  descent-override: 26.47%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Playfair Fallback Noto";
+  font-style: italic;
+  font-weight: 700;
+  src:
+    local("Noto Serif Bold Italic"), local("NotoSerif-BoldItalic"), local("Droid Serif Bold Italic"),
+    local("DroidSerif-BoldItalic");
+  size-adjust: 88.43%;
+  ascent-override: 122.36%;
+  descent-override: 28.38%;
+  line-gap-override: 0%;
+}

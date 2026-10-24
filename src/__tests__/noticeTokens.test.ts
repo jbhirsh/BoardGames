@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { BLOCKS, token, contrast } from './themeTokens';
 
-// The Notice tones' text on their fill, in each theme block of App.css: the
+// The Notice tones' text on their fill, in each theme block of index.css: the
 // light :root, the system dark theme and the toggle's dark theme.
 describe('notice tokens', () => {
   for (const [theme, block] of Object.entries(BLOCKS)) {

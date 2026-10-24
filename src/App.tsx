@@ -1,4 +1,4 @@
-import './App.css';
+import './index.css';
 import { useRef } from 'react';
 import { Outlet, ScrollRestoration } from 'react-router';
 import { FilterProvider } from './context/FilterContext';

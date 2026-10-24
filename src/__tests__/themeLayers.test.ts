@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { BLOCKS, token, rgbToken, mix, contrast, declarations } from './themeTokens';
 
-// The theme tokens App.css draws on top of one another. When a fill matched
+// The theme tokens index.css draws on top of one another. When a fill matched
 // the one under it, the dark theme lost the assistant's answer bubble, the
 // filter sheet's close button and the dropdown's fills (#192).
 
@@ -26,7 +26,7 @@ const FILL_ON_FILL: [fill: string, base: string, where: string][] = [
 ];
 
 // A fill is a token, or a translucent tint over a token: `tint` is an
-// `r,g,b` token name or a literal triple, as App.css writes it in rgba().
+// `r,g,b` token name or a literal triple, as index.css writes it in rgba().
 type Fill = string | { tint: string | [number, number, number]; alpha: number; over: string };
 
 // A dark block inherits what it doesn't redeclare from the light :root, as
