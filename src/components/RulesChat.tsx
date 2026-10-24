@@ -9,6 +9,8 @@ import { citingClause } from '../utils/citeMatch';
 import { useOnline } from '../hooks/useOnline';
 import { errorCode, openStream, readEvents } from '../client/graphql';
 import { AskRulesDocument, type AskRulesSubscription } from '../gql/graphql';
+import { fieldClass, fieldRowClass, panelClass, sendClass } from './chatClasses';
+import { headerButtonClass, headerButtonLiveClass } from './sharedClasses';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -61,7 +63,7 @@ const ChatContext = createContext<RulesChatContext>({ isOpen: false, toggle: () 
 export function RulesChatToggle() {
   const { isOpen, toggle } = useContext(ChatContext);
   return (
-    <button className="rules-chat-toggle" onClick={toggle}>
+    <button className={`${headerButtonClass} ${headerButtonLiveClass}`} onClick={toggle}>
       <AiRulesIcon size={16} />
       {isOpen ? 'Close AI Chat' : 'AI Rules Assistant'}
     </button>
@@ -130,6 +132,17 @@ function AnswerLink({ href, title, children }: ComponentProps<'a'>) {
 }
 
 const ANSWER_COMPONENTS: Components = { a: AnswerLink };
+
+// A message's bubble: the visitor's in blue on the right, the assistant's
+// in grey on the left, each with its near bottom corner squared. The
+// assistant's answer is Markdown, its parts spaced here; its page citations
+// are the site's link blue, underlined in running text.
+const bubbleBaseClass =
+  'rules-chat-bubble max-w-[80%] rounded-[14px] px-3.5 py-2.5 text-[14px] leading-normal wrap-break-word [&_:is(ol,ul)]:mt-1 [&_:is(ol,ul)]:mb-2 [&_:is(ol,ul)]:pl-5 [&_a]:text-blue [&_a]:underline [&_a]:underline-offset-2 [&_code]:rounded-[3px] [&_code]:bg-code-bg [&_code]:px-1 [&_code]:py-px [&_code]:font-[monospace] [&_code]:text-[13px] [&_li]:mb-0.5 [&_ol]:list-decimal [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_ul]:list-disc';
+
+function bubbleClass(role: 'user' | 'assistant'): string {
+  return `${bubbleBaseClass} ${role === 'user' ? 'rounded-br-sm bg-blue-fill whitespace-pre-wrap text-on-fill' : 'rounded-bl-sm bg-bg2 text-text'}`;
+}
 
 /**
  * `parts` names the extra rulebooks the assistant reads along with the game's
@@ -402,22 +415,40 @@ export function RulesChatPanel({
   const stillWorks = !rulebookFailed && (shown === 'resting' || rulebookSaved === true);
 
   return (
-    <div ref={panelRef} className={`rules-chat-panel${fresh ? ' rules-chat-panel-fresh' : ''}`}>
+    // Unused, the panel is just the greeting and the starters, not 420px of
+    // blank. On a phone a hard 420px is taller than the room left under the
+    // header, which pushed the field off the screen: svh (not vh or dvh)
+    // sizes against the screen with the browser's bars showing, so the panel
+    // fits without resizing as they collapse, the cap keeping it from growing
+    // on larger phones.
+    <div
+      ref={panelRef}
+      className={`${panelClass} ${fresh ? 'rules-chat-panel-fresh h-auto' : 'h-[min(420px,60svh)] sm:h-105'}`}
+    >
       {scope && (
-        <p className="rules-chat-scope" aria-live="polite">
+        <p
+          className="rules-chat-scope border-b border-border bg-bg px-5 py-2.5 text-[12.5px] font-medium text-text2"
+          aria-live="polite"
+        >
           {scope}
         </p>
       )}
-      <div className="rules-chat-messages" ref={messagesContainerRef}>
+      <div
+        className={`flex flex-col gap-3 overflow-y-auto p-3.5 sm:p-5 ${fresh ? 'flex-none' : 'flex-1'}`}
+        ref={messagesContainerRef}
+      >
         {messages.map((msg, i) => (
           // A notice gets its own key so it mounts fresh and its alert is announced.
-          <div key={msg.error ? 'error' : i} className={`rules-chat-msg rules-chat-msg-${msg.role}`}>
+          <div
+            key={msg.error ? 'error' : i}
+            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
             {msg.error ? (
-              <div className="rules-chat-bubble rules-chat-error">
+              <div className={`${bubbleClass(msg.role)} flex flex-col items-start gap-2`}>
                 <p role="alert">{msg.content}</p>
                 <button
                   type="button"
-                  className="rules-chat-retry"
+                  className="cursor-pointer rounded-control border border-blue-tint/35 bg-surface px-3.5 py-1.5 text-[13px] font-semibold text-blue hover:not-disabled:bg-blue-bg disabled:cursor-default disabled:opacity-50"
                   onClick={() => void ask(input.trim())}
                   disabled={!input.trim() || !online}
                   aria-describedby={online ? undefined : statusId}
@@ -426,7 +457,7 @@ export function RulesChatPanel({
                 </button>
               </div>
             ) : (
-              <div className="rules-chat-bubble">
+              <div className={bubbleClass(msg.role)}>
                 {msg.role === 'assistant' ? (
                   <CitationContext.Provider value={{ isCitation, onCite }}>
                     <Markdown components={ANSWER_COMPONENTS}>
@@ -441,7 +472,13 @@ export function RulesChatPanel({
                   i > 0 &&
                   !(isLoading && i === messages.length - 1) &&
                   linksFor?.(msg.content, msg.tab ?? tab).map((l) => (
-                    <Link key={l.to} className="rules-chat-tablink" to={l.to} replace state={l.state}>
+                    <Link
+                      key={l.to}
+                      className="mt-2 inline-block font-semibold text-blue hover:underline [&+&]:ml-3"
+                      to={l.to}
+                      replace
+                      state={l.state}
+                    >
                       Open {l.label} <span aria-hidden="true">→</span>
                     </Link>
                   ))}
@@ -450,12 +487,12 @@ export function RulesChatPanel({
           </div>
         ))}
         {fresh && starters.length > 0 && (
-          <div className="rules-chat-starters" role="group" aria-label="Try asking">
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Try asking">
             {starters.map((q) => (
               <button
                 key={q}
                 type="button"
-                className="rules-chat-starter"
+                className="cursor-pointer rounded-[999px] border border-blue-tint/30 bg-surface px-3 py-1.75 text-left text-[13px] font-medium text-blue hover:not-disabled:bg-blue-bg disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={() => void ask(q, false)}
                 disabled={!online}
                 aria-describedby={online ? undefined : statusId}
@@ -466,14 +503,20 @@ export function RulesChatPanel({
           </div>
         )}
         {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
-          <div className="rules-chat-msg rules-chat-msg-assistant">
-            <div className="rules-chat-bubble rules-chat-thinking">Thinking...</div>
+          <div className="flex justify-start">
+            <div className={`${bubbleClass('assistant')} text-text3 italic`}>Thinking...</div>
           </div>
         )}
       </div>
       {/* In the panel while empty too, so what it comes to say is read out:
           the one live region for it, so its notice isn't one as well. */}
-      <div id={statusId} className="rules-chat-status" aria-live="polite">
+      {/* Why the assistant can't answer, on the box's own strip above it;
+          empty, it takes no room but stays in the page, a live region. */}
+      <div
+        id={statusId}
+        className="border-t border-border bg-bg px-3 pt-2.5 empty:border-t-0 empty:p-0 sm:px-4 sm:pt-3"
+        aria-live="polite"
+      >
         {shown && !holding && (
           <Notice
             tone="info"
@@ -492,8 +535,12 @@ export function RulesChatPanel({
           </Notice>
         )}
       </div>
-      <form className="rules-chat-input" onSubmit={handleSend}>
+      <form
+        className={`${fieldRowClass} px-3 pt-2.5 pb-[max(10px,env(safe-area-inset-bottom))] sm:px-4 sm:py-3 ${shown && !holding ? '' : 'border-t border-border'}`}
+        onSubmit={handleSend}
+      >
         <input
+          className={fieldClass}
           ref={inputRef}
           type="text"
           value={input}
@@ -503,6 +550,7 @@ export function RulesChatPanel({
         />
         <button
           type="submit"
+          className={sendClass}
           disabled={!input.trim() || isLoading || !online}
           aria-describedby={online ? undefined : statusId}
         >

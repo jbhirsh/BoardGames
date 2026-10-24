@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { SaveState } from '../pdfjs/saved';
 import { SavedIcon, SaveOfflineIcon, SavingIcon, WarningIcon } from './Icons';
+import { rulesLinkClass } from './sharedClasses';
 
 /** What the live region says as a save ends. */
 const ENDED: Partial<Record<SaveState, string>> = {
@@ -11,7 +12,8 @@ const ENDED: Partial<Record<SaveState, string>> = {
 
 /**
  * Words that a phone (600px and narrower, where the row's three items keep
- * one line) shows `short`, with `full` read out in their place.
+ * one line) shows `short`, with `full` read out in their place (the row's
+ * fewerWordsClass).
  */
 function Said({ full, short }: { full: string; short: string }) {
   return (
@@ -96,7 +98,7 @@ export default function SaveOffline({
 
   return (
     <span
-      className="rules-save-slot"
+      className="inline-flex"
       style={hidden ? { visibility: 'hidden' } : undefined}
       onFocus={() => {
         focused.current = true;
@@ -109,7 +111,7 @@ export default function SaveOffline({
         <button
           ref={ref}
           type="button"
-          className="rules-download rules-save"
+          className={`rules-save ${rulesLinkClass} cursor-pointer p-0 [&_svg]:size-3.5 [&_svg]:flex-none`}
           aria-describedby={state === 'unsaved' && sized ? 'rules-download-size' : undefined}
           onClick={onSave}
         >
@@ -128,7 +130,11 @@ export default function SaveOffline({
           )}
         </button>
       ) : (
-        <span ref={ref} className={`rules-save rules-save-status rules-save-${state}`} tabIndex={-1}>
+        <span
+          ref={ref}
+          className={`rules-save rules-save-status rules-save-${state} inline-flex items-center gap-1.5 text-[13px] text-text2 focus:outline-none max-xs:gap-1.25 [&_svg]:size-3.5 [&_svg]:flex-none ${state === 'saved' ? '[&_svg]:text-ok-fg' : ''}`}
+          tabIndex={-1}
+        >
           {STATUS[state]}
         </span>
       )}

@@ -154,3 +154,56 @@ export const linesClass = 'lines overflow-hidden rounded-panel border border-bor
 
 /** A wishlist group (and its heading), spaced from the one before it. */
 export const wishGroupClass = '[&+&]:mt-3';
+
+/** An add-on's kind (expansion, extension, version) beside its name, on its row or its rulebook's tab. */
+export const kindChipClass =
+  'rounded-[5px] px-1.5 py-0.5 text-[9.5px] leading-[1.3] font-bold tracking-[0.6px] whitespace-nowrap uppercase';
+/** A kind chip's colours: an expansion's amber, an extension's green, a version's blue. */
+export const kindClasses: Readonly<Record<string, string>> = {
+  expansion: 'bg-expansion-tint/12 text-expansion-fg',
+  extension: 'bg-extension-tint/12 text-extension-fg',
+  version: 'bg-blue-tint/10 text-version-fg',
+};
+
+/**
+ * A page of its own (a game's rules, a score pad, the word checker,
+ * sign-in): one 960px column, whose side padding follows the gutter on a
+ * phone but stops at 24px, as a 48px gutter would eat content width for
+ * nothing in a column this narrow.
+ */
+export const pageClass = 'rules-page mx-auto max-w-240 px-[min(var(--spacing-gutter),24px)] pt-8 pb-16';
+/** A page's header: Back, then the title. */
+export const pageHeaderClass = 'rules-header mb-8';
+/**
+ * A page's title: one line, cut short with an ellipsis, beside the box art;
+ * on a phone it wraps under nothing and nothing is cut.
+ */
+export const pageTitleClass =
+  'rules-game-name mb-1.5 font-display text-[22px] leading-[1.2] font-bold text-dark sm:mb-1 sm:truncate sm:text-[clamp(24px,4vw,36px)]';
+/** The line under a page's title. */
+export const pageDescClass = 'rules-game-desc text-[14px] leading-normal text-text2';
+/**
+ * A button beside a page's title (the rules assistant, the score pad, the
+ * word checker): its colours are the caller's (headerButtonLiveClass, or a
+ * loading page's grey). On a phone two share a row where they fit, else each
+ * takes the row, a label never wrapping inside its button.
+ */
+export const headerButtonClass = `rules-chat-toggle inline-flex shrink-0 items-center gap-2 rounded-control border py-2.5 text-[14px] leading-4 font-semibold [transition:background_0.15s,border-color_0.15s] max-sm:flex-[1_1_calc(50%-7px)] max-sm:justify-center max-sm:px-3 max-sm:whitespace-nowrap sm:px-5 ${tapTargetClass}`;
+/** A header button's blue. */
+export const headerButtonLiveClass =
+  'cursor-pointer border-blue-tint/20 bg-blue-bg text-blue hover:border-blue-tint/35 hover:bg-blue-tint/12';
+
+/** A rulebook's quiet line: loading, or why it can't be shown. */
+export const pdfNoteClass = 'py-6 text-center text-[14px] text-text2';
+
+/**
+ * On a phone the rules page's links keep one line, from the first paint and
+ * whatever Save for offline says, in fewer words: Download, Open, Save
+ * offline (Saving…, Saved, No space, Try again). Words dropped from sight
+ * (rules-more) are still read out; rules-short stands in for them on
+ * screen; rules-wide goes altogether. Worn by what holds them.
+ */
+export const fewerWordsClass =
+  'max-md:[&_.rules-more]:sr-only [&_.rules-short]:hidden max-md:[&_.rules-short]:inline max-md:[&_.rules-wide]:hidden';
+/** The rules page's links above the reader (Download, Open, Save for offline). */
+export const rulesLinkClass = `rules-download inline-flex items-center gap-1.5 text-[13px] font-medium text-blue [transition:opacity_0.15s] hover:opacity-70 max-xs:gap-1.25 ${tapTargetClass}`;

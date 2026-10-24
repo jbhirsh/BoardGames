@@ -6,6 +6,7 @@ import type { Meaning } from '../utils/wiktionary';
 import { loadWordList } from '../client/wordList';
 import { lookUp } from '../client/dictionary';
 import Notice from './Notice';
+import { checkClass, fieldClass, fieldRowClass, panelClass } from './chatClasses';
 
 /**
  * The verdict comes from the word-game list (public/words/: ENABLE and the
@@ -45,6 +46,18 @@ const STATUS_TEXT: Record<Verdict['status'], string> = {
 };
 
 const STATUS_ICON: Record<Verdict['status'], string> = { valid: '✓', unlisted: '?', invalid: '✗', unchecked: '?' };
+// The verdict's badge: green for a word, red for none, the info tone for one
+// the list doesn't know, grey for one nothing could check.
+const verdictClasses: Record<Verdict['status'], string> = {
+  valid: 'border-ok-tint/25 bg-ok-tint/12 text-ok-fg',
+  invalid: 'border-bad-tint/20 bg-bad-tint/10 text-bad-fg',
+  unlisted: 'border-info-border bg-info-bg text-info-fg',
+  unchecked: 'border-gray-tint/25 bg-gray-tint/12 text-text2',
+};
+// A line under the badge.
+const noteClass = 'mx-0.5 mt-2 text-[12.5px] leading-normal text-text2';
+// What the box says before there is an answer, and while it comes.
+const emptyClass = 'px-5 py-10 text-center text-[14px] text-text3';
 
 export default function WordChecker() {
   const [input, setInput] = useState('');
@@ -128,11 +141,14 @@ export default function WordChecker() {
   }
 
   return (
-    <div className="rules-chat-panel word-checker-panel">
-      <form className="rules-chat-input" onSubmit={handleCheck}>
+    // It sizes to its answer, with the field on top, where the thumb and the
+    // keyboard are (and nowhere near a phone's home indicator).
+    <div className={`${panelClass} h-auto`}>
+      <form className={`${fieldRowClass} border-b border-border px-3 py-2.5 sm:px-4 sm:py-3`} onSubmit={handleCheck}>
         {/* iOS would otherwise capitalise and autocorrect the word being
             looked up, which is the one thing this tool must not do. */}
         <input
+          className={fieldClass}
           ref={inputRef}
           type="text"
           value={input}
@@ -145,34 +161,37 @@ export default function WordChecker() {
           spellCheck={false}
           enterKeyHint="search"
         />
-        <button type="submit" disabled={!input.trim() || isLocked}>
+        <button type="submit" className={checkClass} disabled={!input.trim() || isLocked}>
           Check
         </button>
       </form>
       {/* Announced as it changes: a verdict can follow the first answer. */}
-      <div className="word-checker-body" aria-live="polite">
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-5" aria-live="polite">
         {result?.status === 'letters' && (
           <Notice tone="info">Use one word of letters only, without spaces, hyphens or apostrophes.</Notice>
         )}
         {result?.status === 'short' && <Notice tone="info">Words need at least two letters.</Notice>}
         {result && result.status !== 'letters' && result.status !== 'short' && (
-          <div className="word-result">
-            <div className={`word-badge word-${result.status}`}>
-              <span className="word-badge-icon" aria-hidden="true">
+          <div>
+            <div
+              className={`flex items-center gap-2.5 rounded-control border px-4 py-3 text-[14px] ${verdictClasses[result.status]}`}
+            >
+              <span className="w-5.5 text-center text-[22px] leading-none font-bold" aria-hidden="true">
                 {STATUS_ICON[result.status]}
               </span>
-              <span className="word-badge-word">{result.word}</span>
-              <span className="word-badge-status">{STATUS_TEXT[result.status]}</span>
+              <span className="text-[18px] font-bold lowercase">{result.word}</span>
+              <span className="ml-auto text-[13px] font-semibold">{STATUS_TEXT[result.status]}</span>
             </div>
             {result.status === 'valid' && result.source === 'dictionary' && (
-              <p className="word-note">Not in our word list, but the dictionary has it.</p>
+              <p className={noteClass}>Not in our word list, but the dictionary has it.</p>
             )}
             {result.status === 'unlisted' && result.dictionary === 'asking' && (
-              <p className="word-note">Checking the dictionary…</p>
+              <p className={noteClass}>Checking the dictionary…</p>
             )}
             {result.status === 'unlisted' && result.dictionary === 'unreachable' && (
               <Notice
                 tone="warning"
+                className="mt-2"
                 action={{
                   label: 'Try again',
                   onClick: () => retry(() => askDictionary(result.word, ++latest.current)),
@@ -182,27 +201,35 @@ export default function WordChecker() {
               </Notice>
             )}
             {result.status === 'unchecked' && (
-              <Notice tone="warning" action={{ label: 'Try again', onClick: () => retry(() => check(result.word)) }}>
+              <Notice
+                tone="warning"
+                className="mt-2"
+                action={{ label: 'Try again', onClick: () => retry(() => check(result.word)) }}
+              >
                 Neither the word list nor the dictionary could be reached.
               </Notice>
             )}
             {result.status === 'valid' && result.meanings === undefined && (
-              <p className="word-note">Looking up the meaning…</p>
+              <p className={noteClass}>Looking up the meaning…</p>
             )}
             {result.status === 'valid' && result.meanings && (
-              <div className="word-meanings">
+              <div className="flex flex-col gap-3">
                 {result.meanings.map((meaning, j) => (
-                  <div key={j} className="word-meaning">
-                    <div className="word-pos">{meaning.partOfSpeech}</div>
+                  <div key={j} className="flex flex-col gap-1">
+                    <div className="text-[12px] font-bold tracking-[0.5px] text-blue uppercase">
+                      {meaning.partOfSpeech}
+                    </div>
                     {meaning.definitions.slice(0, 2).map((def, k) => (
-                      <div key={k} className="word-def">
-                        <span className="word-def-num">{k + 1}.</span> {def.definition}
-                        {def.example && <div className="word-example">"{def.example}"</div>}
+                      <div key={k} className="pl-1 text-[14px] leading-normal text-text">
+                        <span className="font-semibold text-text3">{k + 1}.</span> {def.definition}
+                        {def.example && (
+                          <div className="mt-0.5 pl-4 text-[13px] text-text3 italic">"{def.example}"</div>
+                        )}
                       </div>
                     ))}
                   </div>
                 ))}
-                <p className="word-source">
+                <p className="text-[12.5px] leading-normal text-text2 [&_a]:underline [&_a]:underline-offset-2">
                   Definitions from{' '}
                   <a href={wiktionaryPage(result.word)} target="_blank" rel="noopener noreferrer">
                     Wiktionary
@@ -218,9 +245,9 @@ export default function WordChecker() {
           </div>
         )}
         {!result && !isChecking && (
-          <div className="word-checker-empty">Type a word to check if it's valid for word games like Bananagrams.</div>
+          <div className={emptyClass}>Type a word to check if it's valid for word games like Bananagrams.</div>
         )}
-        {isChecking && <div className="word-checker-empty">Checking...</div>}
+        {isChecking && <div className={emptyClass}>Checking...</div>}
       </div>
     </div>
   );

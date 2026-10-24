@@ -260,7 +260,7 @@ export function SavedIcon() {
 
 export function SavingIcon() {
   return (
-    <svg className="spin" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <svg className="animate-spin" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.4" opacity=".25" />
       <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
     </svg>

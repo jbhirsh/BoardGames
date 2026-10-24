@@ -3,6 +3,7 @@ import type { Game } from '../data/types';
 import { digitNudge } from '../utils/digitNudge';
 import { useWakeLock } from '../hooks/useWakeLock';
 import PageHeader from './PageHeader';
+import { pageClass } from './sharedClasses';
 
 // The score boxes' digits, moved to the middle of the box for the font in
 // use. A hidden line in the boxes' font (16px) gives the layout's own
@@ -39,7 +40,7 @@ export default function ScorePadFrame({ name, art, children }: Props) {
   const [nudge] = useState(measureDigitNudge);
   useWakeLock(true);
   return (
-    <div className="rules-page" style={{ '--digit-nudge': `${nudge}px` } as CSSProperties}>
+    <div className={pageClass} style={{ '--digit-nudge': `${nudge}px` } as CSSProperties}>
       <title>{`${name} score · The Game Room`}</title>
       <PageHeader title="Score Calculator" desc={name} art={art} />
       {children}

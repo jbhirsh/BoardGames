@@ -2,6 +2,7 @@ import PageHeader from './PageHeader';
 import { GAMES } from '../data/games';
 import { WORD_CHECKER_GAME } from '../data/wordChecker';
 import WordChecker from './WordChecker';
+import { pageClass } from './sharedClasses';
 
 /**
  * /word-checker: the word checker on a page of its own, for the game in
@@ -15,7 +16,7 @@ export default function WordCheckerPage() {
   if (!game) return null;
 
   return (
-    <div className="rules-page">
+    <div className={pageClass}>
       <title>Word Checker · The Game Room</title>
       <PageHeader title="Word Checker" desc={game.name} art={game} />
 

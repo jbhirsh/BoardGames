@@ -6,6 +6,7 @@ import { WORD_CHECKER_GAME } from '../data/wordChecker';
 import { rulebooks } from '../utils/rulebooks';
 import PageHeader from './PageHeader';
 import { AiRulesIcon, CalculatorIcon } from './Icons';
+import { headerButtonClass, pageClass } from './sharedClasses';
 
 interface Props {
   /** The page's heading, drawn as a bar its size (the words aren't shown). */
@@ -28,13 +29,16 @@ interface Props {
  */
 export default function RouteFallback({ title = 'The Game Room', desc = 'Loading', art = true, children }: Props) {
   return (
-    <div className="rules-page route-fallback" aria-busy="true">
+    <div className={pageClass} aria-busy="true">
       <PageHeader title={title} desc={desc} art={art} loading>
         {children}
       </PageHeader>
     </div>
   );
 }
+
+// The rules page's buttons in grey, their words and icons there but unseen.
+const buttonClass = `${headerButtonClass} cursor-default border-transparent bg-bg3 text-transparent [&_svg]:invisible`;
 
 /**
  * The rules page's, sized by its game's name and rulebook line and the
@@ -48,17 +52,17 @@ export function RulesFallback() {
   if (!game || !book) return <RouteFallback />;
   return (
     <RouteFallback title={game.name} desc={book.short}>
-      <button type="button" className="rules-chat-toggle" disabled>
+      <button type="button" className={buttonClass} disabled>
         <AiRulesIcon size={16} />
         AI Rules Assistant
       </button>
       {scorePadLink(game.slug, book.part) && (
-        <span className="rules-chat-toggle">
+        <span className={buttonClass}>
           <CalculatorIcon /> Score calculator
         </span>
       )}
       {game.slug === WORD_CHECKER_GAME && (
-        <button type="button" className="rules-chat-toggle" disabled>
+        <button type="button" className={buttonClass} disabled>
           Word Checker
         </button>
       )}

@@ -28,6 +28,7 @@ import {
   warmPage,
   type PageTextData,
 } from '../pdfjs/documents';
+import { pdfNoteClass, tapTargetClass } from './sharedClasses';
 
 // The rules page draws the rulebook itself with pdf.js rather than leaving
 // it to the browser's viewer (which a phone hasn't got: Android draws
@@ -58,7 +59,7 @@ const RENDERS = 1;
 // memory budget and draws them blank.
 const MAX_PIXELS = 4_000_000;
 // How long a page jumped to from a citation keeps its ring before it fades
-// (App.css .pdf-page--cited).
+// (the page's pdf-page--cited outline).
 const RING_MS = 1600;
 // How long a jump's smooth scroll may take before the reader stops waiting
 // for its scrollend (a browser without the event, or a scroll cut short).
@@ -446,7 +447,7 @@ function PdfPage({
       for (const p of pieces) {
         parts.push(str.slice(at, p.from));
         const el = document.createElement('mark');
-        el.className = p.className;
+        el.className = `${p.className} ${markClasses[p.className]}`;
         el.textContent = str.slice(p.from, p.to);
         parts.push(el);
         if (p.isCurrent) currentMark ??= el;
@@ -506,7 +507,7 @@ function PdfPage({
   return (
     <div
       ref={boxRef}
-      className="pdf-page"
+      className="pdf-page relative w-full scroll-mt-[130px] overflow-hidden rounded-sm bg-paper shadow-[0_0_0_1px_var(--color-border),var(--shadow-sm)] outline-3 outline-offset-2 outline-transparent [--scale-round-x:1px] [--scale-round-y:1px] [transition:outline-color_0.8s_ease] focus-visible:outline-cite-ring focus-visible:[transition:none] [&_canvas]:block [&_canvas]:size-full [&.pdf-page--cited]:outline-cite-ring [&.pdf-page--cited]:[transition:none]"
       data-page={n}
       role="group"
       aria-label={`Page ${n} of ${total}`}
@@ -520,6 +521,24 @@ function PdfPage({
 }
 
 const NO_MATCHES: readonly Match[] = [];
+
+// The search's buttons: Search, and the steps between matches.
+const searchButtonClass =
+  'h-10.5 cursor-pointer rounded-control border border-blue-tint/25 bg-blue-bg font-semibold text-blue';
+const stepClass = `${searchButtonClass} w-11 p-0 text-[18px]`;
+
+// The matches marked in a page's text layer (pdfMarks.ts names them): the
+// search's in yellow, the one it's on in orange, and the passage a citation
+// points to opaque orange, multiplied into the page (the layer's blend), so
+// it shows on a yellow page as on white and the print stays dark, underlined
+// for those who can't tell the hue. The text itself stays transparent.
+const markClasses: Readonly<Record<string, string>> = {
+  'pdf-hit': 'rounded-xs bg-search-hit text-transparent shadow-[0_0_0_2px_var(--color-search-hit)]',
+  'pdf-hit pdf-hit--current':
+    'rounded-xs bg-search-current text-transparent shadow-[0_0_0_2px_var(--color-search-current)]',
+  'pdf-hit pdf-hit--cited':
+    'rounded-xs bg-cite-hit text-transparent shadow-[0_0_0_2px_var(--color-cite-hit),0_3px_0_0_var(--color-cite-edge)]',
+};
 
 /** Which page is at the top of the screen, and how far into it. */
 function readingPlace(pages: HTMLElement): { page: number; into: number } | null {
@@ -861,12 +880,14 @@ export default function PdfReader({
   else if (missing !== null) status = noted;
 
   return (
-    <section className="pdf-reader" aria-label={title}>
+    <section className="pdf-reader mb-4 print:hidden" aria-label={title}>
       {/* Not once the rulebook has failed, with nothing to search. */}
       {!failed && (
-        <div className="pdf-search">
-          <form role="search" className="pdf-search-form" onSubmit={search}>
+        // It stays in reach while the pages scroll under it.
+        <div className="pdf-search sticky top-[env(safe-area-inset-top,0px)] z-2 mb-2 bg-bg py-2">
+          <form role="search" className="flex gap-2" onSubmit={search}>
             <input
+              className="h-10.5 min-w-0 flex-1 rounded-control border border-border bg-surface px-3 text-[16px] text-text focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-blue"
               type="search"
               aria-label="Search the rulebook"
               placeholder="Search the rulebook"
@@ -874,21 +895,29 @@ export default function PdfReader({
               onChange={(e) => setQuery(e.target.value)}
               enterKeyHint="search"
             />
-            <button type="submit" disabled={!doc}>
+            <button
+              type="submit"
+              className={`${searchButtonClass} px-3.5 text-[14px] disabled:cursor-default disabled:opacity-50 ${tapTargetClass}`}
+              disabled={!doc}
+            >
               Search
             </button>
           </form>
           {/* Always in the page, so a screen reader hears its first message. */}
-          <div className={status ? 'pdf-search-results' : 'pdf-search-results pdf-search-results--idle'}>
-            <p className="pdf-search-status" role="status">
+          {/* Kept in the page while empty (a live region that arrives with its
+              first message often isn't read out), but taking no room. */}
+          <div
+            className={`pdf-search-results flex items-center justify-between gap-2 ${status ? 'mt-1.5 min-h-10.5' : 'pdf-search-results--idle'}`}
+          >
+            <p className="text-[13px] text-text2" role="status">
               {status}
             </p>
             {!searching && hits && hits.length > 1 && (
-              <span className="pdf-search-nav">
-                <button type="button" aria-label="Previous match" onClick={() => step(-1)}>
+              <span className="flex flex-none gap-1.5">
+                <button type="button" className={stepClass} aria-label="Previous match" onClick={() => step(-1)}>
                   &uarr;
                 </button>
-                <button type="button" aria-label="Next match" onClick={() => step(1)}>
+                <button type="button" className={stepClass} aria-label="Next match" onClick={() => step(1)}>
                   &darr;
                 </button>
               </span>
@@ -901,8 +930,8 @@ export default function PdfReader({
         {said}
       </div>
       {failed && failNote}
-      {!failed && !doc && <p className="pdf-note">Loading the rulebook…</p>}
-      <div className="pdf-pages" ref={pagesRef}>
+      {!failed && !doc && <p className={pdfNoteClass}>Loading the rulebook…</p>}
+      <div className="flex flex-col gap-2.5" ref={pagesRef}>
         {doc &&
           Array.from({ length: doc.numPages }, (_, i) => (
             <PdfPage
