@@ -213,6 +213,12 @@ export const MORE: Scenario[] = [
       await page.getByRole('spinbutton', { name: 'Cy' }).fill('4');
       await page.getByRole('button', { name: /^Add hand/ }).click();
       await expect(page.getByRole('table', { name: 'Scores by hand' })).toBeVisible();
+      // Playwright scrolls Add hand into view before the click only when it
+      // is off-screen, which turns on when the fonts land, so the window
+      // came to rest at either end. The shot is of the pad's foot, the sheet
+      // and New game, every time.
+      await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+      await page.waitForFunction(() => innerHeight + scrollY >= document.documentElement.scrollHeight - 1);
     },
   },
   {
