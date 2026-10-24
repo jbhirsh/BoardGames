@@ -62,32 +62,36 @@ export function clientIp(req: MinimalReq): string {
   return last || req.socket?.remoteAddress || 'unknown';
 }
 
+/** Why a request was turned away: the status and body to answer with. */
+export interface Refusal {
+  status: 429 | 503;
+  error: string;
+  code?: string;
+}
+
 /**
- * Enforce a limit for this request. Returns true if the request may proceed.
- * When it returns false it has already written a 429 (or, failing closed, a
- * 503). A null limiter (env not configured) allows the request; so does a
- * thrown limit() call, unless `failClosed` is set.
+ * Counts one request against `limiter` under `key` (the client IP, or a
+ * fixed key for a shared budget). Returns null when it may proceed, or the
+ * refusal: a 429, or, failing closed, a 503. A null limiter (env not
+ * configured) allows the request; so does a thrown limit() call, unless
+ * `failClosed` is set.
  */
-export async function enforceRateLimit(
+export async function rateLimitRefusal(
   limiter: RateLimiter | null,
-  req: MinimalReq,
-  res: MinimalRes,
-  options: RateLimitOptions = {},
-): Promise<boolean> {
-  if (!limiter) return true;
+  key: string,
+  options: Omit<RateLimitOptions, 'key'> = {},
+): Promise<Refusal | null> {
+  if (!limiter) return null;
   try {
-    const { success, reason } = await limiter.limit(options.key ?? clientIp(req));
+    const { success, reason } = await limiter.limit(key);
     // @upstash/ratelimit doesn't throw when Redis hangs: after its timeout
     // (5 s unless getLimiter sets one) it answers success with reason
     // 'timeout'. That is the same unknown as a throw, so a fail-closed caller
     // treats it as one. The Redis call isn't cancelled, so its INCRBY may
     // still land after the refusal and count a request that never ran.
     if (options.failClosed && reason === 'timeout') throw new Error('rate limiter timed out');
-    if (!success) {
-      res.status(429).json(options.refusal ?? { error: 'Too many requests. Please slow down.' });
-      return false;
-    }
-    return true;
+    if (!success) return { status: 429, ...(options.refusal ?? { error: 'Too many requests. Please slow down.' }) };
+    return null;
   } catch (err) {
     // Redis unreachable. Fail-open callers don't punish legitimate traffic for
     // a limiter fault, but surface it: a silent fail-open means limits quietly
@@ -99,15 +103,30 @@ export async function enforceRateLimit(
     // one; awaiting flush(2000) on each would slow all traffic for the whole
     // outage, the opposite of fail-open's goal. The reused Fluid Compute
     // container still delivers the event across later invocations, and Sentry
-    // aggregates the repeats. (The 500 paths in chat.ts/votes.ts flush because
-    // they are terminal and low-frequency; this is the fast path.)
+    // aggregates the repeats. (The server-error path flushes because it is
+    // terminal and low-frequency; this is the fast path.)
     Sentry.captureException(err);
-    if (options.failClosed) {
-      res.status(503).json({ error: 'Temporarily unavailable. Please try again later.' });
-      return false;
-    }
-    return true;
+    if (options.failClosed) return { status: 503, error: 'Temporarily unavailable. Please try again later.' };
+    return null;
   }
+}
+
+/**
+ * Enforce a limit for this request. Returns true if the request may proceed.
+ * When it returns false it has already written the refusal (see
+ * rateLimitRefusal).
+ */
+export async function enforceRateLimit(
+  limiter: RateLimiter | null,
+  req: MinimalReq,
+  res: MinimalRes,
+  options: RateLimitOptions = {},
+): Promise<boolean> {
+  const refusal = await rateLimitRefusal(limiter, options.key ?? clientIp(req), options);
+  if (!refusal) return true;
+  const { status, ...body } = refusal;
+  res.status(status).json(body);
+  return false;
 }
 
 const cache = new Map<string, Ratelimit | null>();
