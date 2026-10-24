@@ -144,7 +144,9 @@ export default function WordChecker() {
     // It sizes to its answer, with the field on top, where the thumb and the
     // keyboard are (and nowhere near a phone's home indicator).
     <div className={`${panelClass} h-auto`}>
-      <form className={`${fieldRowClass} border-b border-border px-3 py-2.5 sm:px-4 sm:py-3`} onSubmit={handleCheck}>
+      {/* The field row and the answer under it share one 16px inset, so the
+          field's and the verdict's edges line up. */}
+      <form className={`${fieldRowClass} border-b border-border px-4 py-3`} onSubmit={handleCheck}>
         {/* iOS would otherwise capitalise and autocorrect the word being
             looked up, which is the one thing this tool must not do. */}
         <input
@@ -166,7 +168,7 @@ export default function WordChecker() {
         </button>
       </form>
       {/* Announced as it changes: a verdict can follow the first answer. */}
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-5" aria-live="polite">
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4" aria-live="polite">
         {result?.status === 'letters' && (
           <Notice tone="info">Use one word of letters only, without spaces, hyphens or apostrophes.</Notice>
         )}
@@ -213,7 +215,7 @@ export default function WordChecker() {
               <p className={noteClass}>Looking up the meaning…</p>
             )}
             {result.status === 'valid' && result.meanings && (
-              <div className="flex flex-col gap-3">
+              <div className="mt-4 flex flex-col gap-3">
                 {result.meanings.map((meaning, j) => (
                   <div key={j} className="flex flex-col gap-1">
                     <div className="text-[12px] font-bold tracking-[0.5px] text-blue uppercase">
