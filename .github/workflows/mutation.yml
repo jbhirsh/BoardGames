@@ -4,7 +4,10 @@
 #
 # Three placements (the first two the pattern from jbhirsh/sift#67):
 #   - Pull requests: mutate only the in-scope files the PR touched — fast,
-#     targeted feedback on exactly the code under review. PRs that change no
+#     targeted feedback on exactly the code under review. A file whose
+#     change is formatting alone (Prettier turns its merge-base version into
+#     exactly the new one) is left out, so a reformat doesn't re-test every
+#     mutant (stryker-mutate-scope.mjs). PRs that change no
 #     mutable source (data, docs, styles, workflow edits, pure deletions) run a
 #     small utils smoke scope instead, so the Stryker wiring itself stays
 #     validated at PR time and the required check always reports.
@@ -94,7 +97,8 @@ jobs:
 
       # On PRs, narrow mutation to changed files inside the configured scope:
       # the script filters the diff through stryker.config.json's own mutate
-      # globs, so the two can't drift. --diff-filter=d drops deletions: a
+      # globs, so the two can't drift, and leaves out formatting-only
+      # changes. --diff-filter=d drops deletions: a
       # removed file must not be passed to --mutate.
       - name: Determine mutation scope
         id: scope
@@ -104,8 +108,9 @@ jobs:
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
+          set -o pipefail
           CHANGED=$(git diff --name-only --diff-filter=d "origin/${BASE_REF}"...HEAD \
-            | node .github/scripts/stryker-mutate-scope.mjs)
+            | MUTATE_BASE="origin/${BASE_REF}" node .github/scripts/stryker-mutate-scope.mjs)
           if [ -z "$CHANGED" ]; then
             echo "No mutable files changed — running the utils smoke scope to validate the Stryker wiring."
             echo "mutate=src/utils/filterUrl.ts,src/utils/pickRandom.ts,src/utils/urls.ts" >> "$GITHUB_OUTPUT"
