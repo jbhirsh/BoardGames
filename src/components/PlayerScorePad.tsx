@@ -2,8 +2,40 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { safeStorage } from '../client/safeStorage';
 import { revealInStrip } from '../client/revealInStrip';
 import { ScoreIcon } from './ScoreIcons';
+import { tapTargetClass } from './sharedClasses';
+import {
+  actionsClass,
+  formClass,
+  labelClass,
+  nameInputClass,
+  nextClass,
+  panelClass,
+  quietButtonClass,
+  sheetCellClass,
+  sheetClass,
+  sheetCornerClass,
+  sheetHeadClass,
+  sheetPlaceCellClass,
+  sheetPlaceHeadClass,
+  sheetRowHeadClass,
+  sheetTotalCellClass,
+  sheetTotalHeadClass,
+  sheetWrapClass,
+  totalClass,
+  winClass,
+} from './scorePadClasses';
 
 let nextPlayerId = 0;
+
+// The strip's buttons: a player's tab (their name, and on the chosen one,
+// a × removing them), then Add and Results. A phone gives each a 44px tap
+// area; the strip gains room for those (it clips what passes its edges,
+// scrolling sideways), and the tab's frame stops clipping its corners.
+const tabFrameClass =
+  'group/tab inline-flex items-stretch overflow-hidden rounded-control border [transition:color_0.15s,background_0.15s,border-color_0.15s] max-sm:overflow-visible';
+const tabClass = `cursor-pointer px-4 py-2 text-[13px] font-semibold [transition:color_0.15s,background_0.15s] max-sm:px-3 ${tapTargetClass}`;
+const stripButtonClass = `flex-none cursor-pointer rounded-control border px-4 py-2 font-semibold [transition:color_0.15s,background_0.15s,border-color_0.15s] ${tapTargetClass}`;
+const quietStripClass = 'border-border bg-bg2 text-text3 hover:bg-bg3 hover:text-text';
 
 // Scrolls the player strip sideways just far enough to show the chosen tab.
 function scrollIntoStrip(el: HTMLDivElement | null) {
@@ -183,45 +215,54 @@ export default function PlayerScorePad<P extends PadPlayer>({
   return (
     <>
       {setup}
-      <div className="sc-player-tabs">
-        <div className="sc-player-strip">
-          {players.map((p, i) => (
-            <div
-              key={p.id}
-              className={`sc-player-tab-wrap${i === activePlayer && !showSummary ? ' active' : ''}`}
-              ref={i === activePlayer ? scrollIntoStrip : undefined}
-            >
-              <button
-                type="button"
-                className={`sc-player-tab${i === activePlayer && !showSummary ? ' active' : ''}`}
-                onClick={() => {
-                  setActivePlayer(i);
-                  setShowSummary(false);
-                }}
+      <div className="mb-3 flex items-stretch gap-1">
+        <div className="flex min-w-0 flex-1 scrollbar-none gap-1 overflow-x-auto *:flex-none max-sm:-my-1 max-sm:py-1 [&::-webkit-scrollbar]:hidden">
+          {players.map((p, i) => {
+            const on = i === activePlayer && !showSummary;
+            return (
+              <div
+                key={p.id}
+                className={`${tabFrameClass} ${on ? 'border-blue-tint/30 bg-blue-bg' : 'border-border bg-bg2 hover:bg-bg3'}`}
+                ref={i === activePlayer ? scrollIntoStrip : undefined}
               >
-                {p.name}
-              </button>
-              {players.length > minPlayers && (
                 <button
                   type="button"
-                  className="sc-player-remove"
-                  aria-label={`Remove ${p.name}`}
-                  onClick={() => removePlayer(i)}
+                  className={`${tabClass} ${on ? 'active text-blue' : 'text-text3 hover:text-text'}`}
+                  onClick={() => {
+                    setActivePlayer(i);
+                    setShowSummary(false);
+                  }}
                 >
-                  &times;
+                  {p.name}
                 </button>
-              )}
-            </div>
-          ))}
+                {players.length > minPlayers && (
+                  // Room for more names on a phone: a player is removed from their own tab.
+                  <button
+                    type="button"
+                    className={`cursor-pointer px-2.5 text-[15px] opacity-50 [transition:opacity_0.15s,background_0.15s] hover:bg-bg3 hover:opacity-100 ${tapTargetClass} ${on ? '' : 'max-sm:hidden'}`}
+                    aria-label={`Remove ${p.name}`}
+                    onClick={() => removePlayer(i)}
+                  >
+                    &times;
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
         {players.length < maxPlayers && (
-          <button type="button" className="sc-add-player" aria-label="Add player" onClick={addPlayer}>
+          <button
+            type="button"
+            className={`${stripButtonClass} ${quietStripClass} text-[16px]`}
+            aria-label="Add player"
+            onClick={addPlayer}
+          >
             +
           </button>
         )}
         <button
           type="button"
-          className={`sc-summary-tab${showSummary ? ' active' : ''}`}
+          className={`${stripButtonClass} ml-auto text-[13px] ${showSummary ? 'active border-blue-tint/30 bg-blue-bg text-blue' : quietStripClass}`}
           onClick={() => setShowSummary(true)}
         >
           Results
@@ -229,20 +270,20 @@ export default function PlayerScorePad<P extends PadPlayer>({
       </div>
 
       {showSummary ? (
-        <div className="sc-panel" ref={panelRef} tabIndex={-1} role="region" aria-label="Results">
+        <div className={panelClass} ref={panelRef} tabIndex={-1} role="region" aria-label="Results">
           {results(players)}
         </div>
       ) : (
-        <div className="sc-panel" key={current.id} ref={panelRef}>
-          <div className="sc-form">
-            <div className="sc-name-row">
-              <label className="sc-label" htmlFor="sc-player-name">
+        <div className={panelClass} key={current.id} ref={panelRef}>
+          <div className={formClass}>
+            <div className="flex items-center justify-between gap-3">
+              <label className={labelClass} htmlFor="sc-player-name">
                 Player Name
               </label>
               <input
                 ref={nameRef}
                 id="sc-player-name"
-                className="sc-input sc-name-input"
+                className={`${nameInputClass} max-w-50 text-center`}
                 type="text"
                 value={current.name}
                 onChange={(e) => updateName(e.target.value)}
@@ -251,22 +292,22 @@ export default function PlayerScorePad<P extends PadPlayer>({
 
             {form(current, update)}
 
-            <div className="sc-total">
+            <div className={totalClass}>
               <span>Total</span>
-              <span className="sc-total-num">
+              <span className="text-[22px] text-blue">
                 {total(current)} {unit}
               </span>
             </div>
 
-            <button type="button" className="sc-next" onClick={handOn}>
+            <button type="button" className={nextClass} onClick={handOn}>
               {next ? `Next: ${next.name || 'next player'}` : 'See results'} <span aria-hidden="true">&rarr;</span>
             </button>
           </div>
         </div>
       )}
 
-      <div className="sc-actions">
-        <button type="button" className="sc-new-game" onClick={startNewGame}>
+      <div className={actionsClass}>
+        <button type="button" className={quietButtonClass} onClick={startNewGame}>
           New game
         </button>
       </div>
@@ -297,19 +338,19 @@ interface SheetProps {
  * while the players scroll sideways on a phone.
  */
 export function ScoreSheet({ players, rows, totals, places, won }: SheetProps) {
-  const win = (i: number) => (won[i] ? 'sc-win' : undefined);
+  const win = (i: number) => (won[i] ? winClass : '');
   return (
-    <div className="sc-sheet-wrap">
-      <table className="sc-sheet">
+    <div className={sheetWrapClass}>
+      <table className={sheetClass}>
         <caption className="sr-only">Scores by category</caption>
         <thead>
           <tr>
-            <th scope="col">
+            <th scope="col" className={sheetCornerClass}>
               <span className="sr-only">Category</span>
             </th>
             {players.map((p, i) => (
-              <th key={p.id} scope="col" className={win(i)}>
-                {won[i] && <ScoreIcon kind="winner" />}
+              <th key={p.id} scope="col" className={`${sheetHeadClass} ${win(i)}`}>
+                {won[i] && <ScoreIcon kind="winner" className="mx-auto mb-0.5 size-7 text-crown" />}
                 {p.name}
               </th>
             ))}
@@ -318,9 +359,11 @@ export function ScoreSheet({ players, rows, totals, places, won }: SheetProps) {
         <tbody>
           {rows.map((row) => (
             <tr key={row.key}>
-              <th scope="row">{row.label}</th>
+              <th scope="row" className={sheetRowHeadClass}>
+                {row.label}
+              </th>
               {players.map((p, i) => (
-                <td key={p.id} className={win(i)}>
+                <td key={p.id} className={`${sheetCellClass} ${win(i)}`}>
                   {row.cells[i]}
                 </td>
               ))}
@@ -328,18 +371,22 @@ export function ScoreSheet({ players, rows, totals, places, won }: SheetProps) {
           ))}
         </tbody>
         <tfoot>
-          <tr className="sc-sheet-total">
-            <th scope="row">Total</th>
+          <tr>
+            <th scope="row" className={sheetTotalHeadClass}>
+              Total
+            </th>
             {players.map((p, i) => (
-              <td key={p.id} className={win(i)}>
+              <td key={p.id} className={`${sheetTotalCellClass} ${win(i)}`}>
                 {totals[i]}
               </td>
             ))}
           </tr>
-          <tr className="sc-sheet-place">
-            <th scope="row">Place</th>
+          <tr>
+            <th scope="row" className={sheetPlaceHeadClass}>
+              Place
+            </th>
             {players.map((p, i) => (
-              <td key={p.id} className={win(i)}>
+              <td key={p.id} className={`${sheetPlaceCellClass} ${win(i)}`}>
                 {places[i]}
               </td>
             ))}

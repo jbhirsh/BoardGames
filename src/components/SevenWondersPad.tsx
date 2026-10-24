@@ -12,6 +12,17 @@ import { cleanInput, isBoxText, num } from '../utils/scoreInput';
 import PlayerScorePad, { ScoreSheet, type PadPlayer } from './PlayerScorePad';
 import ScoreInput, { SignButton } from './ScoreInput';
 import { ScoreIcon, type ScoreIconKind } from './ScoreIcons';
+import {
+  inputWrapClass,
+  labelClass,
+  labelNoteClass,
+  labelTextClass,
+  pointsClass,
+  rowClass,
+  ruleClass,
+  sheetSubClass,
+  tieNoteClass,
+} from './scorePadClasses';
 
 const SCORE_FIELDS = [
   'military',
@@ -105,22 +116,22 @@ function Form({
   return (
     <>
       {CATEGORIES.map(({ key, label, unit, color }) => (
-        <div key={key} className="sc-row">
-          <label className="sc-label" htmlFor={`sc-${key}`}>
-            <span className="sc-label-icon" style={{ color }}>
+        <div key={key} className={`sc-row ${rowClass}`}>
+          <label className={labelClass} htmlFor={`sc-${key}`}>
+            <span className="inline-flex" style={{ color }}>
               <ScoreIcon kind={ICON_FOR[key]} />
             </span>
-            <span className="sc-label-text">
+            <span className={labelTextClass}>
               <span>{label}</span>
               {/* Out of the box's name: its description reads it. */}
               {key === 'coins' && (
-                <span className="sc-vp-note sc-vp-pts" id="sc-coins-vp" aria-hidden="true">
+                <span className={`${labelNoteClass} ${pointsClass}`} id="sc-coins-vp" aria-hidden="true">
                   = {treasuryVP} VP
                 </span>
               )}
             </span>
           </label>
-          <div className="sc-input-wrap">
+          <div className={inputWrapClass}>
             {key === 'military' && (
               <SignButton
                 label="± Switch military sign"
@@ -141,30 +152,36 @@ function Form({
         </div>
       ))}
 
-      <div className="sc-science-section">
-        <div className="sc-label">
-          <span className="sc-label-icon" style={{ color: COLORS.science }}>
+      <div className="sc-science-section flex flex-wrap items-center gap-3 max-sm:flex-col max-sm:items-stretch">
+        <div className={`sc-label ${labelClass}`}>
+          <span className="inline-flex" style={{ color: COLORS.science }}>
             <ScoreIcon kind="science" />
           </span>
-          <span className="sc-label-text">
+          <span className={labelTextClass}>
             <span>Science (Green)</span>
             {/* The icons say which symbol; the unit is said once, here. */}
-            <span className="sc-vp-note">
+            <span className={labelNoteClass}>
               <span id="sc-science-unit">symbols</span>
               <span aria-hidden="true"> · </span>
-              <span id="sc-science-vp" className="sc-vp-pts">
+              <span id="sc-science-vp" className={pointsClass}>
                 = {scienceVP} VP
               </span>
             </span>
           </span>
         </div>
-        <div className="sc-science-inputs">
+        <div className="ml-auto flex gap-3 max-sm:ml-0 max-sm:w-full max-sm:gap-2">
           {(['tablets', 'compasses', 'gears'] as const).map((field) => (
-            <label key={field} className="sc-science-field" htmlFor={`sc-${field}`} style={{ color: COLORS.science }}>
-              <ScoreIcon kind={field} />
+            <label
+              key={field}
+              className="flex items-center gap-1 max-sm:min-w-0 max-sm:flex-1"
+              htmlFor={`sc-${field}`}
+              style={{ color: COLORS.science }}
+            >
+              <ScoreIcon kind={field} className="size-7.5" />
               <ScoreInput
                 id={`sc-${field}`}
                 label={field}
+                width="w-[5.5em] max-sm:w-full"
                 value={player[field]}
                 color={COLORS.science}
                 describedBy="sc-science-unit sc-science-vp"
@@ -202,7 +219,7 @@ function Results({ players }: { players: PlayerScores[] }) {
           key: row.key,
           label: (
             <>
-              <span className="sc-sheet-label" style={{ color: COLORS[row.key] }}>
+              <span className="mr-2 inline-flex align-[-5px]" style={{ color: COLORS[row.key] }}>
                 <ScoreIcon kind={row.icon} />
               </span>
               {row.label}
@@ -212,7 +229,7 @@ function Results({ players }: { players: PlayerScores[] }) {
             <>
               {sheet[i][row.key]}
               {row.key === 'treasury' && num(p.coins) > 0 && (
-                <span className="sc-sheet-sub">
+                <span className={sheetSubClass}>
                   <span className="sr-only">, from </span>
                   {num(p.coins)} coins
                 </span>
@@ -225,11 +242,11 @@ function Results({ players }: { players: PlayerScores[] }) {
         won={players.map((_, i) => scored && placeOf.get(i) === 1)}
       />
       {notes.map((note) => (
-        <p key={note} className="sc-tie-note">
+        <p key={note} className={tieNoteClass}>
           {note}
         </p>
       ))}
-      <p className="sc-tie-rule">A tie on points goes to the player with more coins.</p>
+      <p className={`mt-2 ${ruleClass}`}>A tie on points goes to the player with more coins.</p>
     </>
   );
 }

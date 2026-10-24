@@ -1,4 +1,14 @@
 import type { ChangeEvent, CSSProperties } from 'react';
+import {
+  fieldClass,
+  fieldInputClass,
+  labelClass,
+  labelNoteClass,
+  labelTextClass,
+  numberInputClass,
+  pointsClass,
+  rowClass,
+} from './scorePadClasses';
 
 interface Props {
   id: string;
@@ -11,6 +21,8 @@ interface Props {
   /** More text for the box's description, after its unit: a converted field's points. */
   describedBy?: string;
   label?: string;
+  /** A bare box's width class, where it isn't the usual 80px (w-20). */
+  width?: string;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -21,13 +33,24 @@ interface Props {
  * (SignButton), since that pad has no minus key. With a unit, the box is a
  * wrapper holding the score's input, as wide as its text, then a space and
  * the unit: "7 coins" reads as one line of text centred in the box. --chars
- * sizes the input where the browser can't size it to its text.
+ * sizes the input where the browser can't size it to its text
+ * (scorePadClasses.ts' fieldClass).
  */
-export default function ScoreInput({ id, unit, value, color, negative = false, describedBy, label, onChange }: Props) {
+export default function ScoreInput({
+  id,
+  unit,
+  value,
+  color,
+  negative = false,
+  describedBy,
+  label,
+  width = 'w-20',
+  onChange,
+}: Props) {
   const input = (
     <input
       id={id}
-      className="sc-input"
+      className={unit ? fieldInputClass : `${numberInputClass} ${width}`}
       type="number"
       inputMode="numeric"
       pattern={negative ? undefined : '[0-9]*'}
@@ -48,9 +71,9 @@ export default function ScoreInput({ id, unit, value, color, negative = false, d
   );
   if (!unit) return input;
   return (
-    <span className="sc-field" style={color ? ({ '--box-color': color } as CSSProperties) : undefined}>
+    <span className={fieldClass} style={color ? ({ '--box-color': color } as CSSProperties) : undefined}>
       {input}{' '}
-      <span className="sc-unit" id={`${id}-unit`} aria-hidden="true">
+      <span className="sc-unit text-text3" id={`${id}-unit`} aria-hidden="true">
         {unit}
       </span>
     </span>
@@ -67,6 +90,8 @@ interface CountProps {
   value: string;
   /** The row's points, beside the label: "= 24 VP". */
   points: string;
+  /** More classes for the row: a rule above it. */
+  className?: string;
   onChange: (text: string) => void;
 }
 
@@ -75,16 +100,16 @@ interface CountProps {
  * worth and what they come to, then the box. The worth and points are out
  * of the box's name and in its description, as 7 Wonders' Treasury has.
  */
-export function CountRow({ id, label, worth, unit, value, points, onChange }: CountProps) {
+export function CountRow({ id, label, worth, unit, value, points, className = '', onChange }: CountProps) {
   return (
-    <div className="sc-row">
-      <label className="sc-label" htmlFor={id}>
-        <span className="sc-label-text">
+    <div className={`${rowClass} ${className}`}>
+      <label className={labelClass} htmlFor={id}>
+        <span className={labelTextClass}>
           {label}
-          <span className="sc-vp-note" id={`${id}-worth`} aria-hidden="true">
+          <span className={labelNoteClass} id={`${id}-worth`} aria-hidden="true">
             {worth}
           </span>
-          <span className="sc-vp-note sc-vp-pts" id={`${id}-pts`} aria-hidden="true">
+          <span className={`${labelNoteClass} ${pointsClass}`} id={`${id}-pts`} aria-hidden="true">
             {points}
           </span>
         </span>
@@ -105,7 +130,7 @@ export function SignButton({ label, value, onFlip }: { label: string; value: num
   return (
     <button
       type="button"
-      className="sc-sign"
+      className="size-11 cursor-pointer rounded-control border border-border bg-bg2 text-[18px] font-semibold text-text2 hover:not-disabled:bg-bg3 hover:not-disabled:text-text disabled:cursor-default disabled:opacity-45"
       aria-label={label}
       title={value === 0 ? 'Type the number first' : undefined}
       disabled={value === 0}

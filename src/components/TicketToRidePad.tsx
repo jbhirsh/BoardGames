@@ -16,6 +16,25 @@ import { cleanInput, isBoxText, num, showScore } from '../utils/scoreInput';
 import { ordinal, places, tieNotes } from '../utils/standings';
 import PlayerScorePad, { ScoreSheet, type PadPlayer } from './PlayerScorePad';
 import ScoreInput, { CountRow } from './ScoreInput';
+import {
+  addRowClass,
+  checkClass,
+  checkboxClass,
+  dividedClass,
+  groupClass,
+  groupTitleClass,
+  hintClass,
+  noteClass,
+  removeClass,
+  ruleClass,
+  segButtonClass,
+  segClass,
+  setupClass,
+  setupTitleClass,
+  sharedSegButtonClass,
+  tieNoteClass,
+  titleNoteClass,
+} from './scorePadClasses';
 
 // Every length either map has, so a player's routes survive a change of map.
 const LENGTHS = [...new Set([...ROUTE_LENGTHS.usa, ...ROUTE_LENGTHS.europe])];
@@ -101,9 +120,9 @@ function Form({
     update({ tickets: player.tickets.map((t, j) => (j === i ? { ...t, ...patch } : t)) });
   return (
     <>
-      <fieldset className="sc-group">
-        <legend className="sc-group-title">
-          Routes <span className="sc-vp-note">= {pts(b.routes)}</span>
+      <fieldset className={groupClass}>
+        <legend className={groupTitleClass}>
+          Routes <span className={titleNoteClass}>= {pts(b.routes)}</span>
         </legend>
         {ROUTE_LENGTHS[map].map((len) => (
           <CountRow
@@ -119,15 +138,15 @@ function Form({
         ))}
       </fieldset>
 
-      <fieldset className="sc-group">
-        <legend className="sc-group-title">
-          Destination tickets <span className="sc-vp-note">= {pts(b.made + b.missed)}</span>
+      <fieldset className={`${groupClass} ${dividedClass}`}>
+        <legend className={groupTitleClass}>
+          Destination tickets <span className={titleNoteClass}>= {pts(b.made + b.missed)}</span>
         </legend>
         {player.tickets.length === 0 && (
-          <p className="sc-hint">Add each ticket you kept, with the points printed on it.</p>
+          <p className={hintClass}>Add each ticket you kept, with the points printed on it.</p>
         )}
         {player.tickets.map((t, i) => (
-          <div key={i} className="sc-ticket">
+          <div key={i} className="flex flex-wrap items-center gap-2">
             <ScoreInput
               id={`sc-ticket-${i}`}
               label={`Ticket ${i + 1} points`}
@@ -135,10 +154,14 @@ function Form({
               value={t.points}
               onChange={(e) => setTicket(i, { points: cleanInput(e.target.value, false, 99) })}
             />
-            <div className="sc-seg" role="group" aria-label={`Ticket ${i + 1}`}>
+            <div
+              className="flex flex-1 flex-nowrap gap-1.5 min-[600px]:flex-[0_1_auto]"
+              role="group"
+              aria-label={`Ticket ${i + 1}`}
+            >
               <button
                 type="button"
-                className="sc-seg-btn"
+                className={sharedSegButtonClass}
                 aria-pressed={t.made}
                 onClick={() => setTicket(i, { made: true })}
               >
@@ -146,7 +169,7 @@ function Form({
               </button>
               <button
                 type="button"
-                className="sc-seg-btn"
+                className={sharedSegButtonClass}
                 aria-pressed={!t.made}
                 onClick={() => setTicket(i, { made: false })}
               >
@@ -155,7 +178,7 @@ function Form({
             </div>
             <button
               type="button"
-              className="sc-remove"
+              className={removeClass}
               aria-label={`Remove ticket ${i + 1}`}
               onClick={() => update({ tickets: player.tickets.filter((_, j) => j !== i) })}
             >
@@ -165,24 +188,30 @@ function Form({
         ))}
         <button
           type="button"
-          className="sc-add-row"
+          className={addRowClass}
           onClick={() => update({ tickets: [...player.tickets, { points: '', made: true }] })}
         >
           + Add ticket
         </button>
       </fieldset>
 
-      <label className="sc-check">
-        <input type="checkbox" checked={player.longest} onChange={(e) => update({ longest: e.target.checked })} />
+      <label className={`${checkClass} ${dividedClass}`}>
+        <input
+          type="checkbox"
+          className={checkboxClass}
+          checked={player.longest}
+          onChange={(e) => update({ longest: e.target.checked })}
+        />
         <span>
           {MAPS[map].longest}
-          <span className="sc-vp-note">+{LONGEST_BONUS}; every player tied for the longest scores it</span>
+          <span className={noteClass}>+{LONGEST_BONUS}; every player tied for the longest scores it</span>
         </span>
       </label>
 
       {map === 'europe' && (
         <CountRow
           id="sc-stations"
+          className={dividedClass}
           label="Stations kept"
           worth={`${pts(STATION_POINTS)} each, of ${STATIONS}`}
           unit="kept"
@@ -226,11 +255,11 @@ function Results({ map, players }: { map: TtrMap; players: TtrPlayer[] }) {
       />
       {scored &&
         tieNotes(names, totals.map(pts), totals, breaks).map((note) => (
-          <p key={note} className="sc-tie-note">
+          <p key={note} className={tieNoteClass}>
             {note}
           </p>
         ))}
-      <p className="sc-tie-rule">
+      <p className={`mt-2 ${ruleClass}`}>
         A tie on points goes to the player who completed more tickets
         {map === 'europe' ? ', then to the one who built fewer stations' : ''}, then to the holder of the{' '}
         {MAPS[map].longest} card.
@@ -267,13 +296,19 @@ export default function TicketToRidePad() {
       valid={valid}
       hasScores={hasScores}
       setup={
-        <section className="sc-setup" aria-labelledby="sc-map-title">
-          <h2 className="sc-setup-title" id="sc-map-title">
+        <section className={setupClass} aria-labelledby="sc-map-title">
+          <h2 className={setupTitleClass} id="sc-map-title">
             Map
           </h2>
-          <div className="sc-seg" role="group" aria-labelledby="sc-map-title">
+          <div className={segClass} role="group" aria-labelledby="sc-map-title">
             {(['usa', 'europe'] as const).map((m) => (
-              <button key={m} type="button" className="sc-seg-btn" aria-pressed={map === m} onClick={() => setMap(m)}>
+              <button
+                key={m}
+                type="button"
+                className={segButtonClass}
+                aria-pressed={map === m}
+                onClick={() => setMap(m)}
+              >
                 {MAPS[m].name}
               </button>
             ))}
