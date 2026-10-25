@@ -4,16 +4,11 @@
 # fire after the secret is already in pushed branch history. This job makes it
 # a red check instead.
 #
-# Two placements (same pattern as mutation.yml):
-#   - Pull requests: scan the PR's commits — fast, targeted, blocks the merge.
-#   - Weekly schedule (+ manual dispatch): full-history sweep as a drift
-#     sensor, so a secret that slips in outside the PR path (direct push,
-#     rewritten history, new gitleaks rules catching an old leak) still
-#     surfaces. The full history was verified clean when this was added.
-#
-# No GITLEAKS_LICENSE is needed: the action is free for personal-account
-# repos. If a false positive ever appears, allowlist it in a .gitleaks.toml
-# at the repo root rather than disabling the job.
+# The scan (the PR's commits on pull requests; the full history on the weekly
+# sweep, as a drift sensor) is jbhirsh/ci's gitleaks action. The full history
+# was verified clean when this was added. If a false positive ever appears,
+# allowlist it in a .gitleaks.toml at the repo root rather than disabling the
+# job.
 name: Gitleaks
 
 on:
@@ -23,11 +18,11 @@ on:
     - cron: "0 6 * * 1"
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 # Read-only: findings are reported via the job summary and a results artifact.
-# PR comments are disabled below so the job never needs write scopes.
 permissions:
   contents: read
 
@@ -37,15 +32,4 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
-        with:
-          # Full history: PR runs diff the PR's commit range; scheduled runs
-          # sweep every commit.
-          fetch-depth: 0
-
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          # Read-only token; the action uses it to resolve the PR's commit
-          # range via the API.
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_ENABLE_COMMENTS: "false"
+      - uses: jbhirsh/ci/gitleaks@main
