@@ -9,8 +9,9 @@
 // under review, whether their results are reused or re-tested. Test files
 // are kept: the diff needs them to tell which tests changed. A scope entry
 // naming lines (`a.ts:10-20`, what stryker-mutate-scope.mjs prints for a
-// file the PR edited) keeps only that file's mutants starting on those
-// lines, so the score is the changed code's alone there too.
+// file the PR edited) keeps only that file's mutants lying wholly within
+// those lines (starting and ending inside one, Stryker's own rule for a
+// line range), so the score is the changed code's alone there too.
 //
 // Usage: node .github/scripts/stryker-incremental-scope.mjs <file> <a.ts,b.ts:10-20>
 import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -52,7 +53,10 @@ export function narrow(report, scope, cwd = process.cwd()) {
       ? {
           ...file,
           mutants: (file.mutants ?? []).filter(({ location }) =>
-            ranges.some(([first, last]) => location?.start?.line >= first && location.start.line <= last),
+            ranges.some(
+              ([first, last]) =>
+                location?.start?.line >= first && location.start.line <= last && location.end?.line <= last,
+            ),
           ),
         }
       : file;

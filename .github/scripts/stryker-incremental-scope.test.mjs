@@ -40,7 +40,7 @@ describe('narrow', () => {
     expect(narrow({}, ['a.ts'], '/repo').files).toEqual({});
   });
 
-  it("keeps only the mutants starting on a file's named lines", () => {
+  it("keeps only the mutants lying within a file's named lines", () => {
     const at = (id, line) => ({ id, location: { start: { line, column: 1 }, end: { line, column: 5 } } });
     const lined = {
       files: { 'src/a.ts': { language: 'ts', mutants: [at('1', 2), at('2', 5), at('3', 9), { id: '4' }] } },
@@ -48,6 +48,17 @@ describe('narrow', () => {
     const out = narrow(lined, ['src/a.ts:4-5', 'src/a.ts:9-12'], '/repo');
     expect(out.files['src/a.ts'].mutants.map((m) => m.id)).toEqual(['2', '3']);
     expect(out.files['src/a.ts'].language).toBe('ts');
+  });
+
+  it('drops a mutant that starts in a named range but ends past it', () => {
+    const span = (id, start, end) => ({
+      id,
+      location: { start: { line: start, column: 1 }, end: { line: end, column: 2 } },
+    });
+    const lined = {
+      files: { 'src/a.ts': { mutants: [span('in', 4, 5), span('across', 5, 7), span('before', 3, 4)] } },
+    };
+    expect(narrow(lined, ['src/a.ts:4-5'], '/repo').files['src/a.ts'].mutants.map((m) => m.id)).toEqual(['in']);
   });
 });
 
