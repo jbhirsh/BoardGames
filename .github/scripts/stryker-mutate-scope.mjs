@@ -22,15 +22,48 @@
 // A file new to the branch is mutated whole, and one whose change only
 // deletes lines has nothing left to mutate.
 //
+// A PR that changes nothing in scope runs no mutants. Unless it touches what
+// Stryker's own setup rests on (WIRING: its config, the Vitest config and
+// setup, the dependencies and patches, this workflow and its scripts), it
+// skips Stryker altogether: a smoke run there cost about nine minutes on PRs
+// that change only pictures or docs, nearly all of it Stryker's dry run and
+// mutants. The install still runs, as this script needs Prettier. One that
+// does touch it runs a small smoke scope, so a broken setup still shows.
+//
 // Usage: git diff --name-only ... | MUTATE_BASE=origin/main node .github/scripts/stryker-mutate-scope.mjs
 // Prints the --mutate entries, one per line (nothing when none are). Without
 // MUTATE_BASE, files are printed whole and none is checked for a
-// formatting-only change.
+// formatting-only change. With --wiring it prints instead whether any of the
+// changed files is one Stryker's setup rests on: `true` or `false`.
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import * as prettier from 'prettier';
+
+/**
+ * The files Stryker's own setup rests on: a change to one can break a run
+ * however little source it mutates, so a PR touching one is smoke-tested.
+ */
+export const WIRING = [
+  'stryker.config.json',
+  'vite.config.ts',
+  'src/setupTests.ts',
+  'tsconfig*.json',
+  'package.json',
+  'package-lock.json',
+  'patches/**',
+  '.github/workflows/mutation.yml',
+  '.github/scripts/stryker-*.mjs',
+];
+
+/** Whether any of `changed` (newline-separated paths) is one WIRING names. */
+export function wiringChanged(changed) {
+  return changed
+    .split('\n')
+    .map((name) => name.trim())
+    .some((name) => name !== '' && WIRING.some((pattern) => path.matchesGlob(name, pattern)));
+}
 
 /** Whether the ordered `mutate` globs select `file` (a repo-relative path). */
 export function inMutateScope(file, patterns) {
@@ -153,7 +186,11 @@ export async function main(changed, configText, io) {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
-  const ref = process.env.MUTATE_BASE;
-  const io = ref ? gitIo(ref, process.cwd()) : undefined;
-  process.stdout.write(await main(readFileSync(0, 'utf8'), readFileSync('stryker.config.json', 'utf8'), io));
+  if (process.argv.includes('--wiring')) {
+    process.stdout.write(`${wiringChanged(readFileSync(0, 'utf8'))}\n`);
+  } else {
+    const ref = process.env.MUTATE_BASE;
+    const io = ref ? gitIo(ref, process.cwd()) : undefined;
+    process.stdout.write(await main(readFileSync(0, 'utf8'), readFileSync('stryker.config.json', 'utf8'), io));
+  }
 }
