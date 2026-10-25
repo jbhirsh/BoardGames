@@ -14,6 +14,7 @@ import {
   mutateEntries,
   mutateScope,
   substantive,
+  wiringChanged,
 } from './stryker-mutate-scope.mjs';
 
 const script = fileURLToPath(new URL('./stryker-mutate-scope.mjs', import.meta.url));
@@ -119,6 +120,34 @@ describe('main', () => {
   });
 });
 
+describe('wiringChanged', () => {
+  it("is true for a change to what Stryker's setup rests on", () => {
+    for (const file of [
+      'stryker.config.json',
+      'vite.config.ts',
+      'src/setupTests.ts',
+      'tsconfig.app.json',
+      'package.json',
+      'package-lock.json',
+      'patches/@stryker-mutator+vitest-runner+10.0.0.patch',
+      '.github/workflows/mutation.yml',
+      '.github/scripts/stryker-mutate-scope.mjs',
+    ]) {
+      expect(wiringChanged(`README.md\n${file}\n`), file).toBe(true);
+    }
+  });
+
+  it('is false for pictures, docs and unrelated workflows', () => {
+    expect(wiringChanged('docs/screenshots/a.png\nREADME.md\n.github/workflows/e2e.yml\nsrc/data/games.ts\n')).toBe(
+      false,
+    );
+  });
+
+  it('is false for nothing', () => {
+    expect(wiringChanged('\n')).toBe(false);
+  });
+});
+
 describe('addedRanges', () => {
   it('reads the new side of each hunk, a missing count meaning one line', () => {
     const diff = [
@@ -211,6 +240,12 @@ describe('command line', () => {
     const out = run('src/App.tsx\nREADME.md\napi/graphql.ts\n');
     expect(out.status).toBe(0);
     expect(out.stdout).toBe('src/App.tsx\napi/graphql.ts\n');
+  });
+
+  it('answers --wiring with whether the setup changed', () => {
+    const run = (input) => spawnSync(process.execPath, [script, '--wiring'], { input, encoding: 'utf8' }).stdout;
+    expect(run('docs/a.png\npackage-lock.json\n')).toBe('true\n');
+    expect(run('docs/a.png\n')).toBe('false\n');
   });
 
   it('succeeds with no output when no file is in scope', () => {
