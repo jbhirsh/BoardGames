@@ -166,6 +166,8 @@ describe('ScoreCalculatorPage', () => {
     // The winner's column is marked, with the crown on their name.
     expect(within(sheet).getByRole('columnheader', { name: 'Player 2' })).toHaveClass('sc-win');
     expect(within(sheet).getByRole('columnheader', { name: 'Player 1' })).not.toHaveClass('sc-win');
+    expect(within(sheet).getByRole('columnheader', { name: 'Player 2' }).querySelector('svg')).not.toBeNull();
+    expect(within(sheet).getByRole('columnheader', { name: 'Player 1' }).querySelector('svg')).toBeNull();
     expect(screen.queryByText(/tie on \d+ VP/)).not.toBeInTheDocument();
     expect(screen.getByText('A tie on points goes to the player with more coins.')).toBeInTheDocument();
   });
@@ -488,6 +490,16 @@ describe('ScoreCalculatorPage', () => {
     } finally {
       delete (navigator as { wakeLock?: unknown }).wakeLock;
     }
+  });
+
+  it('highlights the player whose form is open, and only theirs', () => {
+    renderPage();
+    expect(screen.getByRole('button', { name: 'Player 1' })).toHaveClass('active');
+    expect(screen.getByRole('button', { name: 'Player 2' })).not.toHaveClass('active');
+    fireEvent.click(screen.getByRole('button', { name: 'Player 2' }));
+    expect(screen.getByRole('button', { name: 'Player 2' })).toHaveClass('active');
+    expect(screen.getByRole('button', { name: 'Player 1' })).not.toHaveClass('active');
+    expect(screen.getByRole('button', { name: 'Results' })).not.toHaveClass('active');
   });
 
   it('highlights only the Results tab while results are showing', () => {
