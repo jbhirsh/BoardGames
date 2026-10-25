@@ -17,6 +17,7 @@
   // A system tool the GIF recorder runs, not an npm package.
   "ignoreBinaries": ["ffmpeg"],
   // e2e/theme.spec.ts loads axe's browser build by path
-  // (createRequire().resolve), which knip doesn't follow.
-  "ignoreDependencies": ["axe-core"],
+  // (createRequire().resolve), which knip doesn't follow. jbhirsh/ci's
+  // weekly audit runs jscpd from this repo's node_modules.
+  "ignoreDependencies": ["axe-core", "jscpd"],
 }
