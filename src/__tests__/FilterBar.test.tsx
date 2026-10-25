@@ -186,6 +186,22 @@ describe('KeywordsDropdown', () => {
     expect(screen.getByRole('button', { name: /1 keyword.*OR/i })).toBeInTheDocument();
   });
 
+  it('ticks a chosen keyword, and presses the mode in use', () => {
+    renderFilterBar();
+    fireEvent.click(getDDButton('Keywords'));
+    const ddOpt = screen.getByText('Bluffing').closest('.dd-opt')!;
+    expect(ddOpt).toHaveAttribute('aria-pressed', 'false');
+    expect(ddOpt.querySelector('svg')).toBeNull();
+    fireEvent.click(ddOpt);
+    expect(ddOpt).toHaveAttribute('aria-pressed', 'true');
+    expect(ddOpt.querySelector('svg')).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'Any' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(screen.getByRole('button', { name: 'All' }));
+    expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Any' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
   it('toggles keyword mode between Any and All', () => {
     renderFilterBar();
     fireEvent.click(getDDButton('Keywords'));

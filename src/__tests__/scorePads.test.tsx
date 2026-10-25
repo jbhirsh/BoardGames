@@ -69,6 +69,26 @@ describe('Ticket to Ride', () => {
     expect(screen.getByText('45 points')).toBeInTheDocument();
   });
 
+  it('asks for each ticket until one is added, and presses Made or Missed for each', () => {
+    renderPage('/score/ticket-to-ride');
+    const hint = 'Add each ticket you kept, with the points printed on it.';
+    expect(screen.getByText(hint)).toBeInTheDocument();
+    click('+ Add ticket');
+    expect(screen.queryByText(hint)).not.toBeInTheDocument();
+    const made = within(group('Ticket 1')).getByRole('button', { name: 'Made' });
+    const missed = within(group('Ticket 1')).getByRole('button', { name: 'Missed' });
+    expect(made).toHaveAttribute('aria-pressed', 'true');
+    expect(missed).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(missed);
+    expect(made).toHaveAttribute('aria-pressed', 'false');
+    expect(missed).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(made);
+    expect(made).toHaveAttribute('aria-pressed', 'true');
+    expect(missed).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'United States' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Europe' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
   it("names a box's unit in the singular for one", () => {
     renderPage('/score/ticket-to-ride');
     type(/1-train route\b/, '1');
@@ -244,6 +264,41 @@ describe('the round-by-round pad', () => {
     expect(cells('Total')).toEqual(['0', '40']);
     expect(screen.getByRole('heading', { name: 'Round 2' })).toBeInTheDocument();
     expect(screen.getByText('Round 1 added.')).toBeInTheDocument();
+  });
+
+  it('folds the players away once a round is in, and crowns the leader in the standings', () => {
+    const { container } = renderPage('/score/uno');
+    const players = container.querySelector('details')!;
+    expect(players).toHaveAttribute('open');
+    expect(screen.queryByText(/Partners sit opposite/)).not.toBeInTheDocument();
+    click('Player 2', group('Who went out?'));
+    type('Player 1', '40');
+    click('Add round 1');
+    expect(players).not.toHaveAttribute('open');
+    const [first, second] = within(screen.getByRole('region', { name: 'Standings' })).getAllByRole('listitem');
+    expect(second).toHaveClass('sc-win');
+    expect(second.querySelector('svg')).not.toBeNull();
+    expect(first).not.toHaveClass('sc-win');
+    expect(first.querySelector('svg')).toBeNull();
+  });
+
+  it("marks the round being fixed on the sheet, and says where Spades' partners sit", () => {
+    renderPage('/score/card-deck/golf');
+    type('Player 1', '4');
+    type('Player 2', '5');
+    click('Add hole 1');
+    type('Player 1', '3');
+    type('Player 2', '2');
+    click('Add hole 2');
+    const row = (n: number) => screen.getByRole('button', { name: `Fix hole ${n}` }).closest('tr')!;
+    expect(row(1).querySelector('td')).not.toHaveClass('bg-blue-bg');
+    click('Fix hole 1');
+    expect(row(1).querySelector('td')).toHaveClass('bg-blue-bg');
+    expect(row(1).querySelector('th')).toHaveClass('bg-blue-bg');
+    expect(row(2).querySelector('td')).not.toHaveClass('bg-blue-bg');
+    expect(row(2).querySelector('th')).not.toHaveClass('bg-blue-bg');
+    renderPage('/score/card-deck/spades');
+    expect(screen.getByText('Partners sit opposite: players 1 and 3 against 2 and 4.')).toBeInTheDocument();
   });
 
   it('adds and removes players only before the first round, and names them', () => {
