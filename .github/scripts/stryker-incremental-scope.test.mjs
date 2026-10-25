@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { main, narrow, narrowFile, relativeName } from './stryker-incremental-scope.mjs';
+import { main, narrow, narrowFile, relativeName, scopeLines } from './stryker-incremental-scope.mjs';
 
 const report = {
   schemaVersion: '1.0',
@@ -38,6 +38,31 @@ describe('narrow', () => {
 
   it('copes with a report that has no files', () => {
     expect(narrow({}, ['a.ts'], '/repo').files).toEqual({});
+  });
+
+  it("keeps only the mutants starting on a file's named lines", () => {
+    const at = (id, line) => ({ id, location: { start: { line, column: 1 }, end: { line, column: 5 } } });
+    const lined = {
+      files: { 'src/a.ts': { language: 'ts', mutants: [at('1', 2), at('2', 5), at('3', 9), { id: '4' }] } },
+    };
+    const out = narrow(lined, ['src/a.ts:4-5', 'src/a.ts:9-12'], '/repo');
+    expect(out.files['src/a.ts'].mutants.map((m) => m.id)).toEqual(['2', '3']);
+    expect(out.files['src/a.ts'].language).toBe('ts');
+  });
+});
+
+describe('scopeLines', () => {
+  it("collects each file's ranges, a file named whole staying whole", () => {
+    const lines = scopeLines(
+      ['src/a.ts:1-2', 'src/a.ts:7-7', 'src/b.ts', 'src/b.ts:3-4', 'src/c.ts:5-6', 'src/c.ts'],
+      '/repo',
+    );
+    expect(lines.get('src/a.ts')).toEqual([
+      [1, 2],
+      [7, 7],
+    ]);
+    expect(lines.get('src/b.ts')).toBeNull();
+    expect(lines.get('src/c.ts')).toBeNull();
   });
 });
 

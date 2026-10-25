@@ -203,8 +203,9 @@ behavior to prove.
 
 **In CI:** mutation testing runs as its own workflow
 ([`.github/workflows/mutation.yml`](.github/workflows/mutation.yml)) in three
-placements. On pull requests it mutates **only the in-scope files the PR
-touched** — fast, targeted feedback on exactly the code under review (a PR that
+placements. On pull requests it mutates **only the lines the PR added or
+changed** in the in-scope files it touched (a new file whole) — fast, targeted
+feedback on exactly the code under review (a PR that
 triggers the workflow without changing mutable source runs a small utils smoke
 scope instead, keeping the Stryker wiring validated). A **weekly scheduled full
 sweep** (plus manual `workflow_dispatch`) acts as a drift sensor, catching test
@@ -212,8 +213,9 @@ erosion that PR-scoped runs can't see — e.g. a test refactor weakening
 assertions for untouched code. Each **merge to main** re-tests just what it
 changed to keep main's results current. All three run incrementally
 (`--incremental`, results cached between runs), so a PR's later pushes re-test
-only what moved. The `break` threshold gates PR runs (on the touched files'
-score) and the weekly sweep; merge runs only refresh the cached results.
+only what moved. The `break` threshold gates PR runs (on the score of the
+lines they changed) and the weekly sweep; merge runs only refresh the cached
+results.
 
 ## Monitoring & reliability
 

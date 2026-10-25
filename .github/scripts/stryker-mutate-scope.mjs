@@ -14,9 +14,18 @@
 // (a reformat would otherwise re-test every mutant). A file new to the
 // branch, or one Prettier can't read, stays in.
 //
+// Of a file that was there before, only the lines the branch adds or changes
+// are mutated (`file:first-last`, one entry per block, from `git diff -U0`):
+// the rest of the file is code the PR didn't write. A PR touching most of
+// the components (the Tailwind migration, about 80 files) otherwise mutated
+// every line of each, over 5,000 mutants, and outran the job's three hours.
+// A file new to the branch is mutated whole, and one whose change only
+// deletes lines has nothing left to mutate.
+//
 // Usage: git diff --name-only ... | MUTATE_BASE=origin/main node .github/scripts/stryker-mutate-scope.mjs
-// Prints the in-scope files, one per line (nothing when none are). Without
-// MUTATE_BASE, no file is checked for a formatting-only change.
+// Prints the --mutate entries, one per line (nothing when none are). Without
+// MUTATE_BASE, files are printed whole and none is checked for a
+// formatting-only change.
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -75,8 +84,34 @@ export async function substantive(files, { before, now, format }) {
 }
 
 /**
+ * The line ranges a diff with no context lines (`git diff -U0`) adds to its
+ * new side, as `[first, last]` pairs; a hunk that only deletes adds none.
+ * @param {string} diff
+ * @returns {Array<[number, number]>}
+ */
+export function addedRanges(diff) {
+  const ranges = [];
+  for (const [, start, count] of diff.matchAll(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/gm)) {
+    const lines = count === undefined ? 1 : Number(count);
+    if (lines > 0) ranges.push([Number(start), Number(start) + lines - 1]);
+  }
+  return ranges;
+}
+
+/**
+ * `file` as --mutate entries: whole when `ranges` is null (a new file), else
+ * one `file:first-last` per range, so none when it only lost lines.
+ * @param {string} file
+ * @param {Array<[number, number]> | null} ranges
+ */
+export function mutateEntries(file, ranges) {
+  return ranges === null ? [file] : ranges.map(([first, last]) => `${file}:${first}-${last}`);
+}
+
+/**
  * Reads files from git at the merge base of `ref` and HEAD, and from the
- * working tree, run in `cwd`.
+ * working tree, run in `cwd`; `ranges` is the lines the working tree adds
+ * or changes against that base, null for a file new to the branch.
  * @param {string} ref
  * @param {string} cwd
  */
@@ -93,17 +128,28 @@ export function gitIo(ref, cwd) {
     },
     now: (file) => readFileSync(path.join(cwd, file), 'utf8'),
     format: (text, file) => formatAs(text, path.join(cwd, file)),
+    ranges: (file) => {
+      try {
+        git(['cat-file', '-e', `${base}:${file}`]);
+      } catch {
+        return null;
+      }
+      return addedRanges(git(['diff', '-U0', '--no-ext-diff', '--no-color', base, '--', file]));
+    },
   };
 }
 
 /**
  * The command's output for the changed files and the config's text; with
- * `io`, files changed only in formatting are left out.
+ * `io`, files changed only in formatting are left out and the rest narrowed
+ * to the lines that changed.
  */
 export async function main(changed, configText, io) {
   const inScope = mutateScope(changed, JSON.parse(configText));
-  const files = io ? await substantive(inScope, io) : inScope;
-  return files.length > 0 ? `${files.join('\n')}\n` : '';
+  const entries = io
+    ? (await substantive(inScope, io)).flatMap((file) => mutateEntries(file, io.ranges(file)))
+    : inScope;
+  return entries.length > 0 ? `${entries.join('\n')}\n` : '';
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {

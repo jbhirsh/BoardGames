@@ -3,7 +3,8 @@
 # and checking a test fails.
 #
 # Three placements (the first two the pattern from jbhirsh/sift#67):
-#   - Pull requests: mutate only the in-scope files the PR touched — fast,
+#   - Pull requests: mutate only the lines the PR added or changed in the
+#     in-scope files it touched (a file new to the branch whole) — fast,
 #     targeted feedback on exactly the code under review. A file whose
 #     change is formatting alone (Prettier turns its merge-base version into
 #     exactly the new one) is left out, so a reformat doesn't re-test every
@@ -21,10 +22,10 @@
 #     waits for a first baseline (a sweep) rather than re-test everything.
 #
 # PRs and sweeps gate on the `break` threshold in stryker.config.json: a
-# PR whose touched files score below it fails the check. A subset score is
+# PR whose changed lines score below it fails the check. A subset score is
 # stricter than the full-scope one (a PR touching only a weakly-tested file
-# has nowhere to hide), which is the point — the files under review are the
-# ones whose tests must hold up. Stryker exits nonzero after writing the
+# has nowhere to hide), which is the point — the code under review is the
+# code whose tests must hold up. Stryker exits nonzero after writing the
 # report, so the report is still uploaded for diagnosis.
 #
 # All three run in Stryker's incremental mode (--incremental): results are kept
@@ -78,9 +79,10 @@ jobs:
   mutation:
     name: StrykerJS
     runs-on: ubuntu-latest
-    # A PR touching many components mutates thousands of mutants: one with
-    # 32 changed files (about 4,000 mutants) took 86 minutes. The cap only
-    # stops a hung run, so leave such a PR room to finish.
+    # A PR mutates only its changed lines, but one touching most of the
+    # components can still mean many: the Tailwind migration's 77 files, run
+    # whole, came to 5,176 mutants and outran this cap at 52%. The cap only
+    # stops a hung run, so leave a big PR room to finish.
     timeout-minutes: 180
     steps:
       - uses: actions/checkout@v5
@@ -95,10 +97,11 @@ jobs:
 
       - run: npm ci
 
-      # On PRs, narrow mutation to changed files inside the configured scope:
-      # the script filters the diff through stryker.config.json's own mutate
-      # globs, so the two can't drift, and leaves out formatting-only
-      # changes. --diff-filter=d drops deletions: a
+      # On PRs, narrow mutation to the changed lines of changed files inside
+      # the configured scope: the script filters the diff through
+      # stryker.config.json's own mutate globs, so the two can't drift,
+      # leaves out formatting-only changes and names each changed block as
+      # `file:first-last`. --diff-filter=d drops deletions: a
       # removed file must not be passed to --mutate.
       - name: Determine mutation scope
         id: scope
@@ -115,7 +118,7 @@ jobs:
             echo "No mutable files changed — running the utils smoke scope to validate the Stryker wiring."
             echo "mutate=src/utils/filterUrl.ts,src/utils/pickRandom.ts,src/utils/urls.ts" >> "$GITHUB_OUTPUT"
           else
-            echo "Mutating changed files:"; echo "$CHANGED"
+            echo "Mutating the changed lines:"; echo "$CHANGED"
             echo "mutate=$(echo "$CHANGED" | paste -sd, -)" >> "$GITHUB_OUTPUT"
           fi
 

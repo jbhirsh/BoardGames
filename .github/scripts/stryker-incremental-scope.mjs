@@ -7,9 +7,12 @@
 // whole project, its three files diluted by thousands of reused results.
 // Dropping the out-of-scope files first keeps the score to exactly the files
 // under review, whether their results are reused or re-tested. Test files
-// are kept: the diff needs them to tell which tests changed.
+// are kept: the diff needs them to tell which tests changed. A scope entry
+// naming lines (`a.ts:10-20`, what stryker-mutate-scope.mjs prints for a
+// file the PR edited) keeps only that file's mutants starting on those
+// lines, so the score is the changed code's alone there too.
 //
-// Usage: node .github/scripts/stryker-incremental-scope.mjs <file> <a.ts,b.ts>
+// Usage: node .github/scripts/stryker-incremental-scope.mjs <file> <a.ts,b.ts:10-20>
 import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -19,12 +22,41 @@ export function relativeName(fileName, cwd = process.cwd()) {
   return path.relative(cwd, path.resolve(cwd, fileName)).split(path.sep).join('/');
 }
 
-/** The report with only the mutated files named in `scope` left in it. */
+/**
+ * The scope's entries by file: null for a whole file, else the `[first,
+ * last]` line ranges named for it (a file named whole anywhere is whole).
+ * @param {string[]} scope
+ * @param {string} cwd
+ * @returns {Map<string, Array<[number, number]> | null>}
+ */
+export function scopeLines(scope, cwd = process.cwd()) {
+  const byFile = new Map();
+  for (const entry of scope) {
+    const lines = /^(.+):(\d+)-(\d+)$/.exec(entry);
+    const name = relativeName(lines ? lines[1] : entry, cwd);
+    if (!lines || byFile.get(name) === null) byFile.set(name, null);
+    else byFile.set(name, [...(byFile.get(name) ?? []), [Number(lines[2]), Number(lines[3])]]);
+  }
+  return byFile;
+}
+
+/** The report with only the mutated files, and lines, named in `scope` left in it. */
 export function narrow(report, scope, cwd = process.cwd()) {
-  const wanted = new Set(scope.map((name) => relativeName(name, cwd)));
-  const files = Object.fromEntries(
-    Object.entries(report.files ?? {}).filter(([name]) => wanted.has(relativeName(name, cwd))),
-  );
+  const wanted = scopeLines(scope, cwd);
+  const files = {};
+  for (const [name, file] of Object.entries(report.files ?? {})) {
+    const key = relativeName(name, cwd);
+    if (!wanted.has(key)) continue;
+    const ranges = wanted.get(key);
+    files[name] = ranges
+      ? {
+          ...file,
+          mutants: (file.mutants ?? []).filter(({ location }) =>
+            ranges.some(([first, last]) => location?.start?.line >= first && location.start.line <= last),
+          ),
+        }
+      : file;
+  }
   return { ...report, files };
 }
 
@@ -57,7 +89,7 @@ export function narrowFile(file, scope, log = console.log) {
 export function main(args, log = console.log, error = console.error) {
   const [file, scope] = args;
   if (!file || !scope) {
-    error('Usage: stryker-incremental-scope.mjs <incremental file> <comma-separated files>');
+    error('Usage: stryker-incremental-scope.mjs <incremental file> <comma-separated files or file:lines>');
     return 2;
   }
   narrowFile(file, scope.split(',').filter(Boolean), log);
