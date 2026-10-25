@@ -5,9 +5,9 @@
 # Claude to fix, validate against the full CI suite, and open ONE consolidated
 # PR (never one per finding).
 #
-# Runs on the shared Monday 06:00 UTC sweep cadence (mutation.yml,
-# gitleaks.yml, Dependabot), so all robot output lands together on Monday
-# morning. Scans with the free Semgrep CLI (--config auto) rather than the
+# Runs on the shared Monday 06:00 UTC sweep cadence (gitleaks.yml,
+# weekly-audit.yml, Dependabot), so all robot output lands together on
+# Monday morning. Scans with the free Semgrep CLI (--config auto) rather than the
 # platform API, so no SEMGREP_APP_TOKEN is needed; zero findings means the
 # Claude step never runs and the job costs a couple of CLI minutes.
 #

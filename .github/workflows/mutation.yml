@@ -12,9 +12,18 @@
 #     mutable source (data, docs, styles, workflow edits, pure deletions) run a
 #     small utils smoke scope instead, so the Stryker wiring itself stays
 #     validated at PR time and the required check always reports.
-#   - Weekly schedule (+ manual dispatch): full sweep as a drift sensor,
+#   - Monthly schedule (+ manual dispatch): full sweep as a drift sensor,
 #     catching test erosion PR-scoped runs can't see (e.g. a test refactor
-#     weakening assertions for untouched code).
+#     weakening assertions for untouched code), and what incremental mode
+#     can't see at all (helpers, data, dependencies). The whole scope is
+#     about 12,500 mutants, most of a day at CI's pace (about 4 s a mutant),
+#     far past one job's limit, so it runs as shards in parallel jobs: a plan
+#     job splits the in-scope files into SWEEP_SHARDS groups of near-equal
+#     weight (stryker-shards.mjs: mutant counts from main's latest results,
+#     else line counts), each shard tests its files from scratch, and a last
+#     job merges the shards' results, scores the whole and judges it
+#     (stryker-sweep-merge.mjs). Rarer than weekly because PR runs and merges
+#     already keep main's results current; it remains the backstop.
 #   - Pushes to main (each merge): the whole scope again, but incremental
 #     from main's latest results, so only what the merge changed is
 #     re-tested. It keeps main's baseline current between sweeps, which is
@@ -26,7 +35,9 @@
 # stricter than the full-scope one (a PR touching only a weakly-tested file
 # has nowhere to hide), which is the point — the code under review is the
 # code whose tests must hold up. Stryker exits nonzero after writing the
-# report, so the report is still uploaded for diagnosis.
+# report, so the report is still uploaded for diagnosis. A sweep shard runs
+# with no threshold (one part's score says nothing about the whole); the
+# merge job applies it to the merged score, computed as Stryker computes it.
 #
 # All three run in Stryker's incremental mode (--incremental): results are kept
 # in reports/stryker-incremental.json, cached between runs, and a mutant is
@@ -38,9 +49,12 @@
 # and the restored file is first narrowed to the run's scope (Stryker would
 # otherwise score the PR on every file in it), so the gate is the same as a
 # from-scratch run over the same files. Incremental mode only sees changes
-# to the mutated files and the test files; the weekly sweep starts from no
-# file, re-tests everything, and saves the result as main's baseline, which
-# catches anything else (helpers, data, dependencies) within a week.
+# to the mutated files and the test files; the monthly sweep starts from no
+# file, re-tests everything, and saves the merged result as main's
+# baseline, which catches anything else (helpers, data, dependencies)
+# within a month. The baseline is saved only when every shard finished: a
+# partial one would send PR runs to re-test, or score on nothing, the files
+# of the shard that was missing.
 #
 # Stryker writes its results only when a run ends, so a run cancelled or cut
 # off by the time limit saves nothing and the next one starts over. Runs
@@ -58,8 +72,10 @@ on:
     branches: [main]
   push:
     branches: [main]
+  # 06:00 UTC on the 1st. Not a "first Monday": GitHub's cron ORs the
+  # day-of-month and day-of-week fields, so that would run far more often.
   schedule:
-    - cron: "0 6 * * 1"
+    - cron: "0 6 1 * *"
   workflow_dispatch:
 
 # Queued, not cancelled (see the header): GitHub keeps one waiting run per
@@ -76,8 +92,10 @@ permissions:
   contents: read
 
 jobs:
+  # PRs and merges to main. Its name is the required check: keep it.
   mutation:
     name: StrykerJS
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
     runs-on: ubuntu-latest
     # A PR mutates only its changed lines, but one touching most of the
     # components can still mean many: the Tailwind migration's 77 files, run
@@ -163,7 +181,7 @@ jobs:
           MUTATE_SCOPE: ${{ steps.scope.outputs.mutate }}
         run: npx stryker run --incremental --mutate "$MUTATE_SCOPE"
 
-      # Only refreshes the baseline: the score is the weekly sweep's to judge
+      # Only refreshes the baseline: the score is the monthly sweep's to judge
       # (main's own drift would otherwise mark the merged commit red), so a
       # run below the threshold still passes and still saves its results.
       # With no baseline yet it would re-test everything, which can outrun
@@ -176,20 +194,10 @@ jobs:
         timeout-minutes: 170
         run: npx stryker run --incremental
 
-      # No restore here: with no file to start from, every mutant is
-      # re-tested, which is what a drift sensor is for, and the fresh results
-      # become main's baseline. That is what --force would do on a restored
-      # file, minus the stale results --force still carries over for files
-      # that have since left the mutate scope.
-      - name: Run Stryker (full sweep)
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        run: npx stryker run --incremental
-
       # always(): a run below the break threshold has still written its
       # results, and the next push should start from them (a cancelled or
-      # timed-out run writes none, so there is nothing to save). A sweep or a
-      # merge run is saved only on main, the one branch whose cache the PRs
-      # can read.
+      # timed-out run writes none, so there is nothing to save). A merge run
+      # is saved only on main, the one branch whose cache the PRs can read.
       - name: Save incremental results
         if: >-
           always()
@@ -212,4 +220,143 @@ jobs:
           name: mutation-report
           path: reports/mutation
           if-no-files-found: ${{ github.event_name == 'push' && 'warn' || 'error' }}
+          retention-days: 30
+
+  # The monthly sweep, part 1: split the mutate scope into shards. main's
+  # latest results are restored only to weigh each file by its mutant count;
+  # no shard starts from them (a sweep re-tests everything).
+  sweep-plan:
+    name: StrykerJS sweep plan
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      count: ${{ steps.plan.outputs.count }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      # The scope script reads Prettier, so the shard script needs it too.
+      - run: npm ci
+
+      - name: Restore main's latest results (for weights only)
+        uses: actions/cache/restore@v6
+        with:
+          path: reports/stryker-incremental.json
+          key: stryker-incremental-main-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: stryker-incremental-main-
+
+      # About 12,500 mutants at about 4 s each, over 8 shards: under two
+      # hours a shard, inside its limit with room for a slower month.
+      - name: Split the mutate scope
+        id: plan
+        env:
+          SWEEP_SHARDS: 8
+        run: node .github/scripts/stryker-shards.mjs plan "$SWEEP_SHARDS" reports/stryker-incremental.json
+
+  # Part 2: each shard mutates its files from scratch. fail-fast is off so
+  # one failing shard doesn't cancel the rest: their results still show
+  # where the score stands.
+  sweep:
+    name: StrykerJS sweep ${{ matrix.shard }}
+    needs: sweep-plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.sweep-plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # The repository's config without its break threshold: a shard's score
+      # is one part's, and only the merged score is judged. --mutate takes
+      # the shard's files in place of the config's globs.
+      - name: Write the shard's config
+        run: node .github/scripts/stryker-shards.mjs config reports/stryker-shard.config.json
+
+      - name: Run Stryker (shard)
+        id: stryker
+        env:
+          MUTATE_SCOPE: ${{ matrix.mutate }}
+        run: npx stryker run reports/stryker-shard.config.json --incremental --mutate "$MUTATE_SCOPE"
+
+      # Only a finished run's results: Stryker can save a partial file when
+      # interrupted, and the merge must count a shard cut short as missing.
+      - name: Upload the shard's results
+        if: steps.stryker.outcome == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: stryker-sweep-results-${{ matrix.shard }}
+          path: reports/stryker-incremental.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload the shard's mutation report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutation-report-${{ matrix.shard }}
+          path: reports/mutation
+          if-no-files-found: warn
+          retention-days: 30
+
+  # Part 3: merge the shards' results, score the whole against `break`, and
+  # save it as main's baseline when every shard finished. It runs when some
+  # shards failed too (not when the run was cancelled): the script then
+  # shows the partial score and fails, leaving the baseline as it was.
+  sweep-merge:
+    name: StrykerJS sweep
+    needs: [sweep-plan, sweep]
+    if: ${{ !cancelled() && needs.sweep-plan.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      # One directory per shard that finished. None finishing is the merge
+      # script's to report, so a download with nothing to fetch can't stop it.
+      - name: Download the shards' results
+        continue-on-error: true
+        uses: actions/download-artifact@v7
+        with:
+          pattern: stryker-sweep-results-*
+          path: shards
+
+      - name: Merge and score the shards
+        id: merge
+        env:
+          SHARDS: ${{ needs.sweep-plan.outputs.count }}
+        run: node .github/scripts/stryker-sweep-merge.mjs shards "$SHARDS" reports/stryker-incremental.json
+
+      # always(): a complete sweep below the threshold is still main's latest
+      # results, and the PR runs should start from them.
+      - name: Save main's baseline
+        if: always() && steps.merge.outputs.complete == 'true' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@v6
+        with:
+          path: reports/stryker-incremental.json
+          key: stryker-incremental-main-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Upload the merged results
+        if: always() && steps.merge.outputs.complete == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutation-results
+          path: reports/stryker-incremental.json
           retention-days: 30
