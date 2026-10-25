@@ -32,5 +32,12 @@
     ],
     "ignore": ["src/__tests__/**"],
     "source": "the production build, every /api call and the dictionary stubbed (e2e/readme.shots.ts)"
+  },
+  "gif": {
+    "setup": "scripts/gif-setup.ts",
+    "scenarios": "scripts/gif-scenarios",
+    "build": {
+      "unsetEnv": ["SENTRY_AUTH_TOKEN"]
+    }
   }
 }
