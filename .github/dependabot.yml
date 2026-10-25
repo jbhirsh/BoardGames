@@ -11,9 +11,10 @@ updates:
     directory: /
     assignees:
       - jbhirsh
-    # Pinned to the shared Monday 06:00 UTC sweep slot (mutation.yml,
-    # gitleaks.yml, semgrep-autofix.yml) so all weekly robot output lands
-    # together on Monday morning. Security updates don't wait for it: they
+    # Pinned to the shared Monday 06:00 UTC sweep slot (gitleaks.yml,
+    # semgrep-autofix.yml, weekly-audit.yml) so all weekly robot output
+    # lands together on Monday morning (mutation.yml's full sweep is
+    # monthly, at 06:00 UTC on the 1st). Security updates don't wait for it: they
     # open as soon as an alert does.
     schedule:
       interval: weekly
