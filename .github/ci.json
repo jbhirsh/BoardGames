@@ -43,5 +43,29 @@
   "review": {
     "instructions": ".github/claude-review.md",
     "skip": ["src/gql/**", "src/data/gameWeights.ts", "src/data/wishlistArt.ts", "rules-text/**"]
+  },
+  "autofix": {
+    "ciFixChecks": [
+      "`npm run lint`",
+      "`npm run format:check` (`npm run format` rewrites what it flags)",
+      "`npm run depcruise`",
+      "`npm run typecheck`",
+      "`npm run codegen && git diff --exit-code src/gql/ && test -z \"$(git status --porcelain src/gql/)\"` (if an operation or the SDL changed, commit the regenerated `src/gql/` too)",
+      "`npm run typecov`",
+      "`npx vitest run --coverage` (per-file 80% coverage)",
+      "`npm run build`",
+      "`npm audit --omit=dev --audit-level=high`",
+      "`npx playwright install --with-deps chromium && npx playwright test --project=chromium --project=phone` (E2E's functional tests; its visual projects are in \"can't run\")"
+    ],
+    "cannotRun": [
+      "visual regression",
+      "deployment smoke tests",
+      "mutation testing",
+      "the answer-quality eval (it needs the Gemini key)"
+    ],
+    "exempt": {
+      "Dependabot Auto-Merge": "Turns on auto-merge as a bot's PR opens: not a check, and nothing in it for a fix to answer.",
+      "PR visuals": "Wants pictures in the PR description, which no code change gives (autofix skips its failure too)."
+    }
   }
 }
