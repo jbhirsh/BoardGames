@@ -5,7 +5,16 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { formatAs, gitIo, inMutateScope, main, mutateScope, substantive } from './stryker-mutate-scope.mjs';
+import {
+  addedRanges,
+  formatAs,
+  gitIo,
+  inMutateScope,
+  main,
+  mutateEntries,
+  mutateScope,
+  substantive,
+} from './stryker-mutate-scope.mjs';
 
 const script = fileURLToPath(new URL('./stryker-mutate-scope.mjs', import.meta.url));
 const configText = readFileSync('stryker.config.json', 'utf8');
@@ -97,6 +106,64 @@ describe('main', () => {
       format: async (text) => text.toUpperCase(),
     };
     expect(await main('src/App.tsx\napi/graphql.ts\n', configText, io)).toBe('');
+  });
+
+  it('narrows, given the base, an edited file to its changed lines and keeps a new one whole', async () => {
+    const io = {
+      before: (file) => (file === 'src/App.tsx' ? 'old' : null),
+      now: () => 'new',
+      format: async (text) => text,
+      ranges: (file) => (file === 'src/App.tsx' ? [[4, 9]] : null),
+    };
+    expect(await main('src/App.tsx\napi/graphql.ts\n', configText, io)).toBe('src/App.tsx:4-9\napi/graphql.ts\n');
+  });
+});
+
+describe('addedRanges', () => {
+  it('reads the new side of each hunk, a missing count meaning one line', () => {
+    const diff = [
+      '--- a/x.ts',
+      '+++ b/x.ts',
+      '@@ -3 +3 @@',
+      '-a',
+      '+b',
+      '@@ -10,0 +11,4 @@',
+      '+c',
+      '+d',
+      '+e',
+      '+f',
+    ].join('\n');
+    expect(addedRanges(diff)).toEqual([
+      [3, 3],
+      [11, 14],
+    ]);
+  });
+
+  it('adds nothing for a hunk that only deletes', () => {
+    expect(addedRanges('@@ -5,2 +4,0 @@\n-a\n-b\n')).toEqual([]);
+  });
+
+  it('adds nothing for no diff', () => {
+    expect(addedRanges('')).toEqual([]);
+  });
+});
+
+describe('mutateEntries', () => {
+  it('names a new file whole', () => {
+    expect(mutateEntries('src/a.ts', null)).toEqual(['src/a.ts']);
+  });
+
+  it('names each changed block of an edited file', () => {
+    expect(
+      mutateEntries('src/a.ts', [
+        [3, 3],
+        [11, 14],
+      ]),
+    ).toEqual(['src/a.ts:3-3', 'src/a.ts:11-14']);
+  });
+
+  it('names nothing when the file only lost lines', () => {
+    expect(mutateEntries('src/a.ts', [])).toEqual([]);
   });
 });
 
@@ -219,12 +286,14 @@ describe('command line, against a base', () => {
     expect(io.before('src/new.ts')).toBeNull();
     expect(io.now('src/reformatted.ts')).toBe("export const a = 'x';\n");
     expect(await io.format('export const a = "x"', 'src/reformatted.ts')).toBe("export const a = 'x';\n");
+    expect(io.ranges('src/changed.ts')).toEqual([[1, 1]]);
+    expect(io.ranges('src/new.ts')).toBeNull();
     expect(await main('src/reformatted.ts\nsrc/changed.ts\nsrc/new.ts\n', '{"mutate":["src/**/*.ts"]}', io)).toBe(
-      'src/changed.ts\nsrc/new.ts\n',
+      'src/changed.ts:1-1\nsrc/new.ts\n',
     );
   });
 
-  it('mutates the real change and the new file, not the reformatted one', () => {
+  it('mutates the changed line and the new file, not the reformatted one', () => {
     const cwd = repo();
     const out = spawnSync(process.execPath, [script], {
       cwd,
@@ -234,6 +303,6 @@ describe('command line, against a base', () => {
     });
     expect(out.stderr).toBe('');
     expect(out.status).toBe(0);
-    expect(out.stdout).toBe('src/changed.ts\nsrc/new.ts\n');
+    expect(out.stdout).toBe('src/changed.ts:1-1\nsrc/new.ts\n');
   });
 });
