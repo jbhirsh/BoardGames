@@ -372,13 +372,15 @@ export default function RulesPage() {
                 to={rulebookPath(game.slug, b.part)}
                 replace
                 state={arrival}
-                className={`rules-book inline-flex shrink-0 snap-start items-center gap-1.75 rounded-control border px-3.5 py-2 text-[13px] font-medium whitespace-nowrap [transition:background_0.15s,color_0.15s,border-color_0.15s] ${b === book ? 'border-dark bg-dark text-surface' : 'border-border bg-bg2 text-text2 hover:border-blue-tint/30 hover:bg-blue-bg hover:text-blue'}`}
+                // The open book's tab is drawn by its aria-current, so the look
+                // and what a screen reader hears can't part.
+                className="rules-book group/book inline-flex shrink-0 snap-start items-center gap-1.75 rounded-control border border-border bg-bg2 px-3.5 py-2 text-[13px] font-medium whitespace-nowrap text-text2 [transition:background_0.15s,color_0.15s,border-color_0.15s] hover:not-aria-[current=page]:border-blue-tint/30 hover:not-aria-[current=page]:bg-blue-bg hover:not-aria-[current=page]:text-blue aria-[current=page]:border-dark aria-[current=page]:bg-dark aria-[current=page]:text-surface"
                 aria-current={b === book ? 'page' : undefined}
               >
                 {b.label}
                 {b.kind && shownKind(b.label, b.kind) && (
                   <span
-                    className={`kind-chip kind-${b.kind} ${kindChipClass} ${b === book ? 'bg-surface/18 text-surface' : kindClasses[b.kind]}`}
+                    className={`kind-chip kind-${b.kind} ${kindChipClass} ${kindClasses[b.kind]} group-aria-[current=page]/book:bg-surface/18 group-aria-[current=page]/book:text-surface`}
                   >
                     {b.kind}
                   </span>
