@@ -9,13 +9,13 @@
     "api/*.ts",
     // Run as a child process by extract-rules-text.mjs.
     "scripts/ocr-pdfs.mjs",
-    // A scenario passed to `npm run pr-gif` on the command line.
-    "scripts/pr-gif-example.ts",
+    // Scenarios passed to `npm run pr-gif` on the command line, and the
+    // setup module .github/ci.json names: jbhirsh/ci's GIF tool loads them.
+    "scripts/gif-scenarios/*.ts",
+    "scripts/gif-setup.ts",
     // The README's screenshots, a Playwright project only when README_SHOTS is set.
     "e2e/readme.shots.ts",
   ],
-  // A system tool the GIF recorder runs, not an npm package.
-  "ignoreBinaries": ["ffmpeg"],
   // e2e/theme.spec.ts loads axe's browser build by path
   // (createRequire().resolve), which knip doesn't follow. jbhirsh/ci's
   // actions run the rest from this repo's node_modules: the weekly audit's
