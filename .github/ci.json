@@ -14,5 +14,8 @@
   "visuals": {
     "ui": ["src/**/*.{tsx,css}", "src/**/*Classes.ts", "index.html"],
     "notUi": ["**/*.test.tsx", "src/__tests__/**", "src/context/**", "src/main.tsx"]
+  },
+  "audit": {
+    "graph": ["src", "api", "e2e"]
   }
 }
