@@ -10,5 +10,9 @@
       ".github/workflows/mutation.yml"
     ],
     "smoke": ["src/utils/filterUrl.ts", "src/utils/pickRandom.ts", "src/utils/urls.ts"]
+  },
+  "visuals": {
+    "ui": ["src/**/*.{tsx,css}", "src/**/*Classes.ts", "index.html"],
+    "notUi": ["**/*.test.tsx", "src/__tests__/**", "src/context/**", "src/main.tsx"]
   }
 }
