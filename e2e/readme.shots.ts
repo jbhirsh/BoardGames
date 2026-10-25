@@ -5,8 +5,8 @@ import { settle } from './visual';
 /**
  * The README's screenshots (docs/screenshots/), taken by the "readme"
  * project, which playwright.config.ts adds only when README_SHOTS is set:
- * readme-screenshots.yml runs it after a UI change reaches main and
- * .github/scripts/readme-screenshots.mjs replaces the ones that changed.
+ * readme-screenshots.yml runs it after a UI change reaches main, and
+ * jbhirsh/ci's readme-screenshots actions replace the ones that changed.
  * Same names, sizes and framing as the README shows; every /api call and
  * the dictionary stubbed (the README says so), the rest the real build.
  */

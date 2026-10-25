@@ -17,5 +17,20 @@
   },
   "audit": {
     "graph": ["src", "api", "e2e"]
+  },
+  "readme-screenshots": {
+    "shows": [
+      "src/**",
+      "public/**",
+      "index.html",
+      "e2e/readme.shots.ts",
+      "e2e/visual.ts",
+      "e2e/fixtures.ts",
+      "playwright.config.ts",
+      "package-lock.json",
+      ".github/workflows/readme-screenshots.yml"
+    ],
+    "ignore": ["src/__tests__/**"],
+    "source": "the production build, every /api call and the dictionary stubbed (e2e/readme.shots.ts)"
   }
 }

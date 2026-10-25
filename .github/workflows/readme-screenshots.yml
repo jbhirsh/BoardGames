@@ -1,33 +1,25 @@
 # Keeps the README's screenshots (docs/screenshots/) in step with the app.
 # After a change that can alter how the app looks reaches main, it takes
 # them again (e2e/readme.shots.ts: the production build, every /api call
-# and the dictionary stubbed) and replaces those that visibly changed
-# (.github/scripts/readme-screenshots.mjs). The result goes to one PR from
+# and the dictionary stubbed), and jbhirsh/ci's readme-screenshots actions
+# replace those that visibly changed (over 0.5% of pixels) in one PR from
 # bot/readme-screenshots, with auto-merge on: branch protection blocks a
 # push to main, and the PR still runs every required check.
 #
 # Every push to main starts it, and the capture job decides: if anything
-# the screenshots show (the app, the capture spec and what it uses, the
-# dependencies) changed since the last run that finished, it takes them
-# again. Counting from the last finished run, not the push's own parent,
-# means a UI push whose run a later push cancelled is still caught. With
-# screenshots that changed, the publish job opens or rebuilds the bot PR on
-# the latest main; with none, it closes an open one, whose pictures are
-# stale. With nothing to retake, it only rebases an open bot PR onto main
-# (gh pr update-branch), so it never sits behind it while main requires
-# branches to be up to date.
+# the screenshots show (`readme-screenshots.shows` in .github/ci.json: the
+# app, the capture spec and what it uses, the dependencies) changed since
+# the last run that finished, it takes them again. With screenshots that
+# changed, the publish job opens or rebuilds the bot PR on the latest main;
+# with none, it closes an open one, whose pictures are stale. With nothing
+# to retake, it only brings an open bot PR up to date with main, so it never
+# sits behind it while main requires branches to be up to date.
 #
 # Two jobs, so the token that can open PRs never meets npm: capture runs
 # npm, the build and Playwright with read-only permissions and no
-# credentials kept, and hands the screenshots over as an artifact; publish
-# runs no npm.
-#
-# Secrets: BOT_PR_TOKEN, a fine-grained personal access token for this
-# repository with Contents and Pull requests read and write. A PR opened
-# with the default Actions token starts no workflows, so its required
-# checks would never report and auto-merge would wait forever. Without the
-# secret it falls back to that token, which also needs Settings > Actions >
-# General > "Allow GitHub Actions to create and approve pull requests".
+# credentials kept, and hands the changed screenshots over as an artifact;
+# publish runs no npm, with BOT_PR_TOKEN (the publish action's `token` input
+# says why it's needed and what it falls back to).
 name: README screenshots
 
 on:
@@ -39,15 +31,8 @@ concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: true
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 permissions:
   contents: read
-
-defaults:
-  run:
-    shell: bash
 
 jobs:
   capture:
@@ -63,38 +48,18 @@ jobs:
       actions: read
     outputs:
       capture: ${{ steps.decide.outputs.capture }}
-      changed: ${{ steps.refresh.outputs.count }}
-      list: ${{ steps.refresh.outputs.list }}
+      changed: ${{ steps.compare.outputs.changed }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           # The commits since the last finished run, to see what changed.
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Decide
-        id: decide
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          since=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow readme-screenshots.yml --branch main \
-            --status success --limit 1 --json headSha --jq '.[0].headSha // empty')
-          if [ "$GITHUB_EVENT_NAME" != push ] || [ -z "$since" ] || ! git cat-file -e "$since^{commit}" 2>/dev/null; then
-            echo "Run by hand, or no finished run to count from: taking them."
-            echo "capture=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          files=$(git diff --name-only "$since" "$GITHUB_SHA")
-          shows='^(src/|public/|index\.html$|e2e/(readme\.shots|visual|fixtures)\.ts$|playwright\.config\.ts$|package-lock\.json$|\.github/scripts/readme-screenshots\.mjs$|\.github/workflows/readme-screenshots\.yml$)'
-          if printf '%s\n' "$files" | grep -v '^src/__tests__/' | grep -qE "$shows"; then
-            echo "What the screenshots show changed since ${since}: taking them."
-            echo "capture=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "Nothing the screenshots show changed since ${since}."
-            echo "capture=false" >> "$GITHUB_OUTPUT"
-          fi
+      - id: decide
+        uses: jbhirsh/ci/readme-screenshots/decide@main
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         if: steps.decide.outputs.capture == 'true'
         with:
           node-version: 24
@@ -107,33 +72,18 @@ jobs:
         if: steps.decide.outputs.capture == 'true'
         run: npx playwright install --with-deps chromium
 
+      # Into readme-shots/ (e2e/readme.shots.ts).
       - name: Take the screenshots
         if: steps.decide.outputs.capture == 'true'
         env:
           README_SHOTS: "1"
         run: npx playwright test --project=readme
 
-      - name: Replace the ones that changed
-        id: refresh
+      - id: compare
         if: steps.decide.outputs.capture == 'true'
-        run: |
-          changed=$(node .github/scripts/readme-screenshots.mjs readme-shots docs/screenshots)
-          count=$(printf '%s\n' "$changed" | sed '/^$/d' | wc -l)
-          echo "Replaced ${count}: ${changed:-nothing}"
-          echo "count=$count" >> "$GITHUB_OUTPUT"
-          {
-            echo 'list<<EOF'
-            printf '%s\n' "$changed" | sed '/^$/d; s/^/- `docs\/screenshots\//; s/$/`/'
-            echo 'EOF'
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Hand them over
-        if: steps.decide.outputs.capture == 'true'
-        uses: actions/upload-artifact@v7
+        uses: jbhirsh/ci/readme-screenshots/compare@main
         with:
-          name: readme-screenshots
-          path: docs/screenshots/*.png
-          retention-days: 7
+          fresh: readme-shots
 
   publish:
     name: Open, update or close the bot PR
@@ -144,75 +94,9 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    env:
-      GH_TOKEN: ${{ secrets.BOT_PR_TOKEN || github.token }}
     steps:
-      - name: Find the open bot PR
-        id: open
-        run: |
-          pr=$(gh pr list --repo "$GITHUB_REPOSITORY" --head bot/readme-screenshots --state open \
-            --json number --jq '.[0].number // empty')
-          echo "number=$pr" >> "$GITHUB_OUTPUT"
-
-      - name: Keep the open bot PR on main
-        if: needs.capture.outputs.capture == 'false' && steps.open.outputs.number != ''
-        env:
-          PR: ${{ steps.open.outputs.number }}
-        run: gh pr update-branch "$PR" --rebase --repo "$GITHUB_REPOSITORY"
-
-      - name: Close the open bot PR, now stale
-        if: needs.capture.outputs.capture == 'true' && needs.capture.outputs.changed == '0' && steps.open.outputs.number != ''
-        env:
-          PR: ${{ steps.open.outputs.number }}
-        run: >-
-          gh pr close "$PR" --delete-branch --repo "$GITHUB_REPOSITORY"
-          --comment "Main's own screenshots match the app again, so these are no longer needed."
-
-      - uses: actions/checkout@v5
-        if: needs.capture.outputs.changed != '' && needs.capture.outputs.changed != '0'
-        with:
-          persist-credentials: false
-
-      - name: Take the new screenshots
-        if: needs.capture.outputs.changed != '' && needs.capture.outputs.changed != '0'
-        uses: actions/download-artifact@v7
-        with:
-          name: readme-screenshots
-          path: docs/screenshots
-
-      - name: Open or update the PR
-        id: pr
-        if: needs.capture.outputs.changed != '' && needs.capture.outputs.changed != '0'
-        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7.0.11
+      - uses: jbhirsh/ci/readme-screenshots@main
         with:
           token: ${{ secrets.BOT_PR_TOKEN || github.token }}
-          branch: bot/readme-screenshots
-          delete-branch: true
-          add-paths: docs/screenshots/*.png
-          commit-message: |
-            Refresh the README's screenshots
-
-            Taken again from main by readme-screenshots.yml, after a change
-            that can alter how the app looks; only the visibly changed ones
-            are replaced.
-          title: Refresh the README's screenshots
-          body: |
-            The README's screenshots, taken again from the current `main` by `readme-screenshots.yml` (`e2e/readme.shots.ts`, with the API stubbed). Only those more than 0.5% of pixels away from the ones in `docs/screenshots/` are replaced:
-
-            ${{ needs.capture.outputs.list }}
-
-            ## Visual changes
-
-            - [x] No visible UI change
-
-            The app is unchanged; these are pictures of it for the README. See the files tab.
-
-            ## Validation
-
-            Taken by Playwright against the production build, as the e2e suite runs it.
-
-      - name: Turn on auto-merge
-        if: steps.pr.outputs.pull-request-operation == 'created' || steps.pr.outputs.pull-request-operation == 'updated'
-        env:
-          PR: ${{ steps.pr.outputs.pull-request-number }}
-        run: gh pr merge "$PR" --auto --squash --repo "$GITHUB_REPOSITORY"
+          capture: ${{ needs.capture.outputs.capture }}
+          changed: ${{ needs.capture.outputs.changed }}
