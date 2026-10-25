@@ -143,15 +143,12 @@ function useSaved(pdf: string, online: boolean): boolean | 'asking' {
 const STRIP_FADE = 48;
 
 // The strip fades at an end with more tabs past it: without it, a tab cut at
-// the edge ("Monster Box 2 EXPA") gave no sign the strip scrolls. A mask's
-// black is only opacity, not a colour, so it holds in both themes.
-function stripFade({ start, end }: { start: boolean; end: boolean }): string {
-  if (start && end)
-    return '[mask-image:linear-gradient(to_right,transparent,var(--color-black)_var(--strip-fade),var(--color-black)_calc(100%-var(--strip-fade)),transparent)]';
-  if (end) return '[mask-image:linear-gradient(to_right,var(--color-black)_calc(100%-var(--strip-fade)),transparent)]';
-  if (start) return '[mask-image:linear-gradient(to_left,var(--color-black)_calc(100%-var(--strip-fade)),transparent)]';
-  return '';
-}
+// the edge ("Monster Box 2 EXPA") gave no sign the strip scrolls. The fade
+// is drawn from the strip's own fade-start and fade-end marks, so it can't
+// disagree with them. A mask's black is only opacity, not a colour, so it
+// holds in both themes.
+const stripFadeClass =
+  '[&.fade-end]:mask-[linear-gradient(to_right,var(--color-black)_calc(100%-var(--strip-fade)),transparent)] [&.fade-start]:mask-[linear-gradient(to_left,var(--color-black)_calc(100%-var(--strip-fade)),transparent)] [&.fade-start.fade-end]:mask-[linear-gradient(to_right,transparent,var(--color-black)_var(--strip-fade),var(--color-black)_calc(100%-var(--strip-fade)),transparent)]';
 
 /** Scrolls the tab strip sideways to its chosen tab, clear of the faded edge. */
 function scrollToChosenTab(strip: HTMLElement) {
@@ -358,7 +355,7 @@ export default function RulesPage() {
             ref={stripRef}
             // Faded at an end with more tabs past it, so a cut-off strip
             // reads as one that scrolls.
-            className={`rules-books mb-3.5 flex snap-x snap-proximity scroll-px-(--strip-fade) scrollbar-thin gap-1.5 overflow-x-auto pb-1 ${edges.start ? 'fade-start' : ''} ${edges.end ? 'fade-end' : ''} ${stripFade(edges)}`}
+            className={`rules-books mb-3.5 flex snap-x snap-proximity scroll-px-(--strip-fade) scrollbar-thin gap-1.5 overflow-x-auto pb-1 ${edges.start ? 'fade-start' : ''} ${edges.end ? 'fade-end' : ''} ${stripFadeClass}`}
             style={{ '--strip-fade': `${STRIP_FADE}px` } as CSSProperties}
             aria-label="Rulebooks"
             // A tab reached by keyboard is brought clear of the faded edges:
