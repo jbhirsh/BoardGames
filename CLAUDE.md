@@ -42,9 +42,11 @@ npx playwright test --project=phone     # the phone project (e2e/phone.spec.ts, 
 npx playwright test --project=visual-chromium   # one engine's screenshots
 npx playwright show-report              # open the last HTML report
 
-# A PR's before/after GIFs: builds main and this tree, plays a scenario
-# (e.g. scripts/pr-gif-example.ts) against both, writes pr-gif/<name>/
-npm run pr-gif -- <scenario.ts> [--side-by-side] [--publish]
+# A PR's before/after GIFs (jbhirsh/ci's gif tool, through scripts/gif.mjs):
+# builds main and this tree, plays a scenario (e.g.
+# scripts/gif-scenarios/example.ts) against both, writes pr-gif/<scenario>/;
+# --dir <PR> hosts them on the screenshots branch and prints the table
+npm run pr-gif -- <scenario.ts> [--side-by-side] [--dir <PR>]
 ```
 
 `npm run test:e2e` needs a Chromium matching the installed `@playwright/test`
@@ -264,7 +266,8 @@ before changing the module.
   with the `Co-Authored-By:` trailer. One logical change per commit; squash
   "fix typo"/"oops" churn before opening or updating a PR. Linear history
   (rebase, not merge); amend your own branch freely, but never amend, rebase,
-  or force-push `main`. `check-commits.sh` in CI enforces the shape.
+  or force-push `main`. CI's commit step (jbhirsh/ci's `commits`) enforces
+  the shape.
 - **Never** `git add -A`/`git add .` (stage files explicitly), modify a test to
   make it pass (fix the implementation instead), install packages outside the
   project root, or use `--no-verify`.
@@ -273,15 +276,15 @@ before changing the module.
   rationale the code doesn't.
 - **Show UI changes in the PR.** A PR changing a component or stylesheet puts
   before/after visuals in its description: screenshots for looks, GIFs for
-  motion, hosted on the `pr-screenshots` branch as the PR template shows.
-  GIFs show the pointer and key presses: record them with `npm run pr-gif`
-  (`scripts/record-pr-gif.ts`), from a scenario of real `page.mouse` moves
-  with steps and pauses like `scripts/pr-gif-example.ts`, in a phone's
-  window unless the scenario names another; `--publish` hosts them on
-  `pr-screenshots` and prints the table, linked by commit SHA.
-  `PR visuals` (`.github/scripts/pr-visuals.mjs`) fails one with no picture
-  unless "No visible UI change" is ticked. It counts components,
-  stylesheets, the `*Classes.ts` class modules and `index.html` as UI; it
+  motion, hosted on the `screenshots` branch in a folder named for the PR,
+  as the PR template shows (older PRs' pictures stay on `pr-screenshots`).
+  GIFs show the pointer and key presses: record them with `npm run pr-gif`,
+  from a scenario whose `play(page, gif)` moves with `gif.glide`, `click`,
+  `drag` and `scroll`, with pauses, like `scripts/gif-scenarios/example.ts`,
+  in a phone's window unless the scenario names another; `--dir <PR>` hosts
+  them and prints the table, linked by commit SHA. `PR visuals` (jbhirsh/ci's
+  `visuals`; what counts as UI is the `visuals` key of `.github/ci.json`)
+  fails one with no picture unless "No visible UI change" is ticked; it
   can't see changes through `src/data` or `public/`, so show those too.
 - **Review before raising a PR.** Review the full diff (e.g. a review subagent
   reading it) before opening the PR — review gates PR creation, rather than
@@ -289,11 +292,21 @@ before changing the module.
 
 ## CI and required checks
 
+CI tooling is shared with fog-and-frontier and sift in
+[jbhirsh/ci](https://github.com/jbhirsh/ci), run from its `main` (no
+version pin): mutation testing, Claude Review and autofix, PR GIFs, PR
+visuals, the commit check, the weekly audit, the README screenshot bot,
+Dependabot auto-merge and the secret scan. The workflows here keep their
+triggers and job names (the required checks) and call it; this repo's
+settings for each tool are its key in `.github/ci.json`, and how a tool
+works is in its headers there. Change a tool in jbhirsh/ci (cloned beside
+this repo as `../ci`), never by copying it back here.
+
 | Required check (workflow) | What it runs |
 | --- | --- |
 | `ci` (`ci.yml`) | commit messages, lint, Prettier, depcruise, type-check, GraphQL codegen drift, type coverage (100%), unit tests + coverage (axe suite included), build, `npm audit --omit=dev` (high+) |
-| Claude Review (`claude-review.yml`) | AI review, in its own file: claude-code-action skips a PR that edits its workflow |
-| StrykerJS (`mutation.yml`) | incremental mutation testing of the lines a PR added or changed (a new file whole, a formatting-only change left out), failing below `break`. The monthly full sweep (not a PR check) runs as 8 parallel shards (`stryker-shards.mjs`), merged, scored and saved as main's baseline by the `StrykerJS sweep` job (`stryker-sweep-merge.mjs`) |
+| Claude Review (`claude-review.yml`) | jbhirsh/ci's AI review; this repo's guide is `.github/claude-review.md`. In its own file: claude-code-action skips a PR that edits its workflow |
+| StrykerJS (`mutation.yml`) | jbhirsh/ci's mutation testing of the lines a PR added or changed, failing below `break`; the monthly full sweep (not a PR check) runs in 8 parallel shards |
 | E2E Tests (Playwright) (`e2e.yml`) | the e2e suite and visual regression in three engines; passing only on retry still fails |
 | Answer-Quality Eval (`eval.yml`) | the assistant against `eval/golden-set.json` |
 | Secret scan, `semgrep-cloud-platform/scan`, Vercel, API smoke test | secrets, static analysis, the deploy and its live API (`smoke.yml`: a rules question over SSE and a votes query to `/api/graphql`) |
@@ -303,7 +316,7 @@ before changing the module.
 duplicated code outside the tests, which repeat each case's setup on
 purpose) and lychee (broken links and anchors in the markdown), and draws
 dependency-cruiser's whole graph as an artifact. Each kind of finding keeps
-one issue labelled `weekly-audit` (`.github/scripts/tracking-issue.mjs`),
+one issue labelled `weekly-audit` (jbhirsh/ci's `audit` workflow),
 rewritten each week and closed when clean. Each tool reports nothing
 today: keep it that way, fixing a finding rather than ignoring it; a
 deliberate copy (the dark theme's second block)
@@ -313,10 +326,10 @@ caller uses is tagged `@public`.
 **The README's screenshots refresh themselves** (`readme-screenshots.yml`):
 once a change that can alter the app's look reaches main (counted from the
 workflow's last finished run), Playwright takes them again
-(`e2e/readme.shots.ts`, the API stubbed) and the visibly changed ones (over
-0.5% of pixels) go to one PR from `bot/readme-screenshots`, the one branch a
-workflow pushes besides a PR's own, with auto-merge on; other pushes keep
-that PR rebased on main. Add the shot there when the README gains a picture. It needs a `BOT_PR_TOKEN`
+(`e2e/readme.shots.ts`, the API stubbed), and jbhirsh/ci's
+`readme-screenshots` tool sends the visibly changed ones to one PR from
+`bot/readme-screenshots`, the one branch a workflow pushes besides a PR's
+own, with auto-merge on. Add the shot there when the README gains a picture. It needs a `BOT_PR_TOKEN`
 secret (a fine-grained token for this repository, Contents and Pull requests
 read and write): a PR the default Actions token opens starts no workflows, so
 its required checks never report. Without it the default token is used, which
@@ -324,9 +337,10 @@ also needs "Allow GitHub Actions to create and approve pull requests" on.
 
 Every check but `PR visuals` is required (autofix skips that one too), so
 nothing merges until all report and arming auto-merge early is safe. A new PR workflow must be
-added to the required checks, or bot PRs merge without it; list a gating
-`pull_request` workflow in `workflows:` in `claude-autofix.yml` too, or
-autofix won't fix its failures. Dependabot's npm PRs auto-merge
+added to the required checks, or bot PRs merge without it, and to
+`claude-autofix.yml`'s trigger list (or `.github/ci.json`'s
+`autofix.exempt`, with its reason); CI's autofix trigger check fails a PR
+that does neither. Dependabot's npm PRs auto-merge
 (`dependabot-merge.yml`) once every check is green and every review thread
 resolved; `claude-autofix.yml` works review comments on bots' PRs and fixes
 mechanical breakage from a bump (one attempt per head, two per PR), leaving

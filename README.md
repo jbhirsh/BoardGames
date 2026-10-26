@@ -214,11 +214,12 @@ drift sensor, catching test erosion that PR-scoped runs can't see — e.g. a tes
 refactor weakening assertions for untouched code — and changes to helpers, data
 and dependencies that incremental runs don't notice. The whole scope is about
 12,500 mutants, far more than one job can test within GitHub's time limit, so
-the sweep is split into 8 parallel shards of near-equal weight
-([`stryker-shards.mjs`](.github/scripts/stryker-shards.mjs)), each testing its
-files from scratch; a final job merges their results, scores the whole the way
-Stryker does and saves it as main's baseline
-([`stryker-sweep-merge.mjs`](.github/scripts/stryker-sweep-merge.mjs)). Each
+the sweep is split into 8 parallel shards of near-equal weight, each testing
+its files from scratch; a final job merges their results, scores the whole the
+way Stryker does and saves it as main's baseline. The machinery is shared with
+this owner's other apps in [jbhirsh/ci](https://github.com/jbhirsh/ci)
+(`mutation/`); this repo's settings are the `mutation` key of
+`.github/ci.json`. Each
 **merge to main** re-tests just what it changed to keep main's results current.
 All three run incrementally (`--incremental`, results cached between runs), so
 a PR's later pushes re-test only what moved. The `break` threshold gates PR
