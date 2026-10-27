@@ -26,23 +26,32 @@ updates:
     # or broken release is usually yanked first. Security updates ignore it.
     cooldown:
       default-days: 7
-    # `typescript` is an alias of @typescript/typescript6 (the 6.0 API); a
-    # major bump would swap in TS 7, which has no JS API. Tried with
-    # typescript 7.0.2 and the latest tools (Oct 2026): eslint fails with
-    # "typescript-eslint does not support TS 7.0", type-coverage with "needs
-    # the TypeScript compiler API (ts.createProgram), which typescript@7.0.2
-    # does not export", and depcruise cruises 0 modules
-    # (missing-typescript-transpiler). The TS 7 compiler is @typescript/native.
-    ignore:
-      - dependency-name: typescript
-        update-types:
-          - version-update:semver-major
     # One PR per run for everything, majors included, and one for every
     # security fix found at once, instead of a PR per package. This also keeps
     # lockstep packages together (vitest with @vitest/*, eslint with
     # @eslint/js), which can't pass as separate bumps. The cost: a major that
     # needs code changes holds the whole bundle until it's fixed.
     groups:
+      # Majors that wait on another package, one group per package: each gets
+      # a PR of its own, red until that package catches up, then green, and
+      # auto-merge takes it, without waiting on another blocked major or
+      # holding the bumps in all-updates. (Dependabot puts an update in the
+      # first group that matches; this package's minors and patches go on to
+      # all-updates.) Autofix leaves their red checks alone: jbhirsh/ci's
+      # autofix/action.yml passes over a branch matching
+      # dependabot/*/blocked-*, so keep the blocked- prefix.
+      #
+      # `typescript` is an alias of @typescript/typescript6 (the 6.0 API; the
+      # TS 7 compiler is @typescript/native). TS 7 exports no JS API: tried
+      # with typescript 7.0.2 and the latest tools (Oct 2026), eslint fails
+      # with "typescript-eslint does not support TS 7.0", type-coverage with
+      # "needs the TypeScript compiler API (ts.createProgram)", and depcruise
+      # cruises 0 modules.
+      blocked-typescript:
+        update-types:
+          - major
+        patterns:
+          - typescript
       all-updates:
         patterns:
           - "*"
