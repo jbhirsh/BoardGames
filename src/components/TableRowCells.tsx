@@ -166,13 +166,14 @@ export function TableRowExpand({ colSpan, isOpen, children }: ExpandProps) {
   return (
     <tr className="row-expand">
       <td colSpan={colSpan} className="border-b border-border bg-bg2" style={{ padding: 0 }}>
-        {/* It opens by growing its one grid row from nothing to its content's height. */}
+        {/* It opens by growing its one grid row from nothing to its content's height,
+            clipped as PhoneLine's is, so nothing can scroll it mid-growth. */}
         <div
           className={`row-expand-inner grid [transition:grid-template-rows_0.32s_cubic-bezier(0.16,1,0.3,1)] ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
           inert={!isOpen}
         >
           <div
-            className={`row-expand-content min-h-0 overflow-hidden px-3.5 [transition:padding_0.32s_cubic-bezier(0.16,1,0.3,1)] sm:px-7 ${isOpen ? 'pt-5.5 pb-6' : ''}`}
+            className={`row-expand-content min-h-0 overflow-clip px-3.5 [transition:padding_0.32s_cubic-bezier(0.16,1,0.3,1)] sm:px-7 ${isOpen ? 'pt-5.5 pb-6' : ''}`}
           >
             {children}
           </div>

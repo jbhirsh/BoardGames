@@ -81,13 +81,15 @@ export default function PhoneLine({
           <ChevronIcon open={isOpen} />
         </button>
       </div>
-      {/* It opens by growing its one grid row from nothing to its content's height. */}
+      {/* It opens by growing its one grid row from nothing to its content's height,
+          clipped (not hidden, which can be scrolled: a link revealed mid-growth
+          would slide away under its tap as the box grew). */}
       <div
         className={`line-detail grid [transition:grid-template-rows_0.25s_cubic-bezier(0.16,1,0.3,1)] ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
         id={detailId}
         inert={!isOpen}
       >
-        <div className="min-h-0 overflow-hidden">
+        <div className="min-h-0 overflow-clip">
           <div className="px-3.5 pt-0.5 pb-3.5">{children}</div>
         </div>
       </div>
