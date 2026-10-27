@@ -281,7 +281,8 @@ before changing the module.
 - **Show UI changes in the PR.** A PR changing a component or stylesheet puts
   before/after visuals in its description: screenshots for looks, GIFs for
   motion, hosted on the `screenshots` branch in a folder named for the PR,
-  as the PR template shows (older PRs' pictures stay on `pr-screenshots`).
+  as the PR template shows (it began as `pr-screenshots`, whose history and
+  commits `screenshots` kept, so older PRs' pictures still resolve).
   GIFs show the pointer and key presses: record them with `npm run pr-gif`,
   from a scenario whose `play(page, gif)` moves with `gif.glide`, `click`,
   `drag` and `scroll`, with pauses, like `scripts/gif-scenarios/example.ts`,
