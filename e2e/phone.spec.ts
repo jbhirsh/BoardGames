@@ -34,6 +34,26 @@ test('the list is a line a game, which opens in place; Rules inside opens the ru
   await expect(open).toHaveAttribute('aria-expanded', 'true');
 });
 
+test('a line opening never scrolls inside itself, so a tap on what it shows stays where it was aimed', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByPlaceholder('Search games...').fill('Uno');
+  await expect(page.getByRole('button', { name: /^Show details for / })).toHaveCount(1);
+  await page.getByRole('button', { name: 'Show details for Uno' }).click();
+  // While it grows, its last link is still clipped. Bringing it into view
+  // (as a tap's scroll does) must move the page, not scroll the growing box,
+  // which the rest of its growth would undo under the tap: Score's tap once
+  // landed on the rules text that way.
+  const scrolled = await page.getByRole('link', { name: 'Score', exact: true }).evaluate((link) => {
+    link.scrollIntoView({ block: 'center' });
+    let box = link.parentElement;
+    while (box && getComputedStyle(box).overflowY === 'visible') box = box.parentElement;
+    return box?.scrollTop ?? 0;
+  });
+  expect(scrolled).toBe(0);
+});
+
 test('cards are still a choice, and the choice is kept in the link', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Show as cards' }).click();
