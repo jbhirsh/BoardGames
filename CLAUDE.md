@@ -308,7 +308,7 @@ this repo as `../ci`), never by copying it back here.
 
 | Required check (workflow) | What it runs |
 | --- | --- |
-| `ci` (`ci.yml`) | commit messages, lint, Prettier, depcruise, type-check, GraphQL codegen drift, type coverage (100%), unit tests + coverage (axe suite included), build, `npm audit --omit=dev` (high+) |
+| `ci` (`ci.yml`) | commit messages, pins, lint, Prettier, depcruise, type-check, GraphQL codegen drift, type coverage (100%), unit tests + coverage (axe suite included), build, `npm audit --omit=dev` (high+) |
 | Claude Review (`claude-review.yml`) | jbhirsh/ci's AI review; this repo's guide is `.github/claude-review.md`. In its own file: claude-code-action skips a PR that edits its workflow |
 | StrykerJS (`mutation.yml`) | jbhirsh/ci's mutation testing of the lines a PR added or changed, failing below `break`; the monthly full sweep (not a PR check) runs in 8 parallel shards |
 | E2E Tests (Playwright) (`e2e.yml`) | the e2e suite and visual regression in three engines; passing only on retry still fails |
