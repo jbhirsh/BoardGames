@@ -107,11 +107,14 @@ before changing the module.
 ## Invariants and gotchas
 
 - **TypeScript 7 runs side by side with the TypeScript 6 API.** TS 7 (the
-  native compiler) has no JavaScript API, which typescript-eslint loads via
-  `require('typescript')`; so `@typescript/native` aliases `typescript@7`
-  and `typescript` aliases `@typescript/typescript6`. Which `tsc` wins can
-  change on any `npm install`: type-check with `npm run typecheck`, never
-  bare `npx tsc`. Drop the aliases once typescript-eslint supports TS 7.
+  native compiler) has no JavaScript API, which typescript-eslint,
+  type-coverage and dependency-cruiser load via `require('typescript')`
+  (with TS 7 as plain `typescript`, lint and typecov stop with an error and
+  depcruise cruises 0 modules); so `@typescript/native` aliases
+  `typescript@7` and `typescript` aliases `@typescript/typescript6`. Which
+  `tsc` wins can change on any `npm install`: type-check with
+  `npm run typecheck`, never bare `npx tsc`. Drop the aliases once all
+  three support TS 7.
 - **`patches/` holds a `patch-package` fix** (on `postinstall`): a pdf.js
   range rejection marked handled (an unhandled AbortError otherwise).
   Delete it once upstream fixes it. The package isn't pinned: a changed
@@ -213,9 +216,12 @@ before changing the module.
   `.git-blame-ignore-revs` lists the one-time reformat (#265) by its SHA on
   main, so blame skips it (locally once `git config blame.ignoreRevsFile
   .git-blame-ignore-revs` is set).
-- **No exact version pins.** Every dependency in `package.json` takes a range
-  (`^`, `~`); the lockfile fixes what gets installed.
-  `dependencyRanges.test.ts` fails on an exact version.
+- **No version pins without a reason.** Every dependency in `package.json`
+  takes a caret range; the lockfile fixes what gets installed. jbhirsh/ci's
+  `pins` check fails any pin (a version held below its major: an exact or
+  `~` range, an override, a Dependabot `ignore`, an action below its major)
+  without a reason beside it: a `"//pins"` note in `package.json` naming the
+  package, or a comment beside it in YAML.
 - **Tests live in `src/__tests__/`** (Vitest + React Testing Library, jsdom).
   Coverage thresholds are enforced **per file at 80% lines** (`vite.config.ts`),
   so new reducer actions, filter utilities, and API handlers need their own
