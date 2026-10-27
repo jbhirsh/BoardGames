@@ -112,12 +112,10 @@ before changing the module.
   and `typescript` aliases `@typescript/typescript6`. Which `tsc` wins can
   change on any `npm install`: type-check with `npm run typecheck`, never
   bare `npx tsc`. Drop the aliases once typescript-eslint supports TS 7.
-- **`patches/` holds `patch-package` fixes** (on `postinstall`): Stryker's
-  vitest runner naming tests as Vitest 5 matches them (stryker-js#6210;
-  without it every mutant survives), and a pdf.js range rejection marked
-  handled (an unhandled AbortError otherwise). Delete each once upstream
-  fixes it. Neither package is pinned: a changed release fails to patch,
-  which fails CI's install.
+- **`patches/` holds a `patch-package` fix** (on `postinstall`): a pdf.js
+  range rejection marked handled (an unhandled AbortError otherwise).
+  Delete it once upstream fixes it. The package isn't pinned: a changed
+  release fails to patch, which fails CI's install.
 - **PR workflows must not use a workflow-level `paths:` filter**: a required
   check that never reports blocks the PR forever. Decide inside the job and
   skip the expensive step (a skipped step still reports success).
