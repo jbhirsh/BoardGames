@@ -33,6 +33,10 @@
     "ignore": ["src/__tests__/**"],
     "source": "the production build, every /api call and the dictionary stubbed (e2e/readme.shots.ts)"
   },
+  "visual-baselines": {
+    "folders": ["e2e/*-snapshots"],
+    "command": "npx playwright install --with-deps chromium firefox webkit && npx playwright test --project='visual-*' --update-snapshots"
+  },
   "gif": {
     "setup": "scripts/gif-setup.ts",
     "scenarios": "scripts/gif-scenarios",
