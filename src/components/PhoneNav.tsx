@@ -23,6 +23,13 @@ const TABS: { mode: CollectionMode; label: string; Icon: ComponentType }[] = [
  * leaves no room for it. Its buttons stay where they are on a switch, so
  * focus needs no handing over as the toggle's does. Suggest a game waits,
  * disabled, for the wishlist's entries, which bring the form it goes to.
+ *
+ * Its foot pads 8px, or the home indicator's inset where that is more. On
+ * iOS (the one platform with `-webkit-touch-callout`) it pads 8px less,
+ * none at all in Safari: there Safari's toolbar band, tinted the bar's
+ * colour, runs on below it, and an installed app's home indicator sits in
+ * the inset's bottom third, so the full padding left the buttons sitting
+ * visibly high.
  */
 export default function PhoneNav() {
   const { collection } = useFilterLayout();
@@ -43,7 +50,7 @@ export default function PhoneNav() {
 
   return (
     <nav
-      className="sticky bottom-0 z-150 grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-bg px-gutter pt-2 pb-[calc(8px+env(safe-area-inset-bottom,0px))] before:pointer-events-none before:absolute before:inset-x-0 before:bottom-full before:h-6 before:bg-[linear-gradient(to_bottom,transparent,var(--color-bg))] before:content-[''] [body:has(:is(input:not([type=checkbox],[type=radio]),textarea):focus)_&]:invisible"
+      className="sticky bottom-0 z-150 grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-bg px-gutter pt-2 pb-[max(8px,env(safe-area-inset-bottom))] before:pointer-events-none before:absolute before:inset-x-0 before:bottom-full before:h-6 before:bg-[linear-gradient(to_bottom,transparent,var(--color-bg))] before:content-[''] supports-[-webkit-touch-callout:none]:pb-[max(0px,env(safe-area-inset-bottom)-8px)] [body:has(:is(input:not([type=checkbox],[type=radio]),textarea):focus)_&]:invisible"
       aria-label="Which games to show"
       data-phone-nav
     >
