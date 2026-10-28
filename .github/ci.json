@@ -68,7 +68,6 @@
       "the answer-quality eval (it needs the Gemini key)"
     ],
     "exempt": {
-      "Dependabot Auto-Merge": "Turns on auto-merge as a bot's PR opens: not a check, and nothing in it for a fix to answer.",
       "PR visuals": "Wants pictures in the PR description, which no code change gives (autofix skips its failure too)."
     }
   }

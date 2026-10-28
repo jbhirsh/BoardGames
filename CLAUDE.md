@@ -345,9 +345,9 @@ nothing merges until all report and arming auto-merge early is safe. A new PR wo
 added to the required checks, or bot PRs merge without it, and to
 `claude-autofix.yml`'s trigger list (or `.github/ci.json`'s
 `autofix.exempt`, with its reason); CI's autofix trigger check fails a PR
-that does neither. Dependabot's npm PRs auto-merge
-(`dependabot-merge.yml`) once every check is green and every review thread
-resolved; `claude-autofix.yml` works review comments on bots' PRs and fixes
+that does neither. Dependabot's npm PRs auto-merge once every check is
+green and every review thread resolved (autofix turns auto-merge on, once,
+when the first check on the PR completes); `claude-autofix.yml` works review comments on bots' PRs and fixes
 mechanical breakage from a bump (one attempt per head, two per PR), leaving
 behaviour changes (privacy, auth, features, a test's expected values) to
 the owner in a comment, and a person's PR to its author. Vercel
