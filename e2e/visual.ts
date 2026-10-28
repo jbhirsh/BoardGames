@@ -11,8 +11,8 @@ import { expect, CHAT_ANSWER, stubOperation } from './fixtures';
  * phone shows.
  *
  * Baselines are Linux CI's (fonts and anti-aliasing differ between
- * machines), in visual*.spec.ts-snapshots/: a run of e2e.yml by hand with
- * "update_snapshots" rewrites them and commits them to its branch. A change
+ * machines), in visual*.spec.ts-snapshots/: a run of visual-baselines.yml
+ * by hand rewrites them and commits them to its branch. A change
  * meant to move pixels updates them in the same PR; any other diff is a
  * regression.
  */

@@ -251,8 +251,8 @@ before changing the module.
   screenshots against baselines, the core pages in Chromium, Firefox and
   WebKit on a desktop and on phones, every state in both themes in desktop
   Chromium. A new page or state gets a scenario there. Baselines are Linux
-  CI's: a change meant to move pixels reruns `e2e.yml` by hand with
-  `update_snapshots` (it commits them to the branch; push again after), and
+  CI's: a change meant to move pixels runs `visual-baselines.yml` by hand on
+  the branch (it commits them there; push again after), and
   any other diff is a regression.
 - **Pure utilities stay pure.** `src/utils/` and `src/context/filterReducer.ts`
   have no side effects and are directly unit-testable. dependency-cruiser
