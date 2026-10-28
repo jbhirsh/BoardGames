@@ -201,15 +201,17 @@ the aggregate is pulled down by presentational component code — SVG icons, the
 PDF-viewer shell, animation-driven UI — where mutation testing has little
 behavior to prove.
 
-**In CI:** mutation testing runs as its own workflow
-([`.github/workflows/mutation.yml`](.github/workflows/mutation.yml)) in three
-placements. On pull requests it mutates **only the lines the PR added or
-changed** in the in-scope files it touched (a new file whole) — fast, targeted
+**In CI:** mutation testing runs in three placements, the first two from
+[`.github/workflows/mutation.yml`](.github/workflows/mutation.yml). On pull
+requests it mutates **only the lines the PR added or changed** in the
+in-scope files it touched (a new file whole) — fast, targeted
 feedback on exactly the code under review. A PR that changes no mutable
 source skips Stryker (the check still passes), unless it touches Stryker's own
 setup (its config, Vitest's, the dependencies, `patches/`, the workflow), which
 runs a small utils smoke scope so a broken setup still shows. A **monthly scheduled
-full sweep** (06:00 UTC on the 1st, plus manual `workflow_dispatch`) acts as a
+full sweep**
+([`.github/workflows/mutation-sweep.yml`](.github/workflows/mutation-sweep.yml),
+06:00 UTC on the 1st, plus manual `workflow_dispatch`) acts as a
 drift sensor, catching test erosion that PR-scoped runs can't see — e.g. a test
 refactor weakening assertions for untouched code — and changes to helpers, data
 and dependencies that incremental runs don't notice. The whole scope is about

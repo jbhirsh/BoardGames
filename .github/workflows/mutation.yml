@@ -1,13 +1,12 @@
 # Mutation testing (StrykerJS), from the shared tooling in jbhirsh/ci: what
-# runs and why is in its mutation/action.yml (pull requests and pushes) and
-# .github/workflows/mutation-sweep.yml (the monthly sweep); this app's
-# settings are the `mutation` key of .github/ci.json.
+# runs and why is in its mutation/action.yml; this app's settings are the
+# `mutation` key of .github/ci.json.
 #
 #   - Pull requests: the lines the PR changed, gated on stryker.config.json's
 #     `break`. StrykerJS is a required check: keep the job's name.
 #   - Pushes to main: refresh main's baseline, incrementally; gates nothing.
-#   - Monthly (+ manual): the full sweep in parallel shards, saved as main's
-#     baseline.
+#
+# The monthly full sweep, saved as main's baseline, is mutation-sweep.yml.
 name: Mutation
 
 on:
@@ -18,19 +17,13 @@ on:
     branches: [main]
   push:
     branches: [main]
-  # 06:00 UTC on the 1st. Not a "first Monday": GitHub's cron ORs the
-  # day-of-month and day-of-week fields, so that would run far more often.
-  schedule:
-    - cron: "0 6 1 * *"
-  workflow_dispatch:
 
 # Queued, not cancelled: Stryker writes its results only when a run ends, so
 # a cancelled run saves nothing and the next starts over. A push made while
 # its PR's run is going waits, then re-tests only what it changed. GitHub
-# keeps one waiting run per group, the latest. Merges and sweeps on main
-# queue apart, so a merge can't push a waiting sweep out.
+# keeps one waiting run per group, the latest.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'pull_request' && 'pr' || github.event_name == 'push' && 'merge' || 'sweep' }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'pull_request' && 'pr' || 'merge' }}
   cancel-in-progress: false
 
 env:
@@ -42,7 +35,6 @@ permissions:
 jobs:
   mutation:
     name: StrykerJS
-    if: github.event_name == 'pull_request' || github.event_name == 'push'
     runs-on: ubuntu-latest
     # A PR mutates only its changed lines, but one touching most of the
     # components can still mean many: the Tailwind migration's 77 files, run
@@ -51,8 +43,3 @@ jobs:
     timeout-minutes: 180
     steps:
       - uses: jbhirsh/ci/mutation@main
-
-  sweep:
-    name: StrykerJS sweep
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    uses: jbhirsh/ci/.github/workflows/mutation-sweep.yml@main
