@@ -5,10 +5,8 @@
 # and visual regression: screenshots of every page, compared with baselines,
 # in Chromium, Firefox and WebKit on a desktop and on phones (e2e/visual.ts).
 #
-# Run by hand with "update_snapshots", it rewrites those baselines on Linux
-# (the machine they must match) and commits them to the branch it ran on.
-# The Actions token's push starts no workflow, so push again afterwards for
-# the PR's checks to run on the new baselines.
+# visual-baselines.yml, run by hand, rewrites those baselines on Linux (the
+# machine they must match) and commits them to its branch.
 # Every /api call is stubbed (e2e/fixtures.ts, which also aborts any request
 # off the preview origin) and a spec that needs the dictionary API stubs it
 # itself, so the job needs no secrets and touches no live service.
@@ -21,11 +19,6 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      update_snapshots:
-        description: Rewrite the visual baselines and commit them to this branch
-        type: boolean
-        default: false
 
 concurrency:
   group: e2e-${{ github.event.pull_request.number || github.ref }}
@@ -40,7 +33,6 @@ permissions:
 jobs:
   e2e:
     name: E2E Tests (Playwright)
-    if: ${{ !inputs.update_snapshots }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -68,58 +60,6 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: playwright-report
-          path: |
-            playwright-report/
-            test-results/
-          retention-days: 14
-
-  update-baselines:
-    name: Update visual baselines
-    if: ${{ inputs.update_snapshots }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    # Pushes the new baselines to the branch it ran on.
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-
-      - run: npm ci
-
-      - name: Install browsers
-        run: npx playwright install --with-deps chromium firefox webkit
-
-      # Every baseline written afresh, so one no test takes any more is gone.
-      - name: Rewrite the baselines
-        run: |
-          rm -rf e2e/*-snapshots
-          npx playwright test --project='visual-*' --update-snapshots
-
-      # A subject and a body, so the commit check passes on it.
-      - name: Commit them
-        env:
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          git add -- e2e/
-          if git diff --cached --quiet; then
-            echo "The baselines are already up to date."
-            exit 0
-          fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'Update the visual baselines' -m "Rewritten on Linux by e2e.yml ($RUN_URL)."
-          git push origin "HEAD:$GITHUB_REF_NAME"
-
-      - name: Upload Playwright report
-        if: failure() || cancelled()
-        uses: actions/upload-artifact@v7
-        with:
-          name: playwright-report-baselines
           path: |
             playwright-report/
             test-results/

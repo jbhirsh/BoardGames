@@ -1,0 +1,69 @@
+name: Update visual baselines
+
+# Run by hand, on a branch: rewrites the visual regression's baselines on
+# Linux (the machine they must match; e2e.yml's E2E Tests compare against
+# them) and commits them to that branch. The Actions token's push starts no
+# workflow, so push again afterwards for the PR's checks to run on the new
+# baselines. A file of its own, not a job in e2e.yml, so pull requests
+# don't list it as a skipped check.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  update:
+    name: Update visual baselines
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # Pushes the new baselines to the branch it ran on.
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      # Every baseline written afresh, so one no test takes any more is gone.
+      - name: Rewrite the baselines
+        run: |
+          rm -rf e2e/*-snapshots
+          npx playwright test --project='visual-*' --update-snapshots
+
+      # A subject and a body, so the commit check passes on it.
+      - name: Commit them
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          git add -- e2e/
+          if git diff --cached --quiet; then
+            echo "The baselines are already up to date."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Update the visual baselines' -m "Rewritten on Linux by visual-baselines.yml ($RUN_URL)."
+          git push origin "HEAD:$GITHUB_REF_NAME"
+
+      - name: Upload Playwright report
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-baselines
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
