@@ -330,9 +330,13 @@ chart, and the E2E job's `job-summary/note` adds the Playwright and
 browser versions to its Environment, beside the machine. `ci.yml` and
 `e2e.yml` also run on every push to main, so a PR's report has main's
 runs to compare with; a step that reads a pull request runs only for one.
-`job-reports.yml` publishes the reports to the repository's Pages (the
-`job-reports` branch, served from Settings, Pages: Deploy from a branch,
-`job-reports`, / (root)) once each run finishes.
+Each workflow's last job, `reports` (jbhirsh/ci's `job-reports.yml`),
+publishes the run's reports to the repository's Pages (the `job-reports`
+branch, served from Settings, Pages: Deploy from a branch, `job-reports`,
+/ (root)) and keeps one comment on the PR with every job's summary,
+updated after each run. It runs from the PR's own branch, as part of the
+run, so a change to it shows on the PR that makes it; it isn't a required
+check and never fails a run for a report.
 
 **The weekly audit** (`weekly-audit.yml`, Mondays, not a PR check) runs knip
 (`knip.jsonc`: dead files, exports and dependencies), jscpd (`.jscpd.json`:
