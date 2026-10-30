@@ -37,12 +37,21 @@ export default defineConfig({
   failOnFlakyTests: CI,
   // In CI, JUnit too, for the job summary (jbhirsh/ci's job-summary, in
   // e2e.yml): each test named with its project, since the visual suite runs
-  // the same tests in several.
+  // the same tests in several, and with its retries, so a test that passed
+  // only on its retry shows as flaky in the report (each failed try a
+  // <flakyFailure>) rather than as a plain pass.
   reporter: CI
     ? [
         ['github'],
         ['html', { open: 'never' }],
-        ['junit', { outputFile: 'test-results/junit.xml', includeProjectInTestName: true }],
+        [
+          'junit',
+          {
+            outputFile: 'test-results/junit.xml',
+            includeProjectInTestName: true,
+            includeRetries: true,
+          },
+        ],
       ]
     : [['list'], ['html', { open: 'never' }]],
   use: {
