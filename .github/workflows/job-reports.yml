@@ -5,6 +5,10 @@
 # the site is the job-reports branch (Settings, Pages: Deploy from a branch,
 # job-reports, / (root)). Not a pull-request workflow, so it's no check on a
 # PR.
+#
+# pull-requests: write lets jbhirsh/ci's job-reports keep one comment on
+# each PR with every job's summary, updated after each run; without it the
+# comment is skipped.
 name: Job reports
 
 on:
@@ -15,6 +19,7 @@ on:
 permissions:
   contents: write
   actions: read
+  pull-requests: write
 
 jobs:
   publish:
