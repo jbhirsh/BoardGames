@@ -10,6 +10,10 @@
 # Every /api call is stubbed (e2e/fixtures.ts, which also aborts any request
 # off the preview origin) and a spec that needs the dictionary API stubs it
 # itself, so the job needs no secrets and touches no live service.
+#
+# It also runs on every push to main, so the job's report (jbhirsh/ci's
+# job-summary) has main's runs to compare a pull request's with. Nothing in
+# it reads a pull request or writes anything back.
 name: E2E
 
 on:
@@ -18,8 +22,12 @@ on:
   # leaves the PR pending forever.
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
   workflow_dispatch:
 
+# A push to main has no PR number and groups by its branch: it cancels only
+# main's previous run, never a PR's.
 concurrency:
   group: e2e-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true

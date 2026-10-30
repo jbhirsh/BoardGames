@@ -1,7 +1,15 @@
+# The unit-level gate: commit messages, lint, formatting, layering, types,
+# codegen drift, type coverage, unit tests with coverage, the build and the
+# production dependency audit. It also runs on every push to main, so the
+# job's report (jbhirsh/ci's job-summary) has main's runs to compare a pull
+# request's with; the steps that read a pull request (commit messages,
+# autofix triggers) run only for one.
 name: CI
 
 on:
   pull_request:
+    branches: [main]
+  push:
     branches: [main]
   # Robot-made branches (semgrep-autofix PRs, claude-autofix force-pushes) are
   # created with the default Actions token, whose events never trigger
@@ -11,8 +19,9 @@ on:
   workflow_dispatch:
 
 # A new push supersedes the run for the old head, whose result no longer
-# gates anything. A dispatched run has no PR number and groups by its branch,
-# so it never cancels (or is cancelled by) the PR's own runs.
+# gates anything. A dispatched run or a push to main has no PR number and
+# groups by its branch, so it never cancels (or is cancelled by) a PR's own
+# runs; a push to main cancels only main's previous run.
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
