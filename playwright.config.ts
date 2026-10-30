@@ -35,7 +35,16 @@ export default defineConfig({
   // run when that retry passes, so it never hides a flake.
   retries: CI ? 1 : 0,
   failOnFlakyTests: CI,
-  reporter: CI ? [['github'], ['html', { open: 'never' }]] : [['list'], ['html', { open: 'never' }]],
+  // In CI, JUnit too, for the job summary (jbhirsh/ci's job-summary, in
+  // e2e.yml): each test named with its project, since the visual suite runs
+  // the same tests in several.
+  reporter: CI
+    ? [
+        ['github'],
+        ['html', { open: 'never' }],
+        ['junit', { outputFile: 'test-results/junit.xml', includeProjectInTestName: true }],
+      ]
+    : [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: BASE_URL,
     // The trace of the attempt that failed, not of a retry that may pass.
