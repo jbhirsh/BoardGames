@@ -323,11 +323,16 @@ what needs attention (failed tests, steps and tests getting slower or
 flaky across runs) and links to the job's report, a page with every step
 and test beside the job's recent runs (Vitest's JUnit in `reports/junit.xml`;
 Playwright's, CI only, in `test-results/junit.xml`, each test named with
-its project). `ci.yml` and `e2e.yml` also run on every push to main, so a
-PR's report has main's runs to compare with; a step that reads a pull
-request runs only for one. `job-reports.yml` publishes the reports to the
-repository's Pages (the `job-reports` branch, served from Settings, Pages:
-Deploy from a branch, `job-reports`, / (root)) once each run finishes.
+its project and its retries recorded, so a test that passed only on its
+retry shows as flaky there). Each job's first step, jbhirsh/ci's
+`job-summary/sample-load`, samples the machine's CPU for the report's
+chart, and the E2E job's `job-summary/note` adds the Playwright and
+browser versions to its Environment, beside the machine. `ci.yml` and
+`e2e.yml` also run on every push to main, so a PR's report has main's
+runs to compare with; a step that reads a pull request runs only for one.
+`job-reports.yml` publishes the reports to the repository's Pages (the
+`job-reports` branch, served from Settings, Pages: Deploy from a branch,
+`job-reports`, / (root)) once each run finishes.
 
 **The weekly audit** (`weekly-audit.yml`, Mondays, not a PR check) runs knip
 (`knip.jsonc`: dead files, exports and dependencies), jscpd (`.jscpd.json`:
