@@ -301,11 +301,12 @@ CI tooling is shared with fog-and-frontier and sift in
 [jbhirsh/ci](https://github.com/jbhirsh/ci), run from its `main` (no
 version pin): mutation testing, Claude Review and autofix, PR GIFs, PR
 visuals, the commit check, the weekly audit, the README screenshot bot,
-Dependabot auto-merge and the secret scan. The workflows here keep their
-triggers and job names (the required checks) and call it; this repo's
-settings for each tool are its key in `.github/ci.json`, and how a tool
-works is in its headers there. Change a tool in jbhirsh/ci (cloned beside
-this repo as `../ci`), never by copying it back here.
+the job summaries, Dependabot auto-merge and the secret scan. The
+workflows here keep their triggers and job names (the required checks) and
+call it; this repo's settings for each tool are its key in
+`.github/ci.json`, and how a tool works is in its headers there. Change a
+tool in jbhirsh/ci (cloned beside this repo as `../ci`), never by copying
+it back here.
 
 | Required check (workflow) | What it runs |
 | --- | --- |
@@ -315,6 +316,18 @@ this repo as `../ci`), never by copying it back here.
 | E2E Tests (Playwright) (`e2e.yml`) | the e2e suite and visual regression in three engines; passing only on retry still fails |
 | Answer-Quality Eval (`eval.yml`) | the assistant against `eval/golden-set.json` |
 | Secret scan, `semgrep-cloud-platform/scan`, Vercel, API smoke test | secrets, static analysis, the deploy and its live API (`smoke.yml`: a rules question over SSE and a votes query to `/api/graphql`) |
+
+**Job summaries and reports.** The `ci` and E2E Tests (Playwright) jobs
+end with jbhirsh/ci's `job-summary`: its run summary gives the verdict and
+what needs attention (failed tests, steps and tests getting slower or
+flaky across runs) and links to the job's report, a page with every step
+and test beside the job's recent runs (Vitest's JUnit in `reports/junit.xml`;
+Playwright's, CI only, in `test-results/junit.xml`, each test named with
+its project). `ci.yml` and `e2e.yml` also run on every push to main, so a
+PR's report has main's runs to compare with; a step that reads a pull
+request runs only for one. `job-reports.yml` publishes the reports to the
+repository's Pages (the `job-reports` branch, served from Settings, Pages:
+Deploy from a branch, `job-reports`, / (root)) once each run finishes.
 
 **The weekly audit** (`weekly-audit.yml`, Mondays, not a PR check) runs knip
 (`knip.jsonc`: dead files, exports and dependencies), jscpd (`.jscpd.json`:
@@ -333,8 +346,8 @@ once a change that can alter the app's look reaches main (counted from the
 workflow's last finished run), Playwright takes them again
 (`e2e/readme.shots.ts`, the API stubbed), and jbhirsh/ci's
 `readme-screenshots` tool sends the visibly changed ones to one PR from
-`bot/readme-screenshots`, the one branch a workflow pushes besides a PR's
-own, with auto-merge on. Add the shot there when the README gains a picture. It needs a `BOT_PR_TOKEN`
+`bot/readme-screenshots` (with `job-reports`, above, one of the two
+branches a workflow pushes besides a PR's own), with auto-merge on. Add the shot there when the README gains a picture. It needs a `BOT_PR_TOKEN`
 secret (a fine-grained token for this repository, Contents and Pull requests
 read and write): a PR the default Actions token opens starts no workflows, so
 its required checks never report. Without it the default token is used, which
