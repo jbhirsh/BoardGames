@@ -14,7 +14,9 @@ function build(automaticDeserialization: boolean): Redis {
   if (!url || !token) {
     throw new Error('KV_REST_API_URL and KV_REST_API_TOKEN must be set');
   }
-  return new Redis({ url, token, automaticDeserialization });
+  // base64 replies were the client's default until @upstash/redis 1.40; kept
+  // explicit so every byte of a value survives the REST round trip.
+  return new Redis({ url, token, automaticDeserialization, responseEncoding: 'base64' });
 }
 
 /** The shared Upstash client, built once per function instance from the KV env vars. */
