@@ -10,6 +10,7 @@ import AwardsBadge from './AwardsBadge';
 import VoteButton from './VoteButton';
 import AdminItemControls from './AdminItemControls';
 import ExpansionTag from './ExpansionTag';
+import DifficultyMeta from './DifficultyMeta';
 import { wishAnchor } from '../utils/heroCovers';
 import {
   cardBodyClass,
@@ -82,6 +83,7 @@ function WishlistCard({ item, voteCount, voted, onVote, disabled, headingLevel =
               <ClockIcon /> {item.dur}
             </span>
           )}
+          <DifficultyMeta item={item} />
         </div>
         {item.expands && (
           <p className={`pt-2 ${clear}`}>

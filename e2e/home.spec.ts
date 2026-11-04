@@ -224,8 +224,11 @@ function sortWeight(g: (typeof GAMES)[number], dir: 1 | -1): number {
 test("each card shows BoardGameGeek's difficulty, and a deck the span of its games'", async ({ page }) => {
   await page.goto('/?v=grid');
   const game = uniquelyLabelled();
-  await expect(page.getByText(`Difficulty: ${weightLabel(game.weight!)}`, { exact: true })).toBeVisible();
-  await expect(page.getByText(`Difficulty: ${deckSpan('card-deck')}`, { exact: true })).toBeVisible();
+  // Only the visible cards: the wishlist's grid stays mounted, hidden, and
+  // its cards carry difficulties too.
+  const shown = (label: string) => page.getByText(`Difficulty: ${label}`, { exact: true }).filter({ visible: true });
+  await expect(shown(weightLabel(game.weight!))).toBeVisible();
+  await expect(shown(deckSpan('card-deck'))).toBeVisible();
 });
 
 test('the list sorts by difficulty from its column header', async ({ page }) => {

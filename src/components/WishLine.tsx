@@ -3,8 +3,10 @@ import type { WishlistItem } from '../data/types';
 import { useFilterDispatch, useItemFilter } from '../context/useFilter';
 import { sortedKw } from '../utils/filterGames';
 import { shortDesc } from '../utils/shortDesc';
+import { difficultyWord } from '../utils/difficulty';
 import { wishAnchor } from '../utils/heroCovers';
 import PhoneLine from './PhoneLine';
+import LineMeta from './LineMeta';
 import VoteButton from './VoteButton';
 import KeywordPill from './KeywordPill';
 import ExpansionTag from './ExpansionTag';
@@ -26,8 +28,10 @@ interface Props {
 }
 
 /**
- * A wishlist entry on a phone's list: its vote on the line, compact, and
- * open, the rest of what its card shows (the blurb, the base game an
+ * A wishlist entry on a phone's list: its players, time and difficulty
+ * (LineMeta, as a collection game's line has them; the blurb's first
+ * sentence for a suggestion BGG gave neither), its vote on the line,
+ * compact, and open, the rest of what its card shows (the blurb, the base game an
  * expansion needs, who suggested it, its tags and awards, the owner's
  * controls) over the buy and video links. Memoized: a filter change that
  * leaves this entry as it was doesn't redraw it.
@@ -43,7 +47,13 @@ function WishLine({ item, voteCount, voted, onVote, disabled, isOpen, onToggle, 
       img={item.img}
       name={item.name}
       headingLevel={headingLevel}
-      meta={[item.players, item.dur].filter(Boolean).join(' · ') || shortDesc(item.desc)}
+      meta={
+        item.players || item.dur ? (
+          <LineMeta players={item.players} dur={item.dur} difficulty={difficultyWord(item)} wrap />
+        ) : (
+          shortDesc(item.desc)
+        )
+      }
       action={
         <VoteButton
           compact

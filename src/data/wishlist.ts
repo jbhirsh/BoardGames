@@ -1,5 +1,6 @@
 import type { WishlistItem } from './types';
 import { WISHLIST_ART } from './wishlistArt';
+import { weighed } from './weighed';
 
 // Awards list confirmed wins from recognised award bodies only (Spiel des
 // Jahres family, Deutscher Spiele Preis, As d'Or, Golden Geek, Dice Tower,
@@ -775,7 +776,10 @@ const ENTRIES: WishlistItem[] = [
   },
 ];
 
-/** The entries with their bundled box art, where `npm run wishlist-art` has fetched it. */
+/**
+ * The entries with their bundled box art, where `npm run wishlist-art` has
+ * fetched it, and BoardGameGeek's weight, where `npm run game-weights` has.
+ */
 export const WISHLIST: WishlistItem[] = ENTRIES.map((w) =>
-  WISHLIST_ART[w.id] ? { ...w, img: WISHLIST_ART[w.id] } : w,
+  weighed(WISHLIST_ART[w.id] ? { ...w, img: WISHLIST_ART[w.id] } : w),
 );

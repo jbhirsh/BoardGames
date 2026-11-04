@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { WISHLIST } from '../data/wishlist';
 import { ALL_GAMES } from '../data/games';
+import { GAME_WEIGHTS } from '../data/gameWeights';
 import { KW } from '../data/keywords';
 import { normalizeName } from '../utils/normalizeName';
 import { expectCoherentTable } from './coherentTable';
@@ -22,6 +23,13 @@ describe('wishlist data', () => {
     for (const w of WISHLIST) {
       expect(w.img, w.id).toMatch(new RegExp(`^/images/wishlist/${w.id}\\.(jpg|png|webp)$`));
       expect(existsSync(join('public', w.img!)), w.img).toBe(true);
+    }
+  });
+
+  it("carries the weight `npm run game-weights` fetched for each entry's BGG id, and no other", () => {
+    for (const w of WISHLIST) {
+      expect(w.bgg! in GAME_WEIGHTS, `${w.id}: BGG ${w.bgg} not fetched; run npm run game-weights`).toBe(true);
+      expect(w.weight, `${w.id}: weight`).toBe(GAME_WEIGHTS[w.bgg!] ?? undefined);
     }
   });
 
