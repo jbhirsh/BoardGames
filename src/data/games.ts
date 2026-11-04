@@ -1,5 +1,5 @@
 import type { ExtraRulebook, Game, SubGame } from './types';
-import { GAME_WEIGHTS } from './gameWeights';
+import { weighed } from './weighed';
 
 // The collection, and the source of truth for it: a compiled-in constant,
 // with no database on the read path. The rest of src/data supports it (the
@@ -1531,19 +1531,6 @@ function withPaths({ img, rules, moreRules, subgames, ...game }: GameEntry): Gam
         }
       : {}),
   };
-}
-
-/**
- * BoardGameGeek's weight for a game, or a game inside one, where BGG rates
- * it (gameWeights.ts, `npm run game-weights`): a difficulty is never typed
- * in. Something BGG doesn't rate (no id, or null in the map) shows none; a
- * deck has none of its own, and an add-on, learned on top of its game, has
- * no id. The data test (gamesData.test.ts) fails on an id the script hasn't
- * fetched and on any weight but the fetched one.
- */
-function weighed<T extends { bgg?: number; weight?: number }>(t: T): T {
-  const weight = t.bgg === undefined ? undefined : GAME_WEIGHTS[t.bgg];
-  return weight == null ? t : { ...t, weight };
 }
 
 /** Every game we own, on the shelf or on its way: what a slug or a name is looked up in. */

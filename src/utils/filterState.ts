@@ -52,7 +52,9 @@ export function clearFilters(state: FilterState, fields: readonly FilterField[] 
 
 /**
  * Whether a list can be put in this order: only the wishlist has votes to
- * sort by, and only the collection a difficulty (nor the column to show it).
+ * sort by, and only the collection's table has the difficulty column the
+ * sort is chosen from (a wishlist entry shows its difficulty on its card
+ * and phone line, not in the table).
  */
 export function sortAllowed(sort: SortMode, collection: CollectionMode): boolean {
   if (sort === 'votes') return collection === 'want';

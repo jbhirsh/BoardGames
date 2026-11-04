@@ -97,6 +97,42 @@ describe('WishLine', () => {
     expect(container.querySelector('.line-meta')).toHaveTextContent('A plain one.');
   });
 
+  function renderLine(item: WishlistItem) {
+    return renderWithFilter(
+      <ul>
+        <WishLine
+          item={item}
+          voteCount={0}
+          voted={false}
+          onVote={() => {}}
+          isOpen={false}
+          onToggle={() => {}}
+          headingLevel={4}
+        />
+      </ul>,
+    );
+  }
+
+  it("says its players, time and difficulty word as a game's line does, always with the word players", () => {
+    const { container } = renderLine({ ...plain, players: '2–4', dur: '25 min', weight: 1.82 });
+    const meta = container.querySelector('.line-meta')!;
+    expect(meta).toHaveTextContent('2–4 players · 25 min · Light');
+    // Too narrow beside the vote to keep it on one line, the line wraps
+    // between the parts instead of dropping the word as a game's line does.
+    expect(within(meta as HTMLElement).getByText('players', { exact: false })).not.toHaveClass(
+      '[@container_(max-width:225px)]:hidden',
+    );
+    expect(meta.querySelectorAll('.whitespace-nowrap')).toHaveLength(3);
+  });
+
+  it('leaves out what it lacks: one player, no time or no difficulty', () => {
+    const { container, unmount } = renderLine({ ...plain, players: '1', dur: '', weight: 3.4 });
+    expect(container.querySelector('.line-meta')).toHaveTextContent(/^1 player · Heavy$/);
+    unmount();
+    renderLine({ ...plain, players: '', dur: '45 min', weight: undefined });
+    expect(document.querySelector('.line-meta')).toHaveTextContent(/^45 min$/);
+  });
+
   it('votes without toggling the line', () => {
     const onVote = vi.fn();
     const onToggle = vi.fn();

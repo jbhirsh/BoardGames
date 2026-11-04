@@ -77,6 +77,11 @@ describe('WishlistCard', () => {
     expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent('Test Wishlist Game');
   });
 
+  it("shows BoardGameGeek's difficulty beside the players and time, as a collection card does", () => {
+    renderCard({ item: { ...testItem, weight: 2.23 } });
+    expect(screen.getByText('Difficulty:').closest('.cmeta')).toHaveTextContent('Difficulty: Medium · 2.2');
+  });
+
   it('omits the play time, the players and the keyword row when the entry lacks them', () => {
     const { container } = renderCard({ item: { ...testItem, dur: '', players: '', kw: [] } });
     expect(screen.queryByText('30 min')).not.toBeInTheDocument();

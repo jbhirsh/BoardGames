@@ -27,8 +27,8 @@ const range = (lo: string, hi: string) => (lo === hi ? lo : `${lo}–${hi}`);
 /**
  * What a card or row shows for how hard a game is to learn: its own weight,
  * "Medium · 2.3", or for a deck (which has none) the span of its games',
- * "Light · 1.0–1.9". Null when BoardGameGeek rates none of it, and for a
- * wishlist entry.
+ * "Light · 1.0–1.9". Null when BoardGameGeek rates none of it (as for a
+ * wishlist suggestion, whose weight isn't fetched).
  */
 export function difficultyOf(item: Pick<Filterable, 'weight' | 'subgames'>): string | null {
   if (item.weight !== undefined) return weightLabel(item.weight);
