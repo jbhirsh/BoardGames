@@ -23,6 +23,8 @@ npm run lint:fix     # eslint . --fix (Tailwind class order and spelling, among 
 npm run format       # prettier --write . (format:check is CI's read-only check)
 npm run depcruise    # dependency-cruiser: layering rules (.dependency-cruiser.cjs)
 npm run codegen      # typed GraphQL documents into src/gql/ (codegen.ts); commit the output
+npm run db:generate  # a migration in drizzle/ for a change to api/_db/schema.ts; commit it
+npm run db:migrate   # apply drizzle/ to the development database (DEV_DB_PATH, from .env.local)
 npm run preview      # serve the production build locally
 # `npm install` also runs `prepare`, pointing core.hooksPath at .githooks/
 
@@ -94,7 +96,11 @@ before changing the module.
   guards, `limits.ts` the bounds on one request (tokens, aliases, depth; GET
   only for a query; no introspection in production), `context.ts` the owner
   check and rate limits, `errors.ts` refusals);
-  `api/_lib/` what they share (Redis, Resend, BGG, sessions, limits).
+  `api/_lib/` what they share (Redis, Resend, BGG, sessions, limits);
+  `api/_db/` the Turso database (#290, moving everything off Redis):
+  `schema.ts` its tables for Drizzle, `environment.ts` the check that a
+  deploy uses its own environment's database; `drizzle/` the generated
+  migrations; `scripts/db-migrate.ts` applies them at deploy.
 - **`scripts/`** — `npm run rules-text` (`extract-rules-text.mjs`, into
   `rules-text/`), `game-weights`, `wishlist-art`, `collection-art`;
   **`eval/`** the assistant's eval; **`vite.config.ts`** the build.
@@ -131,6 +137,18 @@ before changing the module.
 - **Emailed links never change state on a GET**: mail scanners follow every
   URL, so approve/deny and sign-in links open app pages that only read (a
   query) until their button sends the mutation.
+- **The database changes only through migrations**: edit
+  `api/_db/schema.ts`, then `npm run db:generate` and commit `drizzle/`
+  (CI's "Database migrations drift" fails a stale one). Vercel's build
+  applies them once the app has built (`vercel.json`'s `buildCommand`):
+  production's only from main's code, and preview's from every PR's
+  preview, which all share it (`scripts/db-migrate.ts` says what that
+  risks, and how to start the preview database over). A migration has to work with the code already deployed unless
+  its PR says it accepts a minute or two of errors. Each database records
+  its environment: a deploy claims a brand-new, empty one for its own, and
+  refuses another's, as does a shell not told which one it is
+  (`api/_db/environment.ts`); a new or recreated database needs nothing by
+  hand.
 - **The client's GraphQL documents are generated**: change an operation in
   `src/client/operations/` or the SDL, then `npm run codegen` and commit
   `src/gql/` (CI's "GraphQL codegen drift" fails a stale one). Documents go
@@ -229,7 +247,8 @@ before changing the module.
   A CI helper's test sits beside it (`.github/scripts/*.test.mjs`), as a
   script's does (`scripts/*.test.ts`, or here if it needs the DOM's types),
   in the same suite and gate. Shared fakes: `src/__tests__/helpers/`
-  (`fakeRedis`, with `raw` for the raw client; `stubMatchMedia`; `api`,
+  (`fakeRedis`, with `raw` for the raw client; `testDb`, a fresh migrated
+  database per test; `stubMatchMedia`; `api`,
   the whole GraphQL API in process over fakes; `graphqlFetch`, a fetch
   answering the client's operations by name).
   Property tests (`*.property.test.ts`, fast-check) state an invariant over
@@ -310,7 +329,7 @@ it back here.
 
 | Required check (workflow) | What it runs |
 | --- | --- |
-| `ci` (`ci.yml`) | commit messages, pins, lint, Prettier, depcruise, type-check, GraphQL codegen drift, type coverage (100%), unit tests + coverage (axe suite included), build, `npm audit --omit=dev` (high+) |
+| `ci` (`ci.yml`) | commit messages, pins, lint, Prettier, depcruise, type-check, GraphQL codegen drift, database migrations drift, type coverage (100%), unit tests + coverage (axe suite included), build, `npm audit --omit=dev` (high+) |
 | Claude Review (`claude-review.yml`) | jbhirsh/ci's AI review; this repo's guide is `.github/claude-review.md`. In its own file: claude-code-action skips a PR that edits its workflow |
 | StrykerJS (`mutation.yml`) | jbhirsh/ci's mutation testing of the lines a PR added or changed, failing below `break`; the monthly full sweep (`mutation-sweep.yml`, not a PR check) runs in 8 parallel shards |
 | E2E Tests (Playwright) (`e2e.yml`) | the e2e suite and visual regression in three engines; passing only on retry still fails |
@@ -390,6 +409,9 @@ secrets belong in tracked source.
 | `GEMINI_API_KEY` | serverless (`api/graphql.ts`, for `api/_resolvers/chat.ts`) | Google Gemini key (server-only) |
 | `KV_REST_API_URL` | serverless (`api/_lib/redis.ts`, `api/graphql.ts`) | Upstash Redis REST URL |
 | `KV_REST_API_TOKEN` | serverless (`api/_lib/redis.ts`, `api/graphql.ts`) | Upstash Redis REST token |
+| `TURSO_DATABASE_URL` | build (`scripts/db-migrate.ts`) | the deployment's Turso database: production's and preview's, each in Vercel for its environment |
+| `TURSO_AUTH_TOKEN` | build (`scripts/db-migrate.ts`) | its token |
+| `DEV_DB_PATH` | local (optional) | a SQLite file used in place of Turso for development |
 | `SENTRY_AUTH_TOKEN` | build (optional) | enables Sentry source-map upload during `vite build` |
 | `RESEND_API_KEY` | serverless (`api/_lib/mail.ts`) | Resend key for the suggestion and sign-in emails; suggestions are refused until set |
 | `SUGGESTIONS_TO` | serverless (`api/_lib/mail.ts`) | address that receives approve/deny emails; the only address that can sign in as the owner |

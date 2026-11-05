@@ -8,6 +8,7 @@ import playwright from 'eslint-plugin-playwright';
 import eslintComments from '@eslint-community/eslint-plugin-eslint-comments';
 import eslintConfigPrettier from 'eslint-config-prettier/flat';
 import jsdoc from 'eslint-plugin-jsdoc';
+import drizzle from 'eslint-plugin-drizzle';
 import betterTailwindcss from 'eslint-plugin-better-tailwindcss';
 import { getDefaultSelectors } from 'eslint-plugin-better-tailwindcss/defaults';
 import { defineConfig, globalIgnores } from 'eslint/config';
@@ -102,6 +103,17 @@ export default defineConfig([
       // so they are unaffected. @ts-ignore/@ts-nocheck are already blocked by
       // @typescript-eslint/ban-ts-comment.
       '@eslint-community/eslint-comments/no-use': 'error',
+    },
+  },
+  {
+    // The database's queries (Drizzle, api/_db/schema.ts): a delete or an
+    // update with no `where` empties or rewrites a whole table, so each must
+    // have one. The client is always named `db`.
+    files: ['api/**/*.ts', 'scripts/**/*.ts', 'src/__tests__/**/*.ts'],
+    plugins: { drizzle },
+    rules: {
+      'drizzle/enforce-delete-with-where': ['error', { drizzleObjectName: ['db'] }],
+      'drizzle/enforce-update-with-where': ['error', { drizzleObjectName: ['db'] }],
     },
   },
   {

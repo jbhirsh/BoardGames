@@ -55,6 +55,7 @@
       "`npm run depcruise`",
       "`npm run typecheck`",
       "`npm run codegen && git diff --exit-code src/gql/ && test -z \"$(git status --porcelain src/gql/)\"` (if an operation or the SDL changed, commit the regenerated `src/gql/` too)",
+      "`npm run db:generate` must print \"No schema changes\" (if api/_db/schema.ts changed, commit the new migration in `drizzle/` too; a rename makes drizzle-kit ask a question it can only take in a terminal)",
       "`npm run typecov`",
       "`npx vitest run --coverage` (per-file 80% coverage)",
       "`npm run build`",

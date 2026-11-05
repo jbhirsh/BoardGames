@@ -52,8 +52,8 @@ done
 # shellcheck disable=SC2046 # one variable name per word, by design
 unset $(git rev-parse --local-env-vars)
 
-code='^(src|api|eval|\.github/scripts)/.+\.(ts|tsx|mts|mjs|js)$'
-untested='^([^/]+\.md|docs/.*|\.github/workflows/.*|\.github/dependabot\.yml|\.githooks/.*|e2e/.*|playwright\.config\.ts|scripts/.*|index\.html|\.gitignore|\.env\.example)$'
+code='^(src|api|eval|scripts|\.github/scripts)/.+\.(ts|tsx|mts|mjs|js)$'
+untested='^([^/]+\.md|docs/.*|\.github/workflows/.*|\.github/dependabot\.yml|\.githooks/.*|e2e/.*|playwright\.config\.ts|scripts/.*\.(json|md)|index\.html|\.gitignore|\.env\.example)$'
 if grep -vE "$code" "$changed" | grep -vqE "$untested"; then
   echo "▶ pre-push: vitest (whole suite: a change reaches beyond the code tests import)"
   npx vitest run

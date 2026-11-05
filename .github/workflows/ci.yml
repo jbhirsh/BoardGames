@@ -100,6 +100,25 @@ jobs:
           git diff --exit-code src/gql/
           test -z "$(git status --porcelain src/gql/)"
 
+      # The database's schema (api/_db/schema.ts) and its committed
+      # migrations (drizzle/) must agree: drizzle-kit has to answer "No
+      # schema changes". It exits 0 even when it fails (a rename it would ask
+      # about with no terminal to ask on), so its words are checked, not its
+      # status. The journal's entries must also be in time order, as Drizzle
+      # applies only migrations newer than a database's newest: one generated
+      # before another that merged first would never run, so it's generated
+      # again.
+      - name: Database migrations drift
+        run: |
+          out=$(npm run db:generate 2>&1 </dev/null) || true
+          echo "$out"
+          if ! echo "$out" | grep -q 'No schema changes'; then
+            echo "::error::api/_db/schema.ts and drizzle/ disagree: run npm run db:generate and commit drizzle/"
+            exit 1
+          fi
+          test -z "$(git status --porcelain drizzle/)"
+          node -e "const { entries } = require('./drizzle/meta/_journal.json'); entries.forEach((e, i) => { if (i > 0 && e.when <= entries[i - 1].when) throw new Error(e.tag + ' is older than ' + entries[i - 1].tag + ': delete it and run npm run db:generate again'); });"
+
       # No `any` anywhere: every identifier in every tsconfig project has a
       # type (type-coverage at 100%).
       - name: Type coverage
