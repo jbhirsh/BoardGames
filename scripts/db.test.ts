@@ -144,10 +144,8 @@ describe('db:migrate', () => {
     expect(await hasLater(path)).toBe(false);
   });
 
-  it('only says so on a deploy with no database configured, and fails elsewhere', async () => {
-    expect(await runMigrate(MAIN_PRODUCTION, [])).toBe(
-      'db:migrate: no database configured (TURSO_DATABASE_URL); nothing migrated.',
-    );
+  it('fails with no database configured, on a deploy or not', async () => {
+    await expect(runMigrate(MAIN_PRODUCTION, [])).rejects.toThrow(/no database configured/);
     await expect(migrateDatabase({}, undefined)).rejects.toThrow(/no database configured/);
   });
 
