@@ -24,16 +24,15 @@
 // claim that migrated but couldn't write its record) is deleted and
 // recreated in Turso, and the next deploy claims it.
 //
-// Until the API reads the database (#290's second part), a deploy with no
-// database configured only says so, so deploys keep working before the
-// databases exist; from then on it fails.
+// A deploy with no database configured fails: the API is moving onto it
+// (#290), so a deploy without one wouldn't work.
 
 import { pathToFileURL } from 'node:url';
 import { checkEnvironment, isDbEnvironment, type DbEnvironment } from '../api/_db/environment.ts';
 import { connection, isEmpty, open, recordEnvironment, recordedEnvironment, runMigrations, type Env } from './db.ts';
 
 /** What a run did, for its log line. */
-export type Outcome = 'migrated' | 'claimed a new database and migrated it' | 'skipped: no database';
+export type Outcome = 'migrated' | 'claimed a new database and migrated it';
 
 /**
  * The environment this run is for: a Vercel build's own (VERCEL_ENV;
@@ -55,18 +54,25 @@ export function expectedEnvironment(env: Env, arg: string | undefined): DbEnviro
   return named;
 }
 
-export async function migrateDatabase(env: Env, arg: string | undefined, migrations?: string): Promise<Outcome> {
+/**
+ * `expectedEnvironment`, refusing a production build of any branch but
+ * main, and the database this run is for: what a script must know before
+ * it changes a database (`what` names the change, for the refusal).
+ */
+export function deployTarget(env: Env, arg: string | undefined, what: string) {
   const expected = expectedEnvironment(env, arg);
   if (env.VERCEL_ENV === 'production' && env.VERCEL_GIT_COMMIT_REF !== 'main') {
     throw new Error(
-      `a production build of ${env.VERCEL_GIT_COMMIT_REF ?? 'an unknown branch'}: only main's code migrates production`,
+      `a production build of ${env.VERCEL_GIT_COMMIT_REF ?? 'an unknown branch'}: only main's code ${what} production`,
     );
   }
   const conn = connection(env);
-  if (!conn) {
-    if (env.VERCEL_ENV) return 'skipped: no database';
-    throw new Error('no database configured: set TURSO_DATABASE_URL (and TURSO_AUTH_TOKEN), or DEV_DB_PATH');
-  }
+  if (!conn) throw new Error('no database configured: set TURSO_DATABASE_URL (and TURSO_AUTH_TOKEN), or DEV_DB_PATH');
+  return { expected, conn };
+}
+
+export async function migrateDatabase(env: Env, arg: string | undefined, migrations?: string): Promise<Outcome> {
+  const { expected, conn } = deployTarget(env, arg, 'migrates');
   const { db, client } = open(conn);
   try {
     const recorded = await recordedEnvironment(db);
@@ -85,10 +91,7 @@ export async function migrateDatabase(env: Env, arg: string | undefined, migrati
 
 /** The command: migrates, and returns its log line. */
 export async function run(env: Env, args: string[]): Promise<string> {
-  const outcome = await migrateDatabase(env, args[0]);
-  return outcome === 'skipped: no database'
-    ? 'db:migrate: no database configured (TURSO_DATABASE_URL); nothing migrated.'
-    : `db:migrate: ${outcome}.`;
+  return `db:migrate: ${await migrateDatabase(env, args[0])}.`;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

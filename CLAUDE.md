@@ -98,9 +98,11 @@ before changing the module.
   check and rate limits, `errors.ts` refusals);
   `api/_lib/` what they share (Redis, Resend, BGG, sessions, limits);
   `api/_db/` the Turso database (#290, moving everything off Redis):
-  `schema.ts` its tables for Drizzle, `environment.ts` the check that a
-  deploy uses its own environment's database; `drizzle/` the generated
-  migrations; `scripts/db-migrate.ts` applies them at deploy.
+  `schema.ts` its tables for Drizzle (`games`, `suggestions`, `votes`,
+  `meta`), `validation.ts` the rules a row keeps (Zod, from the tables),
+  `environment.ts` the check that a deploy uses its own environment's
+  database; `drizzle/` the generated migrations; `scripts/db-migrate.ts`
+  applies them at deploy. The API reads the tables from #290's part 2b.
 - **`scripts/`** — `npm run rules-text` (`extract-rules-text.mjs`, into
   `rules-text/`), `game-weights`, `wishlist-art`, `collection-art`;
   **`eval/`** the assistant's eval; **`vite.config.ts`** the build.
@@ -148,7 +150,7 @@ before changing the module.
   its environment: a deploy claims a brand-new, empty one for its own, and
   refuses another's, as does a shell not told which one it is
   (`api/_db/environment.ts`); a new or recreated database needs nothing by
-  hand.
+  hand. A deploy with no database configured fails.
 - **The client's GraphQL documents are generated**: change an operation in
   `src/client/operations/` or the SDL, then `npm run codegen` and commit
   `src/gql/` (CI's "GraphQL codegen drift" fails a stale one). Documents go
