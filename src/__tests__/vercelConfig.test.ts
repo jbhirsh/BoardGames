@@ -8,10 +8,17 @@ interface Rule {
 }
 
 const config = JSON.parse(readFileSync(join(process.cwd(), 'vercel.json'), 'utf-8')) as {
+  buildCommand?: string;
   headers?: Rule[];
   functions?: Record<string, { maxDuration?: number }>;
 };
 const cacheControl = (rule: Rule) => rule.headers.find((h) => h.key.toLowerCase() === 'cache-control')?.value;
+
+describe('vercel.json build', () => {
+  it("migrates the deploy's database once the app has built, before the deploy goes live, so a failed build migrates nothing", () => {
+    expect(config.buildCommand).toBe('npm run build && npm run db:migrate');
+  });
+});
 
 describe('vercel.json headers', () => {
   it("caches the build's hashed /assets for a year, never revalidated", () => {

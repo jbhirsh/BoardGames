@@ -53,3 +53,9 @@ blob-report
 /jscpd-report
 /architecture
 /readme-shots
+
+# Local development database (DEV_DB_PATH).
+*.db
+*.db-journal
+*.db-wal
+*.db-shm

@@ -13,6 +13,7 @@
     "src/pdfjs/saved.ts",
     "src/client/graphql.ts",
     "api/**/*.ts",
+    "scripts/db*.ts",
     "!**/*.d.ts"
   ],
   "mutator": {
