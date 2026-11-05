@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+@../ci/README.md
+
 Guidance for Claude Code (claude.ai/code) when working in this repository.
 
 ## What this is
