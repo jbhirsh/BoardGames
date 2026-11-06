@@ -4,8 +4,6 @@ type Hashes = Record<string, Record<string, unknown>>;
 type Lists = Record<string, string[]>;
 
 export interface FakeRedisSeed {
-  /** String keys, as SET writes them. */
-  strings?: Record<string, string>;
   /** Hashes, each field as written (a number stays a number until read). */
   hashes?: Hashes;
   lists?: Lists;
@@ -38,13 +36,11 @@ export interface FakeTransaction {
 
 /**
  * An in-memory Redis behind the commands the API's resolvers use, each a
- * spy, for their own small interfaces (AuthRedis, VotesRedis,
- * SuggestionsRedis in api/_resolvers/). The keyspace is open for a test to read or change:
- * `strings` (with the `ttl` each SET gave), `hashes`, `lists` and `sets`.
+ * spy, for their own small interfaces (VotesRedis, SuggestionsRedis in
+ * api/_resolvers/). The keyspace is open for a test to read or change:
+ * `hashes`, `lists` and `sets`.
  */
 export function fakeRedis(seed: FakeRedisSeed = {}) {
-  const strings: Record<string, string> = { ...seed.strings };
-  const ttl: Record<string, number> = {};
   // Copied through JSON, which, as Redis, keeps no field that is undefined.
   const hashes: Hashes = JSON.parse(JSON.stringify(seed.hashes ?? {}));
   const lists: Lists = JSON.parse(JSON.stringify(seed.lists ?? {}));
@@ -72,32 +68,9 @@ export function fakeRedis(seed: FakeRedisSeed = {}) {
   const sismember = (key: string, member: string) => (sets[key]?.has(member) ? 1 : 0);
 
   const redis = {
-    strings,
-    ttl,
     hashes,
     lists,
     sets,
-    get: vi.fn(async (key: string) => (key in strings ? read(strings[key]) : null)),
-    getdel: vi.fn(async (key: string) => {
-      const value = key in strings ? read(strings[key]) : null;
-      delete strings[key];
-      delete ttl[key];
-      return value;
-    }),
-    set: vi.fn(async (key: string, value: string, opts: { ex: number }) => {
-      strings[key] = value;
-      ttl[key] = opts.ex;
-      return 'OK';
-    }),
-    del: vi.fn(async (key: string) => {
-      const had = key in strings || key in hashes || key in lists || key in sets;
-      delete strings[key];
-      delete ttl[key];
-      delete hashes[key];
-      delete lists[key];
-      delete sets[key];
-      return had ? 1 : 0;
-    }),
     hset: vi.fn(async (key: string, fields: Record<string, string | number>) => {
       hashes[key] = { ...(hashes[key] ?? {}), ...fields };
       return Object.keys(fields).length;

@@ -11,7 +11,7 @@ DAILY_LIMIT 429, INTERNAL_SERVER_ERROR 500, UNAVAILABLE 503, TIMEOUT 504.
 Mutations are POST only, and every POST must be JSON.
 """
 type Query {
-  "Whether the request's cookie names a live owner session."
+  "Whether the request's session (Better Auth's, from /api/auth) is the owner's."
   session: Session!
 
   "Vote counts for up to 100 wishlist ids (malformed ones are dropped), and which of them this browser voted for."
@@ -25,9 +25,6 @@ type Query {
 
   "Owner, as JSON: what BoardGameGeek has for a game, or why it has nothing. Stores nothing."
   previewGame(game: String!): Preview!
-
-  "Whether an emailed sign-in link can still be used. Reading it doesn't use it up."
-  signInLinkLive(token: String!): Boolean!
 
   "The suggestion behind an emailed approve or deny link, checked against the link's token. Changes nothing."
   emailedSuggestion(id: String!, token: String!): EmailedSuggestion!
@@ -56,15 +53,6 @@ type Mutation {
 
   "Owner: takes an approved game off the wishlist."
   removeSuggestion(id: String!): Boolean!
-
-  "Emails the owner a single-use sign-in link if `email` is theirs. The answer is the same for any address."
-  requestSignInLink(email: String!): Boolean!
-
-  "Uses an emailed sign-in link's token up and sets the owner's session cookie."
-  verifySignIn(token: String!): Session!
-
-  "Ends this browser's owner session and clears its cookie."
-  logout: Boolean!
 }
 
 type Subscription {

@@ -1,5 +1,5 @@
-// Outbound email shared by the suggestion approvals and the owner sign-in
-// link: one Resend wiring, one place the app's public origin is resolved.
+// Outbound email for the suggestion approvals: one Resend wiring, one place
+// the app's public origin is resolved, and the owner's address.
 
 export interface Mail {
   subject: string;
@@ -11,7 +11,7 @@ export interface Mailer {
   send(mail: Mail): Promise<void>;
 }
 
-/** The owner's address: where approvals go and the only address that can sign in. */
+/** The owner's address: where approvals go, and the Google account that signs in as the owner (api/_auth.ts). */
 export function ownerEmail(): string | null {
   return process.env.SUGGESTIONS_TO || null;
 }
@@ -55,7 +55,7 @@ const escapeHtml = (s: string) =>
 export { escapeHtml };
 
 /**
- * The shell both emails share: a narrow column in the app's type and colours,
+ * The shell the emails share: a narrow column in the app's type and colours,
  * closed by a small grey footnote. Inline styles only, since many mail clients
  * ignore a <style> block.
  */

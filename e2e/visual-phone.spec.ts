@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-import { LINKS, prepare, shoot } from './visual';
+import { LINKS, SIGN_IN, prepare, shoot } from './visual';
 
 // What only a phone shows, on the phone projects (see visual.ts).
 test('the filter sheet', async ({ page }) => {
@@ -10,8 +10,9 @@ test('the filter sheet', async ({ page }) => {
   await shoot(page, 'filter-sheet-light');
 });
 
-// The emailed links' pages, opened on a phone more often than not.
-for (const scenario of LINKS) {
+// The emailed links' pages, opened on a phone more often than not, and the
+// sign-in page, designed for one.
+for (const scenario of [...LINKS, ...SIGN_IN]) {
   test(scenario.name, async ({ page }) => {
     await prepare(page, 'light');
     await scenario.open(page);

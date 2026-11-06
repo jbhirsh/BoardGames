@@ -12,8 +12,20 @@ import SaveOffline from '../components/SaveOffline';
 import { WISHLIST } from '../data/wishlist';
 import { stubMatchMedia } from './helpers/stubMatchMedia';
 import { graphqlFetch } from './helpers/graphqlFetch';
+import { AuthContext } from '../context/authContextValue';
+import type { AuthOutcome } from '../client/auth';
 
 expect.extend(matchers);
+
+// Better Auth's client (client/auth.ts), for the sign-in page's states.
+const authClient = vi.hoisted(() => ({
+  signInWithGoogle: vi.fn<() => Promise<AuthOutcome>>(),
+  signInWithPasskey: vi.fn<() => Promise<AuthOutcome>>(),
+  addPasskey: vi.fn<() => Promise<AuthOutcome>>(),
+  signOut: vi.fn<() => Promise<AuthOutcome>>(),
+  signedInEmail: vi.fn<() => Promise<string | null>>(),
+}));
+vi.mock('../client/auth', () => authClient);
 
 // color-contrast needs real layout, which jsdom does not compute; skip it.
 const axeOptions = { rules: { 'color-contrast': { enabled: false } } };
@@ -277,15 +289,81 @@ describe('accessibility', () => {
     OWNER_TIMEOUT_MS,
   );
 
-  it(
-    'owner sign-in page has no axe violations',
-    async () => {
-      const router = createMemoryRouter(
-        [{ element: <App />, children: [{ path: '/sign-in', element: <SignInPage /> }] }],
-        { initialEntries: ['/sign-in'] },
-      );
-      const { container } = render(<RouterProvider router={router} />);
-      await screen.findByRole('form', { name: 'Owner sign-in' });
+  /** The sign-in page at `entry`, as the owner or not. */
+  function renderSignIn(admin: boolean, entry = '/sign-in') {
+    const router = createMemoryRouter(
+      [
+        {
+          element: <App />,
+          children: [
+            {
+              path: '/sign-in',
+              element: (
+                <AuthContext.Provider value={{ admin, loaded: true, refresh: async () => {} }}>
+                  <SignInPage />
+                </AuthContext.Provider>
+              ),
+            },
+          ],
+        },
+      ],
+      { initialEntries: [entry] },
+    );
+    return render(<RouterProvider router={router} />);
+  }
+
+  it.each([
+    [
+      'signed out, with an error from Google',
+      async () => {
+        authClient.signedInEmail.mockResolvedValue(null);
+        const page = renderSignIn(false, '/sign-in?error=access_denied');
+        await screen.findByRole('button', { name: 'Sign in with Google' });
+        await screen.findByRole('alert');
+        return page;
+      },
+    ],
+    [
+      'signed in with another Google account',
+      async () => {
+        authClient.signedInEmail.mockResolvedValue('sam.rivera@gmail.com');
+        const page = renderSignIn(false);
+        await screen.findByText(/You're signed in as sam\.rivera@gmail\.com/);
+        return page;
+      },
+    ],
+    [
+      'signed in as the owner',
+      async () => {
+        const page = renderSignIn(true);
+        await screen.findByRole('button', { name: 'Add a passkey on this device' });
+        return page;
+      },
+    ],
+    [
+      'signed in as the owner, with a passkey just added',
+      async () => {
+        authClient.addPasskey.mockResolvedValue({ ok: true });
+        const page = renderSignIn(true);
+        fireEvent.click(screen.getByRole('button', { name: 'Add a passkey on this device' }));
+        await screen.findByText('Passkey added. Next time, sign in with Face ID.');
+        return page;
+      },
+    ],
+    [
+      'signed in as the owner on a session too old to add a passkey',
+      async () => {
+        authClient.addPasskey.mockResolvedValue({ ok: false, code: 'SESSION_NOT_FRESH' });
+        const page = renderSignIn(true);
+        fireEvent.click(screen.getByRole('button', { name: 'Add a passkey on this device' }));
+        await screen.findByRole('button', { name: 'Sign in with Google' });
+        return page;
+      },
+    ],
+  ])(
+    'owner sign-in page (%s) has no axe violations',
+    async (_state, open) => {
+      const { container } = await open();
       const results = await axe(container, axeOptions);
       expect(results).toHaveNoViolations();
     },

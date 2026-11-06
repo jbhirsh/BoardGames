@@ -246,6 +246,10 @@ export default defineConfig({
     // its production one for Node, which loads GraphQL Yoga in tests; two
     // copies would answer `instanceof GraphQLError` differently, so the
     // API's code gets the one Node (and Vercel) loads.
+    // The passkey plugin goes through Vite rather than Node, so that the
+    // sign-in tests' mock of the WebAuthn checks it imports
+    // (@simplewebauthn/server, in authServer.test.ts) reaches it.
+    server: { deps: { inline: ['@better-auth/passkey'] } },
     alias: [
       { find: /^graphql$/, replacement: fileURLToPath(new URL('./node_modules/graphql/index.mjs', import.meta.url)) },
     ],

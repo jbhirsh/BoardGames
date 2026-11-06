@@ -118,18 +118,6 @@ export type SessionQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type SessionQuery = { session: { admin: boolean } };
 
-export type RequestSignInLinkMutationVariables = Exact<{
-  email: string;
-}>;
-
-
-export type RequestSignInLinkMutation = { requestSignInLink: boolean };
-
-export type LogoutMutationVariables = Exact<{ [key: string]: never; }>;
-
-
-export type LogoutMutation = { logout: boolean };
-
 export type EmailedSuggestionQueryVariables = Exact<{
   id: string;
   token: string;
@@ -149,20 +137,6 @@ export type DecideByLinkMutationVariables = Exact<{
 
 
 export type DecideByLinkMutation = { decideSuggestion: { lookup: LookupOutcome | null, item: { game: string } | null } };
-
-export type SignInLinkLiveQueryVariables = Exact<{
-  token: string;
-}>;
-
-
-export type SignInLinkLiveQuery = { signInLinkLive: boolean };
-
-export type VerifySignInMutationVariables = Exact<{
-  token: string;
-}>;
-
-
-export type VerifySignInMutation = { verifySignIn: { admin: boolean } };
 
 export type AskRulesSubscriptionVariables = Exact<{
   slug: string;
@@ -302,16 +276,6 @@ export const SessionDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<SessionQuery, SessionQueryVariables>;
-export const RequestSignInLinkDocument = new TypedDocumentString(`
-    mutation RequestSignInLink($email: String!) {
-  requestSignInLink(email: $email)
-}
-    `) as unknown as TypedDocumentString<RequestSignInLinkMutation, RequestSignInLinkMutationVariables>;
-export const LogoutDocument = new TypedDocumentString(`
-    mutation Logout {
-  logout
-}
-    `) as unknown as TypedDocumentString<LogoutMutation, LogoutMutationVariables>;
 export const EmailedSuggestionDocument = new TypedDocumentString(`
     query EmailedSuggestion($id: String!, $token: String!, $game: String) {
   emailedSuggestion(id: $id, token: $token) {
@@ -356,18 +320,6 @@ export const DecideByLinkDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DecideByLinkMutation, DecideByLinkMutationVariables>;
-export const SignInLinkLiveDocument = new TypedDocumentString(`
-    query SignInLinkLive($token: String!) {
-  signInLinkLive(token: $token)
-}
-    `) as unknown as TypedDocumentString<SignInLinkLiveQuery, SignInLinkLiveQueryVariables>;
-export const VerifySignInDocument = new TypedDocumentString(`
-    mutation VerifySignIn($token: String!) {
-  verifySignIn(token: $token) {
-    admin
-  }
-}
-    `) as unknown as TypedDocumentString<VerifySignInMutation, VerifySignInMutationVariables>;
 export const AskRulesDocument = new TypedDocumentString(`
     subscription AskRules($slug: String!, $message: String!, $history: [HistoryEntry!], $parts: [String!]) {
   askRules(slug: $slug, message: $message, history: $history, parts: $parts)

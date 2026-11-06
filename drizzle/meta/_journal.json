@@ -15,6 +15,13 @@
       "when": 1793920521473,
       "tag": "0001_wishlist",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1793946654610,
+      "tag": "0002_auth",
+      "breakpoints": true
     }
   ]
 }

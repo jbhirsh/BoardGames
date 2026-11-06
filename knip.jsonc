@@ -5,8 +5,8 @@
   // the workflows); these are the ones they can't see.
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
-    // Vercel Functions.
-    "api/*.ts",
+    // Vercel Functions (a file starting `_` is a module, not a function).
+    "api/[^_]*.ts",
     // Run as a child process by extract-rules-text.mjs.
     "scripts/ocr-pdfs.mjs",
     // Scenarios passed to `npm run pr-gif` on the command line, and the
@@ -20,5 +20,15 @@
   // (createRequire().resolve), which knip doesn't follow. jbhirsh/ci's
   // actions run the rest from this repo's node_modules: the weekly audit's
   // jscpd, and the README screenshot comparison's pixelmatch and pngjs.
-  "ignoreDependencies": ["axe-core", "jscpd", "pixelmatch", "pngjs"],
+  // The sign-in tests mock @simplewebauthn's browser and server packages,
+  // @better-auth/passkey's own dependencies: the copy it loads is the one
+  // to mock, so they aren't listed here as dependencies of their own.
+  "ignoreDependencies": [
+    "axe-core",
+    "jscpd",
+    "pixelmatch",
+    "pngjs",
+    "@simplewebauthn/browser",
+    "@simplewebauthn/server",
+  ],
 }

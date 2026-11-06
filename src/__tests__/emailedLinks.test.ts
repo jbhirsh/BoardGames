@@ -54,7 +54,7 @@ describe('emailedLinks', () => {
     expect(withoutToken('https://games.example/approve?id=sug-1&token=abc#x')).toBe(
       'https://games.example/approve?id=sug-1#x',
     );
-    expect(withoutToken('/sign-in/confirm?token=abc')).toBe('/sign-in/confirm');
+    expect(withoutToken('/deny?token=abc')).toBe('/deny');
     expect(withoutToken('/?c=want')).toBe('/?c=want');
     expect(withoutToken('https://games.example/rules/catan')).toBe('https://games.example/rules/catan');
   });

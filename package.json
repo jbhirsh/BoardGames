@@ -30,6 +30,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@better-auth/passkey": "^1.7.18",
     "@google/genai": "^2.31.0",
     "@graphql-yoga/plugin-csrf-prevention": "^4.0.1",
     "@libsql/client": "^0.18.0",
@@ -38,6 +39,7 @@
     "@upstash/ratelimit": "^2.2.0",
     "@upstash/redis": "^1.40.0",
     "@vercel/analytics": "^2.0.1",
+    "better-auth": "^1.7.18",
     "drizzle-orm": "^0.45.4",
     "drizzle-zod": "^0.8.3",
     "graphql": "^17.0.2",

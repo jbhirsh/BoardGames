@@ -40,44 +40,19 @@ describe('useAuthState', () => {
     expect(result.current).toMatchObject({ admin: false, loaded: false });
   });
 
-  it('requests a link and relays the outcome', async () => {
-    const spy = stubGraphql({
-      Session: session(false),
-      RequestSignInLink: ({ email }) =>
-        email === 'jess@example.com'
-          ? { requestSignInLink: true }
-          : gqlError('Sign-in is not set up yet', 'UNAVAILABLE', 503),
-    });
+  it('asks again on refresh, as a session changed on the page', async () => {
+    let admin = false;
+    const spy = stubGraphql({ Session: () => ({ session: { admin } }) });
     const { result } = renderHook(() => useAuthState());
     await waitFor(() => expect(result.current.loaded).toBe(true));
-
-    expect(await result.current.requestLink('jess@example.com')).toEqual({ ok: true });
-    expect(operations(spy).at(-1)).toMatchObject({
-      operationName: 'RequestSignInLink',
-      variables: { email: 'jess@example.com' },
-    });
-    expect(await result.current.requestLink('x@y.z')).toEqual({ ok: false, error: 'Sign-in is not set up yet' });
-
-    vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('offline'));
-    expect(await result.current.requestLink('x@y.z')).toEqual({
-      ok: false,
-      error: 'Something went wrong. Try again in a minute.',
-    });
-  });
-
-  it('logs out through the API and drops admin mode even if that call fails', async () => {
-    const spy = stubGraphql({ Session: session(true), Logout: () => ({ logout: true }) });
-    const { result } = renderHook(() => useAuthState());
-    await waitFor(() => expect(result.current.admin).toBe(true));
-    await act(() => result.current.logout());
     expect(result.current.admin).toBe(false);
-    expect(operations(spy).at(-1)?.operationName).toBe('Logout');
+    admin = true;
+    await act(() => result.current.refresh());
+    expect(result.current.admin).toBe(true);
+    expect(operations(spy).map((o) => o.operationName)).toEqual(['Session', 'Session']);
 
-    stubGraphql({ Session: session(true) });
-    const { result: again } = renderHook(() => useAuthState());
-    await waitFor(() => expect(again.current.admin).toBe(true));
     vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('offline'));
-    await act(() => again.current.logout());
-    expect(again.current.admin).toBe(false);
+    await act(() => result.current.refresh());
+    expect(result.current).toMatchObject({ admin: false, loaded: true });
   });
 });
