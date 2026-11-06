@@ -12,8 +12,16 @@
     "smoke": ["src/utils/filterUrl.ts", "src/utils/pickRandom.ts", "src/utils/urls.ts"]
   },
   "visuals": {
-    "ui": ["src/**/*.{tsx,css}", "src/**/*Classes.ts", "index.html"],
-    "notUi": ["**/*.test.tsx", "src/__tests__/**", "src/context/**", "src/main.tsx"]
+    "ui": ["src/**/*.{tsx,css}", "src/**/*Classes.ts", "src/data/**", "public/**", "index.html"],
+    "notUi": [
+      "**/*.test.tsx",
+      "src/__tests__/**",
+      "src/context/**",
+      "src/main.tsx",
+      "src/data/types.ts",
+      "src/data/suggestionLimits.ts"
+    ],
+    "advice": "Add before/after pictures to the description, at phone size first: screenshots for looks, a GIF for motion. `npm run pr-gif -- <scenario.ts> --dir <PR number>` records main and this branch (a scenario like scripts/gif-scenarios/example.ts, moving with gif.glide, click, drag and scroll, with pauses), hosts the GIFs on the screenshots branch and prints the table to paste. Or tick \"No visible UI change\" in the template. Editing the description re-runs this check."
   },
   "audit": {
     "graph": ["src", "api", "e2e"]
