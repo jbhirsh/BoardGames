@@ -14,7 +14,8 @@
 # text, PDFs and word lists, index.css's theme tokens, vercel.json, the
 # Stryker config, the eval's golden set, the PR template, test fixtures, and
 # the README's screenshot links and e2e/readme.shots.ts, which
-# src/__tests__/readmeShots.test.ts holds equal).
+# src/__tests__/readmeShots.test.ts holds equal, and src/data's games.ts and
+# wishlist.ts, which the BoardGameGeek scripts' tests parse).
 #
 # No-op in CI (see pre-commit).
 [ -n "$CI" ] && exit 0
@@ -56,7 +57,7 @@ unset $(git rev-parse --local-env-vars)
 
 code='^(src|api|eval|scripts|\.github/scripts)/.+\.(ts|tsx|mts|mjs|js)$'
 untested='^([^/]+\.md|docs/.*|\.github/workflows/.*|\.github/dependabot\.yml|\.githooks/.*|e2e/.*|playwright\.config\.ts|scripts/.*\.(json|md)|index\.html|\.gitignore|\.env\.example)$'
-read='^(README\.md|e2e/readme\.shots\.ts)$'
+read='^(README\.md|e2e/readme\.shots\.ts|src/data/(games|wishlist)\.ts)$'
 if grep -qE "$read" "$changed" || grep -vE "$code" "$changed" | grep -vqE "$untested"; then
   echo "▶ pre-push: vitest (whole suite: a change reaches beyond the code tests import)"
   npx vitest run
