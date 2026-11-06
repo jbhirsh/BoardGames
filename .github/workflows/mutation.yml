@@ -7,6 +7,13 @@
 #   - Pushes to main: refresh main's baseline, incrementally; gates nothing.
 #
 # The monthly full sweep, saved as main's baseline, is mutation-sweep.yml.
+#
+# What's mutated (stryker.config.json's `mutate`, which can't hold comments):
+# the pure-logic layer (src/utils, the filter reducer, the api/ handlers) and
+# the components, where a surviving mutant is a missing assertion. The static
+# data, the entry points and the tests aren't. The StringLiteral mutator is off:
+# in TSX it mostly rewrites className, aria-label and placeholder strings, and
+# in the logic only error text, so it adds noise rather than missing tests.
 name: Mutation
 
 on:

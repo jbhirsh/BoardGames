@@ -120,9 +120,15 @@ jobs:
           node -e "const { entries } = require('./drizzle/meta/_journal.json'); entries.forEach((e, i) => { if (i > 0 && e.when <= entries[i - 1].when) throw new Error(e.tag + ' is older than ' + entries[i - 1].tag + ': delete it and run npm run db:generate again'); });"
 
       # No `any` anywhere: every identifier in every tsconfig project has a
-      # type (type-coverage at 100%).
+      # type (type-coverage at 100%). To fix a failure, give the value its
+      # type where it enters: annotate a JSON.parse, res.json() or req.body
+      # result `unknown` and narrow it, or type the library field.
       - name: Type coverage
-        run: npm run typecov
+        run: |
+          npm run typecov || {
+            echo "::error title=Type coverage::An identifier is typed any. Give it its type where it enters (annotate a JSON.parse, res.json() or req.body result unknown and narrow it); npx type-coverage -p tsconfig.<project>.json --detail --ignore-files 'src/gql/**' lists them."
+            exit 1
+          }
 
       # Strict mode also counts an `any` inside a type argument (Promise<any>,
       # a library's any[]). Shown in the run's summary, never gating.

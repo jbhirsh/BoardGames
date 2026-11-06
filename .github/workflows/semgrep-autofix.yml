@@ -101,7 +101,8 @@ jobs:
             POSITIVE. Judge against how this codebase actually works (e.g. a
             "tainted path" finding on a value already validated against
             SLUG_RE at the boundary is a false positive — this repo validates
-            at boundaries by design, see CLAUDE.md).
+            at boundaries by design: the shared rules' "Validate only at
+            boundaries").
 
             NEVER "fix" a finding by adding `// nosemgrep`, creating or
             editing `.semgrepignore`, or weakening any config — suppressions

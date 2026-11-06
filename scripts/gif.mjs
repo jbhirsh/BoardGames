@@ -18,37 +18,58 @@
 // ../ci. The tool's self-test (gif/selftest.mjs, run by jbhirsh/ci's CI
 // against this app) loads each and checks it against the tool's own idea of
 // those shapes, so the copy can't drift unnoticed.
+//
+// The run happens only when this file is executed (`node scripts/gif.mjs`);
+// importing it, as its test does, runs nothing.
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const given = process.env.CI_TOOLING_DIR;
-const tooling = given ? path.resolve(given) : path.resolve(root, '..', 'ci');
 
-/** Runs git, its output shown; says whether it worked. */
+/**
+ * Runs git, its output shown; says whether it worked.
+ *
+ * @param {string[]} args
+ * @returns {boolean}
+ */
 function git(args) {
   return spawnSync('git', args, { stdio: 'inherit' }).status === 0;
 }
 
-if (!given) {
-  if (existsSync(path.join(tooling, '.git'))) {
-    if (!git(['-C', tooling, 'pull', '--ff-only', '--quiet'])) {
-      console.warn(`gif: couldn't update ${tooling}; running it as it is`);
+/**
+ * Fetches the tool if need be and runs it with these arguments.
+ *
+ * @param {string[]} args What followed `npm run pr-gif --`, passed on as they are.
+ * @param {Record<string, string | undefined>} env The environment: CI_TOOLING_DIR, and what the tool is handed.
+ * @returns {number} The exit code: the tool's, or 1 when it couldn't be fetched or run.
+ */
+export function main(args, env = process.env) {
+  const given = env.CI_TOOLING_DIR;
+  const tooling = given ? path.resolve(given) : path.resolve(root, '..', 'ci');
+  if (!given) {
+    if (existsSync(path.join(tooling, '.git'))) {
+      if (!git(['-C', tooling, 'pull', '--ff-only', '--quiet'])) {
+        console.warn(`gif: couldn't update ${tooling}; running it as it is`);
+      }
+    } else if (!git(['clone', '--quiet', 'https://github.com/jbhirsh/ci', tooling])) {
+      console.error(`gif: couldn't clone jbhirsh/ci into ${tooling}`);
+      return 1;
     }
-  } else if (!git(['clone', '--quiet', 'https://github.com/jbhirsh/ci', tooling])) {
-    console.error(`gif: couldn't clone jbhirsh/ci into ${tooling}`);
-    process.exit(1);
   }
+  const cli = path.join(tooling, 'gif', 'cli.mjs');
+  if (!existsSync(cli)) {
+    console.error(`gif: ${cli} isn't there: is ${tooling} a clone of jbhirsh/ci?`);
+    return 1;
+  }
+  const result = spawnSync(process.execPath, [cli, ...args], {
+    stdio: 'inherit',
+    env: { ...env, APP_ROOT: root },
+  });
+  return result.status ?? 1;
 }
-const cli = path.join(tooling, 'gif', 'cli.mjs');
-if (!existsSync(cli)) {
-  console.error(`gif: ${cli} isn't there: is ${tooling} a clone of jbhirsh/ci?`);
-  process.exit(1);
+
+if (import.meta.main) {
+  process.exitCode = main(process.argv.slice(2));
 }
-const result = spawnSync(process.execPath, [cli, ...process.argv.slice(2)], {
-  stdio: 'inherit',
-  env: { ...process.env, APP_ROOT: root },
-});
-process.exitCode = result.status ?? 1;

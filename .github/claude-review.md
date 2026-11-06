@@ -36,7 +36,7 @@ the trust boundary. Flag:
 - A caught error in a handler that isn't reported to Sentry.
 - The session cookie losing `HttpOnly`, `Secure` or `SameSite=Lax`.
 - An external call (Gemini, Resend, BoardGameGeek) whose failure breaks a
-  path CLAUDE.md says keeps working: a BoardGameGeek miss still approves the
+  path that must keep working: a BoardGameGeek miss still approves the
   suggestion, and missing Resend configuration returns 503 rather than
   storing a suggestion.
 

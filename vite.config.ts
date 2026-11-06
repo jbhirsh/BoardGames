@@ -253,8 +253,18 @@ export default defineConfig({
       // vitest's defaults plus Cobertura, which ci.yml uploads to GitHub for
       // the code coverage rule on main.
       reporter: ['text', 'html', 'clover', 'json', 'cobertura'],
-      // src/gql is generated (npm run codegen), its documents tested through their callers.
-      exclude: ['e2e/**', 'playwright.config.ts', 'src/gql/**'],
+      // Every source file counts, not only those a test happens to import, so a
+      // file with no tests fails the gate rather than going unmeasured.
+      include: [
+        'src/**/*.{ts,tsx}',
+        'api/**/*.ts',
+        'scripts/**/*.{ts,mjs}',
+        'eval/**/*.ts',
+        '.github/scripts/**/*.mjs',
+      ],
+      // The tests' own helpers aren't source; src/gql is generated (npm run
+      // codegen), its documents tested through their callers.
+      exclude: ['src/__tests__/**', 'src/gql/**'],
       thresholds: {
         perFile: true,
         lines: 80,

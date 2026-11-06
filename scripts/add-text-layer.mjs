@@ -6,6 +6,8 @@
 //
 //   npm run rules-text-layer                 # every rulebook with no text
 //   npm run rules-text-layer -- suspicion.pdf
+//
+// It runs only when executed directly; the tests import its functions.
 
 import { readFile, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -42,6 +44,7 @@ const CAP_HEIGHT = 0.72;
 
 const open = (bytes) => getDocument({ data: new Uint8Array(bytes), verbosity: 0 }).promise;
 
+/** Whether any page of the PDF has text in it. */
 async function hasText(bytes) {
   const doc = await open(bytes);
   for (let n = 1; n <= doc.numPages; n++) {
@@ -73,13 +76,17 @@ function encodable(font, word) {
 }
 
 /** Where a line's baseline sits at x, in image pixels. */
-function baselineAt(line, x) {
+export function baselineAt(line, x) {
   const { x0, y0, x1, y1 } = line.baseline;
   return x1 === x0 ? y0 : y0 + ((y1 - y0) * (x - x0)) / (x1 - x0);
 }
 
-async function addTextLayer(file, worker) {
-  const path = join(RULES_DIR, file);
+/**
+ * OCRs `file` in `rulesDir` with the tesseract `worker` and writes its words
+ * back into it as invisible text, unless it already has text.
+ */
+export async function addTextLayer(file, worker, rulesDir = RULES_DIR) {
+  const path = join(rulesDir, file);
   const bytes = await readFile(path);
   if (await hasText(bytes)) {
     console.log(`${file}: has text, left alone`);
@@ -152,11 +159,13 @@ async function addTextLayer(file, worker) {
   );
 }
 
-const files =
-  process.argv.slice(2).length > 0
-    ? process.argv.slice(2)
-    : (await readdir(RULES_DIR)).filter((f) => f.endsWith('.pdf')).sort();
+/** Adds a text layer to each of `args` (names in `rulesDir`), or to every PDF there if none are given. */
+export async function run(args, rulesDir = RULES_DIR) {
+  const files = args.length > 0 ? args : (await readdir(rulesDir)).filter((f) => f.endsWith('.pdf')).sort();
 
-const worker = await createWorker('eng');
-for (const file of files) await addTextLayer(file, worker);
-await worker.terminate();
+  const worker = await createWorker('eng');
+  for (const file of files) await addTextLayer(file, worker, rulesDir);
+  await worker.terminate();
+}
+
+if (import.meta.main) await run(process.argv.slice(2));
