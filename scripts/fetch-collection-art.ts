@@ -46,6 +46,25 @@ interface Cover {
 }
 type Entry = Cover | { keep: string };
 
+/** A game in games.ts: its box art's path and, where it has one, its BoardGameGeek id. */
+export interface Game {
+  name: string;
+  slug: string;
+  img: string;
+  bgg: number | undefined;
+}
+
+/** Runs a command and returns what it printed: ImageMagick, here. */
+export type Exec = (cmd: string, args: string[], options?: { stdio: 'ignore' }) => string;
+
+/** What a run reaches outside itself: the folder it writes under, the network, ImageMagick and its pause. */
+export interface Deps {
+  dir?: string;
+  fetch?: typeof fetch;
+  exec?: Exec;
+  pause?: () => Promise<unknown>;
+}
+
 const COVERS: Record<string, Entry> = {
   '7-wonders': { image: 7416519, box: [0.036, 0.032, 0.928, 0.936] }, // second edition, inside its printed frame
   'analyze-me': { keep: "BGG only has the 2011 tin; this edition's box front, flattened from a product photo" },
@@ -82,149 +101,156 @@ const COVERS: Record<string, Entry> = {
   uno: { image: 8204165, focus: 0 },
 };
 
-// The games are data literals; read them straight off the source rather
-// than importing it (its path-less imports are Vite's, not Node's). A game
-// is a literal with a name and slug and no `kind`, which only a game inside
-// one has; its box art is /images/<slug>.webp unless it names an `img` (as
-// games.ts fills it in), and its own `bgg` comes before any `subgames`,
-// whose ids are theirs.
-const source = await readFile('src/data/games.ts', 'utf8');
-const starts = [...source.matchAll(/\{\s*name:\s*(['"])(.+?)\1,\s*slug:\s*(['"])(.+?)\3,(?!\s*kind:)/g)];
-const games = starts.map((m, i) => {
-  const literal = source.slice(m.index, starts[i + 1]?.index ?? source.length).split('subgames:')[0];
-  const bgg = /\bbgg:\s*(\d+)/.exec(literal)?.[1];
-  const img = /\bimg:\s*(['"])(.+?)\1/.exec(literal)?.[2] ?? `/images/${m[4]}.webp`;
-  return { name: m[2], slug: m[4], img, bgg: bgg ? Number(bgg) : undefined };
-});
-if (games.length === 0) throw new Error('no games found in src/data/games.ts');
-const only = process.argv.slice(2);
-const unknown = only.filter((slug) => !games.some((g) => g.slug === slug));
-if (unknown.length) throw new Error(`not in src/data/games.ts: ${unknown.join(', ')}`);
+/**
+ * The games in games.ts's source.
+ *
+ * The games are data literals; read them straight off the source rather
+ * than importing it (its path-less imports are Vite's, not Node's), each
+ * string in either quote (Prettier's double quotes where it holds an
+ * apostrophe). A game is a literal with a name and slug and no `kind`,
+ * which only a game inside one has; its box art is /images/<slug>.webp
+ * unless it names an `img` (as games.ts fills it in), and its own `bgg`
+ * comes before any `subgames`, whose ids are theirs.
+ */
+export function readGames(source: string): Game[] {
+  const starts = [...source.matchAll(/\{\s*name:\s*(['"])(.+?)\1,\s*slug:\s*(['"])(.+?)\3,(?!\s*kind:)/g)];
+  const games = starts.map((m, i) => {
+    const literal = source.slice(m.index, starts[i + 1]?.index ?? source.length).split('subgames:')[0];
+    const bgg = /\bbgg:\s*(\d+)/.exec(literal)?.[1];
+    const img = /\bimg:\s*(['"])(.+?)\1/.exec(literal)?.[2] ?? `/images/${m[4]}.webp`;
+    return { name: m[2], slug: m[4], img, bgg: bgg ? Number(bgg) : undefined };
+  });
+  if (games.length === 0) throw new Error('no games found in src/data/games.ts');
+  return games;
+}
 
-const magick = (() => {
+/** The ImageMagick command on the PATH: `magick`, or version 6's `convert`. */
+export function findMagick(exec: Exec): string {
   for (const cmd of ['magick', 'convert']) {
     try {
-      execFileSync(cmd, ['-version'], { stdio: 'ignore' });
+      exec(cmd, ['-version'], { stdio: 'ignore' });
       return cmd;
     } catch {
       // Try the next name.
     }
   }
   throw new Error('ImageMagick is needed: neither `magick` nor `convert` is on the PATH');
-})();
+}
 
-// BGG asks clients to keep a gentle pace: one request at a time, spaced.
-const pause = () => new Promise((resolve) => setTimeout(resolve, 1200));
 class Stop extends Error {}
-const get = async (url: string) => {
-  // A rate limit, a challenge page or a stall ends the run; what was written stays.
-  const r = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(30_000) }).catch(
-    (e: unknown) => {
-      if ((e as Error).name === 'TimeoutError')
-        throw new Stop(`BoardGameGeek stopped answering for ${url}; stopping, re-run later for the rest.`);
-      throw e;
-    },
-  );
-  if (r.status === 429 || r.status === 403)
-    throw new Stop(`BoardGameGeek answered ${r.status} for ${url}; stopping, re-run later for the rest.`);
-  await pause();
-  return r;
-};
 
-const work = await mkdtemp(join(tmpdir(), 'collection-art-'));
-let written = 0;
-try {
-  for (const game of games) {
-    if (only.length && !only.includes(game.slug)) continue;
-    const entry = COVERS[game.slug];
-    if (entry && 'keep' in entry) {
-      console.log(`${game.name}: keeping ${game.img} (${entry.keep})`);
-      continue;
-    }
-    let cover: Cover | undefined = entry;
-    if (!cover) {
-      if (!game.bgg) {
-        console.warn(`${game.name}: no bgg id and no entry in COVERS; keeping ${game.img}`);
+/**
+ * The command: writes the cover of each game under `dir` (of those in
+ * `only`, when it names any), and returns how many it wrote.
+ */
+export async function run(
+  only: string[],
+  {
+    dir = '.',
+    fetch: request = fetch,
+    exec = (cmd, args, options) => execFileSync(cmd, args, { encoding: 'utf8', ...options }),
+    // BGG asks clients to keep a gentle pace: one request at a time, spaced.
+    pause = () => new Promise((resolve) => setTimeout(resolve, 1200)),
+  }: Deps = {},
+): Promise<number> {
+  const games = readGames(await readFile(join(dir, 'src/data/games.ts'), 'utf8'));
+  const unknown = only.filter((slug) => !games.some((g) => g.slug === slug));
+  if (unknown.length) throw new Error(`not in src/data/games.ts: ${unknown.join(', ')}`);
+
+  const magick = findMagick(exec);
+
+  const get = async (url: string) => {
+    // A rate limit, a challenge page or a stall ends the run; what was written stays.
+    const r = await request(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(30_000) }).catch(
+      (e: unknown) => {
+        if ((e as Error).name === 'TimeoutError')
+          throw new Stop(`BoardGameGeek stopped answering for ${url}; stopping, re-run later for the rest.`);
+        throw e;
+      },
+    );
+    if (r.status === 429 || r.status === 403)
+      throw new Stop(`BoardGameGeek answered ${r.status} for ${url}; stopping, re-run later for the rest.`);
+    await pause();
+    return r;
+  };
+
+  const work = await mkdtemp(join(tmpdir(), 'collection-art-'));
+  let written = 0;
+  try {
+    for (const game of games) {
+      if (only.length && !only.includes(game.slug)) continue;
+      const entry = COVERS[game.slug];
+      if (entry && 'keep' in entry) {
+        console.log(`${game.name}: keeping ${game.img} (${entry.keep})`);
         continue;
       }
-      const r = await get(ITEM_URL(game.bgg));
-      const image = r.ok ? Number(((await r.json()) as { item?: { imageid?: string } }).item?.imageid) : NaN;
-      if (!image) {
-        console.warn(`${game.name}: item ${game.bgg} has no main image (${r.status}); keeping ${game.img}`);
+      let cover: Cover | undefined = entry;
+      if (!cover) {
+        if (!game.bgg) {
+          console.warn(`${game.name}: no bgg id and no entry in COVERS; keeping ${game.img}`);
+          continue;
+        }
+        const r = await get(ITEM_URL(game.bgg));
+        const image = r.ok ? Number(((await r.json()) as { item?: { imageid?: string } }).item?.imageid) : NaN;
+        if (!image) {
+          console.warn(`${game.name}: item ${game.bgg} has no main image (${r.status}); keeping ${game.img}`);
+          continue;
+        }
+        console.warn(
+          `${game.name}: not in COVERS, using its main image ${image}; check it is a flat front cover and pin it`,
+        );
+        cover = { image };
+      }
+      const info = await get(IMAGE_URL(cover.image));
+      if (!info.ok) {
+        console.warn(`${game.name}: image ${cover.image} answered ${info.status}; keeping ${game.img}`);
         continue;
       }
-      console.warn(
-        `${game.name}: not in COVERS, using its main image ${image}; check it is a flat front cover and pin it`,
-      );
-      cover = { image };
-    }
-    const info = await get(IMAGE_URL(cover.image));
-    if (!info.ok) {
-      console.warn(`${game.name}: image ${cover.image} answered ${info.status}; keeping ${game.img}`);
-      continue;
-    }
-    const sizes = ((await info.json()) as { images?: Record<string, { url?: string }> }).images;
-    // `large` fits in 1024 px without upscaling: plenty for a 400 px tile.
-    const url = sizes?.large?.url ?? sizes?.original?.url;
-    if (!url) {
-      console.warn(`${game.name}: image ${cover.image} has no download; keeping ${game.img}`);
-      continue;
-    }
-    const file = await get(url);
-    if (!file.ok) {
-      console.warn(`${game.name}: download of image ${cover.image} answered ${file.status}; keeping ${game.img}`);
-      continue;
-    }
-    const raw = join(work, `${game.slug}.src`);
-    await writeFile(raw, Buffer.from(await file.arrayBuffer()));
+      const sizes = ((await info.json()) as { images?: Record<string, { url?: string }> }).images;
+      // `large` fits in 1024 px without upscaling: plenty for a 400 px tile.
+      const url = sizes?.large?.url ?? sizes?.original?.url;
+      if (!url) {
+        console.warn(`${game.name}: image ${cover.image} has no download; keeping ${game.img}`);
+        continue;
+      }
+      const file = await get(url);
+      if (!file.ok) {
+        console.warn(`${game.name}: download of image ${cover.image} answered ${file.status}; keeping ${game.img}`);
+        continue;
+      }
+      const raw = join(work, `${game.slug}.src`);
+      await writeFile(raw, Buffer.from(await file.arrayBuffer()));
 
-    // Cut the box, then the largest square inside it at the focus, or fit
-    // the whole box in the square.
-    const [w, h] = execFileSync(magick, [`${raw}[0]`, '-auto-orient', '-format', '%w %h', 'info:'], {
-      encoding: 'utf8',
-    })
-      .split(' ')
-      .map(Number);
-    const [bl, bt, bw, bh] = cover.box ?? [0, 0, 1, 1];
-    const box = { x: Math.round(bl * w), y: Math.round(bt * h), w: Math.round(bw * w), h: Math.round(bh * h) };
-    const out = `public${game.img}`;
-    const load = [
-      `${raw}[0]`,
-      '-auto-orient',
-      '-colorspace',
-      'sRGB',
-      '-crop',
-      `${box.w}x${box.h}+${box.x}+${box.y}`,
-      '+repage',
-    ];
-    const save = ['-strip', '-quality', QUALITY, '-define', 'webp:method=6', out];
-    if (cover.fit) {
-      const trimmed = join(work, `${game.slug}.png`);
-      // A white border first makes the trim take off white margins only.
-      execFileSync(magick, [
-        ...load,
-        '-bordercolor',
-        'white',
-        '-border',
-        '1',
-        '-fuzz',
-        '4%',
-        '-trim',
-        '+repage',
-        trimmed,
-      ]);
-      const [tw, th] = execFileSync(magick, [trimmed, '-format', '%w %h', 'info:'], { encoding: 'utf8' })
+      // Cut the box, then the largest square inside it at the focus, or fit
+      // the whole box in the square.
+      const [w, h] = exec(magick, [`${raw}[0]`, '-auto-orient', '-format', '%w %h', 'info:'])
         .split(' ')
         .map(Number);
-      const wide = tw >= th;
-      // Each band takes the mean colour of a 3 px strip just inside its
-      // edge, clear of a scan's outline or shadow.
-      const inset = Math.round((wide ? th : tw) * 0.02);
-      const edge = (gravity: string) =>
-        cover.pad ??
-        execFileSync(
-          magick,
-          [
+      const [bl, bt, bw, bh] = cover.box ?? [0, 0, 1, 1];
+      const box = { x: Math.round(bl * w), y: Math.round(bt * h), w: Math.round(bw * w), h: Math.round(bh * h) };
+      const out = join(dir, `public${game.img}`);
+      const load = [
+        `${raw}[0]`,
+        '-auto-orient',
+        '-colorspace',
+        'sRGB',
+        '-crop',
+        `${box.w}x${box.h}+${box.x}+${box.y}`,
+        '+repage',
+      ];
+      const save = ['-strip', '-quality', QUALITY, '-define', 'webp:method=6', out];
+      if (cover.fit) {
+        const trimmed = join(work, `${game.slug}.png`);
+        // A white border first makes the trim take off white margins only.
+        exec(magick, [...load, '-bordercolor', 'white', '-border', '1', '-fuzz', '4%', '-trim', '+repage', trimmed]);
+        const [tw, th] = exec(magick, [trimmed, '-format', '%w %h', 'info:']).split(' ').map(Number);
+        const wide = tw >= th;
+        // Each band takes the mean colour of a 3 px strip just inside its
+        // edge, clear of a scan's outline or shadow.
+        const inset = Math.round((wide ? th : tw) * 0.02);
+        const edge = (gravity: string) =>
+          cover.pad ??
+          exec(magick, [
             trimmed,
             '-gravity',
             gravity,
@@ -236,50 +262,52 @@ try {
             '-format',
             '%[pixel:p{0,0}]',
             'info:',
-          ],
-          { encoding: 'utf8' },
-        );
-      const half = wide ? `${SIZE}x${SIZE / 2}` : `${SIZE / 2}x${SIZE}`;
-      execFileSync(magick, [
-        '-size',
-        half,
-        `xc:${edge(wide ? 'north' : 'west')}`,
-        '-size',
-        half,
-        `xc:${edge(wide ? 'south' : 'east')}`,
-        wide ? '-append' : '+append',
-        '(',
-        trimmed,
-        '-resize',
-        `${SIZE}x${SIZE}`,
-        ')',
-        '-gravity',
-        'center',
-        '-composite',
-        ...save,
-      ]);
-    } else {
-      const side = Math.min(box.w, box.h);
-      const focus = cover.focus ?? (box.h > box.w * 1.15 ? 0.2 : 0.5);
-      const x = Math.round((box.w - side) * focus);
-      const y = Math.round((box.h - side) * focus);
-      execFileSync(magick, [
-        ...load,
-        '-crop',
-        `${side}x${side}+${x}+${y}`,
-        '+repage',
-        '-resize',
-        `${SIZE}x${SIZE}!`,
-        ...save,
-      ]);
+          ]);
+        const half = wide ? `${SIZE}x${SIZE / 2}` : `${SIZE / 2}x${SIZE}`;
+        exec(magick, [
+          '-size',
+          half,
+          `xc:${edge(wide ? 'north' : 'west')}`,
+          '-size',
+          half,
+          `xc:${edge(wide ? 'south' : 'east')}`,
+          wide ? '-append' : '+append',
+          '(',
+          trimmed,
+          '-resize',
+          `${SIZE}x${SIZE}`,
+          ')',
+          '-gravity',
+          'center',
+          '-composite',
+          ...save,
+        ]);
+      } else {
+        const side = Math.min(box.w, box.h);
+        const focus = cover.focus ?? (box.h > box.w * 1.15 ? 0.2 : 0.5);
+        const x = Math.round((box.w - side) * focus);
+        const y = Math.round((box.h - side) * focus);
+        exec(magick, [
+          ...load,
+          '-crop',
+          `${side}x${side}+${x}+${y}`,
+          '+repage',
+          '-resize',
+          `${SIZE}x${SIZE}!`,
+          ...save,
+        ]);
+      }
+      written++;
+      console.log(`${game.name}: image ${cover.image} (${w}x${h}) -> ${out}`);
     }
-    written++;
-    console.log(`${game.name}: image ${cover.image} (${w}x${h}) -> ${out}`);
+  } catch (e) {
+    if (!(e instanceof Stop)) throw e;
+    console.error(e.message);
+  } finally {
+    await rm(work, { recursive: true, force: true });
   }
-} catch (e) {
-  if (!(e instanceof Stop)) throw e;
-  console.error(e.message);
-} finally {
-  await rm(work, { recursive: true, force: true });
+  console.log(`${written} cover${written === 1 ? '' : 's'} written.`);
+  return written;
 }
-console.log(`${written} cover${written === 1 ? '' : 's'} written.`);
+
+if (import.meta.main) await run(process.argv.slice(2));
