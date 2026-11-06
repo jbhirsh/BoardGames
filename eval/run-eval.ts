@@ -10,6 +10,9 @@
 //   npm run eval -- --file path/to/set.json --threshold 0.8
 //
 // Requires GEMINI_API_KEY in the environment or in .env.local at the repo root.
+//
+// The run happens only when this file is executed (`node eval/run-eval.ts`);
+// importing it, as its test does, runs nothing.
 
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
@@ -59,8 +62,9 @@ async function judgeAnswer(ai: GoogleGenAI, entry: GoldenEntry, answer: string):
   return response.text ?? '';
 }
 
-async function main(): Promise<number> {
-  const options = parseCliArgs(process.argv.slice(2));
+/** One eval run over the given command-line arguments; resolves to the exit code. */
+export async function main(argv: string[]): Promise<number> {
+  const options = parseCliArgs(argv);
   loadDotEnvLocal();
 
   const apiKey = process.env.GEMINI_API_KEY;
@@ -127,12 +131,16 @@ async function main(): Promise<number> {
   return summary.ok ? 0 : 1;
 }
 
-main().then(
-  (code) => {
-    process.exitCode = code;
-  },
-  (err: unknown) => {
+/** Runs the eval and sets the process's exit code: main's, or 1 when it throws. */
+export async function run(argv: string[]): Promise<void> {
+  try {
+    process.exitCode = await main(argv);
+  } catch (err) {
     console.error(errorMessage(err));
     process.exitCode = 1;
-  },
-);
+  }
+}
+
+if (import.meta.main) {
+  void run(process.argv.slice(2));
+}
