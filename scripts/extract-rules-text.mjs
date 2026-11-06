@@ -15,6 +15,8 @@
 // src/__tests__/rulesTextQuality.test.ts fails a file below a words-per-page
 // or dictionary-word floor, above a stray-letter ceiling, or sharing most of
 // its text with another.
+//
+// It runs only when executed directly; the tests import its functions.
 import { readdir, readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join, basename } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -33,7 +35,7 @@ const MIN_CHARS_PER_PAGE = 200;
 // so the rules assistant can cite where a rule is: api/_lib/rulesAssistant.ts
 // asks for "(p. N)" and the chat links it to that page.
 const pageMarker = (n) => `[Page ${n}]\n`;
-const withPageMarkers = (pages) => pages.map((t, i) => pageMarker(i + 1) + t).join('\n\n');
+export const withPageMarkers = (pages) => pages.map((t, i) => pageMarker(i + 1) + t).join('\n\n');
 
 // Rio Grande's Dominion books picture whole cards, and each picture carries
 // its print-file slug ("treasure_2nd02.indd 68 7/12/21 12:43 AM") and art
@@ -43,7 +45,7 @@ const withPageMarkers = (pages) => pages.map((t, i) => pageMarker(i + 1) + t).jo
 // of a line and the rest kept, unless the rest is a scrap of another date.
 const PRINT_SLUG = /^[\w ]+\.indd \d+[a-z]* \d{1,2}\/\d{1,2}\/\d{2} \d{1,2}:\d{2} [AP]M/;
 const ART_CREDIT = /^Illustration: [\p{L} .'-]+ © ?\d{4} Rio Grande Games$/u;
-const withoutCardPrint = (text) =>
+export const withoutCardPrint = (text) =>
   text
     .split('\n')
     .flatMap((line) => {
@@ -54,16 +56,13 @@ const withoutCardPrint = (text) =>
     })
     .join('\n');
 
-await mkdir(OUTPUT_DIR, { recursive: true });
-
-const files = (await readdir(RULES_DIR)).filter((f) => f.endsWith('.pdf'));
-console.log(`Found ${files.length} PDF file(s) in public/rules/`);
-
-const needsOcr = [];
-
-// Step 1: Try unpdf text extraction for all files
-for (const file of files) {
-  const pdfPath = join(RULES_DIR, file);
+/**
+ * Extracts one PDF in `rulesDir` to its .txt in `outputDir`, returning
+ * whether it did: false when it has too little text (a scan) or unpdf can't
+ * read it, which leaves it to OCR.
+ */
+export async function extractFile(file, { rulesDir, outputDir }) {
+  const pdfPath = join(rulesDir, file);
   const outName = basename(file, '.pdf') + '.txt';
 
   try {
@@ -73,22 +72,45 @@ for (const file of files) {
     const text = withPageMarkers(pages);
 
     if (pages.join('\n\n').trim().length >= MIN_CHARS_PER_PAGE * result.totalPages) {
-      await writeFile(join(OUTPUT_DIR, outName), text);
+      await writeFile(join(outputDir, outName), text);
       console.log(`${file} -> ${outName} (${Buffer.byteLength(text)} bytes)`);
-    } else {
-      console.log(`${file} -> ${text.trim().length} chars, needs OCR`);
-      needsOcr.push(file);
+      return true;
     }
+    console.log(`${file} -> ${text.trim().length} chars, needs OCR`);
   } catch (err) {
     console.error(`${file} -> error: ${err.message}`);
-    needsOcr.push(file);
   }
+  return false;
 }
 
-// Step 2: OCR the rest in a child process (separate from unpdf/pdfjs-dist)
-if (needsOcr.length > 0) {
-  console.log(`\nRunning OCR on ${needsOcr.length} file(s)...`);
-  execFileSync('node', [join(import.meta.dirname, 'ocr-pdfs.mjs'), ...needsOcr], { stdio: 'inherit' });
+/** OCRs `files` in a child process, apart from unpdf's pdf.js: ./ocr-pdfs.mjs. */
+const ocrInChild = (files) =>
+  execFileSync('node', [join(import.meta.dirname, 'ocr-pdfs.mjs'), ...files], { stdio: 'inherit' });
+
+/**
+ * Extracts every PDF in `rulesDir`, then hands the ones with no text to
+ * `ocr` (by default ./ocr-pdfs.mjs, which reads public/rules/ and writes
+ * rules-text/ whatever the dirs here are).
+ */
+export async function run({ rulesDir = RULES_DIR, outputDir = OUTPUT_DIR, ocr = ocrInChild } = {}) {
+  await mkdir(outputDir, { recursive: true });
+
+  const files = (await readdir(rulesDir)).filter((f) => f.endsWith('.pdf'));
+  console.log(`Found ${files.length} PDF file(s) in public/rules/`);
+
+  // Step 1: try unpdf text extraction for every file.
+  const needsOcr = [];
+  for (const file of files) {
+    if (!(await extractFile(file, { rulesDir, outputDir }))) needsOcr.push(file);
+  }
+
+  // Step 2: OCR the rest.
+  if (needsOcr.length > 0) {
+    console.log(`\nRunning OCR on ${needsOcr.length} file(s)...`);
+    ocr(needsOcr);
+  }
+
+  console.log('Done.');
 }
 
-console.log('Done.');
+if (import.meta.main) await run();
