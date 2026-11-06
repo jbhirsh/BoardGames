@@ -106,6 +106,16 @@ export default defineConfig([
     },
   },
   {
+    // type-coverage counts every `any` (npm run typecov, at 100%), and its
+    // ignore comments would hide one where no review sees it; type the value
+    // where it enters instead. Its ignored files are only generated code,
+    // each named with its reason in package.json's "//typeCoverage".
+    files: ['**/*.{ts,tsx}'],
+    rules: {
+      'no-warning-comments': ['error', { terms: ['type-coverage:ignore'], location: 'anywhere' }],
+    },
+  },
+  {
     // The database's queries (Drizzle, api/_db/schema.ts): a delete or an
     // update with no `where` empties or rewrites a whole table, so each must
     // have one. The client is always named `db`.
