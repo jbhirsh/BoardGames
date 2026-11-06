@@ -89,12 +89,12 @@ const COVERS: Record<string, Entry> = {
 // games.ts fills it in), and its own `bgg` comes before any `subgames`,
 // whose ids are theirs.
 const source = await readFile('src/data/games.ts', 'utf8');
-const starts = [...source.matchAll(/\{\s*name:"([^"]+)",\s*slug:"([^"]+)",(?!\s*kind:)/g)];
+const starts = [...source.matchAll(/\{\s*name:\s*(['"])(.+?)\1,\s*slug:\s*(['"])(.+?)\3,(?!\s*kind:)/g)];
 const games = starts.map((m, i) => {
   const literal = source.slice(m.index, starts[i + 1]?.index ?? source.length).split('subgames:')[0];
-  const bgg = /\bbgg:(\d+)/.exec(literal)?.[1];
-  const img = /\bimg:"([^"]+)"/.exec(literal)?.[1] ?? `/images/${m[2]}.webp`;
-  return { name: m[1], slug: m[2], img, bgg: bgg ? Number(bgg) : undefined };
+  const bgg = /\bbgg:\s*(\d+)/.exec(literal)?.[1];
+  const img = /\bimg:\s*(['"])(.+?)\1/.exec(literal)?.[2] ?? `/images/${m[4]}.webp`;
+  return { name: m[2], slug: m[4], img, bgg: bgg ? Number(bgg) : undefined };
 });
 if (games.length === 0) throw new Error('no games found in src/data/games.ts');
 const only = process.argv.slice(2);

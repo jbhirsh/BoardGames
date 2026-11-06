@@ -30,20 +30,21 @@ interface Item {
 // The entries are data literals; read them straight off the source rather
 // than importing it (its path-less imports are Vite's, not Node's). Each
 // literal runs from its `id:` to the next one, and the fields inside can
-// come in any order.
+// come in any order, each string in either quote (Prettier's double quotes
+// where it holds an apostrophe).
 const source = await readFile('src/data/wishlist.ts', 'utf8');
-const starts = [...source.matchAll(/\{\s*id:"([^"]+)"/g)];
+const starts = [...source.matchAll(/\{\s*id:\s*(['"])(.+?)\1/g)];
 const entries = starts.flatMap((m, i) => {
-  const id = m[1];
+  const id = m[2];
   const literal = source.slice(m.index, starts[i + 1]?.index ?? source.length);
-  const bgg = /\bbgg:(\d+)/.exec(literal)?.[1];
+  const bgg = /\bbgg:\s*(\d+)/.exec(literal)?.[1];
   if (!bgg) {
     console.warn(`${id} has no bgg id in src/data/wishlist.ts; add one to fetch its art`);
     return [];
   }
   // Every entry has a name; the id (a readable slug) only stands in for a
   // literal the regex could not read.
-  const name = /\bname:"([^"]+)"/.exec(literal)?.[1] ?? id;
+  const name = /\bname:\s*(['"])(.+?)\1/.exec(literal)?.[2] ?? id;
   return [{ id, bgg: Number(bgg), name }];
 });
 if (entries.length === 0) throw new Error('no wishlist entries found in src/data/wishlist.ts');
