@@ -1,0 +1,12 @@
+{
+  "id": 42188631724,
+  "number": 531,
+  "workflow": "CI",
+  "branch": "google-passkey-sign-in",
+  "sha": "87d4c828bc0e21c898a25b3f35e2c34a1aacf187",
+  "created": "2026-11-06T08:34:19Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/42188631724",
+  "jobs": [
+    "ci"
+  ]
+}
