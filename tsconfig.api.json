@@ -3,6 +3,9 @@
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.api.tsbuildinfo",
     "lib": ["ES2023"],
+    // NodeNext, as Vercel runs api/ as Node ESM: a relative import Node's
+    // loader rejects (an extensionless one, the #26 incident that took
+    // production down while every check passed) fails tsc -b here instead.
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "types": ["node"]

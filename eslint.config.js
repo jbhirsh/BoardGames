@@ -96,7 +96,7 @@ export default defineConfig([
       '@eslint-community/eslint-comments': eslintComments,
     },
     rules: {
-      // Enforce CLAUDE.md's "never suppress lint or type errors": ban every
+      // Never suppress lint or type errors: ban every
       // inline eslint control comment (eslint-disable, disable-next-line,
       // eslint-enable, …). The sanctioned escape hatch stays the file-scoped
       // overrides in this config below — those are configuration, not comments,
