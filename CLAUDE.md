@@ -37,13 +37,18 @@ changing the module.
 - **`patches/` holds a `patch-package` fix** (on `postinstall`): a pdf.js range rejection
   marked handled. Delete it once upstream fixes it; a changed release fails to patch, which
   fails CI's install.
-- **Owner mutations must be JSON.** CSRF protection is the session cookie's SameSite=Lax, then
-  the JSON media type (`api/_lib/session.ts`), which a cross-site form can't send without a
-  preflight: every POST to `/api/graphql` must be JSON (checked on the headers as they arrived,
-  in `api/graphql.ts`), Yoga's CSRF plugin refuses a GET without its header, only a query is
-  served over GET, and CORS stays off.
-- **Emailed links never change state on a GET**: mail scanners follow every URL, so approve,
-  deny and sign-in links open app pages that only read until their button sends the mutation.
+- **Owner mutations must be JSON.** CSRF protection is Better Auth's session cookie's
+  SameSite=Lax, then the JSON media type (`api/_lib/json.ts`), which a cross-site form can't
+  send without a preflight: every POST to `/api/graphql` must be JSON (checked on the headers as
+  they arrived, in `api/graphql.ts`), Yoga's CSRF plugin refuses a GET without its header, only
+  a query is served over GET, and CORS stays off. `/api/auth/*` is Better Auth's (`api/_auth.ts`),
+  ahead of that gate: it checks the Origin of every POST itself, and answers only the routes the
+  app uses.
+- **Previews sign in through production** (Better Auth's OAuth proxy): only production holds
+  `GOOGLE_CLIENT_SECRET`, and `scripts/check-auth-env.ts` fails a deploy whose sign-in settings
+  are missing or misplaced.
+- **Emailed links never change state on a GET**: mail scanners follow every URL, so approve and
+  deny links open app pages that only read until their button sends the mutation.
 - **The database changes only through migrations**: edit `api/_db/schema.ts`, then
   `npm run db:generate` and commit `drizzle/`. Vercel's build applies them once the app has
   built (`vercel.json`'s `buildCommand`): production's only from main's code, and preview's

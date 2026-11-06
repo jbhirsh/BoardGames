@@ -242,6 +242,10 @@ export default defineConfig({
     // e2e/ holds the Playwright suite (`npm run test:e2e`), which drives a
     // real browser; its *.spec.ts files are not Vitest tests.
     exclude: [...configDefaults.exclude, 'e2e/**'],
+    // The passkey plugin goes through Vite rather than Node, so that the
+    // sign-in tests' mock of the WebAuthn checks it imports
+    // (@simplewebauthn/server, in authServer.test.ts) reaches it.
+    server: { deps: { inline: ['@better-auth/passkey'] } },
     // graphql's package picks a development build for Vite's resolver but
     // its production one for Node, which loads GraphQL Yoga in tests; two
     // copies would answer `instanceof GraphQLError` differently, so the

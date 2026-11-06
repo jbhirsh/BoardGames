@@ -143,3 +143,118 @@ export const votes = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.gameId, t.anonId] })],
 );
+
+// Sign-in (#296): Better Auth's tables (api/_auth.ts), in the shapes its
+// Drizzle adapter reads and its schema check holds them to. Each column's
+// key is Better Auth's field name, which the adapter looks a column up by;
+// the column itself is snake_case, as the app's are. Dates are milliseconds,
+// a new row's taken from the database's clock. A user's sessions, Google
+// account and passkeys go with it.
+
+/** When a row was made, in ms, from the database's clock: what Better Auth's `new Date()` defaults become. */
+const createdNow = (name: string) =>
+  integer(name, { mode: 'timestamp_ms' }).default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`);
+
+/**
+ * Everyone who has signed in, as Google says they are. Only the one whose
+ * verified email is the owner's (SUGGESTIONS_TO) gets anything for it.
+ */
+export const authUser = sqliteTable('auth_user', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  email: text('email').notNull().unique(),
+  emailVerified: integer('email_verified', { mode: 'boolean' }).default(false).notNull(),
+  image: text('image'),
+  createdAt: createdNow('created_at').notNull(),
+  updatedAt: createdNow('updated_at')
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+/**
+ * A browser's sign-in: its token is the session cookie's, which Better Auth
+ * signs. It lasts 30 days from when it was last used.
+ */
+export const authSession = sqliteTable(
+  'auth_session',
+  {
+    id: text('id').primaryKey(),
+    expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+    token: text('token').notNull().unique(),
+    createdAt: createdNow('created_at').notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+      .$onUpdate(() => new Date())
+      .notNull(),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+    userId: text('user_id')
+      .notNull()
+      .references(() => authUser.id, { onDelete: 'cascade' }),
+  },
+  (t) => [index('auth_session_user_id').on(t.userId)],
+);
+
+/**
+ * A user's Google account. Google's tokens are kept encrypted, and never
+ * read: the app asks Google nothing once someone is signed in.
+ */
+export const authAccount = sqliteTable(
+  'auth_account',
+  {
+    id: text('id').primaryKey(),
+    accountId: text('account_id').notNull(),
+    providerId: text('provider_id').notNull(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => authUser.id, { onDelete: 'cascade' }),
+    accessToken: text('access_token'),
+    refreshToken: text('refresh_token'),
+    idToken: text('id_token'),
+    accessTokenExpiresAt: integer('access_token_expires_at', { mode: 'timestamp_ms' }),
+    refreshTokenExpiresAt: integer('refresh_token_expires_at', { mode: 'timestamp_ms' }),
+    scope: text('scope'),
+    password: text('password'),
+    createdAt: createdNow('created_at').notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => [index('auth_account_user_id').on(t.userId)],
+);
+
+/** Short-lived values a sign-in needs between two requests: a Google sign-in's state, a passkey's challenge. */
+export const authVerification = sqliteTable(
+  'auth_verification',
+  {
+    id: text('id').primaryKey(),
+    identifier: text('identifier').notNull(),
+    value: text('value').notNull(),
+    expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+    createdAt: createdNow('created_at').notNull(),
+    updatedAt: createdNow('updated_at')
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => [index('auth_verification_identifier').on(t.identifier)],
+);
+
+/** A passkey (Face ID, Touch ID, a security key) a signed-in user added on a device. */
+export const authPasskey = sqliteTable(
+  'auth_passkey',
+  {
+    id: text('id').primaryKey(),
+    name: text('name'),
+    publicKey: text('public_key').notNull(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => authUser.id, { onDelete: 'cascade' }),
+    credentialID: text('credential_id').notNull(),
+    counter: integer('counter').notNull(),
+    deviceType: text('device_type').notNull(),
+    backedUp: integer('backed_up', { mode: 'boolean' }).notNull(),
+    transports: text('transports'),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }),
+    aaguid: text('aaguid'),
+  },
+  (t) => [index('auth_passkey_user_id').on(t.userId), index('auth_passkey_credential_id').on(t.credentialID)],
+);

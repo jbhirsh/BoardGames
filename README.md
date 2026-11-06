@@ -47,12 +47,13 @@ A sortable list view is also available:
 - **A service worker:** the app installs, opens offline, and keeps the rulebooks for offline
   reading.
 - **GraphQL (GraphQL Yoga) on one Vercel Function:** one typed API for the rules assistant,
-  votes, suggestions and sign-in, with the browser's documents generated from the schema, so
+  votes, suggestions and the owner's session, with the browser's documents generated from the schema, so
   the two sides can't drift apart.
 - **Google Gemini:** the rules assistant's answers, streamed over server-sent events.
-- **Turso, through Drizzle,** and **Upstash Redis:** the wishlist, suggestions and sessions,
-  moving from Redis to Turso (#290), with every schema change a reviewed migration.
-- **Resend:** the approval and magic-link emails.
+- **Turso, through Drizzle,** and **Upstash Redis:** the wishlist, suggestions and the owner's
+  sessions, moving from Redis to Turso (#290), with every schema change a reviewed migration.
+- **Better Auth:** the owner's sign-in, with Google or a passkey.
+- **Resend:** the approval emails.
 - **Sentry and Vercel Analytics:** errors from the browser and the API, and usage.
 - **Vitest, React Testing Library and axe:** unit and component tests, with accessibility
   assertions and an 80% line-coverage gate on every file.
@@ -67,7 +68,8 @@ A sortable list view is also available:
   its URL sync (`src/context/`), pure helpers (`src/utils/`), the pages and components
   (`src/components/`), and the service worker (`src/sw/`).
 - **`api/`, the one function:** a GraphQL API over the rules assistant, wishlist votes,
-  suggestions with email approval, the owner's edits and magic-link sign-in.
+  suggestions with email approval and the owner's edits, and the owner's sign-in (Better Auth,
+  at `/api/auth/*`).
 - **`scripts/`, the rules pipeline:** turns `public/rules/*.pdf` into the text the assistant
   reads (`rules-text/`), with OCR for scanned rulebooks, and fetches box art and game weights
   from BoardGameGeek.

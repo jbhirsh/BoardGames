@@ -9,7 +9,6 @@ vi.mock('../components/RulesPage', () => ({ default: () => <h1>RulesPage</h1> })
 vi.mock('../components/ScoreCalculatorPage', () => ({ default: () => <h1>ScoreCalculatorPage</h1> }));
 vi.mock('../components/WordCheckerPage', () => ({ default: () => <h1>WordCheckerPage</h1> }));
 vi.mock('../components/SignInPage', () => ({ default: () => <h1>SignInPage</h1> }));
-vi.mock('../components/SignInConfirmPage', () => ({ default: () => <h1>SignInConfirmPage</h1> }));
 const emailedDecisionPage = vi.hoisted(() => () => ({ default: () => <h1>EmailedDecisionPage</h1> }));
 vi.mock('../components/EmailedDecisionPage', emailedDecisionPage);
 
@@ -50,20 +49,16 @@ afterEach(() => {
 });
 
 describe('lazyPages', () => {
-  it.each([
-    'RulesPage',
-    'ScoreCalculatorPage',
-    'WordCheckerPage',
-    'SignInPage',
-    'SignInConfirmPage',
-    'EmailedDecisionPage',
-  ] as const)("loads %s's code when first shown, then clears the reload flag", async (name) => {
-    const Page = (await pages())[name];
-    show(Page);
-    expect(screen.getByText('Loading')).toBeInTheDocument();
-    expect(await screen.findByRole('heading', { name })).toBeInTheDocument();
-    expect(window.sessionStorage.getItem(RELOAD_KEY)).toBeNull();
-  });
+  it.each(['RulesPage', 'ScoreCalculatorPage', 'WordCheckerPage', 'SignInPage', 'EmailedDecisionPage'] as const)(
+    "loads %s's code when first shown, then clears the reload flag",
+    async (name) => {
+      const Page = (await pages())[name];
+      show(Page);
+      expect(screen.getByText('Loading')).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name })).toBeInTheDocument();
+      expect(window.sessionStorage.getItem(RELOAD_KEY)).toBeNull();
+    },
+  );
 
   it('keeps the flag when the code fails to load, so the error page reloads no more', async () => {
     vi.doMock('../components/EmailedDecisionPage', () => {

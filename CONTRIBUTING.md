@@ -23,11 +23,15 @@ assistant, wishlist, suggestions, sign-in and monitoring need the variables belo
 | `SENTRY_DSN` | serverless | Sentry Node DSN |
 | `GEMINI_API_KEY` | serverless | Google Gemini key, for the rules assistant |
 | `KV_REST_API_URL`, `KV_REST_API_TOKEN` | serverless | Upstash Redis REST URL and token |
-| `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` | build | the deployment's Turso database and its token, set in Vercel per environment |
+| `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` | build and serverless | the deployment's Turso database and its token, set in Vercel per environment |
 | `DEV_DB_PATH` | local (optional) | a SQLite file used in place of Turso for development |
 | `SENTRY_AUTH_TOKEN` | build (optional) | Sentry source-map upload during `vite build` |
-| `RESEND_API_KEY` | serverless | Resend key for the suggestion and sign-in emails; suggestions are refused until set |
-| `SUGGESTIONS_TO` | serverless | address that gets approve and deny emails; the only one that can sign in as the owner |
+| `BETTER_AUTH_SECRET` | serverless; checked at build | signs the session cookie; production's and preview's each their own |
+| `GOOGLE_CLIENT_ID` | serverless; checked at build | the Google OAuth client (Web application) |
+| `GOOGLE_CLIENT_SECRET` | serverless, production only; checked at build | its secret: only production exchanges a code, for itself and for previews; a preview build that has it fails |
+| `OAUTH_PROXY_SECRET` | serverless; checked at build | the same value in production and every preview: previews sign in through production |
+| `RESEND_API_KEY` | serverless | Resend key for the suggestion emails; suggestions are refused until set |
+| `SUGGESTIONS_TO` | serverless; production's checked at build | address that gets approve and deny emails; the Google account that signs in as the owner |
 | `SUGGESTIONS_FROM` | serverless (optional) | sender; defaults to `The Game Room <onboarding@resend.dev>` |
 | `APP_URL` | serverless (optional) | origin for the emailed links; defaults to the production URL |
 | `BGG_API_TOKEN` | serverless | BoardGameGeek token; without it suggestions still go through, with no details or art, and the owner is told why |

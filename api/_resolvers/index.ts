@@ -8,7 +8,8 @@
 // (jsonOnly below; Vercel parses a form body into an object, which Yoga
 // would then read as JSON), Yoga's CSRF prevention refuses a GET without
 // its header, a GET carries only queries (limits.ts), CORS is off so no
-// preflight is ever answered, and the session cookie is SameSite=Lax.
+// preflight is ever answered, and Better Auth's session cookie is
+// SameSite=Lax (api/_auth.ts).
 // limits.ts also bounds a document's size, aliases and depth.
 
 import { readFileSync } from 'node:fs';
@@ -16,11 +17,10 @@ import { createSchema, createYoga, type Plugin } from 'graphql-yoga';
 // Renamed: it is a Yoga plugin, not a React hook.
 import { useCSRFPrevention as csrfPrevention } from '@graphql-yoga/plugin-csrf-prevention';
 import type { LookupResult } from '../_lib/bgg.js';
-import { isJsonRequest, type Headers } from '../_lib/session.js';
-import * as auth from './auth.js';
+import { isJsonRequest, type Headers } from '../_lib/json.js';
 import { askRules, type AskRulesInput } from './chat.js';
 import { buildContext, limit, requireAdmin, type ApiContext, type ApiDeps } from './context.js';
-import { ApiError, guarded } from './errors.js';
+import { guarded } from './errors.js';
 import { limits } from './limits.js';
 import * as suggestions from './suggestions.js';
 import { castVote, readVotes } from './votes.js';
@@ -68,9 +68,6 @@ const Query = {
       await requireAdmin(ctx);
       return preview(await suggestions.previewGame(ctx.deps.suggestions, args.game));
     }),
-
-  signInLinkLive: (_: unknown, args: { token: string }, ctx: ApiContext) =>
-    guarded(...AUTH, () => auth.signInLinkLive(ctx.deps.auth.redis, args.token)),
 
   emailedSuggestion: (_: unknown, args: { id: string; token: string }, ctx: ApiContext) =>
     guarded(...SUGGESTIONS, async (): Promise<EmailedParent> => ({
@@ -132,29 +129,6 @@ const Mutation = {
     guarded(...SUGGESTIONS, async () => {
       await requireAdmin(ctx);
       await suggestions.removeSuggestion(ctx.deps.suggestions, args.id);
-      return true;
-    }),
-
-  // Each link request sends an email, so it is bounded tightly per IP.
-  requestSignInLink: (_: unknown, args: { email: string }, ctx: ApiContext) =>
-    guarded(...AUTH, async () => {
-      await limit(ctx, ctx.deps.limiters.signInLink);
-      await auth.requestSignInLink(ctx.deps.auth, args.email, ctx.defer);
-      return true;
-    }),
-
-  verifySignIn: (_: unknown, args: { token: string }, ctx: ApiContext) =>
-    guarded(...AUTH, async () => {
-      ctx.setCookie(await auth.verifySignIn(ctx.deps.auth, args.token));
-      return { admin: true };
-    }),
-
-  // JSON only, like every other owner mutation: a cross-site form could
-  // otherwise clear the cookie out from under the owner (see isJsonRequest).
-  logout: (_: unknown, __: unknown, ctx: ApiContext) =>
-    guarded(...AUTH, async () => {
-      if (!ctx.json) throw new ApiError(403, 'owner actions must be sent as JSON');
-      ctx.setCookie(await auth.logout(ctx.deps.redis, ctx.headers));
       return true;
     }),
 };

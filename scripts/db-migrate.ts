@@ -29,7 +29,8 @@
 
 import { pathToFileURL } from 'node:url';
 import { checkEnvironment, isDbEnvironment, type DbEnvironment } from '../api/_db/environment.ts';
-import { connection, isEmpty, open, recordEnvironment, recordedEnvironment, runMigrations, type Env } from './db.ts';
+import { connection, open, recordedEnvironment, type Env } from '../api/_db/connection.ts';
+import { isEmpty, recordEnvironment, runMigrations } from './db.ts';
 
 /** What a run did, for its log line. */
 export type Outcome = 'migrated' | 'claimed a new database and migrated it';

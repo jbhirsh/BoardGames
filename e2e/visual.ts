@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { expect, CHAT_ANSWER, stubOperation } from './fixtures';
+import { expect, CHAT_ANSWER, authRefusal, stubAuth, stubOperation } from './fixtures';
 
 /**
  * Visual regression's pages and states (the visual*.spec.ts files), and how
@@ -174,12 +174,114 @@ export const LINKS: Scenario[] = [
       await expect(page.getByRole('heading', { name: 'Deny Cascadia?' })).toBeVisible();
     },
   },
+];
+
+/** A passkey's registration options, as Better Auth's passkey plugin answers them. */
+export const REGISTER_OPTIONS = {
+  challenge: 'ZTJlLWNoYWxsZW5nZS0wMDAx',
+  rp: { name: 'The Game Room', id: 'localhost' },
+  user: { id: 'ZTJlLXVzZXItMDAwMQ', name: 'Jess', displayName: 'Jess' },
+  pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+  timeout: 60000,
+  attestation: 'none',
+  excludeCredentials: [],
+  authenticatorSelection: { residentKey: 'preferred', userVerification: 'preferred' },
+};
+
+/**
+ * The owner, signed in, adding a passkey on a device that makes one: the
+ * WebAuthn prompt answered at once, in every engine (a stand-in for Face
+ * ID that only these shots need; e2e/phone.spec.ts uses Chromium's virtual
+ * authenticator). An engine that offers no WebAuthn to the page (a
+ * headless one, or an address it won't trust) gets the PublicKeyCredential
+ * and navigator.credentials the passkey client checks for and calls.
+ */
+async function addPasskeyAnswered(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const bytes = () => new Uint8Array([1, 2, 3, 4]).buffer;
+    const credential = {
+      id: 'AQIDBA',
+      rawId: bytes(),
+      type: 'public-key',
+      authenticatorAttachment: 'platform',
+      response: { clientDataJSON: bytes(), attestationObject: bytes(), getTransports: () => ['internal'] },
+      getClientExtensionResults: () => ({}),
+    };
+    if (typeof window.PublicKeyCredential !== 'function') {
+      const StandIn = class {
+        static isUserVerifyingPlatformAuthenticatorAvailable = () => Promise.resolve(true);
+        static isConditionalMediationAvailable = () => Promise.resolve(false);
+      };
+      Object.defineProperty(window, 'PublicKeyCredential', { value: StandIn, configurable: true, writable: true });
+    }
+    Object.defineProperty(navigator, 'credentials', {
+      configurable: true,
+      value: {
+        create: () => Promise.resolve(credential),
+        get: () => Promise.resolve(null),
+      },
+    });
+  });
+  await stubAuth(page, '/passkey/generate-register-options', () => REGISTER_OPTIONS);
+  await stubAuth(page, '/passkey/verify-registration', () => ({ id: 'passkey-1' }));
+}
+
+/** Better Auth's session for another Google account. */
+const anotherAccount = () => ({ user: { email: 'sam.rivera@gmail.com' }, session: {} });
+/** Better Auth's answer to adding a passkey on a session over a day old. */
+const notFresh = () => authRefusal(403, 'SESSION_NOT_FRESH');
+
+/** /sign-in's states (components/SignInPage.tsx): in MORE, and on phones. */
+export const SIGN_IN: Scenario[] = [
   {
-    name: 'sign-in-link',
+    name: 'sign-in',
     open: async (page) => {
-      await answer(page, 'SignInLinkLive', { signInLinkLive: true });
-      await page.goto(`/sign-in/confirm?token=${LINK_TOKEN}`);
-      await expect(page.getByRole('heading', { name: 'Sign in to The Game Room?' })).toBeVisible();
+      await page.goto('/sign-in');
+      await expect(page.getByRole('button', { name: 'Sign in with Google' })).toBeVisible();
+    },
+  },
+  {
+    name: 'sign-in-error',
+    open: async (page) => {
+      await page.goto('/sign-in?error=access_denied');
+      await expect(page.getByRole('alert')).toHaveText('Signing in with Google was cancelled.');
+      await expect(page).toHaveURL(/\/sign-in$/);
+    },
+  },
+  {
+    name: 'sign-in-other-account',
+    open: async (page) => {
+      await stubAuth(page, '/get-session', anotherAccount);
+      await page.goto('/sign-in');
+      await expect(page.getByText(/You're signed in as sam\.rivera@gmail\.com/)).toBeVisible();
+    },
+  },
+  {
+    name: 'sign-in-owner',
+    open: async (page) => {
+      await answer(page, 'Session', { session: { admin: true } });
+      await page.goto('/sign-in');
+      await expect(page.getByRole('button', { name: 'Add a passkey on this device' })).toBeVisible();
+    },
+  },
+  {
+    name: 'sign-in-passkey-added',
+    open: async (page) => {
+      await answer(page, 'Session', { session: { admin: true } });
+      await addPasskeyAnswered(page);
+      await page.goto('/sign-in');
+      await page.getByRole('button', { name: 'Add a passkey on this device' }).click();
+      await expect(page.getByText('Passkey added. Next time, sign in with Face ID.')).toBeVisible();
+    },
+  },
+  {
+    name: 'sign-in-old-session',
+    open: async (page) => {
+      await answer(page, 'Session', { session: { admin: true } });
+      await stubAuth(page, '/passkey/generate-register-options', notFresh);
+      await page.goto('/sign-in');
+      await page.getByRole('button', { name: 'Add a passkey on this device' }).click();
+      await expect(page.getByText(/Adding a passkey needs a sign-in from today/)).toBeVisible();
     },
   },
 ];
@@ -295,13 +397,7 @@ export const MORE: Scenario[] = [
       await expect(page.getByText('A curved fruit.')).toBeVisible();
     },
   },
-  {
-    name: 'sign-in',
-    open: async (page) => {
-      await page.goto('/sign-in');
-      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    },
-  },
+  ...SIGN_IN,
   {
     name: 'not-found',
     open: async (page) => {

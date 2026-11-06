@@ -27,7 +27,7 @@ const item: StoredWishlistItem = {
 
 function renderControls(over: Partial<WishlistItem> = {}, admin = true) {
   const reload = vi.fn();
-  const auth = { admin, loaded: true, requestLink: vi.fn(), logout: vi.fn() };
+  const auth = { admin, loaded: true, refresh: vi.fn(async () => {}) };
   const { container } = render(
     <AuthContext.Provider value={auth}>
       <WishlistContext.Provider value={{ items: [], hidden: [], loaded: true, reload }}>

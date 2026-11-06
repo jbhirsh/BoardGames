@@ -60,7 +60,6 @@ vi.mock('../lazyPages', () => ({
   ScoreCalculatorPage: stand('ScoreCalculatorPage'),
   WordCheckerPage: stand('WordCheckerPage'),
   SignInPage: stand('SignInPage'),
-  SignInConfirmPage: stand('SignInConfirmPage'),
   EmailedDecisionPage: stand('EmailedDecisionPage'),
 }));
 
@@ -100,7 +99,6 @@ describe('the routes', () => {
     ['/score/7-wonders', 'ScoreCalculatorPage 7-wonders'],
     ['/score/card-deck/hearts', 'ScoreCalculatorPage card-deck hearts'],
     ['/word-checker', 'WordCheckerPage'],
-    ['/sign-in/confirm', 'SignInConfirmPage'],
     ['/approve', 'EmailedDecisionPage'],
     ['/deny', 'EmailedDecisionPage'],
   ])('%s shows %s, inside the layout', async (path, page) => {
@@ -153,7 +151,6 @@ describe("a page's loading header", () => {
     ['/score/7-wonders', 'Score Calculator'],
     ['/word-checker', 'Word Checker'],
     ['/sign-in', SIGN_IN_TITLE],
-    ['/sign-in/confirm', SIGN_IN_TITLE],
     ['/approve', 'Approve'],
     ['/deny', 'Deny'],
   ])('%s shows the header of %s while its code loads', async (path, title) => {

@@ -41,8 +41,7 @@ function renderWishlist(url = '/?c=want', hidden = false, admin = false) {
   const auth = {
     admin,
     loaded: true,
-    requestLink: vi.fn(async () => ({ ok: true as const })),
-    logout: vi.fn(async () => {}),
+    refresh: vi.fn(async () => {}),
   };
   return render(
     <MemoryRouter initialEntries={[url]}>

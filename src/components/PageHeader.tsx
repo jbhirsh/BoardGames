@@ -20,6 +20,11 @@ interface Props {
    * the page is loading.
    */
   loading?: boolean;
+  /**
+   * Centres the title and its line in a column 440px at most, under the Back
+   * link, for a page whose content is one narrow panel (the sign-in page).
+   */
+  narrow?: boolean;
   /** The buttons beside the title. */
   children?: ReactNode;
 }
@@ -35,7 +40,7 @@ const artClass =
 // A loading page's words, in grey bars the length of the words to come.
 const skeletonClass = 'skeleton-text rounded-md bg-bg3 box-decoration-clone text-transparent';
 
-export default function PageHeader({ title, desc, art, loading = false, children }: Props) {
+export default function PageHeader({ title, desc, art, loading = false, narrow = false, children }: Props) {
   return (
     // Loading, it all pulses in grey, the header restyling its parts so they
     // are the very ones the page draws.
@@ -51,7 +56,7 @@ export default function PageHeader({ title, desc, art, loading = false, children
       {/* On a phone the art and the title share a line, the buttons wrapping
           under them, so the description isn't squeezed into a word a line. */}
       <div
-        className="rules-title-row flex flex-wrap items-start gap-3.5 sm:flex-nowrap sm:items-center sm:gap-5"
+        className={`rules-title-row flex flex-wrap items-start gap-3.5 sm:flex-nowrap sm:items-center sm:gap-5 ${narrow ? 'mx-auto max-w-110' : ''}`}
         aria-hidden={loading || undefined}
       >
         {art &&

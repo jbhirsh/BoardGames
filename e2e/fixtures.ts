@@ -4,8 +4,10 @@ import { test as base, expect, type Page, type Request, type Route } from '@play
  * Shared setup for every spec: the page runs against deterministic stubs for
  * the API, and nothing it requests leaves the machine. The API is GraphQL at
  * /api/graphql (api/graphql.ts), so its stubs answer by operation name
- * (stubOperation); an operation nothing stubs fails the test, as does any
- * other /api call. Specs import `test` and `expect` from here, not from
+ * (stubOperation), and sign-in is Better Auth at /api/auth/* (api/_auth.ts),
+ * whose stubs answer by path (stubAuth): by default signed out. An operation
+ * or sign-in route nothing stubs fails the test, as does any other /api
+ * call. Specs import `test` and `expect` from here, not from
  * '@playwright/test'.
  */
 
@@ -109,6 +111,38 @@ export async function stubOperation(
   );
 }
 
+/** A request to Better Auth: its method and its JSON body, if any. */
+export interface AuthRequest {
+  method: string;
+  body: unknown;
+}
+
+/**
+ * Answers one of Better Auth's routes (`path` under /api/auth, e.g.
+ * '/get-session') with `stub`'s JSON, or a whole Reply; every other request
+ * passes on, as stubOperation's do. A stub that returns a Reply of status
+ * 403 with a `code` is how Better Auth refuses.
+ */
+export async function stubAuth(page: Page, path: string, stub: (request: AuthRequest) => unknown): Promise<void> {
+  await page.route(
+    (url) => url.pathname === `/api/auth${path}`,
+    (route) => {
+      const request = route.request();
+      const text = request.postData();
+      return answerAuth(route, stub({ method: request.method(), body: text ? (JSON.parse(text) as unknown) : null }));
+    },
+  );
+}
+
+/** Answers with `out` as JSON, or with a whole Reply. */
+async function answerAuth(route: Route, out: unknown): Promise<void> {
+  if (out instanceof Reply) return route.fulfill({ status: out.status, contentType: out.contentType, body: out.body });
+  return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(out) });
+}
+
+/** Better Auth's refusal: its status and code. */
+export const authRefusal = (status: number, code: string) => new Reply(status, JSON.stringify({ code, message: code }));
+
 async function stubBackend(page: Page, baseURL: string, unexpected: string[]): Promise<void> {
   const origin = new URL(baseURL).origin;
   const isApi = (url: URL, path: string) => url.origin === origin && url.pathname === path;
@@ -149,6 +183,8 @@ async function stubBackend(page: Page, baseURL: string, unexpected: string[]): P
   );
 
   await stubOperation(page, 'Session', () => ({ session: { admin: false } }));
+  // Signed out: no Better Auth session either.
+  await stubAuth(page, '/get-session', () => null);
   await stubOperation(page, 'Suggestions', () => ({ suggestions: [SUGGESTION] }));
   // A count for every id asked about, zeros included; a vote answers the
   // entry's new count.
