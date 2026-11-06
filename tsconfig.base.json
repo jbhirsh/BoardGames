@@ -1,7 +1,8 @@
 {
   // The options every project shares, so their strictness can't drift apart.
   // Each tsconfig.*.json extends this and adds its own module setup, libraries,
-  // types and files.
+  // types and files; a new one also joins npm run typecov's project list
+  // (package.json), or its `any`s go uncounted.
   "compilerOptions": {
     "target": "ES2023",
     "skipLibCheck": true,

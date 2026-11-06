@@ -1,8 +1,8 @@
 /**
- * Architecture rules (dependency-cruiser). CLAUDE.md states the layering as
- * prose — "keep src/utils free of React and side effects", "src/data is the
- * static data layer" — and the AI review re-checks it per PR, but nothing
- * failed a build on a violation. These rules make the layering computational:
+ * Architecture rules (dependency-cruiser). The layering ("keep src/utils free
+ * of React and side effects", "src/data is the static data layer") was once
+ * only prose the AI review re-checked per PR, and nothing failed a build on a
+ * violation. These rules make the layering computational:
  *
  *   data  → data                      (leaf: types + compiled-in constants)
  *   utils → utils, data               (pure helpers; no React, no context)
@@ -27,7 +27,7 @@ module.exports = {
       name: 'utils-pure',
       severity: 'error',
       comment:
-        'src/utils are pure helpers: they may reach only other utils and the static data layer (CLAUDE.md: "keep these free of React and side effects").',
+        'src/utils are pure helpers: they may reach only other utils and the static data layer, free of React and side effects.',
       from: { path: '^src/utils' },
       to: { path: '^src/', pathNot: '^src/(utils|data)/' },
     },

@@ -7,9 +7,8 @@ name: PR visuals
 # description edits too, so adding the pictures turns it green without a new
 # push, and it passes Dependabot's PRs. Whether a change to motion needs a GIF
 # rather than a still is a judgment call that Claude Review makes
-# (claude-review.yml). It is not a required check today; no `paths:` filter
-# all the same, so making it one can't leave a PR waiting on a check that
-# never reports.
+# (claude-review.yml). It is a required check, so it has no `paths:` filter:
+# a filtered-out workflow never reports, and the PR would wait on it forever.
 on:
   pull_request:
     branches: [main]
