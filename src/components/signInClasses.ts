@@ -4,7 +4,7 @@ import { tapTargetClass } from './sharedClasses';
  * The owner's sign-in page (SignInPage) and the pages the owner's emails
  * link to (EmailedLinkPage and the pages in it): one panel holding a line
  * of status, a field and its buttons. A button's or field's height is the
- * caller's: 40px on the sign-in form, 44px (a thumb's) on an emailed page.
+ * caller's: 44px (a thumb's) on the sign-in page and on an emailed page.
  */
 
 /** The panel, 440px at most. */

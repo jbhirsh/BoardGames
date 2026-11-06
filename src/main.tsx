@@ -3,14 +3,7 @@ import { StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import App, { HomePage } from './App';
-import {
-  RulesPage,
-  ScoreCalculatorPage,
-  WordCheckerPage,
-  SignInPage,
-  SignInConfirmPage,
-  EmailedDecisionPage,
-} from './lazyPages';
+import { RulesPage, ScoreCalculatorPage, WordCheckerPage, SignInPage, EmailedDecisionPage } from './lazyPages';
 import NotFoundPage, { RouteError } from './components/NotFoundPage';
 import RouteFallback, { RulesFallback } from './components/RouteFallback';
 import { AuthProvider } from './context/AuthContext';
@@ -26,10 +19,9 @@ import { SIGN_IN_INTRO, SIGN_IN_TITLE } from './data/signIn';
 //                        deck's Hearts), in data/scoreCalculators.ts
 //                        (components/ScoreCalculatorPage.tsx)
 //   /word-checker        components/WordCheckerPage.tsx
-//   /sign-in             the owner's magic-link sign-in (components/SignInPage.tsx),
-//                        which nothing on the home page links to
-//   /sign-in/confirm     where the emailed sign-in link leads
-//                        (components/SignInConfirmPage.tsx)
+//   /sign-in             the owner's sign-in, with Google or a passkey
+//                        (components/SignInPage.tsx), which nothing on the
+//                        site links to: the owner keeps it bookmarked
 //   /approve, /deny      where a suggestion email's links lead
 //                        (components/EmailedDecisionPage.tsx)
 // The emailed links' pages read with a query and act only when their button
@@ -73,18 +65,10 @@ const router = createBrowserRouter([
         path: '/sign-in',
         element: (
           <AuthProvider>
-            <Suspense fallback={<RouteFallback title={SIGN_IN_TITLE} desc={SIGN_IN_INTRO} art={false} />}>
+            <Suspense fallback={<RouteFallback title={SIGN_IN_TITLE} desc={SIGN_IN_INTRO} art={false} narrow />}>
               <SignInPage />
             </Suspense>
           </AuthProvider>
-        ),
-      },
-      {
-        path: '/sign-in/confirm',
-        element: (
-          <Suspense fallback={<RouteFallback title={SIGN_IN_TITLE} art={false} />}>
-            <SignInConfirmPage />
-          </Suspense>
         ),
       },
       ...(['approve', 'deny'] as const).map((decision) => ({

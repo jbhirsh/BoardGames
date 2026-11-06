@@ -1,7 +1,8 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { open, runMigrations, type Opened } from '../../../scripts/db.ts';
+import { open, type Opened } from '../../../api/_db/connection.ts';
+import { runMigrations } from '../../../scripts/db.ts';
 
 export interface TestDb extends Opened {
   /** The database's file, for a test that opens it again as a script would. */

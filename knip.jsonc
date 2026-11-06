@@ -5,8 +5,8 @@
   // the workflows); these are the ones they can't see.
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
-    // Vercel Functions.
-    "api/*.ts",
+    // Vercel Functions (a file starting `_` is a module, not a function).
+    "api/[^_]*.ts",
     // Run as a child process by extract-rules-text.mjs.
     "scripts/ocr-pdfs.mjs",
     // Scenarios passed to `npm run pr-gif` on the command line, and the

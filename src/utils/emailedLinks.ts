@@ -1,9 +1,9 @@
 /**
  * What the pages behind the owner's emailed links say
- * (components/EmailedDecisionPage.tsx, components/SignInConfirmPage.tsx),
- * in the words the API's own confirmation pages used before they moved
- * into the app: why a link can't be used, why BoardGameGeek has nothing
- * for a game and what approving does about it, and what an approval did.
+ * (components/EmailedDecisionPage.tsx), in the words the API's own
+ * confirmation pages used before they moved into the app: why a link can't
+ * be used, why BoardGameGeek has nothing for a game and what approving does
+ * about it, and what an approval did.
  */
 import type { LookupOutcome, PreviewDetails } from './lookupNotice';
 

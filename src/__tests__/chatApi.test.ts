@@ -452,21 +452,17 @@ describe('the rules assistant daily cap', () => {
     expect(streamRulesAnswer).not.toHaveBeenCalled();
   });
 
-  it('lets votes, suggestions and sign-in through when Redis is down', async () => {
+  it('lets votes and suggestions through when Redis is down', async () => {
     const broken = limiter('down', 1);
     down.add('down');
     const api = testApi((d) => ({
-      limiters: { votes: broken, signInLink: broken, suggest: broken },
+      limiters: { votes: broken, suggest: broken },
       suggestions: { ...d.suggestions, mailer: null },
-      auth: { ...d.auth, mailer: null },
     }));
     // Each answer is the resolver's own, past the limiter.
     expect((await api.run('{ wishlistVotes(ids: []) { myVotes } }')).errors[0].message).toBe('ids is required');
     expect((await api.run('mutation { suggestGame(game: "Azul", name: "Sam") { id } }')).errors[0].message).toBe(
       'Suggestions are not open yet',
-    );
-    expect((await api.run('mutation { requestSignInLink(email: "a@b.c") }')).errors[0].message).toBe(
-      'Sign-in is not set up yet',
     );
   });
 });

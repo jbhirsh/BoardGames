@@ -18,23 +18,28 @@ the trust boundary. Flag:
 
 - An owner-only operation (listing the queue, previewing, deciding without
   a token, adding, editing or removing) that doesn't go through
-  `requireAdmin` in `_resolvers/context.ts`: the session check, plus a JSON
+  `requireAdmin` in `_resolvers/context.ts`: the owner check (a Better Auth
+  session whose verified email is `SUGGESTIONS_TO`, `api/_auth.ts`), plus a JSON
   POST for mutations. Requiring JSON is the CSRF protection (with the
   `jsonOnly` guard and Yoga's CSRF plugin in `_resolvers/index.ts`): a
   cross-site form can post urlencoded data with the cookie attached but
   can't send JSON without a preflight. Mutations must never be served over
   GET, and CORS stays off.
-- An emailed-link flow (approve/deny, magic-link sign-in) that changes state
-  on a plain GET, since mail scanners follow every link, or that doesn't
-  verify its token. Sign-in tokens must stay single-use (`getdel`).
+- An emailed-link flow (approve/deny) that changes state on a plain GET,
+  since mail scanners follow every link, or that doesn't verify its token.
+- A Better Auth route answering under `/api/auth/*` that the app doesn't
+  use (`allowedRoute` in `api/_auth.ts`), production answering the OAuth
+  proxy's completion route, Google's client secret reaching a preview, or
+  an ID-token sign-in turned back on (`disableIdTokenSignIn`).
 - A new endpoint or parameter that takes untrusted input without validating
   it (slug format, lengths, counts, allowed values).
 - A new public (unauthenticated) path that writes data, sends mail or calls
   a paid API without the per-IP limit from `_lib/rateLimit.ts`
-  (`enforceRateLimit`), as voting, chat, suggesting and sign-in requests
-  have.
+  (`enforceRateLimit`), as voting, chat and suggesting have. Sign-in has
+  none, by the owner's decision on #296.
 - A caught error in a handler that isn't reported to Sentry.
-- The session cookie losing `HttpOnly`, `Secure` or `SameSite=Lax`.
+- The session cookie losing `HttpOnly`, `Secure` or `SameSite=Lax`, or
+  Better Auth's origin check being turned off (`disableOriginCheck`).
 - An external call (Gemini, Resend, BoardGameGeek) whose failure breaks a
   path that must keep working: a BoardGameGeek miss still approves the
   suggestion, and missing Resend configuration returns 503 rather than
@@ -44,8 +49,9 @@ the trust boundary. Flag:
 
 Redis holds live production data that outlives every deploy: the vote sets
 (`wishlist:votes:<id>`), the suggestion hashes and the `suggestions:active` /
-`suggestions:approved` / `suggestions:unsent` lists, sessions and magic-link
-tokens (`auth:*`) and rate-limit counters. Each browser also keeps
+`suggestions:approved` / `suggestions:unsent` lists and rate-limit
+counters; Turso holds the owner's sign-in (Better Auth's `auth_*` tables).
+Each browser also keeps
 localStorage: the anonymous voter id (`wishlist:anonId`), which dedupes
 votes, and the remembered display name (`gameroom:name`). A renamed key or
 changed shape orphans existing records or makes them unreadable, and a

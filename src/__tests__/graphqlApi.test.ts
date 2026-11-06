@@ -3,21 +3,15 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { createApi } from '../../api/_resolvers/index';
 import { ApiError, guarded } from '../../api/_resolvers/errors';
 import type { LookupResult } from '../../api/_lib/bgg';
-import { refusing, testApi } from './helpers/api';
+import { OWNER_COOKIE, refusing, testApi } from './helpers/api';
 
 // What the API does around the resolvers: CSRF, the owner's session, the
 // schema's enums, errors and time limits. Each operation's own rules are in
 // votesApi, authApi, suggestionsApi and chatApi.
 
-const SID = 'test-session-' + 'b'.repeat(20);
 const TOKEN = 'test-token-' + 'a'.repeat(21);
-const OWNER = { cookie: `gr_session=${SID}` };
-
-function ownerApi(over?: Parameters<typeof testApi>[0]) {
-  const api = testApi(over);
-  api.redis.strings[`auth:session:${SID}`] = '1';
-  return api;
-}
+const OWNER = { cookie: OWNER_COOKIE };
+const REMOVE = 'mutation { removeSuggestion(id: "sug-aaaaaa") }';
 
 const pending = {
   id: 'sug-aaaaaa',
@@ -41,24 +35,25 @@ describe('CSRF', () => {
     'text/plain',
     'text/plain; x=application/json',
   ])('refuses a %s POST before reading it', async (contentType) => {
-    const api = ownerApi();
+    const api = testApi();
     const res = await api.fetch('/api/graphql', {
       method: 'POST',
       headers: { 'content-type': contentType, cookie: OWNER.cookie },
-      body: 'query=mutation%20%7B%20logout%20%7D',
+      body: `query=${encodeURIComponent(REMOVE)}`,
     });
     expect(res.status).toBe(415);
     expect(await res.json()).toEqual({ errors: [{ message: 'Requests must be sent as JSON' }] });
-    expect(api.redis.strings[`auth:session:${SID}`]).toBe('1');
+    expect(api.deps.ownerSession).not.toHaveBeenCalled();
+    expect(api.rawRedis.multi).not.toHaveBeenCalled();
   });
 
   it('never serves a mutation over GET', async () => {
-    const api = ownerApi();
-    const res = await api.fetch(`/api/graphql?query=${encodeURIComponent('mutation { logout }')}`, {
+    const api = testApi();
+    const res = await api.fetch(`/api/graphql?query=${encodeURIComponent(REMOVE)}`, {
       headers: { 'x-graphql-yoga-csrf': '1', cookie: OWNER.cookie },
     });
     expect(res.status).toBe(405);
-    expect(api.redis.strings[`auth:session:${SID}`]).toBe('1');
+    expect(api.rawRedis.multi).not.toHaveBeenCalled();
   });
 
   it("answers a GET query only with Yoga's CSRF header", async () => {
@@ -85,7 +80,7 @@ describe('CSRF', () => {
   });
 
   it('looks a game up for the owner only as JSON, never over GET', async () => {
-    const api = ownerApi((d) => ({ suggestions: { ...d.suggestions, lookup: vi.fn(async () => WINGSPAN) } }));
+    const api = testApi((d) => ({ suggestions: { ...d.suggestions, lookup: vi.fn(async () => WINGSPAN) } }));
     const res = await api.fetch(
       `/api/graphql?query=${encodeURIComponent('{ previewGame(game: "Wingspan") { outcome } }')}`,
       {
@@ -107,10 +102,10 @@ describe('limits on a request', () => {
     // A validation error: GraphQL-over-HTTP answers it 200 to a plain JSON client.
     expect(refused.data).toBeNull();
     expect(refused.errors[0].message).toBe('A request may use at most 15 aliases');
-    const links = await api.run(many(50, `signInLinkLive(token: "${TOKEN}")`));
-    expect(links.errors[0].message).toBe('A request may use at most 15 aliases');
+    const sessions = await api.run(many(50, 'session { admin }'), {}, OWNER);
+    expect(sessions.errors[0].message).toBe('A request may use at most 15 aliases');
     expect(api.rawRedis.lrange).not.toHaveBeenCalled();
-    expect(api.redis.get).not.toHaveBeenCalled();
+    expect(api.deps.ownerSession).not.toHaveBeenCalled();
     expect((await api.run(many(15, 'suggestions { id }'))).errors).toEqual([]);
   });
 
@@ -160,7 +155,7 @@ describe("the owner's operations", () => {
   it.each(OWNER_ONLY)('refuses %s without a live session, changing nothing', async (_name, query) => {
     const api = testApi();
     api.rawRedis.hashes['suggestions:sug-aaaaaa'] = { ...pending, status: 'approved' };
-    for (const init of [{}, { cookie: 'gr_session=' + 'c'.repeat(24) }]) {
+    for (const init of [{}, { cookie: 'better-auth.session_token=someone-else' }]) {
       const res = await api.run(query, {}, init);
       expect(res.status).toBe(403);
       expect(res.errors[0]).toMatchObject({ message: 'owner sign-in required', extensions: { code: 'FORBIDDEN' } });
@@ -169,9 +164,26 @@ describe("the owner's operations", () => {
     expect(api.rawRedis.multi).not.toHaveBeenCalled();
   });
 
+  it('asks the owner check once a request, and sends the cookie it renewed with the answer', async () => {
+    const RENEWED =
+      '__Secure-better-auth.session_token=renewed; Max-Age=2592000; Path=/; HttpOnly; Secure; SameSite=Lax';
+    const ownerSession = vi.fn(async () => ({ owner: true, setCookies: [RENEWED] }));
+    const api = testApi(() => ({ ownerSession }));
+    const res = await api.run('{ a: session { admin } b: session { admin } pendingSuggestions { id } }', {}, OWNER);
+    expect(res.data).toEqual({ a: { admin: true }, b: { admin: true }, pendingSuggestions: [] });
+    expect(ownerSession).toHaveBeenCalledTimes(1);
+    expect(ownerSession).toHaveBeenCalledWith(expect.objectContaining({ cookie: OWNER_COOKIE }));
+    expect(res.headers.getSetCookie()).toEqual([RENEWED]);
+
+    // A request that never asks sends no cookie.
+    const votes = await api.run('{ wishlistVotes(ids: ["azul"]) { myVotes } }', {}, OWNER);
+    expect(votes.headers.getSetCookie()).toEqual([]);
+    expect(ownerSession).toHaveBeenCalledTimes(1);
+  });
+
   it('works the queue with a session: lists, previews, approves, edits and removes', async () => {
     const lookup = vi.fn(async (): Promise<LookupResult> => ({ outcome: 'no-match' }));
-    const api = ownerApi((d) => ({ suggestions: { ...d.suggestions, lookup } }));
+    const api = testApi((d) => ({ suggestions: { ...d.suggestions, lookup } }));
     api.rawRedis.hashes['suggestions:sug-aaaaaa'] = pending;
     api.rawRedis.lists['suggestions:active'] = ['sug-aaaaaa'];
 
@@ -218,7 +230,7 @@ describe("the owner's operations", () => {
 
   it('adds a game, telling apart details left out (look it up) and null (none)', async () => {
     const lookup = vi.fn(async () => WINGSPAN);
-    const api = ownerApi((d) => ({ suggestions: { ...d.suggestions, lookup } }));
+    const api = testApi((d) => ({ suggestions: { ...d.suggestions, lookup } }));
     const ADD =
       'mutation ($details: DetailsInput) { addGame(game: "Wingspan", name: "Jess", type: "strategy", details: $details) { item { source details { mins type } } lookup } }';
     const looked = await api.run(ADD, {}, OWNER);

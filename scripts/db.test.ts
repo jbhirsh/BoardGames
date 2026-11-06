@@ -4,7 +4,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
-import { connection, open, recordEnvironment, recordedEnvironment, runMigrations } from './db.ts';
+import { connection, open, recordedEnvironment } from '../api/_db/connection.ts';
+import { recordEnvironment, runMigrations } from './db.ts';
 import { expectedEnvironment, migrateDatabase, run as runMigrate } from './db-migrate.ts';
 
 let dirs: string[] = [];

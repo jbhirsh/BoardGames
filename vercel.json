@@ -1,7 +1,7 @@
 {
   "outputDirectory": "dist",
   "framework": "vite",
-  "buildCommand": "npm run build && npm run db:migrate",
+  "buildCommand": "npm run build && node scripts/check-auth-env.ts && npm run db:migrate",
   "devCommand": "npx vite --port $PORT",
   "functions": {
     "api/graphql.ts": {
@@ -11,7 +11,7 @@
   },
   "headers": [
     {
-      "source": "/(approve|deny|sign-in/confirm)",
+      "source": "/(approve|deny)",
       "headers": [
         {
           "key": "Referrer-Policy",
@@ -30,6 +30,10 @@
     }
   ],
   "rewrites": [
+    {
+      "source": "/api/auth/:path*",
+      "destination": "/api/graphql"
+    },
     {
       "source": "/((?!api/)(?!.*\\..*).*)",
       "destination": "/index.html"

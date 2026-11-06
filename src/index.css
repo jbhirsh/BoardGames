@@ -124,6 +124,12 @@
      Its tints by modifier: bg-vote/10. */
   --color-vote: #d33945;
   --color-vote-hover: #c02f3b;
+  /* Google's "G" on Sign in with Google (SignInPage): its brand colours,
+     the same in both themes, as Google's sign-in guidelines ask. */
+  --color-google-blue: #4285f4;
+  --color-google-green: #34a853;
+  --color-google-yellow: #fbbc05;
+  --color-google-red: #ea4335;
   --color-text: #1d1d1f;
   --color-text2: #6e6e73;
   /* 4.5:1 or better on --color-bg and --color-bg2 (WCAG AA); #86868B was 3.5:1. */

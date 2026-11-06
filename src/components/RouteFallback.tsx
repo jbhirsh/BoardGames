@@ -15,6 +15,8 @@ interface Props {
   desc?: string;
   /** Whether the page's header has box art. */
   art?: boolean;
+  /** Whether the page's header is centred and narrow (PageHeader's `narrow`). */
+  narrow?: boolean;
   /** Its header's buttons, the same elements, greyed and inert. */
   children?: ReactNode;
 }
@@ -27,10 +29,16 @@ interface Props {
  * fonts and hidden, so they wrap where the page's would and the page drops in
  * without moving.
  */
-export default function RouteFallback({ title = 'The Game Room', desc = 'Loading', art = true, children }: Props) {
+export default function RouteFallback({
+  title = 'The Game Room',
+  desc = 'Loading',
+  art = true,
+  narrow = false,
+  children,
+}: Props) {
   return (
     <div className={pageClass} aria-busy="true">
-      <PageHeader title={title} desc={desc} art={art} loading>
+      <PageHeader title={title} desc={desc} art={art} narrow={narrow} loading>
         {children}
       </PageHeader>
     </div>

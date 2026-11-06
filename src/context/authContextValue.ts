@@ -5,6 +5,5 @@ import type { Auth } from '../hooks/useAuth';
 export const AuthContext = createContext<Auth>({
   admin: false,
   loaded: true,
-  requestLink: async () => ({ ok: false, error: 'Sign-in is not available here' }),
-  logout: async () => {},
+  refresh: async () => {},
 });

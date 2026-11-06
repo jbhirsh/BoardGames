@@ -1,26 +1,32 @@
 // What every resolver gets: the API's dependencies (Redis, Resend, the
-// BoardGameGeek lookup, the rate limiters, Gemini), and per request the
-// caller's IP for rate limits, whether the request is a JSON POST, whether
-// its cookie names a live owner session, and a way to set a cookie or leave
-// work running after the answer.
+// BoardGameGeek lookup, the rate limiters, Gemini, the owner check), and per
+// request the caller's IP for rate limits, whether the request is a JSON
+// POST, whether its session is the owner's, and a way to set a cookie or
+// leave work running after the answer.
 
+import { isJsonRequest, type Headers } from '../_lib/json.js';
 import { clientIp, rateLimitRefusal, type RateLimiter } from '../_lib/rateLimit.js';
-import { isAdmin, isJsonRequest, type Headers, type SessionRedis } from '../_lib/session.js';
-import type { AuthDeps } from './auth.js';
 import type { ChatDeps } from './chat.js';
 import { ApiError } from './errors.js';
 import type { SuggestionsDeps } from './suggestions.js';
 import type { VotesRedis } from './votes.js';
 
+/** Whether a request's session is the owner's, and the cookies that renew it (api/_auth.ts). */
+export interface OwnerSession {
+  owner: boolean;
+  setCookies?: string[];
+}
+
 export interface ApiDeps {
-  /** The Upstash client with its default reply parsing, for votes and sessions. */
-  redis: VotesRedis & SessionRedis;
+  /** The Upstash client with its default reply parsing, for votes. */
+  redis: VotesRedis;
   /** Suggestions read through the raw client (getRawRedis), with the mailer and the lookup. */
   suggestions: SuggestionsDeps;
-  auth: AuthDeps;
   chat: ChatDeps;
-  /** Per-IP limits, each failing open: votes (reads and writes), sign-in links, new suggestions. */
-  limiters: { votes: RateLimiter | null; signInLink: RateLimiter | null; suggest: RateLimiter | null };
+  /** Per-IP limits, each failing open: votes (reads and writes), new suggestions. */
+  limiters: { votes: RateLimiter | null; suggest: RateLimiter | null };
+  /** Reads whether a request's session is the owner's (ownerSessionReader in api/_auth.ts; a fake in tests). */
+  ownerSession: (headers: Headers) => Promise<OwnerSession>;
 }
 
 export interface ApiContext {
@@ -30,7 +36,7 @@ export interface ApiContext {
   ip: string;
   /** Whether the request is a POST whose body is JSON, as every owner mutation must be. */
   json: boolean;
-  /** Whether the cookie names a live owner session; asked once per request. */
+  /** Whether the session is the owner's; asked once per request, its renewed cookie set as it's read. */
   admin: () => Promise<boolean>;
   setCookie: (value: string) => void;
   /** Keeps work (an email) running after the answer has gone. */
@@ -53,7 +59,11 @@ export function buildContext(deps: ApiDeps, request: RequestParts): ApiContext {
     headers: request.headers,
     ip: clientIp({ headers: request.headers, socket: { remoteAddress: request.remoteAddress } }),
     json: request.method === 'POST' && isJsonRequest(request.headers),
-    admin: () => (admin ??= isAdmin(deps.redis, request.headers)),
+    admin: () =>
+      (admin ??= deps.ownerSession(request.headers).then(({ owner, setCookies = [] }) => {
+        for (const value of setCookies) request.setCookie(value);
+        return owner;
+      })),
     setCookie: request.setCookie,
     defer: request.defer,
   };
