@@ -1,6 +1,7 @@
 import { vi } from 'vitest';
 import { createApi } from '../../../api/_resolvers/index';
 import type { ApiDeps } from '../../../api/_resolvers/context';
+import type { Headers as NodeHeaders } from '../../../api/_lib/json';
 import type { Mail } from '../../../api/_lib/mail';
 import type { RateLimiter } from '../../../api/_lib/rateLimit';
 import { fakeRedis } from './fakeRedis';
@@ -25,7 +26,7 @@ export interface TestApi {
   redis: ReturnType<typeof fakeRedis>;
   rawRedis: ReturnType<typeof fakeRedis>;
   sent: Mail[];
-  /** Work the API left running after an answer (the sign-in email). */
+  /** Work the API left running after an answer (a suggestion's email). */
   deferred: Promise<unknown>[];
   /** POSTs one operation as JSON (or as `contentType`), with the session cookie when `cookie` is given. */
   run(query: string, variables?: Record<string, unknown>, init?: RunInit): Promise<GqlAnswer>;
@@ -39,6 +40,16 @@ interface RunInit {
   ip?: string;
   accept?: string;
 }
+
+/**
+ * The cookie the fake owner check takes for the owner's session: the real
+ * one (api/_auth.ts, against Better Auth) is authServer.test.ts's.
+ */
+export const OWNER_COOKIE = 'better-auth.session_token=owner-session';
+
+/** testApi's owner check: the owner's with OWNER_COOKIE, no one's without. */
+const fakeOwnerSession = (headers: NodeHeaders) =>
+  Promise.resolve({ owner: typeof headers.cookie === 'string' && headers.cookie.includes(OWNER_COOKIE) });
 
 /** A limiter that refuses every request. */
 export const refusing = (): RateLimiter => ({ limit: vi.fn(async () => ({ success: false })) });
@@ -64,13 +75,6 @@ export function testApi(over: (deps: ApiDeps) => Partial<ApiDeps> = () => ({})):
       randomId: () => 'sug-bbbbbb',
       randomToken: () => 'test-token-' + 'b'.repeat(21),
     },
-    auth: {
-      redis,
-      mailer,
-      ownerEmail: 'jess@example.com',
-      baseUrl: () => 'https://games.example',
-      randomToken: () => 'test-token-' + 'a'.repeat(21),
-    },
     chat: {
       limiter: null,
       dailyLimiter: null,
@@ -79,7 +83,8 @@ export function testApi(over: (deps: ApiDeps) => Partial<ApiDeps> = () => ({})):
       apiKey: 'test-key',
       retryDelayMs: 0,
     },
-    limiters: { votes: null, signInLink: null, suggest: null },
+    limiters: { votes: null, suggest: null },
+    ownerSession: vi.fn(fakeOwnerSession),
   };
   const deps: ApiDeps = { ...base, ...over(base) };
   const yoga = createApi(() => deps);

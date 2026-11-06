@@ -33,8 +33,9 @@ functions for the AI and voting features.
   owner gets an email with Approve and Deny links, and approved games join
   the wishlist credited to the suggester, with details and box art from
   BoardGameGeek.
-- **Owner sign-in by magic link** (`/sign-in`): signed in, the wishlist shows
-  the pending queue, an add-a-game form and edit/remove controls.
+- **Owner sign-in with Google or a passkey** (`/sign-in`, Better Auth):
+  signed in, the wishlist shows the pending queue, an add-a-game form and
+  edit/remove controls.
 - **Accessibility-tested UI** — `eslint-plugin-jsx-a11y-x` static checks plus
   `axe-core` assertions on rendered components in CI.
 
@@ -58,7 +59,8 @@ A sortable list view is also available:
 - **Content:** `react-markdown` for AI answers; rule PDFs rendered inline
 - **Backend:** Vercel serverless functions (`@vercel/node`)
 - **AI:** Google Gemini via `@google/genai` (`gemini-2.5-flash`, streamed)
-- **Data / KV:** Upstash Redis (`@upstash/redis`) for wishlist votes, suggestions and owner sessions
+- **Data / KV:** Upstash Redis (`@upstash/redis`) for wishlist votes and suggestions; Turso (Drizzle) for the owner's sessions
+- **Sign-in:** Better Auth, with Google and passkeys
 - **Email:** Resend (REST, no SDK) for suggestion approvals
 - **Monitoring:** Sentry (browser + serverless) and Vercel Analytics
 - **Testing:** Vitest 5, React Testing Library, jsdom, `axe-core` / `vitest-axe`
@@ -109,8 +111,9 @@ suggestion emails). Real secrets live in `.env.local`, which is gitignored.
   (GraphQL Yoga; schema in `_schema.graphql`, resolvers in `_resolvers/`) for
   the Gemini rules assistant (streamed over server-sent events), wishlist
   voting, friend suggestions with email approval and the owner's on-site
-  edits, and magic-link sign-in, all on Upstash Redis. The client's typed
-  documents are generated from the schema into `src/gql/`.
+  edits, on Upstash Redis; and the owner's sign-in (Better Auth at
+  `/api/auth/*`, `_auth.ts`), on Turso. The client's typed documents are
+  generated from the schema into `src/gql/`.
 - `scripts/` — the PDF-to-text pipeline that generates `rules-text/` from
   `public/rules/*.pdf` for the AI assistant.
 - CI runs lint, type-check, accessibility tests, unit tests with coverage, and a

@@ -29,7 +29,7 @@ describe('useLinkToken', () => {
   });
 
   it('leaves a bare address with no search behind', async () => {
-    const router = renderRouted(<Shows />, ['/sign-in/confirm?token=abc'], '/sign-in/confirm');
+    const router = renderRouted(<Shows />, ['/deny?token=abc'], '/deny');
     await waitFor(() => expect(router.state.location.search).toBe(''));
   });
 });

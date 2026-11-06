@@ -2,7 +2,8 @@ import { createRequire } from 'node:module';
 import type { Locator, Page } from '@playwright/test';
 import { GAMES } from '../src/data/games';
 import { WISHLIST } from '../src/data/wishlist';
-import { test, expect } from './fixtures';
+import { test, expect, authRefusal, stubAuth, stubOperation, type AuthRequest } from './fixtures';
+import { REGISTER_OPTIONS } from './visual';
 
 // The home page on a phone: this file runs on the "phone" project, the
 // newest iPhone Pro's window (playwright.config.ts).
@@ -360,4 +361,132 @@ test('filters live in a sheet behind one button and survive a reload', async ({ 
     .getByRole('button', { name: `Show ${GAMES.length} games` })
     .click();
   await expect(page).toHaveURL(/\/$/);
+});
+
+// /sign-in (components/SignInPage.tsx), designed for a phone, with
+// Better Auth's routes stubbed (e2e/fixtures.ts).
+
+test('sign-in starts with Google and comes back to the page, which says what went wrong in its own words', async ({
+  page,
+}) => {
+  const asked: AuthRequest[] = [];
+  // Google, as far as the page can see it: the sign-in's address, here the
+  // page itself, as Better Auth sends it back after the person cancelled.
+  await stubAuth(page, '/sign-in/social', (request) => {
+    asked.push(request);
+    return { url: '/sign-in?error=access_denied&error_description=Something%20from%20Google', redirect: true };
+  });
+  await page.goto('/sign-in');
+  const google = page.getByRole('button', { name: 'Sign in with Google' });
+  const passkey = page.getByRole('button', { name: 'Sign in with a passkey' });
+  await expect(
+    page.getByText("These controls are the owner's: any other account signs in to nothing extra."),
+  ).toBeVisible();
+  await takesTaps44([google, passkey, page.getByRole('link', { name: /Back to The Game Room/ })]);
+  // The two buttons fill the panel's width, a thumb's height each.
+  expect((await google.boundingBox())!.height).toBe(44);
+
+  await google.click();
+  await expect(page.getByRole('alert')).toHaveText('Signing in with Google was cancelled.');
+  await expect(page).toHaveURL(/\/sign-in$/);
+  await expect(page.getByText(/Something from Google/)).toHaveCount(0);
+  const back = new URL('/sign-in', page.url()).href;
+  expect(asked).toEqual([{ method: 'POST', body: { provider: 'google', callbackURL: back, errorCallbackURL: back } }]);
+});
+
+test('another Google account signs in to nothing extra, and the page says whose it is', async ({ page }) => {
+  let signedIn = true;
+  await stubAuth(page, '/get-session', () =>
+    signedIn ? { user: { email: 'sam.rivera@gmail.com' }, session: {} } : null,
+  );
+  await stubAuth(page, '/sign-out', () => {
+    signedIn = false;
+    return { success: true };
+  });
+  await page.goto('/sign-in');
+  await expect(page.getByRole('status')).toHaveText(
+    "You're signed in as sam.rivera@gmail.com, which isn't the owner's account, so the site works as it does for everyone. To sign in as the owner, sign out and choose the owner's Google account.",
+  );
+  await expect(page.getByRole('link', { name: 'Go to the wishlist' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await expect(page.getByRole('button', { name: 'Sign in with Google' })).toBeVisible();
+});
+
+test('a session over a day old is asked for Google again before it adds a passkey', async ({ page }) => {
+  await stubOperation(page, 'Session', () => ({ session: { admin: true } }));
+  await stubAuth(page, '/passkey/generate-register-options', () => authRefusal(403, 'SESSION_NOT_FRESH'));
+  const asked: AuthRequest[] = [];
+  await stubAuth(page, '/sign-in/social', (request) => {
+    asked.push(request);
+    return { url: '/sign-in', redirect: true };
+  });
+  await page.goto('/sign-in');
+  await page.getByRole('button', { name: 'Add a passkey on this device' }).click();
+  await expect(
+    page.getByText('Adding a passkey needs a sign-in from today: sign in with Google again first.'),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Sign in with Google' }).click();
+  await expect.poll(() => asked.length).toBe(1);
+});
+
+// A passkey needs a domain, not an IP address: these load the site as
+// localhost (the preview server's own address otherwise), with Chromium's
+// virtual authenticator standing in for Face ID.
+test.describe('with a passkey', () => {
+  test.use({ baseURL: 'http://localhost:4174' });
+
+  test('the owner adds one, signs out, and signs back in with it with no Google step', async ({ page }) => {
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('WebAuthn.enable');
+    await cdp.send('WebAuthn.addVirtualAuthenticator', {
+      options: {
+        protocol: 'ctap2',
+        transport: 'internal',
+        hasResidentKey: true,
+        hasUserVerification: true,
+        isUserVerified: true,
+        automaticPresenceSimulation: true,
+      },
+    });
+
+    let admin = true;
+    const credentials: string[] = [];
+    await stubOperation(page, 'Session', () => ({ session: { admin } }));
+    await stubAuth(page, '/get-session', () => (admin ? { user: { email: 'jess@example.com' }, session: {} } : null));
+    await stubAuth(page, '/passkey/generate-register-options', () => REGISTER_OPTIONS);
+    await stubAuth(page, '/passkey/verify-registration', ({ body }) => {
+      credentials.push((body as { response: { id: string } }).response.id);
+      return { id: 'passkey-1' };
+    });
+    await stubAuth(page, '/sign-out', () => {
+      admin = false;
+      return { success: true };
+    });
+    await stubAuth(page, '/passkey/generate-authenticate-options', () => ({
+      challenge: 'ZTJlLWNoYWxsZW5nZS0wMDAy',
+      rpId: 'localhost',
+      allowCredentials: [],
+      userVerification: 'preferred',
+      timeout: 60000,
+    }));
+    await stubAuth(page, '/passkey/verify-authentication', ({ body }) => {
+      expect((body as { response: { id: string } }).response.id).toBe(credentials[0]);
+      admin = true;
+      return { session: {}, user: {} };
+    });
+
+    await page.goto('/sign-in');
+    await expect(page.getByRole('status')).toHaveText("You're signed in as the owner on this browser.");
+    const add = page.getByRole('button', { name: 'Add a passkey on this device' });
+    await takesTaps44([page.getByRole('link', { name: 'Go to the wishlist' }), add]);
+    await add.click();
+    await expect(page.getByText('Passkey added. Next time, sign in with Face ID.')).toBeVisible();
+    await expect(add).toHaveCount(0);
+    expect(credentials).toHaveLength(1);
+
+    await page.getByRole('button', { name: 'Sign out' }).click();
+    await page.getByRole('button', { name: 'Sign in with a passkey' }).click();
+    await expect(page.getByRole('status')).toHaveText("You're signed in as the owner on this browser.");
+    await expect(page.getByRole('link', { name: 'Go to the wishlist' })).toBeVisible();
+  });
 });

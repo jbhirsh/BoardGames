@@ -37,7 +37,7 @@ jobs:
     if: github.event_name != 'deployment_status' || github.event.deployment_status.state == 'success'
     runs-on: ubuntu-latest
     steps:
-      - name: Probe the GraphQL API's rules chat and votes on the target deployment
+      - name: Probe the GraphQL API's rules chat, votes and session, and sign-in, on the target deployment
         env:
           TARGET_URL: ${{ github.event.deployment_status.environment_url }}
           ENVIRONMENT: ${{ github.event.deployment_status.environment }}
@@ -106,4 +106,17 @@ jobs:
           probe "votes" '"counts"' -X POST "$TARGET_URL/api/graphql" \
             -H 'Content-Type: application/json' \
             -d '{"query":"query Smoke { wishlistVotes(ids: [\"lost-cities\"]) { counts { id count } } }"}' || fail=1
+          # Sign-in (Better Auth, api/_auth.ts) answers at /api/auth/*, which
+          # vercel.json rewrites to the same function: its health check
+          # proves the routing, the runtime database client's import, the
+          # database's environment check and the deploy's sign-in settings,
+          # none of which a preview can show by finishing a Google sign-in
+          # (that goes through production). The session query, with a
+          # session cookie that names nothing, has the owner check read it;
+          # that counts a failure as signed out (reported to Sentry), so the
+          # health check is the one that fails on a broken sign-in.
+          probe "auth" '"ok":true' "$TARGET_URL/api/auth/ok" || fail=1
+          probe "session" '"admin":false' -X POST "$TARGET_URL/api/graphql" \
+            -H 'Content-Type: application/json' -H 'Cookie: __Secure-better-auth.session_token=smoke.test' \
+            -d '{"query":"query Smoke { session { admin } }"}' || fail=1
           exit $fail

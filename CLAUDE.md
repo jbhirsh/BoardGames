@@ -77,37 +77,46 @@ before changing the module.
   `filterReducer.ts`, `useFilterUrlSync.ts`), wishlist, owner session.
 - **`src/components/`** — pages `RulesPage` (`PdfReader`, `RulesChat`,
   `SaveOffline`), `ScoreCalculatorPage` (its pads listed in
-  `data/scoreCalculators.ts`), `WordCheckerPage`, `SignInPage`, and the
-  pages the owner's emails link to, `EmailedDecisionPage` (/approve, /deny)
-  and `SignInConfirmPage`; home `Hero`, `FilterBar/`, `GameCard`, `GameRow`,
-  `Wishlist`.
+  `data/scoreCalculators.ts`), `WordCheckerPage`, `SignInPage` (Google
+  and passkeys, unlisted: the owner bookmarks it), and the page the owner's
+  emails link to, `EmailedDecisionPage` (/approve, /deny); home `Hero`,
+  `FilterBar/`, `GameCard`, `GameRow`, `Wishlist`.
 - **`src/hooks/`** hooks; **`src/utils/`** pure helpers; **`src/client/`**
-  side-effecting browser modules, `graphql.ts` the one way to the API (typed
-  documents POSTed as JSON, and the rules chat's server-sent events) with
-  its operations in `client/operations/*.graphql`; **`src/gql/`** the typed
-  documents codegen writes from them and the SDL; **`src/pdfjs/`** the
-  reader's pdf.js; **`src/sw/`** the service worker; **`src/index.css`** the
-  one stylesheet (Tailwind's entry and theme); `src/components/*Classes.ts`
-  the class strings components share.
-- **`api/`** — one Vercel Function, `graphql.ts`: GraphQL Yoga serving the
-  SDL in `_schema.graphql` with the resolvers in `_resolvers/` (`votes`,
-  `suggestions`, `auth`, `chat` (Gemini, a subscription over server-sent
-  events), each headed by its rules; `index.ts` the server and its CSRF
-  guards, `limits.ts` the bounds on one request (tokens, aliases, depth; GET
-  only for a query; no introspection in production), `context.ts` the owner
-  check and rate limits, `errors.ts` refusals);
-  `api/_lib/` what they share (Redis, Resend, BGG, sessions, limits);
+  side-effecting browser modules, `graphql.ts` the one way to the GraphQL
+  API (typed documents POSTed as JSON, and the rules chat's server-sent
+  events) with its operations in `client/operations/*.graphql`, `auth.ts`
+  Better Auth's client for sign-in (only `/sign-in`'s chunk imports it);
+  **`src/gql/`** the typed documents codegen writes from them and the SDL;
+  **`src/pdfjs/`** the reader's pdf.js; **`src/sw/`** the service worker;
+  **`src/index.css`** the one stylesheet (Tailwind's entry and theme);
+  `src/components/*Classes.ts` the class strings components share.
+- **`api/`** — one Vercel Function, `graphql.ts`: the owner's sign-in at
+  `/api/auth/*` (Better Auth, `_auth.ts`: Google, passkeys, the OAuth proxy
+  for previews, the routes it answers, and the owner check), and GraphQL
+  Yoga serving the SDL in `_schema.graphql` with the resolvers in
+  `_resolvers/` (`votes`, `suggestions`, `chat` (Gemini, a subscription
+  over server-sent events), each headed by its rules; `index.ts` the server
+  and its CSRF guards, `limits.ts` the bounds on one request (tokens,
+  aliases, depth; GET only for a query; no introspection in production),
+  `context.ts` the owner check and rate limits, `errors.ts` refusals);
+  `api/_lib/` what they share (Redis, Resend, BGG, the JSON-only rule, the
+  owner's email, limits);
   `api/_db/` the Turso database (#290, moving everything off Redis):
   `schema.ts` its tables for Drizzle (`games`, `suggestions`, `votes`,
-  `meta`), `validation.ts` the rules a row keeps (Zod, from the tables),
-  `environment.ts` the check that a deploy uses its own environment's
-  database; `drizzle/` the generated migrations; `scripts/db-migrate.ts`
-  applies them at deploy. The API reads the tables from #290's part 2b.
+  `meta`, and Better Auth's `auth_*`), `validation.ts` the rules a row
+  keeps (Zod, from the tables), `environment.ts` the check that a deploy
+  uses its own environment's database, `connection.ts` opening it (the
+  scripts' too), `client.ts` the function's one checked connection;
+  `drizzle/` the generated migrations; `scripts/db-migrate.ts` applies them
+  at deploy, after `scripts/check-auth-env.ts` fails a deploy whose
+  sign-in settings are missing or misplaced. Sign-in uses the database;
+  the app's tables are read from #290's part 2b.
 - **`scripts/`** — `npm run rules-text` (`extract-rules-text.mjs`, into
   `rules-text/`), `game-weights`, `wishlist-art`, `collection-art`;
   **`eval/`** the assistant's eval; **`vite.config.ts`** the build.
 - **External services** — Gemini (`api/_resolvers/chat.ts`), Upstash Redis
-  (`api/_lib/redis.ts`), Resend (`api/_lib/mail.ts`), Sentry
+  (`api/_lib/redis.ts`), Turso (`api/_db/`), Google sign-in (Better Auth,
+  `api/_auth.ts`), Resend (`api/_lib/mail.ts`), Sentry
   (`src/client/sentry.ts`, `src/instrument.ts`, `api/_lib/sentry.ts`),
   BoardGameGeek (`api/_lib/bgg.ts`, the art and weight scripts), Wiktionary
   (`src/client/dictionary.ts`).
@@ -130,15 +139,17 @@ before changing the module.
 - **PR workflows must not use a workflow-level `paths:` filter**: a required
   check that never reports blocks the PR forever. Decide inside the job and
   skip the expensive step (a skipped step still reports success).
-- **Owner mutations must be JSON.** CSRF protection is the session cookie's
-  SameSite=Lax, then the JSON media type (`api/_lib/session.ts`), which a
-  cross-site form can't send without a preflight: every POST to
-  `/api/graphql` must be JSON (checked on the headers as they arrived, in
-  `api/graphql.ts`), Yoga's CSRF plugin refuses a GET without its header,
-  only a query is served over GET, and CORS stays off.
+- **Owner mutations must be JSON.** CSRF protection is Better Auth's
+  session cookie's SameSite=Lax, then the JSON media type
+  (`api/_lib/json.ts`), which a cross-site form can't send without a
+  preflight: every POST to `/api/graphql` must be JSON (checked on the
+  headers as they arrived, in `api/graphql.ts`), Yoga's CSRF plugin refuses
+  a GET without its header, only a query is served over GET, and CORS stays
+  off. `/api/auth/*` is Better Auth's, ahead of that gate: it checks the
+  Origin of every POST itself, and answers only the routes the app uses.
 - **Emailed links never change state on a GET**: mail scanners follow every
-  URL, so approve/deny and sign-in links open app pages that only read (a
-  query) until their button sends the mutation.
+  URL, so approve/deny links open app pages that only read (a query) until
+  their button sends the mutation.
 - **The database changes only through migrations**: edit
   `api/_db/schema.ts`, then `npm run db:generate` and commit `drizzle/`
   (CI's "Database migrations drift" fails a stale one). Vercel's build
@@ -336,7 +347,7 @@ it back here.
 | StrykerJS (`mutation.yml`) | jbhirsh/ci's mutation testing of the lines a PR added or changed, failing below `break`; the monthly full sweep (`mutation-sweep.yml`, not a PR check) runs in 8 parallel shards |
 | E2E Tests (Playwright) (`e2e.yml`) | the e2e suite and visual regression in three engines; passing only on retry still fails |
 | Answer-Quality Eval (`eval.yml`) | the assistant against `eval/golden-set.json` |
-| Secret scan, `semgrep-cloud-platform/scan`, Vercel, API smoke test | secrets, static analysis, the deploy and its live API (`smoke.yml`: a rules question over SSE and a votes query to `/api/graphql`) |
+| Secret scan, `semgrep-cloud-platform/scan`, Vercel, API smoke test | secrets, static analysis, the deploy and its live API (`smoke.yml`: a rules question over SSE, a votes query and a session query to `/api/graphql`, and sign-in's `/api/auth/ok`) |
 
 **Job summaries and reports.** The `ci` and E2E Tests (Playwright) jobs
 end with jbhirsh/ci's `job-summary`: its run summary gives the verdict and
@@ -411,12 +422,16 @@ secrets belong in tracked source.
 | `GEMINI_API_KEY` | serverless (`api/graphql.ts`, for `api/_resolvers/chat.ts`) | Google Gemini key (server-only) |
 | `KV_REST_API_URL` | serverless (`api/_lib/redis.ts`, `api/graphql.ts`) | Upstash Redis REST URL |
 | `KV_REST_API_TOKEN` | serverless (`api/_lib/redis.ts`, `api/graphql.ts`) | Upstash Redis REST token |
-| `TURSO_DATABASE_URL` | build (`scripts/db-migrate.ts`) | the deployment's Turso database: production's and preview's, each in Vercel for its environment |
-| `TURSO_AUTH_TOKEN` | build (`scripts/db-migrate.ts`) | its token |
+| `TURSO_DATABASE_URL` | build (`scripts/db-migrate.ts`) and serverless (`api/_db/client.ts`) | the deployment's Turso database: production's and preview's, each in Vercel for its environment |
+| `TURSO_AUTH_TOKEN` | build (`scripts/db-migrate.ts`) and serverless (`api/_db/client.ts`) | its token |
 | `DEV_DB_PATH` | local (optional) | a SQLite file used in place of Turso for development |
 | `SENTRY_AUTH_TOKEN` | build (optional) | enables Sentry source-map upload during `vite build` |
-| `RESEND_API_KEY` | serverless (`api/_lib/mail.ts`) | Resend key for the suggestion and sign-in emails; suggestions are refused until set |
-| `SUGGESTIONS_TO` | serverless (`api/_lib/mail.ts`) | address that receives approve/deny emails; the only address that can sign in as the owner |
+| `BETTER_AUTH_SECRET` | serverless (`api/_auth.ts`); checked at build (`scripts/check-auth-env.ts`) | signs the session cookie; production's and preview's each their own |
+| `GOOGLE_CLIENT_ID` | serverless (`api/_auth.ts`); checked at build | the Google OAuth client (Web application) |
+| `GOOGLE_CLIENT_SECRET` | serverless, production only (`api/_auth.ts`); checked at build | its secret: only production exchanges a code, for itself and for previews; a preview build that has it fails |
+| `OAUTH_PROXY_SECRET` | serverless (`api/_auth.ts`); checked at build | production's and every preview's, the same value: previews sign in through production |
+| `RESEND_API_KEY` | serverless (`api/_lib/mail.ts`) | Resend key for the suggestion emails; suggestions are refused until set |
+| `SUGGESTIONS_TO` | serverless (`api/_lib/mail.ts`); production's checked at build | address that receives approve/deny emails; the Google account that signs in as the owner |
 | `SUGGESTIONS_FROM` | serverless (optional) | sender; defaults to `The Game Room <onboarding@resend.dev>` |
 | `APP_URL` | serverless (optional) | origin for the emailed links; defaults to the Vercel production URL |
 | `BGG_API_TOKEN` | serverless (`api/graphql.ts`, for `api/_resolvers/suggestions.ts`) | BoardGameGeek XML API token; unset (BGG isn't called) or refused, adds and approvals still go through with no details or art, the owner is told why (on the add form, in the on-site queue and on the emailed approval page) and Sentry gets an error naming the variable |

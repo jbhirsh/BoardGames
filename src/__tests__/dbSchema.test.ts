@@ -2,7 +2,17 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { eq, sql } from 'drizzle-orm';
 import { getTableConfig } from 'drizzle-orm/sqlite-core';
-import { games, meta, suggestions, votes } from '../../api/_db/schema';
+import {
+  authAccount,
+  authPasskey,
+  authSession,
+  authUser,
+  authVerification,
+  games,
+  meta,
+  suggestions,
+  votes,
+} from '../../api/_db/schema';
 import { testDb, type TestDb } from './helpers/testDb';
 
 let current: TestDb | undefined;
@@ -102,5 +112,58 @@ describe('the committed migrations', () => {
     current = await testDb();
     const applied = await current.db.all<{ hash: string }>(sql`SELECT hash FROM __drizzle_migrations`);
     expect(applied.length).toBeGreaterThan(0);
+  });
+
+  it("keep sign-in's rows: dated by the database, kept current on update, and gone with their user", async () => {
+    current = await testDb();
+    const { db } = current;
+    const later = new Date('2030-01-01T00:00:00Z');
+    await db.insert(authUser).values({ id: 'u1', name: 'Jess', email: 'jess@example.com' });
+    const [user] = await db.select().from(authUser);
+    expect(user.emailVerified).toBe(false);
+    expect(Math.abs(user.createdAt.getTime() - Date.now())).toBeLessThan(60_000);
+    // One account per email.
+    await expect(db.insert(authUser).values({ id: 'u2', name: 'J', email: 'jess@example.com' })).rejects.toThrow();
+
+    await db
+      .insert(authSession)
+      .values({ id: 's1', token: 't1', userId: 'u1', expiresAt: later, updatedAt: new Date(0) });
+    await expect(
+      db.insert(authSession).values({ id: 's2', token: 't1', userId: 'u1', expiresAt: later, updatedAt: later }),
+    ).rejects.toThrow();
+    await db.insert(authAccount).values({
+      id: 'a1',
+      accountId: 'google-1',
+      providerId: 'google',
+      userId: 'u1',
+      updatedAt: new Date(0),
+    });
+    await db.insert(authVerification).values({ id: 'v1', identifier: 'state', value: '{}', expiresAt: later });
+    await db.insert(authPasskey).values({
+      id: 'p1',
+      publicKey: 'key',
+      userId: 'u1',
+      credentialID: 'cred',
+      counter: 0,
+      deviceType: 'multiDevice',
+      backedUp: true,
+    });
+
+    // An update that doesn't say when brings updated_at up to now.
+    await db.update(authUser).set({ name: 'Jess R' }).where(eq(authUser.id, 'u1'));
+    await db.update(authSession).set({ expiresAt: later }).where(eq(authSession.id, 's1'));
+    await db.update(authAccount).set({ scope: 'openid' }).where(eq(authAccount.id, 'a1'));
+    await db.update(authVerification).set({ value: '{"a":1}' }).where(eq(authVerification.id, 'v1'));
+    for (const table of [authUser, authSession, authAccount, authVerification]) {
+      const [row] = await db.select({ updatedAt: table.updatedAt }).from(table);
+      expect(Math.abs(row.updatedAt.getTime() - Date.now()), getTableConfig(table).name).toBeLessThan(60_000);
+    }
+
+    // A user's sessions, Google account and passkeys go with it.
+    await db.run(sql`PRAGMA foreign_keys = ON`);
+    await db.delete(authUser).where(eq(authUser.id, 'u1'));
+    for (const table of [authSession, authAccount, authPasskey]) {
+      expect(await db.select().from(table), getTableConfig(table).name).toEqual([]);
+    }
   });
 });

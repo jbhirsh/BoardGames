@@ -17,29 +17,6 @@ function sentOperations(page: Page): string[] {
   return names;
 }
 
-test('the sign-in link signs this browser in only when Sign in is pressed', async ({ page }) => {
-  await stubOperation(page, 'SignInLinkLive', () => ({ signInLinkLive: true }));
-  await stubOperation(page, 'VerifySignIn', () => ({ verifySignIn: { admin: true } }));
-  const sent = sentOperations(page);
-  await page.goto(`/sign-in/confirm?token=${TOKEN}`);
-  await expect(page.getByRole('heading', { name: 'Sign in to The Game Room?' })).toBeVisible();
-  expect(sent).toEqual(['SignInLinkLive']);
-  // The token leaves the address (and the history entry's URL) once read.
-  await expect(page).toHaveURL(/\/sign-in\/confirm$/);
-
-  const verified = nextOperation(page, 'VerifySignIn');
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  expect(await verified).toEqual({ token: TOKEN });
-  await expect(page).toHaveURL(/\/\?c=want$/);
-});
-
-test('a used sign-in link says so', async ({ page }) => {
-  await stubOperation(page, 'SignInLinkLive', () => ({ signInLinkLive: false }));
-  await page.goto(`/sign-in/confirm?token=${TOKEN}`);
-  await expect(page.getByRole('heading', { name: 'Link expired' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Sign in' })).toHaveCount(0);
-});
-
 test('an approve link shows what BoardGameGeek has, and approves only when pressed', async ({ page }) => {
   await stubOperation(page, 'EmailedSuggestion', () => ({
     emailedSuggestion: {

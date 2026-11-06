@@ -87,7 +87,7 @@ const HIDDEN: WishlistItem = {
 
 function renderPanel(hidden: WishlistItem[] = []) {
   const reload = vi.fn();
-  const auth = { admin: true, loaded: true, requestLink: vi.fn(), logout: vi.fn() };
+  const auth = { admin: true, loaded: true, refresh: vi.fn(async () => {}) };
   render(
     <AuthContext.Provider value={auth}>
       <WishlistContext.Provider value={{ items: [], hidden, loaded: true, reload }}>

@@ -73,10 +73,10 @@ describe('instrument', () => {
       request: { url: 'https://games.example/approve?id=sug-1' },
     });
     expect(options.beforeSendTransaction!({ type: 'transaction' }, {})).toEqual({ type: 'transaction' });
-    const crumb = { category: 'navigation', data: { from: '/', to: '/sign-in/confirm?token=secret', url } };
+    const crumb = { category: 'navigation', data: { from: '/', to: '/deny?token=secret', url } };
     expect(options.beforeBreadcrumb!(crumb)).toEqual({
       category: 'navigation',
-      data: { from: '/', to: '/sign-in/confirm', url: 'https://games.example/approve?id=sug-1' },
+      data: { from: '/', to: '/deny', url: 'https://games.example/approve?id=sug-1' },
     });
     expect(options.beforeBreadcrumb!({ category: 'ui.click' })).toEqual({ category: 'ui.click' });
     expect(options.beforeBreadcrumb!({ category: 'fetch', data: { status_code: 200 } })).toEqual({
