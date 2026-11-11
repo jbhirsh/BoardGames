@@ -121,5 +121,5 @@ changing the module.
 - **Pure utilities stay pure.** `src/utils/` and `src/context/filterReducer.ts` have no side
   effects (no network, storage or clock), so they test directly; dependency-cruiser checks only
   what they import.
-- **An export only a command-line caller uses is tagged `@public`**, so the weekly audit's knip
-  doesn't count it unused.
+- **A module only a command-line caller loads is an `entry` in `knip.jsonc`** (as the GIF
+  scenarios are), never tagged `@public`.
