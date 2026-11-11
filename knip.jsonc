@@ -16,7 +16,4 @@
     // The README's screenshots, a Playwright project only when README_SHOTS is set.
     "e2e/readme.shots.ts",
   ],
-  // jbhirsh/ci's README screenshot comparison runs these from this repo's
-  // node_modules.
-  "ignoreDependencies": ["pixelmatch", "pngjs"],
 }

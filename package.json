@@ -95,8 +95,6 @@
     "patch-package": "^8.0.1",
     "pdf-lib": "^1.17.1",
     "pdf-to-img": "^7.0.1",
-    "pixelmatch": "^8.0.0",
-    "pngjs": "^7.0.0",
     "prettier": "^3.9.10",
     "tailwindcss": "^4.3.3",
     "tesseract.js": "^7.0.0",
