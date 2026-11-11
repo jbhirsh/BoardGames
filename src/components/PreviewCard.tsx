@@ -28,7 +28,7 @@ export default function PreviewCard({
     >
       {details.img && (
         <img
-          className="size-16 flex-none rounded-md bg-bg2 object-cover"
+          className="size-16 flex-none rounded-control border border-border bg-art-matte object-contain filter-(--art-dim)"
           src={details.img}
           alt=""
           width={64}

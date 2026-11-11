@@ -287,7 +287,7 @@ export default function CoverCarousel({ want }: { want: boolean }) {
             onKeyDown={copy ? undefined : (e) => move(e, i)}
           >
             <img
-              className="block aspect-[1] h-auto w-full rounded-(--cover-r) bg-art-matte object-cover shadow-(--shadow-cover-sm) filter-(--art-dim) sm:shadow-(--shadow-cover)"
+              className="block aspect-[1] h-auto w-full rounded-(--cover-r) bg-art-matte object-contain shadow-(--shadow-cover-sm) filter-(--art-dim) sm:shadow-(--shadow-cover)"
               src={c.img}
               alt=""
               width={120}
