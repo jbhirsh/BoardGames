@@ -78,7 +78,7 @@ function WishlistRow({ item, voteCount, voted, onVote, disabled, isOpen, onToggl
             <img
               src={item.img}
               alt={`${item.name} box art`}
-              className="row-art float-right mb-2 ml-3.5 size-16 rounded-xl border border-border bg-art-matte object-cover filter-(--art-dim)"
+              className="row-art float-right mb-2 ml-3.5 size-16 rounded-xl border border-border bg-art-matte object-contain filter-(--art-dim)"
               loading="lazy"
             />
           )}
