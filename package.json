@@ -30,6 +30,7 @@
     "rules-text": "node scripts/extract-rules-text.mjs",
     "rules-text-layer": "node scripts/add-text-layer.mjs",
     "test:mutation": "stryker run",
+    "jscpd": "jscpd",
     "test:e2e": "playwright test"
   },
   "dependencies": {
