@@ -25,7 +25,19 @@ const pending = {
 
 const WINGSPAN: LookupResult = {
   outcome: 'found',
-  details: { bggId: 266192, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'] },
+  details: {
+    bggId: 266192,
+    name: 'Wingspan',
+    year: 2019,
+    min: 1,
+    max: 5,
+    mins: 70,
+    desc: 'Birds.',
+    kw: ['strategy'],
+    categories: [],
+    mechanics: [],
+    section: 'strategy',
+  },
 };
 
 describe('CSRF', () => {

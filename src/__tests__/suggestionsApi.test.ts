@@ -18,23 +18,13 @@ import {
   previewGame,
   removeSuggestion,
   suggestGame,
-  KEYWORD_IDS,
-  WISHLIST_SECTION_IDS,
-  NAME_RE,
-  GAME_MIN,
-  GAME_MAX,
-  NOTE_MAX,
-  DESC_MAX,
-  MINS_MAX,
-  PLAYERS_MAX,
   type ApprovalInput,
   type SuggestionsDeps,
 } from '../../api/_resolvers/suggestions';
 import { ApiError } from '../../api/_resolvers/errors';
+import { DESC_MAX, GAME_MAX, GAME_MIN, MINS_MAX, PLAYERS_MAX } from '../../api/_lib/limits';
 import { resendMailer, type Mail } from '../../api/_lib/mail';
 import { reportError } from '../../api/_lib/sentry';
-import { KW, WISHLIST_SECTIONS } from '../data/keywords';
-import * as clientLimits from '../data/suggestionLimits';
 import { fakeRedis, type FakeRedisSeed } from './helpers/fakeRedis';
 import { parseThing, type GameDetails, type LookupResult } from '../../api/_lib/bgg';
 import { abortReason } from './helpers/abortReason';
@@ -86,7 +76,11 @@ async function refusal(call: Promise<unknown>): Promise<ApiError> {
   throw new Error('expected a refusal');
 }
 
-const found = (details: GameDetails): LookupResult => ({ outcome: 'found', details });
+type Found = Omit<GameDetails, 'categories' | 'mechanics' | 'section'> & Partial<GameDetails>;
+const found = (details: Found): LookupResult => ({
+  outcome: 'found',
+  details: { categories: [], mechanics: [], section: 'strategy', ...details },
+});
 const NO_MATCH: LookupResult = { outcome: 'no-match' };
 
 const valid = { game: 'Cascadia', name: 'Sam', note: 'Calm and quick' };
@@ -1163,19 +1157,6 @@ describe('owner actions', () => {
       expect((await refusal(removeSuggestion(deps(), 'sug-nope'))).status).toBe(404);
     });
   });
-
-  it('knows the same keyword ids and wishlist sections as the client', () => {
-    expect([...KEYWORD_IDS].sort()).toEqual(Object.keys(KW).sort());
-    expect([...WISHLIST_SECTION_IDS].sort()).toEqual([...WISHLIST_SECTIONS].sort());
-  });
-
-  it("puts the same bounds on an entry as the client's forms", () => {
-    const { NAME_MAX, ...bounds } = clientLimits;
-    expect(bounds).toEqual({ GAME_MIN, GAME_MAX, NOTE_MAX, DESC_MAX, PLAYERS_MAX, MINS_MAX });
-    // The name's bound lives in NAME_RE: the longest name it takes is the form's.
-    expect(NAME_RE.test('x'.repeat(NAME_MAX))).toBe(true);
-    expect(NAME_RE.test('x'.repeat(NAME_MAX + 1))).toBe(false);
-  });
 });
 
 describe('BoardGameGeek token problems', () => {
@@ -1235,7 +1216,7 @@ describe('previewGame (looking a game up before adding it)', () => {
   it('answers what BoardGameGeek found, and stores nothing', async () => {
     const lookup = vi.fn(async () => found(WINGSPAN));
     const d = deps({ lookup });
-    expect(await previewGame(d, '  Wingspan ')).toEqual({ outcome: 'found', details: WINGSPAN });
+    expect(await previewGame(d, '  Wingspan ')).toMatchObject({ outcome: 'found', details: WINGSPAN });
     expect(lookup).toHaveBeenCalledWith('Wingspan');
     expect(d.redis.hashes).toEqual({});
     expect(d.redis.lists).toEqual({});

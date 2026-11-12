@@ -7,10 +7,19 @@
 
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
-import { DESC_MAX, MINS_MAX, PLAYERS_MAX } from '../_lib/bgg.js';
 import { ANON_RE } from '../_lib/ids.js';
+import {
+  DESC_MAX,
+  GAME_MAX,
+  GAME_MIN,
+  KEYWORD_IDS,
+  MINS_MAX,
+  NAME_RE,
+  NOTE_MAX,
+  PLAYERS_MAX,
+  WISHLIST_SECTION_IDS,
+} from '../_lib/limits.js';
 import { SLUG_RE } from '../_lib/slug.js';
-import { GAME_MAX, GAME_MIN, KEYWORD_IDS, NAME_RE, NOTE_MAX, WISHLIST_SECTION_IDS } from '../_resolvers/suggestions.js';
 import { games, suggestions, votes } from './schema.js';
 
 // Where box art comes from: a file the app serves, or a link (BoardGameGeek's).

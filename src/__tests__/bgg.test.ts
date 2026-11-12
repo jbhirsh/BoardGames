@@ -1,9 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
+import { DESC_MAX, MINS_MAX, PLAYERS_MAX } from '../../api/_lib/limits';
 import {
-  DESC_MAX,
-  MINS_MAX,
-  PLAYERS_MAX,
   cleanDescription,
+  fetchBggItem,
+  fetchBggWeight,
+  parseHonour,
   parseThing,
   pickSearchId,
   lookupGame,
@@ -37,6 +38,18 @@ const THING = `<?xml version="1.0" encoding="utf-8"?>
     </statistics>
   </item>
 </items>`;
+
+const ITEM = JSON.stringify({
+  item: {
+    short_description: 'Attract a beautiful and diverse collection of birds to your wildlife preserve.',
+    links: {
+      boardgamehonor: [
+        { name: '2019 Kennerspiel des Jahres Winner' },
+        { name: '2019 Golden Geek Best Board Game Artwork &amp; Presentation Nominee' },
+      ],
+    },
+  },
+});
 
 const SEARCH = `<items total="3" termsofuse="x">
   <item type="boardgame" id="292859"><name type="primary" value="Wingspan: European Expansion"/><yearpublished value="2019"/></item>
@@ -283,7 +296,8 @@ describe('lookupGame', () => {
     const statuses = [202, 200, 200, 200];
     const bodies = ['', '<items total="0"></items>', SEARCH, THING];
     let i = 0;
-    const fetchLike: FetchLike = vi.fn(async () => {
+    const fetchLike: FetchLike = vi.fn(async (url: string) => {
+      if (url.includes('/geekitems?')) return respond(404);
       const r = respond(statuses[i], bodies[i]);
       i++;
       return r;
@@ -293,7 +307,7 @@ describe('lookupGame', () => {
     const r = await p;
     vi.useRealTimers();
     expect(r.outcome === 'found' && r.details.name).toBe('Wingspan');
-    expect(fetchLike).toHaveBeenCalledTimes(4);
+    expect(i).toBe(4);
   });
 
   it('gives up once the time budget is spent instead of retrying, as BGG not answering', async () => {
@@ -342,15 +356,48 @@ describe('lookupGame', () => {
     expect(fetchLike).toHaveBeenCalledTimes(2);
   });
 
-  it('sends the API token as a bearer header on every request', async () => {
+  it('sends the API token as a bearer header on every XML API request, and never to the site API', async () => {
     const inits: Array<{ headers?: Record<string, string> } | undefined> = [];
+    const site: Array<{ headers?: Record<string, string> } | undefined> = [];
     const fetchLike: FetchLike = vi.fn(async (url: string, init?: { headers?: Record<string, string> }) => {
+      if (url.startsWith('https://api.geekdo.com/')) {
+        site.push(init);
+        return respond(404);
+      }
       inits.push(init);
       return respond(200, url.includes('/thing?') ? THING : SEARCH);
     });
     await lookupGame('Wingspan', TOKEN, fetchLike, 6000);
     expect(inits).toHaveLength(2);
     for (const init of inits) expect(init?.headers).toEqual({ Authorization: `Bearer ${TOKEN}` });
+    expect(site).toHaveLength(1);
+    expect(site[0]?.headers).toBeUndefined();
+  });
+
+  it("adds BGG's summary and honours from geekitems, fetched beside the thing", async () => {
+    const fetchLike: FetchLike = vi.fn(async (url: string) => {
+      if (url.includes('/geekitems?objectid=266192&')) return respond(200, ITEM);
+      return respond(200, url.includes('/thing?') ? THING : SEARCH);
+    });
+    const r = await lookupGame('Wingspan', TOKEN, fetchLike);
+    expect(r.outcome === 'found' && r.details).toMatchObject({
+      summary: 'Attract a beautiful and diverse collection of birds to your wildlife preserve.',
+      honours: [
+        { name: 'Kennerspiel des Jahres', year: 2019, result: 'Winner' },
+        { name: 'Golden Geek Best Board Game Artwork & Presentation', year: 2019, result: 'Nominee' },
+      ],
+    });
+  });
+
+  it('still finds the game when geekitems fails, without a summary or honours', async () => {
+    const fetchLike: FetchLike = vi.fn(async (url: string) => {
+      if (url.includes('/geekitems?')) throw new Error('down');
+      return respond(200, url.includes('/thing?') ? THING : SEARCH);
+    });
+    const r = await lookupGame('Wingspan', TOKEN, fetchLike);
+    expect(r.outcome).toBe('found');
+    expect(r.outcome === 'found' && r.details.summary).toBeUndefined();
+    expect(r.outcome === 'found' && r.details.honours).toBeUndefined();
   });
 
   it('does not call BGG at all without a token, and says so', async () => {
@@ -437,5 +484,92 @@ describe('lookupGame', () => {
   it('says BGG did not answer when the thing request errors', async () => {
     const fetchLike: FetchLike = vi.fn(async (url: string) => respond(url.includes('/thing?') ? 503 : 200, SEARCH));
     expect(await lookupGame('Wingspan', TOKEN, fetchLike)).toEqual({ outcome: 'unavailable' });
+  });
+});
+
+describe('parseThing, for the section and the weight', () => {
+  it('keeps the categories and mechanics as BGG names them, and the section they give', () => {
+    const d = parseThing(THING)!;
+    expect(d.categories).toEqual(['Card Game', 'Animals']);
+    expect(d.mechanics).toEqual(['Deck, Bag, and Pool Building']);
+    expect(d.section).toBe('strategy');
+  });
+
+  it('reads the weight to two places, only when someone rated it and it is within 1 to 5', () => {
+    const rated = THING.replace('</ratings>', '<averageweight value="2.4612" /><numweights value="900" /></ratings>');
+    expect(parseThing(rated)!.weight).toBe(2.46);
+    const heavy = rated.replace('2.4612', '3.6');
+    expect(parseThing(heavy)!.section).toBe('heavy');
+    expect(parseThing(rated.replace('value="900"', 'value="0"'))!.weight).toBeUndefined();
+    expect(parseThing(rated.replace('2.4612', '0'))!.weight).toBeUndefined();
+    expect(parseThing(rated.replace('2.4612', '5.2'))!.weight).toBeUndefined();
+    expect(parseThing(THING)!.weight).toBeUndefined();
+  });
+});
+
+describe('parseHonour', () => {
+  it.each([
+    ['2017 Golden Geek Best Cooperative Game Nominee', 'Golden Geek Best Cooperative Game', 2017, 'Nominee'],
+    ['2017 Board Game Quest Awards Best Coop Game Winner', 'Board Game Quest Awards Best Coop Game', 2017, 'Winner'],
+    ['2020 Origins Awards Best Board Game Finalist', 'Origins Awards Best Board Game', 2020, 'Finalist'],
+    ['2018 Spiel des Jahres Recommended', 'Spiel des Jahres', 2018, 'Recommended'],
+    ["2015 Gamers' Choice Awards Inductee", "Gamers' Choice Awards", 2015, 'Inductee'],
+    ["2019 Meeple's Choice Award Runner-up", "Meeple's Choice Award", 2019, 'Runner-up'],
+    ['2016 Lys Grand Public Honorable Mention', 'Lys Grand Public', 2016, 'Honorable Mention'],
+    ['2016 Lys Grand Public Special Mention', 'Lys Grand Public', 2016, 'Special Mention'],
+    ['2014 Nederlandse Spellenprijs 2nd Place', 'Nederlandse Spellenprijs', 2014, '2nd Place'],
+    ['2014 Nederlandse Spellenprijs 3rd Place', 'Nederlandse Spellenprijs', 2014, '3rd Place'],
+    ['2013 Juego del Año 11th Place', 'Juego del Año', 2013, '11th Place'],
+    ["2012 Tric Trac d'Argent", "Tric Trac d'Argent", 2012, '2nd Place'],
+    ['2012 Tric Trac de Bronze', 'Tric Trac de Bronze', 2012, '3rd Place'],
+    [
+      '2009 International Gamers Awards - General Strategy; Two-players',
+      'International Gamers Awards - General Strategy; Two-players',
+      2009,
+      'Winner',
+    ],
+    ["2011 Tric Trac d'Or", "Tric Trac d'Or", 2011, 'Winner'],
+    ['Vuoden Peli Adult Game of the Year', 'Vuoden Peli Adult Game of the Year', null, 'Winner'],
+  ])('reads %s', (raw, name, year, result) => {
+    expect(parseHonour(raw)).toEqual({ name, year, result });
+  });
+});
+
+describe('fetchBggItem and fetchBggWeight', () => {
+  const respond = (status: number, body = '') => Promise.resolve({ status, text: async () => body });
+
+  it('reads the summary and honours, decoding and cleaning them', async () => {
+    const item = await fetchBggItem(266192, async () => respond(200, ITEM));
+    expect(item?.summary).toBe('Attract a beautiful and diverse collection of birds to your wildlife preserve.');
+    expect(item?.honours).toHaveLength(2);
+    expect(item?.honours[1].name).toBe('Golden Geek Best Board Game Artwork & Presentation');
+  });
+
+  it('leaves the summary out when BGG has none, and skips honours without a name', async () => {
+    const body = JSON.stringify({ item: { short_description: null, links: { boardgamehonor: [{ name: '' }, {}] } } });
+    expect(await fetchBggItem(1, async () => respond(200, body))).toEqual({ honours: [] });
+    expect(await fetchBggItem(1, async () => respond(200, JSON.stringify({ item: {} })))).toEqual({ honours: [] });
+  });
+
+  it('answers null for a 404, a body that is not JSON or not an item, a throw, or a spent budget', async () => {
+    expect(await fetchBggItem(1, async () => respond(404))).toBeNull();
+    expect(await fetchBggItem(1, async () => respond(200, '<html>'))).toBeNull();
+    expect(await fetchBggItem(1, async () => respond(200, '[]'))).toBeNull();
+    expect(
+      await fetchBggItem(1, async () => {
+        throw new Error('timeout');
+      }),
+    ).toBeNull();
+    const fetchLike = vi.fn(async () => respond(200, ITEM));
+    expect(await fetchBggItem(1, fetchLike, 0)).toBeNull();
+    expect(fetchLike).not.toHaveBeenCalled();
+  });
+
+  it('reads a weight from dynamicinfo: a number, null when unrated, undefined when BGG did not answer', async () => {
+    const stats = (s: object) => async () => respond(200, JSON.stringify({ item: { stats: s } }));
+    expect(await fetchBggWeight(13, stats({ avgweight: '2.2834', numweights: '7000' }))).toBe(2.28);
+    expect(await fetchBggWeight(13, stats({ avgweight: '0', numweights: '0' }))).toBeNull();
+    expect(await fetchBggWeight(13, async () => respond(500))).toBeUndefined();
+    expect(await fetchBggWeight(13, async () => respond(200, '{}'))).toBeUndefined();
   });
 });

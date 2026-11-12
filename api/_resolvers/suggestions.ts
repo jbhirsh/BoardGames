@@ -60,18 +60,22 @@
 import * as Sentry from '@sentry/node';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { reportError } from '../_lib/sentry.js';
-import { BGG_IMG_RE, DESC_MAX, MINS_MAX, PLAYERS_MAX, type LookupOutcome, type LookupResult } from '../_lib/bgg.js';
+import { BGG_IMG_RE, type LookupOutcome, type LookupResult } from '../_lib/bgg.js';
+import {
+  DESC_MAX,
+  GAME_MAX,
+  GAME_MIN,
+  KEYWORD_IDS,
+  MINS_MAX,
+  NAME_RE,
+  NOTE_MAX,
+  PLAYERS_MAX,
+  WISHLIST_SECTION_IDS,
+} from '../_lib/limits.js';
 import { SLUG_RE, isSuggestionId } from '../_lib/slug.js';
 import { button, escapeHtml, mailLayout, type Mail, type Mailer } from '../_lib/mail.js';
 import { ApiError } from './errors.js';
 
-// Same display-name shape as the client's utils/displayName.ts. It and the
-// bounds below are mirrored by the client's forms (src/data/suggestionLimits.ts),
-// which tests keep in step.
-export const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} .'-]{0,29}$/u;
-export const GAME_MIN = 2;
-export const GAME_MAX = 80;
-export const NOTE_MAX = 200;
 const TOKEN_RE = /^[A-Za-z0-9_-]{20,64}$/;
 
 // Ids that still count for duplicate checks (pending + approved) and ids the
@@ -97,35 +101,6 @@ const decidable = (s: SuggestionStatus) => s === 'pending' || s === 'unsent';
 // How long a decision's claim may stand without the decision landing.
 const STALE_CLAIM_MS = 60_000;
 
-// Lists the client also has (src/data/keywords.ts): the two trees can't
-// import each other, so these are mirrored by hand and tests keep them in step.
-/** Wishlist sections the owner can file a game under (WISHLIST_SECTIONS on the client). */
-export const WISHLIST_SECTION_IDS = ['party', 'strategy', 'coop', 'two-player', 'heavy'] as const;
-/** The keyword ids the client knows (KW on the client). */
-export const KEYWORD_IDS = [
-  'social',
-  'bluffing',
-  'deduction',
-  'strategy',
-  'negotiation',
-  'abstract',
-  'deck-building',
-  'cooperative',
-  'team',
-  'party',
-  'adult',
-  'active',
-  'creative',
-  'card-game',
-  'word',
-  'family',
-  'classic',
-  'thematic',
-  'portable',
-  'quick-play',
-] as const;
-// Defined with the lookup, which caps BGG's numbers and text to them.
-export { DESC_MAX, MINS_MAX, PLAYERS_MAX };
 const KW_MAX = 20;
 
 /** Details filled in from BoardGameGeek on approval, editable by the owner. */

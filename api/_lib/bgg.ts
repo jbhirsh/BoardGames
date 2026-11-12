@@ -1,7 +1,21 @@
-// BoardGameGeek XML API 2 lookup used to fill in a suggested game's details
-// when the owner approves it. BGG requires a registered API token (sent as
-// a bearer header); the XML is small enough to read with a few targeted
-// regexes rather than a parser dependency.
+// BoardGameGeek, for a game's details when the owner approves or adds it.
+//
+// - The search and the `thing` lookup are BGG's documented XML API 2, which
+//   needs a registered token (sent as a bearer header); the XML is small
+//   enough to read with a few targeted regexes rather than a parser
+//   dependency. `thing` with stats gives players, time, the description,
+//   the weight, and the categories and mechanics the keywords and the
+//   section (section.ts) come from.
+// - The site's own JSON endpoints answer by id with no token, for what the
+//   XML API lacks: `geekitems` has the one-line summary BGG writes for each
+//   game (`short_description`) and its honours (`links.boardgamehonor`),
+//   `dynamicinfo` the weight of a game nobody looks up by name (the
+//   collection's). They're undocumented, so a failure there never costs a
+//   lookup: the game is still found, and the summary and honours wait for
+//   the next refresh (scripts/bgg-refresh.ts).
+
+import { inferSection } from './section.js';
+import { DESC_MAX, MINS_MAX, PLAYERS_MAX, type WishlistSection } from './limits.js';
 
 export interface GameDetails {
   bggId: number;
@@ -17,18 +31,19 @@ export interface GameDetails {
   kw: string[];
   /** Box-art thumbnail URL on BGG's image CDN, when the entry has one. */
   img?: string;
+  /** The community's weight, 1 (light) to 5 (heavy), when anyone has rated it. */
+  weight?: number;
+  /** BGG's categories and mechanics as it names them, which the section rule reads. */
+  categories: string[];
+  mechanics: string[];
+  /** The wishlist section its players, weight, categories and mechanics put it under (section.ts). */
+  section: WishlistSection;
+  /** BGG's one-line summary (geekitems), when it has one and answered. */
+  summary?: string;
+  /** Its honours (geekitems), absent when that didn't answer. */
+  honours?: Honour[];
 }
 
-// The bounds an entry's details are held to. They live here, not in
-// _resolvers/suggestions.ts (which imports this module), so a lookup produces details
-// an owner edit would also accept: a preview the owner adds is checked
-// against them.
-/** The most players an entry can list (BGG has party games at 100 and more). */
-export const PLAYERS_MAX = 99;
-/** The longest playing time an entry can list, in minutes. */
-export const MINS_MAX = 600;
-/** The longest description kept or saved, in characters; BGG's are rarely longer. */
-export const DESC_MAX = 5000;
 /**
  * Box art an entry can show: BGG's image CDN only. The lookup keeps no
  * other thumbnail, and details the owner sends back are held to it, so the
@@ -231,6 +246,8 @@ export function parseThing(xml: string): GameDetails | null {
   const img = BGG_IMG_RE.test(thumb) ? thumb : undefined;
 
   const kw = new Set<string>();
+  const categories: string[] = [];
+  const mechanics: string[] = [];
   for (const tag of xml.match(/<rank\b[^>]*>/g) ?? []) {
     const name = attr(tag, 'name');
     const value = attr(tag, 'value');
@@ -240,10 +257,16 @@ export function parseThing(xml: string): GameDetails | null {
     const type = attr(tag, 'type');
     const value = attr(tag, 'value');
     if (!value || (type !== 'boardgamecategory' && type !== 'boardgamemechanic')) continue;
-    const mapped: string | undefined = LINK_KW[decodeEntities(value)];
+    const label = decodeEntities(value);
+    (type === 'boardgamecategory' ? categories : mechanics).push(label);
+    const mapped: string | undefined = LINK_KW[label];
     if (mapped) kw.add(mapped);
   }
   if (playing > 0 && playing <= 15) kw.add('quick-play');
+  const weight = weightOf(
+    /<averageweight\b[^>]*value="([^"]*)"/.exec(xml)?.[1],
+    /<numweights\b[^>]*value="([^"]*)"/.exec(xml)?.[1],
+  );
 
   return {
     bggId: Number(idMatch[1]),
@@ -255,7 +278,22 @@ export function parseThing(xml: string): GameDetails | null {
     desc: cleanDescription(descRaw),
     kw: [...kw],
     img,
+    ...(weight === null ? {} : { weight }),
+    categories,
+    mechanics,
+    section: inferSection({ max, weight: weight ?? undefined, categories, mechanics }),
   };
+}
+
+/**
+ * A weight as BGG writes it (a decimal string, and how many rated it),
+ * rounded to two places, or null when nobody has rated it or it's out of
+ * BGG's 1 to 5.
+ */
+function weightOf(avg: unknown, votes: unknown): number | null {
+  const weight = Number(avg);
+  if (!(Number(votes) > 0) || !(weight >= 1 && weight <= 5)) return null;
+  return Math.round(weight * 100) / 100;
 }
 
 const norm = (s: string) =>
@@ -365,8 +403,144 @@ export async function lookupGame(
     id = pickSearchId(loose.body, name);
   }
   if (id === null) return { outcome: 'no-match' };
-  const thing = await get(fetchLike, `${BASE}/thing?id=${id}&stats=1`, deadline, token);
+  // The summary and honours come from BGG's site API, alongside: a failure
+  // there leaves them out, never the game.
+  const [thing, item] = await Promise.all([
+    get(fetchLike, `${BASE}/thing?id=${id}&stats=1`, deadline, token),
+    fetchBggItem(id, fetchLike, deadline - Date.now()),
+  ]);
   if (!thing.ok) return thing.result;
   const details = parseThing(thing.body);
-  return details ? { outcome: 'found', details } : { outcome: 'no-match' };
+  if (!details) return { outcome: 'no-match' };
+  return {
+    outcome: 'found',
+    details: item ? { ...details, ...(item.summary ? { summary: item.summary } : {}), honours: item.honours } : details,
+  };
+}
+
+/**
+ * One of a game's honours as BGG lists it: the award, its year, and how the
+ * game placed. A `result` of `Winner` is a win, whatever BGG's own word for
+ * a single-tier award (which has none, so it reads as a win).
+ */
+export interface Honour {
+  name: string;
+  year: number | null;
+  result: string;
+}
+
+/** The results BGG ends an honour's name with, longest first so "Special Mention" isn't read as "Mention". */
+const RESULTS = [
+  'Honorable Mention',
+  'Special Mention',
+  'Recommended',
+  'Runner-up',
+  'Inductee',
+  'Finalist',
+  'Nominee',
+  'Winner',
+];
+
+/**
+ * An honour's name as BGG writes it ("2017 Golden Geek Best Cooperative
+ * Game Nominee") split into the award, the year and the result. A leading
+ * year is the year; a known result word at the end is the result; `Nth
+ * Place`, `d'Argent` (second) and `de Bronze` (third) are placings; an
+ * honour with none of these is a single-tier award, which BGG lists only
+ * for the games that won it, so it's a win. Never throws.
+ */
+export function parseHonour(raw: string): Honour {
+  let rest = raw.replace(/\s+/g, ' ').trim();
+  let year: number | null = null;
+  const y = /^(\d{4})\s+(.*)$/.exec(rest);
+  if (y) {
+    year = Number(y[1]);
+    rest = y[2];
+  }
+  const lower = rest.toLowerCase();
+  const word = RESULTS.find((r) => lower.endsWith(` ${r.toLowerCase()}`) || lower === r.toLowerCase());
+  if (word)
+    return { name: rest.slice(0, rest.length - word.length).replace(/[\s:–-]+$/, '') || rest, year, result: word };
+  const place = /^(.*?)[\s:–-]*\b(\d+)(?:st|nd|rd|th) Place$/i.exec(rest);
+  if (place) return { name: place[1] || rest, year, result: `${place[2]}${ordinal(Number(place[2]))} Place` };
+  if (/ d['’]Argent$/i.test(rest)) return { name: rest, year, result: '2nd Place' };
+  if (/ de Bronze$/i.test(rest)) return { name: rest, year, result: '3rd Place' };
+  return { name: rest, year, result: 'Winner' };
+}
+
+function ordinal(n: number): string {
+  if (n % 100 >= 11 && n % 100 <= 13) return 'th';
+  return ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th';
+}
+
+/** What BGG's site has for a game that its XML API doesn't. */
+export interface BggItem {
+  /** BGG's one-line summary, absent when it has none. */
+  summary?: string;
+  honours: Honour[];
+}
+
+/** BGG's site API, which answers by id with no token (geekitems, dynamicinfo). */
+const SITE = 'https://api.geekdo.com/api';
+
+/** A JSON answer from BGG's site API within the deadline, or undefined for any failure. */
+async function siteJson(fetchLike: FetchLike, url: string, deadline: number): Promise<unknown> {
+  const remaining = deadline - Date.now();
+  if (remaining <= 0) return undefined;
+  try {
+    const r = await fetchLike(url, { signal: AbortSignal.timeout(remaining) });
+    if (r.status !== 200) return undefined;
+    return JSON.parse(await r.text()) as unknown;
+  } catch {
+    return undefined;
+  }
+}
+
+const record = (v: unknown): Record<string, unknown> | undefined =>
+  v !== null && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : undefined;
+
+/**
+ * A game's summary and honours from BGG's `geekitems`, or null when it
+ * didn't answer (an error, a timeout, or not the shape it has). The summary
+ * is cleaned as a description is and capped at 300 characters.
+ */
+export async function fetchBggItem(
+  bggId: number,
+  fetchLike: FetchLike = fetch,
+  budgetMs = 6000,
+): Promise<BggItem | null> {
+  const body = await siteJson(
+    fetchLike,
+    `${SITE}/geekitems?objectid=${bggId}&objecttype=thing&nosession=1`,
+    Date.now() + budgetMs,
+  );
+  const item = record(record(body)?.item);
+  if (!item) return null;
+  const short = typeof item.short_description === 'string' ? cleanDescription(item.short_description, 300) : '';
+  const links = record(item.links)?.boardgamehonor;
+  const honours = (Array.isArray(links) ? links : [])
+    .map((l) => record(l)?.name)
+    .filter((n): n is string => typeof n === 'string' && n.trim() !== '')
+    .map((n) => parseHonour(decodeEntities(n)));
+  return { ...(short ? { summary: short } : {}), honours };
+}
+
+/**
+ * A game's weight from BGG's `dynamicinfo`, for an id nobody looks up by
+ * name (the collection's): a number, null when nobody has rated it, or
+ * undefined when BGG didn't answer.
+ */
+export async function fetchBggWeight(
+  bggId: number,
+  fetchLike: FetchLike = fetch,
+  budgetMs = 6000,
+): Promise<number | null | undefined> {
+  const body = await siteJson(
+    fetchLike,
+    `${SITE}/dynamicinfo?objectid=${bggId}&objecttype=thing`,
+    Date.now() + budgetMs,
+  );
+  const stats = record(record(record(body)?.item)?.stats);
+  if (!stats) return undefined;
+  return weightOf(stats.avgweight, stats.numweights);
 }
