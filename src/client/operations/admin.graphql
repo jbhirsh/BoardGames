@@ -21,20 +21,20 @@ mutation DecideSuggestion($id: String!, $decision: Decision!, $game: String, $de
   }
 }
 
-mutation AddGame($game: String!, $name: String!, $note: String, $type: String, $details: DetailsInput) {
-  addGame(game: $game, name: $name, note: $note, type: $type, details: $details) {
+mutation AddGame($game: String!, $name: String!, $note: String, $details: DetailsInput) {
+  addGame(game: $game, name: $name, note: $note, details: $details) {
     lookup
   }
 }
 
-mutation EditSuggestion($id: String!, $game: String!, $details: DetailsEdit!) {
-  editSuggestion(id: $id, game: $game, details: $details) {
+mutation EditGame($id: String!, $game: String!, $details: DetailsEdit!) {
+  editGame(id: $id, game: $game, details: $details) {
     id
   }
 }
 
-mutation RemoveSuggestion($id: String!) {
-  removeSuggestion(id: $id)
+mutation RemoveGame($id: String!) {
+  removeGame(id: $id)
 }
 
 fragment Preview on Preview {
@@ -49,5 +49,13 @@ fragment Preview on Preview {
     desc
     kw
     img
+    weight
+    section
+    summary
+    honours {
+      name
+      year
+      result
+    }
   }
 }

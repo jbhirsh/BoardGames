@@ -10,6 +10,8 @@ import GameDetail from './GameDetail';
 import { fittingSubgames, hasSubgames, subgameTitle } from '../utils/subgames';
 import { gameAnchor } from '../utils/heroCovers';
 import { useItemFilter } from '../context/useFilter';
+import { useGames } from '../context/useGames';
+import { waitingForBgg } from '../utils/bggInfo';
 import { detailHeadingClass, detailSectionClass } from './sharedClasses';
 
 interface Props {
@@ -35,6 +37,7 @@ export default memo(GameRow);
 
 function GameRow({ game, isOpen, onToggle: toggleRow }: Props) {
   const filter = useItemFilter();
+  const { loaded } = useGames();
   const onToggle = () => toggleRow(game.name);
   const hasFitting = game.subgames !== undefined && fittingSubgames(game.subgames, filter).length > 0;
   return (
@@ -54,6 +57,7 @@ function GameRow({ game, isOpen, onToggle: toggleRow }: Props) {
           awards={game.awards}
           subTag={hasSubgames(game) && <SubGamesTag game={game} />}
           difficulty={game}
+          waiting={waitingForBgg(game, loaded)}
           isOpen={isOpen}
           onToggle={onToggle}
         />

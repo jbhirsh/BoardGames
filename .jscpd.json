@@ -1,15 +1,7 @@
 {
   "path": ["src", "api", "e2e", "eval", "scripts", ".github/scripts"],
   "format": ["typescript", "tsx", "javascript", "css"],
-  "ignore": [
-    "**/node_modules/**",
-    "**/__tests__/**",
-    "**/*.test.*",
-    "**/*.spec.ts",
-    "src/data/gameWeights.ts",
-    "src/gql/**",
-    "src/data/wishlistArt.ts"
-  ],
+  "ignore": ["**/node_modules/**", "**/__tests__/**", "**/*.test.*", "**/*.spec.ts", "src/gql/**"],
   "minTokens": 70,
   "minLines": 6,
   "reporters": ["console", "markdown"],

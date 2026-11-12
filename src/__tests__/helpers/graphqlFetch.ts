@@ -34,9 +34,18 @@ export type Handlers = Record<string, (variables: Record<string, unknown>, init?
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
 
-/** The operation a fetch call posted to /api/graphql, or null for any other call. */
+/** The operation a fetch call posted to /api/graphql, or sent there by GET (client/graphql.ts's query()), or null for any other call. */
 function operationOf(input: RequestInfo | URL, init?: RequestInit): Operation | null {
-  if (String(input) !== '/api/graphql' || typeof init?.body !== 'string') return null;
+  const url = String(input);
+  if (url.startsWith('/api/graphql?')) {
+    const params = new URLSearchParams(url.slice('/api/graphql?'.length));
+    const variables: unknown = JSON.parse(params.get('variables') ?? '{}');
+    const operationName = params.get('operationName');
+    const query = params.get('query');
+    if (!operationName || !query) return null;
+    return { operationName, query, variables: isRecord(variables) ? variables : {} };
+  }
+  if (url !== '/api/graphql' || typeof init?.body !== 'string') return null;
   const body: unknown = JSON.parse(init.body);
   if (!isRecord(body) || typeof body.query !== 'string' || typeof body.operationName !== 'string') return null;
   return {

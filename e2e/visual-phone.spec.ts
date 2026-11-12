@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-import { LINKS, SIGN_IN, prepare, shoot } from './visual';
+import { GAMES_STATES, LINKS, SIGN_IN, prepare, shoot } from './visual';
 
 // What only a phone shows, on the iPhone (see visual.ts).
 test('the filter sheet', async ({ page }) => {
@@ -10,9 +10,10 @@ test('the filter sheet', async ({ page }) => {
   await shoot(page, 'filter-sheet-light');
 });
 
-// The emailed links' pages, opened on a phone more often than not, and the
-// sign-in page, designed for one.
-for (const scenario of [...LINKS, ...SIGN_IN]) {
+// The emailed links' pages, opened on a phone more often than not, the
+// sign-in page, designed for one, and the games query's states, which a
+// phone's lines and cards show their own way.
+for (const scenario of [...LINKS, ...SIGN_IN, ...GAMES_STATES]) {
   test(scenario.name, async ({ page }) => {
     await prepare(page, 'light');
     await scenario.open(page);

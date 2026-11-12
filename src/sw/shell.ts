@@ -25,6 +25,8 @@ export const SHELL_PREFIX = 'gameroom-shell-';
 export const ASSETS = 'gameroom-assets';
 /** Rulebooks saved: small ones once opened, any when asked; outlives a build. */
 export const RULEBOOKS = 'gameroom-rulebooks';
+/** The games query's last answer (sw.ts's games()), kept across builds. */
+export const GAMES = 'gameroom-games';
 /** A saved rulebook's contents hash, from the build that saved it. */
 export const RULEBOOK_VERSION = 'X-Rulebook-Version';
 /** A saved wishlist box art's contents hash, from the build that saved it. */

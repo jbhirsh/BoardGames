@@ -7,6 +7,8 @@ import { useFilter } from '../context/useFilter';
 import type { WishlistItem } from '../data/types';
 
 const testItem: WishlistItem = {
+  source: 'curated',
+  blurb: '',
   id: 'test-row-game',
   name: 'Row Game',
   desc: 'A row of a game.',
@@ -93,7 +95,7 @@ describe('WishlistRow', () => {
       ...testItem,
       img: '/images/wishlist/r.jpg',
       suggestedBy: 'Alex',
-      awards: [{ name: "As d'Or", year: 2021 }],
+      awards: [{ name: "As d'Or", year: 2021, result: 'Winner' }],
     };
     const { container } = renderRow({ item, isOpen: true });
     expect(container.querySelector('tr.game-row')).toHaveClass('open');

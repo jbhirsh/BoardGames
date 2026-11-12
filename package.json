@@ -22,7 +22,6 @@
     "db:migrate": "node --env-file-if-exists=.env.local scripts/db-migrate.ts",
     "preview": "vite preview",
     "eval": "node eval/run-eval.ts",
-    "game-weights": "node scripts/fetch-game-weights.ts",
     "box-art": "node scripts/fetch-box-art.ts",
     "pr-gif": "node scripts/gif.mjs",
     "rules-text": "node scripts/extract-rules-text.mjs",

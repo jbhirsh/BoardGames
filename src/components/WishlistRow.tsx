@@ -49,7 +49,7 @@ function WishlistRow({ item, voteCount, voted, onVote, disabled, isOpen, onToggl
           players={item.players}
           dur={item.dur}
           mins={item.mins}
-          short={shortDesc(item.desc)}
+          short={item.short ?? shortDesc(item.desc)}
           kw={item.kw}
           awards={item.awards}
           subTag={item.expands && <ExpansionTag base={item.expands} wrap />}
@@ -88,9 +88,11 @@ function WishlistRow({ item, voteCount, voted, onVote, disabled, isOpen, onToggl
           )}
         </div>
         <AwardsSection awards={item.awards} />
-        <AdminItemControls item={item} />
-        <div className={rowFootClass}>
-          <WishlistLinks item={item} />
+        <div className={`${rowFootClass} flex-wrap`}>
+          <AdminItemControls item={item} />
+          <span className="ml-auto flex items-center gap-2">
+            <WishlistLinks item={item} />
+          </span>
         </div>
       </TableRowExpand>
     </>

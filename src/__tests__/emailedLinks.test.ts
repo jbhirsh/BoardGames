@@ -1,7 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { approvalDetails, approvedText, linkProblem, missText, withoutToken } from '../utils/emailedLinks';
 
-const DETAILS = { bggId: 1, name: 'Root', min: 2, max: 4, mins: 90, desc: '', kw: [] };
+const DETAILS = {
+  bggId: 1,
+  name: 'Root',
+  min: 2,
+  max: 4,
+  mins: 90,
+  desc: '',
+  kw: [],
+  section: 'strategy',
+  honours: [],
+};
 
 describe('emailedLinks', () => {
   it('names a refused link by its code', () => {

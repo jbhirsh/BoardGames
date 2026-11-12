@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   ART_VERSION,
   ASSETS,
+  GAMES,
   READER_MESSAGE,
   RULEBOOK_VERSION,
   RULEBOOKS,
@@ -314,6 +315,72 @@ describe('fetch', () => {
     it('is a network error offline before the app is saved', async () => {
       await caches.delete(SHELL);
       expect((await get('/', { navigate: true })).response!.type).toBe('error');
+    });
+  });
+
+  describe('the games query', () => {
+    const GAMES_URL = '/api/graphql?operationName=Games&query=query%20Games';
+    const savedAnswer = async () => (await caches.match('/api/graphql', { cacheName: GAMES }))?.text();
+
+    beforeEach(load);
+
+    it("is the network's, saved for next time", async () => {
+      network.set('/api/graphql', () => new Response('fresh'));
+      const { event, response } = await get(GAMES_URL);
+      expect(await response!.text()).toBe('fresh');
+      await event.done();
+      expect(await savedAnswer()).toBe('fresh');
+    });
+
+    it('is the saved answer offline, or when the network answers an error, which is not saved', async () => {
+      await (await caches.open(GAMES)).put('/api/graphql', new Response('saved'));
+      expect(await (await get(GAMES_URL)).response!.text()).toBe('saved');
+      network.set('/api/graphql', () => new Response('down', { status: 503 }));
+      const { event, response } = await get(GAMES_URL);
+      expect(await response!.text()).toBe('saved');
+      await event.done();
+      expect(await savedAnswer()).toBe('saved');
+    });
+
+    it('fails as the network did, offline with nothing saved', async () => {
+      const event = dispatch('fetch', new FakeFetchEvent(request(GAMES_URL)));
+      await expect(event.answer).rejects.toThrow('Failed to fetch');
+    });
+
+    it('is the saved answer when the network is slow, and the late answer is saved', async () => {
+      vi.useFakeTimers();
+      await (await caches.open(GAMES)).put('/api/graphql', new Response('saved'));
+      let land: (r: Response) => void = () => {};
+      vi.mocked(fetch).mockImplementationOnce(() => new Promise<Response>((resolve) => (land = resolve)));
+      const event = dispatch('fetch', new FakeFetchEvent(request(GAMES_URL)));
+      await vi.advanceTimersByTimeAsync(4000);
+      expect(await (await event.answer!).text()).toBe('saved');
+      land(new Response('late'));
+      await event.done();
+      expect(await savedAnswer()).toBe('late');
+    });
+
+    it("waits for a slow network when the page asks for the network's answer, though a copy is saved", async () => {
+      vi.useFakeTimers();
+      await (await caches.open(GAMES)).put('/api/graphql', new Response('saved'));
+      let land: (r: Response) => void = () => {};
+      vi.mocked(fetch).mockImplementationOnce(() => new Promise<Response>((resolve) => (land = resolve)));
+      const event = dispatch('fetch', new FakeFetchEvent(request(GAMES_URL, { cache: 'reload' })));
+      await vi.advanceTimersByTimeAsync(10_000);
+      land(new Response('edited'));
+      expect(await (await event.answer!).text()).toBe('edited');
+      await event.done();
+      expect(await savedAnswer()).toBe('edited');
+    });
+
+    it('waits for a slow network when nothing is saved yet', async () => {
+      vi.useFakeTimers();
+      let land: (r: Response) => void = () => {};
+      vi.mocked(fetch).mockImplementationOnce(() => new Promise<Response>((resolve) => (land = resolve)));
+      const event = dispatch('fetch', new FakeFetchEvent(request(GAMES_URL)));
+      await vi.advanceTimersByTimeAsync(10_000);
+      land(new Response('late'));
+      expect(await (await event.answer!).text()).toBe('late');
     });
   });
 

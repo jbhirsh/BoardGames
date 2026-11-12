@@ -1,6 +1,6 @@
 // The owner's calls to the API (api/graphql.ts, through client/graphql.ts),
-// each a typed document from src/gql/: on the site, signed in, and from the
-// pages the emailed approve and deny links open, with the link's token. Every failure resolves to a message
+// each a typed document from src/gql/: on the site and on the pages the
+// emailed approve and deny links open, signed in. Every failure resolves to a message
 // the form can show rather than throwing into React. The API's shapes are
 // turned into the ones the admin controls work with: BoardGameGeek's
 // outcome in utils/lookupNotice.ts's words, and absent fields undefined
@@ -11,10 +11,10 @@ import {
   DecideByLinkDocument,
   DecideSuggestionDocument,
   EmailedSuggestionDocument,
-  EditSuggestionDocument,
+  EditGameDocument,
   PendingSuggestionsDocument,
   PreviewGameDocument,
-  RemoveSuggestionDocument,
+  RemoveGameDocument,
   type LookupOutcome as ApiOutcome,
   type PreviewFragment,
   type SuggestionStatus,
@@ -39,7 +39,11 @@ function map<T, U>(result: Result<T>, shape: (data: T) => U): Outcome<U> {
 
 const done = () => undefined;
 
-/** The parts of a preview an entry keeps: BGG's name for the match was for the owner to see. */
+/**
+ * The parts of a preview an entry keeps, the section it inferred among
+ * them: BGG's name for the match was for the owner to see, and its summary
+ * and honours the server asks BGG for itself.
+ */
 const storedDetails = (d: PreviewDetails) => ({
   bggId: d.bggId,
   year: d.year,
@@ -49,6 +53,8 @@ const storedDetails = (d: PreviewDetails) => ({
   desc: d.desc,
   kw: d.kw,
   img: d.img,
+  section: d.section,
+  weight: d.weight,
 });
 
 export interface PendingSuggestion {
@@ -105,7 +111,18 @@ export interface Preview {
 function toPreview({ outcome, details }: PreviewFragment): Preview {
   return {
     outcome: OUTCOMES[outcome],
-    ...(details ? { details: { ...details, year: details.year ?? undefined, img: details.img ?? undefined } } : {}),
+    ...(details
+      ? {
+          details: {
+            ...details,
+            year: details.year ?? undefined,
+            img: details.img ?? undefined,
+            weight: details.weight ?? undefined,
+            summary: details.summary ?? undefined,
+            honours: details.honours.map((h) => ({ ...h, year: h.year ?? undefined })),
+          },
+        }
+      : {}),
   };
 }
 
@@ -117,22 +134,12 @@ export interface AddGameInput {
   game: string;
   name: string;
   note: string;
-  type: string | null;
   /** What the preview found, or null to add it without details. */
   details: PreviewDetails | null;
 }
 
-export const addGame = async ({ game, name, note, type, details }: AddGameInput): Promise<Outcome> =>
-  map(
-    await request(AddGameDocument, {
-      game,
-      name,
-      note,
-      ...(type ? { type } : {}),
-      details: details && storedDetails(details),
-    }),
-    done,
-  );
+export const addGame = async ({ game, name, note, details }: AddGameInput): Promise<Outcome> =>
+  map(await request(AddGameDocument, { game, name, note, details: details && storedDetails(details) }), done);
 
 export interface EditGameInput {
   id: string;
@@ -141,10 +148,9 @@ export interface EditGameInput {
 }
 
 export const editGame = async ({ id, game, details }: EditGameInput): Promise<Outcome> =>
-  map(await request(EditSuggestionDocument, { id, game, details }), done);
+  map(await request(EditGameDocument, { id, game, details }), done);
 
-export const removeGame = async (id: string): Promise<Outcome> =>
-  map(await request(RemoveSuggestionDocument, { id }), done);
+export const removeGame = async (id: string): Promise<Outcome> => map(await request(RemoveGameDocument, { id }), done);
 
 /** An emailed link's suggestion, and what BoardGameGeek has for it (or for `game`). */
 export interface Emailed {
@@ -164,12 +170,12 @@ export type LinkOutcome<T> = { ok: true; data: T } | { ok: false; error: string;
 
 const OPEN: SuggestionStatus[] = ['PENDING', 'UNSENT'];
 
-/** Reads an emailed link's suggestion; changes nothing. */
+/** Reads an emailed link's suggestion, for the signed-in owner; changes nothing. */
 export async function openEmailed(
-  { id, token, game }: { id: string; token: string; game?: string },
+  { id, game }: { id: string; game?: string },
   signal?: AbortSignal,
 ): Promise<LinkOutcome<Emailed>> {
-  const result = await request(EmailedSuggestionDocument, { id, token, game }, signal);
+  const result = await request(EmailedSuggestionDocument, { id, game }, signal);
   if (!result.ok) return result;
   const { suggestion, preview } = result.data.emailedSuggestion;
   return {
@@ -188,14 +194,12 @@ export async function openEmailed(
 /** Decides from an emailed link, with what its page showed. */
 export async function decideByLink({
   id,
-  token,
   decision,
   game,
   details,
-}: { id: string; token: string; decision: 'approve' | 'deny' } & ApprovalChoice): Promise<LinkOutcome<LookedUp>> {
+}: { id: string; decision: 'approve' | 'deny' } & ApprovalChoice): Promise<LinkOutcome<LookedUp>> {
   const result = await request(DecideByLinkDocument, {
     id,
-    token,
     decision: decision === 'approve' ? 'APPROVE' : 'DENY',
     game,
     ...(details !== undefined ? { details: details && storedDetails(details) } : {}),

@@ -41,8 +41,9 @@ interface Press {
  * Takes the reader to a game's card or row: scrolled to the top of the
  * view, under the sticky bar (their scroll-margin), with focus on its name
  * or its row's toggle so a keyboard user carries on from there, and a
- * brief ring to show which one it is. Before the wishlist has loaded its
- * entries aren't on the page yet, so the section itself stands in.
+ * brief ring to show which one it is. Should its card not be on the page,
+ * the section itself stands in. (The wishlist's covers are the games
+ * query's entries, so none shows before the entries can render.)
  */
 function jumpTo(anchor: string) {
   const target = document.getElementById(anchor);

@@ -74,9 +74,11 @@ const router = createBrowserRouter([
       ...(['approve', 'deny'] as const).map((decision) => ({
         path: `/${decision}`,
         element: (
-          <Suspense fallback={<RouteFallback title={decision === 'approve' ? 'Approve' : 'Deny'} art={false} />}>
-            <EmailedDecisionPage />
-          </Suspense>
+          <AuthProvider>
+            <Suspense fallback={<RouteFallback title={decision === 'approve' ? 'Approve' : 'Deny'} art={false} />}>
+              <EmailedDecisionPage />
+            </Suspense>
+          </AuthProvider>
         ),
       })),
       { path: '*', element: <NotFoundPage /> },

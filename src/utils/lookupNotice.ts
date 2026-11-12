@@ -1,6 +1,6 @@
 /**
  * How the API's BoardGameGeek lookup went for a game the owner is adding or
- * approved (`outcome` and `lookup` in api/_resolvers/suggestions.ts, mirrored here
+ * approved (`outcome` and `lookup` in api/_lib/bgg.ts, mirrored here
  * since the two trees can't import each other).
  */
 export type LookupOutcome = 'found' | 'no-match' | 'no-token' | 'refused' | 'unavailable';
@@ -17,6 +17,13 @@ export interface PreviewDetails {
   desc: string;
   kw: string[];
   img?: string;
+  /** BoardGameGeek's weight, 1 to 5, when anyone rated it. */
+  weight?: number;
+  /** The wishlist section its players, weight, categories and mechanics put it under. */
+  section: string;
+  /** BoardGameGeek's one-line summary. */
+  summary?: string;
+  honours: Array<{ name: string; year?: number; result: string }>;
 }
 
 const CAUSE: Record<Exclude<LookupOutcome, 'found'>, (game: string) => string> = {

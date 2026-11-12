@@ -81,7 +81,7 @@ interface TableInfo extends Pick<Filterable, 'name' | 'min' | 'max' | 'dur' | 'm
    * so the rules assistant reads the one on screen and those before it.
    */
   moreRules?: ExtraRulebook[];
-  /** Confirmed award wins of its own. */
+  /** Its honours, BoardGameGeek's and the owner's, from the games query (utils/bggInfo.ts); none until it answers. */
   awards?: Award[];
   /** The long write-up, a section at a time (a game inside one shows it under `desc`). */
   detail?: DetailSection[];
@@ -112,16 +112,18 @@ export interface Filterable {
   mins: number;
   kw: KeywordId[];
   /**
-   * BoardGameGeek id. A game's or a compiled-in wishlist entry's difficulty
-   * is BGG's weight for it (`npm run game-weights`); its box art is
-   * fetched by it too (`npm run box-art`).
+   * BoardGameGeek id. A game's difficulty, awards and (where it takes one)
+   * summary are what BGG says about this id, from the games query's
+   * `bgg_info` (utils/bggInfo.ts); its box art is fetched by it too
+   * (`npm run box-art`).
    */
   bgg?: number;
   /**
    * How heavy it is to learn: BoardGameGeek's community weight, 1 (light)
-   * to 5 (heavy), set from `bgg` (src/data/gameWeights.ts, never typed in);
-   * shown as Light, Medium or Heavy with the number. Absent where BGG has
-   * no rating, and on a deck, whose games each carry their own.
+   * to 5 (heavy), set from `bgg` by the games query, never typed in; shown
+   * as Light, Medium or Heavy with the number. Absent where BGG has no
+   * rating, until the query answers, and on a deck, whose games each carry
+   * their own.
    */
   weight?: number;
   /** Games inside this one; the filters match the item when it or any of these fits. */
@@ -145,7 +147,12 @@ export interface Game extends Filterable, TableInfo {
   houseRules?: HouseRule[];
   group: GroupId;
   detail: DetailSection[];
-  awards: Award[];
+  /**
+   * Its card and row take BoardGameGeek's one-line summary in place of
+   * `short`, the owner's pick (#290), where BGG has one; `short` stays
+   * the fallback.
+   */
+  bggSummary?: true;
   /**
    * When a game we've bought hasn't come yet, when it's due ("December 2",
    * "December 2027"). Such a game is listed under Coming Soon, below the
@@ -163,22 +170,29 @@ export type WishlistType = 'two-player' | 'coop' | 'strategy' | 'heavy' | 'party
 /** The sections the owner can file a game under: every type but the friends' one. */
 export type WishlistSection = Exclude<WishlistType, 'suggested'>;
 
-/** One confirmed award win from a recognised body (nominations excluded). */
+/**
+ * One of a game's honours: BoardGameGeek's (utils/bggInfo.ts), or a win the
+ * owner confirmed that BGG doesn't list. `result` is "Winner" for a win,
+ * otherwise how it placed ("Nominee", "Finalist", "Recommended", "2nd Place").
+ */
 export interface Award {
   name: string;
-  year: number;
+  year?: number;
+  result: string;
 }
 
-/** What every wishlist entry carries, compiled in or stored. */
-interface WishlistEntry extends Filterable {
+/** Every wishlist entry, from the games query (context/GamesContext.tsx), whichever way it got there. */
+export interface WishlistItem extends Filterable {
   id: string;
   yt: string;
   players: string;
   type: WishlistType;
   awards: Award[];
+  /** Its one line: BoardGameGeek's summary, else the description's first sentence. */
+  short?: string;
   /** Amazon product id of the standard edition, when verified; buy links fall back to a search without it. */
   asin?: string;
-  /** Box art: a bundled file for compiled-in entries (see wishlistArt.ts), a BGG thumbnail for suggestions. */
+  /** Box art: a file the site serves, or a BoardGameGeek thumbnail for a game added on the site. */
   img?: string;
   /** Set on approved friend suggestions: the display name that suggested it. */
   suggestedBy?: string;
@@ -188,22 +202,11 @@ interface WishlistEntry extends Filterable {
    * plays on its own.
    */
   expands?: string;
-}
-
-/** An entry compiled in from wishlist.ts, edited in the source. */
-interface CompiledWishlistItem extends WishlistEntry {
-  source?: undefined;
-}
-
-/** An entry that lives in the suggestions store, which the signed-in owner can edit or remove. */
-export interface StoredWishlistItem extends WishlistEntry {
-  /** A friend's approved suggestion, or a game the owner added. */
-  source: 'friend' | 'owner';
-  /** The stored description on its own, without the credit line, for the owner's edit form. */
+  /** Written into the site, a friend's approved suggestion, or a game the owner added. */
+  source: 'curated' | 'friend' | 'owner';
+  /** The description on its own, without a friend's quoted note, for the owner's edit form. */
   blurb: string;
 }
-
-export type WishlistItem = CompiledWishlistItem | StoredWishlistItem;
 
 /** The most minutes a game may take to show under the duration filter. */
 export type TimeBudget = 15 | 30 | 60;

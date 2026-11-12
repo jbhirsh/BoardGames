@@ -7,8 +7,9 @@ import { passkeyClient } from '@better-auth/passkey/client';
 // that session is the owner's is the API's to say (Query.session,
 // hooks/useAuth.ts); this only signs in and out, adds a passkey, and reads
 // whose account is signed in, which /sign-in shows to anyone who isn't the
-// owner. Only the pages that sign in import it (components/SignInPage.tsx),
-// so it stays out of the home page's bundle.
+// owner. Only the pages that sign in import it (components/SignInPage.tsx,
+// and EmailedDecisionPage.tsx for an owner who opens an emailed link signed
+// out), so it stays out of the home page's bundle.
 
 const client = createAuthClient({ plugins: [passkeyClient()] });
 
@@ -35,14 +36,22 @@ async function attempt(call: () => Promise<{ error: { code?: string; status?: nu
 
 /**
  * Sends the browser to Google to choose an account; it comes back to
- * /sign-in, or to /sign-in?error=<code> when Google or the sign-in fails.
- * Both are this deployment's own address in full: a preview's sign-in
- * returns through production (api/_auth.ts), whose callback would read a
- * bare path as its own page. Resolves only when it couldn't start.
+ * `returnTo` (a path on this site, /sign-in by default; an emailed link's
+ * page comes back to itself), or to /sign-in?error=<code> when Google or the
+ * sign-in fails. Both are this deployment's own address in full: a
+ * preview's sign-in returns through production (api/_auth.ts), whose
+ * callback would read a bare path as its own page. Resolves only when it
+ * couldn't start.
  */
-export function signInWithGoogle(): Promise<AuthOutcome> {
-  const page = `${window.location.origin}/sign-in`;
-  return attempt(() => client.signIn.social({ provider: 'google', callbackURL: page, errorCallbackURL: page }));
+export function signInWithGoogle(returnTo = '/sign-in'): Promise<AuthOutcome> {
+  const origin = window.location.origin;
+  return attempt(() =>
+    client.signIn.social({
+      provider: 'google',
+      callbackURL: `${origin}${returnTo}`,
+      errorCallbackURL: `${origin}/sign-in`,
+    }),
+  );
 }
 
 /** Signs in with a passkey this device holds (Face ID, Touch ID, a security key). */

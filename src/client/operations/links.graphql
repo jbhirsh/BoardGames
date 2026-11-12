@@ -1,9 +1,9 @@
 # The pages the owner's emails link to (components/EmailedDecisionPage.tsx):
-# each reads with a query, which changes nothing, and acts only with a
-# mutation when its button is pressed.
+# each reads with a query, which changes nothing and answers only the
+# signed-in owner, and acts only with a mutation when its button is pressed.
 
-query EmailedSuggestion($id: String!, $token: String!, $game: String) {
-  emailedSuggestion(id: $id, token: $token) {
+query EmailedSuggestion($id: String!, $game: String) {
+  emailedSuggestion(id: $id) {
     suggestion {
       game
       name
@@ -16,8 +16,8 @@ query EmailedSuggestion($id: String!, $token: String!, $game: String) {
   }
 }
 
-mutation DecideByLink($id: String!, $token: String!, $decision: Decision!, $game: String, $details: DetailsInput) {
-  decideSuggestion(id: $id, token: $token, decision: $decision, game: $game, details: $details) {
+mutation DecideByLink($id: String!, $decision: Decision!, $game: String, $details: DetailsInput) {
+  decideSuggestion(id: $id, decision: $decision, game: $game, details: $details) {
     item {
       game
     }

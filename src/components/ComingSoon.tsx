@@ -1,5 +1,5 @@
 import { useId, useMemo } from 'react';
-import { COMING_SOON } from '../data/games';
+import { useGames } from '../context/useGames';
 import { useFilterResults } from '../context/useFilter';
 import { filterGames } from '../utils/filterGames';
 import GameCard from './GameCard';
@@ -15,7 +15,9 @@ import { cardGridClass, groupHeadingClass } from './sharedClasses';
 export default function ComingSoon({ hidden = false }: { hidden?: boolean }) {
   const { state } = useFilterResults();
   const headingId = useId();
-  const games = useMemo(() => filterGames(COMING_SOON, state), [state]);
+  // With BoardGameGeek's weights and awards once the games query answers.
+  const { comingSoon } = useGames();
+  const games = useMemo(() => filterGames(comingSoon, state), [comingSoon, state]);
   if (games.length === 0) return null;
 
   return (

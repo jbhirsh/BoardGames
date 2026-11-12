@@ -7,7 +7,7 @@ import { useFilter } from '../context/useFilter';
 import type { FilterAction } from '../context/filterReducer';
 import type { FilterState } from '../data/types';
 import { GAMES } from '../data/games';
-import { WISHLIST } from '../data/wishlist';
+import { WISHLIST, gamesAnswer } from './helpers/wishlist';
 import { filterGames, filterWishlist } from '../utils/filterGames';
 import { gameAnchor } from '../utils/heroCovers';
 import { stubGraphql } from './helpers/graphqlFetch';
@@ -104,7 +104,7 @@ const search = () =>
 beforeEach(() => {
   seen.renders.clear();
   stubGraphql({
-    Suggestions: () => ({ suggestions: [] }),
+    Games: () => gamesAnswer(),
     Session: () => ({ session: { admin: false } }),
     WishlistVotes: () => ({ wishlistVotes: { counts: [], myVotes: [] } }),
   });

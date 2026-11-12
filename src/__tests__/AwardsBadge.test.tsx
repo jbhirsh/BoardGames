@@ -1,10 +1,11 @@
+import { pillShapeClass } from '../components/sharedClasses';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import AwardsBadge, { AwardsSection } from '../components/AwardsBadge';
 
 const awards = [
-  { name: 'Spiel des Jahres', year: 2024 },
-  { name: 'Golden Geek Best Two-Player Game', year: 2023 },
+  { name: 'Spiel des Jahres', year: 2024, result: 'Winner' },
+  { name: 'Golden Geek Best Two-Player Game', year: 2023, result: 'Winner' },
 ];
 
 describe('AwardsBadge', () => {
@@ -160,6 +161,35 @@ describe('AwardsBadge', () => {
   });
 });
 
+describe('AwardsBadge with honours other than wins', () => {
+  const nominee = (year: number) => ({ name: 'Golden Geek Best Game', year, result: 'Nominee' });
+
+  it('counts only the wins on the trophy, the rest one quiet line in its list', () => {
+    render(
+      <AwardsBadge
+        itemName="Spirit Island"
+        awards={[...awards, nominee(2017), nominee(2018), { name: 'SdJ', year: 2018, result: 'Recommended' }]}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Spirit Island: 2 awards, show which' }));
+    expect(screen.getByText('Nominated twice · Recommended once')).toBeInTheDocument();
+  });
+
+  it('shows a grey pill saying what they are for a game with honours but no wins', () => {
+    render(<AwardsBadge itemName="Clocktower" awards={[nominee(2020), nominee(2021), nominee(2022)]} />);
+    const pill = screen.getByRole('button', { name: 'Clocktower: Nominated 3 times, show which' });
+    expect(pill).toHaveTextContent('Nominated 3 times');
+    expect(pill).not.toHaveTextContent('🏆');
+  });
+
+  it("shares the keyword pill's shape", () => {
+    render(<AwardsBadge itemName="Clocktower" awards={[nominee(2020)]} />);
+    for (const c of pillShapeClass.split(' ')) {
+      expect(screen.getByRole('button', { name: /Clocktower/ })).toHaveClass(c);
+    }
+  });
+});
+
 describe('AwardsSection', () => {
   it('lists every win, with its year, under an Awards heading', () => {
     const { container } = render(<AwardsSection awards={awards} />);
@@ -168,9 +198,24 @@ describe('AwardsSection', () => {
     expect(screen.getByRole('heading', { level: 3, name: 'Awards' })).toBeInTheDocument();
     const items = screen.getAllByRole('listitem');
     expect(items.map((li) => li.textContent)).toEqual([
-      'Spiel des Jahres 2024',
-      'Golden Geek Best Two-Player Game 2023',
+      'Spiel des Jahres, 2024',
+      'Golden Geek Best Two-Player Game, 2023',
     ]);
+  });
+
+  it('lists the other honours after the wins, three at first and the rest behind a button', () => {
+    const others = [2016, 2017, 2018, 2019, 2020].map((year) => ({
+      name: 'Golden Geek Best Game',
+      year,
+      result: 'Nominee',
+    }));
+    render(<AwardsSection awards={[...awards, ...others]} />);
+    expect(screen.getByRole('heading', { level: 3, name: 'Other honours · 5' })).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(5);
+    expect(screen.getByText('Golden Geek Best Game, 2020 · Nominee')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '2 more' }));
+    expect(screen.getAllByRole('listitem')).toHaveLength(7);
+    expect(screen.queryByRole('button', { name: /more$/ })).not.toBeInTheDocument();
   });
 
   it('renders nothing for an entry with no wins', () => {

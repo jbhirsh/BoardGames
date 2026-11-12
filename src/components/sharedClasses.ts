@@ -69,6 +69,13 @@ export const cardGridClass = 'grid grid-cols-[repeat(auto-fill,minmax(290px,1fr)
  */
 export const pillTapClass = "relative after:absolute after:-inset-x-0.5 after:-inset-y-0.75 after:content-['']";
 
+/**
+ * A pill's shape, shared by the keyword pills and the award pills so they
+ * stand the same size side by side: the radius, border, padding and line
+ * height. Text size is the caller's (11.5px on a card, 11px in a list row).
+ */
+export const pillShapeClass = 'rounded-[20px] border px-2 py-0.5 leading-[1.3]';
+
 /** Players, time or difficulty beside its icon, on a card or an add-on's row. */
 export const metaClass = 'cmeta flex items-center gap-1 text-[12px] text-text3 [&_svg]:shrink-0';
 

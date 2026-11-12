@@ -1,4 +1,4 @@
-// What every resolver gets: the API's dependencies (Redis, Resend, the
+// What every resolver gets: the API's dependencies (the database, Resend, the
 // BoardGameGeek lookup, the rate limiters, Gemini, the owner check), and per
 // request the caller's IP for rate limits, whether the request is a JSON
 // POST, whether its session is the owner's, and a way to set a cookie or
@@ -8,8 +8,8 @@ import { isJsonRequest, type Headers } from '../_lib/json.js';
 import { clientIp, rateLimitRefusal, type RateLimiter } from '../_lib/rateLimit.js';
 import type { ChatDeps } from './chat.js';
 import { ApiError } from './errors.js';
+import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import type { SuggestionsDeps } from './suggestions.js';
-import type { VotesRedis } from './votes.js';
 
 /** Whether a request's session is the owner's, and the cookies that renew it (api/_auth.ts). */
 export interface OwnerSession {
@@ -18,9 +18,9 @@ export interface OwnerSession {
 }
 
 export interface ApiDeps {
-  /** The Upstash client with its default reply parsing, for votes. */
-  redis: VotesRedis;
-  /** Suggestions read through the raw client (getRawRedis), with the mailer and the lookup. */
+  /** The deployment's database (api/_db/client.ts), checked on first use. */
+  db: () => Promise<LibSQLDatabase>;
+  /** The wishlist and suggestions: the database, the mailer and BoardGameGeek. */
   suggestions: SuggestionsDeps;
   chat: ChatDeps;
   /** Per-IP limits, each failing open: votes (reads and writes), new suggestions. */

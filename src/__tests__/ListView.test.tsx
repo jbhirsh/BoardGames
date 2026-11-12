@@ -6,7 +6,8 @@ import ListView from '../components/ListView';
 import { sortItems } from '../utils/filterGames';
 import { FilterProvider } from '../context/FilterContext';
 import { useFilter } from '../context/useFilter';
-import { GAMES } from '../data/games';
+import { GamesFixture } from './helpers/GamesFixture';
+import { WEIGHED_GAMES as GAMES } from './helpers/wishlist';
 import { GROUPS } from '../data/keywords';
 
 /** The state the router's current history entry carries. */
@@ -15,9 +16,11 @@ const entryState = (router: { state: { location: Location<unknown> } }): unknown
 function renderListView() {
   return render(
     <MemoryRouter>
-      <FilterProvider>
-        <ListView />
-      </FilterProvider>
+      <GamesFixture>
+        <FilterProvider>
+          <ListView />
+        </FilterProvider>
+      </GamesFixture>
     </MemoryRouter>,
   );
 }
@@ -45,6 +48,7 @@ describe('ListView', () => {
     // Each game's row reads its weight.
     const catan = GAMES.find((g) => g.slug === 'catan')!;
     const row = screen.getAllByRole('row').find((r) => r.querySelector('span.col-name')?.textContent === 'Catan')!;
+    // The fixture's made-up weight for Catan is 2.1, a Medium.
     expect(within(row).getByText(`Medium · ${catan.weight!.toFixed(1)}`)).toBeInTheDocument();
   });
 

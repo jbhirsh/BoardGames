@@ -118,7 +118,12 @@ export default function SignInPage() {
     setAsked((n) => n + 1);
   };
 
-  const google = () => void run('google', signInWithGoogle, async () => {});
+  const google = () =>
+    void run(
+      'google',
+      () => signInWithGoogle(),
+      async () => {},
+    );
   const passkey = () => void run('passkey', signInWithPasskey, reread);
   const add = () =>
     void run('add', addPasskey, async () => {

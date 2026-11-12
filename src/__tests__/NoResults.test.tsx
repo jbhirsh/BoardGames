@@ -1,3 +1,4 @@
+import { WishlistFixture } from './helpers/WishlistFixture';
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
@@ -19,13 +20,15 @@ function renderAt(url: string, kind: 'games' | 'wishlist' = 'games') {
   return render(
     <MemoryRouter initialEntries={[url]}>
       <FilterProvider>
-        <section id="collection">
-          <h2 tabIndex={-1} data-focus-target="title">
-            Our Collection
-          </h2>
-        </section>
-        <NoResults kind={kind} />
-        <Probe />
+        <WishlistFixture>
+          <section id="collection">
+            <h2 tabIndex={-1} data-focus-target="title">
+              Our Collection
+            </h2>
+          </section>
+          <NoResults kind={kind} />
+          <Probe />
+        </WishlistFixture>
       </FilterProvider>
     </MemoryRouter>,
   );

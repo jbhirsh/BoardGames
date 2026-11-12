@@ -4,7 +4,7 @@ import type { ApiDeps } from '../../../api/_resolvers/context';
 import type { Headers as NodeHeaders } from '../../../api/_lib/json';
 import type { Mail } from '../../../api/_lib/mail';
 import type { RateLimiter } from '../../../api/_lib/rateLimit';
-import { fakeRedis } from './fakeRedis';
+import { testDb, type TestDb } from './testDb';
 
 /** A GraphQL error as the API sends it. */
 export interface GqlError {
@@ -23,8 +23,10 @@ interface GqlAnswer {
 /** The test's whole API: every dependency a fake, each one open to change. */
 export interface TestApi {
   deps: ApiDeps;
-  redis: ReturnType<typeof fakeRedis>;
-  rawRedis: ReturnType<typeof fakeRedis>;
+  /** Its database, a fresh one with the migrations applied, opened on first use. */
+  db: () => Promise<TestDb['db']>;
+  /** Closes and deletes the database, if it was opened. */
+  close: () => Promise<void>;
   sent: Mail[];
   /** Work the API left running after an answer (a suggestion's email). */
   deferred: Promise<unknown>[];
@@ -55,8 +57,8 @@ const fakeOwnerSession = (headers: NodeHeaders) =>
 export const refusing = (): RateLimiter => ({ limit: vi.fn(async () => ({ success: false })) });
 
 export function testApi(over: (deps: ApiDeps) => Partial<ApiDeps> = () => ({})): TestApi {
-  const redis = fakeRedis();
-  const rawRedis = fakeRedis({ raw: true });
+  let opened: Promise<TestDb> | undefined;
+  const db = async () => (await (opened ??= testDb())).db;
   const sent: Mail[] = [];
   const deferred: Promise<unknown>[] = [];
   const mailer = {
@@ -65,15 +67,14 @@ export function testApi(over: (deps: ApiDeps) => Partial<ApiDeps> = () => ({})):
     }),
   };
   const base: ApiDeps = {
-    redis,
+    db,
     suggestions: {
-      redis: rawRedis,
+      db,
       mailer,
       baseUrl: () => 'https://games.example',
       lookup: null,
       now: () => 5000,
       randomId: () => 'sug-bbbbbb',
-      randomToken: () => 'test-token-' + 'b'.repeat(21),
     },
     chat: {
       limiter: null,
@@ -99,8 +100,8 @@ export function testApi(over: (deps: ApiDeps) => Partial<ApiDeps> = () => ({})):
     yoga.fetch(new URL(input, 'https://games.example'), init ?? {}, serverContext);
   return {
     deps,
-    redis,
-    rawRedis,
+    db,
+    close: async () => (await opened)?.close(),
     sent,
     deferred,
     fetch,

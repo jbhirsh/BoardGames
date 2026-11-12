@@ -1,9 +1,14 @@
+import type { ReactNode } from 'react';
+
 interface Props {
   /** "2–4", or empty where a wishlist suggestion has none. */
   players: string;
   dur: string;
-  /** The difficulty's word (`difficultyWord`): "Light", or a deck's "Light–Medium". */
-  difficulty: string | null;
+  /**
+   * The difficulty's word (`difficultyWord`): "Light", or a deck's
+   * "Light–Medium"; a grey bar while the games query is out.
+   */
+  difficulty: ReactNode;
   /**
    * Always say "players", wrapping between the parts where they don't fit
    * on one line: a wishlist line's text, beside its vote, is too narrow for

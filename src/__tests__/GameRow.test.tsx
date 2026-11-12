@@ -72,8 +72,8 @@ describe('GameRow', () => {
     const game: Game = {
       ...quickGame,
       awards: [
-        { name: 'Mensa Select', year: 2009 },
-        { name: "As d'Or", year: 2010 },
+        { name: 'Mensa Select', year: 2009, result: 'Winner' },
+        { name: "As d'Or", year: 2010, result: 'Winner' },
       ],
     };
     const { container } = renderRow(game, true);
@@ -96,12 +96,16 @@ describe('GameRow', () => {
 
   it('lists the wins from the award count, like a card, without toggling the row', () => {
     const onToggle = vi.fn();
-    const { container } = renderRow({ ...quickGame, awards: [{ name: 'Mensa Select', year: 2009 }] }, false, onToggle);
+    const { container } = renderRow(
+      { ...quickGame, awards: [{ name: 'Mensa Select', year: 2009, result: 'Winner' }] },
+      false,
+      onToggle,
+    );
     const column = container.querySelector('td.col-short') as HTMLElement;
     fireEvent.click(within(column).getByRole('button', { name: 'Quick Game: 1 award, show which' }));
     const list = screen.getByRole('group', { name: 'Quick Game: 1 award' });
     expect(list).toHaveTextContent('Mensa Select');
-    fireEvent.click(within(list).getByText('Mensa Select'));
+    fireEvent.click(within(list).getByText('Mensa Select, 2009'));
     expect(onToggle).not.toHaveBeenCalled();
   });
 
@@ -299,7 +303,7 @@ describe('GameRow', () => {
   });
 
   it('closes the description with the add-ons tag, then the award count, and tags no game that holds none', () => {
-    renderRow({ ...addonGame, awards: [{ name: 'Mensa Select', year: 2009 }] });
+    renderRow({ ...addonGame, awards: [{ name: 'Mensa Select', year: 2009, result: 'Winner' }] });
     // One copy in the description column, one in the description folded
     // under the name for narrow widths; CSS shows one of them.
     const inColumn = document.querySelector('td.col-short > .row-badges') as HTMLElement;

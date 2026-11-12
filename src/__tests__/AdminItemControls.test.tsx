@@ -3,11 +3,11 @@ import { render, screen, fireEvent, waitFor, within } from '@testing-library/rea
 import AdminItemControls from '../components/AdminItemControls';
 import { AuthContext } from '../context/authContextValue';
 import { WishlistContext } from '../context/wishlistContextValue';
-import type { StoredWishlistItem, WishlistItem } from '../data/types';
+import type { WishlistItem } from '../data/types';
 import { DESC_MAX, GAME_MAX, GAME_MIN, MINS_MAX, PLAYERS_MAX } from '../data/suggestionLimits';
 import { gqlError, operations, stubGraphql } from './helpers/graphqlFetch';
 
-const item: StoredWishlistItem = {
+const item: WishlistItem = {
   id: 'sug-1',
   name: 'Root',
   desc: 'Woodland war. “Mean fun”',
@@ -30,7 +30,7 @@ function renderControls(over: Partial<WishlistItem> = {}, admin = true) {
   const auth = { admin, loaded: true, refresh: vi.fn(async () => {}) };
   const { container } = render(
     <AuthContext.Provider value={auth}>
-      <WishlistContext.Provider value={{ items: [], hidden: [], loaded: true, reload }}>
+      <WishlistContext.Provider value={{ items: [], loaded: true, failed: false, reload }}>
         <AdminItemControls item={{ ...item, ...over }} />
       </WishlistContext.Provider>
     </AuthContext.Provider>,
@@ -47,13 +47,19 @@ const lastSent = (spy: ReturnType<typeof stubGraphql>) => {
 describe('AdminItemControls', () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it('renders nothing when not signed in or for a compiled-in entry', () => {
+  it('renders nothing when not signed in, and a pencil and a bin, named in full, for any entry', () => {
     expect(renderControls({}, false).container).toBeEmptyDOMElement();
-    expect(renderControls({ source: undefined }).container).toBeEmptyDOMElement();
+    renderControls({ source: 'curated', name: 'SETI: Search for Extraterrestrial Intelligence' });
+    for (const name of [
+      'Edit SETI: Search for Extraterrestrial Intelligence',
+      'Remove SETI: Search for Extraterrestrial Intelligence',
+    ]) {
+      expect(screen.getByRole('button', { name })).toHaveAttribute('title', name);
+    }
   });
 
   it('opens an edit form prefilled from the entry and saves the changes', async () => {
-    const spy = stubGraphql({ EditSuggestion: () => ({ editSuggestion: { id: 'sug-1' } }) });
+    const spy = stubGraphql({ EditGame: () => ({ editGame: { id: 'sug-1' } }) });
     const { reload } = renderControls();
     fireEvent.click(screen.getByRole('button', { name: 'Edit Root' }));
     const form = screen.getByRole('form', { name: 'Edit Root' });
@@ -75,7 +81,7 @@ describe('AdminItemControls', () => {
 
     await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
     expect(lastSent(spy)).toEqual({
-      op: 'EditSuggestion',
+      op: 'EditGame',
       variables: {
         id: 'sug-1',
         game: 'Root: Riverfolk',
@@ -99,7 +105,7 @@ describe('AdminItemControls', () => {
   });
 
   it('keeps the form open and shows the reason when saving fails, and cancels cleanly', async () => {
-    stubGraphql({ EditSuggestion: () => gqlError('unknown wishlist type') });
+    stubGraphql({ EditGame: () => gqlError('unknown wishlist type') });
     const { reload } = renderControls({ type: 'party', source: 'owner', suggestedBy: undefined });
     fireEvent.click(screen.getByRole('button', { name: 'Edit Root' }));
     const form = screen.getByRole('form', { name: 'Edit Root' });
@@ -118,7 +124,7 @@ describe('AdminItemControls', () => {
   });
 
   it('asks before removing, then removes it and reloads', async () => {
-    const spy = stubGraphql({ RemoveSuggestion: () => ({ removeSuggestion: true }) });
+    const spy = stubGraphql({ RemoveGame: () => ({ removeGame: true }) });
     const { reload } = renderControls();
     fireEvent.click(screen.getByRole('button', { name: 'Remove Root' }));
     const confirm = screen.getByRole('group', { name: 'Remove Root?' });
@@ -129,11 +135,11 @@ describe('AdminItemControls', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Remove Root' }));
     fireEvent.click(screen.getByRole('button', { name: 'Yes, remove' }));
     await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
-    expect(lastSent(spy)).toEqual({ op: 'RemoveSuggestion', variables: { id: 'sug-1' } });
+    expect(lastSent(spy)).toEqual({ op: 'RemoveGame', variables: { id: 'sug-1' } });
   });
 
   it('reports a failed removal', async () => {
-    stubGraphql({ RemoveSuggestion: () => gqlError('owner sign-in required', 'FORBIDDEN', 403) });
+    stubGraphql({ RemoveGame: () => gqlError('owner sign-in required', 'FORBIDDEN', 403) });
     const { reload } = renderControls();
     fireEvent.click(screen.getByRole('button', { name: 'Remove Root' }));
     fireEvent.click(screen.getByRole('button', { name: 'Yes, remove' }));

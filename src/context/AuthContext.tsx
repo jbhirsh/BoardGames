@@ -5,7 +5,7 @@ import { AuthContext } from './authContextValue';
 /**
  * Checks the owner session once and shares it with every admin control on
  * the page (SignInPage, AdminPanel, AdminItemControls), which switch admin
- * mode on. It wraps only the home page and the /sign-in route, each with
+ * mode on. It wraps only the home page, /sign-in and the emailed links' pages, each with
  * an instance of its own, so the rules, score and word-checker pages never
  * ask the API for the session.
  */

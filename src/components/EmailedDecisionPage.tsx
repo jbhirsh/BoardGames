@@ -1,9 +1,13 @@
 import { useEffect, useId, useState, type FormEvent, type ReactNode } from 'react';
 import { useLocation, useSearchParams } from 'react-router';
+import { signInWithGoogle, signInWithPasskey, signedInEmail } from '../client/auth';
+import { useAuth } from '../context/useAuth';
 import { decideByLink, openEmailed, type Emailed, type LinkOutcome } from '../client/adminApi';
 import { GAME_MAX, GAME_MIN } from '../data/suggestionLimits';
 import { approvalDetails, approvedText, linkProblem, missText } from '../utils/emailedLinks';
+import { normalizeName } from '../utils/normalizeName';
 import EmailedLinkPage from './EmailedLinkPage';
+import { GoogleIcon, KeyIcon } from './Icons';
 import PreviewCard from './PreviewCard';
 import {
   signInActionsClass,
@@ -21,7 +25,6 @@ import {
 const decideClass = `h-11 w-full ${signInButtonClass}`;
 const approveClass = `${decideClass} ${signInPrimaryClass}`;
 const denyClass = `${decideClass} border border-danger-border bg-danger-bg text-danger-fg`;
-import { useLinkToken } from '../hooks/useLinkToken';
 
 type Decision = 'approve' | 'deny';
 
@@ -37,8 +40,8 @@ function linkRefused(refusal: Refusal): { title: string; text: string } {
 }
 
 /**
- * Why a decision didn't go through. The link was just read with the same
- * token, so a bad request now is about the name or details sent with it.
+ * Why a decision didn't go through. The suggestion was just read, so a bad
+ * request now is about the name or details sent with it.
  */
 function decisionRefused(refusal: Refusal, game: string): { title: string; text: string } {
   if (refusal.code === 'ALREADY_DECIDED' && refusal.status) {
@@ -56,36 +59,139 @@ function decisionRefused(refusal: Refusal, game: string): { title: string; text:
 
 /**
  * /approve and /deny: where the approve and deny links in the owner's
- * suggestion emails lead (`?id=…&token=…`). Opening one only reads the
- * suggestion, with the token, and what BoardGameGeek has for it (so a
- * denial shows what's turned down too): mail scanners follow every link, so nothing changes until the
- * page's button is pressed. A misspelt name can be corrected and looked up
- * again (`&game=`), still changing nothing; Approve then sends the name and
- * the details the page showed (none when BoardGameGeek found nothing, so
- * the game goes on without them; left out after an outage, so the approval
- * tries the lookup again). A link already used, mistyped or no longer
- * matching says so. The token leaves the address at once (useLinkToken), and
- * the page asks not to be indexed and sends no referrer (vercel.json sends
+ * suggestion emails lead (`?id=…`). The page is the owner's: signed out it
+ * shows nothing of the suggestion and offers sign-in, which comes back to
+ * the same page; signed in as anyone else it says the decision is the
+ * owner's. For the owner, opening it only reads the suggestion and what
+ * BoardGameGeek has for it (so a denial shows what's turned down too):
+ * mail scanners follow every link, so nothing changes until the page's
+ * button is pressed. A misspelt name can be corrected and looked up again
+ * (`&game=`), still changing nothing; Approve then sends the name and the
+ * details the page showed (none when BoardGameGeek found nothing, so the
+ * game goes on without them; left out after an outage, so the approval
+ * tries the lookup again). A link already used or mistyped says so. The
+ * page asks not to be indexed and sends no referrer (vercel.json sends
  * Referrer-Policy before the page's code has loaded).
  */
 export default function EmailedDecisionPage() {
   const decision: Decision = useLocation().pathname === '/deny' ? 'deny' : 'approve';
+  const { admin, loaded } = useAuth();
+  const title = decision === 'approve' ? 'Approve a suggestion' : 'Deny a suggestion';
+  if (!loaded) {
+    return (
+      <EmailedLinkPage title={title}>
+        <p className={signInStatusClass} role="status">
+          Loading…
+        </p>
+      </EmailedLinkPage>
+    );
+  }
+  if (!admin) return <OwnersOnly title={title} />;
+  return <Decide decision={decision} />;
+}
+
+/**
+ * What anyone but the signed-in owner sees: sign-in with Google (back to
+ * this page) or a passkey, or, for someone signed in with another account,
+ * that the decision is the owner's.
+ */
+function OwnersOnly({ title }: { title: string }) {
+  const { refresh } = useAuth();
+  const location = useLocation();
+  const [email, setEmail] = useState<string | null | undefined>(undefined);
+  const [busy, setBusy] = useState<'google' | 'passkey' | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    void signedInEmail().then((e) => {
+      if (live) setEmail(e);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  const google = async () => {
+    setBusy('google');
+    setFailed(false);
+    const outcome = await signInWithGoogle(`${location.pathname}${location.search}`);
+    // One that started has left for Google: its button stays busy.
+    if (!outcome.ok) {
+      setBusy(null);
+      setFailed(true);
+    }
+  };
+  const passkey = async () => {
+    setBusy('passkey');
+    setFailed(false);
+    const outcome = await signInWithPasskey();
+    if (outcome.ok) await refresh();
+    else setFailed(true);
+    setBusy(null);
+  };
+
+  let body: ReactNode = (
+    <p className={signInStatusClass} role="status">
+      Loading…
+    </p>
+  );
+  if (typeof email === 'string') {
+    body = (
+      <p className={signInStatusClass} role="status">
+        This is the owner's to decide. You're signed in as {email}.
+      </p>
+    );
+  } else if (email === null) {
+    body = (
+      <div className="flex flex-col gap-3">
+        <p className={signInStatusClass}>Sign in as the owner to see this suggestion and decide it.</p>
+        <button
+          type="button"
+          className={`h-11 w-full ${signInButtonClass} ${signInGhostClass}`}
+          disabled={busy !== null}
+          onClick={() => void google()}
+        >
+          <GoogleIcon />
+          {busy === 'google' ? 'Opening Google…' : 'Sign in with Google'}
+        </button>
+        <button
+          type="button"
+          className={`h-11 w-full ${signInButtonClass} ${signInGhostClass}`}
+          disabled={busy !== null}
+          onClick={() => void passkey()}
+        >
+          <KeyIcon />
+          {busy === 'passkey' ? 'Signing in…' : 'Sign in with a passkey'}
+        </button>
+        {failed && (
+          <p className={signInStatusClass} role="alert">
+            That didn't sign you in. Try again.
+          </p>
+        )}
+      </div>
+    );
+  }
+  return <EmailedLinkPage title={title}>{body}</EmailedLinkPage>;
+}
+
+/** The owner's page: the suggestion, what BoardGameGeek has for it, and the button. */
+function Decide({ decision }: { decision: Decision }) {
   const [params, setParams] = useSearchParams();
   const id = params.get('id') ?? '';
-  const token = useLinkToken();
   const game = params.get('game') ?? undefined;
-  const key = JSON.stringify([id, token, game]);
+  const key = JSON.stringify([id, game]);
   const [loaded, setLoaded] = useState<{ key: string; outcome: LinkOutcome<Emailed> } | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const uid = useId();
 
   useEffect(() => {
     const controller = new AbortController();
-    void openEmailed({ id, token, game }, controller.signal).then((outcome) => {
+    void openEmailed({ id, game }, controller.signal).then((outcome) => {
       if (!controller.signal.aborted) setLoaded({ key, outcome });
     });
     return () => controller.abort();
-  }, [key, id, token, game]);
+  }, [key, id, game]);
 
   const outcome = loaded?.key === key ? loaded.outcome : null;
   const item = outcome?.ok ? outcome.data : null;
@@ -97,7 +203,6 @@ export default function EmailedDecisionPage() {
     const details = decision === 'approve' ? approvalDetails(item.preview) : undefined;
     const sent = await decideByLink({
       id,
-      token,
       decision,
       ...(decision === 'approve' ? { game: shown, details } : {}),
     });
@@ -134,7 +239,8 @@ export default function EmailedDecisionPage() {
   );
   if (!said && waiting) {
     const data = waiting;
-    const renamed = shown !== data.game;
+    // Only a real rename says what the friend typed.
+    const renamed = normalizeName(shown) !== normalizeName(data.game);
     title = decision === 'approve' ? `Approve ${shown}?` : `Deny ${data.game}?`;
     const sending = result?.kind === 'sending';
     body = (
@@ -168,12 +274,7 @@ export default function EmailedDecisionPage() {
           </button>
         </div>
         {decision === 'approve' && (
-          <RenameForm
-            key={shown}
-            uid={uid}
-            game={shown}
-            onLookUp={(name) => setParams({ id, game: name }, { state: { token } })}
-          />
+          <RenameForm key={shown} uid={uid} game={shown} onLookUp={(name) => setParams({ id, game: name })} />
         )}
       </div>
     );

@@ -2,6 +2,7 @@ import { useId, useState, type FormEvent } from 'react';
 import { getDisplayName, setDisplayName } from '../client/displayName';
 import { isValidDisplayName, NAME_HINT } from '../utils/displayName';
 import { alreadyListed } from '../utils/alreadyListed';
+import { useWishlistItems } from '../context/useWishlistItems';
 import { GAME_MAX, GAME_MIN, NAME_MAX, NOTE_MAX } from '../data/suggestionLimits';
 import { request } from '../client/graphql';
 import { SuggestGameDocument } from '../gql/graphql';
@@ -23,6 +24,7 @@ type Status =
  * approve/deny link. Approved games show up on the wishlist on next load.
  */
 export default function SuggestForm() {
+  const { items: wishlist } = useWishlistItems();
   const [game, setGame] = useState('');
   const [name, setName] = useState(() => getDisplayName() ?? '');
   const [note, setNote] = useState('');
@@ -37,7 +39,7 @@ export default function SuggestForm() {
       setStatus({ kind: 'error', message: NAME_HINT });
       return;
     }
-    const known = alreadyListed(game);
+    const known = alreadyListed(game, wishlist);
     if (known) {
       setStatus({ kind: 'error', message: known });
       return;

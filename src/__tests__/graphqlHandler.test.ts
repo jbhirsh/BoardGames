@@ -37,12 +37,6 @@ vi.mock('../../api/_auth.js', () => ({
   ownerSessionReader: vi.fn(() => vi.fn(async () => ({ owner: false }))),
 }));
 
-vi.mock('@upstash/redis', () => ({
-  Redis: class {
-    readonly kind = 'redis';
-  },
-}));
-
 vi.mock('../../api/_lib/rateLimit.js', async (importActual) => ({
   ...(await importActual<typeof import('../../api/_lib/rateLimit.js')>()),
   getLimiter: vi.fn(() => null),
@@ -100,7 +94,7 @@ describe('api/graphql.ts', () => {
     vi.unstubAllEnvs();
   });
 
-  it('keeps each per-IP budget, and one daily chat budget of 500 with a short Redis timeout', () => {
+  it('keeps each per-IP budget, and one daily chat budget of 500 with a short database timeout', () => {
     expect(limiterCalls).toEqual(
       expect.arrayContaining([
         ['votes', 30, 60],
@@ -157,8 +151,6 @@ describe('api/graphql.ts', () => {
   });
 
   it('builds the services once, from the environment', () => {
-    vi.stubEnv('KV_REST_API_URL', 'https://example.upstash.io');
-    vi.stubEnv('KV_REST_API_TOKEN', 'test-token');
     vi.stubEnv('GEMINI_API_KEY', 'gemini-key');
     vi.stubEnv('SUGGESTIONS_TO', 'jess@example.com');
     vi.stubEnv('RESEND_API_KEY', '');
@@ -167,6 +159,8 @@ describe('api/graphql.ts', () => {
     expect(deps.chat.apiKey).toBe('gemini-key');
     expect(deps.suggestions.mailer).toBeNull();
     expect(deps.suggestions.lookup).toEqual(expect.any(Function));
+    expect(deps.suggestions.spelling).toEqual(expect.any(Function));
+    expect(deps.suggestions.db).toBe(deps.db);
     expect(deps.limiters).toEqual({ votes: null, suggest: null });
     expect(deps.ownerSession).toEqual(expect.any(Function));
   });

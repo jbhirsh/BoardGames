@@ -1,7 +1,6 @@
 import { useReducer, useMemo, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router';
 import { filterReducer } from './filterReducer';
-import { GAMES } from '../data/games';
 import { filterGames, groupGames } from '../utils/filterGames';
 import { litKeywords } from '../utils/keywordLit';
 import {
@@ -12,6 +11,7 @@ import {
 } from './filterContextValue';
 import { searchParamsToFilter } from '../utils/filterUrl';
 import { useFilterUrlSync } from './useFilterUrlSync';
+import { useGames } from './useGames';
 
 /**
  * The same set as last time while its members are the same, so most search
@@ -36,7 +36,10 @@ export function FilterProvider({ children }: { children: ReactNode }) {
 
   useFilterUrlSync(state, dispatch);
 
-  const filteredGames = useMemo(() => filterGames(GAMES, state), [state]);
+  // The collection with BoardGameGeek's weights, so the difficulty sort and
+  // filter see them once the games query answers.
+  const { collection: games } = useGames();
+  const filteredGames = useMemo(() => filterGames(games, state), [games, state]);
   const gameGroups = useMemo(() => groupGames(filteredGames, state), [filteredGames, state]);
   const results = useMemo(() => ({ state, filteredGames, gameGroups }), [state, filteredGames, gameGroups]);
 

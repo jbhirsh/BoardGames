@@ -1,3 +1,5 @@
+import { WishlistFixture } from './helpers/WishlistFixture';
+import { WISHLIST } from './helpers/wishlist';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SuggestForm from '../components/SuggestForm';
@@ -18,7 +20,11 @@ describe('SuggestForm', () => {
   afterEach(() => vi.restoreAllMocks());
 
   it('marks each placeholder as an example, not a typed value', () => {
-    render(<SuggestForm />);
+    render(
+      <WishlistFixture>
+        <SuggestForm />
+      </WishlistFixture>,
+    );
     for (const field of [
       screen.getByLabelText('Game'),
       screen.getByLabelText('Your name'),
@@ -29,16 +35,24 @@ describe('SuggestForm', () => {
   });
 
   it('gives an example game that is on neither the collection nor the wishlist', () => {
-    render(<SuggestForm />);
+    render(
+      <WishlistFixture>
+        <SuggestForm />
+      </WishlistFixture>,
+    );
     const example = screen
       .getByLabelText('Game')
       .getAttribute('placeholder')!
       .replace(/^e\.g\. /, '');
-    expect(alreadyListed(example)).toBeNull();
+    expect(alreadyListed(example, WISHLIST)).toBeNull();
   });
 
   it('bounds each field as the API does', () => {
-    render(<SuggestForm />);
+    render(
+      <WishlistFixture>
+        <SuggestForm />
+      </WishlistFixture>,
+    );
     expect(screen.getByLabelText('Game')).toHaveAttribute('minlength', String(GAME_MIN));
     expect(screen.getByLabelText('Game')).toHaveAttribute('maxlength', String(GAME_MAX));
     expect(screen.getByLabelText('Your name')).toHaveAttribute('maxlength', String(NAME_MAX));
@@ -47,13 +61,21 @@ describe('SuggestForm', () => {
 
   it('prefills the name the browser remembers', () => {
     localStorage.setItem('gameroom:name', 'Jess');
-    render(<SuggestForm />);
+    render(
+      <WishlistFixture>
+        <SuggestForm />
+      </WishlistFixture>,
+    );
     expect(screen.getByLabelText('Your name')).toHaveValue('Jess');
   });
 
   it('posts the trimmed fields, remembers the name, and confirms', async () => {
     const fetchSpy = stubGraphql({ SuggestGame: () => sent });
-    render(<SuggestForm />);
+    render(
+      <WishlistFixture>
+        <SuggestForm />
+      </WishlistFixture>,
+    );
     fill();
     fireEvent.click(screen.getByRole('button', { name: 'Send suggestion' }));
     await waitFor(() =>
@@ -68,7 +90,11 @@ describe('SuggestForm', () => {
 
   it('refuses an invalid name before posting and shows the hint', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
-    render(<SuggestForm />);
+    render(
+      <WishlistFixture>
+        <SuggestForm />
+      </WishlistFixture>,
+    );
     fill();
     fireEvent.change(screen.getByLabelText('Your name'), { target: { value: 'a@b' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send suggestion' }));
@@ -78,7 +104,11 @@ describe('SuggestForm', () => {
 
   it('refuses games already owned or already on the wishlist before posting', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
-    render(<SuggestForm />);
+    render(
+      <WishlistFixture>
+        <SuggestForm />
+      </WishlistFixture>,
+    );
     fill();
     fireEvent.change(screen.getByLabelText('Game'), { target: { value: 'codenames' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send suggestion' }));
@@ -91,7 +121,11 @@ describe('SuggestForm', () => {
 
   it('shows the server error message when the request is refused', async () => {
     stubGraphql({ SuggestGame: () => gqlError('Suggestions are not open yet', 'UNAVAILABLE', 503) });
-    render(<SuggestForm />);
+    render(
+      <WishlistFixture>
+        <SuggestForm />
+      </WishlistFixture>,
+    );
     fill();
     fireEvent.click(screen.getByRole('button', { name: 'Send suggestion' }));
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Suggestions are not open yet'));
@@ -99,7 +133,11 @@ describe('SuggestForm', () => {
 
   it('shows a generic error when the network fails', async () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'));
-    render(<SuggestForm />);
+    render(
+      <WishlistFixture>
+        <SuggestForm />
+      </WishlistFixture>,
+    );
     fill();
     fireEvent.click(screen.getByRole('button', { name: 'Send suggestion' }));
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Something went wrong'));
@@ -112,7 +150,11 @@ describe('SuggestForm', () => {
         resolve = r;
       }),
     );
-    render(<SuggestForm />);
+    render(
+      <WishlistFixture>
+        <SuggestForm />
+      </WishlistFixture>,
+    );
     fill();
     fireEvent.click(screen.getByRole('button', { name: 'Send suggestion' }));
     expect(screen.getByRole('button', { name: 'Sending…' })).toBeDisabled();

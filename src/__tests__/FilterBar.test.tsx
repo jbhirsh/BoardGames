@@ -1,16 +1,19 @@
+import { WishlistFixture } from './helpers/WishlistFixture';
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent, cleanup, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import FilterBar from '../components/FilterBar/FilterBar';
 import { FilterProvider } from '../context/FilterContext';
 import { GAMES } from '../data/games';
-import { WISHLIST } from '../data/wishlist';
+import { WISHLIST } from './helpers/wishlist';
 
 function renderFilterBar(url = '/') {
   return render(
     <MemoryRouter initialEntries={[url]}>
       <FilterProvider>
-        <FilterBar />
+        <WishlistFixture>
+          <FilterBar />
+        </WishlistFixture>
       </FilterProvider>
     </MemoryRouter>,
   );

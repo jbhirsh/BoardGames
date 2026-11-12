@@ -1,6 +1,6 @@
 import { KW } from '../data/keywords';
 import type { KeywordId } from '../data/types';
-import { pillTapClass } from './sharedClasses';
+import { pillShapeClass, pillTapClass } from './sharedClasses';
 
 interface Props {
   keyword: KeywordId;
@@ -10,7 +10,7 @@ interface Props {
   small?: boolean;
 }
 
-const pillBaseClass = `kw-pill inline-block w-max max-w-25 shrink-0 grow-0 cursor-pointer rounded-[20px] border px-2 py-0.5 text-center leading-[1.3] select-none [transition:background_0.13s,color_0.13s,border-color_0.13s,transform_0.12s] can-hover:hover:transform-[scale(1.05)] ${pillTapClass}`;
+const pillBaseClass = `kw-pill inline-block w-max max-w-25 shrink-0 grow-0 cursor-pointer ${pillShapeClass} text-center select-none [transition:background_0.13s,color_0.13s,border-color_0.13s,transform_0.12s] can-hover:hover:transform-[scale(1.05)] ${pillTapClass}`;
 
 export default function KeywordPill({ keyword, active, onClick, small = false }: Props) {
   const interactive = typeof onClick === 'function';

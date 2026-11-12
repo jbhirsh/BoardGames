@@ -9,7 +9,7 @@ import ScoreCalculatorPage from '../components/ScoreCalculatorPage';
 import SignInPage from '../components/SignInPage';
 import RulesPage from '../components/RulesPage';
 import SaveOffline from '../components/SaveOffline';
-import { WISHLIST } from '../data/wishlist';
+import { WISHLIST, gamesAnswer, suggested } from './helpers/wishlist';
 import { stubMatchMedia } from './helpers/stubMatchMedia';
 import { graphqlFetch } from './helpers/graphqlFetch';
 import { AuthContext } from '../context/authContextValue';
@@ -236,34 +236,29 @@ describe('accessibility', () => {
                     desc: 'Plan and build a modern zoo.',
                     kw: ['strategy'],
                     img: 'https://cf.geekdo-images.com/ark.jpg',
+                    weight: 3.8,
+                    section: 'heavy',
+                    summary: null,
+                    honours: [],
                   },
                 }
               : { outcome: 'NO_MATCH', details: null },
         }),
-        Suggestions: () => ({
-          suggestions: [
-            {
+        Games: () =>
+          gamesAnswer([
+            suggested({
               id: 'sug-r',
-              game: 'Root',
-              name: 'Alex',
-              note: '',
-              source: 'FRIEND',
-              details: {
-                min: 2,
-                max: 4,
-                mins: 90,
-                desc: 'Woodland war.',
-                kw: ['strategy'],
-                year: null,
-                type: null,
-                img: null,
-              },
-            },
-            // Duplicates a compiled entry, so it renders in the owner tools
-            // instead of on a card; scan that list too.
-            { id: 'sug-d', game: WISHLIST[0].name, name: 'Alex', note: '', source: 'FRIEND', details: null },
-          ],
-        }),
+              name: 'Root',
+              suggestedBy: 'Alex',
+              minPlayers: 2,
+              maxPlayers: 4,
+              minutes: 90,
+              players: '2–4',
+              dur: '90 min',
+              description: 'Woodland war.',
+              keywords: ['strategy'],
+            }),
+          ]),
         WishlistVotes: () => ({ wishlistVotes: { counts: [], myVotes: [] } }),
       });
       vi.spyOn(globalThis, 'fetch').mockImplementation(fetchSpy);
@@ -376,7 +371,8 @@ describe('accessibility', () => {
       const router = createMemoryRouter([{ element: <App />, children: [{ path: '/', element: <HomePage /> }] }]);
       render(<RouterProvider router={router} />);
       fireEvent.click(screen.getByRole('button', { name: 'Grid view' }));
-      fireEvent.click(screen.getAllByRole('button', { name: /awards?, show which$/ })[0]);
+      // The awards come with the games query's answer.
+      fireEvent.click((await screen.findAllByRole('button', { name: /awards?, show which$/ }))[0]);
       await screen.findByRole('group', { name: /awards/ });
       // The panel is portalled onto the body, outside the render container.
       const results = await axe(document.body, bodyAxeOptions);

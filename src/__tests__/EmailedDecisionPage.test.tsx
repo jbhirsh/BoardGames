@@ -1,11 +1,19 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
+
+// The page's sign-in for anyone but the owner: Better Auth's client, faked.
+vi.mock('../client/auth', () => ({
+  signedInEmail: vi.fn(async () => null),
+  signInWithGoogle: vi.fn(async () => ({ ok: true })),
+  signInWithPasskey: vi.fn(async () => ({ ok: true })),
+}));
 import { screen, fireEvent, waitFor, within } from '@testing-library/react';
 import EmailedDecisionPage from '../components/EmailedDecisionPage';
+import { AuthContext } from '../context/authContextValue';
+import { signInWithGoogle, signedInEmail } from '../client/auth';
 import { GAME_MAX, GAME_MIN } from '../data/suggestionLimits';
 import { renderRouted } from './routed';
 import { gqlError, operations, stubGraphql, type Handlers } from './helpers/graphqlFetch';
 
-const TOKEN = 'test-token-' + 'a'.repeat(21);
 const ARKHAM_FOUND = {
   bggId: 15987,
   name: 'Arkham Horror',
@@ -16,6 +24,10 @@ const ARKHAM_FOUND = {
   desc: 'Investigate Arkham.',
   kw: ['cooperative', 'thematic'],
   img: 'https://cf.geekdo-images.com/ah.jpg',
+  weight: null,
+  section: 'coop',
+  summary: null,
+  honours: [],
 };
 const ARKHAM = {
   bggId: 15987,
@@ -26,6 +38,7 @@ const ARKHAM = {
   desc: 'Investigate Arkham.',
   kw: ['cooperative', 'thematic'],
   img: 'https://cf.geekdo-images.com/ah.jpg',
+  section: 'coop',
 };
 const MISSPELT = { game: 'Arkham Horry', name: 'Robin', note: 'Spooky', status: 'PENDING' };
 
@@ -52,9 +65,15 @@ function api({
   });
 }
 
-const visit = (path: string) => renderRouted(<EmailedDecisionPage />, [path], path.split('?')[0]);
-const approve = (extra = '') => visit(`/approve?id=sug-aaaaaa&token=${TOKEN}${extra}`);
-const deny = () => visit(`/deny?id=sug-aaaaaa&token=${TOKEN}`);
+/** The page as `admin` (the owner by default) sees it. */
+const asOwner = (admin = true) => (
+  <AuthContext.Provider value={{ admin, loaded: true, refresh: vi.fn(async () => {}) }}>
+    <EmailedDecisionPage />
+  </AuthContext.Provider>
+);
+const visit = (path: string, admin = true) => renderRouted(asOwner(admin), [path], path.split('?')[0]);
+const approve = (extra = '') => visit(`/approve?id=sug-aaaaaa${extra}`);
+const deny = () => visit('/deny?id=sug-aaaaaa');
 const sent = (spy: ReturnType<typeof api>, name: string) => operations(spy).filter((o) => o.operationName === name);
 
 describe('EmailedDecisionPage', () => {
@@ -74,7 +93,7 @@ describe('EmailedDecisionPage', () => {
         .map((li) => li.textContent),
     ).toEqual(['Cooperative', 'Thematic']);
     expect(screen.getByRole('presentation')).toHaveAttribute('src', ARKHAM_FOUND.img);
-    expect(sent(spy, 'EmailedSuggestion').map((o) => o.variables)).toEqual([{ id: 'sug-aaaaaa', token: TOKEN }]);
+    expect(sent(spy, 'EmailedSuggestion').map((o) => o.variables)).toEqual([{ id: 'sug-aaaaaa' }]);
     expect(sent(spy, 'DecideByLink')).toEqual([]);
     expect(document.querySelector('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
     expect(document.querySelector('meta[name="referrer"]')).toHaveAttribute('content', 'no-referrer');
@@ -83,7 +102,7 @@ describe('EmailedDecisionPage', () => {
     expect(await screen.findByRole('heading', { name: 'Approved' })).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Arkham Horror is now on the wishlist, credited to Robin.');
     expect(sent(spy, 'DecideByLink').map((o) => o.variables)).toEqual([
-      { id: 'sug-aaaaaa', token: TOKEN, decision: 'APPROVE', game: 'Arkham Horror', details: ARKHAM },
+      { id: 'sug-aaaaaa', decision: 'APPROVE', game: 'Arkham Horror', details: ARKHAM },
     ]);
   });
 
@@ -101,7 +120,6 @@ describe('EmailedDecisionPage', () => {
     );
     expect(sent(spy, 'DecideByLink')[0].variables).toEqual({
       id: 'sug-aaaaaa',
-      token: TOKEN,
       decision: 'APPROVE',
       game: 'Arkham Horry',
       details: null,
@@ -142,7 +160,6 @@ describe('EmailedDecisionPage', () => {
     expect(await screen.findByRole('heading', { name: 'Approve Arkham Horror?' })).toBeInTheDocument();
     expect(router.state.location).toMatchObject({
       search: '?id=sug-aaaaaa&game=Arkham+Horror',
-      state: { token: TOKEN },
     });
     expect(screen.getByText('Robin', { selector: 'strong' }).parentElement).toHaveTextContent(
       /^Suggested by Robin as “Arkham Horry”$/,
@@ -180,41 +197,32 @@ describe('EmailedDecisionPage', () => {
     expect(await screen.findByRole('heading', { name: 'Deny Arkham Horror?' })).toBeInTheDocument();
     expect(screen.getByText('Investigate Arkham.')).toBeInTheDocument();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
-    expect(sent(spy, 'EmailedSuggestion')[0].variables).toEqual({ id: 'sug-aaaaaa', token: TOKEN });
+    expect(sent(spy, 'EmailedSuggestion')[0].variables).toEqual({ id: 'sug-aaaaaa' });
     fireEvent.click(screen.getByRole('button', { name: 'Deny' }));
     expect(await screen.findByRole('heading', { name: 'Denied' })).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent("Arkham Horror won't appear on the wishlist.");
-    expect(sent(spy, 'DecideByLink')[0].variables).toEqual({ id: 'sug-aaaaaa', token: TOKEN, decision: 'DENY' });
+    expect(sent(spy, 'DecideByLink')[0].variables).toEqual({ id: 'sug-aaaaaa', decision: 'DENY' });
   });
 
-  it("takes the token out of the address at once, keeping it in the history entry's state", async () => {
+  it('reads and shows nothing to anyone signed out, offering sign-in that comes back to the page', async () => {
     const spy = api();
-    const router = approve();
-    await waitFor(() => expect(router.state.location.search).toBe('?id=sug-aaaaaa'));
-    expect(router.state.location).toMatchObject({ state: { token: TOKEN } });
-    expect(router.state.historyAction).toBe('REPLACE');
-    await screen.findByRole('heading', { name: 'Approve Arkham Horry?' });
-    // Read once: moving the token into the state doesn't read the link again.
-    expect(sent(spy, 'EmailedSuggestion')).toHaveLength(1);
+    visit('/approve?id=sug-aaaaaa', false);
+    expect(await screen.findByText('Sign in as the owner to see this suggestion and decide it.')).toBeInTheDocument();
+    expect(screen.queryByText(/Arkham/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in with Google' }));
+    await waitFor(() => expect(signInWithGoogle).toHaveBeenCalledWith('/approve?id=sug-aaaaaa'));
+    expect(screen.getByRole('button', { name: 'Sign in with a passkey' })).toBeInTheDocument();
+    expect(operations(spy)).toEqual([]);
   });
 
-  it('works from the state alone after a reload, and calls a link with no token incomplete', async () => {
+  it("tells someone signed in with another account that it's the owner's to decide", async () => {
+    vi.mocked(signedInEmail).mockResolvedValueOnce('friend@example.com');
     const spy = api();
-    renderRouted(
-      <EmailedDecisionPage />,
-      [{ pathname: '/approve', search: '?id=sug-aaaaaa', state: { token: TOKEN } }],
-      '/approve',
+    visit('/deny?id=sug-aaaaaa', false);
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      "This is the owner's to decide. You're signed in as friend@example.com.",
     );
-    expect(await screen.findByRole('heading', { name: 'Approve Arkham Horry?' })).toBeInTheDocument();
-    expect(sent(spy, 'EmailedSuggestion')[0].variables).toMatchObject({ token: TOKEN });
-    document.body.innerHTML = '';
-
-    const bare = api({
-      open: () => gqlError('This link is incomplete or mistyped. Open it again from the email.', 'BAD_REQUEST', 400),
-    });
-    renderRouted(<EmailedDecisionPage />, ['/approve?id=sug-aaaaaa'], '/approve');
-    expect(await screen.findByRole('heading', { name: 'Link not recognised' })).toBeInTheDocument();
-    expect(sent(bare, 'EmailedSuggestion')[0].variables).toMatchObject({ token: '' });
+    expect(operations(spy)).toEqual([]);
   });
 
   it('tells a stale link the suggestion was already decided, offering nothing to press', async () => {

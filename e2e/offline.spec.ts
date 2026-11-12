@@ -1,8 +1,38 @@
 import type { BrowserContext, Locator, Page } from '@playwright/test';
 import { test, expect, operationOf } from './fixtures';
+import { GAMES_ANSWER } from './games';
 
 // The service worker (src/sw/sw.ts) is blocked for every other spec.
 test.use({ serviceWorkers: 'allow' });
+
+/**
+ * Run in the service worker before its own code: its fetch of the games
+ * query gets the API's answer (`answer`, the fixtures' stub) whenever the
+ * network carries the request, and fails as any fetch does offline. WebKit's
+ * worker fetches skip Playwright's routes, where the fixtures' stub sits, so
+ * the stub has to be in the worker itself.
+ */
+function GAMES_FROM_API(answer: string) {
+  const network = self.fetch.bind(self);
+  self.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = new URL(input instanceof Request ? input.url : String(input), location.href);
+    const response = await network(input, init);
+    return url.pathname === '/api/graphql' && url.searchParams.get('operationName') === 'Games'
+      ? new Response(answer, { headers: { 'Content-Type': 'application/json' } })
+      : response;
+  };
+}
+
+/** Serves the service worker's script with `preludes` run before its own code, and the games query's stub always first. */
+async function workerWith(context: BrowserContext, ...preludes: string[]) {
+  await context.route('**/sw.js', async (route) => {
+    const response = await route.fetch();
+    const games = `(${GAMES_FROM_API})(${JSON.stringify(JSON.stringify({ data: GAMES_ANSWER }))});`;
+    return route.fulfill({ response, body: [games, ...preludes, await response.text()].join('\n') });
+  });
+}
+
+test.beforeEach(({ context }) => workerWith(context));
 
 /** Waits until the service worker has installed and controls the page. */
 async function controlled(page: Page) {
@@ -177,6 +207,25 @@ test('after a first visit, the installed site lists the collection, checks words
   await expect(page.getByText('15 VP', { exact: true })).toBeVisible();
 });
 
+test("the wishlist, seen once online, lists its games offline from the games query's saved answer", async ({
+  page,
+  context,
+}) => {
+  await page.goto('/?c=want');
+  await controlled(page);
+  await page.reload();
+  await expect(page.getByRole('heading', { level: 2, name: 'Wishlist' })).toBeVisible();
+  await expect(page.getByText(`${GAMES_ANSWER.games.wishlist.length} games`, { exact: true })).toBeVisible();
+  await goOffline(context);
+
+  await page.reload();
+  await expect(page.getByText(`${GAMES_ANSWER.games.wishlist.length} games`, { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: `Show details for ${GAMES_ANSWER.games.wishlist[0].name}` }),
+  ).toBeVisible();
+  await goOnline(context);
+});
+
 test("the wishlist's box art, seen once online, shows on its cards with no network", async ({ page, context }) => {
   await page.goto('/');
   await controlled(page);
@@ -334,10 +383,7 @@ test('a large rulebook saved with Save for offline reads offline, and says it is
 test('a rulebook the device has no room for says so, with nothing to try again', async ({ page, context }) => {
   // No room for a rulebook: the service worker's script, as this test
   // fetches it, first makes its cache refuse one as a full device does.
-  await context.route('**/sw.js', async (route) => {
-    const response = await route.fetch();
-    return route.fulfill({ response, body: `(${FULL_FOR_RULEBOOKS})();\n${await response.text()}` });
-  });
+  await workerWith(context, `(${FULL_FOR_RULEBOOKS})();`);
   await page.goto('/');
   await controlled(page);
   await page.goto('/rules/ticket-to-ride');

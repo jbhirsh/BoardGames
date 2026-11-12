@@ -4,9 +4,10 @@ import { MemoryRouter } from 'react-router';
 import Wishlist from '../components/Wishlist';
 import { FilterProvider } from '../context/FilterContext';
 import { WishlistProvider } from '../context/WishlistContext';
+import { GamesProvider } from '../context/GamesContext';
 import { AuthContext } from '../context/authContextValue';
 import { useFilter } from '../context/useFilter';
-import { WISHLIST } from '../data/wishlist';
+import { WISHLIST, gamesAnswer, suggested } from './helpers/wishlist';
 import { WISHLIST_TYPES, WISHLIST_TYPE_ORDER } from '../data/keywords';
 import { stubMatchMedia } from './helpers/stubMatchMedia';
 import { operations, stubGraphql } from './helpers/graphqlFetch';
@@ -24,7 +25,8 @@ function mockVotes(
   { pending = [] as Suggested[], voted = 1 } = {},
 ) {
   return stubGraphql({
-    Suggestions: () => ({ suggestions: suggestions.map((s) => ({ source: 'FRIEND', details: null, ...s })) }),
+    Games: () =>
+      gamesAnswer(suggestions.map((s) => suggested({ id: s.id, name: s.game, suggestedBy: s.name, note: s.note }))),
     PendingSuggestions: () => ({ pendingSuggestions: pending }),
     PreviewGame: () => ({ previewGame: { outcome: 'NO_MATCH', details: null } }),
     WishlistVotes: ({ ids }) => ({
@@ -45,13 +47,15 @@ function renderWishlist(url = '/?c=want', hidden = false, admin = false) {
   };
   return render(
     <MemoryRouter initialEntries={[url]}>
-      <FilterProvider>
-        <AuthContext.Provider value={auth}>
-          <WishlistProvider>
-            <Wishlist hidden={hidden} />
-          </WishlistProvider>
-        </AuthContext.Provider>
-      </FilterProvider>
+      <GamesProvider>
+        <FilterProvider>
+          <AuthContext.Provider value={auth}>
+            <WishlistProvider>
+              <Wishlist hidden={hidden} />
+            </WishlistProvider>
+          </AuthContext.Provider>
+        </FilterProvider>
+      </GamesProvider>
     </MemoryRouter>,
   );
 }
@@ -64,6 +68,29 @@ describe('Wishlist', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it("says the wishlist didn't load when the games query fails with nothing saved, and tries again", async () => {
+    let fail = true;
+    stubGraphql({
+      Games: () => {
+        if (fail) throw new TypeError('Failed to fetch');
+        return gamesAnswer();
+      },
+      WishlistVotes: ({ ids }) => ({
+        wishlistVotes: { counts: (ids as string[]).map((id) => ({ id, count: 0 })), myVotes: [] },
+      }),
+    });
+    renderWishlist();
+    const notice = await screen.findByRole('alert');
+    expect(notice).toHaveTextContent("The wishlist didn't load.");
+    // Not an empty list, nor "no games match", nor a count of none.
+    expect(screen.queryByText(/0 games/)).toBeNull();
+    expect(screen.queryByText(WISHLIST[0].name)).toBeNull();
+    fail = false;
+    fireEvent.click(within(notice).getByRole('button', { name: 'Try again' }));
+    await screen.findByText(WISHLIST[0].name);
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('renders all wishlist items in the default list layout', async () => {
@@ -249,9 +276,13 @@ describe('Wishlist', () => {
     }
     const { container } = render(
       <MemoryRouter initialEntries={['/?c=want']}>
-        <FilterProvider>
-          <ViewToggleTest />
-        </FilterProvider>
+        <GamesProvider>
+          <FilterProvider>
+            <WishlistProvider>
+              <ViewToggleTest />
+            </WishlistProvider>
+          </FilterProvider>
+        </GamesProvider>
       </MemoryRouter>,
     );
 
@@ -361,13 +392,10 @@ describe('Wishlist', () => {
     expect(voteCall()?.variables.ids).toContain('sug-abc123');
   });
 
-  it('filters the header count while suggestions are still loading', async () => {
-    // Suggestions never settle here, so the body never mounts; the count
-    // must still reflect the search from the URL rather than the full total.
+  it('shows no count and no entries while the games query is still out', async () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise(() => {}));
     renderWishlist(`/?c=want&q=${encodeURIComponent(WISHLIST[0].name)}`);
-    expect(screen.getByText('1 game')).toBeInTheDocument();
-    expect(screen.queryByText(`${WISHLIST.length} games`)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^\d+ games?$/)).not.toBeInTheDocument();
     expect(screen.queryByText(WISHLIST[0].name)).not.toBeInTheDocument();
   });
 
@@ -388,7 +416,7 @@ describe('Wishlist', () => {
     expect(screen.queryByRole('button', { name: /^Edit / })).not.toBeInTheDocument();
   });
 
-  it('shows the owner tools and per-entry controls for stored entries when signed in', async () => {
+  it("shows the owner tools and every entry's controls when signed in", async () => {
     mockVotes({}, [], [{ id: 'sug-abc123', game: 'Root', name: 'Alex', note: '' }], {
       pending: [{ id: 'sug-p', game: 'Ark Nova', name: 'Sam', note: '' }],
     });
@@ -397,30 +425,8 @@ describe('Wishlist', () => {
     expect(await screen.findByRole('button', { name: 'Approve Ark Nova' })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Edit Root' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Remove Root' })).toBeInTheDocument();
-    // Compiled-in entries are edited in the source, not here.
-    expect(screen.queryByRole('button', { name: `Edit ${WISHLIST[0].name}` })).not.toBeInTheDocument();
-  });
-
-  it('shows a game once when it is both compiled in and suggested', async () => {
-    const compiled = WISHLIST[0];
-    // Loose match: the stored record's name differs only in case and punctuation.
-    mockVotes({}, [], [{ id: 'sug-dup', game: `${compiled.name.toLowerCase()}!`, name: 'Alex', note: '' }]);
-    renderWishlist();
-    await screen.findByText(compiled.name);
-    expect(screen.queryAllByText(`${compiled.name.toLowerCase()}!`)).toHaveLength(0);
-    expect(document.querySelectorAll('[data-item-id="sug-dup"]')).toHaveLength(0);
-    // The hidden record must not inflate the count either.
-    expect(screen.getByText(`${WISHLIST.length} games`)).toBeInTheDocument();
-  });
-
-  it('offers the owner controls for a suggestion the compiled list already covers', async () => {
-    const compiled = WISHLIST[0];
-    mockVotes({}, [], [{ id: 'sug-dup', game: compiled.name, name: 'Alex', note: '' }]);
-    renderWishlist('/?c=want', false, true);
-    expect(await screen.findByText('Already on the wishlist')).toBeInTheDocument();
-    // The compiled entry keeps its card; only the stored record gets controls.
-    expect(screen.getByRole('button', { name: `Remove ${compiled.name}` })).toBeInTheDocument();
-    expect(screen.getAllByText(compiled.name)).toHaveLength(2);
+    // The entries once written into the site's code too.
+    expect(screen.getAllByRole('button', { name: `Edit ${WISHLIST[0].name}` }).length).toBeGreaterThan(0);
   });
 });
 

@@ -8,7 +8,7 @@ export type Decision =
   | 'APPROVE'
   | 'DENY';
 
-/** The owner's edits; a field left out keeps what is stored, and `type: null` files it back under "Suggested by friends". */
+/** The owner's edits; a field left out keeps what is stored, and `type: null` files it under "Suggested by friends". */
 export type DetailsEdit = {
   desc?: string | null | undefined;
   kw?: Array<string> | null | undefined;
@@ -27,8 +27,18 @@ export type DetailsInput = {
   max?: number | null | undefined;
   min?: number | null | undefined;
   mins?: number | null | undefined;
+  /** The section the preview inferred. */
+  section?: string | null | undefined;
+  /** BoardGameGeek's weight, as the preview found it. */
+  weight?: number | null | undefined;
   year?: number | null | undefined;
 };
+
+export type GameSource =
+  /** Written into the site's code before it moved to the database. */
+  | 'CURATED'
+  | 'FRIEND'
+  | 'OWNER';
 
 export type HistoryEntry = {
   content: string;
@@ -49,10 +59,6 @@ export type Role =
   | 'MODEL'
   | 'USER';
 
-export type Source =
-  | 'FRIEND'
-  | 'OWNER';
-
 export type SuggestionStatus =
   | 'APPROVED'
   | 'DENIED'
@@ -72,7 +78,7 @@ export type PreviewGameQueryVariables = Exact<{
 }>;
 
 
-export type PreviewGameQuery = { previewGame: { outcome: LookupOutcome, details: { bggId: number, name: string, year: number | null, min: number, max: number, mins: number, desc: string, kw: Array<string>, img: string | null } | null } };
+export type PreviewGameQuery = { previewGame: { outcome: LookupOutcome, details: { bggId: number, name: string, year: number | null, min: number, max: number, mins: number, desc: string, kw: Array<string>, img: string | null, weight: number | null, section: string, summary: string | null, honours: Array<{ name: string, year: number | null, result: string }> } | null } };
 
 export type DecideSuggestionMutationVariables = Exact<{
   id: string;
@@ -88,30 +94,29 @@ export type AddGameMutationVariables = Exact<{
   game: string;
   name: string;
   note?: string | null | undefined;
-  type?: string | null | undefined;
   details?: DetailsInput | null | undefined;
 }>;
 
 
 export type AddGameMutation = { addGame: { lookup: LookupOutcome | null } };
 
-export type EditSuggestionMutationVariables = Exact<{
+export type EditGameMutationVariables = Exact<{
   id: string;
   game: string;
   details: DetailsEdit;
 }>;
 
 
-export type EditSuggestionMutation = { editSuggestion: { id: string } | null };
+export type EditGameMutation = { editGame: { id: string } | null };
 
-export type RemoveSuggestionMutationVariables = Exact<{
+export type RemoveGameMutationVariables = Exact<{
   id: string;
 }>;
 
 
-export type RemoveSuggestionMutation = { removeSuggestion: boolean };
+export type RemoveGameMutation = { removeGame: boolean };
 
-export type PreviewFragment = { outcome: LookupOutcome, details: { bggId: number, name: string, year: number | null, min: number, max: number, mins: number, desc: string, kw: Array<string>, img: string | null } | null };
+export type PreviewFragment = { outcome: LookupOutcome, details: { bggId: number, name: string, year: number | null, min: number, max: number, mins: number, desc: string, kw: Array<string>, img: string | null, weight: number | null, section: string, summary: string | null, honours: Array<{ name: string, year: number | null, result: string }> } | null };
 
 export type SessionQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -120,16 +125,14 @@ export type SessionQuery = { session: { admin: boolean } };
 
 export type EmailedSuggestionQueryVariables = Exact<{
   id: string;
-  token: string;
   game?: string | null | undefined;
 }>;
 
 
-export type EmailedSuggestionQuery = { emailedSuggestion: { suggestion: { game: string, name: string, note: string, status: SuggestionStatus }, preview: { outcome: LookupOutcome, details: { bggId: number, name: string, year: number | null, min: number, max: number, mins: number, desc: string, kw: Array<string>, img: string | null } | null } | null } };
+export type EmailedSuggestionQuery = { emailedSuggestion: { suggestion: { game: string, name: string, note: string, status: SuggestionStatus }, preview: { outcome: LookupOutcome, details: { bggId: number, name: string, year: number | null, min: number, max: number, mins: number, desc: string, kw: Array<string>, img: string | null, weight: number | null, section: string, summary: string | null, honours: Array<{ name: string, year: number | null, result: string }> } | null } | null } };
 
 export type DecideByLinkMutationVariables = Exact<{
   id: string;
-  token: string;
   decision: Decision;
   game?: string | null | undefined;
   details?: DetailsInput | null | undefined;
@@ -165,10 +168,10 @@ export type VoteMutationVariables = Exact<{
 
 export type VoteMutation = { vote: { count: number } };
 
-export type SuggestionsQueryVariables = Exact<{ [key: string]: never; }>;
+export type GamesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SuggestionsQuery = { suggestions: Array<{ id: string, game: string, name: string, note: string, source: Source, details: { year: number | null, min: number, max: number, mins: number, desc: string, kw: Array<string>, type: string | null, img: string | null } | null }> };
+export type GamesQuery = { games: { wishlist: Array<{ id: string, name: string, source: GameSource, suggestedBy: string | null, note: string, players: string | null, minPlayers: number, maxPlayers: number, dur: string | null, minutes: number, description: string, keywords: Array<string>, section: string | null, asin: string | null, expands: string | null, video: string | null, image: string | null, bggId: number | null, year: number | null }>, bgg: Array<{ bggId: number, name: string, summary: string | null, weight: number | null, honours: Array<{ name: string, year: number | null, result: string }> }> } };
 
 export type SuggestGameMutationVariables = Exact<{
   game: string;
@@ -210,6 +213,14 @@ export const PreviewFragmentDoc = new TypedDocumentString(`
     desc
     kw
     img
+    weight
+    section
+    summary
+    honours {
+      name
+      year
+      result
+    }
   }
 }
     `, {"fragmentName":"Preview"}) as unknown as TypedDocumentString<PreviewFragment, unknown>;
@@ -241,6 +252,14 @@ export const PreviewGameDocument = new TypedDocumentString(`
     desc
     kw
     img
+    weight
+    section
+    summary
+    honours {
+      name
+      year
+      result
+    }
   }
 }`) as unknown as TypedDocumentString<PreviewGameQuery, PreviewGameQueryVariables>;
 export const DecideSuggestionDocument = new TypedDocumentString(`
@@ -251,24 +270,24 @@ export const DecideSuggestionDocument = new TypedDocumentString(`
 }
     `) as unknown as TypedDocumentString<DecideSuggestionMutation, DecideSuggestionMutationVariables>;
 export const AddGameDocument = new TypedDocumentString(`
-    mutation AddGame($game: String!, $name: String!, $note: String, $type: String, $details: DetailsInput) {
-  addGame(game: $game, name: $name, note: $note, type: $type, details: $details) {
+    mutation AddGame($game: String!, $name: String!, $note: String, $details: DetailsInput) {
+  addGame(game: $game, name: $name, note: $note, details: $details) {
     lookup
   }
 }
     `) as unknown as TypedDocumentString<AddGameMutation, AddGameMutationVariables>;
-export const EditSuggestionDocument = new TypedDocumentString(`
-    mutation EditSuggestion($id: String!, $game: String!, $details: DetailsEdit!) {
-  editSuggestion(id: $id, game: $game, details: $details) {
+export const EditGameDocument = new TypedDocumentString(`
+    mutation EditGame($id: String!, $game: String!, $details: DetailsEdit!) {
+  editGame(id: $id, game: $game, details: $details) {
     id
   }
 }
-    `) as unknown as TypedDocumentString<EditSuggestionMutation, EditSuggestionMutationVariables>;
-export const RemoveSuggestionDocument = new TypedDocumentString(`
-    mutation RemoveSuggestion($id: String!) {
-  removeSuggestion(id: $id)
+    `) as unknown as TypedDocumentString<EditGameMutation, EditGameMutationVariables>;
+export const RemoveGameDocument = new TypedDocumentString(`
+    mutation RemoveGame($id: String!) {
+  removeGame(id: $id)
 }
-    `) as unknown as TypedDocumentString<RemoveSuggestionMutation, RemoveSuggestionMutationVariables>;
+    `) as unknown as TypedDocumentString<RemoveGameMutation, RemoveGameMutationVariables>;
 export const SessionDocument = new TypedDocumentString(`
     query Session {
   session {
@@ -277,8 +296,8 @@ export const SessionDocument = new TypedDocumentString(`
 }
     `) as unknown as TypedDocumentString<SessionQuery, SessionQueryVariables>;
 export const EmailedSuggestionDocument = new TypedDocumentString(`
-    query EmailedSuggestion($id: String!, $token: String!, $game: String) {
-  emailedSuggestion(id: $id, token: $token) {
+    query EmailedSuggestion($id: String!, $game: String) {
+  emailedSuggestion(id: $id) {
     suggestion {
       game
       name
@@ -302,17 +321,19 @@ export const EmailedSuggestionDocument = new TypedDocumentString(`
     desc
     kw
     img
+    weight
+    section
+    summary
+    honours {
+      name
+      year
+      result
+    }
   }
 }`) as unknown as TypedDocumentString<EmailedSuggestionQuery, EmailedSuggestionQueryVariables>;
 export const DecideByLinkDocument = new TypedDocumentString(`
-    mutation DecideByLink($id: String!, $token: String!, $decision: Decision!, $game: String, $details: DetailsInput) {
-  decideSuggestion(
-    id: $id
-    token: $token
-    decision: $decision
-    game: $game
-    details: $details
-  ) {
+    mutation DecideByLink($id: String!, $decision: Decision!, $game: String, $details: DetailsInput) {
+  decideSuggestion(id: $id, decision: $decision, game: $game, details: $details) {
     item {
       game
     }
@@ -343,27 +364,44 @@ export const VoteDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<VoteMutation, VoteMutationVariables>;
-export const SuggestionsDocument = new TypedDocumentString(`
-    query Suggestions {
-  suggestions {
-    id
-    game
-    name
-    note
-    source
-    details {
+export const GamesDocument = new TypedDocumentString(`
+    query Games {
+  games {
+    wishlist {
+      id
+      name
+      source
+      suggestedBy
+      note
+      players
+      minPlayers
+      maxPlayers
+      dur
+      minutes
+      description
+      keywords
+      section
+      asin
+      expands
+      video
+      image
+      bggId
       year
-      min
-      max
-      mins
-      desc
-      kw
-      type
-      img
+    }
+    bgg {
+      bggId
+      name
+      summary
+      weight
+      honours {
+        name
+        year
+        result
+      }
     }
   }
 }
-    `) as unknown as TypedDocumentString<SuggestionsQuery, SuggestionsQueryVariables>;
+    `) as unknown as TypedDocumentString<GamesQuery, GamesQueryVariables>;
 export const SuggestGameDocument = new TypedDocumentString(`
     mutation SuggestGame($game: String!, $name: String!, $note: String) {
   suggestGame(game: $game, name: $name, note: $note) {

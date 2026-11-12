@@ -5,7 +5,9 @@ import { sortedKw } from '../utils/filterGames';
 import KeywordPill from './KeywordPill';
 import AwardsBadge, { AwardsSection } from './AwardsBadge';
 import SubGameList from './SubGameList';
-import DifficultyMeta from './DifficultyMeta';
+import DifficultyMeta, { WaitingBar } from './DifficultyMeta';
+import { useGames } from '../context/useGames';
+import { waitingForBgg } from '../utils/bggInfo';
 import GameActions from './GameActions';
 import GameDetail from './GameDetail';
 import Popover from './Popover';
@@ -47,6 +49,8 @@ interface Props {
 export default memo(GameCard);
 
 function GameCard({ game }: Props) {
+  const { loaded } = useGames();
+  const waiting = waitingForBgg(game, loaded);
   const filter = useItemFilter();
   const dispatch = useFilterDispatch();
   const [subsOpen, setSubsOpen] = useState(false);
@@ -104,7 +108,9 @@ function GameCard({ game }: Props) {
       <div className={cardBodyClass}>
         {/* More opens the long write-up a list row shows when expanded. */}
         <p className={cardDescClass}>
-          {game.short}{' '}
+          {/* A game the owner picked for BGG's summary waits for it on a
+              first visit, a bar in its own line's place. */}
+          {waiting.summary ? <WaitingBar className="w-full" /> : game.short}{' '}
           <button
             type="button"
             className={cardMoreClass}
@@ -132,7 +138,8 @@ function GameCard({ game }: Props) {
         {/* What the card holds besides its own game sits bottom left, so
             every card's head carries the same things and lines up. */}
         <div className={cardFootStartClass}>
-          <AwardsBadge itemName={game.name} awards={game.awards} />
+          {/* The awards come with the games query; a bar waits for them on a first visit. */}
+          {waiting.awards ? <WaitingBar className="w-10" /> : <AwardsBadge itemName={game.name} awards={game.awards} />}
           {game.subgames && hasFitting && (
             <Popover
               className="inline-flex"

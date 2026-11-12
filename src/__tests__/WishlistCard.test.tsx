@@ -7,6 +7,8 @@ import { useFilter } from '../context/useFilter';
 import type { WishlistItem } from '../data/types';
 
 const testItem: WishlistItem = {
+  source: 'curated',
+  blurb: '',
   id: 'test-wishlist-game',
   name: 'Test Wishlist Game',
   desc: 'A great game to add.',
@@ -18,7 +20,7 @@ const testItem: WishlistItem = {
   dur: '30 min',
   mins: 30,
   kw: ['strategy', 'card-game'],
-  awards: [{ name: 'Spiel des Jahres', year: 2020 }],
+  awards: [{ name: 'Spiel des Jahres', year: 2020, result: 'Winner' }],
 };
 
 type Props = React.ComponentProps<typeof WishlistCard>;

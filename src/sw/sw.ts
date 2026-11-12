@@ -10,14 +10,19 @@
 // installable.
 //
 // Pages come from the network (PAGE_TIMEOUT_MS at most), falling back to the
-// app saved at install; /api/* and other sites are never touched, so a
-// friend's suggestion's BoardGameGeek thumbnail is never saved. Sentry
+// app saved at install. The games query over GET is the one API request it
+// handles, the same way: the network's answer, saved, or the last one saved
+// when the network fails or is slow, so the wishlist and the collection's
+// difficulty and awards work offline. The rest of /api/* and other sites
+// are never touched, so a friend's suggestion's BoardGameGeek thumbnail is
+// never saved. Sentry
 // stamps sw.js on every build, so every deploy installs a new worker. Bulk
 // saving of rulebooks and precaching the rules text are left out.
-import { parseRange, rangeHeaders, routeFor, savesOnOpen, savingData } from '../utils/offline';
+import { GAMES_KEY, parseRange, rangeHeaders, routeFor, savesOnOpen, savingData } from '../utils/offline';
 import {
   activate,
   ASSETS,
+  GAMES,
   healReader,
   install,
   isReaderMessage,
@@ -101,6 +106,8 @@ self.addEventListener('fetch', (event) => {
   switch (routeFor(request, self.location.origin, SHELL_PATHS)) {
     case 'page':
       return event.respondWith(page(request));
+    case 'games':
+      return event.respondWith(games(event));
     case 'rulebook':
       return event.respondWith(rulebook(event));
     case 'shell':
@@ -126,6 +133,51 @@ async function page(request: Request): Promise<Response> {
     ]);
   } catch {
     return (await caches.match('/', { ...MATCH, cacheName: SHELL })) ?? Response.error();
+  }
+}
+
+/**
+ * The games query: the network's answer within PAGE_TIMEOUT_MS, or the last
+ * answer saved. The network's is saved for next time even when it comes too
+ * late for this one. Only a 200 is saved, so an outage's error never
+ * replaces a good answer. With nothing saved yet (a first visit's query
+ * never came through the worker, which didn't control the page yet), a slow
+ * network is waited for rather than given up on. So is it for a request
+ * that asks for the network's answer (`cache: 'reload'`, the page's reload
+ * after the owner's edit), which the saved copy would show as lost.
+ */
+async function games(event: FetchEvent): Promise<Response> {
+  const saved = () => caches.match(GAMES_KEY, { cacheName: GAMES });
+  // Saved however late it comes: a slow answer served the old copy this
+  // time, and is the copy next time.
+  const fresh = fetch(event.request).then((response) => {
+    if (response.ok) {
+      const copy = response.clone();
+      event.waitUntil(caches.open(GAMES).then((cache) => cache.put(GAMES_KEY, copy)));
+    }
+    return response;
+  });
+  event.waitUntil(
+    fresh.then(
+      () => undefined,
+      () => undefined,
+    ),
+  );
+  if (event.request.cache === 'reload') return fresh;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const response = await Promise.race([
+      fresh,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error('slow')), PAGE_TIMEOUT_MS);
+      }),
+    ]);
+    return response.ok ? response : ((await saved()) ?? response);
+  } catch {
+    // Offline, fresh has failed and respondWith gets a network error.
+    return (await saved()) ?? fresh;
+  } finally {
+    clearTimeout(timer);
   }
 }
 

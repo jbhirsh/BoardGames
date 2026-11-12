@@ -7,8 +7,6 @@
 
 # Written by scripts: re-run them, never format by hand.
 package-lock.json
-src/data/gameWeights.ts
-src/data/wishlistArt.ts
 rules-text/
 eval/results.json
 src/__tests__/fixtures/

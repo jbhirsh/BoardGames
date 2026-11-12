@@ -1,8 +1,48 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { errorCode, openStream, readEvents, request } from '../client/graphql';
-import { AskRulesDocument, SessionDocument, VoteDocument } from '../gql/graphql';
+import { errorCode, openStream, query, readEvents, request } from '../client/graphql';
+import {
+  AskRulesDocument,
+  EmailedSuggestionDocument,
+  GamesDocument,
+  SessionDocument,
+  VoteDocument,
+} from '../gql/graphql';
 
 const json = (body: unknown, status = 200) => Response.json(body, { status });
+
+describe('query', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("GETs the document, its name and its variables in the query string, with Yoga's CSRF header", async () => {
+    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(json({ data: { games: { wishlist: [], bgg: [] } } }));
+    expect(await query(GamesDocument, {})).toEqual({ ok: true, data: { games: { wishlist: [], bgg: [] } } });
+    const [url, init] = spy.mock.calls[0];
+    const params = new URL(String(url), 'https://x.example').searchParams;
+    expect(String(url).startsWith('/api/graphql?')).toBe(true);
+    expect(params.get('operationName')).toBe('Games');
+    expect(params.get('query')).toBe(GamesDocument.toString());
+    expect(params.has('variables')).toBe(false);
+    expect(init).toEqual({ headers: { 'x-graphql-yoga-csrf': '1' } });
+    await query(EmailedSuggestionDocument, { id: 'sug-1' });
+    expect(new URL(String(spy.mock.calls[1][0]), 'https://x.example').searchParams.get('variables')).toBe(
+      '{"id":"sug-1"}',
+    );
+  });
+
+  it("asks for the network's answer when fresh, past the service worker's saved copy", async () => {
+    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(json({ data: { games: { wishlist: [], bgg: [] } } }));
+    await query(GamesDocument, {}, undefined, { fresh: true });
+    expect(spy.mock.calls[0][1]).toEqual({ headers: { 'x-graphql-yoga-csrf': '1' }, cache: 'reload' });
+  });
+
+  it('answers a failure with a message, never throwing', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'));
+    expect(await query(GamesDocument, {})).toEqual({
+      ok: false,
+      error: 'Something went wrong. Try again in a minute.',
+    });
+  });
+});
 
 describe('request', () => {
   afterEach(() => vi.restoreAllMocks());

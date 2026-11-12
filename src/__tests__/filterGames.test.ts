@@ -1,5 +1,5 @@
 import { filterWishlist } from '../utils/filterGames';
-import { WISHLIST } from '../data/wishlist';
+import { WISHLIST } from './helpers/wishlist';
 import { GROUP_ORDER, WISHLIST_TYPE_ORDER } from '../data/keywords';
 import { describe, it, expect } from 'vitest';
 import {

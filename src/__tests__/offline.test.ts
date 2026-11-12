@@ -23,6 +23,13 @@ describe('routeFor', () => {
     expect(route('/api/suggestions?action=pending', 'GET', 'navigate')).toBe('skip');
   });
 
+  it('takes the games query over GET, and only it, for the saved answer', () => {
+    expect(route('/api/graphql?query=q&operationName=Games', 'GET', 'cors')).toBe('games');
+    expect(route('/api/graphql?operationName=Games', 'POST', 'cors')).toBe('skip');
+    expect(route('/api/graphql?operationName=Session', 'GET', 'cors')).toBe('skip');
+    expect(route('/api/graphql?operationName=Games', 'GET', 'cors', 'https://elsewhere.example')).toBe('skip');
+  });
+
   it('leaves other sites alone', () => {
     expect(route('/api/rest_v1/page/definition/cat', 'GET', 'cors', 'https://en.wiktionary.org')).toBe('skip');
     expect(route('/rules/catan.pdf', 'GET', 'no-cors', 'https://elsewhere.example')).toBe('skip');

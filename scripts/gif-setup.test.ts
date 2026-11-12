@@ -60,13 +60,24 @@ const body = (r: ReturnType<typeof fakeRoute>) =>
 afterEach(() => vi.restoreAllMocks());
 
 describe('operation', () => {
-  const request = (method: string, body: unknown) => ({ method: () => method, postDataJSON: () => body });
+  const request = (method: string, body: unknown, url = 'https://x.example/api/graphql') => ({
+    method: () => method,
+    postDataJSON: () => body,
+    url: () => url,
+  });
 
   it('names a POSTed operation and its variables', () => {
     expect(operation(request('POST', { operationName: 'Session' }))).toEqual({ name: 'Session', variables: {} });
     expect(operation(request('POST', { operationName: 'A', variables: { ids: [1] } }))).toEqual({
       name: 'A',
       variables: { ids: [1] },
+    });
+  });
+
+  it("names a GET's operation from its query string", () => {
+    expect(operation(request('GET', null, 'https://x.example/api/graphql?operationName=Games&query=q'))).toEqual({
+      name: 'Games',
+      variables: {},
     });
   });
 
@@ -95,7 +106,9 @@ describe('stubApi', () => {
   it('answers as signed out, with nothing on the wishlist, and refuses the rest of the API', async () => {
     const stub = await routes(true);
     expect(body(await stub(`${ORIGIN}/api/graphql`, op('Session')))).toEqual({ data: { session: { admin: false } } });
-    expect(body(await stub(`${ORIGIN}/api/graphql`, op('Suggestions')))).toEqual({ data: { suggestions: [] } });
+    expect(body(await stub(`${ORIGIN}/api/graphql`, op('Games')))).toEqual({
+      data: { games: { wishlist: [], bgg: [] } },
+    });
     expect(body(await stub(`${ORIGIN}/api/graphql`, op('WishlistVotes', { ids: ['a', 'b'] })))).toEqual({
       data: {
         wishlistVotes: {
@@ -120,17 +133,17 @@ describe('stubApi', () => {
   it("reads the wishlist from the live site, falling back to the stub's, saying so once", async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const live = await routes(false);
-    expect([...LIVE_READS]).toEqual(['Suggestions', 'WishlistVotes']);
+    expect([...LIVE_READS]).toEqual(['Games', 'WishlistVotes']);
     const answer = { ok: () => true };
-    const read = await live(`${ORIGIN}/api/graphql`, op('Suggestions'), answer);
+    const read = await live(`${ORIGIN}/api/graphql`, op('Games'), answer);
     expect(read.fetch).toHaveBeenCalledWith({ url: `${LIVE}/api/graphql` });
     expect(read.fulfill).toHaveBeenCalledWith({ response: answer });
-    const refused = await live(`${ORIGIN}/api/graphql`, op('Suggestions'), { ok: () => false });
-    expect(body(refused)).toEqual({ data: { suggestions: [] } });
+    const refused = await live(`${ORIGIN}/api/graphql`, op('Games'), { ok: () => false });
+    expect(body(refused)).toEqual({ data: { games: { wishlist: [], bgg: [] } } });
     await live(`${ORIGIN}/api/graphql`, op('WishlistVotes'), new Error('offline'));
     expect(warn).toHaveBeenCalledTimes(1);
     expect(warn).toHaveBeenCalledWith(
-      `pr-gif: ${LIVE} didn't answer Suggestions, so this recording shows the stub's empty wishlist`,
+      `pr-gif: ${LIVE} didn't answer Games, so this recording shows the stub's empty wishlist`,
     );
     const session = await live(`${ORIGIN}/api/graphql`, op('Session'));
     expect(session.fetch).not.toHaveBeenCalled();

@@ -22,6 +22,7 @@ import { askRules, type AskRulesInput } from './chat.js';
 import { buildContext, limit, requireAdmin, type ApiContext, type ApiDeps } from './context.js';
 import { guarded } from './errors.js';
 import { limits } from './limits.js';
+import { listGames } from './games.js';
 import * as suggestions from './suggestions.js';
 import { castVote, readVotes } from './votes.js';
 
@@ -36,9 +37,11 @@ interface EmailedParent {
   item: suggestions.Suggestion;
 }
 
-/** A lookup as the schema's Preview reads it: details only when it found the game. */
+/** A lookup as the schema's Preview reads it: details only when it found the game, its honours a list. */
 const preview = (result: LookupResult) =>
-  result.outcome === 'found' ? { outcome: result.outcome, details: result.details } : { outcome: result.outcome };
+  result.outcome === 'found'
+    ? { outcome: result.outcome, details: { ...result.details, honours: result.details.honours ?? [] } }
+    : { outcome: result.outcome };
 
 /** GraphQL leaves an absent argument out and passes null for an explicit null; the services tell the two apart. */
 type Maybe<T> = T | null | undefined;
@@ -49,11 +52,10 @@ const Query = {
   wishlistVotes: (_: unknown, args: { ids: string[]; anonId?: Maybe<string> }, ctx: ApiContext) =>
     guarded(...VOTES, async () => {
       await limit(ctx, ctx.deps.limiters.votes);
-      return readVotes(ctx.deps.redis, args.ids, args.anonId);
+      return readVotes(await ctx.deps.db(), args.ids, args.anonId);
     }),
 
-  suggestions: (_: unknown, __: unknown, ctx: ApiContext) =>
-    guarded(...SUGGESTIONS, () => suggestions.approvedList(ctx.deps.suggestions)),
+  games: (_: unknown, __: unknown, ctx: ApiContext) => guarded(...SUGGESTIONS, () => listGames(ctx.deps.suggestions)),
 
   pendingSuggestions: (_: unknown, __: unknown, ctx: ApiContext) =>
     guarded(...SUGGESTIONS, async () => {
@@ -69,10 +71,13 @@ const Query = {
       return preview(await suggestions.previewGame(ctx.deps.suggestions, args.game));
     }),
 
-  emailedSuggestion: (_: unknown, args: { id: string; token: string }, ctx: ApiContext) =>
-    guarded(...SUGGESTIONS, async (): Promise<EmailedParent> => ({
-      item: await suggestions.openEmailed(ctx.deps.suggestions, args.id, args.token),
-    })),
+  // A read, so it can come over GET, but only the owner's: the page shows
+  // nothing about a suggestion to anyone else.
+  emailedSuggestion: (_: unknown, args: { id: string }, ctx: ApiContext) =>
+    guarded(...SUGGESTIONS, async (): Promise<EmailedParent> => {
+      await requireAdmin(ctx, false);
+      return { item: await suggestions.openEmailed(ctx.deps.suggestions, args.id) };
+    }),
 };
 
 const EmailedSuggestion = {
@@ -88,11 +93,11 @@ const Mutation = {
   vote: (_: unknown, args: { itemId: string; anonId: string; vote: number }, ctx: ApiContext) =>
     guarded(...VOTES, async () => {
       await limit(ctx, ctx.deps.limiters.votes);
-      return castVote(ctx.deps.redis, args);
+      return castVote(await ctx.deps.db(), args);
     }),
 
   // Each new suggestion sends the owner an email, so creation is bounded
-  // tightly per IP. Reads and the token-gated decisions are unlimited.
+  // tightly per IP. Reads and the owner's decisions are unlimited.
   suggestGame: (_: unknown, args: suggestions.SuggestInput, ctx: ApiContext) =>
     guarded(...SUGGESTIONS, async () => {
       await limit(ctx, ctx.deps.limiters.suggest);
@@ -101,16 +106,13 @@ const Mutation = {
 
   decideSuggestion: (
     _: unknown,
-    args: { id: string; decision: 'approve' | 'deny'; token?: Maybe<string>; game?: Maybe<string>; details?: unknown },
+    args: { id: string; decision: 'approve' | 'deny'; game?: Maybe<string>; details?: unknown },
     ctx: ApiContext,
   ) =>
     guarded(...SUGGESTIONS, async () => {
-      // The emailed token authorises a decision on its own; without one it
-      // is the owner's, from the site.
-      const token = args.token ?? undefined;
-      if (token === undefined) await requireAdmin(ctx);
+      await requireAdmin(ctx);
       const game = args.game ?? undefined;
-      return suggestions.decideSuggestion(ctx.deps.suggestions, { ...args, token, game });
+      return suggestions.decideSuggestion(ctx.deps.suggestions, { ...args, game });
     }),
 
   addGame: (_: unknown, args: suggestions.AddInput, ctx: ApiContext) =>
@@ -119,16 +121,16 @@ const Mutation = {
       return suggestions.addGame(ctx.deps.suggestions, args);
     }),
 
-  editSuggestion: (_: unknown, args: suggestions.EditInput, ctx: ApiContext) =>
+  editGame: (_: unknown, args: suggestions.EditInput, ctx: ApiContext) =>
     guarded(...SUGGESTIONS, async () => {
       await requireAdmin(ctx);
-      return suggestions.editSuggestion(ctx.deps.suggestions, args);
+      return suggestions.editGame(ctx.deps.suggestions, args);
     }),
 
-  removeSuggestion: (_: unknown, args: { id: string }, ctx: ApiContext) =>
+  removeGame: (_: unknown, args: { id: string }, ctx: ApiContext) =>
     guarded(...SUGGESTIONS, async () => {
       await requireAdmin(ctx);
-      await suggestions.removeSuggestion(ctx.deps.suggestions, args.id);
+      await suggestions.removeGame(ctx.deps.suggestions, args.id);
       return true;
     }),
 };
@@ -150,6 +152,7 @@ const enums = {
     REMOVED: 'removed',
   },
   Source: { FRIEND: 'friend', OWNER: 'owner' },
+  GameSource: { CURATED: 'curated', FRIEND: 'friend', OWNER: 'owner' },
   Decision: { APPROVE: 'approve', DENY: 'deny' },
   LookupOutcome: {
     FOUND: 'found',
@@ -199,6 +202,9 @@ export function createApi(getDeps: () => ApiDeps, { production = false }: { prod
   const setCookies: Plugin = {
     onResponse({ request, response }) {
       for (const value of cookies.get(request) ?? []) response.headers.append('Set-Cookie', value);
+      // A query over GET (the games query) is the service worker's to keep,
+      // never the CDN's or the browser's: the owner's edits show at once.
+      if (request.method === 'GET') response.headers.set('Cache-Control', 'no-store');
     },
   };
   return createYoga<NodeServerContext, ApiContext>({

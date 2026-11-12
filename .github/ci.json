@@ -53,13 +53,7 @@
   },
   "review": {
     "instructions": ".github/claude-review.md",
-    "skip": [
-      "src/gql/**",
-      "src/data/gameWeights.ts",
-      "src/data/wishlistArt.ts",
-      "rules-text/**",
-      "drizzle/meta/*_snapshot.json"
-    ]
+    "skip": ["src/gql/**", "rules-text/**", "drizzle/meta/*_snapshot.json"]
   },
   "autofix": {
     "ciFixChecks": [
@@ -91,6 +85,7 @@
       "codegen.ts: graphql-codegen's config, not app code",
       "src/setupTests.ts: Vitest's setup file, which Vitest never measures",
       "e2e/fixtures.ts: Playwright support for the e2e suite, which unit coverage doesn't run",
+      "e2e/games.ts: Playwright support for the e2e suite (the games query's stubbed answer), which unit coverage doesn't run",
       "e2e/readme.shots.ts: Playwright support for the e2e suite, which unit coverage doesn't run",
       "e2e/visual.ts: Playwright support for the e2e suite, which unit coverage doesn't run"
     ]

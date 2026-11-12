@@ -1,66 +1,52 @@
-// Friends' game suggestions, approved by the owner by email or on the site
-// (Query.suggestions, pendingSuggestions, previewGame, emailedSuggestion;
-// Mutation.suggestGame, decideSuggestion, addGame, editSuggestion,
-// removeSuggestion). The resolvers (index.ts) check the owner's session and
-// JSON where an operation is the owner's, and call these.
+// Friends' game suggestions and the owner's wishlist, in the API's database
+// (#290's part 2b): Query.pendingSuggestions, previewGame, emailedSuggestion;
+// Mutation.suggestGame, decideSuggestion, addGame, editGame, removeGame. The
+// resolvers (index.ts) check the owner's session and JSON where an
+// operation is the owner's, and call these.
 //
-// suggestGame validates a suggestion, stores it as `pending`, then emails
-// the owner (Resend) approve and deny links carrying a per-suggestion token:
-// stored first, so the emailed links always resolve. A send that fails (or
-// passes its timeout) takes the record off the active list and marks it
-// `unsent`, so the suggester can retry; its links keep working, since a
-// timeout can follow a real delivery, it still shows in the owner's queue,
-// and approving it returns it to the active list. With no Resend
-// configuration it answers 503 rather than store a suggestion the owner
-// would never see.
+// suggestGame validates a suggestion, spells it as BoardGameGeek does when
+// the two differ only in case, spacing or punctuation (one quick search,
+// which a slow or failed BGG never holds up), stores it as `pending`, then
+// emails the owner links to the approve and deny pages. A send that fails
+// (or passes its timeout) marks it `unsent`, so the suggester can retry; it
+// still shows in the owner's queue, and the owner can decide it there. With
+// no Resend configuration it answers 503 rather than store a suggestion the
+// owner would never see.
 //
-// The links open the app's /approve and /deny pages, which read the
-// suggestion with its token (emailedSuggestion, openEmailed) and change
-// nothing: mail link-scanners follow every URL. Both pages also look the
-// game up (read-only, one lookup per read; previewEmailed) and show what
-// BoardGameGeek has; the approve page also says why it has nothing, with a
-// field to correct a misspelt name, which is only looked up again. Only the page's button
-// decides, sending decideSuggestion with the token, the name and the
-// previewed details (null for none, left out when BGG didn't answer).
-// approvedList lists the approved suggestions, which the wishlist shows
-// under "Suggested by friends".
+// The emailed links carry only the suggestion's id. Their pages read it
+// (emailedSuggestion) and change nothing, as mail link-scanners follow
+// every URL, and only for a signed-in owner: the owner's session is the one
+// thing that decides a suggestion, from the page's button or the site's
+// queue alike. Both look the game up (read-only; previewEmailed, previewGame)
+// and show what BoardGameGeek has.
 //
-// A signed-in owner can also work the list from the site: pendingList is
-// the queue, decideSuggestion without a token decides one, previewGame looks
-// a game up without storing anything ({ outcome, details? }, for the add
-// form and the queue to show), addGame puts a game straight on the wishlist
-// (approved, `source: 'owner'`; `details` are the previewed ones, null for
-// none, absent to look it up here), editSuggestion changes how an entry
-// reads, and removeSuggestion takes it off (status `removed`, the hash kept,
-// the lists forgetting it).
-//
-// An approval, from either place, can carry what the owner saw before
-// deciding: `game`, a corrected name (validated as an add's, refused with a
-// 409 if another entry already lists it), and `details`, held to the same
-// rules as an add's and stored with the status change, null to approve
-// without any. Without `details` the game is looked up here, as before.
-//
-// Redis keeps one hash per suggestion and the id lists below, read through
-// getRawRedis() so a game called "null" stays that. A decision first claims
-// the record (decide), so a double-pressed button, or the email link and the
-// site at once, decides it once; its writes go through one MULTI/EXEC, and a
-// push removes the id first, so no list holds it twice. On approval (or an
-// owner's add) the game is looked up on BoardGameGeek (_lib/bgg.ts) for
-// players, time, the whole description, year, keywords and box art, stored
-// as `details` so the entry renders and filters like any other; a miss, an
-// outage or no token still approves, with details empty. With no
+// A decision is one conditional UPDATE … WHERE status IN ('pending',
+// 'unsent') … RETURNING, in a transaction with what an approval writes, so
+// a double-pressed button, or the email's page and the site at once,
+// decides it once and the other answers 409 with what it became. An
+// approval (or an owner's add) puts a `games` row on the wishlist, filed
+// under the section BoardGameGeek's players, weight, categories and
+// mechanics give it (section.ts), and keeps what BGG says about it in
+// `bgg_info`. The lookup runs first, outside the transaction: a miss, an
+// outage or no token still approves, with the details empty. With no
 // BGG_API_TOKEN, BGG isn't called at all, and that or BGG refusing the token
 // goes to Sentry as an error, so a missing token can't pass for "no match".
-// The owner hears it too: the previews, the add and the approval answer with
-// the lookup's outcome (found, no-match, no-token, refused, unavailable;
-// `lookup` on the add and the approval, absent when none ran), which the
-// pages put into words. Every function takes { redis, mailer, baseUrl,
-// lookup } so tests pass spies, and refuses with an ApiError.
+// The owner hears it too: the previews, the add and the approval answer
+// with the lookup's outcome, which the pages put into words.
+//
+// Every game on the wishlist can be edited (editGame) and taken off it
+// (removeGame, status `removed`, the row kept so old ids still resolve),
+// whether it was written into the site, suggested or added. Duplicates are
+// checked against every game not removed, by name with case, spacing and
+// punctuation ignored. Every function takes { db, mailer, baseUrl, lookup,
+// spelling, item } so tests pass fakes, and refuses with an ApiError.
 
 import * as Sentry from '@sentry/node';
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
+import { and, desc, eq, inArray, ne } from 'drizzle-orm';
+import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { reportError } from '../_lib/sentry.js';
-import { BGG_IMG_RE, type LookupOutcome, type LookupResult } from '../_lib/bgg.js';
+import { BGG_IMG_RE, type BggItem, type GameDetails, type LookupOutcome, type LookupResult } from '../_lib/bgg.js';
 import {
   DESC_MAX,
   GAME_MAX,
@@ -71,53 +57,21 @@ import {
   NOTE_MAX,
   PLAYERS_MAX,
   WISHLIST_SECTION_IDS,
+  type WishlistSection,
 } from '../_lib/limits.js';
 import { SLUG_RE, isSuggestionId } from '../_lib/slug.js';
 import { button, escapeHtml, mailLayout, type Mail, type Mailer } from '../_lib/mail.js';
+import { bggInfo, games, suggestions } from '../_db/schema.js';
+import { bggInfoRow, checked as row, gameRow, suggestionRow } from '../_db/validation.js';
 import { ApiError } from './errors.js';
-
-const TOKEN_RE = /^[A-Za-z0-9_-]{20,64}$/;
-
-// Ids that still count for duplicate checks (pending + approved) and ids the
-// public list renders (approved). Denied suggestions leave both lists but keep
-// their hash so a stale email link can still say "already denied".
-const ACTIVE_KEY = 'suggestions:active';
-const APPROVED_KEY = 'suggestions:approved';
-// Records whose approval email failed to send: off the active list (so the
-// suggester can retry) but kept here so the owner's queue still shows them.
-const UNSENT_KEY = 'suggestions:unsent';
-const itemKey = (id: string) => `suggestions:${id}`;
-
-/**
- * `unsent`: stored, but the send call failed. It leaves the active list so
- * the suggester can retry. Because a timeout can follow a delivery that
- * actually happened, the emailed links still work on an unsent record:
- * deciding it behaves exactly like deciding a pending one.
- * `removed`: the owner took an approved game off the wishlist.
- */
-type SuggestionStatus = 'pending' | 'approved' | 'denied' | 'unsent' | 'removed';
-
-const decidable = (s: SuggestionStatus) => s === 'pending' || s === 'unsent';
-// How long a decision's claim may stand without the decision landing.
-const STALE_CLAIM_MS = 60_000;
 
 const KW_MAX = 20;
 
-/** Details filled in from BoardGameGeek on approval, editable by the owner. */
-interface SuggestionDetails {
-  bggId?: number;
-  year?: number;
-  min: number;
-  max: number;
-  mins: number;
-  desc: string;
-  kw: string[];
-  /** Wishlist section chosen by the owner; absent means "Suggested by friends". */
-  type?: (typeof WISHLIST_SECTION_IDS)[number];
-  /** Box-art thumbnail from BoardGameGeek; set by the lookup, never by an edit. */
-  img?: string;
-}
+type SuggestionStatus = (typeof suggestions.$inferSelect)['status'];
+const DECIDABLE = ['pending', 'unsent'] as const;
+const decidable = (s: SuggestionStatus) => s === 'pending' || s === 'unsent';
 
+/** A suggestion as the API answers it. */
 export interface Suggestion {
   id: string;
   game: string;
@@ -126,51 +80,32 @@ export interface Suggestion {
   status: SuggestionStatus;
   createdAt: number;
   decidedAt?: number;
-  details?: SuggestionDetails;
   /** Who put it on the list: a friend's suggestion, or the owner directly. */
   source: 'friend' | 'owner';
 }
 
-interface SuggestionsPipeline {
-  hgetall(key: string): SuggestionsPipeline;
-  exec(): Promise<unknown[]>;
-}
+type GameRowType = typeof games.$inferSelect;
 
-/** MULTI/EXEC: the queued writes land together or not at all. */
-interface SuggestionsTransaction {
-  hset(key: string, fields: Record<string, string | number>): SuggestionsTransaction;
-  lpush(key: string, value: string): SuggestionsTransaction;
-  lrem(key: string, count: number, value: string): SuggestionsTransaction;
-  exec(): Promise<unknown[]>;
-}
-
-/**
- * The handler reads through a client that skips Upstash's JSON parsing (see
- * getRawRedis), so HGETALL answers a flat [field, value, ...] list of strings.
- */
-interface SuggestionsRedis {
-  hset(key: string, fields: Record<string, string | number>): Promise<number>;
-  hgetall(key: string): Promise<unknown>;
-  hsetnx(key: string, field: string, value: string | number): Promise<number>;
-  hdel(key: string, field: string): Promise<number>;
-  lpush(key: string, value: string): Promise<number>;
-  lrem(key: string, count: number, value: string): Promise<number>;
-  lrange(key: string, start: number, stop: number): Promise<string[]>;
-  pipeline(): SuggestionsPipeline;
-  multi(): SuggestionsTransaction;
-}
+/** A wishlist game as the API answers it: its row, with the note of the suggestion it came from. */
+export type WishlistGame = GameRowType & { note: string };
 
 export interface SuggestionsDeps {
-  redis: SuggestionsRedis;
-  /** Fills in players, time, description and keywords on approval, or says why not; null skips enrichment. */
+  db: () => Promise<LibSQLDatabase>;
+  /** Fills in a game's details on approval, or says why not; null skips it. */
   lookup?: ((name: string) => Promise<LookupResult>) | null;
+  /** BGG's spelling of a typed name, or null for none or any failure (bggSpelling, which never throws); null skips it. */
+  spelling?: ((name: string) => Promise<string | null>) | null;
+  /**
+   * BGG's summary and honours by id, for an add with previewed details, or
+   * null for any failure (fetchBggItem, which never throws); null skips it.
+   */
+  item?: ((bggId: number) => Promise<BggItem | null>) | null;
   /** null when email isn't configured: suggestions are then refused, never lost silently. */
   mailer: Mailer | null;
   /** Absolute origin the emailed links point at; only consulted when sending. */
   baseUrl: () => string;
   now?: () => number;
   randomId?: () => string;
-  randomToken?: () => string;
 }
 
 const normalize = (s: string) =>
@@ -179,74 +114,45 @@ const normalize = (s: string) =>
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
 
-// Values come back exactly as stored, so a game called "null" or "1.50"
-// reads as that text; a missing hash is an empty list.
-function fields(raw: unknown): Record<string, string> | null {
-  if (!Array.isArray(raw) || raw.length === 0) return null;
-  const h: Record<string, string> = {};
-  for (let i = 0; i + 1 < raw.length; i += 2) h[String(raw[i])] = String(raw[i + 1]);
-  return h;
+const view = (s: typeof suggestions.$inferSelect): Suggestion => ({
+  id: s.id,
+  game: s.gameName,
+  name: s.name,
+  note: s.note,
+  status: s.status,
+  createdAt: s.createdAt,
+  ...(s.decidedAt == null ? {} : { decidedAt: s.decidedAt }),
+  source: s.source,
+});
+
+/** Details a game is saved with: BGG's, previewed or looked up, or the owner's edits. */
+interface Details {
+  bggId?: number;
+  year?: number;
+  min: number;
+  max: number;
+  mins: number;
+  desc: string;
+  kw: string[];
+  img?: string;
+  section?: WishlistSection;
+  /** BGG's weight, which a preview brings back to keep in bgg_info. */
+  weight?: number;
 }
 
-function parse(hash: unknown): (Suggestion & { token: string }) | null {
-  const h = fields(hash);
-  if (!h) return null;
-  const { id, game, name, status } = h;
-  if (!id || !game || !name) return null;
-  return {
-    id,
-    game,
-    name,
-    note: h.note ?? '',
-    status:
-      status === 'approved' || status === 'denied' || status === 'unsent' || status === 'removed' ? status : 'pending',
-    createdAt: Number(h.createdAt) || 0,
-    decidedAt: h.decidedAt !== undefined ? Number(h.decidedAt) || 0 : undefined,
-    details: parseDetails(h.details),
-    source: h.source === 'owner' ? 'owner' : 'friend',
-    token: h.token ?? '',
-  };
-}
-
-const isWishlistType = (v: unknown): v is SuggestionDetails['type'] =>
+const isSection = (v: unknown): v is WishlistSection =>
   typeof v === 'string' && (WISHLIST_SECTION_IDS as readonly string[]).includes(v);
 
-// Details are stored as one JSON field.
-function parseDetails(raw: string | undefined): SuggestionDetails | undefined {
-  if (raw === undefined) return undefined;
-  let v: unknown;
-  try {
-    v = JSON.parse(raw);
-  } catch {
-    return undefined;
-  }
-  if (!v || typeof v !== 'object') return undefined;
-  const d = v as Record<string, unknown>;
-  const n = (x: unknown, fallback: number) => (typeof x === 'number' && Number.isFinite(x) ? x : fallback);
-  return {
-    bggId: typeof d.bggId === 'number' ? d.bggId : undefined,
-    year: typeof d.year === 'number' ? d.year : undefined,
-    min: n(d.min, 1),
-    max: n(d.max, 99),
-    mins: n(d.mins, 0),
-    desc: typeof d.desc === 'string' ? d.desc : '',
-    kw: Array.isArray(d.kw) ? d.kw.filter((k: unknown): k is string => typeof k === 'string') : [],
-    type: isWishlistType(d.type) ? d.type : undefined,
-    img: typeof d.img === 'string' && /^https:\/\/\S+$/.test(d.img) ? d.img : undefined,
-  };
+/** A validator's verdict, or its error as a 400. */
+function ok<T>(result: { ok: true; details: T } | { ok: false; error: string }): T {
+  if (!result.ok) throw new ApiError(400, result.error);
+  return result.details;
 }
 
-/**
- * The owner's edits, validated field by field against the stored details.
- * Returns the merged details or the first problem.
- */
-function mergeDetails(
-  current: SuggestionDetails | undefined,
-  raw: unknown,
-): { ok: true; details: SuggestionDetails } | { ok: false; error: string } {
+/** The owner's edits, validated field by field against what's stored. */
+function mergeDetails(base: Details, raw: unknown): { ok: true; details: Details } | { ok: false; error: string } {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ok: false, error: 'details must be an object' };
   const d = raw as Record<string, unknown>;
-  const base: SuggestionDetails = current ?? { min: 1, max: PLAYERS_MAX, mins: 0, desc: '', kw: [] };
   const int = (v: unknown, lo: number, hi: number, fallback: number): number | null =>
     v === undefined ? fallback : typeof v === 'number' && Number.isInteger(v) && v >= lo && v <= hi ? v : null;
   const min = int(d.min, 1, PLAYERS_MAX, base.min);
@@ -274,104 +180,141 @@ function mergeDetails(
       return { ok: false, error: 'keywords must be a short list of keyword ids' };
     kw = [...new Set(d.kw as string[])];
   }
-  let type = base.type;
+  let section = base.section;
   if (d.type !== undefined) {
-    if (d.type !== null && !isWishlistType(d.type)) return { ok: false, error: 'unknown wishlist type' };
-    type = d.type === null ? undefined : d.type;
+    if (d.type !== null && !isSection(d.type)) return { ok: false, error: 'unknown wishlist type' };
+    section = d.type === null ? undefined : d.type;
   }
-  return { ok: true, details: { bggId: base.bggId, year: base.year, img: base.img, min, max, mins, desc, kw, type } };
+  return { ok: true, details: { ...base, min, max, mins, desc, kw, section } };
 }
 
 const IMG_MAX = 500;
+const EMPTY: Details = { min: 1, max: PLAYERS_MAX, mins: 0, desc: '', kw: [] };
 
 /**
- * Details the owner previewed on the add form, sent back with the add so the
+ * Details the owner previewed, sent back with an add or an approval so the
  * game isn't looked up twice. Only the owner can send them, so where they
- * came from is trusted, but they are held to an edit's rules, and the fields
- * an edit can't set (BGG id, year, box art) to their own shapes. The section
- * comes from the add itself, so a `type` sent here is dropped unchecked.
+ * came from is trusted, but they're held to an edit's rules, and the fields
+ * an edit can't set (BGG id, year, box art, the inferred section) to their
+ * own shapes.
  */
-function previewedDetails(raw: unknown): { ok: true; details: SuggestionDetails } | { ok: false; error: string } {
+function previewedDetails(raw: unknown): { ok: true; details: Details } | { ok: false; error: string } {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ok: false, error: 'details must be an object' };
   const fields: Record<string, unknown> = { ...raw };
-  delete fields.type;
-  const merged = mergeDetails(undefined, fields);
+  const { bggId, year, img, section, weight } = fields;
+  delete fields.section;
+  delete fields.weight;
+  const merged = mergeDetails(EMPTY, fields);
   if (!merged.ok) return merged;
-  const { bggId, year, img } = fields;
-  if (bggId !== undefined && !(typeof bggId === 'number' && Number.isInteger(bggId) && bggId > 0)) {
+  if (bggId != null && !(typeof bggId === 'number' && Number.isInteger(bggId) && bggId > 0)) {
     return { ok: false, error: 'bggId must be a positive whole number' };
   }
-  if (year !== undefined && !(typeof year === 'number' && Number.isInteger(year) && Math.abs(year) <= 9999)) {
+  if (year != null && !(typeof year === 'number' && Number.isInteger(year) && Math.abs(year) <= 9999)) {
     return { ok: false, error: 'year must be a whole number' };
   }
-  if (img !== undefined && !(typeof img === 'string' && img.length <= IMG_MAX && BGG_IMG_RE.test(img))) {
+  if (img != null && !(typeof img === 'string' && img.length <= IMG_MAX && BGG_IMG_RE.test(img))) {
     return { ok: false, error: 'img must be a BoardGameGeek image URL' };
   }
-  return { ok: true, details: { ...merged.details, type: undefined, bggId, year, img } };
-}
-
-/**
- * What the owner settled on before approving: a corrected name, and the
- * details previewed for it (null for none). Either absent keeps today's
- * approval: the friend's name, looked up here.
- */
-interface ApprovalChoice {
-  game?: string;
-  details?: SuggestionDetails | null;
-}
-
-/**
- * Reads and checks an approval's `game` and `details` as an add's are,
- * then refuses a rename onto a game another entry already lists.
- */
-async function approvalChoice(
-  redis: SuggestionsRedis,
-  item: Suggestion,
-  input: ApprovalInput,
-): Promise<ApprovalChoice> {
-  const choice: ApprovalChoice = {};
-  if (input.game !== undefined) {
-    const g = validateGame(input.game);
-    if (!g.ok) throw new ApiError(400, g.error);
-    if (g.game !== item.game) choice.game = g.game;
+  if (section != null && !isSection(section)) return { ok: false, error: 'unknown wishlist type' };
+  if (weight != null && !(typeof weight === 'number' && weight >= 1 && weight <= 5)) {
+    return { ok: false, error: 'weight must be from 1 to 5' };
   }
-  if (input.details === null) choice.details = null;
-  else if (input.details !== undefined) choice.details = checked(previewedDetails(input.details));
-  if (choice.game !== undefined) {
-    const dup = await listedAs(redis, choice.game, item.id);
-    if (dup) throw new ApiError(409, `${dup.game} is already on the list`);
-  }
-  return choice;
+  return {
+    ok: true,
+    details: {
+      ...merged.details,
+      ...(bggId == null ? {} : { bggId }),
+      ...(year == null ? {} : { year }),
+      ...(img == null ? {} : { img }),
+      ...(section == null ? {} : { section }),
+      ...(weight == null ? {} : { weight }),
+    },
+  };
 }
 
-async function loadList(redis: SuggestionsRedis, key: string): Promise<Array<Suggestion & { token: string }>> {
-  // Writes never list an id twice; deduping here keeps a stray repeat from
-  // showing a game twice all the same.
-  const ids = [...new Set(await redis.lrange(key, 0, -1))];
-  if (ids.length === 0) return [];
-  const pipe = redis.pipeline();
-  for (const id of ids) pipe.hgetall(itemKey(id));
-  const hashes = await pipe.exec();
-  return hashes.map(parse).filter((s): s is Suggestion & { token: string } => s !== null);
+const fromLookup = (d: GameDetails): Details => ({
+  bggId: d.bggId,
+  ...(d.year === undefined ? {} : { year: d.year }),
+  min: d.min,
+  max: d.max,
+  mins: d.mins,
+  desc: d.desc,
+  kw: d.kw,
+  ...(d.img === undefined ? {} : { img: d.img }),
+  section: d.section,
+});
+
+/** What a card shows for players: "2–4", "3+" for 99, none when unknown. */
+function playersLabel(min: number, max: number): string {
+  if (max >= PLAYERS_MAX) return `${min}+`;
+  return min === max ? String(min) : `${min}–${max}`;
 }
 
-/** The pending or approved entry, other than `exceptId`, already listing this game. */
-async function listedAs(redis: SuggestionsRedis, game: string, exceptId?: string): Promise<Suggestion | undefined> {
-  const active = await loadList(redis, ACTIVE_KEY);
-  return active.find((s) => s.id !== exceptId && normalize(s.game) === normalize(game));
+/** A game's row from its details, for a game added on the site. */
+function gameFrom(
+  id: string,
+  name: string,
+  source: 'friend' | 'owner',
+  suggestedBy: string | null,
+  details: Details | null,
+  at: number,
+): typeof games.$inferInsert {
+  const d = details ?? EMPTY;
+  const known = !!details;
+  return row(
+    gameRow,
+    {
+      id,
+      name,
+      status: 'wanted',
+      source,
+      suggestedBy,
+      players: known ? playersLabel(d.min, d.max) : null,
+      minPlayers: d.min,
+      maxPlayers: d.max,
+      dur: known && d.mins > 0 ? `${d.mins} min` : null,
+      minutes: d.mins,
+      description: d.desc,
+      keywords: d.kw,
+      section: d.section ?? null,
+      image: d.img ?? null,
+      bggId: d.bggId ?? null,
+      year: d.year ?? null,
+      createdAt: at,
+    },
+    `${name}'s row`,
+  );
 }
 
-const publicView = ({
-  id,
-  game,
-  name,
-  note,
-  status,
-  createdAt,
-  decidedAt,
-  details,
-  source,
-}: Suggestion): Suggestion => ({ id, game, name, note, status, createdAt, decidedAt, details, source });
+/** `bgg_info` for a game BGG found, written (or refreshed) with its row. */
+function infoFrom(
+  bggId: number,
+  name: string,
+  weight: number | undefined,
+  item: BggItem | null | undefined,
+  at: number,
+): typeof bggInfo.$inferInsert {
+  // BGG's extras never block saving the game: what's past the table's
+  // bounds is cut to them, not refused.
+  const honours = (item?.honours ?? [])
+    .filter((h) => h.name.trim() && h.result.trim())
+    .slice(0, 200)
+    .map((h) => ({ name: h.name.slice(0, 200), year: h.year, result: h.result.slice(0, 40) }));
+  return row(
+    bggInfoRow,
+    {
+      bggId,
+      name: name.slice(0, 200),
+      summary: item?.summary?.slice(0, 300) ?? null,
+      honours,
+      weight: weight ?? null,
+      // A row BGG's site didn't answer for stays oldest, so the next
+      // build's refresh fills it first.
+      fetchedAt: item ? at : 0,
+    },
+    `${name}'s BoardGameGeek data`,
+  );
+}
 
 function approvalMail(s: Suggestion, approveUrl: string, denyUrl: string): Mail {
   const note = s.note ? `<p style="margin:0 0 16px;color:#6E6E73">“${escapeHtml(s.note)}”</p>` : '';
@@ -381,25 +324,34 @@ function approvalMail(s: Suggestion, approveUrl: string, denyUrl: string): Mail 
       `<h2 style="margin:0 0 6px">${escapeHtml(s.game)}</h2>
 <p style="margin:0 0 16px;color:#6E6E73">Suggested by <strong>${escapeHtml(s.name)}</strong></p>
 ${note}
-<p style="margin:0 0 20px">Approve it to add it to the wishlist, or deny it to hide it. Either link asks you to confirm.</p>
+<p style="margin:0 0 20px">Sign in on the site to decide; these links open the page, which asks you to confirm.</p>
 ${button(approveUrl, 'Approve', '#0071E3')}${button(denyUrl, 'Deny', '#6E6E73')}`,
-      'Only someone with this email can use these links.',
+      'Only the owner, signed in, can decide a suggestion.',
     ),
   };
 }
 
-function tokenMatches(stored: string, given: string): boolean {
-  const a = Buffer.from(stored);
-  const b = Buffer.from(given);
-  return a.length === b.length && timingSafeEqual(a, b);
+/** A suggestion by id: a malformed id is a 400, a missing one a 404. */
+async function loadSuggestion(db: LibSQLDatabase, id: unknown, missing = 'suggestion not found') {
+  if (typeof id !== 'string' || !SLUG_RE.test(id) || !isSuggestionId(id)) throw new ApiError(400, 'invalid id');
+  const [found] = await db.select().from(suggestions).where(eq(suggestions.id, id));
+  if (!found) throw new ApiError(404, missing);
+  return found;
 }
 
-/** An item by id for an owner action: a malformed id is a 400, a missing one a 404. */
-async function loadItem(redis: SuggestionsRedis, id: unknown): Promise<Suggestion & { token: string }> {
-  if (typeof id !== 'string' || !SLUG_RE.test(id) || !isSuggestionId(id)) throw new ApiError(400, 'invalid id');
-  const item = parse(await redis.hgetall(itemKey(id)));
-  if (!item) throw new ApiError(404, 'suggestion not found');
-  return item;
+/** A wishlist game by id, for an owner's edit or removal. */
+async function loadGame(db: LibSQLDatabase, id: unknown): Promise<GameRowType> {
+  if (typeof id !== 'string' || !SLUG_RE.test(id)) throw new ApiError(400, 'invalid id');
+  const [found] = await db.select().from(games).where(eq(games.id, id));
+  if (!found) throw new ApiError(404, 'game not found');
+  if (found.status !== 'wanted') throw new ApiError(409, `${found.name} is not on the wishlist`);
+  return found;
+}
+
+/** The game, other than `exceptId`, already listing this name: any not taken off the list. */
+async function listedAs(db: LibSQLDatabase, game: string, exceptId?: string): Promise<GameRowType | undefined> {
+  const listed = await db.select().from(games).where(ne(games.status, 'removed'));
+  return listed.find((g) => g.id !== exceptId && normalize(g.name) === normalize(game));
 }
 
 /**
@@ -434,99 +386,59 @@ async function lookUp(deps: SuggestionsDeps, game: string): Promise<LookupResult
   return result;
 }
 
-/**
- * Fill in players, time, description and keywords from BoardGameGeek so the
- * card looks like every other wishlist entry. Callers list the game first,
- * so a slow lookup can never strand it off the list. Best effort: a miss or
- * an outage leaves the details as they are.
- */
-async function enrich(
-  deps: SuggestionsDeps,
-  item: Suggestion,
-  extra: Partial<SuggestionDetails> = {},
-): Promise<LookupOutcome | undefined> {
-  const result = await lookUp(deps, item.game);
-  let details: SuggestionDetails | undefined;
-  if (result?.outcome === 'found') {
-    const found = result.details;
-    details = {
-      bggId: found.bggId,
-      year: found.year,
-      img: found.img,
-      min: found.min,
-      max: found.max,
-      mins: found.mins,
-      desc: found.desc,
-      kw: found.kw,
-    };
-  }
-  if (!details && extra.type) details = { min: 1, max: PLAYERS_MAX, mins: 0, desc: '', kw: [] };
-  if (details) await deps.redis.hset(itemKey(item.id), { details: JSON.stringify({ ...details, ...extra }) });
-  return result?.outcome;
+/** BGG's summary and honours for previewed details, best effort: an outage leaves them for the refresh. */
+async function itemFor(deps: SuggestionsDeps, bggId: number | undefined): Promise<BggItem | null> {
+  if (bggId === undefined || !deps.item) return null;
+  return deps.item(bggId);
 }
 
 /**
- * Flip a suggestion the caller has seen as decidable. Two requests can both
- * see it so (a double-clicked confirm form, or the email link and the site at
- * once), so the first claims it and the other gets null: only one flips the
- * status, touches the lists and runs the lookup, whose outcome it returns.
- * An approval's `choice` (a corrected name, previewed details) lands in the
- * same write as the status; with details chosen, nothing is looked up.
+ * What a new game is saved with: the previewed details (`given`, null for
+ * none), or, with none given, what a lookup of `game` finds now, with how
+ * it went. Previewed details bring their own section and weight; their
+ * summary and honours are asked of BGG's site by id.
  */
-async function decide(
+async function detailsFor(
   deps: SuggestionsDeps,
-  item: Suggestion,
-  wanted: 'approved' | 'denied',
-  now: () => number,
-  choice: ApprovalChoice = {},
-): Promise<{ lookup?: LookupOutcome } | null> {
-  const { redis } = deps;
-  const key = itemKey(item.id);
-  const at = now();
-  // Only a decision ever sets decidedAt, so a decidable record has none and
-  // HSETNX on it is an atomic claim.
-  if (!(await redis.hsetnx(key, 'decidedAt', at))) {
-    // A claim whose decision never landed (the function died between claim
-    // and write, or giving it back failed) would block the record for good,
-    // so one that is still undecided a minute on is abandoned: take it over.
-    const current = parse(await redis.hgetall(key));
-    if (!current?.decidedAt || !decidable(current.status) || at - current.decidedAt < STALE_CLAIM_MS) return null;
-    // Two requests can find the same abandoned claim, so taking it over is a
-    // claim of its own: HSETNX on a field named for that claim lets one win.
-    if (!(await redis.hsetnx(key, `takeover:${current.decidedAt}`, at))) return null;
-    await redis.hset(key, { decidedAt: at });
+  game: string,
+  given: Details | null | undefined,
+): Promise<{
+  details: Details | null;
+  weight?: number;
+  bggName?: string;
+  item?: BggItem | null;
+  lookup?: LookupOutcome;
+}> {
+  if (given !== undefined) {
+    const item = await itemFor(deps, given?.bggId);
+    return { details: given, weight: given?.weight, bggName: item?.name, item };
   }
-  const tx = redis.multi().hset(key, {
-    status: wanted,
-    decidedAt: at,
-    ...(choice.game !== undefined ? { game: choice.game } : {}),
-    ...(choice.details ? { details: JSON.stringify(choice.details) } : {}),
-  });
-  if (item.status === 'unsent') tx.lrem(UNSENT_KEY, 0, item.id);
-  if (wanted === 'approved') {
-    // Each push removes the id first, so a list can never hold it twice.
-    tx.lrem(APPROVED_KEY, 0, item.id).lpush(APPROVED_KEY, item.id);
-    // An unsent record left the active list; approving it puts it back
-    // so the duplicate check sees it again.
-    if (item.status === 'unsent') tx.lrem(ACTIVE_KEY, 0, item.id).lpush(ACTIVE_KEY, item.id);
-  } else {
-    tx.lrem(ACTIVE_KEY, 0, item.id);
-  }
-  try {
-    await tx.exec();
-  } catch (err) {
-    // Give the claim back so the decision can be retried.
-    await redis.hdel(key, 'decidedAt');
-    throw err;
-  }
-  if (wanted === 'denied' || choice.details !== undefined) return {};
-  return { lookup: await enrich(deps, { ...item, game: choice.game ?? item.game }) };
+  const result = await lookUp(deps, game);
+  if (result?.outcome !== 'found') return { details: null, lookup: result?.outcome };
+  const d = result.details;
+  const item = d.honours ? { ...(d.summary ? { summary: d.summary } : {}), honours: d.honours } : null;
+  return { details: fromLookup(d), weight: d.weight, bggName: d.name, item, lookup: 'found' };
 }
 
-/** What a request that lost the claim reports: the winner's status, once it has landed. */
-async function settledStatus(redis: SuggestionsRedis, id: string): Promise<string> {
-  const current = parse(await redis.hgetall(itemKey(id)));
-  return current && !decidable(current.status) ? current.status : 'decided';
+/** The statements that keep BGG's data for a new game: an insert, or a refresh of the row already there. */
+function saveInfo(
+  db: Pick<LibSQLDatabase, 'insert'>,
+  name: string,
+  saved: Awaited<ReturnType<typeof detailsFor>>,
+  at: number,
+) {
+  const bggId = saved.details?.bggId;
+  if (bggId === undefined) return null;
+  const info = infoFrom(bggId, saved.bggName ?? name, saved.weight, saved.item, at);
+  // Only BGG's own name replaces a stored one: the typed name stands in
+  // for a new row, never over the spelling BGG already gave this id.
+  const update: Partial<typeof bggInfo.$inferInsert> = saved.bggName ? { name: saved.bggName } : {};
+  if (saved.item) Object.assign(update, { summary: info.summary, honours: info.honours, fetchedAt: info.fetchedAt });
+  if (info.weight != null) update.weight = info.weight;
+  const insert = db.insert(bggInfo).values(info);
+  return Object.keys(update).length === 0
+    ? insert.onConflictDoNothing({ target: bggInfo.bggId })
+    : insert.onConflictDoUpdate({ target: bggInfo.bggId, set: update });
 }
 
 const NAME_ERROR = 'name must be 1–30 letters, digits, spaces or basic punctuation';
@@ -547,12 +459,7 @@ function cleanNote(v: unknown): string | null {
   return note.length > NOTE_MAX || /[\p{C}]/u.test(note) ? null : note;
 }
 
-/** A fresh suggestion id and the token its emailed links carry. */
-function mintIds(deps: SuggestionsDeps): { id: string; token: string } {
-  const id = (deps.randomId ?? (() => `sug-${randomBytes(6).toString('hex')}`))();
-  const token = (deps.randomToken ?? (() => randomBytes(24).toString('base64url')))();
-  return { id, token };
-}
+const mintId = (deps: SuggestionsDeps) => (deps.randomId ?? (() => `sug-${randomBytes(6).toString('hex')}`))();
 
 function validateGame(v: unknown): { ok: true; game: string } | { ok: false; error: string } {
   const game = typeof v === 'string' ? v.trim().replace(/\s+/g, ' ') : '';
@@ -562,10 +469,22 @@ function validateGame(v: unknown): { ok: true; game: string } | { ok: false; err
   return { ok: true, game };
 }
 
-/** A validator's verdict, or its error as a 400. */
-function checked<T>(result: { ok: true; details: T } | { ok: false; error: string }): T {
-  if (!result.ok) throw new ApiError(400, result.error);
-  return result.details;
+/**
+ * A suggestion's or an add's game, name and note, cleaned, in that order of
+ * checking; a 400 naming the first that fails.
+ */
+function entryOf(input: { game: unknown; name: unknown; note?: unknown }): {
+  game: string;
+  name: string;
+  note: string;
+} {
+  const g = validateGame(input.game);
+  if (!g.ok) throw new ApiError(400, g.error);
+  const name = checkName(input.name);
+  if (name === null) throw new ApiError(400, NAME_ERROR);
+  const note = cleanNote(input.note);
+  if (note === null) throw new ApiError(400, NOTE_ERROR);
+  return { game: g.game, name, note };
 }
 
 /** What a decision may bring besides its id: a corrected name and previewed details (null for none). */
@@ -574,60 +493,48 @@ export interface ApprovalInput {
   details?: unknown;
 }
 
-const isLive = (s: Suggestion & { token: string }) => s.status === 'approved';
-
-/** The approved suggestions, newest decision first, without their tokens. */
-export async function approvedList(deps: SuggestionsDeps): Promise<Suggestion[]> {
-  const approved = await loadList(deps.redis, APPROVED_KEY);
-  return approved
-    .filter(isLive)
-    .sort((a, b) => (b.decidedAt ?? 0) - (a.decidedAt ?? 0))
-    .map(publicView);
-}
-
-/** The owner's queue: everything still waiting on a decision, including the ones whose email never went out. */
+/** The owner's queue: everything still waiting on a decision, the ones whose email never went out included. */
 export async function pendingList(deps: SuggestionsDeps): Promise<Suggestion[]> {
-  const { redis } = deps;
-  const waiting = [...(await loadList(redis, ACTIVE_KEY)), ...(await loadList(redis, UNSENT_KEY))];
-  const seen = new Set<string>();
-  return waiting
-    .filter((s) => decidable(s.status) && !seen.has(s.id) && seen.add(s.id))
-    .sort((a, b) => b.createdAt - a.createdAt)
-    .map(publicView);
+  const db = await deps.db();
+  const waiting = await db
+    .select()
+    .from(suggestions)
+    .where(inArray(suggestions.status, [...DECIDABLE]))
+    .orderBy(desc(suggestions.createdAt));
+  return waiting.map(view);
 }
 
 /**
- * The suggestion behind an emailed link, once its token checks out: a bad
- * link is a 400, a missing record a 404, a wrong token a 403. Changes
- * nothing, whatever its status.
+ * Every game on the wishlist: the written ones first, then those added on
+ * the site, newest first, as the friends' suggestions always were; each
+ * with the note of the suggestion it came from.
  */
-export async function openEmailed(
-  deps: SuggestionsDeps,
-  id: unknown,
-  token: unknown,
-): Promise<Suggestion & { token: string }> {
-  if (
-    typeof id !== 'string' ||
-    typeof token !== 'string' ||
-    !SLUG_RE.test(id) ||
-    !isSuggestionId(id) ||
-    !TOKEN_RE.test(token)
-  ) {
+export async function wishlist(deps: Pick<SuggestionsDeps, 'db'>): Promise<WishlistGame[]> {
+  const db = await deps.db();
+  const wanted = await db.select().from(games).where(eq(games.status, 'wanted'));
+  const notes = await db
+    .select({ gameId: suggestions.gameId, note: suggestions.note })
+    .from(suggestions)
+    .where(eq(suggestions.status, 'approved'));
+  const noteOf = new Map(notes.map((n) => [n.gameId, n.note]));
+  return wanted
+    .sort((a, b) => (b.createdAt ?? Infinity) - (a.createdAt ?? Infinity) || a.name.localeCompare(b.name))
+    .map((g) => ({ ...g, note: noteOf.get(g.id) ?? '' }));
+}
+
+/** The suggestion behind an emailed link, for the owner (the resolver checks): a bad id is a 400, a missing one a 404. */
+export async function openEmailed(deps: SuggestionsDeps, id: unknown): Promise<Suggestion> {
+  if (typeof id !== 'string' || !SLUG_RE.test(id) || !isSuggestionId(id)) {
     throw new ApiError(400, 'This link is incomplete or mistyped. Open it again from the email.');
   }
-  const item = parse(await deps.redis.hgetall(itemKey(id)));
-  if (!item) throw new ApiError(404, 'There is no suggestion behind this link any more.');
-  if (!tokenMatches(item.token, token)) {
-    throw new ApiError(403, 'This link does not match the suggestion. Open it again from the email.');
-  }
-  return item;
+  return view(await loadSuggestion(await deps.db(), id, 'There is no suggestion behind this link any more.'));
 }
 
 /**
- * What the approve and deny pages show before the owner decides: the lookup for the
- * friend's name, or for `game` when the owner corrects it. Still a read
- * that changes nothing, the correction included; null once the suggestion
- * is decided, or with no lookup configured.
+ * What the approve and deny pages show before the owner decides: the lookup
+ * for the friend's name, or for `game` when the owner corrects it. Still a
+ * read that changes nothing, the correction included; null once the
+ * suggestion is decided, or with no lookup configured.
  */
 export async function previewEmailed(
   deps: SuggestionsDeps,
@@ -651,28 +558,70 @@ export interface Decided {
 }
 
 /**
- * Approves or denies a waiting suggestion. With `token`, from an emailed
- * link (openEmailed's checks); without, as the owner, whose session the
- * resolver has checked. One already decided, or decided meanwhile by the
- * other place, is a 409 naming its status (`extensions.status`).
+ * Approves or denies a waiting suggestion, as the owner (the resolver has
+ * checked the session). One already decided, or decided meanwhile from the
+ * other place, is a 409 naming its status (`extensions.status`). An
+ * approval may rename the game (refused with a 409 onto one already listed)
+ * and bring the details the owner saw; without them it's looked up here.
  */
 export async function decideSuggestion(
   deps: SuggestionsDeps,
-  input: ApprovalInput & { id: unknown; token?: unknown; decision: 'approve' | 'deny' },
+  input: ApprovalInput & { id: unknown; decision: 'approve' | 'deny' },
 ): Promise<Decided> {
-  const { redis } = deps;
+  const db = await deps.db();
   const now = deps.now ?? (() => Date.now());
-  const item =
-    input.token !== undefined ? await openEmailed(deps, input.id, input.token) : await loadItem(redis, input.id);
+  const item = await loadSuggestion(db, input.id);
   const already = (status: string) =>
-    new ApiError(409, `${item.game} was already ${status}`, { code: 'ALREADY_DECIDED', status });
+    new ApiError(409, `${item.gameName} was already ${status}`, { code: 'ALREADY_DECIDED', status });
   if (!decidable(item.status)) throw already(item.status);
-  const wanted = input.decision === 'approve' ? 'approved' : 'denied';
-  const choice = wanted === 'approved' ? await approvalChoice(redis, item, input) : {};
-  const decided = await decide(deps, item, wanted, now, choice);
-  if (!decided) throw already(await settledStatus(redis, item.id));
-  const updated = parse(await redis.hgetall(itemKey(item.id)));
-  return { item: updated ? publicView(updated) : null, ...decided };
+
+  let game = item.gameName;
+  let saved: Awaited<ReturnType<typeof detailsFor>> | null = null;
+  if (input.decision === 'approve') {
+    if (input.game !== undefined) {
+      const g = validateGame(input.game);
+      if (!g.ok) throw new ApiError(400, g.error);
+      game = g.game;
+    }
+    const dup = await listedAs(db, game, item.id);
+    if (dup) throw new ApiError(409, `${dup.name} is already on the list`);
+    const given =
+      input.details === undefined ? undefined : input.details === null ? null : ok(previewedDetails(input.details));
+    saved = await detailsFor(deps, game, given);
+  }
+
+  const at = now();
+  const status = input.decision === 'approve' ? 'approved' : 'denied';
+  const decided = await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(suggestions)
+      .set({ status, decidedAt: at })
+      .where(and(eq(suggestions.id, item.id), inArray(suggestions.status, [...DECIDABLE])))
+      .returning();
+    if (!updated) return null;
+    if (!saved) return updated;
+    // The game's row takes the suggestion's id, so the votes and links
+    // that name it keep working.
+    await tx
+      .insert(games)
+      .values(gameFrom(item.id, game, item.source, item.source === 'friend' ? item.name : null, saved.details, at));
+    const info = saveInfo(tx, game, saved, at);
+    if (info) await info;
+    const [linked] = await tx
+      .update(suggestions)
+      .set({ gameId: item.id })
+      .where(eq(suggestions.id, item.id))
+      .returning();
+    return linked;
+  });
+  if (!decided) {
+    const [current] = await db
+      .select({ status: suggestions.status })
+      .from(suggestions)
+      .where(eq(suggestions.id, item.id));
+    throw already(current && !decidable(current.status) ? current.status : 'decided');
+  }
+  return { item: view(decided), ...(saved?.lookup ? { lookup: saved.lookup } : {}) };
 }
 
 /** Looks a game up without storing anything, for the add form and the queue to show. */
@@ -687,68 +636,39 @@ export interface AddInput {
   game: unknown;
   name: unknown;
   note?: unknown;
-  type?: unknown;
   details?: unknown;
 }
 
 /**
  * The owner adding a game straight to the wishlist: stored approved, no
  * email. Details previewed on the form come with it (null when the owner
- * adds it without any); without them it is looked up the same way an
- * approved suggestion is.
+ * adds it without any); without them it is looked up as an approval is.
  */
 export async function addGame(deps: SuggestionsDeps, input: AddInput): Promise<Decided> {
-  const { redis } = deps;
+  const db = await deps.db();
   const now = deps.now ?? (() => Date.now());
-  const g = validateGame(input.game);
-  if (!g.ok) throw new ApiError(400, g.error);
-  const name = checkName(input.name);
-  if (name === null) throw new ApiError(400, NAME_ERROR);
-  const note = cleanNote(input.note);
-  if (note === null) throw new ApiError(400, NOTE_ERROR);
-  if (input.type !== undefined && input.type !== null && !isWishlistType(input.type)) {
-    throw new ApiError(400, 'unknown wishlist type');
-  }
-  const extra: Partial<SuggestionDetails> = isWishlistType(input.type) ? { type: input.type } : {};
-  const previewed = input.details !== undefined;
-  let details: SuggestionDetails | undefined;
-  if (previewed && input.details !== null) details = checked(previewedDetails(input.details));
-  else if (previewed && extra.type) details = { min: 1, max: PLAYERS_MAX, mins: 0, desc: '', kw: [] };
-  const dup = await listedAs(redis, g.game);
-  if (dup) throw new ApiError(409, `${dup.game} is already on the list`);
+  const { game, name, note } = entryOf(input);
+  const given =
+    input.details === undefined ? undefined : input.details === null ? null : ok(previewedDetails(input.details));
+  const dup = await listedAs(db, game);
+  if (dup) throw new ApiError(409, `${dup.name} is already on the list`);
+  const saved = await detailsFor(deps, game, given);
 
-  const { id, token } = mintIds(deps);
+  const id = mintId(deps);
   const at = now();
-  const item: Suggestion = {
-    id,
-    game: g.game,
-    name,
-    note,
-    status: 'approved',
-    createdAt: at,
-    decidedAt: at,
-    source: 'owner',
-  };
-  await redis
-    .multi()
-    .hset(itemKey(id), {
-      id,
-      game: g.game,
-      name,
-      note,
-      status: 'approved',
-      createdAt: at,
-      decidedAt: at,
-      source: 'owner',
-      token,
-      ...(details ? { details: JSON.stringify({ ...details, ...extra }) } : {}),
-    })
-    .lpush(ACTIVE_KEY, id)
-    .lpush(APPROVED_KEY, id)
-    .exec();
-  const lookup = previewed ? undefined : await enrich(deps, item, extra);
-  const stored = parse(await redis.hgetall(itemKey(id)));
-  return { item: stored ? publicView(stored) : publicView(item), lookup };
+  const suggestion = row(
+    suggestionRow,
+    { id, gameName: game, name, note, status: 'approved', source: 'owner', gameId: id, createdAt: at, decidedAt: at },
+    `${game}'s suggestion`,
+  );
+  await db.transaction(async (tx) => {
+    await tx.insert(games).values(gameFrom(id, game, 'owner', null, saved.details, at));
+    await tx.insert(suggestions).values(suggestion);
+    const info = saveInfo(tx, game, saved, at);
+    if (info) await info;
+  });
+  const [stored] = await db.select().from(suggestions).where(eq(suggestions.id, id));
+  return { item: view(stored), ...(saved.lookup ? { lookup: saved.lookup } : {}) };
 }
 
 export interface SuggestInput {
@@ -757,109 +677,161 @@ export interface SuggestInput {
   note?: unknown;
 }
 
+/** BGG's spelling of `game` when it's only a matter of case, spacing or punctuation; otherwise `game`. */
+async function spelt(deps: SuggestionsDeps, game: string): Promise<string> {
+  if (!deps.spelling) return game;
+  const bgg = await deps.spelling(game);
+  return bgg && normalize(bgg) === normalize(game) && validateGame(bgg).ok ? bgg : game;
+}
+
 /** A new suggestion from the form, stored and then emailed to the owner. */
 export async function suggestGame(deps: SuggestionsDeps, input: SuggestInput): Promise<Suggestion> {
-  const { redis, mailer } = deps;
+  const { mailer } = deps;
   const now = deps.now ?? (() => Date.now());
   if (!mailer) throw new ApiError(503, 'Suggestions are not open yet');
-  const g = validateGame(input.game);
-  if (!g.ok) throw new ApiError(400, g.error);
-  const game = g.game;
-  const name = checkName(input.name);
-  if (name === null) throw new ApiError(400, NAME_ERROR);
-  const note = cleanNote(input.note);
-  if (note === null) throw new ApiError(400, NOTE_ERROR);
+  const { game: typed, name, note } = entryOf(input);
+  const db = await deps.db();
 
   // Read-then-write: two different people suggesting the same game in the
   // same instant can both get through. Accepted; the owner just sees two
   // emails and approves one. A lock isn't worth it at this traffic.
-  const active = await loadList(redis, ACTIVE_KEY);
-  const dup = active.find((s) => s.status !== 'denied' && normalize(s.game) === normalize(game));
-  if (dup) {
-    throw new ApiError(
-      409,
-      dup.status === 'approved'
-        ? `${dup.game} is already on the wishlist`
-        : `${dup.game} has already been suggested and is waiting for approval`,
-    );
+  const dup = await listedAs(db, typed);
+  if (dup) throw new ApiError(409, `${dup.name} is already on the wishlist`);
+  const waiting = await db
+    .select()
+    .from(suggestions)
+    .where(inArray(suggestions.status, [...DECIDABLE]));
+  const sameGame = waiting.filter((s) => normalize(s.gameName) === normalize(typed));
+  const pending = sameGame.find((s) => s.status === 'pending');
+  if (pending) {
+    throw new ApiError(409, `${pending.gameName} has already been suggested and is waiting for approval`);
   }
+  // Only the same person's unsent suggestion is theirs to send again; one
+  // someone else made whose email failed stays theirs, beside this one.
+  const queued = sameGame.find((s) => s.status === 'unsent' && s.name.toLowerCase() === name.toLowerCase());
 
-  const { id, token } = mintIds(deps);
-  const item: Suggestion = { id, game, name, note, status: 'pending', createdAt: now(), source: 'friend' };
-  const link = (page: string) =>
-    `${deps.baseUrl()}/${page}?id=${encodeURIComponent(id)}&token=${encodeURIComponent(token)}`;
+  const game = await spelt(deps, typed);
+  const createdAt = now();
+  const fresh = (id: string) =>
+    row(
+      suggestionRow,
+      { id, gameName: game, name, note, status: 'pending', source: 'friend', createdAt },
+      `${game}'s suggestion`,
+    );
 
   // Store first, then email, so the links in the owner's inbox always
-  // resolve. If delivery fails, roll the record back out of the active
-  // list so the suggester can retry instead of hitting the duplicate
-  // check for a request the owner never received.
-  await redis.hset(itemKey(id), { id, game, name, note, status: 'pending', createdAt: item.createdAt, token });
-  await redis.lpush(ACTIVE_KEY, id);
+  // resolve. If delivery fails, mark it unsent so the suggester can retry
+  // instead of hitting the duplicate check for a request the owner never
+  // received; it stays in the owner's queue all the same. The same
+  // person's one whose email never went out is the same suggestion, sent
+  // again: it keeps its id, so the owner's queue holds it once. Taking it back and storing it again is
+  // one transaction, so a decision can't land between them; one the owner
+  // decided before it (the delete finds no unsent row) stands, and this is
+  // a new suggestion under a new id.
+  const id = await db.transaction(async (tx) => {
+    const taken = queued
+      ? await tx
+          .delete(suggestions)
+          .where(and(eq(suggestions.id, queued.id), eq(suggestions.status, 'unsent')))
+          .returning({ id: suggestions.id })
+      : [];
+    const kept = taken[0]?.id ?? mintId(deps);
+    await tx.insert(suggestions).values(fresh(kept));
+    return kept;
+  });
+  const item: Suggestion = { id, game, name, note, status: 'pending', createdAt, source: 'friend' };
+  const link = (page: string) => `${deps.baseUrl()}/${page}?id=${encodeURIComponent(id)}`;
+
   try {
     await mailer.send(approvalMail(item, link('approve'), link('deny')));
   } catch (err) {
     // The owner can decide it from the site's queue while the send is
-    // still trying; a decision stands, so only an undecided record
-    // becomes unsent.
-    if (parse(await redis.hgetall(itemKey(id)))?.decidedAt === undefined) {
-      await redis.lrem(ACTIVE_KEY, 0, id);
-      await redis.hset(itemKey(id), { status: 'unsent' });
-      await redis.lpush(UNSENT_KEY, id);
-    }
+    // still trying; a decision stands, so only a pending record becomes
+    // unsent.
+    await db
+      .update(suggestions)
+      .set({ status: 'unsent' })
+      .where(and(eq(suggestions.id, id), eq(suggestions.status, 'pending')));
     throw err;
   }
-  return publicView(item);
+  return item;
 }
 
 export interface EditInput {
   id: unknown;
   game?: unknown;
+  /** The note of the suggestion the game came from; a written entry has none. */
   note?: unknown;
   details?: unknown;
 }
 
-/** The owner editing how an approved (or waiting) game reads on the wishlist. */
-export async function editSuggestion(deps: SuggestionsDeps, input: EditInput): Promise<Suggestion | null> {
-  const { redis } = deps;
-  const item = await loadItem(redis, input.id);
-  if (item.status === 'removed' || item.status === 'denied') {
-    throw new ApiError(409, `${item.game} is not on the wishlist`);
-  }
-  const fields: Record<string, string | number> = {};
+/** The owner editing how a wishlist game reads, whichever way it got there, and the note it came with. */
+export async function editGame(deps: SuggestionsDeps, input: EditInput): Promise<WishlistGame> {
+  const db = await deps.db();
+  const game = await loadGame(db, input.id);
+  const fields: Partial<typeof games.$inferInsert> = {};
   if (input.game !== undefined) {
     const g = validateGame(input.game);
     if (!g.ok) throw new ApiError(400, g.error);
-    fields.game = g.game;
+    const dup = await listedAs(db, g.game, game.id);
+    if (dup) throw new ApiError(409, `${dup.name} is already on the list`);
+    fields.name = g.game;
   }
+  if (input.details !== undefined) {
+    const base: Details = {
+      min: game.minPlayers,
+      max: game.maxPlayers,
+      mins: game.minutes,
+      desc: game.description,
+      kw: game.keywords,
+      ...(isSection(game.section) ? { section: game.section } : {}),
+    };
+    const d = ok(mergeDetails(base, input.details));
+    Object.assign(fields, {
+      minPlayers: d.min,
+      maxPlayers: d.max,
+      minutes: d.mins,
+      description: d.desc,
+      keywords: d.kw,
+      section: d.section ?? null,
+    });
+    if (d.min !== game.minPlayers || d.max !== game.maxPlayers) fields.players = playersLabel(d.min, d.max);
+    if (d.mins !== game.minutes) fields.dur = d.mins > 0 ? `${d.mins} min` : null;
+  }
+  let note: string | undefined;
   if (input.note !== undefined) {
-    // Unlike a new entry's, an edit's note must be text: null is a bad
-    // request, not a way to clear it.
-    const note = typeof input.note === 'string' ? cleanNote(input.note) : null;
-    if (note === null) throw new ApiError(400, NOTE_ERROR);
-    fields.note = note;
+    // Unlike a new suggestion's, an edit's note must be text: null is a
+    // bad request, not a cleared note ("" clears it).
+    const cleaned = typeof input.note === 'string' ? cleanNote(input.note) : null;
+    if (cleaned === null) throw new ApiError(400, NOTE_ERROR);
+    const [from] = await db.select({ id: suggestions.id }).from(suggestions).where(eq(suggestions.gameId, game.id));
+    if (!from) throw new ApiError(400, 'only a game suggested on the site has a note');
+    note = cleaned;
   }
-  if (input.details !== undefined) fields.details = JSON.stringify(checked(mergeDetails(item.details, input.details)));
-  if (Object.keys(fields).length === 0) throw new ApiError(400, 'nothing to change');
-  await redis.hset(itemKey(item.id), fields);
-  const updated = parse(await redis.hgetall(itemKey(item.id)));
-  return updated ? publicView(updated) : null;
+  if (Object.keys(fields).length === 0 && note === undefined) throw new ApiError(400, 'nothing to change');
+  row(gameRow, { ...game, ...fields }, `${game.name}'s row`);
+  await db.transaction(async (tx) => {
+    if (Object.keys(fields).length > 0) await tx.update(games).set(fields).where(eq(games.id, game.id));
+    if (note !== undefined) await tx.update(suggestions).set({ note }).where(eq(suggestions.gameId, game.id));
+  });
+  const [listed] = (await wishlist(deps)).filter((g) => g.id === game.id);
+  return listed;
 }
 
 /**
- * The owner taking a game off the wishlist. The hash stays so old links and
- * ids still resolve; only the lists forget it.
+ * The owner taking a game off the wishlist. The row stays, as `removed`, so
+ * old ids and links still resolve; a game that came from a suggestion takes
+ * the suggestion with it.
  */
-export async function removeSuggestion(deps: SuggestionsDeps, id: unknown): Promise<void> {
-  const { redis } = deps;
+export async function removeGame(deps: SuggestionsDeps, id: unknown): Promise<void> {
+  const db = await deps.db();
   const now = deps.now ?? (() => Date.now());
-  const item = await loadItem(redis, id);
-  // Only what is on the wishlist can come off it; a pending suggestion is
-  // denied through decide(), which keeps the queue's bookkeeping.
-  if (item.status !== 'approved') throw new ApiError(409, `${item.game} is not on the wishlist`);
-  await redis
-    .multi()
-    .lrem(APPROVED_KEY, 0, item.id)
-    .lrem(ACTIVE_KEY, 0, item.id)
-    .hset(itemKey(item.id), { status: 'removed', decidedAt: now() })
-    .exec();
+  const game = await loadGame(db, id);
+  await db.transaction(async (tx) => {
+    await tx.update(games).set({ status: 'removed' }).where(eq(games.id, game.id));
+    await tx
+      .update(suggestions)
+      .set({ status: 'removed', decidedAt: now() })
+      .where(and(eq(suggestions.gameId, game.id), eq(suggestions.status, 'approved')));
+  });
 }

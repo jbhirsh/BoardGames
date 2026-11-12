@@ -1,19 +1,24 @@
+// @vitest-environment node
 import { describe, it, expect } from 'vitest';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { WISHLIST } from '../data/wishlist';
+import seed from '../../data/seed.json';
+import { checked, gameRow } from '../../api/_db/validation';
 import { ALL_GAMES } from '../data/games';
-import { GAME_WEIGHTS } from '../data/gameWeights';
 import { KW } from '../data/keywords';
 import { normalizeName } from '../utils/normalizeName';
 import { expectCoherentTable } from './coherentTable';
+import { WISHLIST } from './helpers/wishlist';
 
-/** The wishlist shares the collection's filter fields; keep them coherent. */
-describe('wishlist data', () => {
-  it('carries bundled box art only from the generated map, as a local path', () => {
-    for (const w of WISHLIST) {
-      expect(w.img === undefined || w.img.startsWith('/images/wishlist/')).toBe(true);
-    }
+/**
+ * The 39 written wishlist entries the one-time copy puts in the database
+ * (data/seed.json), which the tests and e2e render too. The wishlist
+ * shares the collection's filter fields; keep them coherent.
+ */
+describe('the seed wishlist', () => {
+  it('holds 39 games rows the database takes', () => {
+    expect(seed.wishlist).toHaveLength(39);
+    for (const row of seed.wishlist) expect(() => checked(gameRow, row, row.id)).not.toThrow();
   });
 
   it('gives every entry its own BoardGameGeek id and bundled art', () => {
@@ -23,13 +28,6 @@ describe('wishlist data', () => {
     for (const w of WISHLIST) {
       expect(w.img, w.id).toMatch(new RegExp(`^/images/wishlist/${w.id}\\.(jpg|png|webp)$`));
       expect(existsSync(join('public', w.img!)), w.img).toBe(true);
-    }
-  });
-
-  it("carries the weight `npm run game-weights` fetched for each entry's BGG id, and no other", () => {
-    for (const w of WISHLIST) {
-      expect(w.bgg! in GAME_WEIGHTS, `${w.id}: BGG ${w.bgg} not fetched; run npm run game-weights`).toBe(true);
-      expect(w.weight, `${w.id}: weight`).toBe(GAME_WEIGHTS[w.bgg!] ?? undefined);
     }
   });
 
@@ -43,8 +41,8 @@ describe('wishlist data', () => {
   });
 
   it('gives every entry a name no other entry matches', () => {
-    // mergeWishlist keys on the normalised name, so two entries sharing one
-    // would make an approved suggestion vanish behind the wrong game.
+    // The API refuses a duplicate by the normalised name, so two entries
+    // sharing one would make each block the other's edits.
     const keys = WISHLIST.map((w) => normalizeName(w.name));
     expect(new Set(keys).size).toBe(keys.length);
   });
