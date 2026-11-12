@@ -39,9 +39,16 @@ export const meta = sqliteTable('meta', {
   value: text('value').notNull(),
 });
 
+/** One of a game's honours as BoardGameGeek lists it (api/_lib/bgg.ts's Honour). */
+interface StoredHonour {
+  name: string;
+  year: number | null;
+  result: string;
+}
+
 /** A game's place: on the wishlist, bought and on its way, on the shelf, or taken off the wishlist. */
 export const GAME_STATUSES = ['wanted', 'arriving', 'owned', 'removed'] as const;
-/** Where a game came from: the hand-written list (src/data/wishlist.ts), a friend, or the owner on the site. */
+/** Where a game came from: the hand-written list (data/seed.json, once src/data/wishlist.ts), a friend, or the owner on the site. */
 export const GAME_SOURCES = ['curated', 'friend', 'owner'] as const;
 
 /**
@@ -51,7 +58,8 @@ export const GAME_SOURCES = ['curated', 'friend', 'owner'] as const;
  * a suggestion. `players` and `dur` are the words a card shows ("2–4",
  * "30–45 min"), none where they aren't known; `minPlayers`, `maxPlayers`
  * and `minutes` are what the filters read (1, 99 and 0 when unknown, which
- * every filter lets through).
+ * every filter lets through). Its weight, summary and awards are BoardGameGeek's,
+ * kept by BGG id in `bgg_info` (with `owner_awards`), as the collection's are.
  */
 export const games = sqliteTable(
   'games',
@@ -72,7 +80,6 @@ export const games = sqliteTable(
     keywords: text('keywords', { mode: 'json' }).$type<string[]>().notNull(),
     /** The wishlist section it's filed under; none means "Suggested by friends". */
     section: text('section'),
-    awards: text('awards', { mode: 'json' }).$type<{ name: string; year: number }[]>().notNull(),
     /** Amazon's product id for the standard edition, where it's been checked. */
     asin: text('asin'),
     /** The game it expands, by name. */
@@ -83,8 +90,6 @@ export const games = sqliteTable(
     image: text('image'),
     bggId: integer('bgg_id'),
     year: integer('year'),
-    /** BoardGameGeek's weight, 1 (light) to 5 (heavy). */
-    weight: real('weight'),
     /** When it was added on the site, in ms; none for a hand-written entry. */
     createdAt: integer('created_at'),
   },
@@ -142,6 +147,62 @@ export const votes = sqliteTable(
     anonId: text('anon_id').notNull(),
   },
   (t) => [primaryKey({ columns: [t.gameId, t.anonId] })],
+);
+
+/**
+ * What BoardGameGeek says about a game, by its BGG id, for the wishlist's
+ * games and the collection's alike (#290's part 2b): its name, its one-line
+ * summary, its honours and its weight. Filled when a game is approved or
+ * added, by the one-time copy, and by each production build's refresh
+ * (scripts/bgg-refresh.ts), oldest first. None of BGG's data is in the code.
+ */
+export const bggInfo = sqliteTable('bgg_info', {
+  bggId: integer('bgg_id').primaryKey(),
+  /** BGG's primary name. */
+  name: text('name').notNull(),
+  /** BGG's one-line summary (`short_description`), none when it has none. */
+  summary: text('summary'),
+  honours: text('honours', { mode: 'json' }).$type<StoredHonour[]>().notNull(),
+  /** The community's weight, 1 (light) to 5 (heavy); none when nobody has rated it. */
+  weight: real('weight'),
+  /**
+   * Another BGG id whose honours this game shows: a later edition with none
+   * of its own (Dominion's second edition shows the first's).
+   */
+  honoursFrom: integer('honours_from'),
+  /** When BGG was last asked, in ms; zero for a row the copy made without an answer. */
+  fetchedAt: integer('fetched_at').notNull(),
+});
+
+/**
+ * Wins the owner confirmed by hand that BoardGameGeek doesn't list (the Dice
+ * Tower Awards, most Origins Awards), by BGG id so the collection's games keep
+ * theirs before they have rows. They count as wins beside BGG's.
+ */
+export const ownerAwards = sqliteTable(
+  'owner_awards',
+  {
+    bggId: integer('bgg_id').notNull(),
+    name: text('name').notNull(),
+    year: integer('year').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.bggId, t.name, t.year] })],
+);
+
+/**
+ * The rate limits' counters (api/_lib/rateLimit.ts): how many requests a key
+ * (`votes:<ip>`, `chat-global`) made in the fixed window starting at
+ * `windowStart` (ms). A row is swept once `expiresAt` has passed.
+ */
+export const rateLimits = sqliteTable(
+  'rate_limits',
+  {
+    key: text('key').notNull(),
+    windowStart: integer('window_start').notNull(),
+    count: integer('count').notNull(),
+    expiresAt: integer('expires_at').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.key, t.windowStart] }), index('rate_limits_expires_at').on(t.expiresAt)],
 );
 
 // Sign-in (#296): Better Auth's tables (api/_auth.ts), in the shapes its

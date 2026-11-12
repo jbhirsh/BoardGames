@@ -1,6 +1,14 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { checked, gameRow, suggestionRow, voteRow } from '../../api/_db/validation';
+import {
+  bggInfoRow,
+  checked,
+  gameRow,
+  ownerAwardRow,
+  rateLimitRow,
+  suggestionRow,
+  voteRow,
+} from '../../api/_db/validation';
 
 const game = {
   id: 'azul',
@@ -12,7 +20,6 @@ const game = {
   minutes: 45,
   description: 'Tiles.',
   keywords: ['abstract'],
-  awards: [],
 };
 const suggestion = {
   id: 'sug-1a2b',
@@ -54,7 +61,6 @@ describe('the rows the database takes', () => {
         keywords: ['abstract', 'abstract'],
         section: 'suggested',
         image: 'http://example.com/a.jpg',
-        weight: 6,
       }),
     ).toEqual([
       "  id: A game's id is lowercase letters, digits and dashes",
@@ -63,7 +69,34 @@ describe('the rows the database takes', () => {
       '  keywords: A keyword is listed once',
       '  section: A section has to be one of the wishlist’s',
       '  image: Box art is a file the site serves or an https link',
-      '  weight: A weight is up to 5 (heavy)',
+    ]);
+  });
+
+  it("hold BoardGameGeek's data, the owner's awards and the counters to their shapes", () => {
+    const info = {
+      bggId: 13,
+      name: 'Catan',
+      summary: 'Trade, build and settle.',
+      honours: [{ name: 'Spiel des Jahres', year: 1995, result: 'Winner' }],
+      weight: 2.28,
+      fetchedAt: 1,
+    };
+    expect(checked(bggInfoRow, info, 'it')).toEqual(info);
+    expect(
+      problems(bggInfoRow, { ...info, bggId: 0, weight: 0.5, honours: [{ name: '', year: 1.5, result: '' }] }),
+    ).toEqual([
+      '  bggId: A BoardGameGeek id is above 0',
+      '  honours.0.name: An honour has a name',
+      '  honours.0.year: An honour’s year is a whole number',
+      '  honours.0.result: An honour has a result',
+      '  weight: A weight is from 1 (light)',
+    ]);
+    expect(problems(ownerAwardRow, { bggId: 13, name: 'Dice Tower Best Game', year: 1800 })).toEqual([
+      '  year: An award’s year is 1900 or later',
+    ]);
+    expect(problems(rateLimitRow, { key: '', windowStart: 0, count: -1, expiresAt: 0 })).toEqual([
+      '  key: A counter has a key',
+      "  count: A count can't be negative",
     ]);
   });
 

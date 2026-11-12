@@ -44,7 +44,6 @@ describe('the committed migrations', () => {
       minutes: 45,
       description: '',
       keywords: [],
-      awards: [],
     };
     await db.insert(games).values(game);
     await db.insert(votes).values({ gameId: 'azul', anonId: 'anon-aaaaaaaa' });
@@ -75,7 +74,6 @@ describe('the committed migrations', () => {
       minutes: 45,
       description: '',
       keywords: [],
-      awards: [],
     };
     // Drizzle wraps SQLite's error; its cause names the constraint refused.
     const refusal = (write: Promise<unknown>) =>
@@ -85,8 +83,8 @@ describe('the committed migrations', () => {
       );
     expect(
       await refusal(
-        db.run(sql`INSERT INTO games (id, name, status, source, min_players, max_players, minutes, description, keywords, awards)
-        VALUES ('x', 'X', 'lost', 'curated', 1, 1, 0, '', '[]', '[]')`),
+        db.run(sql`INSERT INTO games (id, name, status, source, min_players, max_players, minutes, description, keywords)
+        VALUES ('x', 'X', 'lost', 'curated', 1, 1, 0, '', '[]')`),
       ),
     ).toMatch(/CHECK constraint failed: games_status_known/);
     expect(

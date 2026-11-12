@@ -20,7 +20,7 @@ import {
   WISHLIST_SECTION_IDS,
 } from '../_lib/limits.js';
 import { SLUG_RE } from '../_lib/slug.js';
-import { games, suggestions, votes } from './schema.js';
+import { bggInfo, games, ownerAwards, rateLimits, suggestions, votes } from './schema.js';
 
 // Where box art comes from: a file the app serves, or a link (BoardGameGeek's).
 const IMAGE_RE = /^(\/images\/wishlist\/[\w.-]+|https:\/\/\S+)$/;
@@ -43,6 +43,10 @@ const players = (what: string) => (s: z.ZodNumber) =>
     .min(1, `The ${what} players is at least 1`)
     .max(PLAYERS_MAX, `The ${what} players is at most ${PLAYERS_MAX}`);
 const when = (s: z.ZodNumber) => s.int('A time is whole milliseconds').min(0, 'A time is after 1970');
+const bggId = (s: z.ZodNumber) =>
+  s.int('A BoardGameGeek id is a whole number').positive('A BoardGameGeek id is above 0');
+const awardName = (s: z.ZodString) =>
+  s.min(1, 'An award has a name').max(200, "An award's name can be at most 200 characters");
 
 /** A game's row: one on the wishlist or the shelf. */
 export const gameRow = createInsertSchema(games, {
@@ -61,12 +65,6 @@ export const gameRow = createInsertSchema(games, {
   description: (s) => s.max(DESC_MAX, `A description can be at most ${DESC_MAX} characters`),
   keywords,
   section: section.nullish(),
-  awards: z.array(
-    z.object({
-      name: z.string().min(1, 'An award has a name'),
-      year: z.number().int('An award’s year is a whole number'),
-    }),
-  ),
   asin: (s) => s.regex(/^[A-Z0-9]{10}$/, 'An Amazon id is 10 capital letters and digits'),
   expands: nameOfGame,
   video: (s) =>
@@ -74,9 +72,8 @@ export const gameRow = createInsertSchema(games, {
       .min(1, 'Say what the video searches for, or leave it out')
       .max(200, 'A video search can be at most 200 characters'),
   image: () => image.nullish(),
-  bggId: (s) => s.int('A BoardGameGeek id is a whole number').positive('A BoardGameGeek id is above 0'),
+  bggId,
   year: (s) => s.int('A year is a whole number'),
-  weight: (s) => s.min(1, 'A weight is from 1 (light)').max(5, 'A weight is up to 5 (heavy)'),
   createdAt: when,
 }).refine((g) => g.minPlayers <= g.maxPlayers, {
   message: "The fewest players can't be more than the most",
@@ -101,6 +98,41 @@ export const suggestionRow = createInsertSchema(suggestions, {
 export const voteRow = createInsertSchema(votes, {
   gameId: (s) => s.regex(SLUG_RE, "A game's id is lowercase letters, digits and dashes"),
   anonId: (s) => s.regex(ANON_RE, "A browser's id is 8 to 64 letters, digits and dashes"),
+});
+
+/** What BoardGameGeek says about a game, by its id. */
+export const bggInfoRow = createInsertSchema(bggInfo, {
+  bggId,
+  name: (s) =>
+    s.min(1, 'A game on BoardGameGeek has a name').max(200, "BoardGameGeek's name can be at most 200 characters"),
+  summary: (s) => s.max(300, 'A summary can be at most 300 characters'),
+  honours: z
+    .array(
+      z.object({
+        name: z.string().min(1, 'An honour has a name').max(200, "An honour's name can be at most 200 characters"),
+        year: z.number().int('An honour’s year is a whole number').nullable(),
+        result: z.string().min(1, 'An honour has a result').max(40, "An honour's result can be at most 40 characters"),
+      }),
+    )
+    .max(200, 'A game keeps at most 200 honours'),
+  weight: (s) => s.min(1, 'A weight is from 1 (light)').max(5, 'A weight is up to 5 (heavy)'),
+  honoursFrom: bggId,
+  fetchedAt: when,
+});
+
+/** A win the owner confirmed that BoardGameGeek doesn't list. */
+export const ownerAwardRow = createInsertSchema(ownerAwards, {
+  bggId,
+  name: awardName,
+  year: (s) => s.int('An award’s year is a whole number').min(1900, 'An award’s year is 1900 or later'),
+});
+
+/** A rate limit's counter for one key and window. */
+export const rateLimitRow = createInsertSchema(rateLimits, {
+  key: (s) => s.min(1, 'A counter has a key').max(100, "A counter's key can be at most 100 characters"),
+  windowStart: when,
+  count: (s) => s.int('A count is a whole number').min(0, "A count can't be negative"),
+  expiresAt: when,
 });
 
 /**
