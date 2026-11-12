@@ -361,14 +361,14 @@ describe('askRules', () => {
 });
 
 describe('the rules assistant daily cap', () => {
-  // The limiters' Redis, faked in memory: each (name, key) bucket allows its
-  // budget and, like Upstash, doesn't count a refused request. A name in
-  // `down` makes that limiter's limit() calls throw, as an unreachable Redis does.
+  // The limiters' counters, faked in memory: each (name, key) bucket allows
+  // its budget and doesn't count a refused request. A name in `down` makes
+  // that limiter's limit() calls throw, as an unreachable database does.
   const down = new Set<string>();
   const counts = new Map<string, number>();
   const limiter = (name: string, requests: number): RateLimiter => ({
     async limit(key: string) {
-      if (down.has(name)) throw new Error('redis down');
+      if (down.has(name)) throw new Error('database down');
       const bucket = `${name}:${key}`;
       const used = counts.get(bucket) ?? 0;
       if (used >= requests) return { success: false };
@@ -421,7 +421,7 @@ describe('the rules assistant daily cap', () => {
     expect(counts.has('chat-global:global')).toBe(false);
   });
 
-  it('refuses chat when Redis is down, without asking Gemini', async () => {
+  it('refuses chat when the database is down, without asking Gemini', async () => {
     const { api, streamRulesAnswer } = capped();
     down.add('chat').add('chat-global');
     const res = await ask(api, question);
@@ -444,15 +444,7 @@ describe('the rules assistant daily cap', () => {
     expect(streamRulesAnswer).not.toHaveBeenCalled();
   });
 
-  it('fails closed when Upstash times out at the daily check', async () => {
-    const { api, streamRulesAnswer } = chatApi({
-      dailyLimiter: { limit: async () => ({ success: true, reason: 'timeout' }) },
-    });
-    expect((await ask(api, question)).status).toBe(503);
-    expect(streamRulesAnswer).not.toHaveBeenCalled();
-  });
-
-  it('lets votes and suggestions through when Redis is down', async () => {
+  it('lets votes and suggestions through when the database is down', async () => {
     const broken = limiter('down', 1);
     down.add('down');
     const api = testApi((d) => ({

@@ -106,7 +106,7 @@ describe('api/graphql.ts', () => {
         ['votes', 30, 60],
         ['suggestions', 5, 3600],
         ['chat', 10, 60],
-        ['chat-global', 500, 86400, { timeoutMs: 2000 }],
+        ['chat-global', 500, 86400, { timeoutMs: 2000, failClosed: true }],
       ]),
     );
   });
@@ -287,30 +287,5 @@ describe('api/graphql.ts at /api/auth/*', () => {
     );
     expect(res.statusCode).toBe(415);
     expect(signIn.requests).toEqual([]);
-  });
-});
-
-describe('api/graphql.ts with no KV config (no daily cap)', () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  async function loadFresh(env: string) {
-    vi.stubEnv('VERCEL_ENV', env);
-    vi.resetModules();
-    const sentry = await import('@sentry/node');
-    vi.mocked(sentry.captureMessage).mockClear();
-    await import('../../api/graphql');
-    return sentry;
-  }
-
-  it('warns Sentry in production that the cap is off', async () => {
-    const sentry = await loadFresh('production');
-    expect(sentry.captureMessage).toHaveBeenCalledWith('chat daily cap disabled: KV env missing', 'warning');
-  });
-
-  it('stays quiet outside production', async () => {
-    const sentry = await loadFresh('preview');
-    expect(sentry.captureMessage).not.toHaveBeenCalled();
   });
 });

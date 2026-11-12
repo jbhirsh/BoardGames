@@ -80,6 +80,6 @@ export async function requireAdmin(ctx: ApiContext, mutation = true): Promise<vo
 
 /** Counts the request against a per-IP limiter, refusing with its 429 when spent. */
 export async function limit(ctx: ApiContext, limiter: RateLimiter | null): Promise<void> {
-  const refusal = await rateLimitRefusal(limiter, ctx.ip);
+  const refusal = await rateLimitRefusal(limiter, ctx.ip, { defer: ctx.defer });
   if (refusal) throw new ApiError(refusal.status, refusal.error);
 }

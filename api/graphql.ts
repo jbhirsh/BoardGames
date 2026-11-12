@@ -1,5 +1,4 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import * as Sentry from '@sentry/node';
 import { toNodeHandler } from 'better-auth/node';
 import { auth, ownerSessionReader } from './_auth.js';
 import { lookupGame } from './_lib/bgg.js';
@@ -32,25 +31,14 @@ const limiters = {
 };
 const chatLimiter = getLimiter('chat', 10, 60);
 
-// Per-IP limits alone don't cap a day's spend (many IPs, or a Redis outage),
-// so every caller also shares one daily budget, set well above a busy game
-// night. Hard-coded: changing an env var on Vercel needs a redeploy anyway.
-// It alone fails closed, so it alone carries the spend guarantee; its short
-// Upstash timeout makes an outage refuse in about 2 s rather than 5.
-// getLimiter's sliding window counts fixed UTC-day buckets and weights the
-// previous day's by how much of it still falls within the last 24 hours, so
-// Redis sees roughly "the last 24 hours" and frees questions gradually. But
-// Upstash's in-memory cache remembers a refusal until the bucket ends, so a
-// warm instance that has refused once keeps refusing until 00:00 UTC without
-// asking Redis; only a cold one gets the gradual release. The cache is kept:
-// it only ever refuses sooner, never lets an extra question through.
-const chatDailyLimiter = getLimiter('chat-global', CHAT_DAILY_LIMIT, 86400, { timeoutMs: 2000 });
-
-// Without the KV env vars the cap is silently off (fine for local dev and
-// tests); in production that is a misconfiguration worth hearing about.
-if (!chatDailyLimiter && process.env.VERCEL_ENV === 'production') {
-  Sentry.captureMessage('chat daily cap disabled: KV env missing', 'warning');
-}
+// Per-IP limits alone don't cap a day's spend (many IPs), so every caller
+// also shares one daily budget, set well above a busy game night.
+// Hard-coded: changing an env var on Vercel needs a redeploy anyway. It
+// alone fails closed, so it alone carries the spend guarantee: a database
+// that doesn't answer within 2 s refuses the question, and so does a
+// production deployment with no database (getLimiter). Its window is a UTC
+// day, so the budget frees at midnight UTC.
+const chatDailyLimiter = getLimiter('chat-global', CHAT_DAILY_LIMIT, 86400, { timeoutMs: 2000, failClosed: true });
 
 let deps: ApiDeps | undefined;
 

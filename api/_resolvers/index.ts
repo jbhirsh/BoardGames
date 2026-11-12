@@ -135,7 +135,7 @@ const Mutation = {
 
 const Subscription = {
   askRules: {
-    subscribe: (_: unknown, args: AskRulesInput, ctx: ApiContext) => askRules(ctx.deps.chat, ctx.ip, args),
+    subscribe: (_: unknown, args: AskRulesInput, ctx: ApiContext) => askRules(ctx.deps.chat, ctx.ip, args, ctx.defer),
     resolve: (chunk: string) => chunk,
   },
 };
