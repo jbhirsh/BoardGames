@@ -354,8 +354,10 @@ export default function RulesPage() {
           <nav
             ref={stripRef}
             // Faded at an end with more tabs past it, so a cut-off strip
-            // reads as one that scrolls.
-            className={`rules-books mb-3.5 flex snap-x snap-proximity scroll-px-(--strip-fade) scrollbar-thin gap-1.5 overflow-x-auto pb-1 ${edges.start ? 'fade-start' : ''} ${edges.end ? 'fade-end' : ''} ${stripFadeClass}`}
+            // reads as one that scrolls. A pixel past the last tab: WebKit
+            // scrolls only whole pixels, so a tab ending part way into one
+            // could never be scrolled wholly into view.
+            className={`rules-books mb-3.5 flex snap-x snap-proximity scroll-px-(--strip-fade) scrollbar-thin gap-1.5 overflow-x-auto pe-px pb-1 ${edges.start ? 'fade-start' : ''} ${edges.end ? 'fade-end' : ''} ${stripFadeClass}`}
             style={{ '--strip-fade': `${STRIP_FADE}px` } as CSSProperties}
             aria-label="Rulebooks"
             // A tab reached by keyboard is brought clear of the faded edges:
