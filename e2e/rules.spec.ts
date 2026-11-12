@@ -143,7 +143,8 @@ test('on a phone the page draws the rulebook, searchable, under a download link'
   await expect(download).toHaveAccessibleDescription(/^\d+(\.\d)? (MB|KB)$/);
 
   const reader = page.getByRole('region', { name: 'Azul rules' });
-  await expect(reader.getByText('Factory').first()).toBeAttached();
+  // WebKit takes a few seconds to draw a page and lay its text.
+  await expect(reader.getByText('Factory').first()).toBeAttached({ timeout: 15_000 });
   await reader.getByRole('searchbox', { name: 'Search the rulebook' }).fill('factory display');
   await reader.getByRole('button', { name: 'Search' }).click();
   await expect(reader.getByRole('status')).toHaveText(/^1 of \d+ · page \d+$/);
@@ -318,7 +319,9 @@ test('on a desktop a citation opens its page in place and marks the passage it p
   await expect(cited).toBeFocused();
   // The answer's words are found on the page and marked, said for a screen
   // reader, and brought on screen though the page is taller than the window.
-  await expect(reader.getByText(/^Base game, page 5\. Highlighted: If you roll a .7,. no…$/)).toBeAttached();
+  await expect(reader.getByText(/^Base game, page 5\. Highlighted: If you roll a .7,. no…$/)).toBeAttached({
+    timeout: 15_000,
+  });
   // Whole sentences, from the one the answer's words start in.
   await expect
     .poll(() => marked(cited))
@@ -360,7 +363,7 @@ test('the cited mark covers the words it marks on the page image', async ({ page
   await page.getByRole('button', { name: 'Send' }).click();
   await page.getByRole('link', { name: 'p. 5, Base game', exact: true }).click();
   const cited = page.getByRole('region', { name: 'Catan rules' }).getByRole('group', { name: /^Page 5 of \d+$/ });
-  await expect.poll(() => marked(cited)).toContain('return them to the bank.');
+  await expect.poll(() => marked(cited), { timeout: 15_000 }).toContain('return them to the bank.');
   // Where the PDF draws the first and last words, from `pdftotext -bbox` on
   // public/rules/catan.pdf p. 5 (594pt wide): "If" from 44.44pt, "bank."
   // to 132.48pt. pdf.js lays its text out in a stand-in font, so a mark

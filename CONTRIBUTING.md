@@ -64,7 +64,7 @@ tests a push can affect plus the build on push; both do nothing when `$CI` is se
 | `ci` (`ci.yml`) | commit messages, pins, lint, Prettier, layering, type-check, GraphQL codegen and database migrations drift, type coverage, unit tests with coverage (the axe suite included), unmeasured source files, build, `npm audit --omit=dev` (high and up) |
 | Claude Review (`claude-review.yml`) | jbhirsh/ci's AI review; this repo's guide is `.github/claude-review.md` |
 | StrykerJS (`mutation.yml`) | mutation testing of the lines a PR changed; the monthly full sweep (`mutation-sweep.yml`) isn't a PR check |
-| E2E Tests (Playwright) (`e2e.yml`) | the e2e suite and visual regression in three engines |
+| E2E Tests (Playwright) (`e2e.yml`) | the e2e suite and visual regression in WebKit, on a desktop and an iPhone |
 | Answer-Quality Eval (`eval.yml`) | the rules assistant against the golden set, when its code changes |
 | PR visuals (`pr-visuals.yml`) | a UI change has pictures in its description |
 | Secret scan, `semgrep-cloud-platform/scan`, Vercel, API smoke test | secrets, static analysis, the deploy, and its live API (`smoke.yml`) |

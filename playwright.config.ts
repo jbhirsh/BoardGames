@@ -5,26 +5,28 @@ import { defineConfig, devices } from '@playwright/test';
 const PORT = 4174;
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 const CI = !!process.env.CI;
-// Visual regression (e2e/visual.ts): the core pages everywhere, the
-// desktop-only ones on desktops, the full set in desktop Chromium, the
-// phone-only states on phones.
+// Visual regression (e2e/visual.ts): every state on the desktop, the core
+// pages and the phone-only states on the phone.
 const VISUAL = /visual(-full|-desktop|-phone)?\.spec\.ts$/;
-const CORE = /visual(-desktop)?\.spec\.ts$/;
 // The phone project's own spec, e2e/phone.spec.ts (not visual-phone.spec.ts).
 const PHONE = /(^|[\\/])phone\.spec\.ts$/;
 const DESKTOP = { viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' } as const;
-// For machines whose preinstalled Chromium doesn't match this Playwright
-// release; CI installs the matching browsers instead.
-const chromiumLaunch = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE
-  ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE }
-  : {};
+// The newest iPhone Pro's window: 402 by 681 under Safari's bars, 3x,
+// touch. The 18 Pro's screen is the same size; switch when Playwright ships
+// its descriptor.
+const IPHONE = devices['iPhone 17 Pro'];
 
 /**
  * End-to-end tests: the production build, served by `vite preview`, driven
- * in Chromium, with the visual suite in Chromium, Firefox and WebKit. Every
- * `/api/*` call is stubbed with fixtures (e2e/fixtures.ts), which abort any
- * request off the preview origin, and a spec that needs the dictionary API
- * stubs it itself, so a run needs no network and no secrets.
+ * in WebKit, Safari's engine, on a desktop and on an iPhone, as the site's
+ * people use Safari; the visual suite likewise. Linux's WebKit is Safari's
+ * engine but not Apple's build: fonts (no SF Pro: `-apple-system` falls back)
+ * and safe-area insets still differ from a real iPhone. Locally, WebKit
+ * needs `npx playwright install --with-deps webkit` (Linux's system
+ * libraries for it too). Every `/api/*` call is stubbed with fixtures
+ * (e2e/fixtures.ts), which abort any request off the preview origin, and a
+ * spec that needs the dictionary API stubs it itself, so a run needs no
+ * network and no secrets.
  */
 export default defineConfig({
   testDir: './e2e',
@@ -70,51 +72,32 @@ export default defineConfig({
     toHaveScreenshot: { maxDiffPixelRatio: 0.01, animations: 'disabled', caret: 'hide' },
   },
   // The site is designed phone first, so a phone is a project of its own:
-  // e2e/phone.spec.ts runs in the newest iPhone Pro's window (the 17 Pro's
-  // descriptor: 402 by 681 under Safari's bars, 3x, touch, which the 18 Pro
-  // keeps), in Chromium as CI's e2e suite is Chromium's, every other spec on
-  // a desktop. A spec there may still set a phone's width for a check beside
-  // its desktop one.
+  // e2e/phone.spec.ts runs in the iPhone's window, every other spec on a
+  // desktop (Safari's 1280 by 720, 2x). A spec there may still set a
+  // phone's width for a check beside its desktop one.
   projects: [
     {
-      name: 'chromium',
+      name: 'desktop',
       testIgnore: [VISUAL, PHONE],
-      use: { ...devices['Desktop Chrome'], launchOptions: chromiumLaunch },
+      use: { ...devices['Desktop Safari'] },
     },
-    {
-      name: 'phone',
-      testMatch: PHONE,
-      use: { ...devices['iPhone 17 Pro'], browserName: 'chromium', launchOptions: chromiumLaunch },
-    },
-    // The visual suite, in all three engines and on phones (the free
-    // stand-in for a cross-browser screenshot service). Reduced motion holds
+    { name: 'phone', testMatch: PHONE, use: { ...IPHONE } },
+    // The visual suite: every state in both themes on the desktop, the core
+    // pages and what only a phone shows on the iPhone. Reduced motion holds
     // the hero's row of covers still.
     {
-      name: 'visual-chromium',
+      name: 'visual-webkit',
       testMatch: /visual(-full|-desktop)?\.spec\.ts$/,
-      use: { ...devices['Desktop Chrome'], ...DESKTOP, launchOptions: chromiumLaunch },
-    },
-    { name: 'visual-firefox', testMatch: CORE, use: { ...devices['Desktop Firefox'], ...DESKTOP } },
-    { name: 'visual-webkit', testMatch: CORE, use: { ...devices['Desktop Safari'], ...DESKTOP } },
-    {
-      name: 'visual-phone-chromium',
-      testMatch: /visual(-phone)?\.spec\.ts$/,
-      use: { ...devices['Pixel 7'], reducedMotion: 'reduce', launchOptions: chromiumLaunch },
+      use: { ...devices['Desktop Safari'], ...DESKTOP },
     },
     // The README's screenshots (e2e/readme.shots.ts), only when asked for.
     ...(process.env.README_SHOTS
-      ? [
-          {
-            name: 'readme',
-            testMatch: /readme\.shots\.ts$/,
-            use: { ...devices['Desktop Chrome'], launchOptions: chromiumLaunch },
-          },
-        ]
+      ? [{ name: 'readme', testMatch: /readme\.shots\.ts$/, use: { ...devices['Desktop Safari'] } }]
       : []),
     {
       name: 'visual-phone-webkit',
       testMatch: /visual(-phone)?\.spec\.ts$/,
-      use: { ...devices['iPhone 14'], reducedMotion: 'reduce' },
+      use: { ...IPHONE, reducedMotion: 'reduce' },
     },
   ],
   webServer: {

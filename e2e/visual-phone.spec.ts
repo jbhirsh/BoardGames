@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures';
 import { LINKS, SIGN_IN, prepare, shoot } from './visual';
 
-// What only a phone shows, on the phone projects (see visual.ts).
+// What only a phone shows, on the iPhone (see visual.ts).
 test('the filter sheet', async ({ page }) => {
   await prepare(page, 'light');
   await page.goto('/');

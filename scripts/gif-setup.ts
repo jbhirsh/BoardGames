@@ -44,8 +44,9 @@ type Handler = (route: Route) => Promise<void> | void;
  *   - Off this origin, only pictures load (the BoardGameGeek art), unless
  *     `fixtures`; anything else is aborted. They're fetched from Node rather
  *     than by the browser: BoardGameGeek's image server answers headless
- *     Chromium with a 400, where it serves Node the same request, and a
- *     blank box isn't what the page shows.
+ *     Chromium with a 400 (headless WebKit, which the GIFs are recorded in,
+ *     is unchecked), where it serves Node the same request, and a blank box
+ *     isn't what the page shows.
  *   - The wishlist and its vote counts are read from the live site, unless
  *     `fixtures` (or the live site can't be reached, which it warns of):
  *     then nothing is on the wishlist and every count is 0.

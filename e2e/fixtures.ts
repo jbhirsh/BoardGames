@@ -201,15 +201,47 @@ async function stubBackend(page: Page, baseURL: string, unexpected: string[]): P
   await stubOperation(page, 'AskRules', () => answerStream(CHAT_ANSWER));
 }
 
+/**
+ * WebKit's console lines for a load that failed (an aborted stub, a file
+ * offline), which Playwright's WebKit reports as page errors, split at the
+ * URL's colon ("Fetch API cannot load http" + "//…"): not uncaught errors,
+ * which Chromium never reported them as. An uncaught error or rejection
+ * still counts ("Unhandled Promise Rejection: …").
+ */
+const WEBKIT_LOAD_FAILURE = /^(Fetch API cannot load http|Cannot load http|FetchEvent\.respondWith received an error)/;
+
+/**
+ * Safari's scrollbars, on an iPhone and on a Mac's trackpad, lie over the
+ * page and take no room from it; Linux's WebKit draws classic ones that take
+ * 6px of every scrolling box, so a page there is narrower, and a bar fixed
+ * to the bottom higher, than Safari shows it. This hides them, as Safari's
+ * are while still, before the page's own styles load.
+ */
+function OVERLAY_SCROLLBARS() {
+  const style = document.createElement('style');
+  style.textContent = '::-webkit-scrollbar { display: none; }';
+  const add = () => document.documentElement.append(style);
+  if (document.documentElement) add();
+  else
+    new MutationObserver((_, observer) => {
+      if (!document.documentElement) return;
+      observer.disconnect();
+      add();
+    }).observe(document, { childList: true });
+}
+
 export const test = base.extend<{ api: ApiStubs }>({
   api: [
     async ({ page, baseURL }, use) => {
       const unexpected: string[] = [];
       const pageErrors: string[] = [];
-      page.on('pageerror', (err) => pageErrors.push(err.message));
+      page.on('pageerror', (err) => {
+        if (!WEBKIT_LOAD_FAILURE.test(err.name)) pageErrors.push(err.message);
+      });
       await page.addInitScript((id) => {
         window.localStorage.setItem('wishlist:anonId', id);
       }, ANON_ID);
+      await page.addInitScript(OVERLAY_SCROLLBARS);
       await stubBackend(page, baseURL!, unexpected);
 
       await use({ unexpected });
