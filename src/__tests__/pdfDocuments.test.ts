@@ -170,9 +170,11 @@ describe('warmPage', () => {
     expect(pdf.opened).toEqual(['/a.pdf']);
     // On the shared worker, which fetches its decoders itself (two
     // rulebooks open at once, and the page's side of either may close
-    // first), its requests marked so the service worker saves nothing.
+    // first), its requests marked so the service worker saves nothing, and
+    // its images handed over as pixels (WebKit's bitmaps came out swapped).
     expect(pdf.options[0]).toMatchObject({
       useWorkerFetch: true,
+      isOffscreenCanvasSupported: false,
       iccUrl: '/pdfjs/iccs/',
       disableAutoFetch: true,
       disableStream: true,

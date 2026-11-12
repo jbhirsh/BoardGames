@@ -85,6 +85,11 @@ export function openDocument(src: string, warm = false): PDFDocumentLoadingTask 
     // one is closed, as a tab change closes one while another is opening,
     // a page that needs the decoder waits for it for good.
     useWorkerFetch: true,
+    // The worker hands the page its images as pixels, not as bitmaps it
+    // drew on an OffscreenCanvas: in WebKit, Safari's engine, those came out
+    // swapped or blank about one load in three (Catan's p. 5 drew one card's
+    // picture in another's frame, or a frame with none).
+    isOffscreenCanvasSupported: false,
     ...(warm ? { httpHeaders: { [WARM_HEADER]: '1' } } : {}),
   });
 }
