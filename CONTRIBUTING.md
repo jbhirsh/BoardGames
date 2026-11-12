@@ -22,7 +22,7 @@ assistant, wishlist, suggestions, sign-in and monitoring need the variables belo
 | `VITE_SENTRY_DSN` | client | Sentry browser DSN (`VITE_`-prefixed to reach the browser) |
 | `SENTRY_DSN` | serverless | Sentry Node DSN |
 | `GEMINI_API_KEY` | serverless | Google Gemini key, for the rules assistant |
-| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | serverless | Upstash Redis REST URL and token |
+| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | build | Upstash Redis REST URL and token, read only by the one-time copy (`scripts/copy-from-redis.ts`); remove them and the Upstash integration once production has run it |
 | `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` | build and serverless | the deployment's Turso database and its token, set in Vercel per environment |
 | `DEV_DB_PATH` | local (optional) | a SQLite file used in place of Turso for development |
 | `SENTRY_AUTH_TOKEN` | build (optional) | Sentry source-map upload during `vite build` |

@@ -1,6 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { parseIdList, optionalAnonId, ANON_RE, MAX_IDS } from '../../api/_lib/ids';
-import { getRawRedis, getRedis, resetRedisForTests } from '../../api/_lib/redis';
 import { NAME_RE as CLIENT_NAME_RE } from '../utils/displayName';
 
 const errorOf = (v: string[]) => {
@@ -34,49 +33,6 @@ describe('optionalAnonId', () => {
     expect(optionalAnonId('x')).toBeNull();
     expect(optionalAnonId(undefined)).toBeNull();
     expect(ANON_RE.test('a'.repeat(65))).toBe(false);
-  });
-});
-
-describe('getRedis', () => {
-  const env = { ...process.env };
-  beforeEach(() => resetRedisForTests());
-  afterEach(() => {
-    process.env = { ...env };
-    resetRedisForTests();
-  });
-
-  it('throws a clear error when the KV env vars are missing', () => {
-    delete process.env.KV_REST_API_URL;
-    delete process.env.KV_REST_API_TOKEN;
-    expect(() => getRedis()).toThrow(/KV_REST_API_URL and KV_REST_API_TOKEN/);
-  });
-
-  it('builds one client and reuses it', () => {
-    process.env.KV_REST_API_URL = 'https://example.upstash.io';
-    process.env.KV_REST_API_TOKEN = 'token';
-    const a = getRedis();
-    expect(getRedis()).toBe(a);
-    const raw = getRawRedis();
-    expect(getRawRedis()).toBe(raw);
-    expect(raw).not.toBe(a);
-  });
-
-  it('hands hash values back as stored from the raw client only', async () => {
-    process.env.KV_REST_API_URL = 'https://example.upstash.io';
-    process.env.KV_REST_API_TOKEN = 'token';
-    // Upstash's REST reply, base64-encoded as the client asks for it.
-    const stored = ['game', 'null', 'alt', 'true', 'price', '1.50'];
-    const fetchSpy = vi
-      .spyOn(globalThis, 'fetch')
-      .mockImplementation(
-        async () => new Response(JSON.stringify({ result: stored.map((v) => Buffer.from(v).toString('base64')) })),
-      );
-    try {
-      expect(await getRawRedis().hgetall('k')).toEqual(stored);
-      expect(await getRedis().hgetall('k')).toEqual({ game: null, alt: true, price: '1.50' });
-    } finally {
-      fetchSpy.mockRestore();
-    }
   });
 });
 

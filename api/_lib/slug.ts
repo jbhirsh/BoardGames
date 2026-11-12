@@ -1,8 +1,9 @@
 /**
  * Shared slug/id shape: lowercase alphanumeric plus hyphens, 1–64 chars,
- * leading alphanumeric. Used for the chat rules-text filename lookup and the
- * votes Redis keys alike — kept in one place so the two endpoints can't drift
- * out of sync (both feed user input into a path or key).
+ * leading alphanumeric. Used for the chat rules-text filename lookup and for
+ * game ids (the ones votes, edits and removals name) alike, kept in one place
+ * so the endpoints can't drift apart (each feeds user input into a path or a
+ * query).
  */
 export const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,63}$/;
 
