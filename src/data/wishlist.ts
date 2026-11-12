@@ -777,7 +777,7 @@ const ENTRIES: WishlistItem[] = [
 ];
 
 /**
- * The entries with their bundled box art, where `npm run wishlist-art` has
+ * The entries with their bundled box art, where `npm run box-art` has
  * fetched it, and BoardGameGeek's weight, where `npm run game-weights` has.
  */
 export const WISHLIST: WishlistItem[] = ENTRIES.map((w) =>

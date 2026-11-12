@@ -6,11 +6,11 @@
 //
 //   npm run game-weights
 //
-// The site's own endpoint answers by id without a token, as for the
-// wishlist's box art (scripts/fetch-wishlist-art.ts). A game BGG has no
-// weight votes for is kept as null, and shows no difficulty. A run cut
-// short by a rate limit or an outage keeps the weights it had for the games
-// it didn't reach; ids no longer in either file are dropped.
+// The site's own endpoint answers by id without a token, as for the box
+// art (scripts/fetch-box-art.ts). A game BGG has no weight votes for is
+// kept as null, and shows no difficulty. A run cut short by a rate limit or
+// an outage keeps the weights it had for the games it didn't reach; ids no
+// longer in either file are dropped.
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
