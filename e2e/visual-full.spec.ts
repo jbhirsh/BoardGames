@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures';
 import { CORE, MORE, WIDE, prepare, shoot } from './visual';
 
-// Every state in both themes, in desktop Chromium (see visual.ts), which
+// Every state in both themes, in desktop Safari (see visual.ts), which
 // covers every style the app has.
 for (const theme of ['light', 'dark'] as const) {
   test.describe(`${theme} theme`, () => {

@@ -58,7 +58,9 @@ test('a friend opening the wishlist link is asked to vote, and sees the vote lan
   context,
   baseURL,
 }) => {
-  await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: new URL(baseURL!).origin });
+  // To read back what Share wishlist copied; the click is all writing needs
+  // (and WebKit has no clipboard-write permission to grant).
+  await context.grantPermissions(['clipboard-read'], { origin: new URL(baseURL!).origin });
   await page.goto('/?c=want&v=grid');
   await expect(page.getByText('Help us pick our next game from the wishlist below.')).toBeVisible();
   await expect(page.getByText("Heart the games you'd play. The top pick is what we buy next.")).toBeVisible();

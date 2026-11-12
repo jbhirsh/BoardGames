@@ -430,24 +430,26 @@ test('a session over a day old is asked for Google again before it adds a passke
 });
 
 // A passkey needs a domain, not an IP address: these load the site as
-// localhost (the preview server's own address otherwise), with Chromium's
-// virtual authenticator standing in for Face ID.
+// localhost (the preview server's own address otherwise), with Playwright's
+// virtual authenticator (context.credentials, in every engine) standing in
+// for Face ID: it answers navigator.credentials, so the real ceremonies run.
 test.describe('with a passkey', () => {
   test.use({ baseURL: 'http://localhost:4174' });
 
   test('the owner adds one, signs out, and signs back in with it with no Google step', async ({ page }) => {
-    const cdp = await page.context().newCDPSession(page);
-    await cdp.send('WebAuthn.enable');
-    await cdp.send('WebAuthn.addVirtualAuthenticator', {
-      options: {
-        protocol: 'ctap2',
-        transport: 'internal',
-        hasResidentKey: true,
-        hasUserVerification: true,
-        isUserVerified: true,
-        automaticPresenceSimulation: true,
-      },
+    // The passkey client checks for a PublicKeyCredential class, which a
+    // headless WebKit lacks (Playwright stands in a plain object there): a
+    // stand-in class, with the platform authenticator the virtual one is.
+    // Only the class: navigator.credentials is the authenticator's.
+    await page.addInitScript(() => {
+      if (typeof window.PublicKeyCredential === 'function') return;
+      const StandIn = class {
+        static isUserVerifyingPlatformAuthenticatorAvailable = () => Promise.resolve(true);
+        static isConditionalMediationAvailable = () => Promise.resolve(false);
+      };
+      Object.defineProperty(window, 'PublicKeyCredential', { value: StandIn, configurable: true, writable: true });
     });
+    await page.context().credentials.install();
 
     let admin = true;
     const credentials: string[] = [];

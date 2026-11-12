@@ -1,4 +1,4 @@
-import type { BrowserContext, Locator, Page, Route } from '@playwright/test';
+import type { BrowserContext, Locator, Page } from '@playwright/test';
 import { test, expect, operationOf } from './fixtures';
 
 // The service worker (src/sw/sw.ts) is blocked for every other spec.
@@ -9,22 +9,37 @@ async function controlled(page: Page) {
   await expect.poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null)).toBe(true);
 }
 
-/** Answers every request that reaches the network as a dropped connection would. */
-const NO_NETWORK = (route: Route) => route.abort('internetdisconnected');
+/** A rulebook no test here saves, so only the network could give it. */
+const UNSAVED = '/rules/bananagrams.pdf';
 
 /**
- * Takes the network away. setOffline alone leaves the service worker's own
- * fetches online in Chromium, so a file it should have saved would still
- * come; a route cuts those (the page's own stubs answer first, as the API
- * would).
+ * Takes the network away, and checks it's gone for the service worker too:
+ * asked to save a rulebook it hasn't, as Save for offline asks
+ * (src/sw/shell.ts's SAVE_MESSAGE), its own fetch must fail, or a test of
+ * what works offline could pass on files fetched live. Asked by message,
+ * so the failed fetch is the worker's alone, not a page error.
  */
 async function goOffline(context: BrowserContext) {
   await context.setOffline(true);
-  await context.route('**/*', NO_NETWORK);
+  const [page] = context.pages();
+  const outcome = await page.evaluate(
+    (path) =>
+      navigator.serviceWorker.ready.then(
+        (registration) =>
+          new Promise<string>((resolve) => {
+            const { port1, port2 } = new MessageChannel();
+            port1.onmessage = ({ data }: MessageEvent<{ state: string }>) => {
+              if (data.state !== 'saving') resolve(data.state);
+            };
+            registration.active!.postMessage({ type: 'gameroom-rulebook', path, save: true }, [port2]);
+          }),
+      ),
+    UNSAVED,
+  );
+  expect(outcome, `the service worker saved ${UNSAVED} offline: it still reaches the network`).toBe('failed');
 }
 
 async function goOnline(context: BrowserContext) {
-  await context.unroute('**/*', NO_NETWORK);
   await context.setOffline(false);
 }
 
@@ -59,6 +74,20 @@ async function readerSaved(page: Page) {
       timeout: 15_000,
     })
     .toBe(true);
+}
+
+/**
+ * Run in the service worker before its own code: its cache refuses a
+ * rulebook with the quota error a full device gives.
+ */
+function FULL_FOR_RULEBOOKS() {
+  const put = Cache.prototype.put;
+  Cache.prototype.put = function (request, response) {
+    const url = request instanceof Request ? request.url : String(request);
+    return /\/rules\/[^/]+\.pdf$/.test(new URL(url, location.href).pathname)
+      ? Promise.reject(new DOMException('No room', 'QuotaExceededError'))
+      : put.call(this, request, response);
+  };
 }
 
 /** A hash of a rulebook page's drawing, once it is drawn (its text is laid over it after). */
@@ -302,26 +331,23 @@ test('a large rulebook saved with Save for offline reads offline, and says it is
   await expect(reader.getByRole('status')).toHaveText(/^1 of \d+ · page \d+$/);
 });
 
-test('a rulebook the device has no room for says so, with nothing to try again', async ({ page, context, baseURL }) => {
+test('a rulebook the device has no room for says so, with nothing to try again', async ({ page, context }) => {
+  // No room for a rulebook: the service worker's script, as this test
+  // fetches it, first makes its cache refuse one as a full device does.
+  await context.route('**/sw.js', async (route) => {
+    const response = await route.fetch();
+    return route.fulfill({ response, body: `(${FULL_FOR_RULEBOOKS})();\n${await response.text()}` });
+  });
   await page.goto('/');
   await controlled(page);
-  // Room for a little more than the site holds already: not for 3.6 MB.
-  const cdp = await context.newCDPSession(page);
-  const origin = new URL(baseURL!).origin;
-  const { usage } = await page.evaluate(() => navigator.storage.estimate());
-  await cdp.send('Storage.overrideQuotaForOrigin', { origin, quotaSize: usage! + 1_000_000 });
-  try {
-    await page.goto('/rules/ticket-to-ride');
-    await expect(
-      page.getByRole('region', { name: 'Ticket to Ride rules' }).getByRole('button', { name: 'Search' }),
-    ).toBeEnabled();
-    await page.getByRole('button', { name: 'Save for offline' }).click();
-    await expect(page.getByText('Not enough space on this device', { exact: true })).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole('button', { name: /Try again/ })).toHaveCount(0);
-    expect(await inCache(page, '/rules/ticket-to-ride.pdf')).toBe(false);
-  } finally {
-    await cdp.send('Storage.overrideQuotaForOrigin', { origin });
-  }
+  await page.goto('/rules/ticket-to-ride');
+  await expect(
+    page.getByRole('region', { name: 'Ticket to Ride rules' }).getByRole('button', { name: 'Search' }),
+  ).toBeEnabled();
+  await page.getByRole('button', { name: 'Save for offline' }).click();
+  await expect(page.getByText('Not enough space on this device', { exact: true })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('button', { name: /Try again/ })).toHaveCount(0);
+  expect(await inCache(page, '/rules/ticket-to-ride.pdf')).toBe(false);
 });
 
 test('a rulebook opened once reads on a phone with no network', async ({ page, context }) => {

@@ -3,12 +3,12 @@ import { expect, CHAT_ANSWER, authRefusal, stubAuth, stubOperation } from './fix
 
 /**
  * Visual regression's pages and states (the visual*.spec.ts files), and how
- * each is shot. The visual-* projects in playwright.config.ts decide which
- * spec runs where: visual.spec.ts, the core pages in the light theme, in
- * every engine on a desktop and on phones; visual-desktop.spec.ts, what
- * only a desktop lays out differently, in every engine; visual-full.spec.ts, everything
- * in both themes, in desktop Chromium; visual-phone.spec.ts, what only a
- * phone shows.
+ * each is shot, all in WebKit, Safari's engine. The visual-* projects in
+ * playwright.config.ts decide which spec runs where: visual.spec.ts, the
+ * core pages in the light theme, on a desktop and on the iPhone;
+ * visual-desktop.spec.ts, what only a desktop lays out differently;
+ * visual-full.spec.ts, everything in both themes, on the desktop;
+ * visual-phone.spec.ts, what only a phone shows.
  *
  * Baselines are Linux CI's (fonts and anti-aliasing differ between
  * machines), in visual*.spec.ts-snapshots/: a run of visual-baselines.yml
@@ -66,7 +66,9 @@ async function firstPageDrawn(page: Page): Promise<void> {
   await expect(page.getByRole('button', { name: 'Search', exact: true })).toBeEnabled();
   // Its text is laid over the drawing once that is done (the canvas is
   // hidden from the accessibility tree, so the text is all the page holds).
-  await expect(first.getByText(/\S/).first()).toBeAttached({ timeout: 15_000 });
+  // WebKit draws Catan's first page in about 3 s, but past 15 s on a busy
+  // runner (a baselines run, two workers shooting at once).
+  await expect(first.getByText(/\S/).first()).toBeAttached({ timeout: 30_000 });
 }
 
 /** Answers every dictionary lookup with one English noun sense. */
@@ -191,7 +193,7 @@ export const REGISTER_OPTIONS = {
 /**
  * The owner, signed in, adding a passkey on a device that makes one: the
  * WebAuthn prompt answered at once, in every engine (a stand-in for Face
- * ID that only these shots need; e2e/phone.spec.ts uses Chromium's virtual
+ * ID that only these shots need; e2e/phone.spec.ts uses Playwright's virtual
  * authenticator). An engine that offers no WebAuthn to the page (a
  * headless one, or an address it won't trust) gets the PublicKeyCredential
  * and navigator.credentials the passkey client checks for and calls.
@@ -286,7 +288,7 @@ export const SIGN_IN: Scenario[] = [
   },
 ];
 
-/** The rest of the app's states, shot in desktop Chromium. */
+/** The rest of the app's states, shot on the desktop. */
 export const MORE: Scenario[] = [
   {
     name: 'wishlist',

@@ -259,12 +259,14 @@ test('on a wider screen, add-ons sit side by side, each name starting its row, i
     expect(b.x).toBeGreaterThan(a.x + a.width);
   };
   await page.goto('/');
+  // Measured once the opened details stop moving (in WebKit they were seen
+  // a pixel apart while still laying out).
   await page.getByRole('button', { name: 'Show details for One Night Werewolf' }).click();
-  await sideBySide();
+  await expect(sideBySide).toPass();
 
   await page.goto('/?v=grid');
   await page.getByRole('button', { name: /^One Night Werewolf: \+2/ }).click();
-  await sideBySide();
+  await expect(sideBySide).toPass();
 });
 
 test("on a wider screen, an open game's awards sit side by side", async ({ page }) => {

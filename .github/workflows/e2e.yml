@@ -1,9 +1,10 @@
 # End-to-end tests (Playwright): the production build, served by vite
-# preview, driven in Chromium through the flows people use — browsing and
-# filtering the collection, the wishlist and its votes, the random picker, a
-# rules page and its assistant, the score calculator and the word checker —
-# and visual regression: screenshots of every page, compared with baselines,
-# in Chromium, Firefox and WebKit on a desktop and on phones (e2e/visual.ts).
+# preview, driven in WebKit (Safari's engine) on a desktop and on an iPhone
+# through the flows people use — browsing and filtering the collection, the
+# wishlist and its votes, the random picker, a rules page and its assistant,
+# the score calculator and the word checker — and visual regression:
+# screenshots of every page, compared with baselines, in WebKit on a desktop
+# and on an iPhone (e2e/visual.ts).
 #
 # visual-baselines.yml, run by hand, rewrites those baselines on Linux (the
 # machine they must match) and commits them to its branch.
@@ -64,7 +65,7 @@ jobs:
       # The browsers matching the installed @playwright/test, plus the system
       # libraries they need on the runner.
       - name: Install browsers
-        run: npx playwright install --with-deps chromium firefox webkit
+        run: npx playwright install --with-deps webkit
 
       # What a slow or flaky run's report is worth seeing beside its tests:
       # the Playwright release and the browsers it drove, with their
@@ -75,7 +76,7 @@ jobs:
         continue-on-error: true
         run: |
           echo "version=$(npx playwright --version | sed 's/^Version //')" >> "$GITHUB_OUTPUT"
-          echo "browsers=$(npx playwright install --dry-run chromium firefox webkit | awk '/^[^ ]/ && !/^FFmpeg/ { sub(/ \(playwright.*/, ""); printf "%s%s", sep, $0; sep = ", " }')" >> "$GITHUB_OUTPUT"
+          echo "browsers=$(npx playwright install --dry-run webkit | awk '/^[^ ]/ && !/^FFmpeg/ { sub(/ \(playwright.*/, ""); printf "%s%s", sep, $0; sep = ", " }')" >> "$GITHUB_OUTPUT"
 
       # Shown in the report's Environment, with the machine the first note
       # adds (jbhirsh/ci's job-summary/note).

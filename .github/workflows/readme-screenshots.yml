@@ -68,9 +68,9 @@ jobs:
       - if: steps.decide.outputs.capture == 'true'
         run: npm ci
 
-      - name: Install Chromium
+      - name: Install WebKit
         if: steps.decide.outputs.capture == 'true'
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps webkit
 
       # Into readme-shots/ (e2e/readme.shots.ts).
       - name: Take the screenshots

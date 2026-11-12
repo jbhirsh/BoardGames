@@ -15,8 +15,9 @@ changing the module.
 - Type-check with `npm run typecheck`, never bare `npx tsc` (below).
 - `npm run codegen` after changing a GraphQL operation or the SDL, and `npm run db:generate`
   after changing `api/_db/schema.ts`; commit what each writes (`src/gql/`, `drizzle/`).
-- `npm run test:e2e` needs a Chromium matching the installed `@playwright/test`
-  (`npx playwright install chromium`), or `PLAYWRIGHT_CHROMIUM_EXECUTABLE` pointing at one.
+- `npm run test:e2e` runs in WebKit only: install the one matching `@playwright/test` with
+  `npx playwright install --with-deps webkit` (on Linux, `--with-deps` adds the system
+  libraries WebKit needs; Claude's cloud sessions have only Chromium, which can't stand in).
 
 ## Where names don't tell
 
@@ -64,8 +65,8 @@ changing the module.
 - **The chat's daily cap fails closed** (the only paid API); every other rate limiter fails
   open.
 - **The service worker is blocked in e2e** (`serviceWorkers: 'block'`), as requests it answers
-  never reach `page.route`; only `e2e/offline.spec.ts` lets it run, its `goOffline` aborting
-  what `setOffline` leaves online.
+  never reach `page.route`; only `e2e/offline.spec.ts` lets it run, its `goOffline` checking
+  that `setOffline` cut the worker's own fetches too.
 - **Tests that run git must not inherit the hooks' `GIT_*` variables**, or they act on this
   repository: pre-push unsets them, and such a test strips them itself
   (`.github/scripts/eval-should-grade.test.mjs`).

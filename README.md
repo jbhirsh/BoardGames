@@ -59,8 +59,8 @@ A sortable list view is also available:
   assertions and an 80% line-coverage gate on every file.
 - **StrykerJS:** mutation testing, which checks that the tests would fail if the code changed,
   not just that it ran.
-- **Playwright:** end-to-end tests against the production build, on a desktop and a phone, and
-  visual regression in Chromium, Firefox and WebKit.
+- **Playwright:** end-to-end tests against the production build, and visual regression, in
+  WebKit (Safari's engine) on an iPhone and a desktop.
 
 ## Architecture
 

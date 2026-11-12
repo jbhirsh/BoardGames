@@ -21,7 +21,7 @@
       "src/data/types.ts",
       "src/data/suggestionLimits.ts"
     ],
-    "advice": "Add before/after pictures to the description, at phone size first: screenshots for looks, a GIF for motion. `npm run pr-gif -- <scenario.ts> --dir <PR number>` records main and this branch (a scenario like scripts/gif-scenarios/example.ts, moving with gif.glide, click, drag and scroll, with pauses), hosts the GIFs on the screenshots branch and prints the table to paste. Or tick \"No visible UI change\" in the template. Editing the description re-runs this check."
+    "advice": "Add before/after pictures to the description, at phone size first: screenshots for looks, a GIF for motion. `npm run pr-gif -- <scenario.ts> --dir <PR number>` records main and this branch (a scenario like scripts/gif-scenarios/example.ts, moving with gif.glide, click, drag and scroll, with pauses), hosts the GIFs on the screenshots branch and prints the table to paste; it records in WebKit, which needs `npx playwright install --with-deps webkit` first. Or tick \"No visible UI change\" in the template. Editing the description re-runs this check."
   },
   "audit": {
     "graph": ["src", "api", "e2e"]
@@ -43,7 +43,7 @@
   },
   "visual-baselines": {
     "folders": ["e2e/*-snapshots"],
-    "command": "npx playwright install --with-deps chromium firefox webkit && npx playwright test --project='visual-*' --update-snapshots"
+    "command": "npx playwright install --with-deps webkit && npx playwright test --project='visual-*' --update-snapshots"
   },
   "gif": {
     "setup": "scripts/gif-setup.ts",
@@ -68,7 +68,7 @@
       "`npx vitest run --coverage` (per-file 80% coverage)",
       "`npm run build`",
       "`npm audit --omit=dev --audit-level=high`",
-      "`npx playwright install --with-deps chromium && npx playwright test --project=chromium --project=phone` (E2E's functional tests; its visual projects are in \"can't run\")"
+      "`npx playwright install --with-deps webkit && npx playwright test --project=desktop --project=phone` (E2E's functional tests; its visual projects are in \"can't run\")"
     ],
     "cannotRun": [
       "visual regression",
