@@ -16,9 +16,7 @@
     // The README's screenshots, a Playwright project only when README_SHOTS is set.
     "e2e/readme.shots.ts",
   ],
-  // e2e/theme.spec.ts loads axe's browser build by path
-  // (createRequire().resolve), which knip doesn't follow. jbhirsh/ci's
-  // actions run the rest from this repo's node_modules: the weekly audit's
-  // jscpd, and the README screenshot comparison's pixelmatch and pngjs.
-  "ignoreDependencies": ["axe-core", "jscpd", "pixelmatch", "pngjs"],
+  // jbhirsh/ci's actions run these from this repo's node_modules: the weekly
+  // audit's jscpd, and the README screenshot comparison's pixelmatch and pngjs.
+  "ignoreDependencies": ["jscpd", "pixelmatch", "pngjs"],
 }

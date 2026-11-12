@@ -1,8 +1,9 @@
-import { createRequire } from 'node:module';
+import axe from 'axe-core';
 import { test, expect } from './fixtures';
 import type { Page } from '@playwright/test';
 
-const axePath = createRequire(import.meta.url).resolve('axe-core/axe.min.js');
+/** axe-core's API, as its script, added to the page, defines `window.axe`. */
+type Axe = typeof axe;
 
 /** The page's background colour, as the browser paints it. */
 const background = (page: Page) => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
@@ -57,14 +58,10 @@ for (const scheme of ['light', 'dark'] as const) {
     for (const url of ['/', '/?v=grid', '/?c=want', '/rules/hogwarts-battle', '/score/7-wonders', '/word-checker']) {
       await page.goto(url);
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-      await page.addScriptTag({ path: axePath });
+      await page.addScriptTag({ content: axe.source });
       const failures = await page.evaluate(async () => {
-        const axe = (
-          window as unknown as {
-            axe: { run: (ctx: Document, opts: object) => Promise<{ violations: { nodes: { target: string[] }[] }[] }> };
-          }
-        ).axe;
-        const result = await axe.run(document, { runOnly: ['color-contrast'] });
+        const { axe: injected } = window as unknown as { axe: Axe };
+        const result = await injected.run(document, { runOnly: ['color-contrast'] });
         return result.violations.flatMap((v) => v.nodes.map((n) => n.target.join(' ')));
       });
       expect(failures, url).toEqual([]);

@@ -1,4 +1,4 @@
-import { createRequire } from 'node:module';
+import axe from 'axe-core';
 import type { Locator, Page } from '@playwright/test';
 import { GAMES } from '../src/data/games';
 import { WISHLIST } from '../src/data/wishlist';
@@ -8,7 +8,8 @@ import { REGISTER_OPTIONS } from './visual';
 // The home page on a phone: this file runs on the "phone" project, the
 // newest iPhone Pro's window (playwright.config.ts).
 
-const axePath = createRequire(import.meta.url).resolve('axe-core/axe.min.js');
+/** axe-core's API, as its script, added to the page, defines `window.axe`. */
+type Axe = typeof axe;
 
 /** The bar along the bottom of the screen. */
 const bar = (page: Page) => page.getByRole('navigation', { name: 'Which games to show' });
@@ -292,14 +293,10 @@ for (const scheme of ['light', 'dark'] as const) {
       await page.goto(url);
       await page.getByRole('button', { name: `Show details for ${open}` }).click();
       await expect(page.getByRole('button', { name: `Hide details for ${open}` })).toBeVisible();
-      await page.addScriptTag({ path: axePath });
+      await page.addScriptTag({ content: axe.source });
       const failures = await page.evaluate(async () => {
-        const axe = (
-          window as unknown as {
-            axe: { run: (ctx: Document, opts: object) => Promise<{ violations: { nodes: { target: string[] }[] }[] }> };
-          }
-        ).axe;
-        const result = await axe.run(document, { runOnly: ['color-contrast'] });
+        const { axe: injected } = window as unknown as { axe: Axe };
+        const result = await injected.run(document, { runOnly: ['color-contrast'] });
         return result.violations.flatMap((v) => v.nodes.map((n) => n.target.join(' ')));
       });
       expect(failures, url).toEqual([]);
