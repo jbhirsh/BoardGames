@@ -16,8 +16,10 @@ const config = JSON.parse(readFileSync(join(process.cwd(), 'vercel.json'), 'utf-
 const cacheControl = (rule: Rule) => rule.headers.find((h) => h.key.toLowerCase() === 'cache-control')?.value;
 
 describe('vercel.json build', () => {
-  it("checks sign-in's settings and migrates the deploy's database once the app has built, before the deploy goes live, so a failed build or a missing setting migrates nothing", () => {
-    expect(config.buildCommand).toBe('npm run build && node scripts/check-auth-env.ts && npm run db:migrate');
+  it("checks sign-in's settings, migrates the deploy's database, copies into it once and refreshes BGG's data, all once the app has built, so a failed build or a missing setting migrates nothing", () => {
+    expect(config.buildCommand).toBe(
+      'npm run build && node scripts/check-auth-env.ts && npm run db:migrate && npm run db:copy && npm run bgg-refresh',
+    );
   });
 });
 

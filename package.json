@@ -20,6 +20,8 @@
     "codegen": "graphql-codegen --config codegen.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=.env.local scripts/db-migrate.ts",
+    "db:copy": "node --env-file-if-exists=.env.local scripts/copy-from-redis.ts",
+    "bgg-refresh": "node --env-file-if-exists=.env.local scripts/bgg-refresh.ts",
     "preview": "vite preview",
     "eval": "node eval/run-eval.ts",
     "box-art": "node scripts/fetch-box-art.ts",
