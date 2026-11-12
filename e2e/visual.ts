@@ -137,7 +137,7 @@ const CASCADIA_PREVIEW = {
     mins: 45,
     desc: 'Draft habitat tiles and wildlife tokens to build the Pacific Northwest.',
     kw: ['family', 'strategy'],
-    img: '/images/wishlist/cascadia.jpg',
+    img: '/images/wishlist/cascadia.webp',
   },
 };
 

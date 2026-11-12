@@ -113,8 +113,8 @@ export interface Filterable {
   kw: KeywordId[];
   /**
    * BoardGameGeek id. A game's or a compiled-in wishlist entry's difficulty
-   * is BGG's weight for it (`npm run game-weights`); the entry's box art is
-   * fetched by it too (`npm run wishlist-art`).
+   * is BGG's weight for it (`npm run game-weights`); its box art is
+   * fetched by it too (`npm run box-art`).
    */
   bgg?: number;
   /**
