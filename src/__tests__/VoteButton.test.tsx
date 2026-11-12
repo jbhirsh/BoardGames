@@ -31,6 +31,16 @@ describe('VoteButton', () => {
     expect(screen.getByRole('button', { name: 'Voted for Splendor (0 votes)' })).toHaveTextContent(/^♥Voted$/);
   });
 
+  it('makes room in its label for the widest it can become as a vote lands', () => {
+    const { rerender } = render(<VoteButton itemName="Splendor" voteCount={3} voted={false} onClick={() => {}} />);
+    const label = () => screen.getByRole('button').querySelector('.vote-label')!;
+    expect(label()).toHaveAttribute('data-widest', 'Voted · 4');
+    rerender(<VoteButton itemName="Splendor" voteCount={4} voted onClick={() => {}} />);
+    expect(label()).toHaveAttribute('data-widest', 'Voted · 4');
+    rerender(<VoteButton itemName="Splendor" voteCount={0} voted={false} onClick={() => {}} />);
+    expect(label()).toHaveAttribute('data-widest', 'Voted · 1');
+  });
+
   it('starts its accessible name with the word it shows', () => {
     const { rerender } = render(<VoteButton itemName="Splendor" voteCount={2} voted={false} onClick={() => {}} />);
     const btn = screen.getByRole('button');

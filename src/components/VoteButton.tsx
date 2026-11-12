@@ -20,13 +20,20 @@ const voteBaseClass =
 const lineClass = `vote-btn--compact relative z-1 h-8.5 min-w-[3.6em] px-2.5 text-[14px] ${tapTargetClass}`;
 const tableClass = 'min-w-[8.4em] px-3';
 const cardClass = `min-w-[8.4em] px-3 max-sm:min-w-[8em] max-sm:px-2.5 ${tapTargetClass}`;
+// The label as wide as the widest it can become as a vote lands ("Voted"
+// and the count after it, its data-widest), drawn invisibly under the words
+// with no height, so the button keeps its width in any font: the minimum
+// widths fit the fonts a Mac or an iPhone draws it in, not every font.
+const reserveClass =
+  'inline-flex flex-col items-center after:invisible after:h-0 after:overflow-hidden after:content-[attr(data-widest)]';
 
 /**
  * The verb always shows, so the button reads as an action rather than a
  * badge: "♡ Vote", "♡ Vote · 2", and "♥ Voted · 3" once this viewer has
  * voted. The accessible name starts with the same word the button shows,
- * so a voice-control user can say what they see. Its minimum width keeps
- * it the same size as a vote lands. On a wishlist card it is
+ * so a voice-control user can say what they see. Its minimum width, and
+ * the label's room for the widest it can become, keep it the same size as
+ * a vote lands. On a wishlist card it is
  * the strongest button, where a collection card's is Rules. On a phone's
  * line it is `compact`: "♡", "♡ 2", "♥ 3".
  */
@@ -57,7 +64,12 @@ export default function VoteButton({
       {compact ? (
         voteCount > 0 && <span className="vote-label tabular-nums">{voteCount}</span>
       ) : (
-        <span className="vote-label tabular-nums">{voteCount > 0 ? `${verb} · ${voteCount}` : verb}</span>
+        <span
+          className={`vote-label tabular-nums ${reserveClass}`}
+          data-widest={`Voted · ${voted ? voteCount : voteCount + 1}`}
+        >
+          {voteCount > 0 ? `${verb} · ${voteCount}` : verb}
+        </span>
       )}
     </button>
   );
