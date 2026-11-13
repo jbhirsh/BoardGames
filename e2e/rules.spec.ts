@@ -140,7 +140,7 @@ test('on a phone the page draws the rulebook, searchable, under a download link'
 
   const download = page.getByRole('link', { name: 'Download PDF' });
   await expect(download).toHaveAttribute('href', '/rules/azul.pdf');
-  await expect(download).toHaveAccessibleDescription(/^\d+(\.\d)? (MB|KB)$/);
+  await expect(download).toHaveAccessibleName(/^Download PDF \d+(\.\d)? (MB|KB)$/);
 
   const reader = page.getByRole('region', { name: 'Azul rules' });
   // WebKit takes a few seconds to draw a page and lay its text.
