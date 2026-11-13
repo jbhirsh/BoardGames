@@ -11,6 +11,7 @@ import GameDetail from './GameDetail';
 import Popover from './Popover';
 import { fittingSubgames, hasSubgames, subgameLabel } from '../utils/subgames';
 import { gameAnchor } from '../utils/heroCovers';
+import { useNarrow } from '../hooks/useNarrow';
 import { UserIcon, ClockIcon } from './Icons';
 import {
   cardBodyClass,
@@ -56,6 +57,9 @@ function GameCard({ game }: Props) {
   const fitting = game.subgames ? fittingSubgames(game.subgames, filter) : [];
   const hasFitting = fitting.length > 0;
   const subsLabel = game.subgames ? subgameLabel(game.subgames, filter) : '';
+  // A footer too narrow for the add-ons pill's full label beside the award
+  // count and the actions (its content box at 323px or less).
+  const [footNarrow, footRef] = useNarrow(323);
 
   return (
     // An open card (its write-up or its add-ons list) takes a grid row of its
@@ -124,7 +128,7 @@ function GameCard({ game }: Props) {
           </div>
         )}
       </div>
-      <div className={cardFootClass}>
+      <div className={cardFootClass} ref={footRef}>
         {/* What the card holds besides its own game sits bottom left, so
             every card's head carries the same things and lines up. */}
         <div className={cardFootStartClass}>
@@ -140,10 +144,14 @@ function GameCard({ game }: Props) {
               activate={{ onClick: () => setSubsOpen((o) => !o), expanded: subsOpen, controls: subsId }}
               trigger={
                 <>
-                  {/* On a footer too narrow for the full label beside the award
-                      count and the actions, just the count. */}
-                  <span className="sub-pill-full [@container_(max-width:323px)]:hidden">{subsLabel}</span>
-                  <span className="sub-pill-short hidden [@container_(max-width:323px)]:inline">+{fitting.length}</span>
+                  {/* On a footer too narrow for the full label, just the count.
+                      Only the one shown is rendered, so it alone is the
+                      pill's text; the button's name gives the full label. */}
+                  {footNarrow ? (
+                    <span className="sub-pill-short">+{fitting.length}</span>
+                  ) : (
+                    <span className="sub-pill-full">{subsLabel}</span>
+                  )}
                   <svg
                     className="[transition:transform_0.2s] group-aria-expanded/pill:transform-[rotate(180deg)]"
                     width="10"
