@@ -82,7 +82,8 @@
       "the answer-quality eval (it needs the Gemini key)"
     ],
     "exempt": {
-      "PR visuals": "Wants pictures in the PR description, which no code change gives (autofix skips its failure too)."
+      "PR visuals": "Wants pictures in the PR description, which no code change gives (autofix skips its failure too).",
+      "ci51 carry test": "ci#51 experiment, deleted after."
     }
   },
   "unmeasured": {

@@ -1,0 +1,113 @@
+# Experiment for jbhirsh/ci#51, step 1 (go or no-go). Never merged: the PR
+# holding it is deleted after. Labelling the PR `ci51-carry-test` amends its
+# head commit A with one changed baseline PNG (A'), force-pushes A' with the
+# Actions token, and posts A's required check runs and commit statuses onto
+# A', so the PR shows what the rulesets, workflows and Vercel do with it.
+name: ci51 carry test
+
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: write
+  checks: write
+  statuses: write
+  actions: read
+  pull-requests: read
+
+jobs:
+  carry:
+    if: github.event.label.name == 'ci51-carry-test'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      BRANCH: ${{ github.head_ref }}
+      PNG: e2e/visual.spec.ts-snapshots/home-list-light-visual-webkit-linux.png
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Amend A with one changed PNG and force-push it
+        run: |
+          set -euo pipefail
+          A=$(git rev-parse HEAD)
+          echo "A=$A" >> "$GITHUB_ENV"
+          printf 'ci51' >> "$PNG"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$PNG"
+          git commit --amend --no-edit
+          CHANGED=$(git diff --name-only "$A" HEAD)
+          if [ "$CHANGED" != "$PNG" ]; then
+            echo "::error::A' differs from A in more than $PNG: $CHANGED"
+            exit 1
+          fi
+          git push --force-with-lease="$BRANCH:$A" origin "HEAD:$BRANCH"
+          B=$(git rev-parse HEAD)
+          echo "B=$B" >> "$GITHUB_ENV"
+          {
+            echo "## ci51 carry test"
+            echo "- A: \`$A\`"
+            echo "- A': \`$B\`"
+            echo "- A' author/committer: $(git log -1 --format='%an <%ae> / %cn <%ce>')"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Carry A's required check runs onto A'
+        run: |
+          set -euo pipefail
+          SHORT=${A:0:7}
+          gh api "repos/$GITHUB_REPOSITORY/rules/branches/main" \
+            --jq '.[] | select(.type=="required_status_checks") | .parameters.required_status_checks[] | select(.integration_id==15368 or .integration_id==null) | .context' \
+            > required.txt
+          gh api --paginate "repos/$GITHUB_REPOSITORY/commits/$A/check-runs?per_page=100" \
+            --jq '.check_runs[]' | jq -s '.' > runs.json
+          echo "### Check runs carried over" >> "$GITHUB_STEP_SUMMARY"
+          while IFS= read -r NAME; do
+            RUN=$(jq -c --arg n "$NAME" '[.[] | select(.name==$n and .status=="completed")] | sort_by(.completed_at) | last // empty' runs.json)
+            if [ -z "$RUN" ]; then
+              echo "- \`$NAME\`: no completed run on A (not carried)" >> "$GITHUB_STEP_SUMMARY"
+              continue
+            fi
+            CONCLUSION=$(jq -r '.conclusion' <<<"$RUN")
+            URL=$(jq -r '.html_url' <<<"$RUN")
+            APP=$(jq -r '.app.slug' <<<"$RUN")
+            jq -n --arg name "$NAME" --arg sha "$B" --arg c "$CONCLUSION" \
+              --arg title "Carried over from $SHORT" \
+              --arg summary "Carried over from [$NAME on $SHORT]($URL) (ci#51 experiment)." \
+              '{name:$name, head_sha:$sha, status:"completed", conclusion:$c, output:{title:$title, summary:$summary}}' \
+              > body.json
+            POSTED=$(gh api -X POST "repos/$GITHUB_REPOSITORY/check-runs" --input body.json --jq '"\(.id) app=\(.app.slug)/\(.app.id)"')
+            echo "- \`$NAME\`: $CONCLUSION (A's from $APP, $URL) -> posted $POSTED" >> "$GITHUB_STEP_SUMMARY"
+          done < required.txt
+
+      - name: Carry A's commit statuses onto A' after Vercel's own
+        run: |
+          set -euo pipefail
+          SHORT=${A:0:7}
+          # The combined status holds the newest status of each context.
+          gh api "repos/$GITHUB_REPOSITORY/commits/$A/status" --jq '.statuses[] | @base64' > statuses.txt
+          echo "### Commit statuses" >> "$GITHUB_STEP_SUMMARY"
+          echo "Statuses on A' before posting (waiting up to 5 min for Vercel's own):" >> "$GITHUB_STEP_SUMMARY"
+          for i in $(seq 1 30); do
+            OWN=$(gh api "repos/$GITHUB_REPOSITORY/commits/$B/statuses" --jq '[.[] | select(.context=="Vercel")] | length')
+            [ "$OWN" -gt 0 ] && break
+            sleep 10
+          done
+          gh api "repos/$GITHUB_REPOSITORY/commits/$B/statuses" \
+            --jq '.[] | "- `\(.context)` \(.state) by \(.creator.login) at \(.created_at): \(.description) \(.target_url)"' >> "$GITHUB_STEP_SUMMARY"
+          echo "Posted:" >> "$GITHUB_STEP_SUMMARY"
+          while IFS= read -r ROW; do
+            S=$(base64 -d <<<"$ROW")
+            CONTEXT=$(jq -r '.context' <<<"$S")
+            STATE=$(jq -r '.state' <<<"$S")
+            TARGET=$(jq -r '.target_url // ""' <<<"$S")
+            jq -n --arg state "$STATE" --arg context "$CONTEXT" --arg t "$TARGET" \
+              --arg d "Carried over from $SHORT" \
+              '{state:$state, context:$context, description:$d} + (if $t == "" then {} else {target_url:$t} end)' > status.json
+            gh api -X POST "repos/$GITHUB_REPOSITORY/statuses/$B" --input status.json --jq '"\(.id) by \(.creator.login)"' > posted.txt
+            echo "- \`$CONTEXT\`: $STATE -> posted $(cat posted.txt)" >> "$GITHUB_STEP_SUMMARY"
+          done < statuses.txt

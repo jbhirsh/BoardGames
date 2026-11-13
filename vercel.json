@@ -2,6 +2,7 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "buildCommand": "npm run build && node scripts/check-auth-env.ts && npm run db:migrate",
+  "ignoreCommand": "echo \"an=$(git log -1 --format=%an) cn=$(git log -1 --format=%cn) env=$VERCEL_ENV\"; [ \"$VERCEL_ENV\" = preview ] && [ \"$(git log -1 --format=%cn)\" = 'github-actions[bot]' ] && [ \"$(git log -1 --format=%an)\" != 'github-actions[bot]' ] && exit 0 || exit 1",
   "devCommand": "npx vite --port $PORT",
   "functions": {
     "api/graphql.ts": {
