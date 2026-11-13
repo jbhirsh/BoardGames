@@ -6,6 +6,7 @@
       "tsconfig*.json",
       "package.json",
       "package-lock.json",
+      "patches/**",
       ".github/workflows/mutation.yml"
     ],
     "smoke": ["src/utils/filterUrl.ts", "src/utils/pickRandom.ts", "src/utils/urls.ts"]
