@@ -52,6 +52,16 @@ updates:
           - major
         patterns:
           - typescript
+      # @simplewebauthn/browser and /server are devDependencies only so the
+      # auth tests can mock what @better-auth/passkey calls. The plugin
+      # depends on ^13 (1.7.18, and 1.8.0-beta.9 in Nov 2026), so a 14 at the
+      # top level leaves it a nested 13 the mocks never reach, and the passkey
+      # tests run the real WebAuthn checks and fail. Wait for the plugin.
+      blocked-simplewebauthn:
+        update-types:
+          - major
+        patterns:
+          - "@simplewebauthn/*"
       all-updates:
         patterns:
           - "*"
