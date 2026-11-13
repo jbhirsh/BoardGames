@@ -10,11 +10,10 @@ import {
   type AuthOutcome,
 } from '../client/auth';
 import { addPasskeyProblem, signInProblem, signOutProblem } from '../utils/signInErrors';
-import BackLink from './BackLink';
 import { GoogleIcon, KeyIcon } from './Icons';
 import Notice from './Notice';
 import { SIGN_IN_INTRO, SIGN_IN_TITLE } from '../data/signIn';
-import { pageClass, pageDescClass, pageHeaderClass, pageTitleClass } from './sharedClasses';
+import { pageDescClass, pageHeaderClass, pageTitleClass } from './sharedClasses';
 import {
   signInButtonClass,
   signInGhostClass,
@@ -205,16 +204,15 @@ export default function SignInPage() {
   }
 
   return (
-    <div className={pageClass}>
+    <>
       <title>Sign in · The Game Room</title>
       <header className={pageHeaderClass}>
-        <BackLink />
         <div className="mx-auto max-w-110">
           <h1 className={pageTitleClass}>{SIGN_IN_TITLE}</h1>
           <p className={pageDescClass}>{SIGN_IN_INTRO}</p>
         </div>
       </header>
       {panel && <div className={`${signInPanelClass} mx-auto`}>{panel}</div>}
-    </div>
+    </>
   );
 }

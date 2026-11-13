@@ -92,6 +92,33 @@ test("Back from the picked game's rules returns to the list where it was", async
   await expect.poll(() => scrollY(page)).toBe(left);
 });
 
+// A rules page's code, held back so its grey header shows until let go.
+const RULES_CODE = /\/assets\/RulesPage-[^/]+\.js$/;
+
+test('a press on Back that the page arrives during still goes back', async ({ page }) => {
+  let arrive!: () => void;
+  const arrived = new Promise<void>((resolve) => (arrive = resolve));
+  await page.route(RULES_CODE, async (route) => {
+    await arrived;
+    return route.fallback();
+  });
+  await page.goto('/?p=2');
+  await page.getByRole('button', { name: 'Pick for us' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'View rules' }).click();
+  await expect(page.getByRole('status')).toHaveText('Loading…');
+
+  // Pressed on the loading page's Back, let go once the page is in: one
+  // link throughout (PageFrame), so the click reaches it.
+  const back = (await page.getByRole('link', { name: /Back to The Game Room/ }).boundingBox())!;
+  await page.mouse.move(back.x + back.width / 2, back.y + back.height / 2);
+  await page.mouse.down();
+  arrive();
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await page.mouse.up();
+
+  await expect(page).toHaveURL(/\/\?p=2$/);
+});
+
 test('a collapsed list row carries no Rules link, on a desktop or the narrow list', async ({ page }) => {
   for (const width of [1280, 640]) {
     await page.setViewportSize({ width, height: 900 });

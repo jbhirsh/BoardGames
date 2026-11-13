@@ -1,6 +1,7 @@
 import { useParams } from 'react-router';
 import { ALL_GAMES } from '../data/games';
 import { scorePadFor } from '../data/scoreCalculators';
+import { opensScorePad } from '../utils/subPages';
 import NotFoundPage from './NotFoundPage';
 import ScorePadFrame from './ScorePadFrame';
 import SevenWondersPad from './SevenWondersPad';
@@ -23,11 +24,8 @@ import RoundScorePad from './RoundScorePad';
  */
 export default function ScoreCalculatorPage() {
   const { slug = '', part } = useParams<{ slug: string; part?: string }>();
-  const game = ALL_GAMES.find((g) => g.slug === slug);
-  const sub = part === undefined ? undefined : game?.subgames?.find((s) => s.slug === part);
-  const pad = scorePadFor(slug, part);
-
-  if (!game || !pad || (part !== undefined && !sub)) {
+  // Asked as PageFrame asks it, so a not-found page is never drawn in its frame.
+  if (!opensScorePad(slug, part)) {
     return (
       <NotFoundPage
         title="No score calculator"
@@ -35,6 +33,9 @@ export default function ScoreCalculatorPage() {
       />
     );
   }
+  const game = ALL_GAMES.find((g) => g.slug === slug)!;
+  const sub = part === undefined ? undefined : game.subgames!.find((s) => s.slug === part);
+  const pad = scorePadFor(slug, part)!;
 
   return (
     <ScorePadFrame name={sub?.name ?? game.name} art={game}>

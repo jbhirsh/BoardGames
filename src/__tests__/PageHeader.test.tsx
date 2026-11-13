@@ -18,10 +18,12 @@ const shape = (header: HTMLElement) =>
     .map((el) => el.className);
 
 describe('PageHeader', () => {
-  it("leads with Back, then the game's box art, the page's heading and the line under it", () => {
+  it("shows the game's box art, the page's heading and the line under it, leaving Back to the frame", () => {
     renderRouted(<PageHeader title="Score Calculator" desc="Catan" art={CATAN} />);
     const header = screen.getByRole('banner');
-    expect(screen.getByRole('link', { name: /Back to The Game Room/ })).toHaveAttribute('href', '/');
+    // PageFrame draws Back, outside the page's loading boundary.
+    expect(screen.queryByRole('link')).toBeNull();
+    expect(header).not.toHaveAttribute('aria-busy');
     expect(screen.getByAltText('Catan box art')).toHaveAttribute('src', '/images/catan.webp');
     expect(screen.getByRole('heading', { level: 1, name: 'Score Calculator' })).toHaveClass('rules-game-name');
     expect(header.querySelector('.rules-game-desc')).toHaveTextContent('Catan');
@@ -60,7 +62,7 @@ describe('PageHeader', () => {
     expect(screen.queryByRole('heading')).toBeNull();
     expect(screen.queryByRole('img')).toBeNull();
     expect(screen.getByRole('status')).toHaveTextContent('Loading…');
-    expect(screen.getByRole('link', { name: /Back to The Game Room/ })).toBeInTheDocument();
+    expect(header).toHaveAttribute('aria-busy', 'true');
   });
 
   it("while loading, holds the art's place with a grey box even when given the game", () => {

@@ -22,12 +22,6 @@ describe('WordCheckerPage', () => {
     expect(screen.getByText('Bananagrams')).toBeInTheDocument();
   });
 
-  it('renders the back link to home', () => {
-    renderPage();
-    const backLink = screen.getByText(/Back to The Game Room/);
-    expect(backLink.closest('a')).toHaveAttribute('href', '/');
-  });
-
   it('renders the Bananagrams box art', () => {
     renderPage();
     const img = screen.getByAltText('Bananagrams box art');

@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import type { Game } from '../data/types';
-import BackLink from './BackLink';
 import { pageDescClass, pageHeaderClass, pageTitleClass } from './sharedClasses';
 
 interface Props {
@@ -30,9 +29,10 @@ interface Props {
 }
 
 /**
- * The header of every sub-page: Back to the list, then the game's box art,
- * the page's name and a line under it, and the page's buttons. The loading
- * fallback draws the same header, so the page drops in without moving.
+ * The header of every sub-page, under the Back link its frame draws
+ * (PageFrame): the game's box art, the page's name and a line under it, and
+ * the page's buttons. The loading fallback draws the same header, so the page
+ * drops in without moving.
  */
 // The box art, smaller on a phone.
 const artClass =
@@ -46,8 +46,8 @@ export default function PageHeader({ title, desc, art, loading = false, narrow =
     // are the very ones the page draws.
     <header
       className={`${pageHeaderClass} ${loading ? '[&_.rules-box-art]:bg-bg3 [&_.rules-title-row]:animate-fallback-pulse' : ''}`}
+      aria-busy={loading || undefined}
     >
-      <BackLink />
       {loading && (
         <p className="sr-only" role="status">
           Loading…

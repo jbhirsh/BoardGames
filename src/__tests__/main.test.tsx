@@ -13,7 +13,7 @@ import { stubGraphql } from './helpers/graphqlFetch';
 // real pages' code), showing the route's params.
 const state = vi.hoisted(() => ({
   /** While set, every page waits on it: its route's loading header shows. */
-  loading: null as Promise<never> | null,
+  loading: null as Promise<unknown> | null,
   /** A page that throws, for the router's error page. */
   broken: null as string | null,
   roots: [] as Root[],
@@ -161,6 +161,37 @@ describe("a page's loading header", () => {
   it("lays out the sign-in page's introduction too", async () => {
     await open('/sign-in');
     expect(await header()).toHaveTextContent(/Signed in, the wishlist shows/);
+  });
+});
+
+describe("a page's frame", () => {
+  const back = () => screen.queryByRole('link', { name: /Back to The Game Room/ });
+
+  it.each(['/rules/catan', '/score/7-wonders', '/word-checker', '/sign-in', '/approve'])(
+    '%s keeps one Back link from its loading header to the page',
+    async (path) => {
+      let arrive!: () => void;
+      state.loading = new Promise<void>((resolve) => (arrive = resolve));
+      await open(path);
+      expect(await screen.findByRole('status')).toHaveTextContent('Loading…');
+      const before = back();
+      expect(before).toHaveAttribute('href', '/');
+      await act(async () => arrive());
+      expect(await heading()).toBeInTheDocument();
+      // The same element: a press begun on the loading page's Back and ended
+      // on the page's would otherwise reach neither link.
+      expect(back()).toBe(before);
+    },
+  );
+
+  it.each([
+    ['/rules/no-such-game', 'RulesPage no-such-game'],
+    ['/score/no-such-game', 'ScoreCalculatorPage no-such-game'],
+    ['/score/7-wonders/no-such-part', 'ScoreCalculatorPage 7-wonders no-such-part'],
+  ])('%s, which opens no page, gets no frame: its page draws the not-found page', async (path, page) => {
+    await open(path);
+    expect(await heading()).toHaveTextContent(page);
+    expect(back()).toBeNull();
   });
 });
 

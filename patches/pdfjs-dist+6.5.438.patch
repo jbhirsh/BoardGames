@@ -1,0 +1,15 @@
+diff --git a/node_modules/pdfjs-dist/build/pdf.mjs b/node_modules/pdfjs-dist/build/pdf.mjs
+index b330043..c703c99 100644
+--- a/node_modules/pdfjs-dist/build/pdf.mjs
++++ b/node_modules/pdfjs-dist/build/pdf.mjs
+@@ -13500,6 +13500,10 @@ class PDFFetchStreamReader extends BasePDFStreamReader {
+       }
+       this._headersCapability.resolve();
+     }).catch(this._headersCapability.reject);
++    // A request that fails before the worker asks for its headers (one
++    // started as the page navigates fails at once) has no listener yet:
++    // mark it handled, as the range reader's is; headersReady still sees it.
++    this._headersCapability.promise.catch(() => {});
+   }
+   async read() {
+     await this._headersCapability.promise;

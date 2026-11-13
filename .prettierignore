@@ -14,6 +14,7 @@ src/gql/
 drizzle/
 
 # Not ours, or not source.
+patches/
 public/
 dist/
 coverage/

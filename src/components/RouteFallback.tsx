@@ -6,7 +6,7 @@ import { WORD_CHECKER_GAME } from '../data/wordChecker';
 import { rulebooks } from '../utils/rulebooks';
 import PageHeader from './PageHeader';
 import { AiRulesIcon, CalculatorIcon } from './Icons';
-import { headerButtonClass, pageClass } from './sharedClasses';
+import { headerButtonClass } from './sharedClasses';
 
 interface Props {
   /** The page's heading, drawn as a bar its size (the words aren't shown). */
@@ -23,8 +23,8 @@ interface Props {
 
 /**
  * What a page shows while its code loads (main.tsx loads every page but the
- * home page when it is first opened): its header in grey, with the Back link
- * working, so a slow connection shows where the page is going rather than a
+ * home page when it is first opened): its header in grey, under the Back
+ * link its frame already draws (PageFrame), so a slow connection shows where the page is going rather than a
  * blank screen. The bars are the header's own text, laid out in the page's
  * fonts and hidden, so they wrap where the page's would and the page drops in
  * without moving.
@@ -37,11 +37,9 @@ export default function RouteFallback({
   children,
 }: Props) {
   return (
-    <div className={pageClass} aria-busy="true">
-      <PageHeader title={title} desc={desc} art={art} narrow={narrow} loading>
-        {children}
-      </PageHeader>
-    </div>
+    <PageHeader title={title} desc={desc} art={art} narrow={narrow} loading>
+      {children}
+    </PageHeader>
   );
 }
 
