@@ -3,29 +3,50 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { createApi } from '../../api/_resolvers/index';
 import { ApiError, guarded } from '../../api/_resolvers/errors';
 import type { LookupResult } from '../../api/_lib/bgg';
-import { OWNER_COOKIE, refusing, testApi } from './helpers/api';
+import { eq } from 'drizzle-orm';
+import { games, suggestions } from '../../api/_db/schema';
+import { OWNER_COOKIE, refusing, testApi, type TestApi } from './helpers/api';
+import { curated, pendingRow, seed } from './helpers/rows';
 
 // What the API does around the resolvers: CSRF, the owner's session, the
 // schema's enums, errors and time limits. Each operation's own rules are in
 // votesApi, authApi, suggestionsApi and chatApi.
 
-const TOKEN = 'test-token-' + 'a'.repeat(21);
 const OWNER = { cookie: OWNER_COOKIE };
-const REMOVE = 'mutation { removeSuggestion(id: "sug-aaaaaa") }';
+const REMOVE = 'mutation { removeGame(id: "seti") }';
 
-const pending = {
-  id: 'sug-aaaaaa',
-  game: 'Wingspan',
-  name: 'Alex',
-  note: '',
-  status: 'pending',
-  createdAt: 1000,
-  token: TOKEN,
+const apis: TestApi[] = [];
+/** A test API whose database is closed after the test. */
+const api$ = (...args: Parameters<typeof testApi>) => {
+  const api = testApi(...args);
+  apis.push(api);
+  return api;
 };
+afterEach(async () => {
+  await Promise.all(apis.splice(0).map((a) => a.close()));
+});
+
+/** The games and suggestions rows as they stand. */
+const tables = async (api: TestApi) => ({
+  games: await (await api.db()).select().from(games),
+  suggestions: await (await api.db()).select().from(suggestions),
+});
 
 const WINGSPAN: LookupResult = {
   outcome: 'found',
-  details: { bggId: 266192, name: 'Wingspan', year: 2019, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: ['strategy'] },
+  details: {
+    bggId: 266192,
+    name: 'Wingspan',
+    year: 2019,
+    min: 1,
+    max: 5,
+    mins: 70,
+    desc: 'Birds.',
+    kw: ['strategy'],
+    categories: [],
+    mechanics: [],
+    section: 'strategy',
+  },
 };
 
 describe('CSRF', () => {
@@ -35,7 +56,8 @@ describe('CSRF', () => {
     'text/plain',
     'text/plain; x=application/json',
   ])('refuses a %s POST before reading it', async (contentType) => {
-    const api = testApi();
+    const api = api$();
+    await seed(await api.db(), { gameRows: [curated()] });
     const res = await api.fetch('/api/graphql', {
       method: 'POST',
       headers: { 'content-type': contentType, cookie: OWNER.cookie },
@@ -44,16 +66,17 @@ describe('CSRF', () => {
     expect(res.status).toBe(415);
     expect(await res.json()).toEqual({ errors: [{ message: 'Requests must be sent as JSON' }] });
     expect(api.deps.ownerSession).not.toHaveBeenCalled();
-    expect(api.rawRedis.multi).not.toHaveBeenCalled();
+    expect((await tables(api)).games[0].status).toBe('wanted');
   });
 
   it('never serves a mutation over GET', async () => {
-    const api = testApi();
+    const api = api$();
+    await seed(await api.db(), { gameRows: [curated()] });
     const res = await api.fetch(`/api/graphql?query=${encodeURIComponent(REMOVE)}`, {
       headers: { 'x-graphql-yoga-csrf': '1', cookie: OWNER.cookie },
     });
     expect(res.status).toBe(405);
-    expect(api.rawRedis.multi).not.toHaveBeenCalled();
+    expect((await tables(api)).games[0].status).toBe('wanted');
   });
 
   it("answers a GET query only with Yoga's CSRF header", async () => {
@@ -80,7 +103,7 @@ describe('CSRF', () => {
   });
 
   it('looks a game up for the owner only as JSON, never over GET', async () => {
-    const api = testApi((d) => ({ suggestions: { ...d.suggestions, lookup: vi.fn(async () => WINGSPAN) } }));
+    const api = api$((d) => ({ suggestions: { ...d.suggestions, lookup: vi.fn(async () => WINGSPAN) } }));
     const res = await api.fetch(
       `/api/graphql?query=${encodeURIComponent('{ previewGame(game: "Wingspan") { outcome } }')}`,
       {
@@ -94,19 +117,22 @@ describe('CSRF', () => {
 });
 
 describe('limits on a request', () => {
-  it('refuses 50 aliases before any Redis call, and takes 15', async () => {
-    const api = testApi();
+  it('refuses 50 aliases before reading anything, and takes 15', async () => {
+    const db = vi.fn(async () => {
+      throw new Error('read');
+    });
+    const api = api$((d) => ({ db, suggestions: { ...d.suggestions, db } }));
     const many = (n: number, field: string) =>
       `{ ${Array.from({ length: n }, (_, i) => `a${i}: ${field}`).join(' ')} }`;
-    const refused = await api.run(many(50, 'suggestions { id }'));
+    const refused = await api.run(many(50, 'games { bgg { bggId } }'));
     // A validation error: GraphQL-over-HTTP answers it 200 to a plain JSON client.
     expect(refused.data).toBeNull();
     expect(refused.errors[0].message).toBe('A request may use at most 15 aliases');
     const sessions = await api.run(many(50, 'session { admin }'), {}, OWNER);
     expect(sessions.errors[0].message).toBe('A request may use at most 15 aliases');
-    expect(api.rawRedis.lrange).not.toHaveBeenCalled();
+    expect(db).not.toHaveBeenCalled();
     expect(api.deps.ownerSession).not.toHaveBeenCalled();
-    expect((await api.run(many(15, 'suggestions { id }'))).errors).toEqual([]);
+    expect((await api$().run(many(15, 'games { bgg { bggId } }'))).errors).toEqual([]);
   });
 
   it('refuses a document nested too deep, or too long', async () => {
@@ -142,33 +168,65 @@ describe('limits on a request', () => {
   });
 });
 
+describe('the games query', () => {
+  it('answers anyone over GET with the CSRF header, the same whether or not the owner is signed in', async () => {
+    const api = api$();
+    await seed(await api.db(), { gameRows: [curated(), curated({ id: 'gone', name: 'Gone', status: 'removed' })] });
+    const url = `/api/graphql?query=${encodeURIComponent('query Games { games { wishlist { id source } } }')}`;
+    const asked: Array<Record<string, string>> = [{}, { cookie: OWNER.cookie }];
+    const answers = await Promise.all(
+      asked.map(async (headers: Record<string, string>) => {
+        const res = await api.fetch(url, { headers: { 'x-graphql-yoga-csrf': '1', ...headers } });
+        return res.json() as Promise<unknown>;
+      }),
+    );
+    expect(answers[0]).toEqual({ data: { games: { wishlist: [{ id: 'seti', source: 'CURATED' }] } } });
+    expect(answers[1]).toEqual(answers[0]);
+    expect(api.deps.ownerSession).not.toHaveBeenCalled();
+    // Kept by the service worker alone, never a CDN or the browser's cache.
+    const res = await api.fetch(url, { headers: { 'x-graphql-yoga-csrf': '1' } });
+    expect(res.headers.get('cache-control')).toBe('no-store');
+  });
+});
+
 describe("the owner's operations", () => {
   const OWNER_ONLY: Array<[string, string]> = [
     ['pendingSuggestions', '{ pendingSuggestions { id } }'],
     ['previewGame', '{ previewGame(game: "Wingspan") { outcome } }'],
+    ['emailedSuggestion', '{ emailedSuggestion(id: "sug-aaaaaa") { suggestion { game } } }'],
     ['addGame', 'mutation { addGame(game: "Cascadia", name: "Jess") { item { id } } }'],
-    ['editSuggestion', 'mutation { editSuggestion(id: "sug-aaaaaa", game: "Azul") { id } }'],
-    ['removeSuggestion', 'mutation { removeSuggestion(id: "sug-aaaaaa") }'],
+    ['editGame', 'mutation { editGame(id: "seti", game: "Azul") { id } }'],
+    ['removeGame', 'mutation { removeGame(id: "seti") }'],
     ['decideSuggestion', 'mutation { decideSuggestion(id: "sug-aaaaaa", decision: DENY) { item { id } } }'],
   ];
 
   it.each(OWNER_ONLY)('refuses %s without a live session, changing nothing', async (_name, query) => {
-    const api = testApi();
-    api.rawRedis.hashes['suggestions:sug-aaaaaa'] = { ...pending, status: 'approved' };
+    const api = api$();
+    await seed(await api.db(), { gameRows: [curated()], suggestionRows: [pendingRow()] });
+    const before = await tables(api);
     for (const init of [{}, { cookie: 'better-auth.session_token=someone-else' }]) {
       const res = await api.run(query, {}, init);
       expect(res.status).toBe(403);
       expect(res.errors[0]).toMatchObject({ message: 'owner sign-in required', extensions: { code: 'FORBIDDEN' } });
     }
-    expect(api.rawRedis.hset).not.toHaveBeenCalled();
-    expect(api.rawRedis.multi).not.toHaveBeenCalled();
+    expect(await tables(api)).toEqual(before);
+  });
+
+  it('refuses a token argument, which the emailed links no longer carry', async () => {
+    const api = api$();
+    const res = await api.run(
+      'mutation { decideSuggestion(id: "sug-aaaaaa", token: "x", decision: APPROVE) { lookup } }',
+      {},
+      OWNER,
+    );
+    expect(res.errors[0].message).toMatch(/Unknown argument "token"/);
   });
 
   it('asks the owner check once a request, and sends the cookie it renewed with the answer', async () => {
     const RENEWED =
       '__Secure-better-auth.session_token=renewed; Max-Age=2592000; Path=/; HttpOnly; Secure; SameSite=Lax';
     const ownerSession = vi.fn(async () => ({ owner: true, setCookies: [RENEWED] }));
-    const api = testApi(() => ({ ownerSession }));
+    const api = api$(() => ({ ownerSession }));
     const res = await api.run('{ a: session { admin } b: session { admin } pendingSuggestions { id } }', {}, OWNER);
     expect(res.data).toEqual({ a: { admin: true }, b: { admin: true }, pendingSuggestions: [] });
     expect(ownerSession).toHaveBeenCalledTimes(1);
@@ -182,144 +240,103 @@ describe("the owner's operations", () => {
   });
 
   it('works the queue with a session: lists, previews, approves, edits and removes', async () => {
-    const lookup = vi.fn(async (): Promise<LookupResult> => ({ outcome: 'no-match' }));
-    const api = testApi((d) => ({ suggestions: { ...d.suggestions, lookup } }));
-    api.rawRedis.hashes['suggestions:sug-aaaaaa'] = pending;
-    api.rawRedis.lists['suggestions:active'] = ['sug-aaaaaa'];
-
-    const queue = await api.run('{ pendingSuggestions { id game status source } }', {}, OWNER);
-    expect(queue.data).toEqual({
-      pendingSuggestions: [{ id: 'sug-aaaaaa', game: 'Wingspan', status: 'PENDING', source: 'FRIEND' }],
+    const lookup = vi.fn(async () => WINGSPAN);
+    const api = api$((d) => ({ suggestions: { ...d.suggestions, lookup } }));
+    await seed(await api.db(), { suggestionRows: [pendingRow()] });
+    const queue = await api.run('{ pendingSuggestions { id game status } }', {}, OWNER);
+    expect(queue.data).toEqual({ pendingSuggestions: [{ id: 'sug-aaaaaa', game: 'Wingspan', status: 'PENDING' }] });
+    const preview = await api.run('{ previewGame(game: "Wingspan") { outcome details { name section } } }', {}, OWNER);
+    expect(preview.data).toEqual({
+      previewGame: { outcome: 'FOUND', details: { name: 'Wingspan', section: 'strategy' } },
     });
-
-    const looked = await api.run('{ previewGame(game: "Wingspan") { outcome details { name } } }', {}, OWNER);
-    expect(looked.data).toEqual({ previewGame: { outcome: 'NO_MATCH', details: null } });
-
-    const decided = await api.run(
-      'mutation ($details: DetailsInput) { decideSuggestion(id: "sug-aaaaaa", decision: APPROVE, details: $details) { item { status decidedAt details { min } } lookup } }',
-      { details: { bggId: 1, min: 2, max: 4, mins: 30, desc: '', kw: ['strategy'] } },
+    const approved = await api.run(
+      'mutation { decideSuggestion(id: "sug-aaaaaa", decision: APPROVE) { item { status } lookup } }',
+      {},
       OWNER,
     );
-    expect(decided.data).toEqual({
-      decideSuggestion: { item: { status: 'APPROVED', decidedAt: 5000, details: { min: 2 } }, lookup: null },
-    });
-
+    expect(approved.data).toEqual({ decideSuggestion: { item: { status: 'APPROVED' }, lookup: 'FOUND' } });
     const edited = await api.run(
-      'mutation { editSuggestion(id: "sug-aaaaaa", note: "Birds!", details: { type: "heavy" }) { note details { type } } }',
+      'mutation { editGame(id: "sug-aaaaaa", game: "Wingspan (2nd)", details: { min: 2 }) { name minPlayers } }',
       {},
       OWNER,
     );
-    expect(edited.data).toEqual({ editSuggestion: { note: 'Birds!', details: { type: 'heavy' } } });
-
-    const again = await api.run(
-      'mutation { decideSuggestion(id: "sug-aaaaaa", decision: DENY) { item { id } } }',
-      {},
-      OWNER,
-    );
-    expect(again.status).toBe(409);
-    expect(again.errors[0]).toMatchObject({
-      message: 'Wingspan was already approved',
-      extensions: { code: 'ALREADY_DECIDED', status: 'approved' },
-    });
-
-    expect((await api.run('mutation { removeSuggestion(id: "sug-aaaaaa") }', {}, OWNER)).data).toEqual({
-      removeSuggestion: true,
-    });
-    expect((await api.run('{ suggestions { id } }')).data).toEqual({ suggestions: [] });
+    expect(edited.data).toEqual({ editGame: { name: 'Wingspan (2nd)', minPlayers: 2 } });
+    expect((await api.run('mutation { removeGame(id: "sug-aaaaaa") }', {}, OWNER)).data).toEqual({ removeGame: true });
+    const after = await tables(api);
+    expect(after.games[0].status).toBe('removed');
+    expect(after.suggestions[0].status).toBe('removed');
   });
 
   it('adds a game, telling apart details left out (look it up) and null (none)', async () => {
     const lookup = vi.fn(async () => WINGSPAN);
-    const api = testApi((d) => ({ suggestions: { ...d.suggestions, lookup } }));
-    const ADD =
-      'mutation ($details: DetailsInput) { addGame(game: "Wingspan", name: "Jess", type: "strategy", details: $details) { item { source details { mins type } } lookup } }';
-    const looked = await api.run(ADD, {}, OWNER);
-    expect(looked.data).toEqual({
-      addGame: { item: { source: 'OWNER', details: { mins: 70, type: 'strategy' } }, lookup: 'FOUND' },
-    });
+    const ids = ['sug-111111', 'sug-222222'];
+    const api = api$((d) => ({ suggestions: { ...d.suggestions, lookup, randomId: () => ids.shift()! } }));
+    await api.run('mutation { addGame(game: "Wingspan", name: "Jess") { lookup } }', {}, OWNER);
+    await api.run('mutation { addGame(game: "Azul", name: "Jess", details: null) { lookup } }', {}, OWNER);
     expect(lookup).toHaveBeenCalledTimes(1);
-    api.rawRedis.lists['suggestions:active'] = [];
-    const bare = await api.run(ADD, { details: null }, OWNER);
-    expect(bare.data).toEqual({
-      addGame: { item: { source: 'OWNER', details: { mins: 0, type: 'strategy' } }, lookup: null },
-    });
-    expect(lookup).toHaveBeenCalledTimes(1);
+    const { games: rows } = await tables(api);
+    expect(rows.map((g) => [g.name, g.bggId, g.section])).toEqual([
+      ['Wingspan', 266192, 'strategy'],
+      ['Azul', null, null],
+    ]);
   });
 });
 
 describe('the emailed approve and deny links', () => {
-  const OPEN =
-    'query ($game: String) { emailedSuggestion(id: "sug-aaaaaa", token: "' +
-    TOKEN +
-    '") { suggestion { id game name note status } preview(game: $game) { outcome details { name year } } } }';
+  const EMAILED = `query EmailedSuggestion($id: String!, $game: String) {
+    emailedSuggestion(id: $id) { suggestion { game status } preview(game: $game) { outcome } }
+  }`;
 
-  it('reads the suggestion and what BoardGameGeek has, writing nothing', async () => {
+  it('reads the suggestion and what BoardGameGeek has for the owner, over GET too, writing nothing', async () => {
     const lookup = vi.fn(async () => WINGSPAN);
-    const api = testApi((d) => ({ suggestions: { ...d.suggestions, lookup } }));
-    api.rawRedis.hashes['suggestions:sug-aaaaaa'] = pending;
-    const res = await api.run(OPEN, { game: ' Wingspan ' });
+    const api = api$((d) => ({ suggestions: { ...d.suggestions, lookup } }));
+    await seed(await api.db(), { suggestionRows: [pendingRow()] });
+    const res = await api.run(EMAILED, { id: 'sug-aaaaaa' }, OWNER);
     expect(res.data).toEqual({
-      emailedSuggestion: {
-        suggestion: { id: 'sug-aaaaaa', game: 'Wingspan', name: 'Alex', note: '', status: 'PENDING' },
-        preview: { outcome: 'FOUND', details: { name: 'Wingspan', year: 2019 } },
-      },
+      emailedSuggestion: { suggestion: { game: 'Wingspan', status: 'PENDING' }, preview: { outcome: 'FOUND' } },
     });
-    expect(lookup).toHaveBeenCalledWith('Wingspan');
-    expect(api.rawRedis.hset).not.toHaveBeenCalled();
+    const url = `/api/graphql?query=${encodeURIComponent(EMAILED)}&variables=${encodeURIComponent('{"id":"sug-aaaaaa"}')}`;
+    const got = await api.fetch(url, { headers: { 'x-graphql-yoga-csrf': '1', cookie: OWNER.cookie } });
+    expect(got.status).toBe(200);
+    expect((await tables(api)).suggestions[0].status).toBe('pending');
   });
 
-  it('looks nothing up for a decided suggestion, or when the preview is not asked for', async () => {
+  it('looks nothing up for a decided suggestion', async () => {
     const lookup = vi.fn(async () => WINGSPAN);
-    const api = testApi((d) => ({ suggestions: { ...d.suggestions, lookup } }));
-    api.rawRedis.hashes['suggestions:sug-aaaaaa'] = { ...pending, status: 'denied', decidedAt: 10 };
-    expect((await api.run(OPEN)).data).toMatchObject({
-      emailedSuggestion: { suggestion: { status: 'DENIED' }, preview: null },
+    const api = api$((d) => ({ suggestions: { ...d.suggestions, lookup } }));
+    await seed(await api.db(), { suggestionRows: [pendingRow({ status: 'denied', decidedAt: 10 })] });
+    const res = await api.run(EMAILED, { id: 'sug-aaaaaa' }, OWNER);
+    expect(res.data).toEqual({
+      emailedSuggestion: { suggestion: { game: 'Wingspan', status: 'DENIED' }, preview: null },
     });
-    await api.run(`{ emailedSuggestion(id: "sug-aaaaaa", token: "${TOKEN}") { suggestion { id } } }`);
     expect(lookup).not.toHaveBeenCalled();
   });
 
-  it('refuses a mismatched link and a bad corrected name', async () => {
-    const api = testApi((d) => ({ suggestions: { ...d.suggestions, lookup: async () => WINGSPAN } }));
-    api.rawRedis.hashes['suggestions:sug-aaaaaa'] = pending;
-    const wrong = await api.run(
-      `{ emailedSuggestion(id: "sug-aaaaaa", token: "${'test-token-' + 'z'.repeat(21)}") { suggestion { id } } }`,
-    );
-    expect(wrong.status).toBe(403);
-    expect(wrong.errors[0].extensions?.code).toBe('FORBIDDEN');
-    const bad = await api.run(OPEN, { game: 'X' });
-    expect(bad.status).toBe(400);
-    expect(bad.errors[0].message).toBe('Nothing was looked up: the game must be 2–80 characters.');
-  });
-
-  it('decides with the token alone, no session needed', async () => {
-    const api = testApi();
-    api.rawRedis.hashes['suggestions:sug-aaaaaa'] = pending;
-    api.rawRedis.lists['suggestions:active'] = ['sug-aaaaaa'];
-    const res = await api.run(
-      `mutation { decideSuggestion(id: "sug-aaaaaa", decision: APPROVE, token: "${TOKEN}", game: "Wingspan", details: null) { item { game name status } lookup } }`,
-    );
-    expect(res.data).toEqual({
-      decideSuggestion: { item: { game: 'Wingspan', name: 'Alex', status: 'APPROVED' }, lookup: null },
-    });
+  it('refuses a mistyped link and a bad corrected name', async () => {
+    const api = api$();
+    await seed(await api.db(), { suggestionRows: [pendingRow()] });
+    expect((await api.run(EMAILED, { id: 'nope' }, OWNER)).errors[0].extensions?.code).toBe('BAD_REQUEST');
+    expect((await api.run(EMAILED, { id: 'sug-zzzzzz' }, OWNER)).errors[0].extensions?.code).toBe('NOT_FOUND');
+    const bad = await api.run(EMAILED, { id: 'sug-aaaaaa', game: 'x' }, OWNER);
+    expect(bad.errors[0].extensions?.code).toBe('BAD_NAME');
   });
 });
 
 describe('suggestGame', () => {
   it('is public, and limited per IP before anything is stored', async () => {
     const SUGGEST = 'mutation { suggestGame(game: "Cascadia", name: "Sam", note: "Calm") { id status source } }';
-    const api = testApi();
+    const api = api$();
     expect((await api.run(SUGGEST)).data).toEqual({
       suggestGame: { id: 'sug-bbbbbb', status: 'PENDING', source: 'FRIEND' },
     });
-    const limited = testApi((d) => ({ limiters: { ...d.limiters, suggest: refusing() } }));
+    const limited = api$((d) => ({ limiters: { ...d.limiters, suggest: refusing() } }));
     expect((await limited.run(SUGGEST)).status).toBe(429);
-    expect(limited.rawRedis.hset).not.toHaveBeenCalled();
+    expect((await tables(limited)).suggestions).toEqual([]);
     expect(limited.sent).toHaveLength(0);
   });
 
-  it('answers 500, reported under its label, when the email fails', async () => {
-    const api = testApi((d) => ({
+  it('answers 500, reported under its label, when the email fails, and keeps it as unsent', async () => {
+    const api = api$((d) => ({
       suggestions: {
         ...d.suggestions,
         mailer: {
@@ -335,6 +352,8 @@ describe('suggestGame', () => {
     expect(res.errors[0]).toMatchObject({ message: 'Server error', extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     expect(errSpy).toHaveBeenCalledWith('suggestions api error:', expect.any(Error));
     errSpy.mockRestore();
+    const [row] = await (await api.db()).select().from(suggestions).where(eq(suggestions.id, 'sug-bbbbbb'));
+    expect(row.status).toBe('unsent');
   });
 });
 
@@ -342,7 +361,7 @@ describe('the server', () => {
   it('answers 500 without the cause when its dependencies cannot be built', async () => {
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const yoga = createApi(() => {
-      throw new Error('KV_REST_API_URL and KV_REST_API_TOKEN must be set');
+      throw new Error('no database configured: set TURSO_DATABASE_URL');
     });
     const res = await yoga.fetch('https://games.example/api/graphql', {
       method: 'POST',
@@ -350,7 +369,7 @@ describe('the server', () => {
       body: JSON.stringify({ query: '{ session { admin } }' }),
     });
     expect(res.status).toBe(500);
-    expect(await res.text()).not.toContain('KV_REST_API');
+    expect(await res.text()).not.toContain('TURSO_DATABASE_URL');
     errSpy.mockRestore();
   });
 });

@@ -1,3 +1,4 @@
+import { WishlistFixture } from './helpers/WishlistFixture';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
@@ -5,7 +6,7 @@ import FilterBar from '../components/FilterBar/FilterBar';
 import { FilterProvider } from '../context/FilterContext';
 import { useFilter } from '../context/useFilter';
 import { GAMES } from '../data/games';
-import { WISHLIST } from '../data/wishlist';
+import { WISHLIST } from './helpers/wishlist';
 import { stubMatchMedia } from './helpers/stubMatchMedia';
 
 function Probe() {
@@ -19,9 +20,11 @@ function renderBar(url = '/') {
   return render(
     <MemoryRouter initialEntries={[url]}>
       <FilterProvider>
-        <FilterBar />
-        <section id="collection" />
-        <Probe />
+        <WishlistFixture>
+          <FilterBar />
+          <section id="collection" />
+          <Probe />
+        </WishlistFixture>
       </FilterProvider>
     </MemoryRouter>,
   );

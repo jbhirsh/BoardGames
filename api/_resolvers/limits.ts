@@ -1,6 +1,6 @@
 // Bounds on what one request may ask, checked before any resolver runs:
 // GraphQL lets a single POST repeat a field under many aliases (500
-// `suggestions` would be 500 Redis reads, 500 `vote`s 500 turns of the
+// `games` would be 500 database reads, 500 `vote`s 500 turns of the
 // rate limiter) or nest and pad a document without end. So a document may
 // hold at most MAX_TOKENS tokens, MAX_ALIASES aliases and MAX_DEPTH levels
 // of selection; the client's largest operation (EmailedSuggestion) is

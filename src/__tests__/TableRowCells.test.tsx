@@ -58,7 +58,7 @@ describe('TableRowCells', () => {
   });
 
   it('renders the shared cells in header order with the table classes', () => {
-    const { row } = renderCells({ awards: [{ name: 'Spiel des Jahres', year: 2020 }] });
+    const { row } = renderCells({ awards: [{ name: 'Spiel des Jahres', year: 2020, result: 'Winner' }] });
     // The column hooks; the rest of each class list is its utilities.
     const hooks = (td: Element) => [...td.classList].filter((c) => c.startsWith('col-')).join(' ');
     const cells = Array.from(row.children).map(hooks);

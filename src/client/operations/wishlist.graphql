@@ -1,5 +1,5 @@
-# The wishlist's votes and friends' suggestions (hooks/useWishlistVotes.ts,
-# hooks/useSuggestions.ts, components/SuggestForm.tsx).
+# The wishlist's games, votes and friends' suggestions (context/GamesContext.tsx,
+# hooks/useWishlistVotes.ts, components/SuggestForm.tsx).
 
 query WishlistVotes($ids: [String!]!, $anonId: String) {
   wishlistVotes(ids: $ids, anonId: $anonId) {
@@ -17,22 +17,44 @@ mutation Vote($itemId: String!, $anonId: String!, $vote: Int!) {
   }
 }
 
-query Suggestions {
-  suggestions {
-    id
-    game
-    name
-    note
-    source
-    details {
+# Over GET (client/graphql.ts's query()), so the service worker can keep
+# the last answer for offline use; the same for every caller. The worker
+# (games() in sw/sw.ts) knows it by its operation name (routeFor in
+# utils/offline.ts) and passes the request on as sent, so this document is
+# written only here.
+query Games {
+  games {
+    wishlist {
+      id
+      name
+      source
+      suggestedBy
+      note
+      players
+      minPlayers
+      maxPlayers
+      dur
+      minutes
+      description
+      keywords
+      section
+      asin
+      expands
+      video
+      image
+      bggId
       year
-      min
-      max
-      mins
-      desc
-      kw
-      type
-      img
+    }
+    bgg {
+      bggId
+      name
+      summary
+      weight
+      honours {
+        name
+        year
+        result
+      }
     }
   }
 }

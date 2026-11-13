@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ALL_GAMES } from '../data/games';
-import { GAME_WEIGHTS } from '../data/gameWeights';
+import seed from '../../data/seed.json';
 import { KW } from '../data/keywords';
 import { SCORE_CALCULATORS } from '../data/scoreCalculators';
 import { WORD_CHECKER_GAME } from '../data/wordChecker';
@@ -16,27 +16,15 @@ import { expectCoherentTable, numbers } from './coherentTable';
 const KEYWORDS = Object.keys(KW);
 
 /**
- * A difficulty comes from BoardGameGeek alone: the weight is the one
- * `npm run game-weights` fetched for the item's BGG id (none where BGG has
- * no votes), and nothing without an id has one.
+ * A difficulty and awards come from BoardGameGeek alone, by `bgg`, from the
+ * games query (utils/bggInfo.ts): the compiled data carries neither.
  */
 function expectBggWeight(d: { bgg?: number; weight?: number }, label: string) {
-  if (d.bgg === undefined) {
-    expect(d.weight, `${label}: a weight with no BGG id to come from`).toBeUndefined();
-    return;
-  }
-  expect(d.bgg in GAME_WEIGHTS, `${label}: BGG ${d.bgg} not fetched; run npm run game-weights`).toBe(true);
-  expect(d.weight, `${label}: weight`).toBe(GAME_WEIGHTS[d.bgg] ?? undefined);
+  expect(d.weight, `${label}: a weight typed in`).toBeUndefined();
 }
 
 function expectRealAwards(awards: Award[] | undefined, label: string) {
-  for (const a of awards ?? []) {
-    expect(a.name.trim(), `${label}: award name`).not.toBe('');
-    expect(
-      Number.isInteger(a.year) && a.year >= 1900 && a.year <= new Date().getFullYear(),
-      `${label}: award year ${a.year}`,
-    ).toBe(true);
-  }
+  expect(awards, `${label}: awards typed in`).toBeUndefined();
 }
 
 describe('games data', () => {
@@ -105,10 +93,11 @@ describe('games data', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("keeps only fetched weights, each on BGG's 1 to 5 scale", () => {
-    for (const [id, weight] of Object.entries(GAME_WEIGHTS)) {
-      if (weight !== null) expect(weight >= 1 && weight <= 5, `BGG ${id}: weight ${weight}`).toBe(true);
-    }
+  it('lists every BoardGameGeek id in the seed, whose BGG data the one-time copy fetches', () => {
+    const ids = ALL_GAMES.flatMap((g) => [g, ...(g.subgames ?? [])]).flatMap((t) =>
+      t.bgg === undefined ? [] : [t.bgg],
+    );
+    expect([...ids].sort((a, b) => a - b)).toEqual(seed.collection);
   });
 
   it('has games inside games to check', () => {

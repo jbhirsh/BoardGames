@@ -28,7 +28,14 @@ async function signInWithPreview(page: Page, preview: PreviewStub, pending: unkn
   await stubOperation(page, 'PendingSuggestions', () => ({ pendingSuggestions: pending }));
   await stubOperation(page, 'PreviewGame', ({ game }) => {
     const { outcome, details } = typeof preview === 'function' ? preview(String(game)) : preview;
-    return { previewGame: { outcome, details: details ? { year: null, img: null, ...details } : null } };
+    return {
+      previewGame: {
+        outcome,
+        details: details
+          ? { year: null, img: null, weight: null, section: 'strategy', summary: null, honours: [], ...details }
+          : null,
+      },
+    };
   });
   await stubOperation(page, 'DecideSuggestion', () => ({ decideSuggestion: { lookup: null } }));
   await stubOperation(page, 'AddGame', () => ({ addGame: { lookup: null } }));
@@ -110,6 +117,7 @@ test('the owner corrects a misspelt suggestion, sees what BoardGameGeek has for 
       mins: 30,
       desc: 'Explore Alula backwards.',
       kw: ['card-game', 'quick-play'],
+      section: 'strategy',
     },
   });
   await expect(queue.getByRole('textbox', { name: "Game name for Sam's suggestion “Faraway”" })).toBeHidden();
@@ -139,6 +147,7 @@ test('the owner corrects a misspelt suggestion, sees what BoardGameGeek has for 
       mins: 240,
       desc: 'Investigate the mysteries of Arkham.',
       kw: ['cooperative', 'thematic'],
+      section: 'strategy',
     },
   });
   await expect(queue.getByText('Nothing waiting.')).toBeVisible();

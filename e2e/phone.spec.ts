@@ -1,7 +1,6 @@
 import axe from 'axe-core';
+import { GAMES, WISHLIST } from './games';
 import type { Locator, Page } from '@playwright/test';
-import { GAMES } from '../src/data/games';
-import { WISHLIST } from '../src/data/wishlist';
 import { test, expect, authRefusal, stubAuth, stubOperation, type AuthRequest } from './fixtures';
 import { REGISTER_OPTIONS } from './visual';
 

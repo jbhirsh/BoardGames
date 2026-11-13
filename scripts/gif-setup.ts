@@ -12,18 +12,25 @@ import type { Setup } from './gif-types.ts';
 /** The live site, whose wishlist and votes the recordings show (smoke.yml's TARGET_URL). */
 export const LIVE = 'https://board-games-silk.vercel.app';
 
-/** The reads a recording takes from the live site: the wishlist's suggestions and vote counts. */
-export const LIVE_READS = new Set(['Suggestions', 'WishlistVotes']);
+/** The reads a recording takes from the live site: the games query (the wishlist, BGG's data) and vote counts. */
+export const LIVE_READS = new Set(['Games', 'WishlistVotes']);
 
 function json(body: unknown) {
   return { status: 200, contentType: 'application/json', body: JSON.stringify(body) };
 }
 
-/** The GraphQL operation a request to /api/graphql names, and its variables. */
-export function operation(request: Pick<Request, 'method' | 'postDataJSON'>): {
+/** The GraphQL operation a request to /api/graphql names, POSTed or (the games query) sent by GET, and its variables. */
+export function operation(request: Pick<Request, 'method' | 'postDataJSON' | 'url'>): {
   name: string;
   variables: Record<string, unknown>;
 } | null {
+  if (request.method() === 'GET') {
+    const params = new URL(request.url()).searchParams;
+    const name = params.get('operationName');
+    const variables: unknown = JSON.parse(params.get('variables') ?? '{}');
+    if (!name) return null;
+    return { name, variables: typeof variables === 'object' && variables !== null ? { ...variables } : {} };
+  }
   const body: unknown = request.method() === 'POST' ? request.postDataJSON() : null;
   if (typeof body !== 'object' || body === null || !('operationName' in body)) return null;
   const { operationName, variables }: { operationName?: unknown; variables?: unknown } = body;
@@ -77,7 +84,7 @@ export async function stubApi(page: Routes, origin: string, fixtures: boolean, l
   await route(api, (r) => {
     const op = operation(r.request());
     if (op?.name === 'Session') return r.fulfill(json({ data: { session: { admin: false } } }));
-    if (op?.name === 'Suggestions') return r.fulfill(json({ data: { suggestions: [] } }));
+    if (op?.name === 'Games') return r.fulfill(json({ data: { games: { wishlist: [], bgg: [] } } }));
     if (op?.name === 'WishlistVotes') {
       const ids = Array.isArray(op.variables.ids) ? op.variables.ids : [];
       return r.fulfill(
@@ -92,7 +99,7 @@ export async function stubApi(page: Routes, origin: string, fixtures: boolean, l
     const op = operation(r.request());
     if (!op || !LIVE_READS.has(op.name)) return r.fallback();
     try {
-      const response = await r.fetch({ url: `${live}/api/graphql` });
+      const response = await r.fetch({ url: `${live}/api/graphql${new URL(r.request().url()).search}` });
       if (response.ok()) return await r.fulfill({ response });
     } catch {
       // Out of reach: the stub's empty answer.

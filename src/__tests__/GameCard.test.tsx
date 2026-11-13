@@ -52,7 +52,7 @@ describe('GameCard', () => {
   });
 
   it('renders an award badge that lists the wins when opened', () => {
-    const game: Game = { ...quickGame, awards: [{ name: 'Spiel des Jahres', year: 2016 }] };
+    const game: Game = { ...quickGame, awards: [{ name: 'Spiel des Jahres', year: 2016, result: 'Winner' }] };
     renderWithContext(<GameCard game={game} />);
     fireEvent.click(screen.getByRole('button', { name: `${game.name}: 1 award, show which` }));
     expect(screen.getByRole('listitem')).toHaveTextContent('Spiel des Jahres');
@@ -174,7 +174,9 @@ describe('GameCard', () => {
     });
 
     it('sits bottom left with the award count, apart from the links, so the head holds the same things on every card', () => {
-      renderWithContext(<GameCard game={{ ...deckGame, awards: [{ name: 'Mensa Select', year: 2009 }] }} />);
+      renderWithContext(
+        <GameCard game={{ ...deckGame, awards: [{ name: 'Mensa Select', year: 2009, result: 'Winner' }] }} />,
+      );
       const start = document.querySelector('.card-foot .card-foot-start')!;
       expect(start).toContainElement(screen.getByRole('button', { name: 'Deck: +2 games' }));
       expect(start).toContainElement(screen.getByRole('button', { name: 'Deck: 1 award, show which' }));
@@ -326,7 +328,7 @@ describe('GameCard More', () => {
     const game: Game = {
       ...quickGame,
       detail: [{ heading: 'How it plays', body: 'Full rules story.' }],
-      awards: [{ name: 'Mensa Select', year: 2009 }],
+      awards: [{ name: 'Mensa Select', year: 2009, result: 'Winner' }],
     };
     const { container } = renderWithContext(<GameCard game={game} />);
     const more = screen.getByRole('button', { name: 'More about Quick Game' });

@@ -37,12 +37,6 @@ vi.mock('../../api/_auth.js', () => ({
   ownerSessionReader: vi.fn(() => vi.fn(async () => ({ owner: false }))),
 }));
 
-vi.mock('@upstash/redis', () => ({
-  Redis: class {
-    readonly kind = 'redis';
-  },
-}));
-
 vi.mock('../../api/_lib/rateLimit.js', async (importActual) => ({
   ...(await importActual<typeof import('../../api/_lib/rateLimit.js')>()),
   getLimiter: vi.fn(() => null),
@@ -100,13 +94,13 @@ describe('api/graphql.ts', () => {
     vi.unstubAllEnvs();
   });
 
-  it('keeps each per-IP budget, and one daily chat budget of 500 with a short Redis timeout', () => {
+  it('keeps each per-IP budget, and one daily chat budget of 500 with a short database timeout', () => {
     expect(limiterCalls).toEqual(
       expect.arrayContaining([
         ['votes', 30, 60],
         ['suggestions', 5, 3600],
         ['chat', 10, 60],
-        ['chat-global', 500, 86400, { timeoutMs: 2000 }],
+        ['chat-global', 500, 86400, { timeoutMs: 2000, failClosed: true }],
       ]),
     );
   });
@@ -157,8 +151,6 @@ describe('api/graphql.ts', () => {
   });
 
   it('builds the services once, from the environment', () => {
-    vi.stubEnv('KV_REST_API_URL', 'https://example.upstash.io');
-    vi.stubEnv('KV_REST_API_TOKEN', 'test-token');
     vi.stubEnv('GEMINI_API_KEY', 'gemini-key');
     vi.stubEnv('SUGGESTIONS_TO', 'jess@example.com');
     vi.stubEnv('RESEND_API_KEY', '');
@@ -167,6 +159,8 @@ describe('api/graphql.ts', () => {
     expect(deps.chat.apiKey).toBe('gemini-key');
     expect(deps.suggestions.mailer).toBeNull();
     expect(deps.suggestions.lookup).toEqual(expect.any(Function));
+    expect(deps.suggestions.spelling).toEqual(expect.any(Function));
+    expect(deps.suggestions.db).toBe(deps.db);
     expect(deps.limiters).toEqual({ votes: null, suggest: null });
     expect(deps.ownerSession).toEqual(expect.any(Function));
   });
@@ -287,30 +281,5 @@ describe('api/graphql.ts at /api/auth/*', () => {
     );
     expect(res.statusCode).toBe(415);
     expect(signIn.requests).toEqual([]);
-  });
-});
-
-describe('api/graphql.ts with no KV config (no daily cap)', () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  async function loadFresh(env: string) {
-    vi.stubEnv('VERCEL_ENV', env);
-    vi.resetModules();
-    const sentry = await import('@sentry/node');
-    vi.mocked(sentry.captureMessage).mockClear();
-    await import('../../api/graphql');
-    return sentry;
-  }
-
-  it('warns Sentry in production that the cap is off', async () => {
-    const sentry = await loadFresh('production');
-    expect(sentry.captureMessage).toHaveBeenCalledWith('chat daily cap disabled: KV env missing', 'warning');
-  });
-
-  it('stays quiet outside production', async () => {
-    const sentry = await loadFresh('preview');
-    expect(sentry.captureMessage).not.toHaveBeenCalled();
   });
 });

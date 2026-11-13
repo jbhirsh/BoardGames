@@ -3,7 +3,7 @@ import { cleanup, render, screen, fireEvent, waitFor, within } from '@testing-li
 import AdminPanel from '../components/AdminPanel';
 import { AuthContext } from '../context/authContextValue';
 import { WishlistContext } from '../context/wishlistContextValue';
-import { WISHLIST } from '../data/wishlist';
+import { WISHLIST } from './helpers/wishlist';
 import { GAME_MAX, GAME_MIN, NAME_MAX, NOTE_MAX } from '../data/suggestionLimits';
 import type { WishlistItem } from '../data/types';
 import { gqlError, operations, stubGraphql, type Reply } from './helpers/graphqlFetch';
@@ -23,6 +23,10 @@ const FARAWAY = {
   desc: 'Explore Alula backwards.',
   kw: ['card-game', 'quick-play'],
   img: 'https://cf.geekdo-images.com/faraway.jpg',
+  weight: null,
+  section: 'heavy',
+  summary: null,
+  honours: [],
 };
 
 /** What an entry keeps of FARAWAY's preview: everything but BGG's name for it. */
@@ -35,6 +39,7 @@ const FARAWAY_STORED = {
   desc: 'Explore Alula backwards.',
   kw: ['card-game', 'quick-play'],
   img: FARAWAY.img,
+  section: 'heavy',
 };
 
 /** A preview as the API answers one: its outcome, and what BoardGameGeek has when it found the game. */
@@ -67,30 +72,12 @@ function mockApi(
   });
 }
 
-const HIDDEN: WishlistItem = {
-  id: 'sug-9',
-  name: 'Glyphics',
-  desc: 'Jess thinks we should try this one.',
-  yt: '',
-  players: '',
-  min: 1,
-  max: 99,
-  dur: '',
-  mins: 0,
-  kw: [],
-  type: 'suggested',
-  awards: [],
-  suggestedBy: 'Jess',
-  source: 'friend',
-  blurb: '',
-};
-
-function renderPanel(hidden: WishlistItem[] = []) {
+function renderPanel(items: WishlistItem[] = WISHLIST) {
   const reload = vi.fn();
   const auth = { admin: true, loaded: true, refresh: vi.fn(async () => {}) };
   render(
     <AuthContext.Provider value={auth}>
-      <WishlistContext.Provider value={{ items: [], hidden, loaded: true, reload }}>
+      <WishlistContext.Provider value={{ items, loaded: true, failed: false, reload }}>
         <AdminPanel />
       </WishlistContext.Provider>
     </AuthContext.Provider>,
@@ -174,9 +161,8 @@ describe('AdminPanel', () => {
     const reload = renderPanel();
     const form = await screen.findByRole('form', { name: 'Add a game' });
     expect(within(form).getByLabelText('Added by')).toHaveValue('Jess H');
-    // A game the compiled wishlist doesn't already carry; the form refuses those.
+    // A game the wishlist doesn't already carry; the form refuses those.
     fireEvent.change(within(form).getByLabelText('Game'), { target: { value: ' Faraway ' } });
-    fireEvent.change(within(form).getByLabelText('Section'), { target: { value: 'heavy' } });
     fireEvent.change(within(form).getByLabelText(/Note/), { target: { value: 'Card drafting' } });
     fireEvent.click(within(form).getByRole('button', { name: 'Look up' }));
 
@@ -189,6 +175,8 @@ describe('AdminPanel', () => {
         .map((li) => li.textContent),
     ).toEqual(['Card Game', 'Quick Play']);
     expect(within(form).getByRole('presentation')).toHaveAttribute('src', FARAWAY.img);
+    expect(within(form).queryByLabelText('Section')).not.toBeInTheDocument();
+    expect(within(form).getByText(/^Goes under Heavy Strategy, from BoardGameGeek/)).toBeInTheDocument();
     expect(reload).not.toHaveBeenCalled();
 
     fireEvent.click(within(form).getByRole('button', { name: 'Add to wishlist' }));
@@ -202,10 +190,11 @@ describe('AdminPanel', () => {
       desc: 'Explore Alula backwards.',
       kw: ['card-game', 'quick-play'],
       img: FARAWAY.img,
+      section: 'heavy',
     };
     expect(sent(spy)).toEqual([
       { op: 'PreviewGame', game: 'Faraway' },
-      { op: 'AddGame', game: 'Faraway', name: 'Jess H', note: 'Card drafting', type: 'heavy', details: stored },
+      { op: 'AddGame', game: 'Faraway', name: 'Jess H', note: 'Card drafting', details: stored },
     ]);
     expect(reload).toHaveBeenCalledTimes(1);
     expect(within(form).getByLabelText('Game')).toHaveValue('');
@@ -213,12 +202,11 @@ describe('AdminPanel', () => {
     expect(within(form).getByRole('button', { name: 'Look up' })).toBeInTheDocument();
   });
 
-  it('can file a game under the friends section, and refuses a bad name before posting', async () => {
+  it('refuses a bad name before posting', async () => {
     const spy = mockApi([]);
     renderPanel();
     const form = await screen.findByRole('form', { name: 'Add a game' });
     fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Faraway' } });
-    fireEvent.change(within(form).getByLabelText('Section'), { target: { value: '' } });
     fireEvent.change(within(form).getByLabelText('Added by'), { target: { value: '!!' } });
     fireEvent.submit(form);
     expect(within(form).getByRole('status')).toHaveTextContent('Use 1–30 letters');
@@ -254,7 +242,6 @@ describe('AdminPanel', () => {
       game: 'Magical Athlete',
       name: 'Jess',
       note: '',
-      type: 'strategy',
       details: null,
     });
     expect(within(form).queryByText(/had no match/)).not.toBeInTheDocument();
@@ -341,24 +328,6 @@ describe('AdminPanel', () => {
     await within(form).findByRole('button', { name: 'Add to wishlist' });
     fireEvent.submit(form);
     await waitFor(() => expect(within(form).getByRole('status')).toHaveTextContent('Root is already on the list'));
-  });
-
-  it('lists a stored entry the compiled wishlist already covers, with its controls', async () => {
-    mockApi([]);
-    renderPanel([HIDDEN]);
-    expect(await screen.findByText('Already on the wishlist')).toBeInTheDocument();
-    expect(screen.getByText(/Stored entry for a game the wishlist already lists/)).toBeInTheDocument();
-    expect(screen.getByText('Glyphics')).toBeInTheDocument();
-    expect(screen.getByText(/from Jess$/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Remove Glyphics' })).toBeInTheDocument();
-  });
-
-  it('reads as a list when more than one entry is held back', async () => {
-    mockApi([]);
-    renderPanel([HIDDEN, { ...HIDDEN, id: 'sug-8', name: 'Lovestruck', suggestedBy: undefined }]);
-    expect(await screen.findByText(/Stored entries for games the wishlist already lists/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Remove Lovestruck' })).toBeInTheDocument();
-    expect(screen.queryByText(/from Jess$/)).toBeInTheDocument();
   });
 
   it('refuses to add a game the wishlist already lists, before posting', async () => {

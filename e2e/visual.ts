@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { expect, CHAT_ANSWER, authRefusal, stubAuth, stubOperation } from './fixtures';
+import { expect, CHAT_ANSWER, authRefusal, operationOf, stubAuth, stubOperation } from './fixtures';
 
 /**
  * Visual regression's pages and states (the visual*.spec.ts files), and how
@@ -122,8 +122,6 @@ export const WIDE: Scenario[] = [
   },
 ];
 
-const LINK_TOKEN = 'e2e-token-0000000000000000000001';
-
 /** Answers every call of one operation with the same data. */
 const answer = (page: Page, operation: string, data: unknown) => stubOperation(page, operation, () => data);
 
@@ -140,6 +138,10 @@ const CASCADIA_PREVIEW = {
     desc: 'Draft habitat tiles and wildlife tokens to build the Pacific Northwest.',
     kw: ['family', 'strategy'],
     img: '/images/wishlist/cascadia.webp',
+    weight: 1.8,
+    section: 'strategy',
+    summary: 'Build the Pacific Northwest, one habitat at a time.',
+    honours: [],
   },
 };
 
@@ -159,7 +161,8 @@ export const LINKS: Scenario[] = [
           preview: CASCADIA_PREVIEW,
         },
       });
-      await page.goto(`/approve?id=sug-0e2eappr0001&token=${LINK_TOKEN}`);
+      await answer(page, 'Session', { session: { admin: true } });
+      await page.goto('/approve?id=sug-0e2eappr0001');
       await expect(page.getByRole('heading', { name: 'Approve Cascadia?' })).toBeVisible();
     },
   },
@@ -172,8 +175,16 @@ export const LINKS: Scenario[] = [
           preview: CASCADIA_PREVIEW,
         },
       });
-      await page.goto(`/deny?id=sug-0e2eappr0001&token=${LINK_TOKEN}`);
+      await answer(page, 'Session', { session: { admin: true } });
+      await page.goto('/deny?id=sug-0e2eappr0001');
       await expect(page.getByRole('heading', { name: 'Deny Cascadia?' })).toBeVisible();
+    },
+  },
+  {
+    name: 'approve-link-signed-out',
+    open: async (page) => {
+      await page.goto('/approve?id=sug-0e2eappr0001');
+      await expect(page.getByRole('button', { name: 'Sign in with Google' })).toBeVisible();
     },
   },
 ];
@@ -284,6 +295,51 @@ export const SIGN_IN: Scenario[] = [
       await page.goto('/sign-in');
       await page.getByRole('button', { name: 'Add a passkey on this device' }).click();
       await expect(page.getByText(/Adding a passkey needs a sign-in from today/)).toBeVisible();
+    },
+  },
+];
+
+/**
+ * Holds the games query out for good, as a first visit's slow network does
+ * before the service worker has an answer saved: what it brings shows as
+ * grey bars (`waitingForBgg`, the wishlist's loading cards).
+ */
+async function gamesNeverAnswer(page: Page): Promise<void> {
+  await page.route(
+    (url) => url.pathname === '/api/graphql',
+    (route) =>
+      operationOf(route.request())?.operationName === 'Games' ? new Promise<void>(() => {}) : route.fallback(),
+  );
+}
+
+/** The games query's states: a first visit still waiting for it, and the owner's tools on every entry it brings. */
+export const GAMES_STATES: Scenario[] = [
+  {
+    name: 'collection-loading',
+    open: async (page) => {
+      await gamesNeverAnswer(page);
+      await page.goto('/');
+      await expect(page.getByRole('heading', { level: 2, name: 'Our Collection' })).toBeVisible();
+    },
+  },
+  {
+    name: 'wishlist-loading',
+    open: async (page) => {
+      await gamesNeverAnswer(page);
+      await page.goto('/?c=want');
+      await expect(page.getByLabel('Loading the wishlist')).toBeVisible();
+    },
+  },
+  {
+    name: 'wishlist-owner',
+    open: async (page) => {
+      await answer(page, 'Session', { session: { admin: true } });
+      await answer(page, 'PendingSuggestions', { pendingSuggestions: [] });
+      await page.goto('/?c=want&v=grid');
+      // The first entry's pencil and bin, past the owner's tools.
+      const edit = page.getByRole('button', { name: /^Edit / }).first();
+      await expect(edit).toBeVisible();
+      await edit.scrollIntoViewIfNeeded();
     },
   },
 ];
@@ -408,4 +464,5 @@ export const MORE: Scenario[] = [
     },
   },
   ...LINKS,
+  ...GAMES_STATES,
 ];

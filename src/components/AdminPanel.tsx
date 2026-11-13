@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from 'react';
-import { WISHLIST_SECTIONS, WISHLIST_TYPES } from '../data/keywords';
+import { WISHLIST_TYPES } from '../data/keywords';
 import { GAME_MAX, GAME_MIN, NAME_MAX, NOTE_MAX } from '../data/suggestionLimits';
 import { getDisplayName, setDisplayName } from '../client/displayName';
 import { useWishlistItems } from '../context/useWishlistItems';
 import { alreadyListed } from '../utils/alreadyListed';
 import { isValidDisplayName, NAME_HINT } from '../utils/displayName';
 import { lookupNotice, type LookupOutcome, type PreviewDetails } from '../utils/lookupNotice';
+import { normalizeName } from '../utils/normalizeName';
 import {
   addGame,
   decideSuggestion,
@@ -14,7 +15,6 @@ import {
   type ApprovalChoice,
   type PendingSuggestion,
 } from '../client/adminApi';
-import AdminItemControls from './AdminItemControls';
 import Notice from './Notice';
 import PreviewCard from './PreviewCard';
 import {
@@ -62,6 +62,7 @@ function QueueRow({
   onDecide: Decide;
   inTurn: InTurn;
 }) {
+  const { items: wishlist } = useWishlistItems();
   const [game, setGame] = useState(item.game);
   const [looked, setLooked] = useState<Looked | null>(null);
   // The name a lookup is out for; the friend's from the start.
@@ -108,7 +109,7 @@ function QueueRow({
   const approve = () => {
     if (renamed) {
       // The server only checks stored entries, as for an add.
-      const known = alreadyListed(typed);
+      const known = alreadyListed(typed, wishlist);
       if (known) {
         setError(known);
         return;
@@ -177,7 +178,9 @@ function QueueRow({
       </div>
       <p className={adminMutedClass}>
         from {item.name}
-        {renamed && ` as “${item.game}”`}
+        {/* Only a real rename says what the friend typed: a change of case
+            or punctuation is BoardGameGeek's spelling, applied already. */}
+        {renamed && normalizeName(typed) !== normalizeName(item.game) && ` as “${item.game}”`}
         {item.note ? `: “${item.note}”` : ''}
       </p>
       <div className="empty:hidden">
@@ -298,11 +301,10 @@ interface Looked {
  * or without any, to fill in with Edit.
  */
 function AddGameForm() {
-  const { reload } = useWishlistItems();
+  const { reload, items: wishlist } = useWishlistItems();
   const [game, setGame] = useState('');
   const [name, setName] = useState(() => getDisplayName() ?? 'Jess');
   const [note, setNote] = useState('');
-  const [type, setType] = useState<string>('strategy');
   const [status, setStatus] = useState<AddStatus>({ kind: 'idle' });
   const [looked, setLooked] = useState<Looked | null>(null);
   const [lookingUp, setLookingUp] = useState(false);
@@ -333,9 +335,9 @@ function AddGameForm() {
       setStatus({ kind: 'error', message: NAME_HINT });
       return;
     }
-    // The server only compares against stored suggestions, so without this a
-    // compiled-in game would be stored, hidden, and need removing again.
-    const known = alreadyListed(game);
+    // The server refuses a game already on the wishlist too; this also
+    // catches one we own, which it doesn't know about.
+    const known = alreadyListed(game, wishlist);
     if (known) {
       setStatus({ kind: 'error', message: known });
       return;
@@ -349,7 +351,6 @@ function AddGameForm() {
       game: typed,
       name: trimmedName,
       note: note.trim(),
-      type: type || null,
       details: current.details ?? null,
     });
     if (!result.ok) {
@@ -389,22 +390,6 @@ function AddGameForm() {
           maxLength={GAME_MAX}
           placeholder="Ark Nova"
         />
-        <label className={fieldLabelClass} htmlFor={`${uid}-type`}>
-          Section
-        </label>
-        <select
-          id={`${uid}-type`}
-          className={`${fieldClass} h-8.5 appearance-auto`}
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-        >
-          {WISHLIST_SECTIONS.map((t) => (
-            <option key={t} value={t}>
-              {WISHLIST_TYPES[t]}
-            </option>
-          ))}
-          <option value="">{WISHLIST_TYPES.suggested}</option>
-        </select>
         <label className={fieldLabelClass} htmlFor={`${uid}-name`}>
           Added by
         </label>
@@ -431,6 +416,12 @@ function AddGameForm() {
       {/* One live region for the lookup's answer, so the notice in it doesn't announce itself twice. */}
       <div aria-live="polite">
         {found && <PreviewCard details={found} />}
+        {found && (
+          <p className={`${adminMutedClass} mt-2`}>
+            Goes under {sectionName(found.section)}, from BoardGameGeek’s players, weight and categories. Edit changes
+            it.
+          </p>
+        )}
         {notice && (
           <Notice tone="warning" live={false} className="mt-2.5">
             {notice}
@@ -455,39 +446,9 @@ function AddGameForm() {
   );
 }
 
-/**
- * Stored entries the wishlist leaves out because a compiled-in entry already
- * covers that game. Without this they would have no card, and so no controls:
- * invisible on the page but still returned by the API on every load.
- */
-function HiddenDuplicates() {
-  const { hidden } = useWishlistItems();
-  if (hidden.length === 0) return null;
-  return (
-    <div className="admin-queue" aria-live="polite">
-      <h4 className={adminSubtitleClass}>Already on the wishlist</h4>
-      <p className={adminMutedClass}>
-        {hidden.length === 1
-          ? 'Stored entry for a game the wishlist already lists, so it is hidden from the page. Remove it to clear the record, or rename it if it is really a different game.'
-          : 'Stored entries for games the wishlist already lists, so they are hidden from the page. Remove them to clear the records, or rename one if it is really a different game.'}
-      </p>
-      <ul className="flex flex-col gap-2.5">
-        {hidden.map((item) => (
-          <li
-            key={item.id}
-            className="flex flex-wrap items-center justify-between gap-2.5 rounded-lg border border-border bg-surface px-3 py-2.5"
-          >
-            <div>
-              <span className="text-[13.5px] font-semibold text-dark">{item.name}</span>
-              {item.suggestedBy && <span className={adminMutedClass}> from {item.suggestedBy}</span>}
-            </div>
-            <AdminItemControls item={item} inQueue />
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+/** A section's name as the wishlist heads it ("Heavy Strategy"), for the add form's word on where a game goes. */
+const sectionName = (section: string) =>
+  section in WISHLIST_TYPES ? WISHLIST_TYPES[section as keyof typeof WISHLIST_TYPES] : WISHLIST_TYPES.suggested;
 
 /** Everything the signed-in owner can do that isn't tied to one card. */
 export default function AdminPanel() {
@@ -498,7 +459,6 @@ export default function AdminPanel() {
     >
       <h3 className="mb-3 font-display text-[19px] font-bold text-dark">Owner tools</h3>
       <PendingQueue />
-      <HiddenDuplicates />
       <AddGameForm />
     </section>
   );

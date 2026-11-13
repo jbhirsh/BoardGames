@@ -1,3 +1,5 @@
+import { GamesFixture } from './helpers/GamesFixture';
+import { WishlistFixture } from './helpers/WishlistFixture';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
@@ -5,7 +7,7 @@ import PhoneListView from '../components/PhoneListView';
 import WishLine from '../components/WishLine';
 import WishlistPhoneListView from '../components/WishlistPhoneListView';
 import { FilterProvider } from '../context/FilterContext';
-import { WISHLIST } from '../data/wishlist';
+import { WEIGHED_GAMES, WISHLIST } from './helpers/wishlist';
 import { WISHLIST_TYPES } from '../data/keywords';
 import { groupItems } from '../utils/filterGames';
 import { WISHLIST_TYPE_ORDER } from '../data/keywords';
@@ -14,9 +16,13 @@ import type { WishlistItem } from '../data/types';
 function renderGames(url = '/') {
   return render(
     <MemoryRouter initialEntries={[url]}>
-      <FilterProvider>
-        <PhoneListView />
-      </FilterProvider>
+      <GamesFixture>
+        <FilterProvider>
+          <WishlistFixture>
+            <PhoneListView />
+          </WishlistFixture>
+        </FilterProvider>
+      </GamesFixture>
     </MemoryRouter>,
   );
 }
@@ -24,7 +30,9 @@ function renderGames(url = '/') {
 function renderWithFilter(ui: React.ReactNode) {
   return render(
     <MemoryRouter>
-      <FilterProvider>{ui}</FilterProvider>
+      <FilterProvider>
+        <WishlistFixture>{ui}</WishlistFixture>
+      </FilterProvider>
     </MemoryRouter>,
   );
 }
@@ -34,7 +42,11 @@ describe('PhoneListView', () => {
     renderGames();
     const line = screen.getByRole('heading', { level: 3, name: 'Azul' }).closest('li')!;
     expect(line).toHaveAttribute('id', 'game-azul');
-    expect(line.querySelector('.line-meta')).toHaveTextContent('2–4 players · 30–45 min · Light');
+    // The word is the fixture's weight's: made up (helpers/wishlist), since
+    // real weights now come from the games query, not the code.
+    const azul = WEIGHED_GAMES.find((g) => g.slug === 'azul')!;
+    expect(azul.weight).toBe(2.4);
+    expect(line.querySelector('.line-meta')).toHaveTextContent('2–4 players · 30–45 min · Medium');
     expect(line.querySelector('.line-detail')).toHaveAttribute('inert');
     expect(line.querySelector('.line-detail')).toContainElement(
       within(line).getByRole('link', { name: 'Rules for Azul' }),
@@ -76,7 +88,14 @@ describe('PhoneListView', () => {
 });
 
 describe('WishLine', () => {
-  const plain: WishlistItem = { ...WISHLIST[0], img: undefined, players: '', dur: '', desc: 'A plain one. With more.' };
+  const plain: WishlistItem = {
+    ...WISHLIST[0],
+    img: undefined,
+    players: '',
+    dur: '',
+    desc: 'A plain one. With more.',
+    short: undefined,
+  };
 
   it("stands a blank in for missing art, and the blurb's first sentence for missing players and time", () => {
     const { container } = renderWithFilter(

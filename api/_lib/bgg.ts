@@ -1,7 +1,31 @@
-// BoardGameGeek XML API 2 lookup used to fill in a suggested game's details
-// when the owner approves it. BGG requires a registered API token (sent as
-// a bearer header); the XML is small enough to read with a few targeted
-// regexes rather than a parser dependency.
+// BoardGameGeek, for a game's details when the owner approves or adds it.
+//
+// - The search and the `thing` lookup are BGG's documented XML API 2, which
+//   needs a registered token (sent as a bearer header); the XML is small
+//   enough to read with a few targeted regexes rather than a parser
+//   dependency. `thing` with stats gives players, time, the description,
+//   the weight, and the categories and mechanics the keywords and the
+//   section (section.ts) come from.
+// - BGG's site answers by id with no token for the summary and honours
+//   (bggSite.ts, asked beside `thing`): a failure there never costs a
+//   lookup: the game is still found, and the summary and honours wait for
+//   the next refresh (scripts/bgg-refresh.ts).
+
+import { inferSection } from './section.js';
+import { DESC_MAX, MINS_MAX, PLAYERS_MAX, type WishlistSection } from './limits.js';
+import {
+  attr,
+  cleanText,
+  decodeEntities,
+  fetchBggItem,
+  normName,
+  weightOf,
+  type FetchLike,
+  type Honour,
+} from './bggSite.js';
+
+export type { BggItem, FetchLike, Honour } from './bggSite.js';
+export { bggSpelling, fetchBggItem, fetchBggWeight, parseHonour } from './bggSite.js';
 
 export interface GameDetails {
   bggId: number;
@@ -17,18 +41,19 @@ export interface GameDetails {
   kw: string[];
   /** Box-art thumbnail URL on BGG's image CDN, when the entry has one. */
   img?: string;
+  /** The community's weight, 1 (light) to 5 (heavy), when anyone has rated it. */
+  weight?: number;
+  /** BGG's categories and mechanics as it names them, which the section rule reads. */
+  categories: string[];
+  mechanics: string[];
+  /** The wishlist section its players, weight, categories and mechanics put it under (section.ts). */
+  section: WishlistSection;
+  /** BGG's one-line summary (geekitems), when it has one and answered. */
+  summary?: string;
+  /** Its honours (geekitems), absent when that didn't answer. */
+  honours?: Honour[];
 }
 
-// The bounds an entry's details are held to. They live here, not in
-// _resolvers/suggestions.ts (which imports this module), so a lookup produces details
-// an owner edit would also accept: a preview the owner adds is checked
-// against them.
-/** The most players an entry can list (BGG has party games at 100 and more). */
-export const PLAYERS_MAX = 99;
-/** The longest playing time an entry can list, in minutes. */
-export const MINS_MAX = 600;
-/** The longest description kept or saved, in characters; BGG's are rarely longer. */
-export const DESC_MAX = 5000;
 /**
  * Box art an entry can show: BGG's image CDN only. The lookup keeps no
  * other thumbnail, and details the owner sends back are held to it, so the
@@ -36,149 +61,14 @@ export const DESC_MAX = 5000;
  */
 export const BGG_IMG_RE = /^https:\/\/cf\.geekdo-images\.com\/\S+$/;
 
-export type FetchLike = (
-  url: string,
-  init?: { signal?: AbortSignal; headers?: Record<string, string> },
-) => Promise<{ status: number; text(): Promise<string> }>;
-
-const BASE = 'https://boardgamegeek.com/xmlapi2';
-
-// BGG double-encodes the description (`&amp;mdash;` in the XML means the
-// text holds `&mdash;`), so decoding runs twice.
-function decodeEntities(s: string): string {
-  return decodeOnce(decodeOnce(s));
-}
-
-const codePoint = (n: number, raw: string) => (n >= 0 && n <= 0x10ffff ? String.fromCodePoint(n) : raw);
-
-// The named entities BGG's descriptions use: typographic punctuation and
-// symbols here, accented letters by DIACRITIC below. Any other name is left
-// as written.
-const NAMED: Record<string, string> = {
-  amp: '&',
-  quot: '"',
-  apos: "'",
-  lt: '<',
-  gt: '>',
-  nbsp: ' ',
-  mdash: '—',
-  ndash: '–',
-  hellip: '…',
-  bull: '•',
-  middot: '·',
-  lsquo: '‘',
-  rsquo: '’',
-  sbquo: '‚',
-  ldquo: '“',
-  rdquo: '”',
-  bdquo: '„',
-  laquo: '«',
-  raquo: '»',
-  prime: '′',
-  Prime: '″',
-  iexcl: '¡',
-  iquest: '¿',
-  shy: '\u00ad',
-  trade: '™',
-  copy: '©',
-  reg: '®',
-  deg: '°',
-  times: '×',
-  divide: '÷',
-  plusmn: '±',
-  minus: '−',
-  frac12: '½',
-  frac14: '¼',
-  frac34: '¾',
-  sup2: '²',
-  sup3: '³',
-  euro: '€',
-  pound: '£',
-  cent: '¢',
-  sect: '§',
-  aelig: 'æ',
-  AElig: 'Æ',
-  oelig: 'œ',
-  OElig: 'Œ',
-  oslash: 'ø',
-  Oslash: 'Ø',
-  szlig: 'ß',
-  eth: 'ð',
-  ETH: 'Ð',
-  thorn: 'þ',
-  THORN: 'Þ',
-};
-
-// `&eacute;` is "e" plus a combining acute accent, composed into "é".
-const DIACRITIC: Record<string, string> = {
-  grave: '\u0300',
-  acute: '\u0301',
-  circ: '\u0302',
-  tilde: '\u0303',
-  uml: '\u0308',
-  ring: '\u030a',
-  cedil: '\u0327',
-  caron: '\u030c',
-};
-
-function named(raw: string, name: string): string {
-  if (Object.hasOwn(NAMED, name)) return NAMED[name];
-  const m = /^([a-zA-Z])([a-z]+)$/.exec(name);
-  const mark = m && Object.hasOwn(DIACRITIC, m[2]) ? DIACRITIC[m[2]] : undefined;
-  const composed = m && mark ? (m[1] + mark).normalize('NFC') : '';
-  return composed.length === 1 ? composed : raw;
-}
-
-// One pass, so `&amp;rsquo;` becomes `&rsquo;` here and `’` on the next.
-function decodeOnce(s: string): string {
-  return s
-    .replace(/&#(\d+);/g, (raw: string, n: string) => codePoint(Number(n), raw))
-    .replace(/&#x([0-9a-f]+);/gi, (raw: string, h: string) => codePoint(parseInt(h, 16), raw))
-    .replace(/&([a-zA-Z][a-zA-Z0-9]*);/g, named);
-}
-
-// Anchored on whitespace so `name=` never matches inside `friendlyname=`.
-const attr = (tag: string, name: string): string | undefined => new RegExp(`(?:^|\\s)${name}="([^"]*)"`).exec(tag)?.[1];
-
-// Repeated until nothing changes, so removing one tag can't leave another
-// (`<scr<b>ipt>`) behind.
-function stripTags(s: string): string {
-  let previous: string;
-  do {
-    previous = s;
-    s = s.replace(/<[^>]*>/g, '');
-  } while (s !== previous);
-  return s;
-}
-
 /**
  * BGG's whole description as plain text: entities decoded, markup and
- * control characters gone, whitespace collapsed. Only one longer than `max`
- * is shortened, to the whole sentences that fit (or, failing that, cut on a
- * word with an ellipsis).
+ * control characters gone, whitespace collapsed, and shortened to the whole
+ * sentences that fit DESC_MAX.
  */
-export function cleanDescription(raw: string, max = DESC_MAX): string {
-  // Control and format characters (a soft hyphen from &#173;, zero-width
-  // joiners) go, as an edit would refuse them; newlines and tabs are left
-  // for the whitespace collapse, so the words either side stay apart.
-  // A block tag (a line break, paragraph or list item) parts the words
-  // either side; an inline one (BGG italicises titles) goes without a trace,
-  // so "<i>Inkwell</i>," doesn't become "Inkwell ,".
-  const text = stripTags(decodeEntities(raw).replace(/<\/?(?:br|p|div|li|ul|ol|h[1-6])\b[^>]*>/gi, ' '))
-    .replace(/(?!\s)\p{C}/gu, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  if (text.length <= max) return text;
-  // Split after sentence punctuation followed by whitespace, so decimals
-  // like "2.0" stay whole.
-  let out = '';
-  for (const sentence of text.split(/(?<=[.!?])\s+/)) {
-    const next = out ? `${out} ${sentence}` : sentence;
-    if (next.length > max) break;
-    out = next;
-  }
-  return out || text.slice(0, max - 1).replace(/\s+\S*$/, '') + '…';
-}
+export const cleanDescription = (raw: string, max = DESC_MAX): string => cleanText(raw, max);
+
+const BASE = 'https://boardgamegeek.com/xmlapi2';
 
 // BGG label -> app keyword id. Ranks come from <rank name="…">, categories and
 // mechanics from <link type="boardgamecategory|boardgamemechanic" value="…">.
@@ -231,6 +121,8 @@ export function parseThing(xml: string): GameDetails | null {
   const img = BGG_IMG_RE.test(thumb) ? thumb : undefined;
 
   const kw = new Set<string>();
+  const categories: string[] = [];
+  const mechanics: string[] = [];
   for (const tag of xml.match(/<rank\b[^>]*>/g) ?? []) {
     const name = attr(tag, 'name');
     const value = attr(tag, 'value');
@@ -240,10 +132,16 @@ export function parseThing(xml: string): GameDetails | null {
     const type = attr(tag, 'type');
     const value = attr(tag, 'value');
     if (!value || (type !== 'boardgamecategory' && type !== 'boardgamemechanic')) continue;
-    const mapped: string | undefined = LINK_KW[decodeEntities(value)];
+    const label = decodeEntities(value);
+    (type === 'boardgamecategory' ? categories : mechanics).push(label);
+    const mapped: string | undefined = LINK_KW[label];
     if (mapped) kw.add(mapped);
   }
   if (playing > 0 && playing <= 15) kw.add('quick-play');
+  const weight = weightOf(
+    /<averageweight\b[^>]*value="([^"]*)"/.exec(xml)?.[1],
+    /<numweights\b[^>]*value="([^"]*)"/.exec(xml)?.[1],
+  );
 
   return {
     bggId: Number(idMatch[1]),
@@ -255,14 +153,14 @@ export function parseThing(xml: string): GameDetails | null {
     desc: cleanDescription(descRaw),
     kw: [...kw],
     img,
+    ...(weight === null ? {} : { weight }),
+    categories,
+    mechanics,
+    section: inferSection({ max, weight: weight ?? undefined, categories, mechanics }),
   };
 }
 
-const norm = (s: string) =>
-  decodeEntities(s)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
+const norm = normName;
 
 /**
  * Pick the search hit whose name matches what was typed, ignoring case and
@@ -365,8 +263,17 @@ export async function lookupGame(
     id = pickSearchId(loose.body, name);
   }
   if (id === null) return { outcome: 'no-match' };
-  const thing = await get(fetchLike, `${BASE}/thing?id=${id}&stats=1`, deadline, token);
+  // The summary and honours come from BGG's site API, alongside: a failure
+  // there leaves them out, never the game.
+  const [thing, item] = await Promise.all([
+    get(fetchLike, `${BASE}/thing?id=${id}&stats=1`, deadline, token),
+    fetchBggItem(id, fetchLike, deadline - Date.now()),
+  ]);
   if (!thing.ok) return thing.result;
   const details = parseThing(thing.body);
-  return details ? { outcome: 'found', details } : { outcome: 'no-match' };
+  if (!details) return { outcome: 'no-match' };
+  return {
+    outcome: 'found',
+    details: item ? { ...details, ...(item.summary ? { summary: item.summary } : {}), honours: item.honours } : details,
+  };
 }

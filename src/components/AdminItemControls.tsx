@@ -1,10 +1,12 @@
 import { useId, useState, type FormEvent } from 'react';
-import type { KeywordId, StoredWishlistItem, WishlistItem } from '../data/types';
+import type { KeywordId, WishlistItem } from '../data/types';
 import { KW, WISHLIST_SECTIONS, WISHLIST_TYPES } from '../data/keywords';
 import { DESC_MAX, GAME_MAX, GAME_MIN, MINS_MAX, PLAYERS_MAX } from '../data/suggestionLimits';
 import { useAuth } from '../context/useAuth';
 import { useWishlistItems } from '../context/useWishlistItems';
 import { editGame, removeGame } from '../client/adminApi';
+import { BinIcon, PencilIcon } from './Icons';
+import { outlineIconClass } from './sharedClasses';
 import {
   adminActionsClass,
   adminButtonClass,
@@ -19,28 +21,31 @@ import {
 
 interface Props {
   item: WishlistItem;
-  /** In the owner's list of hidden duplicates, beside the entry's name (a full line while editing). */
-  inQueue?: boolean;
 }
 
-interface StoredProps {
-  item: StoredWishlistItem;
-}
+// The owner's buttons match the cart and YouTube buttons they share a line
+// with: 32px drawn, 44px to tap (outlineIconClass). The bin turns red while
+// Remove asks to confirm.
+const ownerIconClass = `${outlineIconClass} cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue can-hover:hover:border-border-hover can-hover:hover:bg-bg2 can-hover:hover:text-text`;
+const binOpenClass = `${outlineIconClass} cursor-pointer border-danger-border bg-danger-bg text-danger-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue`;
 
 /**
- * Edit and remove for one stored wishlist entry. Renders nothing for the
- * compiled-in list (those are edited in the source) or when not signed in,
- * and holds no state until it does.
+ * Edit and Remove for one wishlist game, whichever way it got there, as a
+ * pencil and a bin, each named in full ("Edit SETI: Search for
+ * Extraterrestrial Intelligence"). Rendered into a footer that wraps: the
+ * two buttons sit in its line, and Remove's question or the Edit form takes
+ * a full-width line of its own below it. Renders nothing unless the owner
+ * is signed in, and holds no state until then.
  */
-export default function AdminItemControls({ item, inQueue = false }: Props) {
+export default function AdminItemControls({ item }: Props) {
   const { admin } = useAuth();
-  if (!admin || !item.source) return null;
-  return <Controls item={item} inQueue={inQueue} />;
+  if (!admin) return null;
+  return <Controls item={item} />;
 }
 
 type Mode = 'idle' | 'editing' | 'confirming';
 
-function Controls({ item, inQueue }: StoredProps & { inQueue: boolean }) {
+function Controls({ item }: Props) {
   const { reload } = useWishlistItems();
   const [mode, setMode] = useState<Mode>('idle');
   const [busy, setBusy] = useState(false);
@@ -59,55 +64,66 @@ function Controls({ item, inQueue }: StoredProps & { inQueue: boolean }) {
     reload();
   };
 
+  const open = (next: Mode) => {
+    setError(null);
+    setMode((m) => (m === next ? 'idle' : next));
+  };
+
   return (
-    <div className={inQueue ? (mode === 'editing' ? 'basis-full' : '') : 'mt-2.5'}>
-      {mode === 'idle' && (
-        <div className={adminActionsClass}>
-          <button
-            type="button"
-            className={adminGhostClass}
-            onClick={() => {
-              setError(null);
-              setMode('editing');
-            }}
-          >
-            Edit {item.name}
-          </button>
-          <button
-            type="button"
-            className={adminGhostClass}
-            onClick={() => {
-              setError(null);
-              setMode('confirming');
-            }}
-          >
-            Remove {item.name}
-          </button>
+    <>
+      <span className="flex items-center gap-1.5">
+        <button
+          type="button"
+          className={ownerIconClass}
+          aria-label={`Edit ${item.name}`}
+          title={`Edit ${item.name}`}
+          aria-expanded={mode === 'editing'}
+          onClick={() => open('editing')}
+        >
+          <PencilIcon />
+        </button>
+        <button
+          type="button"
+          className={mode === 'confirming' ? binOpenClass : ownerIconClass}
+          aria-label={`Remove ${item.name}`}
+          title={`Remove ${item.name}`}
+          aria-expanded={mode === 'confirming'}
+          onClick={() => open('confirming')}
+        >
+          <BinIcon />
+        </button>
+      </span>
+      {(mode !== 'idle' || error) && (
+        <div className="order-last basis-full">
+          {mode === 'confirming' && (
+            <div
+              className={`${adminActionsClass} rounded-lg border border-danger-border bg-danger-bg px-3 py-2`}
+              role="group"
+              aria-label={`Remove ${item.name}?`}
+            >
+              <span className="mr-auto text-[12.5px] text-danger-fg">Remove {item.name} from the wishlist?</span>
+              <button type="button" className={adminDangerClass} disabled={busy} onClick={() => void remove()}>
+                Yes, remove
+              </button>
+              <button type="button" className={adminGhostClass} disabled={busy} onClick={() => setMode('idle')}>
+                Keep it
+              </button>
+            </div>
+          )}
+          {/* Mounted only while open, so every Edit starts from the entry as it is now. */}
+          {mode === 'editing' && <EditForm item={item} onDone={() => setMode('idle')} />}
+          {error && (
+            <p className={adminErrorClass} role="alert">
+              {error}
+            </p>
+          )}
         </div>
       )}
-      {mode === 'confirming' && (
-        <div className={adminActionsClass} role="group" aria-label={`Remove ${item.name}?`}>
-          <span className={adminMutedClass}>Remove {item.name} from the wishlist?</span>
-          <button type="button" className={adminDangerClass} disabled={busy} onClick={() => void remove()}>
-            Yes, remove
-          </button>
-          <button type="button" className={adminGhostClass} disabled={busy} onClick={() => setMode('idle')}>
-            Keep it
-          </button>
-        </div>
-      )}
-      {/* Mounted only while open, so every Edit starts from the entry as it is now. */}
-      {mode === 'editing' && <EditForm item={item} onDone={() => setMode('idle')} />}
-      {error && (
-        <p className={adminErrorClass} role="alert">
-          {error}
-        </p>
-      )}
-    </div>
+    </>
   );
 }
 
-function EditForm({ item, onDone }: StoredProps & { onDone: () => void }) {
+function EditForm({ item, onDone }: Props & { onDone: () => void }) {
   const { reload } = useWishlistItems();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

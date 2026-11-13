@@ -50,8 +50,8 @@ A sortable list view is also available:
   votes, suggestions and the owner's session, with the browser's documents generated from the schema, so
   the two sides can't drift apart.
 - **Google Gemini:** the rules assistant's answers, streamed over server-sent events.
-- **Turso, through Drizzle,** and **Upstash Redis:** the wishlist, suggestions and the owner's
-  sessions, moving from Redis to Turso (#290), with every schema change a reviewed migration.
+- **Turso, through Drizzle:** the wishlist, suggestions, votes, rate limits, the owner's sessions
+  and what BoardGameGeek says about every game, with every schema change a reviewed migration.
 - **Better Auth:** the owner's sign-in, with Google or a passkey.
 - **Resend:** the approval emails.
 - **Sentry and Vercel Analytics:** errors from the browser and the API, and usage.

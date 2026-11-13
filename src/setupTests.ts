@@ -30,3 +30,14 @@ globalThis.IntersectionObserver = class IntersectionObserver {
 // the tests that check a scroll spy on it or replace it, as before. Not in
 // the files that run in Node, which have no window.
 if (typeof window !== 'undefined') window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
+
+// The games query (context/GamesContext.tsx), which every page asks once:
+// answered by default with the seed's wishlist (data/seed.json), as the API
+// would, so a page renders its wishlist without each test stubbing it. Any
+// other request fails as an unstubbed one did; a test stubs its own fetch
+// over this one. Not in the files that run in Node, whose fakes are their own.
+if (typeof window !== 'undefined') {
+  const { graphqlFetch } = await import('./__tests__/helpers/graphqlFetch');
+  const { gamesAnswer } = await import('./__tests__/helpers/wishlist');
+  globalThis.fetch = graphqlFetch({ Games: () => gamesAnswer() });
+}

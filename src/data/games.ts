@@ -1,9 +1,10 @@
 import type { ExtraRulebook, Game, SubGame } from './types';
-import { weighed } from './weighed';
 
 // The collection, and the source of truth for it: a compiled-in constant,
-// with no database on the read path. The rest of src/data supports it (the
-// wishlist, keywords, the initial filter state, which games have a score
+// with no database on the read path, until #290's part 4 moves it into the
+// API's. What BoardGameGeek says about each game (its difficulty, awards and
+// summary) comes from the games query at run time, by `bgg`
+// (utils/bggInfo.ts). The rest of src/data supports it (keywords, the initial filter state, which games have a score
 // calculator or the word checker, the types). A game bought but not yet
 // here carries `arriving` and is exported apart, as COMING_SOON, so the
 // collection's list, filters and random pick (GAMES) never include it;
@@ -32,9 +33,8 @@ interface GameEntry extends Omit<Game, 'img' | 'rules' | 'moreRules' | 'subgames
   subgames?: SubGameEntry[];
 }
 
-// `awards` lists confirmed wins from recognised award bodies only (same rule
-// as wishlist.ts); nominations, recommended lists and toy-industry awards
-// are not counted.
+// `bggSummary` marks the games whose cards take BoardGameGeek's one-line
+// summary in place of `short`, the owner's picks (#290).
 const ENTRIES: GameEntry[] = [
   {
     name: 'One Night Werewolf',
@@ -64,7 +64,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play One Night Ultimate Werewolf tutorial',
-    awards: [{ name: 'Dice Tower Best Party Game', year: 2013 }],
     subgames: [
       {
         name: 'Daybreak',
@@ -150,7 +149,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Suspicion board game tutorial',
-    awards: [],
   },
   {
     name: 'Analyze Me',
@@ -180,7 +178,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Analyze Me party game',
-    awards: [],
   },
   {
     name: 'Love Letter',
@@ -210,21 +207,11 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Love Letter card game tutorial',
-    awards: [
-      { name: "Japan Boardgame Prize Voters' Selection", year: 2012 },
-      { name: 'Dice Tower Best Party Game', year: 2012 },
-      { name: 'Dice Tower Best Family Game', year: 2012 },
-      { name: 'Origins Award Best Traditional Card Game', year: 2013 },
-      { name: 'Golden Geek Best Card Game', year: 2013 },
-      { name: 'Golden Geek Best Party Game', year: 2013 },
-      { name: 'Golden Geek Best Family Game', year: 2013 },
-      { name: 'Golden Geek Most Innovative Game', year: 2013 },
-      { name: 'Guldbrikken Best Family Game', year: 2014 },
-    ],
   },
   {
     name: 'Codenames',
     slug: 'codenames',
+    bggSummary: true,
     players: '3–8',
     min: 3,
     max: 8,
@@ -250,20 +237,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Codenames board game tutorial',
-    awards: [
-      { name: 'Spiel des Jahres', year: 2016 },
-      { name: 'Origins Award Game of the Year', year: 2016 },
-      { name: 'Origins Award Best Family Game', year: 2016 },
-      { name: 'Golden Geek Best Party Game', year: 2016 },
-      { name: 'Golden Geek Best Family Game', year: 2016 },
-      { name: 'Dice Tower Best Party Game', year: 2016 },
-      { name: 'Dice Tower Best Family Game', year: 2016 },
-      { name: 'UK Games Expo Best Party Game', year: 2016 },
-      { name: 'Guldbrikken Best Adult Game', year: 2016 },
-      { name: "Japan Boardgame Prize Voters' Selection", year: 2016 },
-      { name: 'MinD-Spielepreis Short Games', year: 2017 },
-      { name: 'Cardboard Republic Socializer Laurel', year: 2015 },
-    ],
   },
   {
     name: 'Bananagrams',
@@ -293,7 +266,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Bananagrams tutorial rules',
-    awards: [],
   },
   {
     name: 'Taboo',
@@ -323,7 +295,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Taboo card game tutorial rules',
-    awards: [{ name: 'Mensa Select', year: 1990 }],
   },
   {
     name: 'Poetry for Neanderthals',
@@ -353,7 +324,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Poetry for Neanderthals tutorial',
-    awards: [],
   },
   {
     name: 'Exploding Kittens',
@@ -383,7 +353,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Exploding Kittens card game tutorial',
-    awards: [],
   },
   {
     name: 'Taco vs Burrito',
@@ -413,7 +382,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Taco vs Burrito card game tutorial',
-    awards: [],
   },
   {
     name: 'Taco Goat Cheese Pizza',
@@ -443,7 +411,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Taco Goat Cheese Pizza card game tutorial',
-    awards: [],
   },
   {
     name: 'Throw Throw Burrito',
@@ -473,7 +440,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Throw Throw Burrito tutorial',
-    awards: [],
   },
   {
     name: 'Cards Against Humanity',
@@ -503,7 +469,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Cards Against Humanity tutorial rules',
-    awards: [],
   },
   {
     name: 'For the Girls',
@@ -533,11 +498,11 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play For the Girls card game tutorial',
-    awards: [],
   },
   {
     name: 'Cranium',
     slug: 'cranium',
+    bggSummary: true,
     players: '4+',
     min: 4,
     max: 99,
@@ -563,7 +528,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Cranium board game tutorial rules',
-    awards: [],
   },
   {
     name: 'Uno',
@@ -593,7 +557,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Uno card game rules tutorial',
-    awards: [],
   },
   {
     name: 'Card Deck',
@@ -622,7 +585,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Euchre card game tutorial',
-    awards: [],
     subgames: [
       {
         name: 'Euchre',
@@ -804,7 +766,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'date night conversation question cards for couples',
-    awards: [],
   },
   {
     name: 'Truth or Dare Tower',
@@ -829,7 +790,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play truth or dare block stacking game',
-    awards: [],
   },
   {
     name: 'These Cards Will Get You Drunk',
@@ -854,7 +814,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'These Cards Will Get You Drunk drinking game how to play',
-    awards: [],
   },
   {
     name: 'Caroling Charades',
@@ -879,7 +838,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play charades game rules',
-    awards: [],
   },
   {
     name: 'Azul',
@@ -909,21 +867,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Azul board game tutorial',
-    awards: [
-      { name: 'Spiel des Jahres', year: 2018 },
-      { name: 'Deutscher Spiele Preis', year: 2018 },
-      { name: "As d'Or", year: 2018 },
-      { name: 'Golden Geek Best Family Game', year: 2018 },
-      { name: 'Dice Tower Best Family Game', year: 2018 },
-      { name: 'Origins Award Best Family Game', year: 2018 },
-      { name: 'Mensa Select', year: 2018 },
-      { name: 'Nederlandse Spellenprijs Family', year: 2018 },
-      { name: 'Guldbrikken Best Adult Game', year: 2018 },
-      { name: 'UK Games Expo Best Abstract Game', year: 2019 },
-      { name: "UK Games Expo People's Choice Abstract Game", year: 2019 },
-      { name: 'MinD-Spielepreis Short Games', year: 2019 },
-      { name: 'Cardboard Republic Architect Laurel', year: 2017 },
-    ],
   },
   {
     name: '7 Wonders',
@@ -953,17 +896,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play 7 Wonders board game tutorial Watch It Played',
-    awards: [
-      { name: 'Kennerspiel des Jahres', year: 2011 },
-      { name: 'Deutscher Spiele Preis', year: 2011 },
-      { name: "As d'Or Jury Prize", year: 2011 },
-      { name: 'Dice Tower Game of the Year', year: 2011 },
-      { name: 'Dice Tower Best Artwork', year: 2011 },
-      { name: 'International Gamers Award Multiplayer', year: 2011 },
-      { name: "Japan Boardgame Prize Voters' Selection", year: 2011 },
-      { name: 'Guldbrikken Best Adult Game', year: 2011 },
-      { name: 'MinD-Spielepreis', year: 2012 },
-    ],
   },
   // Catan reads 3–6 because the 5–6 Player Extension is owned, but the filters
   // use the base game's own 3–4: five or six players means the extension's
@@ -971,6 +903,7 @@ const ENTRIES: GameEntry[] = [
   {
     name: 'Catan',
     slug: 'catan',
+    bggSummary: true,
     players: '3–6',
     min: 3,
     max: 4,
@@ -996,11 +929,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Catan Settlers of Catan tutorial',
-    awards: [
-      { name: 'Spiel des Jahres', year: 1995 },
-      { name: 'Deutscher Spiele Preis', year: 1995 },
-      { name: 'Origins Award Best Fantasy or Science Fiction Board Game', year: 1997 },
-    ],
     subgames: [
       {
         name: '5–6 Player Extension',
@@ -1087,17 +1015,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Dominion second edition board game tutorial',
-    awards: [
-      { name: 'Spiel des Jahres', year: 2009 },
-      { name: 'Deutscher Spiele Preis', year: 2009 },
-      { name: 'Mensa Select', year: 2009 },
-      { name: 'Golden Geek Game of the Year', year: 2009 },
-      { name: 'Golden Geek Best Card Game', year: 2009 },
-      { name: 'Dice Tower Game of the Year', year: 2008 },
-      { name: 'Dice Tower Best New Designer', year: 2008 },
-      { name: 'Dice Tower Best Small Publisher', year: 2008 },
-      { name: 'Origins Award Best Card Game', year: 2009 },
-    ],
     subgames: [
       {
         name: 'Intrigue',
@@ -1157,13 +1074,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Ticket to Ride board game tutorial',
-    awards: [
-      { name: 'Spiel des Jahres', year: 2004 },
-      { name: 'Origins Award Best Board Game', year: 2005 },
-      { name: 'Japan Boardgame Prize Best Advanced Game', year: 2004 },
-      { name: "As d'Or", year: 2005 },
-      { name: 'Japan Boardgame Prize Best Japanese Edition', year: 2006 },
-    ],
     subgames: [
       {
         name: 'Europe',
@@ -1177,7 +1087,6 @@ const ENTRIES: GameEntry[] = [
         bgg: 14996,
         short: 'Claim train routes across Europe to complete secret destination tickets.',
         yt: 'how to play Ticket to Ride Europe board game tutorial',
-        awards: [{ name: 'International Gamers Award Multiplayer', year: 2005 }],
         desc: 'Claim train routes across Europe by collecting and spending matching coloured cards. Complete secret destination tickets for big points. Block rivals before they finish. Tunnels, ferries, and stations add depth.',
         detail: [
           {
@@ -1224,11 +1133,11 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Risk board game tutorial rules',
-    awards: [],
   },
   {
     name: 'Pandemic',
     slug: 'pandemic',
+    bggSummary: true,
     players: '2–4',
     min: 2,
     max: 4,
@@ -1254,16 +1163,11 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Pandemic board game tutorial Watch It Played',
-    awards: [
-      { name: 'Origins Award Best Board Game', year: 2009 },
-      { name: 'Golden Geek Best Family Game', year: 2009 },
-      { name: 'MinD-Spielepreis', year: 2011 },
-      { name: 'Guldbrikken Jury Prize', year: 2015 },
-    ],
   },
   {
     name: 'Mysterium',
     slug: 'mysterium',
+    bggSummary: true,
     players: '2–7',
     min: 2,
     max: 7,
@@ -1289,15 +1193,11 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Mysterium board game tutorial',
-    awards: [
-      { name: "As d'Or", year: 2016 },
-      { name: 'Golden Geek Best Artwork & Presentation', year: 2016 },
-      { name: "Japan Boardgame Prize Voters' Selection", year: 2015 },
-    ],
   },
   {
     name: 'Hogwarts Battle',
     slug: 'hogwarts-battle',
+    bggSummary: true,
     players: '2–4',
     min: 2,
     max: 4,
@@ -1362,7 +1262,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Harry Potter Hogwarts Battle deck building tutorial',
-    awards: [{ name: 'Mensa Select', year: 2017 }],
     subgames: [
       {
         name: 'The Monster Box of Monsters',
@@ -1425,7 +1324,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Dungeon Crawler Carl Unstoppable',
-    awards: [],
   },
   {
     name: 'Dungeon Crawler Carl RPG: Starter Set',
@@ -1453,7 +1351,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'Dungeon Crawler Carl RPG Starter Set',
-    awards: [],
   },
   {
     name: 'Arkham Horror: Remastered',
@@ -1484,7 +1381,6 @@ const ENTRIES: GameEntry[] = [
       },
     ],
     yt: 'how to play Arkham Horror Remastered Cardboard Crash Course',
-    awards: [],
     subgames: [
       {
         name: 'Dunwich Horror',
@@ -1534,9 +1430,7 @@ function withPaths({ img, rules, moreRules, subgames, ...game }: GameEntry): Gam
 }
 
 /** Every game we own, on the shelf or on its way: what a slug or a name is looked up in. */
-export const ALL_GAMES: Game[] = ENTRIES.map(withPaths).map((g) =>
-  weighed(g.subgames ? { ...g, subgames: g.subgames.map(weighed) } : g),
-);
+export const ALL_GAMES: Game[] = ENTRIES.map(withPaths);
 
 /** The collection on the shelf: what the page lists, filters, counts and picks from. */
 export const GAMES: Game[] = ALL_GAMES.filter((g) => !g.arriving);

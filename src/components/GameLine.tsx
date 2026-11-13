@@ -3,6 +3,9 @@ import type { Game } from '../data/types';
 import { useFilterDispatch, useItemFilter } from '../context/useFilter';
 import { sortedKw } from '../utils/filterGames';
 import { difficultyWord } from '../utils/difficulty';
+import { waitingForBgg } from '../utils/bggInfo';
+import { useGames } from '../context/useGames';
+import { WaitingBar } from './DifficultyMeta';
 import { fittingSubgames, hasSubgames, subgameTitle } from '../utils/subgames';
 import { gameAnchor } from '../utils/heroCovers';
 import PhoneLine from './PhoneLine';
@@ -37,6 +40,8 @@ export default memo(GameLine);
 function GameLine({ game, isOpen, onToggle }: Props) {
   const filter = useItemFilter();
   const dispatch = useFilterDispatch();
+  const { loaded } = useGames();
+  const waiting = waitingForBgg(game, loaded);
   const hasFitting = game.subgames !== undefined && fittingSubgames(game.subgames, filter).length > 0;
   return (
     <PhoneLine
@@ -44,11 +49,20 @@ function GameLine({ game, isOpen, onToggle }: Props) {
       img={game.img}
       name={game.name}
       headingLevel={3}
-      meta={<LineMeta players={game.players} dur={game.dur} difficulty={difficultyWord(game)} />}
+      meta={
+        <LineMeta
+          players={game.players}
+          dur={game.dur}
+          // A grey bar while the games query, which brings the weight, is out.
+          difficulty={difficultyWord(game) ?? (waiting.bgg ? <WaitingBar className="w-12" /> : null)}
+        />
+      }
       isOpen={isOpen}
       onToggle={() => onToggle(game.name)}
     >
-      <p className="mb-2.5 text-[14px] leading-[1.55] text-text2">{game.short}</p>
+      <p className="mb-2.5 text-[14px] leading-[1.55] text-text2">
+        {waiting.summary ? <WaitingBar className="w-full" /> : game.short}
+      </p>
       <div className={`${tagsClass} mb-3.5`}>
         {sortedKw(game.kw).map((kw) => (
           <KeywordPill

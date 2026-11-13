@@ -51,11 +51,12 @@ function WishlistCard({ item, voteCount, voted, onVote, disabled, headingLevel =
   const { lit } = useItemFilter();
   const dispatch = useFilterDispatch();
   const Heading = headingLevel === 3 ? 'h3' : 'h4';
-  // The card opens on the blurb's first sentence, as the list row does, and
-  // More shows the rest.
+  // The card opens on its one line, BoardGameGeek's summary or else the
+  // description's first sentence, as the list row does, and More shows the
+  // description.
   const [moreOpen, setMoreOpen] = useState(false);
   const descId = useId();
-  const short = shortDesc(item.desc);
+  const short = item.short ?? shortDesc(item.desc);
   const hasMore = short !== item.desc.trim();
   // The head's text keeps clear of the box art in its corner, where there is art.
   const clear = item.img ? 'pr-(--corner-clear)' : '';
@@ -123,12 +124,12 @@ function WishlistCard({ item, voteCount, voted, onVote, disabled, headingLevel =
           )}
         </p>
         {item.suggestedBy && <p className={`${creditClass} mt-2`}>Suggested by {item.suggestedBy}</p>}
-        <AdminItemControls item={item} />
       </div>
       <div className={cardFootClass}>
         <div className={cardFootStartClass}>
           <AwardsBadge itemName={item.name} awards={item.awards} />
         </div>
+        <AdminItemControls item={item} />
         <div className={cardFootEndClass}>
           <VoteButton
             itemName={item.name}

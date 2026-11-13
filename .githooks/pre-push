@@ -14,8 +14,9 @@
 # text, PDFs and word lists, index.css's theme tokens, vercel.json, the
 # Stryker config, the eval's golden set, the PR template, test fixtures, and
 # the README's screenshot links and e2e/readme.shots.ts, which
-# src/__tests__/readmeShots.test.ts holds equal, and src/data's games.ts and
-# wishlist.ts, which the BoardGameGeek scripts' tests parse).
+# src/__tests__/readmeShots.test.ts holds equal, src/data's games.ts, which
+# the BoardGameGeek scripts' tests parse, and data/seed.json, the wishlist
+# the tests render).
 #
 # No-op in CI (see pre-commit).
 [ -n "$CI" ] && exit 0

@@ -51,7 +51,7 @@ function WishLine({ item, voteCount, voted, onVote, disabled, isOpen, onToggle, 
         item.players || item.dur ? (
           <LineMeta players={item.players} dur={item.dur} difficulty={difficultyWord(item)} wrap />
         ) : (
-          shortDesc(item.desc)
+          (item.short ?? shortDesc(item.desc))
         )
       }
       action={
@@ -88,9 +88,11 @@ function WishLine({ item, voteCount, voted, onVote, disabled, isOpen, onToggle, 
         </div>
       )}
       <AwardsSection awards={item.awards} />
-      <AdminItemControls item={item} />
-      <div className={rowFootClass}>
-        <WishlistLinks item={item} />
+      <div className={`${rowFootClass} flex-wrap`}>
+        <AdminItemControls item={item} />
+        <span className="ml-auto flex items-center gap-2">
+          <WishlistLinks item={item} />
+        </span>
       </div>
     </PhoneLine>
   );

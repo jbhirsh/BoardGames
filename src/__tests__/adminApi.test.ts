@@ -12,6 +12,8 @@ const ROOT = {
   desc: 'Woodland war.',
   kw: ['strategy'],
   img: 'https://cf.geekdo-images.com/root.jpg',
+  section: 'strategy',
+  honours: [],
 };
 // BGG's name for the match stays behind: the entry keeps the typed one.
 const STORED = {
@@ -23,6 +25,7 @@ const STORED = {
   desc: 'Woodland war.',
   kw: ['strategy'],
   img: 'https://cf.geekdo-images.com/root.jpg',
+  section: 'strategy',
 };
 
 describe('adminApi', () => {
@@ -42,13 +45,13 @@ describe('adminApi', () => {
       DecideSuggestion: () => ({ decideSuggestion: { lookup: null } }),
       PreviewGame: () => ({ previewGame: { outcome: 'NO_MATCH', details: null } }),
       AddGame: () => ({ addGame: { lookup: 'FOUND' } }),
-      EditSuggestion: () => ({ editSuggestion: { id: 'sug-1' } }),
-      RemoveSuggestion: () => ({ removeSuggestion: true }),
+      EditGame: () => ({ editGame: { id: 'sug-1' } }),
+      RemoveGame: () => ({ removeGame: true }),
     });
     await decideSuggestion('sug-1', 'deny');
     await previewGame('Root');
-    await addGame({ game: 'Root', name: 'Jess', note: '', type: 'strategy', details: null });
-    await addGame({ game: 'Root', name: 'Jess', note: '', type: null, details: ROOT });
+    await addGame({ game: 'Root', name: 'Jess', note: '', details: null });
+    await addGame({ game: 'Root', name: 'Jess', note: '', details: ROOT });
     await editGame({
       id: 'sug-1',
       game: 'Root',
@@ -58,17 +61,17 @@ describe('adminApi', () => {
     expect(operations(spy).map((o) => [o.operationName, o.variables])).toEqual([
       ['DecideSuggestion', { id: 'sug-1', decision: 'DENY' }],
       ['PreviewGame', { game: 'Root' }],
-      ['AddGame', { game: 'Root', name: 'Jess', note: '', type: 'strategy', details: null }],
+      ['AddGame', { game: 'Root', name: 'Jess', note: '', details: null }],
       ['AddGame', { game: 'Root', name: 'Jess', note: '', details: STORED }],
       [
-        'EditSuggestion',
+        'EditGame',
         {
           id: 'sug-1',
           game: 'Root',
           details: { min: 2, max: 4, mins: 60, desc: 'War.', kw: ['strategy'], type: null },
         },
       ],
-      ['RemoveSuggestion', { id: 'sug-1' }],
+      ['RemoveGame', { id: 'sug-1' }],
     ]);
   });
 
@@ -76,13 +79,21 @@ describe('adminApi', () => {
     stubGraphql({
       PreviewGame: ({ game }) =>
         game === 'Root'
-          ? { previewGame: { outcome: 'FOUND', details: { ...ROOT, year: null, img: null } } }
+          ? {
+              previewGame: {
+                outcome: 'FOUND',
+                details: { ...ROOT, year: null, img: null, weight: null, summary: null },
+              },
+            }
           : { previewGame: { outcome: 'NO_TOKEN', details: null } },
       DecideSuggestion: ({ decision }) => ({ decideSuggestion: { lookup: decision === 'APPROVE' ? 'REFUSED' : null } }),
     });
     expect(await previewGame('Root')).toEqual({
       ok: true,
-      data: { outcome: 'found', details: { ...ROOT, year: undefined, img: undefined } },
+      data: {
+        outcome: 'found',
+        details: { ...ROOT, year: undefined, img: undefined, weight: undefined, summary: undefined },
+      },
     });
     expect(await previewGame('Rot')).toEqual({ ok: true, data: { outcome: 'no-token' } });
     expect(await decideSuggestion('sug-1', 'approve')).toEqual({ ok: true, data: { lookup: 'refused' } });
@@ -90,7 +101,7 @@ describe('adminApi', () => {
   });
 
   it('turns failures into messages instead of throwing', async () => {
-    stubGraphql({ RemoveSuggestion: () => gqlError('owner sign-in required', 'FORBIDDEN', 403) });
+    stubGraphql({ RemoveGame: () => gqlError('owner sign-in required', 'FORBIDDEN', 403) });
     expect(await removeGame('sug-1')).toEqual({ ok: false, error: 'owner sign-in required' });
     vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('offline'));
     expect(await removeGame('sug-1')).toEqual({ ok: false, error: 'Something went wrong. Try again in a minute.' });

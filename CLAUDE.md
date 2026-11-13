@@ -25,8 +25,10 @@ changing the module.
   resolvers in `api/_resolvers/`, each headed by its rules.
 - `src/client/graphql.ts` is the browser's one way to the API; its operations are in
   `src/client/operations/*.graphql`.
-- `src/data/games.ts` is the collection's source of truth, compiled in: no database on the read
-  path.
+- `src/data/games.ts` is the collection's source of truth, compiled in until #290's part 4; its
+  difficulty, awards and BGG summaries come from the games query (`Query.games`, `bgg_info`),
+  which also carries the wishlist. `data/seed.json` is the one-time copy's input and the tests'
+  wishlist.
 
 ## Traps that cross files
 
@@ -78,8 +80,8 @@ changing the module.
 - **`api` and `src` can't import each other, and `sw.ts` imports no module the app also
   imports.** Values both sides need are written twice, kept in step by tests; the API's shapes
   reach `src` only through codegen reading `api/_schema.graphql`.
-- **Never hand-edit the generated `src/data/gameWeights.ts` and `wishlistArt.ts`**; re-run
-  their scripts.
+- **The games query is the one API request the service worker answers**, so in WebKit the e2e
+  stubs can't reach the worker's fetch of it: `offline.spec.ts` stubs it inside the worker.
 - **Colours are tokens, never literals**: `--color-*` in `src/index.css`'s `@theme`, redefined
   for dark, used as classes (`text-text2`, a tint by modifier: `bg-gold/12`).
   `e2e/theme.spec.ts` holds both themes to AA. Messages use `Notice`, not a one-off coloured
@@ -109,10 +111,10 @@ changing the module.
 - **Unit tests live in `src/__tests__/`** (Vitest + React Testing Library, jsdom), a CI
   helper's or a script's beside it (here instead when it needs the DOM's types, and the eval's,
   with its other tests), all in one suite and gate. They are pure logic or RTL: no real network,
-  no real browser. Shared fakes are in `src/__tests__/helpers/` (`fakeRedis`, with `raw` for the
-  raw client; `testDb`, a fresh migrated database per test; `stubMatchMedia`; `api`, the whole
-  GraphQL API in process over fakes; `graphqlFetch`, a fetch answering the client's operations
-  by name).
+  no real browser. Shared fakes are in `src/__tests__/helpers/` (`wishlist`, the seed's wishlist
+  and the games query's answer; `rows`; `testDb`, a fresh migrated database per test;
+  `stubMatchMedia`; `api`, the whole GraphQL API in process over fakes; `graphqlFetch`, a fetch
+  answering the client's operations by name).
 - **End-to-end tests live in `e2e/`** (Playwright, the production build): a real browser,
   still no real network. Import `test` and `expect` from `./fixtures`, which stubs every
   `/api/*` call (`stubOperation`, the rules chat as an event stream) and fails a test making an

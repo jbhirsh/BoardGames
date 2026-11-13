@@ -16,8 +16,9 @@ Router) for a personal board game collection, with one Vercel Function in
 The GraphQL resolvers (`api/_resolvers/`, served by `api/graphql.ts`) are
 the trust boundary. Flag:
 
-- An owner-only operation (listing the queue, previewing, deciding without
-  a token, adding, editing or removing) that doesn't go through
+- An owner-only operation (listing the queue, previewing, reading an
+  emailed suggestion with `emailedSuggestion`, deciding with
+  `decideSuggestion`, adding, editing or removing) that doesn't go through
   `requireAdmin` in `_resolvers/context.ts`: the owner check (a Better Auth
   session whose verified email is `SUGGESTIONS_TO`, `api/_auth.ts`), plus a JSON
   POST for mutations. Requiring JSON is the CSRF protection (with the
@@ -25,8 +26,9 @@ the trust boundary. Flag:
   cross-site form can post urlencoded data with the cookie attached but
   can't send JSON without a preflight. Mutations must never be served over
   GET, and CORS stays off.
-- An emailed-link flow (approve/deny) that changes state on a plain GET,
-  since mail scanners follow every link, or that doesn't verify its token.
+- An emailed link (approve/deny) whose opening changes state, since mail
+  scanners follow every link: the page only reads, owner-only, until its
+  button sends the decision.
 - A Better Auth route answering under `/api/auth/*` that the app doesn't
   use (`allowedRoute` in `api/_auth.ts`), production answering the OAuth
   proxy's completion route, Google's client secret reaching a preview, or
@@ -47,10 +49,12 @@ the trust boundary. Flag:
 
 ### Where the data lives
 
-Redis holds live production data that outlives every deploy: the vote sets
-(`wishlist:votes:<id>`), the suggestion hashes and the `suggestions:active` /
-`suggestions:approved` / `suggestions:unsent` lists and rate-limit
-counters; Turso holds the owner's sign-in (Better Auth's `auth_*` tables).
+Turso holds live production data that outlives every deploy: the wishlist's
+`games`, the `suggestions`, the `votes`, BoardGameGeek's `bgg_info`, the
+owner's own `owner_awards`, the `rate_limits` counters, the `meta` markers
+(the one-time copy's `redis-copied`) and the owner's sign-in (Better Auth's
+`auth_*` tables). It changes only through migrations (`drizzle/`), which
+must work with the code already deployed.
 Each browser also keeps
 localStorage: the anonymous voter id (`wishlist:anonId`), which dedupes
 votes, and the remembered display name (`gameroom:name`). A renamed key or

@@ -79,7 +79,9 @@ describe('SubGameList', () => {
   it("shows a game's own award wins, and no badge without any", () => {
     const game = {
       ...addonGame,
-      subgames: [{ ...addonGame.subgames![0], awards: [{ name: 'International Gamers Award', year: 2005 }] }],
+      subgames: [
+        { ...addonGame.subgames![0], awards: [{ name: 'International Gamers Award', year: 2005, result: 'Winner' }] },
+      ],
     };
     renderList(game);
     fireEvent.click(screen.getByRole('button', { name: 'Big Box: 1 award, show which' }));

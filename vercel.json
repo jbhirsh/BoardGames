@@ -1,7 +1,7 @@
 {
   "outputDirectory": "dist",
   "framework": "vite",
-  "buildCommand": "npm run build && node scripts/check-auth-env.ts && npm run db:migrate",
+  "buildCommand": "npm run build && node scripts/check-auth-env.ts && npm run db:migrate && npm run db:copy && npm run bgg-refresh",
   "devCommand": "npx vite --port $PORT",
   "functions": {
     "api/graphql.ts": {

@@ -4,8 +4,10 @@
 
 /** How the service worker answers a request. */
 export type Route =
-  /** Left to the browser: the API, other sites, anything not GET or HEAD. */
+  /** Left to the browser: the API (but the games query), other sites, anything not GET or HEAD. */
   | 'skip'
+  /** The games query over GET: the network when it answers in time, the last answer saved when not. */
+  | 'games'
   /** A page: the network when there is one, the saved app when not. */
   | 'page'
   /** A rulebook: the saved copy once it has been opened, ranges and all. */
@@ -91,6 +93,15 @@ export function savingData(navigator: object): boolean {
 }
 
 const RULEBOOK = /^\/rules\/[^/]+\.pdf$/;
+const GAMES_PATH = '/api/graphql';
+
+/**
+ * Where the service worker keeps the games query's last answer: one key
+ * for every build, so a deploy that changes the query's text still has
+ * last night's answer offline. The query takes no variables, so one answer
+ * is all there is.
+ */
+export const GAMES_KEY = '/api/graphql?operationName=Games';
 const ASSET = /^\/(assets|images|pdfjs)\//;
 
 /**
@@ -99,7 +110,10 @@ const ASSET = /^\/(assets|images|pdfjs)\//;
  * (utils/precache.ts).
  */
 export function routeFor({ url, method, mode }: RouteRequest, origin: string, shell: ReadonlySet<string>): Route {
-  const { origin: from, pathname } = new URL(url);
+  const { origin: from, pathname, searchParams } = new URL(url);
+  if (from === origin && pathname === GAMES_PATH && method === 'GET' && searchParams.get('operationName') === 'Games') {
+    return 'games';
+  }
   if (from !== origin || pathname.startsWith('/api/')) return 'skip';
   // A rulebook comes before pages: opened in a tab of its own (a citation
   // clicked for a new tab), it is a navigation too.

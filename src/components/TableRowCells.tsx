@@ -7,6 +7,7 @@ import { durationCategory } from '../utils/duration';
 import DurationPill from './DurationPill';
 import KeywordPill from './KeywordPill';
 import AwardsBadge from './AwardsBadge';
+import { WaitingBar } from './DifficultyMeta';
 import { ChevronIcon } from './Icons';
 import { cellClass, nameClass } from './tableClasses';
 import { pillTapClass } from './sharedClasses';
@@ -21,7 +22,7 @@ interface CellsProps {
   /** One-line description, shown in the description column and under the name on phones. */
   short: string;
   kw: KeywordId[];
-  awards: Award[];
+  awards?: Award[];
   /** A tag for the games this one holds (`SubGamesTag`), after the description. */
   subTag?: ReactNode;
   /**
@@ -29,6 +30,11 @@ interface CellsProps {
    * `difficulty`); left out entirely when absent, as in the wishlist.
    */
   difficulty?: Pick<Filterable, 'weight' | 'subgames'>;
+  /**
+   * What waits for the games query on a first visit (`waitingForBgg`): the
+   * difficulty and award count, and the line, each a grey bar until then.
+   */
+  waiting?: { bgg: boolean; awards: boolean; summary: boolean };
   /** Any list-specific cell, slotted in before the actions cell to match `GamesTableHead`. */
   extra?: ReactNode;
   isOpen: boolean;
@@ -50,6 +56,7 @@ export default function TableRowCells({
   awards,
   subTag,
   difficulty,
+  waiting,
   extra,
   isOpen,
   onToggle,
@@ -66,9 +73,10 @@ export default function TableRowCells({
   const badges = (
     <span className="row-badges whitespace-nowrap *:align-[1px] empty:hidden [&>*+*]:ml-1.5">
       {subTag}
-      <AwardsBadge itemName={name} awards={awards} />
+      {waiting?.awards ? <WaitingBar className="w-8" /> : <AwardsBadge itemName={name} awards={awards} small />}
     </span>
   );
+  const line = waiting?.summary ? <WaitingBar className="w-4/5" /> : short;
 
   return (
     <>
@@ -77,7 +85,7 @@ export default function TableRowCells({
           <span className={`col-name ${nameClass}`}>{name}</span>
           {/* Folded under the name where the description column is gone. */}
           <span className="mobile-short block font-sans text-[11.5px] leading-[1.35] font-normal whitespace-normal text-text2 sm:text-[12.5px] xl:hidden">
-            {short} {badges}
+            {line} {badges}
           </span>
         </div>
       </td>
@@ -103,22 +111,25 @@ export default function TableRowCells({
           className={`col-hide col-diff ${cellClass(isOpen)} hidden text-[12.5px] whitespace-nowrap text-text2 2xl:table-cell`}
         >
           {/* The column header names it, so the cell needn't. */}
-          {label ?? (
-            // BoardGameGeek doesn't rate a few party games. A dash says so,
-            // where an empty cell read as something that failed to render.
-            <>
-              <span className="diff-none text-text3" aria-hidden="true">
-                –
-              </span>
-              <span className="sr-only">Not rated on BoardGameGeek</span>
-            </>
-          )}
+          {label ??
+            (waiting?.bgg ? (
+              <WaitingBar className="w-14" />
+            ) : (
+              // BoardGameGeek doesn't rate a few party games. A dash says so,
+              // where an empty cell read as something that failed to render.
+              <>
+                <span className="diff-none text-text3" aria-hidden="true">
+                  –
+                </span>
+                <span className="sr-only">Not rated on BoardGameGeek</span>
+              </>
+            ))}
         </td>
       )}
       <td
         className={`col-hide col-short ${cellClass(isOpen)} hidden text-[12.5px] leading-[1.45] wrap-break-word text-text2 xl:table-cell`}
       >
-        {short} {badges}
+        {line} {badges}
       </td>
       <td className={`col-hide col-tags col-kw ${cellClass(isOpen)} hidden xl:table-cell`}>
         {sortedKw(kw).map((k) => (

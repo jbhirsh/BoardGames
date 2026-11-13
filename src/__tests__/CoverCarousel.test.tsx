@@ -1,3 +1,4 @@
+import { WishlistFixture } from './helpers/WishlistFixture';
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { act, cleanup, render, screen, within, fireEvent } from '@testing-library/react';
 import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router';
@@ -5,7 +6,7 @@ import App, { HomePage } from '../App';
 import CoverCarousel from '../components/CoverCarousel';
 import { FilterProvider } from '../context/FilterContext';
 import { GAMES } from '../data/games';
-import { WISHLIST } from '../data/wishlist';
+import { WISHLIST } from './helpers/wishlist';
 import { FAVOURITES, SECONDS_PER_COVER, ownCovers, wantCovers } from '../utils/heroCovers';
 import { stubMatchMedia } from './helpers/stubMatchMedia';
 
@@ -13,7 +14,9 @@ function renderReel(want = false) {
   return render(
     <MemoryRouter>
       <FilterProvider>
-        <CoverCarousel want={want} />
+        <WishlistFixture>
+          <CoverCarousel want={want} />
+        </WishlistFixture>
       </FilterProvider>
     </MemoryRouter>,
   );
@@ -76,7 +79,9 @@ describe('CoverCarousel', () => {
     rerender(
       <MemoryRouter>
         <FilterProvider>
-          <CoverCarousel want />
+          <WishlistFixture>
+            <CoverCarousel want />
+          </WishlistFixture>
         </FilterProvider>
       </MemoryRouter>,
     );
@@ -164,7 +169,9 @@ describe('CoverCarousel', () => {
       rerender(
         <MemoryRouter>
           <FilterProvider>
-            <CoverCarousel want={false} />
+            <WishlistFixture>
+              <CoverCarousel want={false} />
+            </WishlistFixture>
           </FilterProvider>
         </MemoryRouter>,
       );
@@ -663,7 +670,7 @@ describe('a cover in the home page', () => {
   it("brings a wishlist entry's card into view in Want mode, clearing a filter that hid it", async () => {
     const entry = wantCovers(WISHLIST)[0];
     const router = renderHome('/?c=want&q=zzzz');
-    // The entries mount once the suggestions request settles (here, fails).
+    // The entries mount once the games query answers.
     await screen.findByRole('button', { name: 'Share wishlist' });
     fireEvent.click(screen.getByRole('button', { name: `Show ${entry.name} in the list` }));
     expect(router.state.location.search).toBe('?c=want');
@@ -685,15 +692,16 @@ describe('a cover in the home page', () => {
     expect(screen.getByRole('button', { name: `Show details for ${other.name}` })).toHaveFocus();
   });
 
-  it("lands on the wishlist's heading while its entries are still loading", () => {
+  it("offers no wishlist cover while the games query is out, the wishlist's heading and its loading cards on the page", () => {
+    // The covers are the answer's entries, so there's nothing to land on
+    // before it: the reel waits, and the section shows that it's loading.
     vi.stubGlobal(
       'fetch',
       vi.fn(() => new Promise(() => {})),
     );
     renderHome('/?c=want');
-    const entry = wantCovers(WISHLIST)[0];
-    fireEvent.click(screen.getByRole('button', { name: `Show ${entry.name} in the list` }));
-    expect(scrolled).toHaveBeenCalledWith(document.getElementById('collection'));
-    expect(screen.getByRole('heading', { level: 2, name: 'Wishlist' })).toHaveFocus();
+    expect(screen.queryByRole('button', { name: /^Show .* in the list$/ })).toBeNull();
+    expect(screen.getByRole('heading', { level: 2, name: 'Wishlist' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Loading the wishlist')).toHaveAttribute('aria-busy', 'true');
   });
 });

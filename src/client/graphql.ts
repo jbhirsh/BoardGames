@@ -7,7 +7,9 @@
 // openStream() asks for a subscription over server-sent events (GraphQL
 // Yoga's distinct-connection mode: the same JSON POST, answered as an event
 // stream), readEvents() reads its answers as they arrive and errorCode()
-// says why one was refused, for the rules chat. Documents are sent as the
+// says why one was refused, for the rules chat. query() sends a query by
+// GET instead, which only the games query uses, so the service worker can
+// keep its answer (it can't keep a POST's). Documents are sent as the
 // strings codegen wrote, so no GraphQL library reaches the browser.
 
 import type { TypedDocumentString } from '../gql/graphql';
@@ -153,6 +155,44 @@ export async function request<TResult, TVariables>(
       headers: { 'Content-Type': 'application/json' },
       body: body(document, variables),
       ...(signal ? { signal } : {}),
+    });
+    const json: unknown = await response.json().catch(() => null);
+    return settle(readAnswer<TResult>(json), response.ok);
+  } catch {
+    return { ok: false, error: GENERIC_ERROR };
+  }
+}
+
+/**
+ * The GET address of a query: its document, operation name and variables
+ * in the query string. The service worker recognises the games query's by
+ * its operation name (routeFor in utils/offline.ts).
+ */
+function queryUrl<TVariables>(document: TypedDocumentString<unknown, TVariables>, variables: TVariables): string {
+  const query = document.toString();
+  const params = new URLSearchParams({ query, operationName: operationName(query) ?? '' });
+  if (variables && Object.keys(variables).length > 0) params.set('variables', JSON.stringify(variables));
+  return `${ENDPOINT}?${params.toString()}`;
+}
+
+/**
+ * Sends one query by GET, with the header Yoga's CSRF check asks of a GET
+ * (a form or an image can't send it). Only queries can go this way: the
+ * API refuses a mutation over GET. `fresh` asks for the network's answer
+ * however long it takes (`cache: 'reload'`, which the service worker
+ * honours rather than serving its saved copy), as after the owner's edit.
+ */
+export async function query<TResult, TVariables>(
+  document: TypedDocumentString<TResult, TVariables>,
+  variables: TVariables,
+  signal?: AbortSignal,
+  { fresh = false }: { fresh?: boolean } = {},
+): Promise<Result<TResult>> {
+  try {
+    const response = await fetch(queryUrl(document, variables), {
+      headers: { 'x-graphql-yoga-csrf': '1' },
+      ...(signal ? { signal } : {}),
+      ...(fresh ? { cache: 'reload' as const } : {}),
     });
     const json: unknown = await response.json().catch(() => null);
     return settle(readAnswer<TResult>(json), response.ok);

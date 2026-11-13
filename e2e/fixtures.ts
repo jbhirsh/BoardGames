@@ -14,24 +14,9 @@ import { test as base, expect, type Page, type Request, type Route } from '@play
 /** The anonymous voter id the page finds in localStorage, so vote bodies are exact. */
 export const ANON_ID = 'e2e-anon-00000001';
 
-/** One approved friend suggestion, as Query.suggestions answers it. */
-export const SUGGESTION = {
-  id: 'sug-0e2e0e2e0e2e',
-  game: 'Fixture Quest',
-  name: 'Robin',
-  note: 'We loved it at game night',
-  source: 'FRIEND',
-  details: {
-    year: null,
-    min: 2,
-    max: 4,
-    mins: 30,
-    desc: 'A made-up game for the end-to-end tests.',
-    kw: ['strategy'],
-    type: null,
-    img: null,
-  },
-} as const;
+import { GAMES_ANSWER, SUGGESTION } from './games';
+
+export { SUGGESTION };
 
 /** Stored vote counts; wishlistVotes reports 0 for every other id it is asked about. */
 const VOTE_COUNTS: Record<string, number> = { splendor: 3, [SUGGESTION.id]: 1 };
@@ -50,9 +35,18 @@ export interface Operation {
   variables: Record<string, unknown>;
 }
 
-/** The GraphQL operation a request carries, or null for anything else. */
+/** The GraphQL operation a request carries, a POST's body or a GET's query string (the games query), or null for anything else. */
 export function operationOf(request: Request): Operation | null {
-  if (request.method() !== 'POST' || new URL(request.url()).pathname !== '/api/graphql') return null;
+  const url = new URL(request.url());
+  if (url.pathname !== '/api/graphql') return null;
+  if (request.method() === 'GET') {
+    const name = url.searchParams.get('operationName');
+    const vars: unknown = JSON.parse(url.searchParams.get('variables') ?? '{}');
+    return name
+      ? { operationName: name, variables: typeof vars === 'object' && vars !== null ? { ...vars } : {} }
+      : null;
+  }
+  if (request.method() !== 'POST') return null;
   const body: unknown = request.postDataJSON();
   if (typeof body !== 'object' || body === null || !('operationName' in body)) return null;
   const { operationName, variables }: { operationName?: unknown; variables?: unknown } = body;
@@ -185,7 +179,7 @@ async function stubBackend(page: Page, baseURL: string, unexpected: string[]): P
   await stubOperation(page, 'Session', () => ({ session: { admin: false } }));
   // Signed out: no Better Auth session either.
   await stubAuth(page, '/get-session', () => null);
-  await stubOperation(page, 'Suggestions', () => ({ suggestions: [SUGGESTION] }));
+  await stubOperation(page, 'Games', () => GAMES_ANSWER);
   // A count for every id asked about, zeros included; a vote answers the
   // entry's new count.
   await stubOperation(page, 'WishlistVotes', ({ ids }) => ({

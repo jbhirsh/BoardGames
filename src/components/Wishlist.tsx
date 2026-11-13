@@ -10,6 +10,7 @@ import ViewToggle from './ViewToggle';
 import ViewFlip from './ViewFlip';
 import NoResults from './NoResults';
 import AdminPanel from './AdminPanel';
+import Notice from './Notice';
 import { useFilterResults } from '../context/useFilter';
 import { useFilteredWishlist } from '../context/useFilteredWishlist';
 import { useAuth } from '../context/useAuth';
@@ -38,6 +39,21 @@ import {
 } from './sharedClasses';
 
 /**
+ * A first visit's wishlist while the games query is out (a later one has
+ * the service worker's last answer at once): six grey cards in the grid,
+ * pulsing as the routes' fallback does.
+ */
+function LoadingCards() {
+  return (
+    <div className={cardGridClass} aria-busy="true" aria-label="Loading the wishlist">
+      {Array.from({ length: 6 }, (_, i) => (
+        <div key={i} className="h-56 animate-pulse rounded-panel border border-border bg-bg2" />
+      ))}
+    </div>
+  );
+}
+
+/**
  * The "We want" view: the static wishlist plus approved friend suggestions,
  * run through the same filter bar as the collection. The body mounts once
  * the suggestions have loaded, because the votes hook needs its id set
@@ -58,7 +74,7 @@ import {
  * the bottom (PhoneNav).
  */
 export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
-  const { items, loaded } = useWishlistItems();
+  const { items, loaded, failed, reload } = useWishlistItems();
   const isPhone = useIsPhone();
   const filtered = useFilteredWishlist();
   const sectionRef = useRef<HTMLElement>(null);
@@ -113,9 +129,14 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
           <h2 className={sectionTitleClass} tabIndex={-1} data-focus-target="title">
             Wishlist
           </h2>
-          <span className={sectionCountClass}>
-            {filtered.length} {filtered.length === 1 ? 'game' : 'games'}
-          </span>
+          {failed ? null : loaded ? (
+            <span className={sectionCountClass}>
+              {filtered.length} {filtered.length === 1 ? 'game' : 'games'}
+            </span>
+          ) : (
+            // Unknown until the games query answers: a bar where the count goes.
+            <span className="inline-block h-3 w-14 animate-pulse rounded-sm bg-bg2" aria-hidden="true" />
+          )}
         </div>
         {/* The wishlist's counterpart to the collection's Pick for us, on
             the heading's line: the form sits below every entry. */}
@@ -140,7 +161,17 @@ export default function Wishlist({ hidden = false }: { hidden?: boolean }) {
       <p className="-mt-1 mb-4 text-[14px] leading-normal text-pretty text-text2 sm:-mt-3.5 sm:mb-6 sm:text-[15px]">
         Heart the games you'd play. The top pick is what we buy next.
       </p>
-      {loaded && <WishlistBody items={items} filtered={filtered} isPhone={isPhone} />}
+      {failed ? (
+        // No answer and none saved: say so, rather than an empty list that
+        // reads as no games, or as none matching the filters.
+        <Notice tone="error" action={{ label: 'Try again', onClick: reload }}>
+          The wishlist didn't load. Check the connection, then try again.
+        </Notice>
+      ) : loaded ? (
+        <WishlistBody items={items} filtered={filtered} isPhone={isPhone} />
+      ) : (
+        <LoadingCards />
+      )}
     </section>
   );
 }

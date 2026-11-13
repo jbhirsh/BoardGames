@@ -147,11 +147,16 @@ const refuse = (refusal: { status: number; error: string; code?: string }) =>
  * after one retry when it was overloaded. A failure once chunks are flowing
  * ends the stream with CUT_OFF_NOTE.
  */
-export async function askRules(deps: ChatDeps, ip: string, input: AskRulesInput): Promise<AsyncGenerator<string>> {
+export async function askRules(
+  deps: ChatDeps,
+  ip: string,
+  input: AskRulesInput,
+  defer?: (work: Promise<void>) => void,
+): Promise<AsyncGenerator<string>> {
   // The per-IP limit fails open like every other endpoint's: in an outage the
-  // daily check below refuses anyway, and while Redis is merely slow, failing
+  // daily check below refuses anyway, and while the database is merely slow, failing
   // closed here too would only double the chance of a 503.
-  const perIp = await rateLimitRefusal(deps.limiter, ip);
+  const perIp = await rateLimitRefusal(deps.limiter, ip, { defer });
   if (perIp) throw refuse(perIp);
 
   const { slug, message } = input;
@@ -180,10 +185,11 @@ export async function askRules(deps: ChatDeps, ip: string, input: AskRulesInput)
   // The daily budget is checked last, after the per-IP limit and every 400 or
   // 404, so it counts only questions that will reach Gemini: one abuser's
   // per-IP refusals, or malformed requests, can't burn everyone's budget.
-  // If Redis can't answer, nothing would cap spend, so it fails closed.
+  // If the database can't answer, nothing would cap spend, so it fails closed.
   const daily = await rateLimitRefusal(deps.dailyLimiter, 'global', {
     refusal: DAILY_LIMIT_REFUSAL,
     failClosed: true,
+    defer,
   });
   if (daily) throw refuse(daily);
 

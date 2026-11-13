@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { GAMES } from '../data/games';
-import { WISHLIST } from '../data/wishlist';
+import { WISHLIST } from './helpers/wishlist';
 import type { WishlistItem } from '../data/types';
 import { FAVOURITES, STILL_COUNT, gameAnchor, ownCovers, wantCovers, wishAnchor } from '../utils/heroCovers';
 

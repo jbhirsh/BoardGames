@@ -1,5 +1,4 @@
-import { COMING_SOON, GAMES } from '../src/data/games';
-import { WISHLIST } from '../src/data/wishlist';
+import { COMING_SOON, GAMES, WISHLIST } from './games';
 import { test, expect, SUGGESTION } from './fixtures';
 
 /** Every game row in the visible list carries a "Show details for <name>" toggle. */
@@ -272,11 +271,20 @@ test('on a wider screen, add-ons sit side by side, each name starting its row, i
 test("on a wider screen, an open game's awards sit side by side", async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Show details for Ticket to Ride' }).click();
+  // Ticket to Ride's wins (the stub's), in the list before its other honours'.
   const wins = page
-    .getByRole('row')
-    .filter({ has: page.getByRole('heading', { name: 'Awards' }) })
+    .getByRole('list')
+    .filter({ has: page.getByText('Spiel des Jahres, 2004', { exact: true }) })
     .getByRole('listitem');
-  const [first, second] = [(await wins.nth(0).boundingBox())!, (await wins.nth(1).boundingBox())!];
+  await expect(wins.nth(1)).toBeVisible();
+  // Both boxes from one frame: the row is still opening, so two separate
+  // reads can land a frame apart and see it at different heights.
+  const [first, second] = await wins.evaluateAll((items) =>
+    items.slice(0, 2).map((item) => {
+      const { x, y, width } = item.getBoundingClientRect();
+      return { x, y, width };
+    }),
+  );
   expect(second.y).toBe(first.y);
   expect(second.x).toBeGreaterThan(first.x + first.width);
 });

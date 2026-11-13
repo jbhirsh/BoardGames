@@ -1,12 +1,11 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import * as Sentry from '@sentry/node';
 import { toNodeHandler } from 'better-auth/node';
 import { auth, ownerSessionReader } from './_auth.js';
-import { lookupGame } from './_lib/bgg.js';
+import { bggSpelling, fetchBggItem, lookupGame } from './_lib/bgg.js';
 import { isJsonRequest } from './_lib/json.js';
 import { ownerEmail, baseUrl, resendMailer } from './_lib/mail.js';
 import { getLimiter } from './_lib/rateLimit.js';
-import { getRawRedis, getRedis } from './_lib/redis.js';
+import { database } from './_db/client.js';
 import { assembleRulesText, streamRulesAnswer } from './_lib/rulesAssistant.js';
 import { initSentry, reportError } from './_lib/sentry.js';
 import { CHAT_DAILY_LIMIT } from './_resolvers/chat.js';
@@ -18,7 +17,7 @@ initSentry();
 // The whole API: one Vercel function serving GraphQL (Yoga) at /api/graphql,
 // the schema in _schema.graphql and the resolvers in _resolvers/, and the
 // owner's sign-in (Better Auth, _auth.ts) at /api/auth/*, which vercel.json
-// rewrites here. This file only wires in the real services: Upstash Redis,
+// rewrites here. This file only wires in the real services: the database,
 // Resend, BoardGameGeek, Gemini, the rate limiters and the owner check.
 // vercel.json gives it the chat's 60 s and the rules text (includeFiles);
 // every other operation keeps its own, tighter limit in its resolver.
@@ -32,41 +31,32 @@ const limiters = {
 };
 const chatLimiter = getLimiter('chat', 10, 60);
 
-// Per-IP limits alone don't cap a day's spend (many IPs, or a Redis outage),
-// so every caller also shares one daily budget, set well above a busy game
-// night. Hard-coded: changing an env var on Vercel needs a redeploy anyway.
-// It alone fails closed, so it alone carries the spend guarantee; its short
-// Upstash timeout makes an outage refuse in about 2 s rather than 5.
-// getLimiter's sliding window counts fixed UTC-day buckets and weights the
-// previous day's by how much of it still falls within the last 24 hours, so
-// Redis sees roughly "the last 24 hours" and frees questions gradually. But
-// Upstash's in-memory cache remembers a refusal until the bucket ends, so a
-// warm instance that has refused once keeps refusing until 00:00 UTC without
-// asking Redis; only a cold one gets the gradual release. The cache is kept:
-// it only ever refuses sooner, never lets an extra question through.
-const chatDailyLimiter = getLimiter('chat-global', CHAT_DAILY_LIMIT, 86400, { timeoutMs: 2000 });
-
-// Without the KV env vars the cap is silently off (fine for local dev and
-// tests); in production that is a misconfiguration worth hearing about.
-if (!chatDailyLimiter && process.env.VERCEL_ENV === 'production') {
-  Sentry.captureMessage('chat daily cap disabled: KV env missing', 'warning');
-}
+// Per-IP limits alone don't cap a day's spend (many IPs), so every caller
+// also shares one daily budget, set well above a busy game night.
+// Hard-coded: changing an env var on Vercel needs a redeploy anyway. It
+// alone fails closed, so it alone carries the spend guarantee: a database
+// that doesn't answer within 2 s refuses the question, and so does a
+// production deployment with no database (getLimiter). Its window is a UTC
+// day, so the budget frees at midnight UTC.
+const chatDailyLimiter = getLimiter('chat-global', CHAT_DAILY_LIMIT, 86400, { timeoutMs: 2000, failClosed: true });
 
 let deps: ApiDeps | undefined;
 
-// Built on the first request, not at load: getRedis() throws without the KV
-// env vars, which should fail a request (a 500), not the function.
+// Built on the first request, not at load, so a missing setting fails a
+// request (a 500), not the function. The database opens on first use.
 function realDeps(): ApiDeps {
   if (deps) return deps;
-  const redis = getRedis();
   const mailer = resendMailer();
+  const db = () => database();
   deps = {
-    redis,
+    db,
     suggestions: {
-      redis: getRawRedis(),
+      db,
       mailer,
       baseUrl,
       lookup: (name) => lookupGame(name, process.env.BGG_API_TOKEN, fetch, 6000),
+      spelling: (name) => bggSpelling(name, process.env.BGG_API_TOKEN, fetch, 3000),
+      item: (bggId) => fetchBggItem(bggId, fetch, 4000),
     },
     chat: {
       limiter: chatLimiter,

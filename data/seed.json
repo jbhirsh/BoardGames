@@ -1,0 +1,1600 @@
+{
+  "//": [
+    "The hand-written data the one-time copy (scripts/copy-from-redis.ts) moves into the database, from the files #290 part 2b deletes.",
+    "wishlist: the 39 entries src/data/wishlist.ts held, as games rows, their box art included (`npm run box-art` rewrites each `image`); also the wishlist fixture for tests and e2e.",
+    "awards: every hand-written award win, wishlist and collection, by BoardGameGeek id; the copy keeps those BGG does not list as owner_awards.",
+    "honoursFrom: a later edition whose honours are its original edition's (Dominion, Love Letter).",
+    "collection: the BGG ids of src/data/games.ts and the games inside its games, whose BoardGameGeek data the copy fetches.",
+    "The awards, honoursFrom and collection parts go with the copy, in a follow-up once production has run it."
+  ],
+  "wishlist": [
+    {
+      "id": "lost-cities",
+      "name": "Lost Cities",
+      "status": "wanted",
+      "source": "curated",
+      "players": "2",
+      "minPlayers": 2,
+      "maxPlayers": 2,
+      "dur": "30 min",
+      "minutes": 30,
+      "description": "An elegant two-player card game of expeditions. Do you commit or hold back? Deceptively tense, quick, and endlessly replayable — the head-to-head filler you don't own yet.",
+      "keywords": ["card-game", "strategy", "quick-play"],
+      "section": "two-player",
+      "video": "how to play Lost Cities board game tutorial",
+      "image": "/images/wishlist/lost-cities.webp",
+      "bggId": 50
+    },
+    {
+      "id": "nemesis",
+      "name": "Nemesis",
+      "status": "wanted",
+      "source": "curated",
+      "players": "1–5",
+      "minPlayers": 1,
+      "maxPlayers": 5,
+      "dur": "90–180 min",
+      "minutes": 180,
+      "description": "Cinematic sci-fi survival on an alien-infested spaceship. Semi-cooperative with secret objectives — expect tension, betrayal, and dramatic deaths.",
+      "keywords": ["thematic", "strategy", "bluffing"],
+      "section": "heavy",
+      "video": "how to play Nemesis board game tutorial",
+      "image": "/images/wishlist/nemesis.webp",
+      "bggId": 167355
+    },
+    {
+      "id": "blood-on-the-clocktower",
+      "name": "Blood on the Clocktower",
+      "status": "wanted",
+      "source": "curated",
+      "players": "5–20",
+      "minPlayers": 5,
+      "maxPlayers": 20,
+      "dur": "60–120 min",
+      "minutes": 120,
+      "description": "The most acclaimed social deduction game ever made. 100+ roles, a storyteller mechanic, and dead players who stay active. Perfect for 10–15 people.",
+      "keywords": ["social", "deduction", "bluffing", "party"],
+      "section": "party",
+      "video": "how to play Blood on the Clocktower tutorial",
+      "image": "/images/wishlist/blood-on-the-clocktower.webp",
+      "bggId": 240980
+    },
+    {
+      "id": "splendor",
+      "name": "Splendor",
+      "status": "wanted",
+      "source": "curated",
+      "players": "2–4",
+      "minPlayers": 2,
+      "maxPlayers": 4,
+      "dur": "30 min",
+      "minutes": 30,
+      "description": "Collect gem tokens, buy development cards, and attract nobles. Deceptively simple engine-building with beautiful components and surprisingly deep decisions.",
+      "keywords": ["strategy", "family", "card-game"],
+      "section": "strategy",
+      "video": "how to play Splendor board game tutorial",
+      "image": "/images/wishlist/splendor.webp",
+      "bggId": 148228
+    },
+    {
+      "id": "wyrmspan",
+      "name": "Wyrmspan",
+      "status": "wanted",
+      "source": "curated",
+      "players": "1–5",
+      "minPlayers": 1,
+      "maxPlayers": 5,
+      "dur": "45–90 min",
+      "minutes": 90,
+      "description": "Wingspan's dragon-taming cousin. Excavate caves, entice dragons into your lair, and chain their abilities into an engine. Familiar rhythm, deeper decisions, gorgeous art.",
+      "keywords": ["strategy", "card-game"],
+      "section": "strategy",
+      "video": "how to play Wyrmspan board game tutorial",
+      "image": "/images/wishlist/wyrmspan.webp",
+      "bggId": 410201
+    },
+    {
+      "id": "wyrmspan-dragon-academy",
+      "name": "Wyrmspan: Dragon Academy",
+      "status": "wanted",
+      "source": "curated",
+      "players": "1–5",
+      "minPlayers": 1,
+      "maxPlayers": 5,
+      "dur": "45–90 min",
+      "minutes": 90,
+      "description": "The first Wyrmspan expansion. Eighty new dragons and 25 caves, fledglings you train up for bonuses and points, new dragon guilds and objectives, and a round tracker that offers an income choice when you pass. Requires the base game.",
+      "keywords": ["strategy", "card-game"],
+      "section": "strategy",
+      "expands": "Wyrmspan",
+      "video": "Wyrmspan Dragon Academy expansion how to play",
+      "image": "/images/wishlist/wyrmspan-dragon-academy.webp",
+      "bggId": 453406
+    },
+    {
+      "id": "dominion-seaside",
+      "name": "Dominion: Seaside",
+      "status": "wanted",
+      "source": "curated",
+      "players": "2–4",
+      "minPlayers": 2,
+      "maxPlayers": 4,
+      "dur": "30 min",
+      "minutes": 30,
+      "description": "Dominion's second expansion, about planning a turn ahead. Duration cards stay in play and pay out again at the start of your next turn, and mats set cards aside for later. The 2022 Second Edition has 27 Kingdom cards, swapping eight first-edition cards for nine new ones and doubling the Durations to sixteen. Requires the base game.",
+      "keywords": ["deck-building", "strategy", "card-game"],
+      "section": "strategy",
+      "expands": "Dominion",
+      "video": "how to play Dominion Seaside second edition",
+      "image": "/images/wishlist/dominion-seaside.webp",
+      "bggId": 355958
+    },
+    {
+      "id": "dominion-prosperity",
+      "name": "Dominion: Prosperity",
+      "status": "wanted",
+      "source": "curated",
+      "players": "2–4",
+      "minPlayers": 2,
+      "maxPlayers": 4,
+      "dur": "30 min",
+      "minutes": 30,
+      "description": "Dominion's big-money expansion. Platinum and Colony sit above Gold and Province, Treasures come with abilities of their own, and Victory point tokens reward decks that score as they go. The 2022 Second Edition keeps 25 Kingdom cards, nine of them new. Requires the base game.",
+      "keywords": ["deck-building", "strategy", "card-game"],
+      "section": "strategy",
+      "expands": "Dominion",
+      "video": "how to play Dominion Prosperity second edition",
+      "image": "/images/wishlist/dominion-prosperity.webp",
+      "bggId": 362517
+    },
+    {
+      "id": "catan-seafarers",
+      "name": "Catan: Seafarers",
+      "status": "wanted",
+      "source": "curated",
+      "players": "3–4",
+      "minPlayers": 3,
+      "maxPlayers": 4,
+      "dur": "60–90 min",
+      "minutes": 90,
+      "description": "Catan goes to sea. Ships run across the water like roads to reach new islands, gold fields pay out any resource you choose, and a pirate blocks shipping the way the robber blocks land. Instead of one random board it comes with a book of scenarios to play through. Requires the Catan base game; a separate extension adds five and six players.",
+      "keywords": ["strategy", "negotiation", "family"],
+      "section": "strategy",
+      "expands": "Catan",
+      "video": "how to play Catan Seafarers expansion tutorial",
+      "image": "/images/wishlist/catan-seafarers.webp",
+      "bggId": 325
+    },
+    {
+      "id": "harmonies",
+      "name": "Harmonies",
+      "status": "wanted",
+      "source": "curated",
+      "players": "1–4",
+      "minPlayers": 1,
+      "maxPlayers": 4,
+      "dur": "30–45 min",
+      "minutes": 45,
+      "description": "Stack colourful tokens into mountains, rivers, and forests, then welcome animals to the landscapes you've built. A serene puzzle with real spatial bite in under an hour.",
+      "keywords": ["strategy", "abstract", "family"],
+      "section": "strategy",
+      "video": "how to play Harmonies board game tutorial",
+      "image": "/images/wishlist/harmonies.webp",
+      "bggId": 414317
+    },
+    {
+      "id": "zombie-burrito",
+      "name": "Zombie Burrito",
+      "status": "wanted",
+      "source": "curated",
+      "players": "3–6",
+      "minPlayers": 3,
+      "maxPlayers": 6,
+      "dur": "15 min",
+      "minutes": 15,
+      "description": "Throw Throw Burrito's undead sequel. Match cards, grab the burrito, and throw it at your friends — now with zombie infections and a tent to hide in. Loud, fast, and chaotic.",
+      "keywords": ["party", "active", "card-game", "quick-play"],
+      "section": "party",
+      "video": "how to play Zombie Burrito game tutorial",
+      "image": "/images/wishlist/zombie-burrito.webp",
+      "bggId": 425077
+    },
+    {
+      "id": "everdell",
+      "name": "Everdell",
+      "status": "wanted",
+      "source": "curated",
+      "players": "1–4",
+      "minPlayers": 1,
+      "maxPlayers": 4,
+      "dur": "40–80 min",
+      "minutes": 80,
+      "description": "Build a woodland city of critters and constructions beneath the Ever Tree. Worker placement meets tableau-building with cards that combo beautifully and a board that stands up.",
+      "keywords": ["strategy", "card-game", "thematic"],
+      "section": "strategy",
+      "video": "how to play Everdell board game tutorial",
+      "image": "/images/wishlist/everdell.webp",
+      "bggId": 199792
+    },
+    {
+      "id": "exploding-kittens-board-game",
+      "name": "Exploding Kittens: The Board Game",
+      "status": "wanted",
+      "source": "curated",
+      "players": "2–6",
+      "minPlayers": 2,
+      "maxPlayers": 6,
+      "dur": "30 min",
+      "minutes": 30,
+      "description": "The card game grows a board. Move around a kitten-themed track, collect and play cards, and dodge the explosions — same silly energy, more room to scheme.",
+      "keywords": ["party", "family", "card-game"],
+      "section": "party",
+      "video": "Exploding Kittens The Board Game how to play",
+      "image": "/images/wishlist/exploding-kittens-board-game.webp",
+      "bggId": 447244
+    },
+    {
+      "id": "7-wonders-duel",
+      "name": "7 Wonders Duel",
+      "status": "wanted",
+      "source": "curated",
+      "players": "2",
+      "minPlayers": 2,
+      "maxPlayers": 2,
+      "dur": "30 min",
+      "minutes": 30,
+      "description": "7 Wonders rebuilt for exactly two. Draft from a pyramid of cards, race for science or military supremacy, and build wonders before your rival does. Tense, sharp, and 30 minutes.",
+      "keywords": ["strategy", "card-game"],
+      "section": "two-player",
+      "video": "how to play 7 Wonders Duel tutorial",
+      "image": "/images/wishlist/7-wonders-duel.webp",
+      "bggId": 173346
+    },
+    {
+      "id": "dnup",
+      "name": "dnup",
+      "status": "wanted",
+      "source": "curated",
+      "players": "2–5",
+      "minPlayers": 2,
+      "maxPlayers": 5,
+      "dur": "15–20 min",
+      "minutes": 20,
+      "description": "A fast, clever shedding card game where every card has two values and flipping your hand changes them all. Play sets, outbid the table, and be first to empty your hand. Quick, portable, and addictive for 2–5.",
+      "keywords": ["card-game", "quick-play", "family"],
+      "section": "party",
+      "video": "how to play dnup card game tutorial",
+      "image": "/images/wishlist/dnup.webp",
+      "bggId": 432456
+    },
+    {
+      "id": "sky-team",
+      "name": "Sky Team",
+      "status": "wanted",
+      "source": "curated",
+      "players": "2",
+      "minPlayers": 2,
+      "maxPlayers": 2,
+      "dur": "15 min",
+      "minutes": 15,
+      "description": "Pilot and co-pilot land a plane together by placing dice on the cockpit — lower the gear, deploy flaps, brake, keep it level — with no talking once the round starts. Each airport is a new scenario. Fifteen tense minutes a landing.",
+      "keywords": ["cooperative", "strategy", "quick-play"],
+      "section": "two-player",
+      "video": "how to play Sky Team board game tutorial",
+      "image": "/images/wishlist/sky-team.webp",
+      "bggId": 373106
+    },
+    {
+      "id": "star-realms",
+      "name": "Star Realms",
+      "status": "wanted",
+      "source": "curated",
+      "players": "2",
+      "minPlayers": 2,
+      "maxPlayers": 2,
+      "dur": "20 min",
+      "minutes": 20,
+      "description": "Head-to-head deck-building in 20 minutes. Both players start with the same weak fleet and buy ships and bases from a shared row to batter the other's authority to zero. Faction combos reward specialising. Fits in a pocket.",
+      "keywords": ["deck-building", "card-game", "strategy"],
+      "section": "two-player",
+      "video": "how to play Star Realms tutorial",
+      "image": "/images/wishlist/star-realms.webp",
+      "bggId": 147020
+    },
+    {
+      "id": "the-crew",
+      "name": "The Crew: The Quest for Planet Nine",
+      "status": "wanted",
+      "source": "curated",
+      "players": "2–5",
+      "minPlayers": 2,
+      "maxPlayers": 5,
+      "dur": "20 min",
+      "minutes": 20,
+      "description": "Trick-taking like Hearts, but everyone wins or loses together. Each of 50 missions hands specific players tasks such as 'win the blue 4' or 'take no tricks', and you can barely communicate. Twenty minutes a mission — you'll play three in a row.",
+      "keywords": ["cooperative", "card-game", "quick-play"],
+      "section": "coop",
+      "video": "how to play The Crew Quest for Planet Nine tutorial",
+      "image": "/images/wishlist/the-crew.webp",
+      "bggId": 284083
+    },
+    {
+      "id": "pandemic-legacy-season-1",
+      "name": "Pandemic Legacy: Season 1",
+      "status": "wanted",
+      "source": "curated",
+      "players": "2–4",
+      "minPlayers": 2,
+      "maxPlayers": 4,
+      "dur": "60 min",
+      "minutes": 60,
+      "description": "Pandemic as a year-long story over 12 to 24 sessions. Cities scar permanently, characters gain relationships and can die, sealed boxes open with new rules, and stickers change the board forever. Regularly called the best board game ever designed. Play it with one fixed group.",
+      "keywords": ["cooperative", "strategy", "thematic"],
+      "section": "coop",
+      "video": "how to play Pandemic Legacy Season 1 tutorial",
+      "image": "/images/wishlist/pandemic-legacy-season-1.webp",
+      "bggId": 161936
+    },
+    {
+      "id": "bomb-busters",
+      "name": "Bomb Busters",
+      "status": "wanted",
+      "source": "curated",
+      "players": "2–5",
+      "minPlayers": 2,
+      "maxPlayers": 5,
+      "dur": "30 min",
+      "minutes": 30,
+      "description": "Each player holds a rack of numbered wires facing out — you see everyone's but your own. Cut a wire by naming a number you think a teammate holds; a wrong guess costs a detonator. Sixty-six missions add gadgets and traps as the campaign ramps up.",
+      "keywords": ["cooperative", "deduction", "family"],
+      "section": "coop",
+      "video": "how to play Bomb Busters board game tutorial",
+      "image": "/images/wishlist/bomb-busters.webp",
+      "bggId": 413246
+    },
+    {
+      "id": "micromacro-crime-city",
+      "name": "MicroMacro: Crime City",
+      "status": "wanted",
+      "source": "curated",
+      "players": "1–4",
+      "minPlayers": 1,
+      "maxPlayers": 4,
+      "dur": "15–45 min",
+      "minutes": 45,
+      "description": "A giant black-and-white poster shows a city frozen in time. Sixteen cases ask you to find a body, then track victim and suspects backward across the map to reconstruct the crime. Works with kids, grandparents, and anyone who loved Where's Wally.",
+      "keywords": ["cooperative", "deduction", "family"],
+      "section": "coop",
+      "video": "how to play MicroMacro Crime City tutorial",
+      "image": "/images/wishlist/micromacro-crime-city.webp",
+      "bggId": 318977
+    },
+    {
+      "id": "wingspan",
+      "name": "Wingspan",
+      "status": "wanted",
+      "source": "curated",
+      "players": "1–5",
+      "minPlayers": 1,
+      "maxPlayers": 5,
+      "dur": "40–70 min",
+      "minutes": 70,
+      "description": "Attract birds to your forest, grassland, and wetland by paying food and eggs. Each bird has a real-world fact and a power that fires whenever you use its habitat, so your board becomes an engine that lays eggs, caches food, and draws cards. Gorgeous production with a birdfeeder dice tower.",
+      "keywords": ["strategy", "card-game", "family"],
+      "section": "strategy",
+      "video": "how to play Wingspan board game tutorial",
+      "image": "/images/wishlist/wingspan.webp",
+      "bggId": 266192
+    },
+    {
+      "id": "quacks-of-quedlinburg",
+      "name": "The Quacks of Quedlinburg",
+      "status": "wanted",
+      "source": "curated",
+      "players": "2–4",
+      "minPlayers": 2,
+      "maxPlayers": 4,
+      "dur": "45 min",
+      "minutes": 45,
+      "description": "You're a quack doctor brewing a potion by pulling ingredient chips blindly from your bag. Each chip moves you up your cauldron for points, but too many cherry bombs and it explodes. Buy better ingredients between rounds. Loud, tense, and a hit with the Exploding Kittens crowd.",
+      "keywords": ["strategy", "family"],
+      "section": "strategy",
+      "video": "how to play Quacks of Quedlinburg tutorial",
+      "image": "/images/wishlist/quacks-of-quedlinburg.webp",
+      "bggId": 244521
+    },
+    {
+      "id": "cascadia",
+      "name": "Cascadia",
+      "status": "wanted",
+      "source": "curated",
+      "players": "1–4",
+      "minPlayers": 1,
+      "maxPlayers": 4,
+      "dur": "30–45 min",
+      "minutes": 45,
+      "description": "Take a paired habitat tile and wildlife token from the market and add them to your slice of the Pacific Northwest. Each animal scores in its own pattern — bears in pairs, salmon in runs — and the scoring cards change every game. Calm, quick, and the same weight as Azul.",
+      "keywords": ["strategy", "abstract", "family"],
+      "section": "strategy",
+      "video": "how to play Cascadia board game tutorial",
+      "image": "/images/wishlist/cascadia.webp",
+      "bggId": 295947
+    },
+    {
+      "id": "survive-the-island",
+      "name": "Survive the Island",
+      "status": "wanted",
+      "source": "curated",
+      "players": "2–5",
+      "minPlayers": 2,
+      "maxPlayers": 5,
+      "dur": "45 min",
+      "minutes": 45,
+      "description": "The 2024 remake of the classic Survive: Escape from Atlantis. Your island is sinking tile by tile and you need to get your explorers to the corner islands by boat or by swimming — past sharks, whales, and sea serpents that the other players steer at you. Cutthroat, quick to teach, and 45 minutes of glee for 2–5.",
+      "keywords": ["strategy", "family", "classic"],
+      "section": "strategy",
+      "video": "how to play Survive the Island board game tutorial",
+      "image": "/images/wishlist/survive-the-island.webp",
+      "bggId": 425428
+    },
+    {
+      "id": "akropolis",
+      "name": "Akropolis",
+      "status": "wanted",
+      "source": "curated",
+      "players": "2–4",
+      "minPlayers": 2,
+      "maxPlayers": 4,
+      "dur": "25 min",
+      "minutes": 25,
+      "description": "Take three-hex tiles from a market and stack them to build a Greek city upward. Houses want to cluster, temples want to be surrounded, and building higher multiplies your score. Twenty-five minutes and instantly teachable.",
+      "keywords": ["strategy", "abstract", "family"],
+      "section": "strategy",
+      "video": "how to play Akropolis board game tutorial",
+      "image": "/images/wishlist/akropolis.webp",
+      "bggId": 357563
+    },
+    {
+      "id": "seti",
+      "name": "SETI: Search for Extraterrestrial Intelligence",
+      "status": "wanted",
+      "source": "curated",
+      "players": "1–4",
+      "minPlayers": 1,
+      "maxPlayers": 4,
+      "dur": "40–160 min",
+      "minutes": 160,
+      "description": "Launch probes, orbit planets on a rotating solar-system board, and scan for signals. Midway through you discover alien species that bolt on whole new rule modules. Real science, one to four players, and two to three hours for a full evening.",
+      "keywords": ["strategy", "thematic"],
+      "section": "heavy",
+      "video": "how to play SETI board game tutorial",
+      "image": "/images/wishlist/seti.webp",
+      "bggId": 418059
+    },
+    {
+      "id": "ark-nova",
+      "name": "Ark Nova",
+      "status": "wanted",
+      "source": "curated",
+      "players": "1–4",
+      "minPlayers": 1,
+      "maxPlayers": 4,
+      "dur": "90–150 min",
+      "minutes": 150,
+      "description": "Build a modern zoo by playing animal cards into enclosures, backing conservation projects, and hiring staff. Two scoring tracks move toward each other and the game ends when they cross. Two to three hours with 255 unique cards.",
+      "keywords": ["strategy", "thematic"],
+      "section": "heavy",
+      "video": "how to play Ark Nova board game tutorial",
+      "image": "/images/wishlist/ark-nova.webp",
+      "bggId": 342942
+    },
+    {
+      "id": "terraforming-mars",
+      "name": "Terraforming Mars",
+      "status": "wanted",
+      "source": "curated",
+      "players": "1–5",
+      "minPlayers": 1,
+      "maxPlayers": 5,
+      "dur": "120 min",
+      "minutes": 120,
+      "description": "Corporations raise the temperature, oxygen, and ocean count on Mars by playing project cards from a deck of over 200, placing cities and forests on a shared hex map. About two hours, with a solo mode and a well-loved app.",
+      "keywords": ["strategy", "thematic", "card-game"],
+      "section": "heavy",
+      "video": "how to play Terraforming Mars tutorial",
+      "image": "/images/wishlist/terraforming-mars.webp",
+      "bggId": 167791
+    },
+    {
+      "id": "the-mind",
+      "name": "The Mind",
+      "status": "wanted",
+      "source": "curated",
+      "players": "2–4",
+      "minPlayers": 2,
+      "maxPlayers": 4,
+      "dur": "20 min",
+      "minutes": 20,
+      "description": "Cards numbered 1 to 100 are dealt out. Together you must play them in ascending order with no talking, no signals, and no turn order. Somehow groups learn to feel the timing. Weird, quick, and unforgettable.",
+      "keywords": ["cooperative", "card-game", "quick-play"],
+      "section": "party",
+      "video": "how to play The Mind card game tutorial",
+      "image": "/images/wishlist/the-mind.webp",
+      "bggId": 244992
+    },
+    {
+      "id": "wavelength",
+      "name": "Wavelength",
+      "status": "wanted",
+      "source": "curated",
+      "players": "2–12",
+      "minPlayers": 2,
+      "maxPlayers": 12,
+      "dur": "30–45 min",
+      "minutes": 45,
+      "description": "A hidden dial sits somewhere on a spectrum like 'hot to cold' or 'overrated to underrated'. One player gives a clue — 'coffee' — and their team argues about where it belongs. Plays two to twelve, and the arguments are the game.",
+      "keywords": ["party", "team", "social"],
+      "section": "party",
+      "video": "how to play Wavelength board game tutorial",
+      "image": "/images/wishlist/wavelength.webp",
+      "bggId": 262543
+    },
+    {
+      "id": "just-one",
+      "name": "Just One",
+      "status": "wanted",
+      "source": "curated",
+      "players": "3–7",
+      "minPlayers": 3,
+      "maxPlayers": 7,
+      "dur": "20 min",
+      "minutes": 20,
+      "description": "One player closes their eyes. Everyone else writes a single-word clue for a mystery word, but duplicated clues are wiped before the guesser looks. Fully cooperative, taught in one sentence, and thirteen rounds take twenty minutes.",
+      "keywords": ["cooperative", "word", "party"],
+      "section": "party",
+      "video": "how to play Just One board game tutorial",
+      "image": "/images/wishlist/just-one.webp",
+      "bggId": 254640
+    },
+    {
+      "id": "decrypto",
+      "name": "Decrypto",
+      "status": "wanted",
+      "source": "curated",
+      "players": "3–8",
+      "minPlayers": 3,
+      "maxPlayers": 8,
+      "dur": "15–45 min",
+      "minutes": 45,
+      "description": "Each team has four secret words. One player gives clues so their team can guess a three-digit code, but the other team hears every clue and tries to intercept the pattern. Codenames' sharper, tenser cousin.",
+      "keywords": ["team", "word", "deduction"],
+      "section": "party",
+      "video": "how to play Decrypto board game tutorial",
+      "image": "/images/wishlist/decrypto.webp",
+      "bggId": 225694
+    },
+    {
+      "id": "flip-7",
+      "name": "Flip 7",
+      "status": "wanted",
+      "source": "curated",
+      "players": "3+",
+      "minPlayers": 3,
+      "maxPlayers": 99,
+      "dur": "20 min",
+      "minutes": 20,
+      "description": "Flip cards one at a time to add to your score, but a duplicate number busts you. Flip seven unique cards and the round ends with a bonus. Push-your-luck that works with any number of people and takes five minutes to teach.",
+      "keywords": ["card-game", "party", "quick-play"],
+      "section": "party",
+      "video": "how to play Flip 7 card game tutorial",
+      "image": "/images/wishlist/flip-7.webp",
+      "bggId": 420087
+    },
+    {
+      "id": "sounds-fishy",
+      "name": "Sounds Fishy",
+      "status": "wanted",
+      "source": "curated",
+      "players": "4–10",
+      "minPlayers": 4,
+      "maxPlayers": 10,
+      "dur": "15–20 min",
+      "minutes": 20,
+      "description": "A bluffing party game built on questions nobody knows the answer to. One player holds the true answer and everyone else improvises a fake; the guesser flips fish tokens one at a time, trying to weed out every Red Herring before landing on the True Blue Kipper. Quick to teach, 20 minutes, and best with a big table.",
+      "keywords": ["party", "bluffing", "social"],
+      "section": "party",
+      "video": "how to play Sounds Fishy party game tutorial",
+      "image": "/images/wishlist/sounds-fishy.webp",
+      "bggId": 359893
+    },
+    {
+      "id": "glyphics",
+      "name": "Glyphics",
+      "status": "wanted",
+      "source": "curated",
+      "players": "3+",
+      "minPlayers": 3,
+      "maxPlayers": 99,
+      "dur": "20–30 min",
+      "minutes": 30,
+      "description": "Charades for people who can't draw. Pick a prompt from your card and build it out of the forty-odd plastic shapes in the box while the table has sixty seconds to shout out what it is — builder and guesser both score, and phrases are worth double. By Eric Olsen, who went on to design Flip 7, and it takes as many players as you can fit round the table.",
+      "keywords": ["party", "creative", "quick-play"],
+      "section": "party",
+      "video": "how to play Glyphics board game tutorial",
+      "image": "/images/wishlist/glyphics.webp",
+      "bggId": 373991
+    },
+    {
+      "id": "lovestruck",
+      "name": "Lovestruck",
+      "status": "wanted",
+      "source": "curated",
+      "players": "5–10",
+      "minPlayers": 5,
+      "maxPlayers": 10,
+      "dur": "45–90 min",
+      "minutes": 90,
+      "description": "A reality dating show as a social deduction game. Every contestant swears they are looking for love, but some are only chasing screen time — go on dates, play action cards to stir up love or drama, and work out who means it before the season finale makes you couple up. Guess wrong, or let the viewing figures hit ten million, and the fame-hunters win. Five to ten players, and the table talk is the whole game.",
+      "keywords": ["party", "social", "deduction", "bluffing"],
+      "section": "party",
+      "video": "how to play Lovestruck board game tutorial",
+      "image": "/images/wishlist/lovestruck.webp",
+      "bggId": 395306
+    },
+    {
+      "id": "herd-mentality",
+      "name": "Herd Mentality",
+      "status": "wanted",
+      "source": "curated",
+      "players": "4–20",
+      "minPlayers": 4,
+      "maxPlayers": 20,
+      "dur": "20–30 min",
+      "minutes": 30,
+      "description": "A question is read out, everyone writes an answer in secret, and the goal is to agree with the herd rather than be right. Match the most common answer and you take a cow; be the only one who went your own way and you are stuck with the Pink Cow, which stops you winning until someone else earns it. First to eight cows wins. Nothing to teach, twenty minutes, and it plays from four to twenty, so it holds up when the whole party wants in.",
+      "keywords": ["party", "social", "family"],
+      "section": "party",
+      "video": "how to play Herd Mentality party game tutorial",
+      "image": "/images/wishlist/herd-mentality.webp",
+      "bggId": 311322
+    },
+    {
+      "id": "two-rooms-and-a-boom",
+      "name": "Two Rooms and a Boom",
+      "status": "wanted",
+      "source": "curated",
+      "players": "6–30",
+      "minPlayers": 6,
+      "maxPlayers": 30,
+      "dur": "10–20 min",
+      "minutes": 20,
+      "description": "Two teams, two rooms, one bomb. Everyone is secretly Red or Blue: Blue protects the President, and Red wins if the Bomber ends up in the same room as the President when the last round runs out. Over a few short timed rounds each room picks a leader who sends hostages across, while you decide who gets a look at your card and who you are lying to. Six to thirty players, so it only gets better the bigger the party.",
+      "keywords": ["party", "social", "deduction", "bluffing", "team"],
+      "section": "party",
+      "video": "how to play Two Rooms and a Boom tutorial",
+      "image": "/images/wishlist/two-rooms-and-a-boom.webp",
+      "bggId": 134352
+    }
+  ],
+  "awards": {
+    "13": [
+      {
+        "name": "Spiel des Jahres",
+        "year": 1995
+      },
+      {
+        "name": "Deutscher Spiele Preis",
+        "year": 1995
+      },
+      {
+        "name": "Origins Award Best Fantasy or Science Fiction Board Game",
+        "year": 1997
+      }
+    ],
+    "50": [
+      {
+        "name": "International Gamers Award",
+        "year": 2000
+      }
+    ],
+    "1111": [
+      {
+        "name": "Mensa Select",
+        "year": 1990
+      }
+    ],
+    "9209": [
+      {
+        "name": "Spiel des Jahres",
+        "year": 2004
+      },
+      {
+        "name": "Origins Award Best Board Game",
+        "year": 2005
+      },
+      {
+        "name": "Japan Boardgame Prize Best Advanced Game",
+        "year": 2004
+      },
+      {
+        "name": "As d'Or",
+        "year": 2005
+      },
+      {
+        "name": "Japan Boardgame Prize Best Japanese Edition",
+        "year": 2006
+      }
+    ],
+    "14996": [
+      {
+        "name": "International Gamers Award Multiplayer",
+        "year": 2005
+      }
+    ],
+    "30549": [
+      {
+        "name": "Origins Award Best Board Game",
+        "year": 2009
+      },
+      {
+        "name": "Golden Geek Best Family Game",
+        "year": 2009
+      },
+      {
+        "name": "MinD-Spielepreis",
+        "year": 2011
+      },
+      {
+        "name": "Guldbrikken Jury Prize",
+        "year": 2015
+      }
+    ],
+    "68448": [
+      {
+        "name": "Kennerspiel des Jahres",
+        "year": 2011
+      },
+      {
+        "name": "Deutscher Spiele Preis",
+        "year": 2011
+      },
+      {
+        "name": "As d'Or Jury Prize",
+        "year": 2011
+      },
+      {
+        "name": "Dice Tower Game of the Year",
+        "year": 2011
+      },
+      {
+        "name": "Dice Tower Best Artwork",
+        "year": 2011
+      },
+      {
+        "name": "International Gamers Award Multiplayer",
+        "year": 2011
+      },
+      {
+        "name": "Japan Boardgame Prize Voters' Selection",
+        "year": 2011
+      },
+      {
+        "name": "Guldbrikken Best Adult Game",
+        "year": 2011
+      },
+      {
+        "name": "MinD-Spielepreis",
+        "year": 2012
+      }
+    ],
+    "147020": [
+      {
+        "name": "Golden Geek Best Two-Player Game",
+        "year": 2014
+      },
+      {
+        "name": "Golden Geek Best Card Game",
+        "year": 2014
+      },
+      {
+        "name": "Dice Tower Best Two-Player Game",
+        "year": 2014
+      },
+      {
+        "name": "Dice Tower Best Small Publisher",
+        "year": 2014
+      },
+      {
+        "name": "Origins Fan Favourite Card Game",
+        "year": 2014
+      }
+    ],
+    "147949": [
+      {
+        "name": "Dice Tower Best Party Game",
+        "year": 2013
+      }
+    ],
+    "148228": [
+      {
+        "name": "Golden Geek Game of the Year",
+        "year": 2014
+      },
+      {
+        "name": "Golden Geek Best Family Game",
+        "year": 2014
+      },
+      {
+        "name": "Dice Tower Best Family Game",
+        "year": 2014
+      },
+      {
+        "name": "Origins Award Best Card Game",
+        "year": 2015
+      },
+      {
+        "name": "UK Games Expo Best New Board Game",
+        "year": 2014
+      },
+      {
+        "name": "Japan Boardgame Prize Voters' Selection",
+        "year": 2014
+      },
+      {
+        "name": "Guldbrikken Best Family Game",
+        "year": 2015
+      },
+      {
+        "name": "Nederlandse Spellenprijs Family",
+        "year": 2015
+      }
+    ],
+    "161936": [
+      {
+        "name": "Golden Geek Game of the Year",
+        "year": 2015
+      },
+      {
+        "name": "Golden Geek Best Strategy Game",
+        "year": 2015
+      },
+      {
+        "name": "Golden Geek Best Thematic Game",
+        "year": 2015
+      },
+      {
+        "name": "Golden Geek Most Innovative Game",
+        "year": 2015
+      },
+      {
+        "name": "Dice Tower Game of the Year",
+        "year": 2015
+      },
+      {
+        "name": "Dice Tower Best Cooperative Game",
+        "year": 2015
+      },
+      {
+        "name": "Cardboard Republic Immersionist Laurel",
+        "year": 2015
+      },
+      {
+        "name": "As d'Or Expert",
+        "year": 2016
+      }
+    ],
+    "167355": [
+      {
+        "name": "Board Game Quest Best Thematic Game",
+        "year": 2019
+      },
+      {
+        "name": "Cardboard Republic Immersionist Laurel",
+        "year": 2019
+      }
+    ],
+    "167791": [
+      {
+        "name": "Deutscher Spiele Preis",
+        "year": 2017
+      },
+      {
+        "name": "Dice Tower Best Strategy Game",
+        "year": 2016
+      },
+      {
+        "name": "As d'Or Expert",
+        "year": 2018
+      },
+      {
+        "name": "Cardboard Republic Architect Laurel",
+        "year": 2016
+      }
+    ],
+    "173346": [
+      {
+        "name": "Golden Geek Best Card Game",
+        "year": 2015
+      },
+      {
+        "name": "Golden Geek Best Two-Player Game",
+        "year": 2015
+      },
+      {
+        "name": "Origins Award Best Card Game",
+        "year": 2015
+      },
+      {
+        "name": "Origins Fan Favourite Card Game",
+        "year": 2015
+      },
+      {
+        "name": "Dice Tower Best Two-Player Game",
+        "year": 2015
+      },
+      {
+        "name": "International Gamers Award Two-Player",
+        "year": 2016
+      }
+    ],
+    "178900": [
+      {
+        "name": "Spiel des Jahres",
+        "year": 2016
+      },
+      {
+        "name": "Origins Award Game of the Year",
+        "year": 2016
+      },
+      {
+        "name": "Origins Award Best Family Game",
+        "year": 2016
+      },
+      {
+        "name": "Golden Geek Best Party Game",
+        "year": 2016
+      },
+      {
+        "name": "Golden Geek Best Family Game",
+        "year": 2016
+      },
+      {
+        "name": "Dice Tower Best Party Game",
+        "year": 2016
+      },
+      {
+        "name": "Dice Tower Best Family Game",
+        "year": 2016
+      },
+      {
+        "name": "UK Games Expo Best Party Game",
+        "year": 2016
+      },
+      {
+        "name": "Guldbrikken Best Adult Game",
+        "year": 2016
+      },
+      {
+        "name": "Japan Boardgame Prize Voters' Selection",
+        "year": 2016
+      },
+      {
+        "name": "MinD-Spielepreis Short Games",
+        "year": 2017
+      },
+      {
+        "name": "Cardboard Republic Socializer Laurel",
+        "year": 2015
+      }
+    ],
+    "181304": [
+      {
+        "name": "As d'Or",
+        "year": 2016
+      },
+      {
+        "name": "Golden Geek Best Artwork & Presentation",
+        "year": 2016
+      },
+      {
+        "name": "Japan Boardgame Prize Voters' Selection",
+        "year": 2015
+      }
+    ],
+    "199042": [
+      {
+        "name": "Mensa Select",
+        "year": 2017
+      }
+    ],
+    "199792": [
+      {
+        "name": "Dice Tower Best Artwork",
+        "year": 2018
+      },
+      {
+        "name": "Cardboard Republic Architect Laurel",
+        "year": 2018
+      }
+    ],
+    "209418": [
+      {
+        "name": "Spiel des Jahres",
+        "year": 2009
+      },
+      {
+        "name": "Deutscher Spiele Preis",
+        "year": 2009
+      },
+      {
+        "name": "Mensa Select",
+        "year": 2009
+      },
+      {
+        "name": "Golden Geek Game of the Year",
+        "year": 2009
+      },
+      {
+        "name": "Golden Geek Best Card Game",
+        "year": 2009
+      },
+      {
+        "name": "Dice Tower Game of the Year",
+        "year": 2008
+      },
+      {
+        "name": "Dice Tower Best New Designer",
+        "year": 2008
+      },
+      {
+        "name": "Dice Tower Best Small Publisher",
+        "year": 2008
+      },
+      {
+        "name": "Origins Award Best Card Game",
+        "year": 2009
+      }
+    ],
+    "225694": [
+      {
+        "name": "UK Games Expo People's Choice Party Game",
+        "year": 2019
+      },
+      {
+        "name": "Guldbrikken Best Party Game",
+        "year": 2019
+      },
+      {
+        "name": "MinD-Spielepreis Short Games",
+        "year": 2020
+      },
+      {
+        "name": "Cardboard Republic Socializer Laurel",
+        "year": 2018
+      }
+    ],
+    "230802": [
+      {
+        "name": "Spiel des Jahres",
+        "year": 2018
+      },
+      {
+        "name": "Deutscher Spiele Preis",
+        "year": 2018
+      },
+      {
+        "name": "As d'Or",
+        "year": 2018
+      },
+      {
+        "name": "Golden Geek Best Family Game",
+        "year": 2018
+      },
+      {
+        "name": "Dice Tower Best Family Game",
+        "year": 2018
+      },
+      {
+        "name": "Origins Award Best Family Game",
+        "year": 2018
+      },
+      {
+        "name": "Mensa Select",
+        "year": 2018
+      },
+      {
+        "name": "Nederlandse Spellenprijs Family",
+        "year": 2018
+      },
+      {
+        "name": "Guldbrikken Best Adult Game",
+        "year": 2018
+      },
+      {
+        "name": "UK Games Expo Best Abstract Game",
+        "year": 2019
+      },
+      {
+        "name": "UK Games Expo People's Choice Abstract Game",
+        "year": 2019
+      },
+      {
+        "name": "MinD-Spielepreis Short Games",
+        "year": 2019
+      },
+      {
+        "name": "Cardboard Republic Architect Laurel",
+        "year": 2017
+      }
+    ],
+    "244521": [
+      {
+        "name": "Kennerspiel des Jahres",
+        "year": 2018
+      },
+      {
+        "name": "Golden Geek Best Family Game",
+        "year": 2018
+      },
+      {
+        "name": "Dice Tower Best New Designer",
+        "year": 2018
+      },
+      {
+        "name": "UK Games Expo People's Choice Euro Game",
+        "year": 2019
+      },
+      {
+        "name": "American Tabletop Award Casual",
+        "year": 2019
+      },
+      {
+        "name": "Origins Award Best Family Game",
+        "year": 2020
+      }
+    ],
+    "244992": [
+      {
+        "name": "Golden Geek Best Party Game",
+        "year": 2018
+      },
+      {
+        "name": "Golden Geek Best Cooperative Game",
+        "year": 2018
+      },
+      {
+        "name": "Golden Geek Best Card Game",
+        "year": 2018
+      },
+      {
+        "name": "Guldbrikken Best Party Game",
+        "year": 2018
+      },
+      {
+        "name": "Guldbrikken Jury Prize",
+        "year": 2018
+      },
+      {
+        "name": "As d'Or",
+        "year": 2019
+      },
+      {
+        "name": "Origins Award Best Card Game",
+        "year": 2019
+      }
+    ],
+    "254640": [
+      {
+        "name": "Spiel des Jahres",
+        "year": 2019
+      },
+      {
+        "name": "Dice Tower Best Party Game",
+        "year": 2018
+      },
+      {
+        "name": "Palme d'Argent Best Party Game",
+        "year": 2019
+      },
+      {
+        "name": "Guldbrikken Best Party Game",
+        "year": 2020
+      }
+    ],
+    "262543": [
+      {
+        "name": "Golden Geek Best Party Game",
+        "year": 2019
+      },
+      {
+        "name": "Dice Tower Best Party Game",
+        "year": 2019
+      },
+      {
+        "name": "Cardboard Republic Socializer Laurel",
+        "year": 2019
+      },
+      {
+        "name": "Guldbrikken Best Party Game",
+        "year": 2021
+      }
+    ],
+    "266192": [
+      {
+        "name": "Kennerspiel des Jahres",
+        "year": 2019
+      },
+      {
+        "name": "Deutscher Spiele Preis",
+        "year": 2019
+      },
+      {
+        "name": "Golden Geek Game of the Year",
+        "year": 2019
+      },
+      {
+        "name": "Golden Geek Best Strategy Game",
+        "year": 2019
+      },
+      {
+        "name": "Golden Geek Best Family Game",
+        "year": 2019
+      },
+      {
+        "name": "Golden Geek Best Card Game",
+        "year": 2019
+      },
+      {
+        "name": "Golden Geek Best Artwork & Presentation",
+        "year": 2019
+      },
+      {
+        "name": "Golden Geek Most Innovative Game",
+        "year": 2019
+      },
+      {
+        "name": "Golden Geek Best Solo Game",
+        "year": 2019
+      },
+      {
+        "name": "Dice Tower Game of the Year",
+        "year": 2019
+      },
+      {
+        "name": "Dice Tower Best New Designer",
+        "year": 2019
+      },
+      {
+        "name": "American Tabletop Award Strategy",
+        "year": 2020
+      }
+    ],
+    "277085": [
+      {
+        "name": "Japan Boardgame Prize Voters' Selection",
+        "year": 2012
+      },
+      {
+        "name": "Dice Tower Best Party Game",
+        "year": 2012
+      },
+      {
+        "name": "Dice Tower Best Family Game",
+        "year": 2012
+      },
+      {
+        "name": "Origins Award Best Traditional Card Game",
+        "year": 2013
+      },
+      {
+        "name": "Golden Geek Best Card Game",
+        "year": 2013
+      },
+      {
+        "name": "Golden Geek Best Party Game",
+        "year": 2013
+      },
+      {
+        "name": "Golden Geek Best Family Game",
+        "year": 2013
+      },
+      {
+        "name": "Golden Geek Most Innovative Game",
+        "year": 2013
+      },
+      {
+        "name": "Guldbrikken Best Family Game",
+        "year": 2014
+      }
+    ],
+    "284083": [
+      {
+        "name": "Kennerspiel des Jahres",
+        "year": 2020
+      },
+      {
+        "name": "Deutscher Spiele Preis",
+        "year": 2020
+      },
+      {
+        "name": "Golden Geek Best Cooperative Game",
+        "year": 2019
+      },
+      {
+        "name": "Dice Tower Game of the Year",
+        "year": 2020
+      },
+      {
+        "name": "Dice Tower Best Cooperative Game",
+        "year": 2020
+      },
+      {
+        "name": "Dice Tower Most Innovative Game",
+        "year": 2020
+      },
+      {
+        "name": "As d'Or Expert",
+        "year": 2021
+      },
+      {
+        "name": "American Tabletop Award Best Casual Game",
+        "year": 2020
+      },
+      {
+        "name": "Nederlandse Spellenprijs Expert",
+        "year": 2020
+      },
+      {
+        "name": "Guldbrikken Best Adult Game",
+        "year": 2020
+      }
+    ],
+    "295947": [
+      {
+        "name": "Spiel des Jahres",
+        "year": 2022
+      },
+      {
+        "name": "Golden Geek Light Game of the Year",
+        "year": 2021
+      },
+      {
+        "name": "International Gamers Award Best Solo",
+        "year": 2022
+      },
+      {
+        "name": "American Tabletop Award Strategy",
+        "year": 2022
+      },
+      {
+        "name": "Nederlandse Spellenprijs Family",
+        "year": 2022
+      }
+    ],
+    "318977": [
+      {
+        "name": "Spiel des Jahres",
+        "year": 2021
+      },
+      {
+        "name": "As d'Or",
+        "year": 2021
+      },
+      {
+        "name": "Golden Geek Light Game of the Year",
+        "year": 2020
+      },
+      {
+        "name": "Golden Geek Most Innovative Game",
+        "year": 2020
+      },
+      {
+        "name": "Guldbrikken Jury Prize",
+        "year": 2021
+      }
+    ],
+    "342942": [
+      {
+        "name": "Deutscher Spiele Preis",
+        "year": 2022
+      },
+      {
+        "name": "Golden Geek Heavy Game of the Year",
+        "year": 2021
+      },
+      {
+        "name": "Dice Tower Game of the Year",
+        "year": 2021
+      },
+      {
+        "name": "Dice Tower Best Strategy Game",
+        "year": 2021
+      },
+      {
+        "name": "Dice Tower Best New Designer",
+        "year": 2021
+      },
+      {
+        "name": "International Gamers Award Two-Player",
+        "year": 2022
+      },
+      {
+        "name": "American Tabletop Award Complex",
+        "year": 2022
+      },
+      {
+        "name": "As d'Or Expert",
+        "year": 2023
+      }
+    ],
+    "357563": [
+      {
+        "name": "As d'Or",
+        "year": 2023
+      },
+      {
+        "name": "Mensa Select",
+        "year": 2023
+      },
+      {
+        "name": "UK Games Expo Best Family Game",
+        "year": 2022
+      },
+      {
+        "name": "UK Games Expo People's Choice Family Game",
+        "year": 2022
+      },
+      {
+        "name": "Dice Tower Best New Designer",
+        "year": 2022
+      }
+    ],
+    "373106": [
+      {
+        "name": "Spiel des Jahres",
+        "year": 2024
+      },
+      {
+        "name": "Golden Geek Best Two-Player Game",
+        "year": 2023
+      },
+      {
+        "name": "Golden Geek Best Cooperative Game",
+        "year": 2023
+      },
+      {
+        "name": "Dice Tower Best Two-Player Game",
+        "year": 2023
+      },
+      {
+        "name": "Dice Tower Best Cooperative Game",
+        "year": 2023
+      },
+      {
+        "name": "Dice Tower Most Innovative Game",
+        "year": 2023
+      },
+      {
+        "name": "International Gamers Award Two-Player",
+        "year": 2024
+      },
+      {
+        "name": "Nederlandse Spellenprijs Family",
+        "year": 2024
+      },
+      {
+        "name": "MinD-Spielepreis Two-Player",
+        "year": 2025
+      },
+      {
+        "name": "Board Game Quest Best Cooperative Game",
+        "year": 2023
+      }
+    ],
+    "413246": [
+      {
+        "name": "Spiel des Jahres",
+        "year": 2025
+      },
+      {
+        "name": "Dice Tower Most Innovative Game",
+        "year": 2024
+      },
+      {
+        "name": "Nederlandse Spellenprijs Family",
+        "year": 2025
+      },
+      {
+        "name": "MinD-Spielepreis Short Games",
+        "year": 2025
+      },
+      {
+        "name": "Guldbrikken",
+        "year": 2025
+      },
+      {
+        "name": "Japan Boardgame Prize Voters' Selection",
+        "year": 2025
+      }
+    ],
+    "414317": [
+      {
+        "name": "Golden Geek Medium Game of the Year",
+        "year": 2024
+      },
+      {
+        "name": "UK Games Expo Best Abstract Game",
+        "year": 2025
+      },
+      {
+        "name": "UK Games Expo People's Choice Family Game",
+        "year": 2025
+      }
+    ],
+    "418059": [
+      {
+        "name": "Deutscher Spiele Preis",
+        "year": 2025
+      },
+      {
+        "name": "Golden Geek Heavy Game of the Year",
+        "year": 2024
+      },
+      {
+        "name": "Golden Geek Best Thematic Game",
+        "year": 2024
+      },
+      {
+        "name": "Dice Tower Game of the Year",
+        "year": 2024
+      },
+      {
+        "name": "Dice Tower Best Strategy Game",
+        "year": 2024
+      },
+      {
+        "name": "Dice Tower Best New Designer",
+        "year": 2024
+      },
+      {
+        "name": "International Gamers Award Multiplayer",
+        "year": 2025
+      },
+      {
+        "name": "Nederlandse Spellenprijs Expert",
+        "year": 2025
+      },
+      {
+        "name": "UK Games Expo Best Euro Game",
+        "year": 2025
+      }
+    ],
+    "420087": [
+      {
+        "name": "Golden Geek Best Party Game",
+        "year": 2024
+      },
+      {
+        "name": "Dice Tower Best Party Game",
+        "year": 2024
+      },
+      {
+        "name": "Board Game Quest Best Card Game",
+        "year": 2024
+      },
+      {
+        "name": "Origins Award Best Party Game",
+        "year": 2025
+      }
+    ]
+  },
+  "honoursFrom": {
+    "209418": 36218,
+    "277085": 129622
+  },
+  "collection": [
+    13, 181, 592, 891, 1111, 1692, 2223, 6887, 6901, 7682, 9209, 10400, 11017, 14996, 15712, 15878, 17521, 27225, 30549,
+    50381, 68448, 92302, 147949, 172225, 178900, 181304, 199042, 204886, 209418, 230802, 249816, 253664, 274533, 277085,
+    300358, 312786, 318632, 459928, 480156
+  ]
+}
