@@ -1,0 +1,33 @@
+# Throwaway trial for jbhirsh/ci#33 / ci#41: runs jbhirsh/ci's gif/record
+# and gif/attach actions from ci#41's branch, as pr-gif.yml will from main,
+# on this draft PR only. Closed unmerged once the results are read.
+name: Trial PR GIFs
+on:
+  pull_request:
+    types: [opened, synchronize]
+permissions:
+  contents: read
+jobs:
+  record:
+    if: github.head_ref == 'trial-pr-gif'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/head
+          persist-credentials: false
+      - uses: jbhirsh/ci/gif/record@gif-attachments
+        with:
+          pr: ${{ github.event.pull_request.number }}
+          scenarios: scripts/gif-scenarios/example.ts
+  attach:
+    needs: record
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions: {}
+    steps:
+      - uses: jbhirsh/ci/gif/attach@gif-attachments
+        with:
+          pr: ${{ github.event.pull_request.number }}
+          token: ${{ secrets.BOT_PR_TOKEN }}
