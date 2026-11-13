@@ -172,7 +172,7 @@ export const kindClasses: Readonly<Record<string, string>> = {
  * nothing in a column this narrow.
  */
 export const pageClass = 'rules-page mx-auto max-w-240 px-[min(var(--spacing-gutter),24px)] pt-8 pb-16';
-/** A page's header: Back, then the title. */
+/** A page's header, under the Back link its frame draws (PageFrame): the title and what sits beside it. */
 export const pageHeaderClass = 'rules-header mb-8';
 /**
  * A page's title: one line, cut short with an ellipsis, beside the box art;

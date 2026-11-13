@@ -36,7 +36,6 @@ import {
   headerButtonLiveClass,
   kindChipClass,
   kindClasses,
-  pageClass,
   pdfNoteClass,
   rulesLinkClass,
   fewerWordsClass,
@@ -252,6 +251,8 @@ export default function RulesPage() {
     if (strip) scrollToChosenTab(strip);
   }, [strip, book?.pdf]);
 
+  // Together, the two not-found pages below are where opensRulesPage is
+  // false, which is where PageFrame draws no frame.
   if (!game) {
     return (
       <NotFoundPage
@@ -332,107 +333,106 @@ export default function RulesPage() {
 
   return (
     <RulesChatProvider>
-      <div className={pageClass}>
-        <title>{`${book.name} rules · The Game Room`}</title>
-        <PageHeader title={game.name} desc={book.short} art={game}>
-          <RulesChatToggle />
-          {scorePath && (
-            <Link className={`${headerButtonClass} ${headerButtonLiveClass}`} to={scorePath}>
-              <CalculatorIcon /> Score calculator
-            </Link>
-          )}
-          {game.slug === WORD_CHECKER_GAME && (
-            <button
-              className={`${headerButtonClass} ${headerButtonLiveClass}`}
-              onClick={() => setWordCheckerOpen((o) => !o)}
-            >
-              {wordCheckerOpen ? 'Close Word Checker' : 'Word Checker'}
-            </button>
-          )}
-        </PageHeader>
-        {books.length > 1 && (
-          <nav
-            ref={stripRef}
-            // Faded at an end with more tabs past it, so a cut-off strip
-            // reads as one that scrolls. A pixel past the last tab: WebKit
-            // scrolls only whole pixels, so a tab ending part way into one
-            // could never be scrolled wholly into view.
-            className={`rules-books mb-3.5 flex snap-x snap-proximity scroll-px-(--strip-fade) scrollbar-thin gap-1.5 overflow-x-auto pe-px pb-1 ${edges.start ? 'fade-start' : ''} ${edges.end ? 'fade-end' : ''} ${stripFadeClass}`}
-            style={{ '--strip-fade': `${STRIP_FADE}px` } as CSSProperties}
-            aria-label="Rulebooks"
-            // A tab reached by keyboard is brought clear of the faded edges:
-            // the browser leaves a partly visible one where it is, which can
-            // put its focus ring under the fade.
-            onFocus={(e) => revealInStrip(e.currentTarget, e.target as HTMLElement, STRIP_FADE)}
+      <title>{`${book.name} rules · The Game Room`}</title>
+      <PageHeader title={game.name} desc={book.short} art={game}>
+        <RulesChatToggle />
+        {scorePath && (
+          <Link className={`${headerButtonClass} ${headerButtonLiveClass}`} to={scorePath}>
+            <CalculatorIcon /> Score calculator
+          </Link>
+        )}
+        {game.slug === WORD_CHECKER_GAME && (
+          <button
+            className={`${headerButtonClass} ${headerButtonLiveClass}`}
+            onClick={() => setWordCheckerOpen((o) => !o)}
           >
-            {books.map((b) => (
-              <Link
-                key={b.pdf}
-                to={rulebookPath(game.slug, b.part)}
-                replace
-                state={arrival}
-                // The open book's tab is drawn by its aria-current, so the look
-                // and what a screen reader hears can't part.
-                className="rules-book group/book inline-flex shrink-0 snap-start items-center gap-1.75 rounded-control border border-border bg-bg2 px-3.5 py-2 text-[13px] font-medium whitespace-nowrap text-text2 [transition:background_0.15s,color_0.15s,border-color_0.15s] hover:not-aria-[current=page]:border-blue-tint/30 hover:not-aria-[current=page]:bg-blue-bg hover:not-aria-[current=page]:text-blue aria-[current=page]:border-dark aria-[current=page]:bg-dark aria-[current=page]:text-surface"
-                aria-current={b === book ? 'page' : undefined}
-              >
-                {b.label}
-                {b.kind && shownKind(b.label, b.kind) && (
-                  <span
-                    className={`kind-chip kind-${b.kind} ${kindChipClass} ${kindClasses[b.kind]} group-aria-[current=page]/book:bg-surface/18 group-aria-[current=page]/book:text-surface`}
-                  >
-                    {b.kind}
-                  </span>
-                )}
-              </Link>
-            ))}
-          </nav>
+            {wordCheckerOpen ? 'Close Word Checker' : 'Word Checker'}
+          </button>
         )}
-        {game.houseRules && (
-          // Folded so the rulebook stays in view; the count says it's there.
-          <details className="group/rules mb-4 rounded-control border border-border bg-surface">
-            {/* The browser's own triangle hidden (Safari draws it with its own
+      </PageHeader>
+      {books.length > 1 && (
+        <nav
+          ref={stripRef}
+          // Faded at an end with more tabs past it, so a cut-off strip
+          // reads as one that scrolls. A pixel past the last tab: WebKit
+          // scrolls only whole pixels, so a tab ending part way into one
+          // could never be scrolled wholly into view.
+          className={`rules-books mb-3.5 flex snap-x snap-proximity scroll-px-(--strip-fade) scrollbar-thin gap-1.5 overflow-x-auto pe-px pb-1 ${edges.start ? 'fade-start' : ''} ${edges.end ? 'fade-end' : ''} ${stripFadeClass}`}
+          style={{ '--strip-fade': `${STRIP_FADE}px` } as CSSProperties}
+          aria-label="Rulebooks"
+          // A tab reached by keyboard is brought clear of the faded edges:
+          // the browser leaves a partly visible one where it is, which can
+          // put its focus ring under the fade.
+          onFocus={(e) => revealInStrip(e.currentTarget, e.target as HTMLElement, STRIP_FADE)}
+        >
+          {books.map((b) => (
+            <Link
+              key={b.pdf}
+              to={rulebookPath(game.slug, b.part)}
+              replace
+              state={arrival}
+              // The open book's tab is drawn by its aria-current, so the look
+              // and what a screen reader hears can't part.
+              className="rules-book group/book inline-flex shrink-0 snap-start items-center gap-1.75 rounded-control border border-border bg-bg2 px-3.5 py-2 text-[13px] font-medium whitespace-nowrap text-text2 [transition:background_0.15s,color_0.15s,border-color_0.15s] hover:not-aria-[current=page]:border-blue-tint/30 hover:not-aria-[current=page]:bg-blue-bg hover:not-aria-[current=page]:text-blue aria-[current=page]:border-dark aria-[current=page]:bg-dark aria-[current=page]:text-surface"
+              aria-current={b === book ? 'page' : undefined}
+            >
+              {b.label}
+              {b.kind && shownKind(b.label, b.kind) && (
+                <span
+                  className={`kind-chip kind-${b.kind} ${kindChipClass} ${kindClasses[b.kind]} group-aria-[current=page]/book:bg-surface/18 group-aria-[current=page]/book:text-surface`}
+                >
+                  {b.kind}
+                </span>
+              )}
+            </Link>
+          ))}
+        </nav>
+      )}
+      {game.houseRules && (
+        // Folded so the rulebook stays in view; the count says it's there.
+        <details className="group/rules mb-4 rounded-control border border-border bg-surface">
+          {/* The browser's own triangle hidden (Safari draws it with its own
                 pseudo-element), and one drawn that turns when open. */}
-            <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-[14px] font-semibold text-text after:ml-auto after:size-1.75 after:flex-none after:transform-[rotate(45deg)] after:border-r-2 after:border-b-2 after:border-text3 after:content-[''] after:[transition:transform_0.15s] group-open/rules:after:transform-[rotate(-135deg)] hover:text-blue focus-visible:rounded-control focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue [&::-webkit-details-marker]:hidden">
-              House rules{' '}
-              <span className="rounded-control bg-bg3 px-1.75 py-px text-[11px] font-bold text-text2">
-                {game.houseRules.length}
-                <span className="sr-only"> rules</span>
-              </span>
-            </summary>
-            <dl className="flex flex-col gap-3 px-4 pt-1 pb-4">
-              {game.houseRules.map((r) => (
-                <div key={r.name}>
-                  <dt className="mb-0.5 text-[13px] font-semibold text-text">{r.name}</dt>
-                  <dd className="text-[13px] leading-[1.6] text-text2">{r.text}</dd>
-                </div>
-              ))}
-            </dl>
-          </details>
-        )}
-        <RulesChatPanel
-          slug={game.slug}
-          gameName={game.name}
-          parts={chatParts(game, book)}
-          scope={chatScope(game, book)}
-          tab={book.part ?? ''}
-          linksFor={(answer, tab) =>
-            mentionedRulebooks(answer, game, askedOn(tab)).map((b) => ({
-              label: b.label,
-              to: rulebookPath(game.slug, b.part),
-              state: arrival,
-            }))
-          }
-          citeLinks={(answer, tab) => linkCitations(answer, game, askedOn(tab))}
-          isCitation={(href) => citedPage(href, game) !== null}
-          onCite={failed ? undefined : showCited}
-          onAnswer={warmCited}
-          starters={starterQuestions(game, book)}
-          rulebookFailed={failed}
-          rulebookSaved={saved}
-        />
-        {wordCheckerOpen && <WordChecker />}
-        {/* Above the reader, where a long rulebook would bury it: the file,
+          <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-[14px] font-semibold text-text after:ml-auto after:size-1.75 after:flex-none after:transform-[rotate(45deg)] after:border-r-2 after:border-b-2 after:border-text3 after:content-[''] after:[transition:transform_0.15s] group-open/rules:after:transform-[rotate(-135deg)] hover:text-blue focus-visible:rounded-control focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue [&::-webkit-details-marker]:hidden">
+            House rules{' '}
+            <span className="rounded-control bg-bg3 px-1.75 py-px text-[11px] font-bold text-text2">
+              {game.houseRules.length}
+              <span className="sr-only"> rules</span>
+            </span>
+          </summary>
+          <dl className="flex flex-col gap-3 px-4 pt-1 pb-4">
+            {game.houseRules.map((r) => (
+              <div key={r.name}>
+                <dt className="mb-0.5 text-[13px] font-semibold text-text">{r.name}</dt>
+                <dd className="text-[13px] leading-[1.6] text-text2">{r.text}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+      )}
+      <RulesChatPanel
+        slug={game.slug}
+        gameName={game.name}
+        parts={chatParts(game, book)}
+        scope={chatScope(game, book)}
+        tab={book.part ?? ''}
+        linksFor={(answer, tab) =>
+          mentionedRulebooks(answer, game, askedOn(tab)).map((b) => ({
+            label: b.label,
+            to: rulebookPath(game.slug, b.part),
+            state: arrival,
+          }))
+        }
+        citeLinks={(answer, tab) => linkCitations(answer, game, askedOn(tab))}
+        isCitation={(href) => citedPage(href, game) !== null}
+        onCite={failed ? undefined : showCited}
+        onAnswer={warmCited}
+        starters={starterQuestions(game, book)}
+        rulebookFailed={failed}
+        rulebookSaved={saved}
+      />
+      {wordCheckerOpen && <WordChecker />}
+      {/* Above the reader, where a long rulebook would bury it: the file,
             with its size (from the build, so it is there from the first
             paint) so nobody starts a big download unawares, the browser's
             own viewer, for its zoom, thumbnails and printing, and the
@@ -440,74 +440,73 @@ export default function RulesPage() {
             stands. Not for a rulebook out of reach, where all three would
             be dead. On a phone the three keep one line by dropping words
             from sight (rules-more), not from their names: Download, Open. */}
-        {!unreachable && (
-          <>
-            <div
-              className={`rules-pdf-links mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 max-xs:gap-x-3.5 ${fewerWordsClass}`}
-            >
-              {/* Named by what it shows, size and all ("Download PDF 2.3
+      {!unreachable && (
+        <>
+          <div
+            className={`rules-pdf-links mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 max-xs:gap-x-3.5 ${fewerWordsClass}`}
+          >
+            {/* Named by what it shows, size and all ("Download PDF 2.3
                   MB": the dot isn't read out). The spaces keep the words
                   apart in the name; a flex row draws none of them. */}
-              <a href={book.pdf} download className={rulesLinkClass}>
-                <span>
-                  Download <span className="rules-more">PDF</span>
-                </span>
-                {size !== null && (
-                  <>
-                    {' '}
-                    <span className="font-normal text-text2" aria-hidden="true">
-                      ·
-                    </span>{' '}
-                    <span className="font-normal text-text2" id="rules-download-size">
-                      {formatSize(size)}
-                    </span>
-                  </>
-                )}
-              </a>
-              <a href={book.pdf} target="_blank" rel="noopener noreferrer" className={rulesLinkClass}>
-                <span>
-                  Open <span className="rules-more">PDF</span>
-                </span>
-              </a>
-              {offline.state !== null && (
-                <SaveOffline
-                  pdf={book.pdf}
-                  state={offline.state}
-                  hidden={offline.hidden}
-                  sized={size !== null}
-                  onSave={offline.save}
-                />
+            <a href={book.pdf} download className={rulesLinkClass}>
+              <span>
+                Download <span className="rules-more">PDF</span>
+              </span>
+              {size !== null && (
+                <>
+                  {' '}
+                  <span className="font-normal text-text2" aria-hidden="true">
+                    ·
+                  </span>{' '}
+                  <span className="font-normal text-text2" id="rules-download-size">
+                    {formatSize(size)}
+                  </span>
+                </>
               )}
-            </div>
-            {/* The reader's pages draw only near the screen, so a printout of
+            </a>
+            <a href={book.pdf} target="_blank" rel="noopener noreferrer" className={rulesLinkClass}>
+              <span>
+                Open <span className="rules-more">PDF</span>
+              </span>
+            </a>
+            {offline.state !== null && (
+              <SaveOffline
+                pdf={book.pdf}
+                state={offline.state}
+                hidden={offline.hidden}
+                sized={size !== null}
+                onSave={offline.save}
+              />
+            )}
+          </div>
+          {/* The reader's pages draw only near the screen, so a printout of
                 this page would be empty boxes: it prints this instead. */}
-            <p className="hidden text-[13px] text-text2 print:block">
-              To print this rulebook, use Open PDF and print it from the browser’s PDF viewer.
-            </p>
-          </>
-        )}
-        <ReaderBoundary key={`${book.pdf}#${attempt}`} pdf={book.pdf} note={failNote} onFail={readerFails}>
-          <Suspense fallback={<p className={pdfNoteClass}>Loading the rulebook…</p>}>
-            <PdfReader
-              src={book.pdf}
-              title={`${book.name} rules`}
-              jump={
-                citedAt === null
-                  ? undefined
-                  : {
-                      page: citedAt,
-                      key,
-                      place: books.length > 1 ? book.label : undefined,
-                      quote: typeof quote === 'string' && quote !== '' ? quote : undefined,
-                    }
-              }
-              warm={warm}
-              onFail={readerFails}
-              failNote={failNote}
-            />
-          </Suspense>
-        </ReaderBoundary>
-      </div>
+          <p className="hidden text-[13px] text-text2 print:block">
+            To print this rulebook, use Open PDF and print it from the browser’s PDF viewer.
+          </p>
+        </>
+      )}
+      <ReaderBoundary key={`${book.pdf}#${attempt}`} pdf={book.pdf} note={failNote} onFail={readerFails}>
+        <Suspense fallback={<p className={pdfNoteClass}>Loading the rulebook…</p>}>
+          <PdfReader
+            src={book.pdf}
+            title={`${book.name} rules`}
+            jump={
+              citedAt === null
+                ? undefined
+                : {
+                    page: citedAt,
+                    key,
+                    place: books.length > 1 ? book.label : undefined,
+                    quote: typeof quote === 'string' && quote !== '' ? quote : undefined,
+                  }
+            }
+            warm={warm}
+            onFail={readerFails}
+            failNote={failNote}
+          />
+        </Suspense>
+      </ReaderBoundary>
     </RulesChatProvider>
   );
 }

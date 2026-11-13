@@ -59,7 +59,6 @@ describe('SignInPage', () => {
 
   it('offers Google and a passkey when signed out, and says whose controls they are', async () => {
     renderPage();
-    expect(screen.getByRole('link', { name: /Back to The Game Room/ })).toHaveAttribute('href', '/');
     expect(await googleButton()).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Sign in with a passkey' })).toBeEnabled();
     expect(

@@ -35,6 +35,10 @@ describe('ScoreCalculatorPage', () => {
     expect(screen.queryByRole('button', { name: 'Player 1' })).not.toBeInTheDocument();
   });
 
+  /** The nudge the pad's box (ScorePadFrame) hands its score boxes. */
+  const nudge = (container: HTMLElement) =>
+    container.querySelector<HTMLElement>('[style*="--digit-nudge"]')!.style.getPropertyValue('--digit-nudge');
+
   it("nudges the score boxes' digits to the middle for the font in use", () => {
     // The page lays out a hidden line: 17px tall, its cap-high marker
     // sitting on a baseline 13px down. jsdom lays out nothing, so fake it.
@@ -44,12 +48,12 @@ describe('ScoreCalculatorPage', () => {
       return { ...rect, left: 0, right: 0, width: 0, x: 0, y: rect.top, toJSON: () => ({}) } as DOMRect;
     });
     const { container } = renderPage();
-    expect((container.firstChild as HTMLElement).style.getPropertyValue('--digit-nudge')).toBe('1.5px');
+    expect(nudge(container)).toBe('1.5px');
   });
 
   it('leaves the digits be where nothing is laid out', () => {
     const { container } = renderPage();
-    expect((container.firstChild as HTMLElement).style.getPropertyValue('--digit-nudge')).toBe('0px');
+    expect(nudge(container)).toBe('0px');
     // The probe line is gone again.
     expect(document.body.querySelector('[style*="visibility: hidden"]')).toBeNull();
   });
