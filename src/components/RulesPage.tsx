@@ -445,21 +445,19 @@ export default function RulesPage() {
             <div
               className={`rules-pdf-links mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 max-xs:gap-x-3.5 ${fewerWordsClass}`}
             >
-              <a
-                href={book.pdf}
-                download
-                className={rulesLinkClass}
-                aria-label="Download PDF"
-                aria-describedby="rules-download-size"
-              >
+              {/* Named by what it shows, size and all ("Download PDF 2.3
+                  MB": the dot isn't read out). The spaces keep the words
+                  apart in the name; a flex row draws none of them. */}
+              <a href={book.pdf} download className={rulesLinkClass}>
                 <span>
                   Download <span className="rules-more">PDF</span>
                 </span>
                 {size !== null && (
                   <>
+                    {' '}
                     <span className="font-normal text-text2" aria-hidden="true">
                       ·
-                    </span>
+                    </span>{' '}
                     <span className="font-normal text-text2" id="rules-download-size">
                       {formatSize(size)}
                     </span>

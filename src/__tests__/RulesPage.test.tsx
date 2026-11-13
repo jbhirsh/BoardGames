@@ -8,6 +8,9 @@ import { PROBE_MS, type SaveState } from '../pdfjs/saved';
 import { stubMatchMedia } from './helpers/stubMatchMedia';
 import { ALL_GAMES } from '../data/games';
 
+/** The Download PDF link's name: its words, then its size once known. */
+const DOWNLOAD = /^Download PDF( \d+(\.\d)? [KM]B)?$/;
+
 /** The state the router's current history entry carries. */
 const entryState = (router: { state: { location: Location<unknown> } }): unknown => router.state.location.state;
 
@@ -241,7 +244,7 @@ describe('RulesPage', () => {
       expect(within(tabs()).getByRole('link', { name: 'Overview' })).toHaveAttribute('href', '/rules/card-deck');
       expect(await viewer()).toHaveAttribute('data-src', '/rules/card-deck.euchre.pdf');
       expect(await viewer()).toHaveAccessibleName('Euchre rules');
-      expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAttribute('href', '/rules/card-deck.euchre.pdf');
+      expect(screen.getByRole('link', { name: DOWNLOAD })).toHaveAttribute('href', '/rules/card-deck.euchre.pdf');
       expect(screen.getByText(/two jacks that outrank everything/)).toBeInTheDocument();
       // The heading stays the deck: the page is the family's, the tab is the game.
       expect(screen.getByRole('heading', { name: 'Card Deck' })).toBeInTheDocument();
@@ -518,9 +521,8 @@ describe("RulesPage's reader", () => {
     const fetchSpy = headWith({ 'content-length': '16445120' });
     renderAt('/rules/7-wonders');
 
-    const download = screen.getByRole('link', { name: 'Download PDF' });
-    // There from the first paint, whatever the HEAD later says.
-    expect(download).toHaveAccessibleDescription('4.6 MB');
+    // Named with its size, there from the first paint, whatever the HEAD later says.
+    const download = screen.getByRole('link', { name: 'Download PDF 4.6 MB' });
     expect(download).toHaveAttribute('href', '/rules/7-wonders.pdf');
     expect(download).toHaveAttribute('download');
     const reader = await screen.findByRole('region', { name: '7 Wonders rules' });
@@ -531,7 +533,7 @@ describe("RulesPage's reader", () => {
     // The HEAD is still sent, for whether the network answers (outOfReach).
     expect(fetchSpy).toHaveBeenCalledWith('/rules/7-wonders.pdf', expect.objectContaining({ method: 'HEAD' }));
     await act(async () => {});
-    expect(download).toHaveAccessibleDescription('4.6 MB');
+    expect(download).toHaveAccessibleName('Download PDF 4.6 MB');
   });
 
   it('cancels the size request when the page goes away', async () => {
@@ -564,7 +566,7 @@ describe("RulesPage's reader", () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     renderAt('/rules/one-night-werewolf/vampire');
     expect(await screen.findByText(/couldn’t be shown here/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Download PDF' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: DOWNLOAD })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
   });
 
@@ -609,7 +611,7 @@ describe("RulesPage's reader", () => {
       expect(await screen.findByRole('status')).toHaveTextContent(NOT_SAVED);
       expect(screen.getByRole('status')).toHaveClass('notice-info');
       expect(screen.queryByText(/couldn’t be shown here/)).not.toBeInTheDocument();
-      expect(screen.queryByRole('link', { name: 'Download PDF' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: DOWNLOAD })).not.toBeInTheDocument();
       expect(screen.queryByRole('link', { name: 'Open PDF' })).not.toBeInTheDocument();
       expect(screen.queryByText(/To print this rulebook/)).not.toBeInTheDocument();
       // The chat's own notice doesn't send them to it.
@@ -631,7 +633,7 @@ describe("RulesPage's reader", () => {
         '/rules/one-night-werewolf.pdf',
       );
       expect(screen.queryByText(NOT_SAVED)).not.toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Download PDF' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: DOWNLOAD })).toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: /ai rules assistant/i }));
       await vi.waitFor(() => expect(chatSays()).toHaveTextContent(OFFLINE + STILL_WORKS));
     });
@@ -701,7 +703,7 @@ describe("RulesPage's reader", () => {
       fireEvent.click(tab(/Vampire/));
       expect(await screen.findByRole('region', { name: /Vampire rules/ })).toHaveAttribute('data-src', VAMPIRE);
       expect(screen.queryByText(NOT_SAVED)).not.toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Download PDF' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: DOWNLOAD })).toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: /ai rules assistant/i }));
       await vi.waitFor(() => expect(chatSays()).toHaveTextContent(OFFLINE + STILL_WORKS));
     });
@@ -712,14 +714,14 @@ describe("RulesPage's reader", () => {
       const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
       renderAt('/rules/one-night-werewolf/vampire');
       expect(await screen.findByText(NOT_SAVED)).toBeInTheDocument();
-      expect(screen.queryByRole('link', { name: 'Download PDF' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: DOWNLOAD })).not.toBeInTheDocument();
 
       reader.broken = null;
       fetchSpy.mockResolvedValue({ ok: true, headers: new Headers({ 'content-length': '2048' }) } as Response);
       goOnline(true);
       expect(await screen.findByRole('region', { name: /Vampire rules/ })).toHaveAttribute('data-src', VAMPIRE);
       expect(screen.queryByText(NOT_SAVED)).not.toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAccessibleDescription('2.1 MB');
+      expect(screen.getByRole('link', { name: 'Download PDF 2.1 MB' })).toBeInTheDocument();
     });
 
     it("judges a failure on the network's return by that attempt's own HEAD, not the last one's", async () => {
@@ -735,7 +737,7 @@ describe("RulesPage's reader", () => {
       goOnline(true);
       expect(await screen.findByText(/couldn’t be shown here/)).toBeInTheDocument();
       expect(screen.queryByText(NOT_SAVED)).not.toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Download PDF' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: DOWNLOAD })).toBeInTheDocument();
     });
 
     it('pays no heed to the saved check of a tab left before it answered', async () => {
@@ -797,13 +799,13 @@ describe("RulesPage's reader", () => {
       await act(async () => {});
       expect(screen.queryByText(/couldn’t be shown here/)).not.toBeInTheDocument();
       expect(screen.queryByText(NOT_SAVED)).not.toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Download PDF' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: DOWNLOAD })).toBeInTheDocument();
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(PROBE_MS);
       });
       expect(screen.getByText(NOT_SAVED)).toBeInTheDocument();
-      expect(screen.queryByRole('link', { name: 'Download PDF' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: DOWNLOAD })).not.toBeInTheDocument();
     });
 
     it("counts a network that doesn't answer as none, though the browser says it is online, asking it once", async () => {
@@ -815,7 +817,7 @@ describe("RulesPage's reader", () => {
       // The HEAD that asked its size answers for it too.
       expect(fetchSpy).toHaveBeenCalledTimes(1);
       expect(fetchSpy).toHaveBeenCalledWith(VAMPIRE, expect.objectContaining({ method: 'HEAD' }));
-      expect(screen.queryByRole('link', { name: 'Download PDF' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: DOWNLOAD })).not.toBeInTheDocument();
     });
 
     it('keeps the note and the links for a rulebook saved on this device', async () => {
@@ -831,7 +833,7 @@ describe("RulesPage's reader", () => {
       await act(async () => {});
       expect(screen.getByText(/couldn’t be shown here/)).toBeInTheDocument();
       expect(screen.queryByText(NOT_SAVED)).not.toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Download PDF' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: DOWNLOAD })).toBeInTheDocument();
     });
 
     it('keeps the note and the links for a rulebook that fails online', async () => {
@@ -842,7 +844,7 @@ describe("RulesPage's reader", () => {
       await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
       await act(async () => {});
       expect(screen.getByText(/couldn’t be shown here/)).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Download PDF' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: DOWNLOAD })).toBeInTheDocument();
       expect(screen.queryByText(NOT_SAVED)).not.toBeInTheDocument();
     });
   });
@@ -1087,7 +1089,7 @@ describe("RulesPage's reader", () => {
       '/rules/7-wonders.pdf',
     );
     expect(screen.queryByTitle('7 Wonders rules')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAccessibleDescription('4.6 MB');
+    expect(screen.getByRole('link', { name: 'Download PDF 4.6 MB' })).toBeInTheDocument();
     // The browser's own viewer a click away, for its zoom, thumbnails and printing.
     const open = screen.getByRole('link', { name: 'Open PDF' });
     expect(open).toHaveAttribute('href', '/rules/7-wonders.pdf');
@@ -1095,7 +1097,7 @@ describe("RulesPage's reader", () => {
     expect(open).not.toHaveAttribute('download');
     expect(screen.getByText(/To print this rulebook, use Open PDF/)).toBeInTheDocument();
     // On a phone (fewerWordsClass) just Download and Open, "PDF" still read out.
-    for (const link of [screen.getByRole('link', { name: 'Download PDF' }), open]) {
+    for (const link of [screen.getByRole('link', { name: 'Download PDF 4.6 MB' }), open]) {
       expect(within(link).getByText('PDF')).toHaveClass('rules-more');
     }
   });
@@ -1167,7 +1169,7 @@ describe("RulesPage's reader", () => {
       expect(links()).toContainElement(button);
       expect(screen.getByRole('banner')).not.toContainElement(button);
       const items = [...links().children];
-      expect(items.map((el) => el.textContent)).toEqual(['Download PDF·4.6 MB', 'Open PDF', 'Save for offline']);
+      expect(items.map((el) => el.textContent)).toEqual(['Download PDF · 4.6 MB', 'Open PDF', 'Save for offline']);
     });
 
     it('saves it on a tap, saying it is saving and then that it is saved', async () => {
