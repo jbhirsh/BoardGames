@@ -11,6 +11,9 @@ import { join } from 'path';
 /** Model used for every rules-assistant Gemini call. */
 export const RULES_ASSISTANT_MODEL = 'gemini-2.5-flash';
 
+/** Google's GenAI SDK 3 defaults to v1; the chat was built and tested on v1beta, so it stays there. */
+const GEMINI_API_VERSION = 'v1beta';
+
 // Answers are meant to be concise, and output tokens are the expensive side of
 // the Gemini meter. Cap them so no single request (or abusive prompt) can run
 // up an unbounded reply. ~1024 tokens is roughly 700 words — ample for a rules
@@ -174,7 +177,7 @@ export interface StreamRulesAnswerOptions {
 export async function streamRulesAnswer(
   options: StreamRulesAnswerOptions,
 ): Promise<AsyncGenerator<GenerateContentResponse>> {
-  const ai = new GoogleGenAI({ apiKey: options.apiKey });
+  const ai = new GoogleGenAI({ apiKey: options.apiKey, apiVersion: GEMINI_API_VERSION });
   return ai.models.generateContentStream({
     model: RULES_ASSISTANT_MODEL,
     contents: buildContents(options.rulesText, options.history, options.message),

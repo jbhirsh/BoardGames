@@ -231,7 +231,7 @@ describe('streamRulesAnswer', () => {
       apiKey: 'test-key',
     });
 
-    expect(mocks.constructorCalls).toEqual([{ apiKey: 'test-key' }]);
+    expect(mocks.constructorCalls).toEqual([{ apiKey: 'test-key', apiVersion: 'v1beta' }]);
     expect(result).toBe(stream);
     const request = lastRequest();
     expect(request.model).toBe(RULES_ASSISTANT_MODEL);
