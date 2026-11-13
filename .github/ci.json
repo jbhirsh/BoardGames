@@ -54,7 +54,13 @@
   },
   "review": {
     "instructions": ".github/claude-review.md",
-    "skip": ["src/gql/**", "src/data/gameWeights.ts", "src/data/wishlistArt.ts", "rules-text/**"]
+    "skip": [
+      "src/gql/**",
+      "src/data/gameWeights.ts",
+      "src/data/wishlistArt.ts",
+      "rules-text/**",
+      "drizzle/meta/*_snapshot.json"
+    ]
   },
   "autofix": {
     "ciFixChecks": [
