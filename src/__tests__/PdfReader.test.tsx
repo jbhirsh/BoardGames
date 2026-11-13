@@ -900,7 +900,11 @@ describe('PdfReader', () => {
     });
 
     it('stops waiting for a scroll that never says it ended', async () => {
-      vi.useFakeTimers();
+      // Timeouts only, here and in the ring tests below: jsdom runs every
+      // animation frame and focus fixup from one interval it starts on first
+      // use, so a faked setInterval left it on a clock that stops with the
+      // test, and no later test's frame (the jump's announcement) ever ran.
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
       top = (p) => (p === '2' ? 400 : 0);
       pdf.pages = [['One'], ['Two']];
       render(<PdfReader src="/rules/x.pdf" title="X rules" jump={{ page: 2, key: key() }} />);
@@ -971,7 +975,7 @@ describe('PdfReader', () => {
     });
 
     it('lets the ring go after a moment, for the stylesheet to fade, and keeps focus there', async () => {
-      vi.useFakeTimers();
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
       pdf.pages = [['One'], ['Two']];
       const view = render(<PdfReader src="/rules/x.pdf" title="X rules" />);
       await act(async () => {
@@ -991,7 +995,7 @@ describe('PdfReader', () => {
     });
 
     it('keeps the ring its full time on a second tap of the same page', async () => {
-      vi.useFakeTimers();
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
       pdf.pages = [['One'], ['Two']];
       const view = render(<PdfReader src="/rules/x.pdf" title="X rules" />);
       await act(async () => {
