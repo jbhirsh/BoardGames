@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import GameCard from '../components/GameCard';
 import { GAMES } from '../data/games';
@@ -180,9 +180,41 @@ describe('GameCard', () => {
       expect(start).toContainElement(screen.getByRole('button', { name: 'Deck: 1 award, show which' }));
       expect(document.querySelector('.card-head .awards')).toBeNull();
       expect(document.querySelector('.card-foot-end')).toContainElement(screen.getByRole('link', { name: /Rules/ }));
-      // The full label for a wide card, the count alone for a narrow one.
+      // The full label for a wide card, and only that.
       expect(document.querySelector('.sub-pill-full')).toHaveTextContent('+2 games');
-      expect(document.querySelector('.sub-pill-short')).toHaveTextContent('+2');
+      expect(document.querySelector('.sub-pill-short')).toBeNull();
+    });
+
+    it('shows just the count on a footer 323px wide or less, still named with the full label', () => {
+      const OriginalRO = globalThis.ResizeObserver;
+      let resize: ((width: number) => void) | undefined;
+      globalThis.ResizeObserver = class MockResizeObserver {
+        cb: ResizeObserverCallback;
+        constructor(cb: ResizeObserverCallback) {
+          this.cb = cb;
+        }
+        observe(target: Element) {
+          resize = (width) =>
+            this.cb(
+              [{ target, contentRect: { width } } as unknown as ResizeObserverEntry],
+              this as unknown as ResizeObserver,
+            );
+        }
+        unobserve() {}
+        disconnect() {}
+      } as unknown as typeof ResizeObserver;
+      try {
+        renderWithContext(<GameCard game={deckGame} />);
+        act(() => resize!(323));
+        const pill = screen.getByRole('button', { name: 'Deck: +2 games' });
+        expect(pill.querySelector('.sub-pill-short')).toHaveTextContent('+2');
+        expect(pill.querySelector('.sub-pill-full')).toBeNull();
+        act(() => resize!(324));
+        expect(pill.querySelector('.sub-pill-full')).toHaveTextContent('+2 games');
+        expect(pill.querySelector('.sub-pill-short')).toBeNull();
+      } finally {
+        globalThis.ResizeObserver = OriginalRO;
+      }
     });
 
     it('previews the names on hover, gone once the pointer leaves, like the award count', () => {

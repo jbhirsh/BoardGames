@@ -1,7 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { act, renderHook } from '@testing-library/react';
 import { useClickOutside } from '../hooks/useClickOutside';
 import { useStickyOffset } from '../hooks/useStickyOffset';
+import { useNarrow } from '../hooks/useNarrow';
 
 describe('useClickOutside', () => {
   it('calls handler when clicking outside the ref element', () => {
@@ -122,5 +123,54 @@ describe('useStickyOffset', () => {
     expect(observeSpy).not.toHaveBeenCalled();
 
     globalThis.ResizeObserver = OriginalRO;
+  });
+});
+
+describe('useNarrow', () => {
+  afterEach(() => document.body.replaceChildren());
+
+  /** A laid-out element: jsdom does no layout, so its width is given. */
+  const sized = (clientWidth: number, padding: string) => {
+    const el = document.createElement('div');
+    el.style.padding = padding;
+    Object.defineProperty(el, 'clientWidth', { value: clientWidth });
+    // Attached, as jsdom computes no style for a detached element.
+    document.body.append(el);
+    return el;
+  };
+
+  it('measures the content box before the first paint, padding left out', () => {
+    const narrow = renderHook(() => useNarrow(323));
+    act(() => narrow.result.current[1](sized(359, '0 18px')));
+    expect(narrow.result.current[0]).toBe(true);
+
+    const wide = renderHook(() => useNarrow(323));
+    act(() => wide.result.current[1](sized(360, '0 18px')));
+    expect(wide.result.current[0]).toBe(false);
+  });
+
+  it('counts an element with no width yet (no layout) as wide', () => {
+    const { result } = renderHook(() => useNarrow(323));
+    act(() => result.current[1](sized(0, '0')));
+    expect(result.current[0]).toBe(false);
+  });
+
+  it('stops following the element once it goes', () => {
+    const disconnect = vi.fn();
+    const OriginalRO = globalThis.ResizeObserver;
+    globalThis.ResizeObserver = class MockResizeObserver {
+      observe = vi.fn();
+      unobserve = vi.fn();
+      disconnect = disconnect;
+    } as unknown as typeof ResizeObserver;
+    try {
+      const { result, unmount } = renderHook(() => useNarrow(323));
+      act(() => result.current[1](sized(300, '0')));
+      expect(result.current[0]).toBe(true);
+      unmount();
+      expect(disconnect).toHaveBeenCalled();
+    } finally {
+      globalThis.ResizeObserver = OriginalRO;
+    }
   });
 });

@@ -117,10 +117,10 @@ export const creditClass = 'card-credit text-[12px] text-text3';
 /**
  * A card's footer: what the card holds besides its own game bottom left, the
  * actions bottom right; on a card too narrow for both, the actions drop to
- * their own line together. A container, so a narrow card can shorten its
- * add-ons button.
+ * their own line together. GameCard measures it (`useNarrow`) so a narrow
+ * card can shorten its add-ons button.
  */
-export const cardFootClass = 'card-foot @container row-3 flex flex-wrap items-center gap-2 self-end px-4.5 pb-4';
+export const cardFootClass = 'card-foot row-3 flex flex-wrap items-center gap-2 self-end px-4.5 pb-4';
 /** The start of a card's footer, gone when it holds nothing. */
 export const cardFootStartClass = 'card-foot-start flex items-center gap-1.5 empty:hidden';
 /** The end of a card's footer: its actions. */
