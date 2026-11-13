@@ -1076,14 +1076,33 @@ describe('PdfReader', () => {
     });
 
     it('says when the rulebook has no such page, again on each tap, and goes nowhere', async () => {
+      // Frames run only when the test runs them: on a busy machine a real
+      // frame can land before the emptied region is checked.
+      const frames = new Map<number, FrameRequestCallback>();
+      let id = 0;
+      vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+        frames.set(++id, cb);
+        return id;
+      });
+      vi.stubGlobal('cancelAnimationFrame', (n: number) => {
+        frames.delete(n);
+      });
+      const runFrames = () =>
+        act(() => {
+          const due = [...frames.values()];
+          frames.clear();
+          for (const cb of due) cb(0);
+        });
       const view = await openAt([['One'], ['Two']], { page: 9, key: key() });
       const status = screen.getByRole('status');
-      await vi.waitFor(() => expect(status).toHaveTextContent('This rulebook has 2 pages, so it has no page 9.'));
+      runFrames();
+      expect(status).toHaveTextContent('This rulebook has 2 pages, so it has no page 9.');
       expect(scrolled).toEqual([]);
       // Emptied and said again, so a screen reader hears it again.
       await jumpTo(view, { page: 9, key: key() });
       expect(status).toBeEmptyDOMElement();
-      await vi.waitFor(() => expect(status).toHaveTextContent('so it has no page 9.'));
+      runFrames();
+      expect(status).toHaveTextContent('so it has no page 9.');
       // A search says its own piece.
       await search('two');
       expect(status).toHaveTextContent('1 of 1 · page 2');
