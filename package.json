@@ -9,7 +9,6 @@
   "scripts": {
     "dev": "vite",
     "prepare": "git config core.hooksPath .githooks || true",
-    "postinstall": "patch-package",
     "build": "npm run typecheck && vite build",
     "typecheck": "node node_modules/@typescript/native/bin/tsc -b",
     "typecov": "for p in app api node eval sw e2e; do type-coverage -p tsconfig.$p.json --at-least 100 --ignore-files 'src/gql/**' || exit 1; done",
@@ -92,7 +91,6 @@
     "jscpd": "^5.4.2",
     "jsdom": "^31.0.0",
     "knip": "^6.44.1",
-    "patch-package": "^8.0.1",
     "pdf-lib": "^1.17.1",
     "pdf-to-img": "^7.0.2",
     "prettier": "^3.9.10",

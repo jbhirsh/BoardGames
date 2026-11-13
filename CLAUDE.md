@@ -35,9 +35,6 @@ changing the module.
   `require('typescript')`, so `@typescript/native` aliases `typescript@7` and `typescript`
   aliases `@typescript/typescript6`. Which `tsc` wins can change on any `npm install`. Drop the
   aliases once all three support TS 7.
-- **`patches/` holds a `patch-package` fix** (on `postinstall`): a pdf.js range rejection
-  marked handled. Delete it once upstream fixes it; a changed release fails to patch, which
-  fails CI's install.
 - **Owner mutations must be JSON.** CSRF protection is Better Auth's session cookie's
   SameSite=Lax, then the JSON media type (`api/_lib/json.ts`), which a cross-site form can't
   send without a preflight: every POST to `/api/graphql` must be JSON (checked on the headers as
