@@ -249,7 +249,7 @@ test('the controls on the page take taps 44px each way, a small one beyond its l
 });
 
 test("a score pad's and the rules page's small controls take taps 44px each way", async ({ page }) => {
-  // Each page loads after its placeholder, whose Back link it replaces.
+  // Each page's controls are measured once its code is in, past its grey header.
   await page.goto('/score/7-wonders');
   await expect(page.getByRole('button', { name: 'Results' })).toBeVisible();
   await takesTaps44([

@@ -9,10 +9,10 @@ const bars = (container: HTMLElement) =>
   [...container.querySelectorAll('.skeleton-text')].map((bar) => bar.textContent);
 
 describe('RouteFallback', () => {
-  it('keeps the Back link working and says the page is loading', () => {
+  it('says the page is loading', () => {
     renderRouted(<RouteFallback title="Word Checker" />, ['/word-checker'], '/word-checker');
-    expect(screen.getByRole('link', { name: /Back to The Game Room/ })).toHaveAttribute('href', '/');
     expect(screen.getByRole('status')).toHaveTextContent('Loading…');
+    expect(screen.getByRole('banner')).toHaveAttribute('aria-busy', 'true');
   });
 
   it("lays out the page's heading as a hidden bar, with room for its box art", () => {

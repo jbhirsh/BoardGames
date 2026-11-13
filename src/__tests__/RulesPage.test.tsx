@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route, type Location } from 'react-router';
 import RulesPage from '../components/RulesPage';
+import PageFrame from '../components/PageFrame';
 import { FROM_LIST } from '../utils/fromList';
 import { renderRouted } from './routed';
 import { PROBE_MS, type SaveState } from '../pdfjs/saved';
@@ -252,7 +253,10 @@ describe('RulesPage', () => {
 
     it('switches tabs in place, so Back still returns to the list it came from', () => {
       const router = renderRouted(
-        <RulesPage />,
+        // In its frame, as main.tsx routes it: the frame draws Back.
+        <PageFrame fallback={null}>
+          <RulesPage />
+        </PageFrame>,
         ['/?p=5', { pathname: '/rules/catan', state: FROM_LIST }],
         '/rules/:slug/:part?',
       );

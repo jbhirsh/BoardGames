@@ -1,13 +1,15 @@
 import './startSentry';
-import { StrictMode, Suspense } from 'react';
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import App, { HomePage } from './App';
 import { RulesPage, ScoreCalculatorPage, WordCheckerPage, SignInPage, EmailedDecisionPage } from './lazyPages';
 import NotFoundPage, { RouteError } from './components/NotFoundPage';
+import PageFrame from './components/PageFrame';
 import RouteFallback, { RulesFallback } from './components/RouteFallback';
 import { AuthProvider } from './context/AuthContext';
 import { SIGN_IN_INTRO, SIGN_IN_TITLE } from './data/signIn';
+import { opensRulesPage, opensScorePad } from './utils/subPages';
 
 // The app's entry: error reporting first (./startSentry; client/sentry.ts
 // fetches Sentry's SDK once the page is up), then the router. Its pages:
@@ -27,9 +29,10 @@ import { SIGN_IN_INTRO, SIGN_IN_TITLE } from './data/signIn';
 // The emailed links' pages read with a query and act only when their button
 // is pressed, since mail scanners follow every link.
 // Only the home page, and the not-found page the router's error page needs,
-// are in the main bundle. The rest load on first open (lazyPages.ts) behind
-// their header in grey (components/RouteFallback.tsx; the sign-in page's
-// words come from data/signIn.ts for both), and code that won't load
+// are in the main bundle. The rest load on first open (lazyPages.ts) in their
+// frame, the column and Back link (components/PageFrame.tsx), behind their
+// header in grey (components/RouteFallback.tsx; the sign-in page's words come
+// from data/signIn.ts for both), and code that won't load
 // reaches RouteError (components/NotFoundPage.tsx), which reloads once.
 const router = createBrowserRouter([
   {
@@ -40,43 +43,46 @@ const router = createBrowserRouter([
       {
         path: '/rules/:slug/:part?',
         element: (
-          <Suspense fallback={<RulesFallback />}>
+          <PageFrame fallback={<RulesFallback />} opens={({ slug }) => opensRulesPage(slug)}>
             <RulesPage />
-          </Suspense>
+          </PageFrame>
         ),
       },
       {
         path: '/score/:slug/:part?',
         element: (
-          <Suspense fallback={<RouteFallback title="Score Calculator" />}>
+          <PageFrame
+            fallback={<RouteFallback title="Score Calculator" />}
+            opens={({ slug, part }) => opensScorePad(slug, part)}
+          >
             <ScoreCalculatorPage />
-          </Suspense>
+          </PageFrame>
         ),
       },
       {
         path: '/word-checker',
         element: (
-          <Suspense fallback={<RouteFallback title="Word Checker" />}>
+          <PageFrame fallback={<RouteFallback title="Word Checker" />}>
             <WordCheckerPage />
-          </Suspense>
+          </PageFrame>
         ),
       },
       {
         path: '/sign-in',
         element: (
           <AuthProvider>
-            <Suspense fallback={<RouteFallback title={SIGN_IN_TITLE} desc={SIGN_IN_INTRO} art={false} narrow />}>
+            <PageFrame fallback={<RouteFallback title={SIGN_IN_TITLE} desc={SIGN_IN_INTRO} art={false} narrow />}>
               <SignInPage />
-            </Suspense>
+            </PageFrame>
           </AuthProvider>
         ),
       },
       ...(['approve', 'deny'] as const).map((decision) => ({
         path: `/${decision}`,
         element: (
-          <Suspense fallback={<RouteFallback title={decision === 'approve' ? 'Approve' : 'Deny'} art={false} />}>
+          <PageFrame fallback={<RouteFallback title={decision === 'approve' ? 'Approve' : 'Deny'} art={false} />}>
             <EmailedDecisionPage />
-          </Suspense>
+          </PageFrame>
         ),
       })),
       { path: '*', element: <NotFoundPage /> },

@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
-import BackLink from './BackLink';
-import { pageClass, pageHeaderClass, pageTitleClass } from './sharedClasses';
+import { pageHeaderClass, pageTitleClass } from './sharedClasses';
 import { signInPanelClass } from './signInClasses';
 
 /**
@@ -12,15 +11,14 @@ import { signInPanelClass } from './signInClasses';
  */
 export default function EmailedLinkPage({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className={pageClass}>
+    <>
       <title>{`${title} · The Game Room`}</title>
       <meta name="robots" content="noindex" />
       <meta name="referrer" content="no-referrer" />
       <header className={pageHeaderClass}>
-        <BackLink />
         <h1 className={`${pageTitleClass} mx-auto max-w-110`}>{title}</h1>
       </header>
       <div className={`${signInPanelClass} mx-auto`}>{children}</div>
-    </div>
+    </>
   );
 }
