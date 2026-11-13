@@ -4,19 +4,29 @@
 
 <!--
 UI changes need before/after visuals; the "PR visuals" check fails without
-them. Use screenshots for how things look, and a GIF (or a video dragged into
-this editor) for how things move or respond: a dropdown or dialog opening,
-an animation, scrolling, a multi-step flow. A GIF shows the pointer and key
-presses, so viewers see where it clicks, scrolls and types: record main's
-and this branch's with `npm run pr-gif -- <scenario.ts> --dir <PR number>`,
-which hosts them and prints this table. Put the images on the screenshots
-branch, in a folder named for the PR (deploys are off there), and link them
-raw by commit SHA (<sha> below) so a later push to the branch can't change
-what the PR shows:
+them.
 
-| Before (`main`) | After |
-|---|---|
-| <img src="https://raw.githubusercontent.com/jbhirsh/BoardGames/<sha>/<PR number>/before.png" width="300"> | <img src="https://raw.githubusercontent.com/jbhirsh/BoardGames/<sha>/<PR number>/after.png" width="300"> |
+Stills are the visual baselines this PR changes: the check keeps a "Visual
+changes" comment with each changed state, phone and desktop, before → after.
+Update the baselines with the UI (run "Update visual baselines" on this
+branch, then push again). A state no baseline shows gets a visual scenario
+first (e2e/visual.ts says how), so its picture guards the change from then
+on.
+
+Motion (a dropdown or dialog opening, an animation, scrolling, a multi-step
+flow) gets a GIF: change or add a scenario in scripts/gif-scenarios/ and
+push. The "PR GIFs" workflow records main and this branch with the pointer
+and key presses drawn in, and adds the GIFs at the end of this description,
+labelled "GIF:"; each later push records them again in place (a failed one
+keeps the last GIFs, marked "Not updated"). Keep the scenario on the branch:
+once the PR no longer changes it, its GIFs are dropped. Running "PR GIFs" by
+hand, with this PR's number and a scenario's path, is the fallback: for a
+scenario this PR doesn't change, side by side, a failed recording, or a
+fork's PR, which is never attached on its own.
+
+Only a still no test can draw (Google's sign-in page, an email) is dragged
+into this editor by hand, with alt text saying why:
+![No test draws: Google's sign-in page](https://github.com/user-attachments/assets/…)
 -->
 
 - [ ] No visible UI change

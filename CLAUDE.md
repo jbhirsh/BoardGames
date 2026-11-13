@@ -98,6 +98,9 @@ changing the module.
   variants (`sm:` from 521px up to `2xl:` from 1081px, in `src/index.css`). The `max-*`
   variants carried over from the old `max-width` blocks convert when next touched. Show a UI
   change at phone size in the PR first.
+- **PR pictures never go on the `screenshots` branch**: the PR template says where they come
+  from. A GIF comes from pushing a scenario in `scripts/gif-scenarios/`, which records and
+  attaches it; don't run PR GIFs by hand except as the fallback.
 - **Every style is a Tailwind class** (v4), written on the element; there is no other
   stylesheet. `src/index.css` holds the `@theme` (Tailwind's own colours, fonts, type scale and
   the like are dropped, so a class reaches only these, all in px, spacing a 4px step), the dark
