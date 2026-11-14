@@ -22,8 +22,16 @@ export const SUGGESTION = {
 /** A made-up weight for a BGG id, 1.0 to 4.9, the same on every run. */
 const fixtureWeight = (bggId: number): number => 1 + ((bggId * 7) % 40) / 10;
 
-/** Made-up honours, by BGG id: Ticket to Ride's two wins and a nomination, and Azul's win. */
+/**
+ * Made-up honours, by BGG id: Ticket to Ride's two wins and a nomination,
+ * Azul's win, and Blood on the Clocktower's nominations alone (a wishlist
+ * entry's rosette pill).
+ */
 const HONOURS: Record<number, Array<{ name: string; year: number; result: string }>> = {
+  240980: [
+    { name: 'Fixture Award Best Party Game', year: 2022, result: 'Nominee' },
+    { name: 'Fixture Award Game of the Year', year: 2023, result: 'Nominee' },
+  ],
   230802: [{ name: 'Fixture Award Best Abstract Game', year: 2018, result: 'Winner' }],
   9209: [
     { name: 'Spiel des Jahres', year: 2004, result: 'Winner' },

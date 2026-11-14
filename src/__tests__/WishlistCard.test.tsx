@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
+import { stubResizeObserver } from './helpers/stubResizeObserver';
+import { AuthContext } from '../context/authContextValue';
 import { MemoryRouter } from 'react-router';
 import WishlistCard from '../components/WishlistCard';
 import { FilterProvider } from '../context/FilterContext';
@@ -30,20 +32,25 @@ function KeywordProbe() {
   return <output>{[...state.keywords].join(',')}</output>;
 }
 
-function renderCard(overrides: Partial<Props> = {}) {
+function renderCard(overrides: Partial<Props> = {}, { admin = false } = {}) {
   const props: Props = { item: testItem, voteCount: 0, voted: false, onVote: () => {}, ...overrides };
   return render(
     <MemoryRouter>
-      <FilterProvider>
-        <WishlistCard {...props} />
-        <KeywordProbe />
-      </FilterProvider>
+      <AuthContext.Provider value={{ admin, loaded: true, refresh: async () => {} }}>
+        <FilterProvider>
+          <WishlistCard {...props} />
+          <KeywordProbe />
+        </FilterProvider>
+      </AuthContext.Provider>
     </MemoryRouter>,
   );
 }
 
 describe('WishlistCard', () => {
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
 
   it('is built on the collection card: name, meta, keyword pills, description', () => {
     const { container } = renderCard();
@@ -62,13 +69,24 @@ describe('WishlistCard', () => {
     expect(screen.queryByText('Wishlist')).not.toBeInTheDocument();
   });
 
-  it('shows the award count bottom left, with the vote and links on the right', () => {
-    renderCard();
-    expect(document.querySelector('.card-foot-start')).toContainElement(
+  it('puts the award pill on the box art when there is some, and the vote and links on the right', () => {
+    renderCard({ item: { ...testItem, img: '/images/wishlist/x.jpg' } });
+    const art = screen.getByRole('img', { name: 'Test Wishlist Game box art' });
+    expect(art.parentElement).toContainElement(screen.getByRole('button', { name: /1 award, show which/ }));
+    expect(document.querySelector('.card-head')).toHaveClass('min-h-[calc(var(--corner-art)+40px)]');
+    expect(document.querySelector('.card-foot .awards')).toBeNull();
+    expect(document.querySelector('.card-foot-end')).toContainElement(screen.getByRole('button', { name: /vote/i }));
+  });
+
+  it('leads the tags with the award pill when there is no art, even with no tags', () => {
+    const { container, unmount } = renderCard();
+    const tags = container.querySelector('.card-kw')!;
+    expect(tags.firstElementChild).toContainElement(screen.getByRole('button', { name: /1 award, show which/ }));
+    unmount();
+    const second = renderCard({ item: { ...testItem, kw: [] } });
+    expect(second.container.querySelector('.card-kw')).toContainElement(
       screen.getByRole('button', { name: /1 award, show which/ }),
     );
-    expect(document.querySelector('.card-head .awards')).toBeNull();
-    expect(document.querySelector('.card-foot-end')).toContainElement(screen.getByRole('button', { name: /vote/i }));
   });
 
   it('uses an h4 by default and an h3 when asked, so flat lists keep heading order', () => {
@@ -85,7 +103,7 @@ describe('WishlistCard', () => {
   });
 
   it('omits the play time, the players and the keyword row when the entry lacks them', () => {
-    const { container } = renderCard({ item: { ...testItem, dur: '', players: '', kw: [] } });
+    const { container } = renderCard({ item: { ...testItem, dur: '', players: '', kw: [], awards: [] } });
     expect(screen.queryByText('30 min')).not.toBeInTheDocument();
     expect(screen.queryByText('2–4')).not.toBeInTheDocument();
     expect(container.querySelectorAll('.cmeta')).toHaveLength(0);
@@ -123,6 +141,49 @@ describe('WishlistCard', () => {
       'aria-pressed',
       'true',
     );
+  });
+
+  it("turns the owner's Vote small, its name unchanged, on a footer too narrow for their row", () => {
+    const { resize } = stubResizeObserver();
+    renderCard({ voteCount: 14 }, { admin: true });
+    const vote = screen.getByRole('button', { name: 'Vote for Test Wishlist Game (14 votes)' });
+    act(() => resize(291));
+    expect(vote).not.toHaveClass('vote-btn--compact');
+    act(() => resize(290));
+    expect(vote).toHaveClass('vote-btn--compact', 'h-8');
+    expect(vote).toHaveTextContent(/^♡14$/);
+    expect(vote).toHaveAccessibleName('Vote for Test Wishlist Game (14 votes)');
+  });
+
+  it("keeps a visitor's Vote whole on any card: without the owner's tools it fits", () => {
+    const { resize } = stubResizeObserver();
+    renderCard({ voteCount: 14 });
+    act(() => resize(250));
+    expect(screen.getByRole('button', { name: /Vote for/ })).not.toHaveClass('vote-btn--compact');
+  });
+
+  it("puts the owner's pencil and bin first in the footer, then Vote and the links", () => {
+    renderCard({}, { admin: true });
+    const foot = document.querySelector('.card-foot')!;
+    const order = Array.from(foot.querySelectorAll('button, a')).map((el) => el.getAttribute('aria-label'));
+    expect(order.slice(0, 3)).toEqual([
+      'Edit Test Wishlist Game',
+      'Remove Test Wishlist Game',
+      'Vote for Test Wishlist Game (0 votes)',
+    ]);
+  });
+
+  it('makes the head tall enough for a sticker only when there is art and an award to put on it', () => {
+    const art = { ...testItem, img: '/images/wishlist/x.jpg' };
+    const sticker = 'min-h-[calc(var(--corner-art)+40px)]';
+    const { unmount } = renderCard({ item: art });
+    expect(document.querySelector('.card-head')).toHaveClass(sticker);
+    unmount();
+    const bare = renderCard({ item: { ...art, awards: [] } });
+    expect(document.querySelector('.card-head')).not.toHaveClass(sticker);
+    bare.unmount();
+    renderCard();
+    expect(document.querySelector('.card-head')).not.toHaveClass(sticker);
   });
 
   it('disables the vote button when asked', () => {

@@ -66,6 +66,41 @@ test('cards are still a choice, and the choice is kept in the link', async ({ pa
   await expect(page.getByRole('button', { name: 'More about Azul' })).toBeVisible();
 });
 
+test("a card's award sits on its art, and its footer is one row of buttons, with add-ons or the owner's tools", async ({
+  page,
+}) => {
+  /** The vertical centre of what `locator` finds. */
+  const middle = async (locator: Locator) => {
+    const box = (await locator.boundingBox())!;
+    return box.y + box.height / 2;
+  };
+
+  await page.goto('/?v=grid');
+  const pill = page.getByRole('button', { name: /^Ticket to Ride: \d+ awards?, show which$/ });
+  await pill.scrollIntoViewIfNeeded();
+  const art = (await page.getByRole('img', { name: 'Ticket to Ride box art' }).boundingBox())!;
+  const sticker = (await pill.boundingBox())!;
+  // Over the art's bottom edge, centred on it.
+  expect(sticker.y).toBeLessThan(art.y + art.height);
+  expect(sticker.y + sticker.height).toBeGreaterThan(art.y + art.height);
+  expect(Math.abs(sticker.x + sticker.width / 2 - (art.x + art.width / 2))).toBeLessThan(2);
+  // The footer's first button and its last share a line: the add-ons
+  // button, then Rules, Score and the video.
+  const addOns = page.getByRole('button', { name: /^Ticket to Ride: \+\d+ / });
+  const video = page.getByRole('link', { name: 'Watch Ticket to Ride tutorial on YouTube' });
+  expect(Math.abs((await middle(addOns)) - (await middle(video)))).toBeLessThan(2);
+
+  // The owner's pencil first, the video last.
+  await stubOperation(page, 'Session', () => ({ session: { admin: true } }));
+  await stubOperation(page, 'PendingSuggestions', () => ({ pendingSuggestions: [] }));
+  await page.goto('/?c=want&v=grid');
+  const edit = page.getByRole('button', { name: 'Edit Blood on the Clocktower' });
+  await edit.scrollIntoViewIfNeeded();
+  await expect(page.getByRole('button', { name: /^Blood on the Clocktower: \d+ honours \(/ })).toBeVisible();
+  const entryVideo = page.getByRole('link', { name: 'Watch Blood on the Clocktower tutorial on YouTube' });
+  expect(Math.abs((await middle(edit)) - (await middle(entryVideo)))).toBeLessThan(2);
+});
+
 test('the bar along the bottom stays on screen, its buttons centred in it, and switches the lists', async ({
   page,
 }) => {

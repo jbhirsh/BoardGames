@@ -306,3 +306,22 @@ test("the list's table fits its box at the narrowest width of each layout, a lon
   const seti = page.getByText('SETI: Search for Extraterrestrial Intelligence', { exact: true });
   expect((await seti.boundingBox())!.height).toBeGreaterThan(30);
 });
+
+test("a card's footer stays one row on the grid's narrowest cards, and under a filter", async ({ page }) => {
+  /** The vertical centre of what `locator` finds. */
+  const middle = async (locator: ReturnType<typeof page.getByRole>) => {
+    const box = (await locator.boundingBox())!;
+    return box.y + box.height / 2;
+  };
+  // Four 290px cards: Dominion's add-ons button, Rules, Score and its video.
+  await page.setViewportSize({ width: 1304, height: 900 });
+  for (const url of ['/?v=grid', '/?v=grid&p=2']) {
+    await page.goto(url);
+    const addOns = page.getByRole('button', { name: /^Dominion: \+1 expansion$|^Dominion: \d+ of 1 expansion fit$/ });
+    const video = page.getByRole('link', { name: 'Watch Dominion tutorial on YouTube' });
+    await addOns.scrollIntoViewIfNeeded();
+    expect(Math.abs((await middle(addOns)) - (await middle(video)))).toBeLessThan(2);
+  }
+  // Score keeps its name while it shows only its icon.
+  await expect(page.getByRole('link', { name: 'Score' }).first()).toBeVisible();
+});

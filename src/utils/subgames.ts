@@ -44,6 +44,16 @@ export function fittingSubgames(subs: SubGame[], state: TableFilter): SubGame[] 
   return tableFiltered(state) ? subs.filter((s) => fitsTable(s, state)) : subs;
 }
 
+/**
+ * The card button's short label, where its full one won't fit: "+2", or
+ * "1 of 3" under a filter (whose full label overflows even a phone's footer).
+ * Its words start subgameLabel's, so they stay in the button's name.
+ */
+export function subgameShortLabel(subs: SubGame[], state: TableFilter): string {
+  if (!tableFiltered(state)) return `+${subs.length}`;
+  return `${fittingSubgames(subs, state).length} of ${subs.length}`;
+}
+
 /** What the card's button says: how many games are inside, or how many fit. */
 export function subgameLabel(subs: SubGame[], state: TableFilter): string {
   if (!tableFiltered(state)) return `+${subs.length} ${subgameNoun(subs, subs.length)}`;

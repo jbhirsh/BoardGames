@@ -38,3 +38,24 @@ test('a visitor sees no pencil or bin', async ({ page }) => {
   await expect(page.getByRole('heading', { name: SETI })).toBeVisible();
   await expect(page.getByRole('button', { name: `Edit ${SETI}` })).toHaveCount(0);
 });
+
+test("the owner's card footers stay one row at the desktop's widths, two-digit votes and all", async ({ page }) => {
+  // Every entry has 23 votes, so Vote's label is as wide as a count usually gets.
+  await stubOperation(page, 'WishlistVotes', ({ ids }) => ({
+    wishlistVotes: { counts: (Array.isArray(ids) ? ids : []).map((id: unknown) => ({ id, count: 23 })), myVotes: [] },
+  }));
+  /** The vertical centre of what `locator` finds. */
+  const middle = async (locator: ReturnType<typeof page.getByRole>) => {
+    const box = (await locator.boundingBox())!;
+    return box.y + box.height / 2;
+  };
+  // 1440: four 304px cards; 1304: four 290px cards, the narrowest the grid makes.
+  for (const width of [1440, 1304]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/?c=want&v=grid&q=seti');
+    const edit = page.getByRole('button', { name: `Edit ${SETI}` });
+    const video = page.getByRole('link', { name: `Watch ${SETI} tutorial on YouTube` });
+    await expect(page.getByRole('button', { name: `Vote for ${SETI} (23 votes)` })).toBeVisible();
+    expect(Math.abs((await middle(edit)) - (await middle(video)))).toBeLessThan(2);
+  }
+});
