@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-import { CORE, MORE, WIDE, prepare, shoot } from './visual';
+import { CORE, GRID, MORE, prepare, shoot } from './visual';
 
 // Every state in both themes, in desktop Safari (see visual.ts), which
 // covers every style the app has.
@@ -16,7 +16,7 @@ for (const theme of ['light', 'dark'] as const) {
     // The core pages in the dark theme; visual.spec.ts and
     // visual-desktop.spec.ts have them light.
     if (theme === 'dark') {
-      for (const scenario of [...CORE, ...WIDE]) {
+      for (const scenario of [...CORE, ...GRID]) {
         test(scenario.name, async ({ page }) => {
           await prepare(page, theme);
           await scenario.open(page);

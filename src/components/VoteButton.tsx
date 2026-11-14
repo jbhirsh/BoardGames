@@ -9,6 +9,12 @@ interface Props {
   disabled?: boolean;
   /** A phone's line, short of room: the heart and the count, the verb left to the accessible name. */
   compact?: boolean;
+  /**
+   * A wishlist card's footer too narrow for the owner's pencil and bin
+   * beside a full Vote (#324): the heart and the count, as on a phone's
+   * line, at the footer buttons' height.
+   */
+  small?: boolean;
   /** In a list row's vote column, where it takes no tap area beyond its box. */
   inTable?: boolean;
 }
@@ -16,8 +22,9 @@ interface Props {
 const voteBaseClass =
   'vote-btn inline-flex h-8 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg border text-[12.5px] font-bold whitespace-nowrap [transition:background_0.15s,border-color_0.15s,color_0.15s] disabled:cursor-not-allowed disabled:opacity-50';
 // Where it sits: a phone's line (compact, raised over the line's tap area),
-// a list row's vote column, or a card's footer.
+// a list row's vote column, or a card's footer, full or (small) compact.
 const lineClass = `vote-btn--compact relative z-1 h-8.5 min-w-[3.6em] px-2.5 text-[14px] ${tapTargetClass}`;
+const smallCardClass = `vote-btn--compact min-w-[3.6em] px-2.5 text-[14px] ${tapTargetClass}`;
 const tableClass = 'min-w-[8.4em] px-3';
 const cardClass = `min-w-[8.4em] px-3 max-sm:min-w-[8em] max-sm:px-2.5 ${tapTargetClass}`;
 // The label as wide as the widest it can become as a vote lands ("Voted"
@@ -33,9 +40,9 @@ const reserveClass =
  * voted. The accessible name starts with the same word the button shows,
  * so a voice-control user can say what they see. Its minimum width, and
  * the label's room for the widest it can become, keep it the same size as
- * a vote lands. On a wishlist card it is
- * the strongest button, where a collection card's is Rules. On a phone's
- * line it is `compact`: "♡", "♡ 2", "♥ 3".
+ * a vote lands. On a wishlist card it is the strongest button, where a
+ * collection card's is Rules. On a phone's line it is `compact`, and on a
+ * narrow card's footer beside the owner's tools `small`: "♡", "♡ 2", "♥ 3".
  */
 export default function VoteButton({
   itemName,
@@ -44,14 +51,16 @@ export default function VoteButton({
   onClick,
   disabled,
   compact = false,
+  small = false,
   inTable = false,
 }: Props) {
+  const short = compact || small;
   const plural = voteCount === 1 ? 'vote' : 'votes';
   const verb = voted ? 'Voted' : 'Vote';
   return (
     <button
       type="button"
-      className={`${voteBaseClass} ${compact ? lineClass : inTable ? tableClass : cardClass} ${voted ? 'vote-btn--on border-vote bg-vote text-on-fill hover:not-disabled:border-vote-hover hover:not-disabled:bg-vote-hover' : 'border-vote bg-vote/10 text-text hover:not-disabled:bg-vote/18'}`}
+      className={`${voteBaseClass} ${compact ? lineClass : small ? smallCardClass : inTable ? tableClass : cardClass} ${voted ? 'vote-btn--on border-vote bg-vote text-on-fill hover:not-disabled:border-vote-hover hover:not-disabled:bg-vote-hover' : 'border-vote bg-vote/10 text-text hover:not-disabled:bg-vote/18'}`}
       aria-label={`${verb} for ${itemName} (${voteCount} ${plural})`}
       aria-pressed={voted}
       onClick={onClick}
@@ -61,7 +70,7 @@ export default function VoteButton({
         {voted ? '♥' : '♡'}
       </span>
       {/* No count until there is one: "Vote · 0" says nobody cares. */}
-      {compact ? (
+      {short ? (
         voteCount > 0 && <span className="vote-label tabular-nums">{voteCount}</span>
       ) : (
         <span

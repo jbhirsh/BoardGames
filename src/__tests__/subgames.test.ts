@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { fittingSubgames, hasSubgames, shownKind, subgameLabel, subgameNoun, subgameTitle } from '../utils/subgames';
+import {
+  fittingSubgames,
+  hasSubgames,
+  shownKind,
+  subgameLabel,
+  subgameShortLabel,
+  subgameNoun,
+  subgameTitle,
+} from '../utils/subgames';
 import { isDeck } from '../utils/filterGames';
 import { initialFilterState } from '../data/initialFilterState';
 import { addonGame, presidentSub, quickGame, speedSub } from './testData';
@@ -86,5 +94,18 @@ describe('subgameLabel', () => {
     expect(subgameLabel(deck, state({ players: 9 }))).toBe('0 of 2 games fit');
     expect(subgameLabel(addons, state({ players: 6 }))).toBe('1 of 1 expansion fit');
     expect(subgameLabel(addons, state({ duration: 60 }))).toBe('0 of 1 expansion fit');
+  });
+});
+
+describe('subgameShortLabel', () => {
+  it('is "+N", or "N of M" once players or time is chosen, the start of the full label', () => {
+    expect(subgameShortLabel(deck, state())).toBe('+2');
+    expect(subgameShortLabel(deck, state({ players: 2 }))).toBe('1 of 2');
+    expect(subgameShortLabel(addons, state({ duration: 60 }))).toBe('0 of 1');
+    for (const s of [state(), state({ players: 2 }), state({ players: 9 }), state({ duration: 60 })]) {
+      for (const subs of [deck, addons]) {
+        expect(subgameLabel(subs, s).startsWith(subgameShortLabel(subs, s))).toBe(true);
+      }
+    }
   });
 });

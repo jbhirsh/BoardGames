@@ -25,6 +25,46 @@ describe('AwardsBadge', () => {
     expect(screen.queryByRole('group')).not.toBeInTheDocument();
   });
 
+  describe("on a card's art (sticker)", () => {
+    const nominated = [
+      { name: 'Golden Geek Best Party Game', year: 2022, result: 'Nominee' },
+      { name: 'Spiel des Jahres', year: 2023, result: 'Recommended' },
+    ];
+
+    it('shows honours without wins as a rosette and their count, its name saying both', () => {
+      render(<AwardsBadge itemName="Clocktower" awards={nominated} sticker />);
+      const btn = screen.getByRole('button', {
+        name: 'Clocktower: 2 honours (Nominated once · Recommended once), show which',
+      });
+      expect(btn.querySelector('svg')).not.toBeNull();
+      expect(btn).toHaveTextContent(/^2$/);
+      fireEvent.click(btn);
+      // The list's heading keeps the words.
+      expect(screen.getByRole('group', { name: 'Clocktower: Nominated once · Recommended once' })).toBeInTheDocument();
+    });
+
+    it('keeps the trophy for wins', () => {
+      render(<AwardsBadge itemName="One Win" awards={[awards[0]]} sticker />);
+      expect(screen.getByRole('button', { name: 'One Win: 1 award, show which' })).toHaveTextContent(/🏆\s*1$/);
+    });
+
+    it("takes a 44px tap on a phone and the pills' own area from sm: up", () => {
+      render(<AwardsBadge itemName="Clocktower" awards={nominated} sticker />);
+      const btn = screen.getByRole('button', { name: /Clocktower/ });
+      expect(btn.className).toContain('max-sm:after:inset-[min(0px,calc(50%-22px))]');
+      expect(btn.className).toContain('sm:after:-inset-y-0.75');
+    });
+
+    it("is the same rosette on a list row, without the sticker's tap area, so a row's badges stay short", () => {
+      render(<AwardsBadge itemName="Clocktower" awards={nominated} small />);
+      const btn = screen.getByRole('button', {
+        name: 'Clocktower: 2 honours (Nominated once · Recommended once), show which',
+      });
+      expect(btn).toHaveTextContent(/^2$/);
+      expect(btn.className).not.toContain('max-sm:after:inset-[min(0px,calc(50%-22px))]');
+    });
+  });
+
   it('opens a floating list on click, positioned from the pill, and closes on a second click', () => {
     render(<AwardsBadge itemName="Sky Team" awards={awards} />);
     const btn = screen.getByRole('button', { name: /Sky Team/ });
@@ -175,10 +215,10 @@ describe('AwardsBadge with honours other than wins', () => {
     expect(screen.getByText('Nominated twice · Recommended once')).toBeInTheDocument();
   });
 
-  it('shows a grey pill saying what they are for a game with honours but no wins', () => {
+  it('shows a grey rosette and the count for a game with honours but no wins, named with what they are', () => {
     render(<AwardsBadge itemName="Clocktower" awards={[nominee(2020), nominee(2021), nominee(2022)]} />);
-    const pill = screen.getByRole('button', { name: 'Clocktower: Nominated 3 times, show which' });
-    expect(pill).toHaveTextContent('Nominated 3 times');
+    const pill = screen.getByRole('button', { name: 'Clocktower: 3 honours (Nominated 3 times), show which' });
+    expect(pill).toHaveTextContent(/^3$/);
     expect(pill).not.toHaveTextContent('🏆');
   });
 
