@@ -1,7 +1,7 @@
 import { memo, useId, useState } from 'react';
 import type { Game } from '../data/types';
 import { useFilterDispatch, useItemFilter } from '../context/useFilter';
-import { sortedKw } from '../utils/filterGames';
+import { sortedKw, tableFiltered } from '../utils/filterGames';
 import KeywordPill from './KeywordPill';
 import AwardsBadge, { AwardsSection } from './AwardsBadge';
 import SubGameList from './SubGameList';
@@ -16,6 +16,7 @@ import { gameAnchor } from '../utils/heroCovers';
 import { useNarrow } from '../hooks/useNarrow';
 import { UserIcon, ClockIcon } from './Icons';
 import {
+  actionButtonClass,
   cardBodyClass,
   cardClass,
   cardDescClass,
@@ -26,8 +27,11 @@ import {
   cardMoreClass,
   cardNameClass,
   cornerArtClass,
+  cornerClass,
   labelPillClass,
   metaClass,
+  stickerClass,
+  stickerHeadClass,
   tagsClass,
 } from './sharedClasses';
 
@@ -38,13 +42,15 @@ interface Props {
 /**
  * A collection game in the grid. The card spans four subgrid rows of the
  * grid (sharedClasses.ts' cardClass), so heads and footers line up across a
- * row. More opens the
- * write-up and awards. A game with games inside it has a button bottom left,
- * beside the award count, named by kind ("+2 expansions", "1 of 12 games
- * fit" under a filter; just "+N" on a narrow card), that lists the names on
- * hover and opens the ones that fit (SubGameList) under the footer. The
- * footer ends with GameActions. Memoized: a filter change that leaves this
- * game as it was doesn't redraw it.
+ * row. The award pill sits on the box art, like a sticker (#324). More opens
+ * the write-up and awards. The footer is one row of same-height buttons: a
+ * game with games inside it has a button bottom left, named by kind ("+2
+ * expansions"; just "+2" on a narrow card, and "1 of 12" under a filter, its
+ * name always the full "1 of 12 games fit"), that lists the names on hover
+ * and opens the ones that fit (SubGameList) under the footer; GameActions
+ * ends it, with Score or the word checker as its icon alone on a narrow card
+ * that has the button. Memoized: a filter change that leaves this game as it
+ * was doesn't redraw it.
  */
 export default memo(GameCard);
 
@@ -61,9 +67,13 @@ function GameCard({ game }: Props) {
   const fitting = game.subgames ? fittingSubgames(game.subgames, filter) : [];
   const hasFitting = fitting.length > 0;
   const subsLabel = game.subgames ? subgameLabel(game.subgames, filter) : '';
-  // A footer too narrow for the add-ons pill's full label beside the award
-  // count and the actions (its content box at 323px or less).
+  // A footer too narrow for the add-ons button's full label beside the
+  // actions (its content box at 323px or less). Under a filter the label is
+  // always short: "1 of 3 expansions fit" overflows even a phone's footer.
   const [footNarrow, footRef] = useNarrow(323);
+  const filtered = tableFiltered(filter);
+  // Its words start the button's name, so a voice user can say what they see.
+  const shortLabel = filtered ? `${fitting.length} of ${game.subgames?.length ?? 0}` : `+${fitting.length}`;
 
   return (
     // An open card (its write-up or its add-ons list) takes a grid row of its
@@ -75,8 +85,7 @@ function GameCard({ game }: Props) {
       id={gameAnchor(game.slug)}
       className={`game-card ${cardClass} ${moreOpen || (subsOpen && hasFitting) ? 'card-open col-span-full' : ''}`}
     >
-      <div className={cardHeadClass}>
-        <img src={game.img} alt={`${game.name} box art`} className={cornerArtClass} loading="lazy" />
+      <div className={`${cardHeadClass} ${stickerHeadClass}`}>
         <h3 className={`${cardNameClass} pr-(--corner-clear)`} tabIndex={-1} data-focus-target="item">
           {game.name}
         </h3>
@@ -103,6 +112,17 @@ function GameCard({ game }: Props) {
               onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: kw })}
             />
           ))}
+        </div>
+        <div className={cornerClass}>
+          <img src={game.img} alt={`${game.name} box art`} className={cornerArtClass} loading="lazy" />
+          <div className={stickerClass}>
+            {/* The awards come with the games query; a bar waits for them on a first visit. */}
+            {waiting.awards ? (
+              <WaitingBar className="w-10" />
+            ) : (
+              <AwardsBadge itemName={game.name} awards={game.awards} sticker />
+            )}
+          </div>
         </div>
       </div>
       <div className={cardBodyClass}>
@@ -135,16 +155,12 @@ function GameCard({ game }: Props) {
         )}
       </div>
       <div className={cardFootClass} ref={footRef}>
-        {/* What the card holds besides its own game sits bottom left, so
-            every card's head carries the same things and lines up. */}
-        <div className={cardFootStartClass}>
-          {/* The awards come with the games query; a bar waits for them on a first visit. */}
-          {waiting.awards ? <WaitingBar className="w-10" /> : <AwardsBadge itemName={game.name} awards={game.awards} />}
-          {game.subgames && hasFitting && (
+        {game.subgames && hasFitting && (
+          <div className={cardFootStartClass}>
             <Popover
               className="inline-flex"
               buttonClassName={() =>
-                'group/pill inline-flex cursor-pointer items-center gap-1.5 rounded-[999px] border border-blue-tint/25 bg-blue-bg px-2.75 py-1.25 text-[11.5px] font-semibold text-blue [transition:background_0.15s,border-color_0.15s] hover:border-blue-tint/40 hover:bg-blue-bg2'
+                `group/pill ${actionButtonClass} cursor-pointer border-blue-tint/25 bg-blue-bg font-semibold text-blue hover:border-blue-tint/40 hover:bg-blue-bg2`
               }
               label={`${game.name}: ${subsLabel}`}
               title={`${game.name}: ${subsLabel}`}
@@ -154,8 +170,8 @@ function GameCard({ game }: Props) {
                   {/* On a footer too narrow for the full label, just the count.
                       Only the one shown is rendered, so it alone is the
                       pill's text; the button's name gives the full label. */}
-                  {footNarrow ? (
-                    <span className="sub-pill-short">+{fitting.length}</span>
+                  {footNarrow || filtered ? (
+                    <span className="sub-pill-short">{shortLabel}</span>
                   ) : (
                     <span className="sub-pill-full">{subsLabel}</span>
                   )}
@@ -177,9 +193,9 @@ function GameCard({ game }: Props) {
                 ))}
               </ul>
             </Popover>
-          )}
-        </div>
-        <GameActions game={game} variant="card" />
+          </div>
+        )}
+        <GameActions game={game} variant="card" iconsOnly={footNarrow && hasFitting} />
       </div>
       {hasSubgames(game) && hasFitting && subsOpen && (
         <div className="row-4 self-start border-t border-border bg-bg2 p-2" id={subsId}>

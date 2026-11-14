@@ -120,6 +120,26 @@ export function ListIcon() {
   );
 }
 
+/** A prize rosette: a game's honours that aren't wins, on a card's award pill. */
+export function RosetteIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="8" r="6" />
+      <path d="M15.48 12.89 17 22l-5-3-5 3 1.52-9.11" />
+    </svg>
+  );
+}
+
 export function CartIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">

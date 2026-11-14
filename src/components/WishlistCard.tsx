@@ -12,20 +12,23 @@ import AdminItemControls from './AdminItemControls';
 import ExpansionTag from './ExpansionTag';
 import DifficultyMeta from './DifficultyMeta';
 import { wishAnchor } from '../utils/heroCovers';
+import { useNarrow } from '../hooks/useNarrow';
 import {
   cardBodyClass,
   cardClass,
   cardDescClass,
   cardFootClass,
   cardFootEndClass,
-  cardFootStartClass,
   cardHeadClass,
   cardMetaClass,
   cardMoreClass,
   cardNameClass,
   cornerArtClass,
+  cornerClass,
   creditClass,
   metaClass,
+  stickerClass,
+  stickerHeadClass,
   tagsClass,
 } from './sharedClasses';
 
@@ -42,8 +45,11 @@ interface Props {
 
 /**
  * A wishlist entry in the grid: the collection's card, with a vote and buy
- * links where Rules would be. Memoized: a filter change that leaves this
- * entry as it was doesn't redraw it.
+ * links where Rules would be. Its award pill sits on its box art, or leads
+ * its tags when it has none (#324). The footer is one row: the owner's
+ * pencil and bin, then Vote and the links, Vote showing just its heart and
+ * count on a footer too narrow for all five. Memoized: a filter change that
+ * leaves this entry as it was doesn't redraw it.
  */
 export default memo(WishlistCard);
 
@@ -60,6 +66,10 @@ function WishlistCard({ item, voteCount, voted, onVote, disabled, headingLevel =
   const hasMore = short !== item.desc.trim();
   // The head's text keeps clear of the box art in its corner, where there is art.
   const clear = item.img ? 'pr-(--corner-clear)' : '';
+  const awarded = (item.awards?.length ?? 0) > 0;
+  // A footer narrower than the owner's pencil, bin, a full Vote and the two
+  // links need (290–330px cards): Vote turns compact, as on a phone's line.
+  const [voteNarrow, footRef] = useNarrow(262);
 
   return (
     <div
@@ -68,8 +78,7 @@ function WishlistCard({ item, voteCount, voted, onVote, disabled, headingLevel =
       data-testid="wishlist-item"
       data-item-id={item.id}
     >
-      <div className={`${cardHeadClass} ${item.img ? '' : 'no-art'}`}>
-        {item.img && <img src={item.img} alt={`${item.name} box art`} className={cornerArtClass} loading="lazy" />}
+      <div className={`${cardHeadClass} ${item.img ? '' : 'no-art'} ${item.img && awarded ? stickerHeadClass : ''}`}>
         <Heading className={`${cardNameClass} ${clear}`} tabIndex={-1} data-focus-target="item">
           {item.name}
         </Heading>
@@ -91,8 +100,10 @@ function WishlistCard({ item, voteCount, voted, onVote, disabled, headingLevel =
             <ExpansionTag base={item.expands} />
           </p>
         )}
-        {item.kw.length > 0 && (
+        {/* With no art to sit on, the award pill leads the tags, even when there are none. */}
+        {(item.kw.length > 0 || (!item.img && awarded)) && (
           <div className={`${tagsClass} pt-2 ${clear}`}>
+            {!item.img && <AwardsBadge itemName={item.name} awards={item.awards} />}
             {sortedKw(item.kw).map((kw) => (
               <KeywordPill
                 key={kw}
@@ -101,6 +112,14 @@ function WishlistCard({ item, voteCount, voted, onVote, disabled, headingLevel =
                 onClick={() => dispatch({ type: 'TOGGLE_KEYWORD', payload: kw })}
               />
             ))}
+          </div>
+        )}
+        {item.img && (
+          <div className={cornerClass}>
+            <img src={item.img} alt={`${item.name} box art`} className={cornerArtClass} loading="lazy" />
+            <div className={stickerClass}>
+              <AwardsBadge itemName={item.name} awards={item.awards} sticker />
+            </div>
           </div>
         )}
       </div>
@@ -125,10 +144,7 @@ function WishlistCard({ item, voteCount, voted, onVote, disabled, headingLevel =
         </p>
         {item.suggestedBy && <p className={`${creditClass} mt-2`}>Suggested by {item.suggestedBy}</p>}
       </div>
-      <div className={cardFootClass}>
-        <div className={cardFootStartClass}>
-          <AwardsBadge itemName={item.name} awards={item.awards} />
-        </div>
+      <div className={cardFootClass} ref={footRef}>
         <AdminItemControls item={item} />
         <div className={cardFootEndClass}>
           <VoteButton
@@ -137,6 +153,7 @@ function WishlistCard({ item, voteCount, voted, onVote, disabled, headingLevel =
             voted={voted}
             onClick={() => onVote(item.id)}
             disabled={disabled}
+            compact={voteNarrow}
           />
           <WishlistLinks item={item} />
         </div>

@@ -8,12 +8,18 @@ import { FROM_LIST } from '../utils/fromList';
 import RulesLink from './RulesLink';
 import ExternalLink from './ExternalLink';
 import { YouTubeIcon, CalculatorIcon, SearchIcon } from './Icons';
-import { cardFootEndClass, rowFootClass, tapTargetClass, videoButtonClass } from './sharedClasses';
+import { actionButtonClass, cardFootEndClass, rowFootClass, videoButtonClass } from './sharedClasses';
 
 interface Props {
   game: Game;
   /** A card's footer, or the foot of an open list row or phone line. */
   variant: 'card' | 'row';
+  /**
+   * Score and the word checker as their icon alone, their word kept for
+   * screen readers and in the tooltip: a narrow card's footer that also holds
+   * the add-ons button, which can't fit them in full (#324).
+   */
+  iconsOnly?: boolean;
 }
 
 // The click stops at the link, so nothing around the bar acts on it as well
@@ -21,8 +27,9 @@ interface Props {
 // that gained a click handler later shouldn't fire on a link's click).
 const stop = (e: MouseEvent) => e.stopPropagation();
 
-// Rules and the game's tools: one size and radius, the 44px tap on a phone.
-const rulesButtonClass = `rules-btn inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 text-[12px] whitespace-nowrap [transition:background_0.15s,color_0.15s,border-color_0.15s,transform_0.12s] hover:shadow-(--shadow-md) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue [&_svg]:block [&_svg]:size-3.5 [&_svg]:shrink-0 ${tapTargetClass}`;
+// Rules and the game's tools: the footer actions' size and radius, the 44px
+// tap on a phone, and their icons at 14px.
+const rulesButtonClass = `rules-btn ${actionButtonClass} [&_svg]:block [&_svg]:size-3.5 [&_svg]:shrink-0`;
 // Rules, filled. Its icon's lines are cut in the fill (--icon-cut).
 const primaryClass =
   'border-blue-fill bg-blue-fill font-semibold text-on-fill [--icon-cut:var(--color-blue-fill)] hover:border-blue-fill-hover hover:bg-blue-fill-hover hover:text-on-fill hover:[--icon-cut:var(--color-blue-fill-hover)]';
@@ -39,7 +46,7 @@ const secondaryClass =
  * glyph in --yt-red), and every footer button one size and radius (44px on
  * a phone).
  */
-export default function GameActions({ game, variant }: Props) {
+export default function GameActions({ game, variant, iconsOnly = false }: Props) {
   const card = variant === 'card';
   return (
     <div className={card ? cardFootEndClass : rowFootClass}>
@@ -52,7 +59,7 @@ export default function GameActions({ game, variant }: Props) {
           title={card ? 'Score Calculator' : undefined}
           onClick={stop}
         >
-          <CalculatorIcon /> Score
+          <CalculatorIcon /> <span className={iconsOnly ? 'sr-only' : undefined}>Score</span>
         </Link>
       )}
       {game.slug === WORD_CHECKER_GAME && (
@@ -63,7 +70,7 @@ export default function GameActions({ game, variant }: Props) {
           title={card ? 'Word Checker' : undefined}
           onClick={stop}
         >
-          <SearchIcon /> Word Checker
+          <SearchIcon /> <span className={iconsOnly ? 'sr-only' : undefined}>Word Checker</span>
         </Link>
       )}
       <ExternalLink

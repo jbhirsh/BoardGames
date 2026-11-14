@@ -2,7 +2,8 @@ import { useState } from 'react';
 import type { Award } from '../data/types';
 import { awardLine, honoursSummary, splitHonours } from '../utils/honours';
 import Popover from './Popover';
-import { detailHeadingClass, detailSectionClass, pillShapeClass, pillTapClass } from './sharedClasses';
+import { RosetteIcon } from './Icons';
+import { detailHeadingClass, detailSectionClass, pillShapeClass, pillTapClass, tapTargetClass } from './sharedClasses';
 
 /** How many of the other honours an open card, row or line shows before "N more". */
 const OTHERS_SHOWN = 3;
@@ -78,16 +79,23 @@ function Trophy({ count }: { count: number }) {
   );
 }
 
-const awardsButtonBaseClass = `inline-flex cursor-pointer items-center gap-1 ${pillShapeClass} [transition:background_0.2s,border-color_0.2s] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue ${pillTapClass}`;
+const awardsButtonBaseClass = `inline-flex cursor-pointer items-center gap-1 ${pillShapeClass} [transition:background_0.2s,border-color_0.2s] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue`;
+
+/**
+ * The sticker's tap area: 44px on a phone (tapTargetClass), where nothing
+ * else is near it on the art, and the pills' own from sm: up, where
+ * tapTargetClass stops.
+ */
+const stickerTapClass = `${tapTargetClass} sm:relative sm:after:absolute sm:after:-inset-x-0.5 sm:after:-inset-y-0.75 sm:after:content-['']`;
 
 /** The gold trophy pill, deeper while hovered or open. */
-function awardsButtonClass(open: boolean): string {
-  return `${awardsButtonBaseClass} ${open ? 'border-gold/65 bg-gold/24' : 'border-gold/40 bg-gold/12 hover:border-gold/65 hover:bg-gold/24'}`;
+function awardsButtonClass(open: boolean, tap: string): string {
+  return `${awardsButtonBaseClass} ${tap} ${open ? 'border-gold/65 bg-gold/24' : 'border-gold/40 bg-gold/12 hover:border-gold/65 hover:bg-gold/24'}`;
 }
 
 /** The grey pill of a game with honours but no wins, in the keyword pills' border and fill. */
-function honoursButtonClass(open: boolean): string {
-  return `${awardsButtonBaseClass} ${open ? 'border-border-hover bg-surface' : 'border-border bg-bg2 hover:border-border-hover'}`;
+function honoursButtonClass(open: boolean, tap: string): string {
+  return `${awardsButtonBaseClass} ${tap} ${open ? 'border-border-hover bg-surface' : 'border-border bg-bg2 hover:border-border-hover'}`;
 }
 
 interface Props {
@@ -95,28 +103,47 @@ interface Props {
   awards?: Award[];
   /** A list row's smaller pill. */
   small?: boolean;
+  /**
+   * On a card's art (stickerClass): honours without wins as a rosette and
+   * their count, as "Nominated 6 times" won't fit there, and a 44px tap on a
+   * phone.
+   */
+  sticker?: boolean;
 }
 
 /**
  * A game's honours as a pill that opens their list (hover on a pointer, tap
  * on touch): a gold trophy counting the wins, its list the wins and one
  * quiet line counting the rest by result, or, for a game with honours but
- * no wins, a grey pill saying what they are ("Nominated 6 times").
+ * no wins, a grey pill saying what they are ("Nominated 6 times"), or on a
+ * card's art (`sticker`) a rosette and their count, its name saying both.
  * Renders nothing for a game with none.
  */
-export default function AwardsBadge({ itemName, awards = [], small = false }: Props) {
+export default function AwardsBadge({ itemName, awards = [], small = false, sticker = false }: Props) {
   const { wins, others } = splitHonours(awards);
   if (awards.length === 0) return null;
   const rest = honoursSummary(others);
   const size = small ? 'text-[11px]' : 'text-[11.5px]';
+  const tap = sticker ? stickerTapClass : pillTapClass;
   if (wins.length === 0) {
+    // The sticker's name carries the count it shows, then what they are.
+    const count = `${others.length} ${others.length === 1 ? 'honour' : 'honours'}`;
     return (
       <Popover
         className={`inline-flex font-sans ${size} font-semibold whitespace-nowrap text-text2`}
-        buttonClassName={honoursButtonClass}
-        label={`${itemName}: ${rest}, show which`}
+        buttonClassName={(open) => honoursButtonClass(open, tap)}
+        label={sticker ? `${itemName}: ${count} (${rest}), show which` : `${itemName}: ${rest}, show which`}
         title={`${itemName}: ${rest}`}
-        trigger={<span>{rest}</span>}
+        trigger={
+          sticker ? (
+            <>
+              <RosetteIcon />
+              <span className="tabular-nums">{others.length}</span>
+            </>
+          ) : (
+            <span>{rest}</span>
+          )
+        }
       >
         <AwardsList awards={others} />
       </Popover>
@@ -126,7 +153,7 @@ export default function AwardsBadge({ itemName, awards = [], small = false }: Pr
   return (
     <Popover
       className={`awards inline-flex font-sans ${size} font-semibold whitespace-nowrap text-award-fg`}
-      buttonClassName={awardsButtonClass}
+      buttonClassName={(open) => awardsButtonClass(open, tap)}
       label={`${itemName}: ${label}, show which`}
       title={`${itemName}: ${label}`}
       trigger={<Trophy count={wins.length} />}

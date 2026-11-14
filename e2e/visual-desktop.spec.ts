@@ -1,9 +1,9 @@
 import { test } from './fixtures';
-import { WIDE, prepare, shoot } from './visual';
+import { GRID, prepare, shoot } from './visual';
 
-// What only a desktop lays out differently, in the light theme (see
-// visual.ts); a phone shows these as visual.spec.ts's pages.
-for (const scenario of WIDE) {
+// The collection's grid on a desktop, in the light theme (see visual.ts);
+// visual-phone.spec.ts shoots a phone's.
+for (const scenario of GRID) {
   test(scenario.name, async ({ page }) => {
     await prepare(page, 'light');
     await scenario.open(page);

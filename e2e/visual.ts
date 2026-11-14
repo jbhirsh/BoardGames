@@ -6,9 +6,9 @@ import { expect, CHAT_ANSWER, authRefusal, operationOf, stubAuth, stubOperation 
  * each is shot, all in WebKit, Safari's engine. The visual-* projects in
  * playwright.config.ts decide which spec runs where: visual.spec.ts, the
  * core pages in the light theme, on a desktop and on the iPhone;
- * visual-desktop.spec.ts, what only a desktop lays out differently;
+ * visual-desktop.spec.ts, the collection's grid on a desktop;
  * visual-full.spec.ts, everything in both themes, on the desktop;
- * visual-phone.spec.ts, what only a phone shows.
+ * visual-phone.spec.ts, what only a phone shows, and its grid.
  *
  * Baselines are Linux CI's (fonts and anti-aliasing differ between
  * machines), in visual*.spec.ts-snapshots/: a run of visual-baselines.yml
@@ -111,8 +111,11 @@ export const CORE: Scenario[] = [
   },
 ];
 
-/** The pages only a desktop draws differently: a phone shows the grid as its list. */
-export const WIDE: Scenario[] = [
+/**
+ * The collection's grid of cards, which a desktop and a phone lay out their
+ * own way (a phone opens on its lines, so this asks for the grid).
+ */
+export const GRID: Scenario[] = [
   {
     name: 'home-grid',
     open: async (page) => {
@@ -320,6 +323,26 @@ export const GAMES_STATES: Scenario[] = [
       await gamesNeverAnswer(page);
       await page.goto('/');
       await expect(page.getByRole('heading', { level: 2, name: 'Our Collection' })).toBeVisible();
+    },
+  },
+  {
+    name: 'collection-loading-grid',
+    open: async (page) => {
+      await gamesNeverAnswer(page);
+      await page.goto('/?v=grid');
+      await expect(page.getByRole('heading', { level: 2, name: 'Our Collection' })).toBeVisible();
+    },
+  },
+  {
+    // A card's award pill, on its art, open to its list (#324). Popover
+    // closes on scroll, so the card is scrolled to before the pill is pressed.
+    name: 'card-awards-open',
+    open: async (page) => {
+      await page.goto('/?v=grid');
+      const pill = page.getByRole('button', { name: /^Ticket to Ride: \d+ awards?, show which$/ });
+      await pill.scrollIntoViewIfNeeded();
+      await pill.click();
+      await expect(page.getByRole('group', { name: /^Ticket to Ride: \d+ awards?$/ })).toBeVisible();
     },
   },
   {

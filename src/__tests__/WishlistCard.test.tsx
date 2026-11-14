@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import WishlistCard from '../components/WishlistCard';
 import { FilterProvider } from '../context/FilterContext';
@@ -62,13 +62,24 @@ describe('WishlistCard', () => {
     expect(screen.queryByText('Wishlist')).not.toBeInTheDocument();
   });
 
-  it('shows the award count bottom left, with the vote and links on the right', () => {
-    renderCard();
-    expect(document.querySelector('.card-foot-start')).toContainElement(
+  it('puts the award pill on the box art when there is some, and the vote and links on the right', () => {
+    renderCard({ item: { ...testItem, img: '/images/wishlist/x.jpg' } });
+    const art = screen.getByRole('img', { name: 'Test Wishlist Game box art' });
+    expect(art.parentElement).toContainElement(screen.getByRole('button', { name: /1 award, show which/ }));
+    expect(document.querySelector('.card-head')).toHaveClass('min-h-[calc(var(--corner-art)+40px)]');
+    expect(document.querySelector('.card-foot .awards')).toBeNull();
+    expect(document.querySelector('.card-foot-end')).toContainElement(screen.getByRole('button', { name: /vote/i }));
+  });
+
+  it('leads the tags with the award pill when there is no art, even with no tags', () => {
+    const { container, unmount } = renderCard();
+    const tags = container.querySelector('.card-kw')!;
+    expect(tags.firstElementChild).toContainElement(screen.getByRole('button', { name: /1 award, show which/ }));
+    unmount();
+    const second = renderCard({ item: { ...testItem, kw: [] } });
+    expect(second.container.querySelector('.card-kw')).toContainElement(
       screen.getByRole('button', { name: /1 award, show which/ }),
     );
-    expect(document.querySelector('.card-head .awards')).toBeNull();
-    expect(document.querySelector('.card-foot-end')).toContainElement(screen.getByRole('button', { name: /vote/i }));
   });
 
   it('uses an h4 by default and an h3 when asked, so flat lists keep heading order', () => {
@@ -85,7 +96,7 @@ describe('WishlistCard', () => {
   });
 
   it('omits the play time, the players and the keyword row when the entry lacks them', () => {
-    const { container } = renderCard({ item: { ...testItem, dur: '', players: '', kw: [] } });
+    const { container } = renderCard({ item: { ...testItem, dur: '', players: '', kw: [], awards: [] } });
     expect(screen.queryByText('30 min')).not.toBeInTheDocument();
     expect(screen.queryByText('2–4')).not.toBeInTheDocument();
     expect(container.querySelectorAll('.cmeta')).toHaveLength(0);
@@ -123,6 +134,37 @@ describe('WishlistCard', () => {
       'aria-pressed',
       'true',
     );
+  });
+
+  it("turns Vote compact, its name unchanged, on a footer too narrow for the owner's row", () => {
+    const OriginalRO = globalThis.ResizeObserver;
+    let resize: ((width: number) => void) | undefined;
+    globalThis.ResizeObserver = class MockResizeObserver {
+      cb: ResizeObserverCallback;
+      constructor(cb: ResizeObserverCallback) {
+        this.cb = cb;
+      }
+      observe(target: Element) {
+        resize = (width) =>
+          this.cb(
+            [{ target, contentRect: { width } } as unknown as ResizeObserverEntry],
+            this as unknown as ResizeObserver,
+          );
+      }
+      unobserve() {}
+      disconnect() {}
+    } as unknown as typeof ResizeObserver;
+    try {
+      renderCard({ voteCount: 14 });
+      const vote = screen.getByRole('button', { name: 'Vote for Test Wishlist Game (14 votes)' });
+      act(() => resize!(263));
+      expect(vote).not.toHaveClass('vote-btn--compact');
+      act(() => resize!(262));
+      expect(vote).toHaveClass('vote-btn--compact');
+      expect(vote).toHaveAccessibleName('Vote for Test Wishlist Game (14 votes)');
+    } finally {
+      globalThis.ResizeObserver = OriginalRO;
+    }
   });
 
   it('disables the vote button when asked', () => {

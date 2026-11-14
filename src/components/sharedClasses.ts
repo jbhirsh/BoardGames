@@ -96,16 +96,35 @@ export const labelPillClass =
 export const cardClass =
   'group/card row-span-4 grid scroll-mt-[calc(var(--thead-top,91px)+16px)] grid-rows-subgrid gap-y-0 overflow-hidden rounded-panel border border-border bg-surface shadow-(--shadow-sm) [transition:transform_0.25s_cubic-bezier(0.16,1,0.3,1),box-shadow_0.25s_cubic-bezier(0.16,1,0.3,1),border-color_0.2s] has-focus-visible:transform-[translateY(-3px)] has-focus-visible:border-border-hover has-focus-visible:shadow-(--shadow-lg) can-hover:hover:transform-[translateY(-3px)] can-hover:hover:border-border-hover can-hover:hover:shadow-(--shadow-lg) [&.jump-arrive]:animate-card-arrive';
 /**
- * A card's head: the name, meta and tags, the box art in its corner.
- * --corner-art sizes the art, and --corner-clear is the text's right padding
- * that keeps clear of it: the art sits 14px in from the edge and the text
- * 18px, so the art plus 10px leaves 14px between them.
+ * A card's head: the name, meta and tags, the box art in its corner (with
+ * the award pill on it, stickerClass). --corner-art sizes the art, and
+ * --corner-clear is the text's right padding that keeps clear of it: the art
+ * sits 14px in from the edge and the text 18px, so the art plus 10px leaves
+ * 14px between them.
  */
 export const cardHeadClass =
   'card-head relative row-1 border-b border-border px-4.5 pt-4 pb-3 [--corner-art:76px] [--corner-clear:calc(var(--corner-art)+10px)]';
+/**
+ * A head tall enough for the award pill on its art: the pill (about 22px)
+ * starts 14px above the art's bottom, so this leaves it, and its 44px tap
+ * area on a phone, inside the head's rule.
+ */
+export const stickerHeadClass = 'min-h-[calc(var(--corner-art)+40px)]';
+/**
+ * A card's corner: the box art and the award pill on it. It comes last in
+ * the head, so a screen reader and Tab meet the name first; being absolute,
+ * it sits top right wherever it is in the DOM.
+ */
+export const cornerClass = 'absolute top-3 right-3.5 w-(--corner-art)';
 /** The box art in a card's corner, its edge tinting blue while the card lifts. */
 export const cornerArtClass =
-  'card-corner-img absolute top-3 right-3.5 size-(--corner-art) shrink-0 rounded-[14px] border border-border bg-art-matte object-contain shadow-(--shadow-sm) filter-(--art-dim) group-has-focus-visible/card:border-blue-tint/25 can-hover:group-hover/card:border-blue-tint/25';
+  'card-corner-img size-(--corner-art) shrink-0 rounded-[14px] border border-border bg-art-matte object-contain shadow-(--shadow-sm) filter-(--art-dim) group-has-focus-visible/card:border-blue-tint/25 can-hover:group-hover/card:border-blue-tint/25';
+/**
+ * The award pill on a card's art, centred on its bottom edge like a sticker,
+ * backed with the card's surface so it reads over any cover.
+ */
+export const stickerClass =
+  'absolute top-[calc(var(--corner-art)-14px)] left-1/2 -translate-x-1/2 rounded-[999px] bg-surface empty:hidden';
 /** A card's name. */
 export const cardNameClass = 'card-name mb-2 font-display text-[16px] leading-[1.2] font-bold text-dark';
 /** A card's players, time and difficulty. */
@@ -122,14 +141,21 @@ export const cardMoreClass =
 /** Who suggested a wishlist entry (mt-2 on a card, mb-2.5 in an open line). */
 export const creditClass = 'card-credit text-[12px] text-text3';
 /**
- * A card's footer: what the card holds besides its own game bottom left, the
- * actions bottom right; on a card too narrow for both, the actions drop to
- * their own line together. GameCard measures it (`useNarrow`) so a narrow
- * card can shorten its add-ons button.
+ * A card's footer, one row of same-height buttons: the add-ons button (a
+ * collection card's) or the owner's pencil and bin (a wishlist card's) bottom
+ * left, the actions bottom right. Both cards measure it (`useNarrow`), so on
+ * the narrowest cards the add-ons button, Score and Vote shorten rather than
+ * wrap; if a row ever can't fit, the actions drop to their own line together.
  */
 export const cardFootClass = 'card-foot row-3 flex flex-wrap items-center gap-2 self-end px-4.5 pb-4';
 /** The start of a card's footer, gone when it holds nothing. */
 export const cardFootStartClass = 'card-foot-start flex items-center gap-1.5 empty:hidden';
+/**
+ * A footer action's size and shape: Rules, Score, the word checker and a
+ * collection card's add-ons button, one height and radius (44px taps on a
+ * phone). Each adds its colours.
+ */
+export const actionButtonClass = `inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 text-[12px] whitespace-nowrap [transition:background_0.15s,color_0.15s,border-color_0.15s,transform_0.12s] hover:shadow-(--shadow-md) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue ${tapTargetClass}`;
 /** The end of a card's footer: its actions. */
 export const cardFootEndClass = 'card-foot-end ml-auto flex items-center gap-1.5 sm:gap-2';
 /** The foot of an open list row or phone line: its actions, ruled off on the right. */

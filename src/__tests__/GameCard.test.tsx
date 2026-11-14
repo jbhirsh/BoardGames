@@ -166,6 +166,20 @@ describe('GameCard', () => {
     expect(pill).toHaveClass('lit');
   });
 
+  it('puts the award pill on the box art, last in the head so the name reads first, in a head tall enough for it', () => {
+    renderWithContext(
+      <GameCard game={{ ...quickGame, awards: [{ name: 'Mensa Select', year: 2009, result: 'Winner' }] }} />,
+    );
+    const head = document.querySelector('.card-head')!;
+    const award = screen.getByRole('button', { name: 'Quick Game: 1 award, show which' });
+    const art = screen.getByRole('img', { name: 'Quick Game box art' });
+    // The art and the award share the corner, which follows the name and tags.
+    expect(art.parentElement).toContainElement(award);
+    expect(head.lastElementChild).toBe(art.parentElement);
+    expect(head).toHaveClass('min-h-[calc(var(--corner-art)+40px)]');
+    expect(document.querySelector('.card-foot .awards')).toBeNull();
+  });
+
   describe('games inside a game', () => {
     it('has no games button when nothing is inside', () => {
       renderWithContext(<GameCard game={quickGame} />);
@@ -173,14 +187,16 @@ describe('GameCard', () => {
       expect(screen.queryByRole('button', { name: /^Quick Game: /, expanded: false })).not.toBeInTheDocument();
     });
 
-    it('sits bottom left with the award count, apart from the links, so the head holds the same things on every card', () => {
+    it('sits bottom left as a footer button, the award on the art, so the footer is one row', () => {
       renderWithContext(
         <GameCard game={{ ...deckGame, awards: [{ name: 'Mensa Select', year: 2009, result: 'Winner' }] }} />,
       );
       const start = document.querySelector('.card-foot .card-foot-start')!;
-      expect(start).toContainElement(screen.getByRole('button', { name: 'Deck: +2 games' }));
-      expect(start).toContainElement(screen.getByRole('button', { name: 'Deck: 1 award, show which' }));
-      expect(document.querySelector('.card-head .awards')).toBeNull();
+      const pill = screen.getByRole('button', { name: 'Deck: +2 games' });
+      expect(start).toContainElement(pill);
+      // The actions' size and shape (actionButtonClass), not a tag's.
+      expect(pill).toHaveClass('h-8', 'rounded-lg');
+      expect(document.querySelector('.card-foot .awards')).toBeNull();
       expect(document.querySelector('.card-foot-end')).toContainElement(screen.getByRole('link', { name: /Rules/ }));
       // The full label for a wide card, and only that.
       expect(document.querySelector('.sub-pill-full')).toHaveTextContent('+2 games');
@@ -214,6 +230,48 @@ describe('GameCard', () => {
         act(() => resize!(324));
         expect(pill.querySelector('.sub-pill-full')).toHaveTextContent('+2 games');
         expect(pill.querySelector('.sub-pill-short')).toBeNull();
+      } finally {
+        globalThis.ResizeObserver = OriginalRO;
+      }
+    });
+
+    it('shows "N of M" under a filter whatever the width, its words starting the full name', () => {
+      // Two players: Speed (2) fits, President (4–8) doesn't.
+      renderWithContext(<GameCard game={deckGame} />, '/?p=2');
+      const pill = screen.getByRole('button', { name: 'Deck: 1 of 2 games fit' });
+      expect(pill.querySelector('.sub-pill-short')).toHaveTextContent('1 of 2');
+      expect(pill.querySelector('.sub-pill-full')).toBeNull();
+    });
+
+    it('shows Score as its icon on a narrow footer that has the button, its word kept for screen readers', () => {
+      const OriginalRO = globalThis.ResizeObserver;
+      let resize: ((width: number) => void) | undefined;
+      globalThis.ResizeObserver = class MockResizeObserver {
+        cb: ResizeObserverCallback;
+        constructor(cb: ResizeObserverCallback) {
+          this.cb = cb;
+        }
+        observe(target: Element) {
+          resize = (width) =>
+            this.cb(
+              [{ target, contentRect: { width } } as unknown as ResizeObserverEntry],
+              this as unknown as ResizeObserver,
+            );
+        }
+        unobserve() {}
+        disconnect() {}
+      } as unknown as typeof ResizeObserver;
+      try {
+        const { unmount } = renderWithContext(<GameCard game={{ ...sevenWondersGame, subgames: deckGame.subgames }} />);
+        const score = screen.getByRole('link', { name: 'Score' });
+        expect(score.querySelector('.sr-only')).toBeNull();
+        act(() => resize!(323));
+        expect(score.querySelector('.sr-only')).toHaveTextContent('Score');
+        unmount();
+        // Without the button, a narrow footer keeps the word.
+        renderWithContext(<GameCard game={sevenWondersGame} />);
+        act(() => resize!(300));
+        expect(screen.getByRole('link', { name: 'Score' }).querySelector('.sr-only')).toBeNull();
       } finally {
         globalThis.ResizeObserver = OriginalRO;
       }

@@ -25,6 +25,44 @@ describe('AwardsBadge', () => {
     expect(screen.queryByRole('group')).not.toBeInTheDocument();
   });
 
+  describe("on a card's art (sticker)", () => {
+    const nominated = [
+      { name: 'Golden Geek Best Party Game', year: 2022, result: 'Nominee' },
+      { name: 'Spiel des Jahres', year: 2023, result: 'Recommended' },
+    ];
+
+    it('shows honours without wins as a rosette and their count, its name saying both', () => {
+      render(<AwardsBadge itemName="Clocktower" awards={nominated} sticker />);
+      const btn = screen.getByRole('button', {
+        name: 'Clocktower: 2 honours (Nominated once · Recommended once), show which',
+      });
+      expect(btn.querySelector('svg')).not.toBeNull();
+      expect(btn).toHaveTextContent(/^2$/);
+      fireEvent.click(btn);
+      // The list's heading keeps the words.
+      expect(screen.getByRole('group', { name: 'Clocktower: Nominated once · Recommended once' })).toBeInTheDocument();
+    });
+
+    it('keeps the trophy for wins', () => {
+      render(<AwardsBadge itemName="One Win" awards={[awards[0]]} sticker />);
+      expect(screen.getByRole('button', { name: 'One Win: 1 award, show which' })).toHaveTextContent(/🏆\s*1$/);
+    });
+
+    it("takes a 44px tap on a phone and the pills' own area from sm: up", () => {
+      render(<AwardsBadge itemName="Clocktower" awards={nominated} sticker />);
+      const btn = screen.getByRole('button', { name: /Clocktower/ });
+      expect(btn.className).toContain('max-sm:after:inset-[min(0px,calc(50%-22px))]');
+      expect(btn.className).toContain('sm:after:-inset-y-0.75');
+    });
+
+    it('still says what they are on a list row, without the sticker', () => {
+      render(<AwardsBadge itemName="Clocktower" awards={nominated} />);
+      expect(
+        screen.getByRole('button', { name: 'Clocktower: Nominated once · Recommended once, show which' }),
+      ).toHaveTextContent('Nominated once · Recommended once');
+    });
+  });
+
   it('opens a floating list on click, positioned from the pill, and closes on a second click', () => {
     render(<AwardsBadge itemName="Sky Team" awards={awards} />);
     const btn = screen.getByRole('button', { name: /Sky Team/ });
