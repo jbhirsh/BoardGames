@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ytURL, rulesURL, amazonURL, priceTrackerURL } from '../utils/urls';
+import { ytURL, rulesURL, amazonURL } from '../utils/urls';
 
 describe('ytURL', () => {
   it('returns a YouTube search URL with encoded query', () => {
@@ -19,17 +19,7 @@ describe('rulesURL', () => {
 });
 
 describe('amazonURL', () => {
-  it('links straight to the product when an ASIN is known', () => {
-    expect(amazonURL('Wingspan', 'B07YQ641NQ')).toBe('https://www.amazon.com/dp/B07YQ641NQ');
-  });
-
-  it('falls back to an encoded Amazon search without an ASIN', () => {
+  it('is an encoded Amazon search for the game', () => {
     expect(amazonURL('7 Wonders Duel')).toBe('https://www.amazon.com/s?k=7%20Wonders%20Duel%20board%20game');
-  });
-});
-
-describe('priceTrackerURL', () => {
-  it('points at the CamelCamelCamel page for the ASIN', () => {
-    expect(priceTrackerURL('B07YQ641NQ')).toBe('https://camelcamelcamel.com/product/B07YQ641NQ');
   });
 });

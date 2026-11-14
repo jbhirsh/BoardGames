@@ -171,7 +171,7 @@ export type VoteMutation = { vote: { count: number } };
 export type GamesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GamesQuery = { games: { wishlist: Array<{ id: string, name: string, source: GameSource, suggestedBy: string | null, note: string, players: string | null, minPlayers: number, maxPlayers: number, dur: string | null, minutes: number, description: string, keywords: Array<string>, section: string | null, asin: string | null, expands: string | null, video: string | null, image: string | null, bggId: number | null, year: number | null }>, bgg: Array<{ bggId: number, name: string, summary: string | null, weight: number | null, honours: Array<{ name: string, year: number | null, result: string }> }> } };
+export type GamesQuery = { games: { wishlist: Array<{ id: string, name: string, source: GameSource, suggestedBy: string | null, note: string, players: string | null, minPlayers: number, maxPlayers: number, dur: string | null, minutes: number, description: string, keywords: Array<string>, section: string | null, expands: string | null, video: string | null, image: string | null, bggId: number | null, year: number | null }>, bgg: Array<{ bggId: number, name: string, summary: string | null, weight: number | null, honours: Array<{ name: string, year: number | null, result: string }> }> } };
 
 export type SuggestGameMutationVariables = Exact<{
   game: string;
@@ -381,7 +381,6 @@ export const GamesDocument = new TypedDocumentString(`
       description
       keywords
       section
-      asin
       expands
       video
       image

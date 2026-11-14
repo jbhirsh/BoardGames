@@ -177,7 +177,8 @@ type WishlistGame {
   keywords: [String!]!
   "The wishlist section it's filed under; null means \"Suggested by friends\"."
   section: String
-  asin: String
+  "Always null: the price-history link it fed is gone. Kept so a client still asking for it gets an answer; drop it once no deployed client selects it (removed from the app's query in #324)."
+  asin: String @deprecated(reason: "The price-history link is gone; always null.")
   "The game it expands, by name."
   expands: String
   "What its video link searches YouTube for."

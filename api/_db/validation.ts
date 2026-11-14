@@ -65,7 +65,6 @@ export const gameRow = createInsertSchema(games, {
   description: (s) => s.max(DESC_MAX, `A description can be at most ${DESC_MAX} characters`),
   keywords,
   section: section.nullish(),
-  asin: (s) => s.regex(/^[A-Z0-9]{10}$/, 'An Amazon id is 10 capital letters and digits'),
   expands: nameOfGame,
   video: (s) =>
     s

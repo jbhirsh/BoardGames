@@ -190,8 +190,6 @@ export interface WishlistItem extends Filterable {
   awards: Award[];
   /** Its one line: BoardGameGeek's summary, else the description's first sentence. */
   short?: string;
-  /** Amazon product id of the standard edition, when verified; buy links fall back to a search without it. */
-  asin?: string;
   /** Box art: a file the site serves, or a BoardGameGeek thumbnail for a game added on the site. */
   img?: string;
   /** Set on approved friend suggestions: the display name that suggested it. */
