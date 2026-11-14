@@ -29,6 +29,13 @@
       "when": 1794463847419,
       "tag": "0003_bgg_info",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1794642048499,
+      "tag": "0004_drop_asin",
+      "breakpoints": true
     }
   ]
 }

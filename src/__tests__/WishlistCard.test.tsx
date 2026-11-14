@@ -130,12 +130,12 @@ describe('WishlistCard', () => {
     expect(screen.getByRole('button', { name: /Vote for/ })).toBeDisabled();
   });
 
-  it('opens YouTube and Amazon in a new window, and the price tracker when an ASIN is pinned', () => {
-    renderCard({ item: { ...testItem, asin: 'B0TESTASIN' } });
+  it('opens YouTube and an Amazon search in a new window, and links no price history', () => {
+    renderCard();
+    expect(screen.queryByRole('link', { name: /price history/ })).toBeNull();
     const links: [string | RegExp, unknown][] = [
       [/YouTube/, expect.stringContaining('youtube.com')],
-      ['Buy Test Wishlist Game on Amazon', expect.stringContaining('amazon.com')],
-      [/price history/, 'https://camelcamelcamel.com/product/B0TESTASIN'],
+      ['Buy Test Wishlist Game on Amazon', 'https://www.amazon.com/s?k=Test%20Wishlist%20Game%20board%20game'],
     ];
     for (const [name, href] of links) {
       const link = screen.getByRole('link', { name });

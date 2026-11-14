@@ -80,8 +80,6 @@ export const games = sqliteTable(
     keywords: text('keywords', { mode: 'json' }).$type<string[]>().notNull(),
     /** The wishlist section it's filed under; none means "Suggested by friends". */
     section: text('section'),
-    /** Amazon's product id for the standard edition, where it's been checked. */
-    asin: text('asin'),
     /** The game it expands, by name. */
     expands: text('expands'),
     /** What the video link searches YouTube for. */

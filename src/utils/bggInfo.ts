@@ -29,7 +29,6 @@ export interface ListedGame {
   description: string;
   keywords: readonly string[];
   section?: string | null;
-  asin?: string | null;
   expands?: string | null;
   video?: string | null;
   image?: string | null;
@@ -124,7 +123,6 @@ export function toWishlistItem(g: ListedGame, info: BggIndex): WishlistItem {
     ...(g.bggId == null ? {} : { bgg: g.bggId }),
     ...(entry?.weight == null ? {} : { weight: entry.weight }),
     ...(g.suggestedBy ? { suggestedBy: g.suggestedBy } : {}),
-    ...(g.asin ? { asin: g.asin } : {}),
     ...(g.expands ? { expands: g.expands } : {}),
     ...(g.image ? { img: g.image } : {}),
   };

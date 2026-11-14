@@ -164,9 +164,16 @@ const enums = {
   Role: { USER: 'user', MODEL: 'model' },
 };
 
+/**
+ * WishlistGame's deprecated `asin`: its column is gone (#324), but an older
+ * client (an open tab, the service worker's copy of the app) still selects
+ * it, so it answers null rather than failing that client's whole query.
+ */
+const WishlistGame = { asin: () => null };
+
 const schema = createSchema<ApiContext>({
   typeDefs,
-  resolvers: { Query, Mutation, Subscription, EmailedSuggestion, ...enums },
+  resolvers: { Query, Mutation, Subscription, EmailedSuggestion, WishlistGame, ...enums },
 });
 
 /** The request's headers as a plain record, as the session and rate-limit helpers read them. */

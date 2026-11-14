@@ -148,9 +148,8 @@ export const detailTextClass = 'text-[13px] leading-[1.75] text-text2';
 export const smallDetailTextClass = 'text-[12px] leading-[1.6] text-text2';
 
 /**
- * The quiet outlined icon buttons beside Rules and the vote: the video, the
- * cart and the price history, one size and radius, taking 44px taps on a
- * phone.
+ * The quiet outlined icon buttons beside Rules and the vote: the video and
+ * the cart, one size and radius, taking 44px taps on a phone.
  */
 export const outlineIconClass = `inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-text2 [transition:background_0.15s,color_0.15s,border-color_0.15s,transform_0.15s] ${tapTargetClass}`;
 /** The video button's play glyph, in YouTube's red, and its lift under a mouse. */

@@ -44,7 +44,6 @@ export const GAMES_ANSWER = {
   games: {
     wishlist: [
       ...seed.wishlist.map((w) => ({
-        asin: null,
         expands: null,
         year: null,
         suggestedBy: null,
@@ -66,7 +65,6 @@ export const GAMES_ANSWER = {
         description: 'A made-up game for the end-to-end tests.',
         keywords: ['strategy'],
         section: null,
-        asin: null,
         expands: null,
         video: null,
         image: null,

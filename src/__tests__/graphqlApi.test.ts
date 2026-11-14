@@ -187,6 +187,14 @@ describe('the games query', () => {
     const res = await api.fetch(url, { headers: { 'x-graphql-yoga-csrf': '1' } });
     expect(res.headers.get('cache-control')).toBe('no-store');
   });
+
+  it("still answers an older client's asin, as null, though its column is gone", async () => {
+    const api = api$();
+    await seed(await api.db(), { gameRows: [curated()] });
+    const { data, errors } = await api.run('query Games { games { wishlist { id asin } } }');
+    expect(errors).toEqual([]);
+    expect(data).toEqual({ games: { wishlist: [{ id: 'seti', asin: null }] } });
+  });
 });
 
 describe("the owner's operations", () => {
