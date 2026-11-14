@@ -1,0 +1,12 @@
+{
+  "id": 43165282296,
+  "number": 549,
+  "workflow": "CI",
+  "branch": "knip-no-ignores",
+  "sha": "e922d2e094311fed6584ed8635fc83e8cf1535c8",
+  "created": "2026-11-12T06:01:52Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43165282296",
+  "jobs": [
+    "ci"
+  ]
+}

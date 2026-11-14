@@ -1,0 +1,12 @@
+{
+  "id": 43135179022,
+  "number": 269,
+  "workflow": "E2E",
+  "branch": "claude/unmeasured-coverage",
+  "sha": "026dac16f59aa16da71ec0c014f406409b8fbcf5",
+  "created": "2026-11-12T01:32:18Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43135179022",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}

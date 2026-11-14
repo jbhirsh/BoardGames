@@ -1,0 +1,12 @@
+{
+  "id": 43498279555,
+  "number": 316,
+  "workflow": "E2E",
+  "branch": "dependabot/npm_and_yarn/all-updates-1820826652",
+  "sha": "a9d78b60dadb20c91e4d7391f02295fbffcd68cb",
+  "created": "2026-11-13T20:05:24Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43498279555",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}

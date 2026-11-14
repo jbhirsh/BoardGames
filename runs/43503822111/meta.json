@@ -1,0 +1,12 @@
+{
+  "id": 43503822111,
+  "number": 592,
+  "workflow": "CI",
+  "branch": "ci51-carry-test",
+  "sha": "c68cbc5bcc9e25357d2f0bb70d4a8325956eed35",
+  "created": "2026-11-13T20:41:08Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43503822111",
+  "jobs": [
+    "ci"
+  ]
+}

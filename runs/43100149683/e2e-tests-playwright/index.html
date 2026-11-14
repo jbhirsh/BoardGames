@@ -1,0 +1,1956 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Job report</title>
+    <!-- jbhirsh/ci job-summary's report page. report.mjs writes the run's model
+     (model.mjs) into its script, as a value; the page loads nothing else. -->
+    <style>
+      /* Layout: one working column like a CI log page; summary strip, then charts, then the test tree. */
+      :root {
+        --bg: #f7f8fa;
+        --surface: #ffffff;
+        --fg: #1c2230;
+        --muted: #5d6677;
+        --line: #dfe3ea;
+        --soft: #eef1f5;
+        --accent: #2f5fd0;
+        --bar: #7d99e0;
+        --ok: #1f8a4c;
+        --warn: #b7791f;
+        --warn-bar: #e0a33a;
+        --bad: #c8323a;
+        --tip-bg: #1c2230;
+        --tip-fg: #f2f4f8;
+        --hl-key: #8a3ab9;
+        --hl-str: #0a7a43;
+        --hl-num: #b04a00;
+        --hl-com: #7c8596;
+        --hl-fn: #2f5fd0;
+        --hl-prop: #9a3412;
+        --mark: #ffe58a;
+        --sans: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --bg: #12151b;
+          --surface: #1a1e26;
+          --fg: #e4e8ef;
+          --muted: #98a2b3;
+          --line: #2c323d;
+          --soft: #222833;
+          --accent: #7ea2ff;
+          --bar: #5876c4;
+          --ok: #4cc27f;
+          --warn: #e7b456;
+          --warn-bar: #c48b2a;
+          --bad: #ff6b72;
+          --tip-bg: #e4e8ef;
+          --tip-fg: #12151b;
+          --hl-key: #d39bff;
+          --hl-str: #7fd6a0;
+          --hl-num: #ffb27a;
+          --hl-com: #7f8899;
+          --hl-fn: #8fb0ff;
+          --hl-prop: #f0a37a;
+          --mark: #6b5a12;
+          color-scheme: dark;
+        }
+      }
+      :root[data-theme='dark'] {
+        --bg: #12151b;
+        --surface: #1a1e26;
+        --fg: #e4e8ef;
+        --muted: #98a2b3;
+        --line: #2c323d;
+        --soft: #222833;
+        --accent: #7ea2ff;
+        --bar: #5876c4;
+        --ok: #4cc27f;
+        --warn: #e7b456;
+        --warn-bar: #c48b2a;
+        --bad: #ff6b72;
+        --tip-bg: #e4e8ef;
+        --tip-fg: #12151b;
+        --hl-key: #d39bff;
+        --hl-str: #7fd6a0;
+        --hl-num: #ffb27a;
+        --hl-com: #7f8899;
+        --hl-fn: #8fb0ff;
+        --hl-prop: #f0a37a;
+        --mark: #6b5a12;
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      body {
+        background: var(--bg);
+        color: var(--fg);
+        font: 14px/1.5 var(--sans);
+        padding-block: 20px 48px;
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
+      }
+      .page {
+        max-width: 1040px;
+        margin: 0 auto;
+        display: grid;
+        gap: 20px;
+      }
+      header.top {
+        display: grid;
+        gap: 6px;
+      }
+      .crumbs {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .crumbs a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0;
+        text-wrap: balance;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 12px;
+        align-items: center;
+      }
+      .pill {
+        font-size: 13px;
+        font-weight: 600;
+        padding: 2px 10px;
+        border-radius: 999px;
+        border: 1px solid currentColor;
+      }
+      .pill.bad {
+        color: var(--bad);
+      }
+      .pill.ok {
+        color: var(--ok);
+      }
+      .facts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 18px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .facts b {
+        color: var(--fg);
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+      .facts .slow {
+        color: var(--warn);
+        font-weight: 600;
+      }
+      section.card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 16px 18px;
+        display: grid;
+        gap: 12px;
+        min-width: 0;
+      }
+      h2 {
+        font-size: 15px;
+        margin: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      h2 small {
+        font-weight: 400;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .attention {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .attention li {
+        display: grid;
+        grid-template-columns: 92px 1fr;
+        gap: 10px;
+        align-items: baseline;
+        padding: 4px 6px;
+        margin: 0 -6px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .attention li:hover {
+        background: var(--soft);
+      }
+      .attention li:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+      .attention .go {
+        color: var(--accent);
+        font-size: 12px;
+        white-space: nowrap;
+        margin-left: 6px;
+      }
+      @keyframes flash {
+        from {
+          background: var(--mark);
+        }
+        to {
+          background: transparent;
+        }
+      }
+      .flash,
+      tr.flash td {
+        animation: flash 1.6s ease-out;
+      }
+      .tag {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .tag.bad {
+        color: var(--bad);
+      }
+      .tag.warn {
+        color: var(--warn);
+      }
+      .tag.flaky {
+        color: var(--accent);
+      }
+      .attention li > span {
+        min-width: 0;
+      }
+      .attention .msg {
+        display: block;
+        margin: 6px 0 0;
+        font: 12px/1.5 var(--mono);
+        background: var(--soft);
+        border-left: 3px solid var(--bad);
+        padding: 6px 10px;
+        border-radius: 4px;
+        white-space: pre;
+        overflow-x: auto;
+        color: var(--fg);
+      }
+      .chart {
+        overflow-x: auto;
+      }
+      .chart svg {
+        display: block;
+      }
+      .chart text {
+        fill: var(--fg);
+        font: 12px var(--sans);
+      }
+      .chart .axis text {
+        fill: var(--muted);
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+      }
+      .chart .grid line {
+        stroke: var(--line);
+      }
+      .chart .rowbg {
+        fill: var(--soft);
+      }
+      .chart .bar {
+        fill: var(--bar);
+        cursor: pointer;
+      }
+      .chart .bar.slow {
+        fill: var(--warn-bar);
+      }
+      .chart .bar.bad {
+        fill: var(--bad);
+      }
+      .chart .bar.this {
+        fill: var(--accent);
+      }
+      .chart .bar:hover,
+      .chart .bar:focus {
+        stroke: var(--fg);
+        stroke-width: 1.5;
+        outline: none;
+      }
+      .chart .usual {
+        stroke: var(--fg);
+        stroke-dasharray: 3 3;
+        fill: none;
+      }
+      .chart .band {
+        fill: var(--soft);
+      }
+      .minibars {
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        height: 24px;
+        border-bottom: 1px solid var(--line);
+        width: max-content;
+      }
+      .minibars .b {
+        width: 9px;
+        background: var(--bar);
+        border-radius: 1px 1px 0 0;
+        display: block;
+      }
+      .minibars a.b:hover,
+      .minibars a.b:focus-visible {
+        background: var(--accent);
+        outline: none;
+      }
+      .minibars .b.this {
+        background: var(--accent);
+      }
+      .minibars .b.slow {
+        background: var(--warn-bar);
+      }
+      .minibars .b.bad {
+        background: var(--bad);
+      }
+      .minibars .none {
+        width: 9px;
+        height: 1px;
+      }
+      .delta {
+        color: var(--warn);
+        font-weight: 600;
+        margin-right: 4px;
+        cursor: help;
+      }
+      .tree .row .num {
+        white-space: nowrap;
+      }
+      .chart .bandlabel {
+        fill: var(--muted);
+        font-size: 11px;
+      }
+      .chart .bandlabel.link {
+        cursor: pointer;
+        text-decoration: underline dotted;
+      }
+      .chart .badge {
+        cursor: pointer;
+      }
+      .chart .badge circle {
+        fill: var(--surface);
+        stroke: var(--muted);
+      }
+      .chart .badge text {
+        fill: var(--fg);
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .chart .badge:hover circle,
+      .chart .badge:focus circle {
+        stroke: var(--accent);
+        stroke-width: 2;
+      }
+      .chart .badge:focus {
+        outline: none;
+      }
+      .stepkey {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 14px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .stepkey button {
+        font: inherit;
+        color: inherit;
+        background: none;
+        border: 0;
+        padding: 2px 0;
+        cursor: pointer;
+        text-align: left;
+      }
+      .stepkey button:hover {
+        color: var(--accent);
+      }
+      .stepkey b {
+        display: inline-grid;
+        place-items: center;
+        width: 18px;
+        height: 18px;
+        border: 1px solid var(--muted);
+        border-radius: 50%;
+        color: var(--fg);
+        font-size: 11px;
+        margin-right: 4px;
+      }
+      .chart text.peaklabel {
+        fill: var(--bad);
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .chart text.muted-label {
+        fill: var(--muted);
+        font-weight: 400;
+      }
+      .chart .bandlabel.link:hover,
+      .chart .bandlabel.link:focus {
+        fill: var(--accent);
+        outline: none;
+      }
+      .chart .loadline {
+        fill: none;
+        stroke: var(--bad);
+        stroke-width: 2;
+      }
+      .chart .idleline {
+        fill: none;
+        stroke: var(--ok);
+        stroke-width: 1.5;
+      }
+      .chart .cursor {
+        stroke: var(--fg);
+        stroke-width: 1;
+      }
+      #load-wrap {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .chart text.inbar {
+        fill: var(--surface);
+        font-size: 11px;
+        font-weight: 600;
+        pointer-events: none;
+        font-variant-numeric: tabular-nums;
+      }
+      .chart .label.link {
+        fill: var(--accent);
+        cursor: pointer;
+      }
+      .legend {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .legend i {
+        display: inline-block;
+        width: 12px;
+        height: 10px;
+        border-radius: 2px;
+        margin-right: 5px;
+        vertical-align: -1px;
+      }
+      .tablewrap {
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 13px;
+        font-variant-numeric: tabular-nums;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 6px 10px;
+        border-bottom: 1px solid var(--line);
+        white-space: nowrap;
+      }
+      th {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 600;
+        user-select: none;
+      }
+      .sortbtn {
+        font: inherit;
+        color: inherit;
+        background: none;
+        border: 0;
+        padding: 0;
+        cursor: pointer;
+        text-align: inherit;
+      }
+      .sortbtn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      th[aria-sort='ascending']::after {
+        content: ' ▲';
+      }
+      th[aria-sort='descending']::after {
+        content: ' ▼';
+      }
+      td.num,
+      th.num {
+        text-align: right;
+      }
+
+      /* A long step name (a command with its flags) is cut short, whole in its
+         tooltip, so the timeline and the times stay on the card. */
+      .stepname {
+        display: block;
+        max-width: 24em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      table.steps td.tl,
+      table.steps th.tl {
+        width: 42%;
+        min-width: 260px;
+        padding-inline: 4px;
+      }
+      .track {
+        position: relative;
+        height: 16px;
+      }
+      .track .seg {
+        position: absolute;
+        top: 2px;
+        height: 12px;
+        border-radius: 3px;
+        background: var(--bar);
+        cursor: default;
+      }
+      .track .seg.slow {
+        background: var(--warn-bar);
+      }
+      .track .seg.bad {
+        background: var(--bad);
+      }
+      .track .seg:hover,
+      .track .seg:focus {
+        outline: 1.5px solid var(--fg);
+        outline-offset: 1px;
+      }
+      .track .was {
+        position: absolute;
+        top: 1px;
+        height: 14px;
+        border: 1px dashed var(--fg);
+        border-radius: 3px;
+        pointer-events: none;
+      }
+      .track .tick {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        border-left: 1px solid var(--line);
+      }
+      .axisrow {
+        position: relative;
+        height: 16px;
+        font-weight: 400;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .axisrow span {
+        position: absolute;
+        transform: translateX(-50%);
+        white-space: nowrap;
+      }
+      .axisrow span:first-child {
+        transform: none;
+      }
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      .toolbar input {
+        font: inherit;
+        padding: 6px 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--bg);
+        color: var(--fg);
+        min-width: 0;
+        flex: 1 1 220px;
+      }
+      .chip {
+        font: inherit;
+        font-size: 13px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--fg);
+        cursor: pointer;
+      }
+      .chip[aria-pressed='true'] {
+        border-color: var(--accent);
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .chip .n {
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+        margin-left: 4px;
+      }
+      .link-btn {
+        font: inherit;
+        font-size: 13px;
+        background: none;
+        border: 0;
+        color: var(--accent);
+        cursor: pointer;
+        padding: 4px;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      .tree .row:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .tree {
+        display: grid;
+        font-size: 13px;
+      }
+      .tree .row {
+        display: grid;
+        grid-template-columns: 1fr 70px 70px 140px;
+        gap: 10px;
+        align-items: center;
+        padding: 4px 6px;
+        border-radius: 6px;
+        font-variant-numeric: tabular-nums;
+      }
+      .tree .row:hover {
+        background: var(--soft);
+      }
+      .tree .row .name {
+        min-width: 0;
+        display: flex;
+        gap: 6px;
+        align-items: baseline;
+        overflow: hidden;
+      }
+      .tree .row .name span.t {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .tree .row .num {
+        text-align: right;
+      }
+      .tree .row .muted,
+      .muted {
+        color: var(--muted);
+      }
+      .tree .group {
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .tree .caret {
+        display: inline-block;
+        width: 12px;
+        color: var(--muted);
+        transition: transform 0.12s;
+      }
+      .tree .open > .caret {
+        transform: rotate(90deg);
+      }
+      .tree .count {
+        font-weight: 400;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .tree .head {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 600;
+        border-bottom: 1px solid var(--line);
+        border-radius: 0;
+      }
+      .tree .head:hover {
+        background: none;
+      }
+      .res {
+        width: 14px;
+        text-align: center;
+        flex: none;
+      }
+      .res.bad {
+        color: var(--bad);
+      }
+      .res.ok {
+        color: var(--ok);
+      }
+      .res.warn {
+        color: var(--warn);
+      }
+      .res.skip {
+        color: var(--muted);
+      }
+      .dots {
+        display: flex;
+        gap: 3px;
+        justify-content: flex-end;
+      }
+      .dots a {
+        width: 11px;
+        height: 11px;
+        border-radius: 2px;
+        background: var(--ok);
+        display: block;
+      }
+      .dots a.bad {
+        background: var(--bad);
+      }
+      .dots a.rerun {
+        background: var(--warn-bar);
+      }
+      .dots a.none {
+        background: var(--line);
+      }
+      .dots a.this {
+        outline: 1.5px solid var(--fg);
+        outline-offset: 1px;
+      }
+      .dots a.changed {
+        box-shadow: inset 0 -3px 0 var(--fg);
+      }
+      .dots a:hover,
+      .dots a:focus-visible {
+        transform: scale(1.35);
+        outline: 1.5px solid var(--fg);
+        outline-offset: 1px;
+      }
+      .slowtxt {
+        color: var(--warn);
+        font-weight: 600;
+      }
+      .msgmore {
+        font: inherit;
+        font-size: 12px;
+        color: var(--accent);
+        background: none;
+        border: 0;
+        padding: 2px 0 0;
+        cursor: pointer;
+        display: block;
+      }
+      .failmsg {
+        grid-column: 1 / -1;
+        margin: 2px 0 6px 38px;
+        font: 12px/1.5 var(--mono);
+        background: var(--soft);
+        border-left: 3px solid var(--bad);
+        padding: 8px 10px;
+        border-radius: 4px;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .empty {
+        color: var(--muted);
+        padding: 10px 6px;
+      }
+      .tree .row .name a.t {
+        color: inherit;
+        text-decoration: none;
+      }
+      .tree .row .name a.t:hover {
+        color: var(--accent);
+        text-decoration: underline;
+      }
+      .codebtn {
+        font: inherit;
+        font-size: 12px;
+        color: var(--accent);
+        background: none;
+        border: 0;
+        padding: 0 2px;
+        cursor: pointer;
+        flex: none;
+      }
+      .code {
+        grid-column: 1 / -1;
+        margin: 2px 0 8px 38px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .code .path {
+        font-size: 12px;
+        padding: 4px 10px;
+        background: var(--soft);
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .code .path a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .code pre {
+        margin: 0;
+        padding: 8px 0;
+        font: 12px/1.5 var(--mono);
+        overflow-x: auto;
+        background: var(--surface);
+      }
+      .code pre span {
+        display: block;
+        padding: 0 10px;
+        white-space: pre;
+      }
+      .code pre span::before {
+        content: attr(data-n);
+        display: inline-block;
+        width: 3.5ch;
+        margin-right: 1.5ch;
+        color: var(--muted);
+        text-align: right;
+      }
+      .code pre span.hit {
+        background: var(--soft);
+        box-shadow: inset 3px 0 var(--bad);
+      }
+      .code b {
+        font-weight: inherit;
+      }
+      .hl b {
+        font-weight: inherit;
+      }
+      .hl .k {
+        color: var(--hl-key);
+      }
+      .hl .s {
+        color: var(--hl-str);
+      }
+      .hl .n {
+        color: var(--hl-num);
+      }
+      .hl .c {
+        color: var(--hl-com);
+        font-style: italic;
+      }
+      .hl .f {
+        color: var(--hl-fn);
+      }
+      .hl .p {
+        color: var(--hl-prop);
+      }
+      .hl .e {
+        color: var(--bad);
+        font-weight: 650;
+      }
+      .hl .del {
+        color: var(--bad);
+      }
+      .hl .ins {
+        color: var(--ok);
+      }
+      mark {
+        background: var(--mark);
+        color: inherit;
+        border-radius: 2px;
+        padding: 0 1px;
+      }
+      .tip {
+        position: fixed;
+        z-index: 20;
+        pointer-events: none;
+        width: max-content;
+        background: var(--tip-bg);
+        color: var(--tip-fg);
+        font-size: 12px;
+        line-height: 1.45;
+        padding: 8px 10px;
+        border-radius: 8px;
+        max-width: 300px;
+        box-shadow: 0 6px 20px rgb(0 0 0 / 0.25);
+        font-variant-numeric: tabular-nums;
+      }
+      .tip b {
+        font-weight: 650;
+      }
+      .tip .k {
+        opacity: 0.7;
+      }
+      dl.notes {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 6px 16px;
+        margin: 0;
+        font-size: 13px;
+      }
+      dl.notes dt {
+        color: var(--muted);
+      }
+      dl.notes dd {
+        margin: 0;
+        font-variant-numeric: tabular-nums;
+      }
+      @media (max-width: 640px) {
+        .tree .row {
+          grid-template-columns: 1fr 56px 0 0;
+        }
+        .tree .row > :nth-child(3),
+        .tree .row > :nth-child(4) {
+          display: none;
+        }
+        .attention li {
+          grid-template-columns: 1fr;
+          gap: 2px;
+        }
+        .failmsg {
+          margin-left: 18px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .tree .caret {
+          transition: none;
+        }
+      }
+
+      .foot {
+        font-size: 12px;
+        color: var(--muted);
+        margin: 0;
+      }
+      #problem {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="top">
+        <div class="crumbs" id="crumbs"></div>
+        <h1 id="title"></h1>
+        <div class="facts" id="facts"></div>
+      </header>
+
+      <section class="card" id="problem-card" hidden>
+        <h2>Not everything could be read</h2>
+        <p id="problem"></p>
+      </section>
+
+      <section class="card" id="attention-card">
+        <h2>Needs attention</h2>
+        <ul class="attention" id="attention"></ul>
+      </section>
+
+      <section class="card" id="steps-card">
+        <h2>Steps</h2>
+        <div class="legend">
+          <span><i style="background: var(--bar)"></i>as usual</span
+          ><span><i style="background: var(--warn-bar)"></i>slower than usual</span
+          ><span><i style="background: var(--bad)"></i>failed</span
+          ><span><i style="border: 1px dashed var(--fg)"></i>usual time</span>
+        </div>
+        <div class="tablewrap"><table id="steps" class="steps"></table></div>
+      </section>
+
+      <section class="card" id="tests-card">
+        <h2 id="tests-title">Tests</h2>
+        <div class="toolbar">
+          <input
+            id="q"
+            type="search"
+            placeholder="Filter by name, file or describe block"
+            aria-label="Filter tests"
+          />
+          <span id="chips" class="toolbar"></span>
+          <button type="button" class="link-btn" id="expand">Expand all</button>
+          <button type="button" class="link-btn" id="collapse">Collapse all</button>
+        </div>
+        <div class="tree" id="tree" role="tree"></div>
+      </section>
+
+      <section class="card" id="history-card">
+        <h2 id="history-title">Job time</h2>
+        <div class="chart" id="history"></div>
+      </section>
+
+      <section class="card" id="notes-card">
+        <h2>Environment</h2>
+        <dl class="notes" id="notes"></dl>
+        <div id="load-wrap" hidden>
+          <h2>CPU over the job</h2>
+          <div class="legend">
+            <span><i style="background: var(--bad)"></i>CPU busy</span
+            ><span id="settle-key"
+              ><i style="border: 1px dashed var(--fg)"></i>the settle wait's limit</span
+            ><span
+              ><i style="background: var(--soft); border: 1px solid var(--line)"></i>a step</span
+            >
+          </div>
+          <div class="chart" id="load"></div>
+          <div class="stepkey" id="stepkey"></div>
+        </div>
+      </section>
+
+      <p class="foot" id="foot"></p>
+    </div>
+    <div class="tip" id="tip" hidden></div>
+
+    <script>
+      // job-summary's report page (jbhirsh/ci, job-summary/report.html): one
+      // job's run beside its recent runs. Its data is the value report.mjs
+      // writes in place of the marker below (model.mjs); everything here
+      // only draws it, escaping every piece of text it writes as HTML.
+      const data = {"repo":"jbhirsh/BoardGames","workflow":"E2E","job":"E2E Tests (Playwright)","noun":"test","problem":"","run":{"number":262,"url":"https://github.com/jbhirsh/BoardGames/actions/runs/43100149683/job/130788815917","sha":"87f841f6b323f352ac161503d3432d7ab915557f","branch":"google-passkey-sign-in","when":"2026-11-11T21:05:57Z"},"seconds":324.425,"usual":355.248,"steps":[{"i":1,"name":"Set up job","start":1,"seconds":2,"conclusion":"success","usual":1,"slower":false,"past":[3,1,2,1,1,1,1,2]},{"i":2,"name":"Run jbhirsh/ci/job-summary/sample-load@main","start":3,"seconds":2,"conclusion":"success","usual":0.5,"slower":false,"past":[0,1,0,1,1,0,1,0]},{"i":3,"name":"Run actions/checkout@v7","start":5,"seconds":11,"conclusion":"success","usual":8.5,"slower":false,"past":[9,15,12,8,8,9,8,9]},{"i":4,"name":"Run actions/setup-node@v7","start":16,"seconds":6,"conclusion":"success","usual":2,"slower":false,"past":[4,4,1,1,1,4,3,4]},{"i":5,"name":"Run npm ci","start":22,"seconds":21,"conclusion":"success","usual":54,"slower":false,"past":[57,43,54,54,61,39,40,69]},{"i":6,"name":"Install browsers","start":43,"seconds":53,"conclusion":"success","usual":39.5,"slower":true,"past":[49,1450,61,43,36,35,35,96]},{"i":7,"name":"Read the Playwright and browser versions","start":96,"seconds":2,"conclusion":"success","usual":1.5,"slower":false,"past":[2,null,1,2,2,1,0,2]},{"i":8,"name":"Note them for the job summary","start":98,"seconds":0,"conclusion":"success","usual":0,"slower":false,"past":[0,null,0,0,0,0,1,0]},{"i":9,"name":"Run Playwright tests","start":98,"seconds":226,"conclusion":"success","usual":233,"slower":false,"past":[250,null,224,242,243,169,171,253]}],"runs":[{"number":235,"url":"https://jbhirsh.github.io/BoardGames/runs/41892589091/e2e-tests-playwright/","sha":"1821e1fb6931fb69dc11b6b1bcd928a7943ee0aa","branch":"main","when":"2026-11-04T18:59:50Z","seconds":374.757,"conclusion":"success"},{"number":237,"url":"https://github.com/jbhirsh/BoardGames/actions/runs/42103930197/job/127513685017","sha":"fe146f0b0a8b73c04f5ae44aaa74c06fdafe6287","branch":"main","when":"2026-11-05T20:29:59Z","seconds":1518,"conclusion":"cancelled"},{"number":243,"url":"https://jbhirsh.github.io/BoardGames/runs/42126290808/e2e-tests-playwright/","sha":"a06e2ab719acf7e88b2c785ab7abaf7757c7c422","branch":"main","when":"2026-11-05T23:01:14Z","seconds":356.2,"conclusion":"success"},{"number":251,"url":"https://jbhirsh.github.io/BoardGames/runs/42170708014/e2e-tests-playwright/","sha":"1f26a20a4593560dda8e6bf33c1b63e2e7c5c833","branch":"main","when":"2026-11-06T05:49:47Z","seconds":354.296,"conclusion":"success"},{"number":254,"url":"https://jbhirsh.github.io/BoardGames/runs/42188631655/e2e-tests-playwright/","sha":"87d4c828bc0e21c898a25b3f35e2c34a1aacf187","branch":"google-passkey-sign-in","when":"2026-11-06T08:34:19Z","seconds":353.997,"conclusion":"success"},{"number":257,"url":"https://jbhirsh.github.io/BoardGames/runs/43091934205/e2e-tests-playwright/","sha":"6bf38494bd3300ca6db6652b63724ffa52e106da","branch":"main","when":"2026-11-11T19:57:13Z","seconds":260.219,"conclusion":"success"},{"number":258,"url":"https://github.com/jbhirsh/BoardGames/actions/runs/43095070598/job/130781709457","sha":"9d7622cc80a43c1d88133b37f67edafb45ab4707","branch":"main","when":"2026-11-11T20:17:16Z","seconds":1406,"conclusion":"success"},{"number":260,"url":"https://jbhirsh.github.io/BoardGames/runs/43098724930/e2e-tests-playwright/","sha":"b99629cda2492cc784faa5718c5dad3feba28ada","branch":"google-passkey-sign-in","when":"2026-11-11T20:54:13Z","seconds":440.769,"conclusion":"failure"}],"tests":[{"name":"admin.spec.ts › [chromium] the owner sees what BoardGameGeek found before adding a game","folder":"","file":"admin.spec.ts","block":"","title":"[chromium] the owner sees what BoardGameGeek found before adding a game","path":"e2e/admin.spec.ts","line":1,"seconds":1.532,"usual":2.7045,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.077,null,2.933,1.622,2.48,2.144,null,2.929],"edited":[],"code":null},{"name":"admin.spec.ts › [chromium] the owner is told on the form when BoardGameGeek has no match, and can add it anyway","folder":"","file":"admin.spec.ts","block":"","title":"[chromium] the owner is told on the form when BoardGameGeek has no match, and can add it anyway","path":"e2e/admin.spec.ts","line":1,"seconds":2.63,"usual":1.6835,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.75,null,1.64,1.695,2.207,1.117,null,1.672],"edited":[],"code":null},{"name":"admin.spec.ts › [chromium] the owner corrects a misspelt suggestion, sees what BoardGameGeek has for it, and approves it","folder":"","file":"admin.spec.ts","block":"","title":"[chromium] the owner corrects a misspelt suggestion, sees what BoardGameGeek has for it, and approves it","path":"e2e/admin.spec.ts","line":1,"seconds":2.026,"usual":2.3715,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.448,null,2.268,2.479,2.523,1.216,null,2.295],"edited":[],"code":null},{"name":"back-link.spec.ts › [chromium] Back from a rules page returns to the filtered list where it was left","folder":"","file":"back-link.spec.ts","block":"","title":"[chromium] Back from a rules page returns to the filtered list where it was left","path":"e2e/back-link.spec.ts","line":1,"seconds":3.232,"usual":3.6255,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.77,null,3.875,3.567,3.684,2.621,null,3.403],"edited":[],"code":null},{"name":"back-link.spec.ts › [chromium] Back from the picked game's rules returns to the list where it was","folder":"","file":"back-link.spec.ts","block":"","title":"[chromium] Back from the picked game's rules returns to the list where it was","path":"e2e/back-link.spec.ts","line":1,"seconds":3.59,"usual":3.6375,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.687,null,3.666,3.609,3.214,3.148,null,3.798],"edited":[],"code":null},{"name":"back-link.spec.ts › [chromium] a collapsed list row carries no Rules link, on a desktop or the narrow list","folder":"","file":"back-link.spec.ts","block":"","title":"[chromium] a collapsed list row carries no Rules link, on a desktop or the narrow list","path":"e2e/back-link.spec.ts","line":1,"seconds":1.406,"usual":1.5630000000000002,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.007,null,2.084,1.391,1.588,1.036,null,1.538],"edited":[],"code":null},{"name":"back-link.spec.ts › [chromium] the open row's Rules, at the end of its write-up on the right, opens the rules page, and Back returns to the list","folder":"","file":"back-link.spec.ts","block":"","title":"[chromium] the open row's Rules, at the end of its write-up on the right, opens the rules page, and Back returns to the list","path":"e2e/back-link.spec.ts","line":1,"seconds":2.739,"usual":2.893,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.669,null,3.53,2.848,2.869,1.996,null,2.917],"edited":[],"code":null},{"name":"back-link.spec.ts › [chromium] the open row comes back open, its Rules in view, by the browser's Back and the page's","folder":"","file":"back-link.spec.ts","block":"","title":"[chromium] the open row comes back open, its Rules in view, by the browser's Back and the page's","path":"e2e/back-link.spec.ts","line":1,"seconds":2.946,"usual":3.475,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[4.073,null,3.95,3.426,3.524,2.563,null,3.234],"edited":[],"code":null},{"name":"back-link.spec.ts › [chromium] a fresh visit to the list opens no row, even after one was left open","folder":"","file":"back-link.spec.ts","block":"","title":"[chromium] a fresh visit to the list opens no row, even after one was left open","path":"e2e/back-link.spec.ts","line":1,"seconds":2.158,"usual":2.6304999999999996,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.115,null,2.635,2.839,2.333,1.605,null,2.626],"edited":[],"code":null},{"name":"back-link.spec.ts › [chromium] Back from a rules page opened directly goes to the whole collection","folder":"","file":"back-link.spec.ts","block":"","title":"[chromium] Back from a rules page opened directly goes to the whole collection","path":"e2e/back-link.spec.ts","line":1,"seconds":1.434,"usual":1.7395,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.152,null,1.598,1.903,1.713,0.89,null,1.766],"edited":[],"code":null},{"name":"hero.spec.ts › [chromium] the hero's covers glide sideways, and stop when paused","folder":"","file":"hero.spec.ts","block":"","title":"[chromium] the hero's covers glide sideways, and stop when paused","path":"e2e/hero.spec.ts","line":1,"seconds":1.668,"usual":2.0244999999999997,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.87,null,1.904,2.062,1.987,1.211,null,2.343],"edited":[],"code":null},{"name":"hero.spec.ts › [chromium] the row holds still under the pointer","folder":"","file":"hero.spec.ts","block":"","title":"[chromium] the row holds still under the pointer","path":"e2e/hero.spec.ts","line":1,"seconds":1.005,"usual":1.056,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.477,null,0.938,1.057,1.055,0.597,null,1.229],"edited":[],"code":null},{"name":"hero.spec.ts › [chromium] only a cover holds the row still, not the gaps or the room round it","folder":"","file":"hero.spec.ts","block":"","title":"[chromium] only a cover holds the row still, not the gaps or the room round it","path":"e2e/hero.spec.ts","line":1,"seconds":1.309,"usual":1.517,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.355,null,1.417,1.809,1.455,0.978,null,1.579],"edited":[],"code":null},{"name":"hero.spec.ts › [chromium] the row drags sideways, and the drag doesn't open a game","folder":"","file":"hero.spec.ts","block":"","title":"[chromium] the row drags sideways, and the drag doesn't open a game","path":"e2e/hero.spec.ts","line":1,"seconds":1.65,"usual":1.924,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.49,null,1.744,2.072,1.968,1.187,null,1.88],"edited":[],"code":null},{"name":"hero.spec.ts › [chromium] pulled right, the row turns to glide right, coming round its loop","folder":"","file":"hero.spec.ts","block":"","title":"[chromium] pulled right, the row turns to glide right, coming round its loop","path":"e2e/hero.spec.ts","line":1,"seconds":2.826,"usual":3.287,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[4.181,null,3.187,3.614,3.284,2.326,null,3.29],"edited":[],"code":null},{"name":"hero.spec.ts › [chromium] a press on a cover that doesn't move still opens its game","folder":"","file":"hero.spec.ts","block":"","title":"[chromium] a press on a cover that doesn't move still opens its game","path":"e2e/hero.spec.ts","line":1,"seconds":1.096,"usual":1.2915,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.765,null,1.225,1.506,1.292,0.695,null,1.291],"edited":[],"code":null},{"name":"hero.spec.ts › [chromium] clicking a cover brings its game's row into view, ready for the keyboard","folder":"","file":"hero.spec.ts","block":"","title":"[chromium] clicking a cover brings its game's row into view, ready for the keyboard","path":"e2e/hero.spec.ts","line":1,"seconds":1.167,"usual":1.3685,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.479,null,1.251,1.583,1.456,0.778,null,1.281],"edited":[],"code":null},{"name":"hero.spec.ts › [chromium] a cover Tabbed to and pressed brings its game's card into view","folder":"","file":"hero.spec.ts","block":"","title":"[chromium] a cover Tabbed to and pressed brings its game's card into view","path":"e2e/hero.spec.ts","line":1,"seconds":1.173,"usual":1.3965,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.462,null,1.243,1.464,1.528,0.872,null,1.331],"edited":[],"code":null},{"name":"hero.spec.ts › [chromium] the row is one Tab stop after its pause button, with arrow keys between covers","folder":"","file":"hero.spec.ts","block":"","title":"[chromium] the row is one Tab stop after its pause button, with arrow keys between covers","path":"e2e/hero.spec.ts","line":1,"seconds":1.348,"usual":1.4495,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.617,null,1.439,1.46,1.707,0.953,null,1.371],"edited":[],"code":null},{"name":"hero.spec.ts › [chromium] the cover the keyboard is on shows its ring on screen, at the start of the list too","folder":"","file":"hero.spec.ts","block":"","title":"[chromium] the cover the keyboard is on shows its ring on screen, at the start of the list too","path":"e2e/hero.spec.ts","line":1,"seconds":1.863,"usual":2.0305,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.344,null,1.938,1.963,2.531,1.305,null,2.098],"edited":[],"code":null},{"name":"hero.spec.ts › [chromium] a cover whose game the filters hide clears them to show it","folder":"","file":"hero.spec.ts","block":"","title":"[chromium] a cover whose game the filters hide clears them to show it","path":"e2e/hero.spec.ts","line":1,"seconds":1.021,"usual":1.1465,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.209,null,1.084,1.18,1.318,0.677,null,1.113],"edited":[],"code":null},{"name":"hero.spec.ts › [chromium] with reduced motion › the covers stand still in a row of favourites, with nothing to pause","folder":"","file":"hero.spec.ts","block":"[chromium] with reduced motion","title":"the covers stand still in a row of favourites, with nothing to pause","path":"e2e/hero.spec.ts","line":274,"seconds":0.737,"usual":0.7905,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.867,null,0.753,0.678,0.975,0.492,null,0.828],"edited":[],"code":null},{"name":"home.spec.ts › [chromium] the home page lists the whole collection","folder":"","file":"home.spec.ts","block":"","title":"[chromium] the home page lists the whole collection","path":"e2e/home.spec.ts","line":1,"seconds":1.207,"usual":1.32,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.958,null,1.235,1.284,1.612,0.771,null,1.356],"edited":[1],"code":null},{"name":"home.spec.ts › [chromium] players and time filters narrow the list and survive a reload","folder":"","file":"home.spec.ts","block":"","title":"[chromium] players and time filters narrow the list and survive a reload","path":"e2e/home.spec.ts","line":1,"seconds":1.954,"usual":2.0725,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.057,null,2.061,1.922,3.074,1.399,null,2.084],"edited":[1],"code":null},{"name":"home.spec.ts › [chromium] a time budget keeps the quick games, and an old bucket link opens one","folder":"","file":"home.spec.ts","block":"","title":"[chromium] a time budget keeps the quick games, and an old bucket link opens one","path":"e2e/home.spec.ts","line":1,"seconds":0.91,"usual":1.0105,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.345,null,1.015,0.911,1.674,0.572,null,1.006],"edited":[1],"code":null},{"name":"home.spec.ts › [chromium] the Own/Want toggle switches to the wishlist","folder":"","file":"home.spec.ts","block":"","title":"[chromium] the Own/Want toggle switches to the wishlist","path":"e2e/home.spec.ts","line":1,"seconds":1.87,"usual":2.0549999999999997,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.391,null,2.159,1.901,2.505,1.389,null,1.951],"edited":[1],"code":null},{"name":"home.spec.ts › [chromium] the random picker picks a game from the filtered list","folder":"","file":"home.spec.ts","block":"","title":"[chromium] the random picker picks a game from the filtered list","path":"e2e/home.spec.ts","line":1,"seconds":3.448,"usual":3.5084999999999997,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.712,null,3.55,3.454,3.467,3,null,3.567],"edited":[1],"code":null},{"name":"home.spec.ts › [chromium] games on their way are listed under the collection, never picked","folder":"","file":"home.spec.ts","block":"","title":"[chromium] games on their way are listed under the collection, never picked","path":"e2e/home.spec.ts","line":1,"seconds":1.149,"usual":1.2485,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.507,null,1.25,1.185,1.732,0.856,null,1.247],"edited":[1],"code":null},{"name":"home.spec.ts › [chromium] opening a card's games on the grid gives it a row of its own and keeps the order","folder":"","file":"home.spec.ts","block":"","title":"[chromium] opening a card's games on the grid gives it a row of its own and keeps the order","path":"e2e/home.spec.ts","line":1,"seconds":1.03,"usual":1.222,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.4,null,1.188,1.227,1.46,0.718,null,1.217],"edited":[1],"code":null},{"name":"home.spec.ts › [chromium] on a desktop grid, More opens a game's write-up across the row","folder":"","file":"home.spec.ts","block":"","title":"[chromium] on a desktop grid, More opens a game's write-up across the row","path":"e2e/home.spec.ts","line":1,"seconds":1.248,"usual":1.215,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.409,null,1.227,1.169,1.348,0.69,null,1.203],"edited":[1],"code":null},{"name":"home.spec.ts › [chromium] pages carry their own titles and the site has a link preview","folder":"","file":"home.spec.ts","block":"","title":"[chromium] pages carry their own titles and the site has a link preview","path":"e2e/home.spec.ts","line":1,"seconds":1.306,"usual":1.3445,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.481,null,1.366,1.323,1.274,0.973,null,1.372],"edited":[1],"code":null},{"name":"home.spec.ts › [chromium] an empty result names the filters and offers to drop one","folder":"","file":"home.spec.ts","block":"","title":"[chromium] an empty result names the filters and offers to drop one","path":"e2e/home.spec.ts","line":1,"seconds":0.631,"usual":0.743,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.755,null,0.658,0.75,0.744,0.515,null,0.742],"edited":[1],"code":null},{"name":"home.spec.ts › [chromium] the picker lands a deck on one of its games","folder":"","file":"home.spec.ts","block":"","title":"[chromium] the picker lands a deck on one of its games","path":"e2e/home.spec.ts","line":1,"seconds":2.129,"usual":2.1014999999999997,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.154,null,2.009,2.167,2.049,2.363,null,2.004],"edited":[1],"code":null},{"name":"home.spec.ts › [chromium] each card shows BoardGameGeek's difficulty, and a deck the span of its games'","folder":"","file":"home.spec.ts","block":"","title":"[chromium] each card shows BoardGameGeek's difficulty, and a deck the span of its games'","path":"e2e/home.spec.ts","line":1,"seconds":0.836,"usual":0.806,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.822,null,0.724,0.815,0.797,0.523,null,0.837],"edited":[1],"code":null},{"name":"home.spec.ts › [chromium] the list sorts by difficulty from its column header","folder":"","file":"home.spec.ts","block":"","title":"[chromium] the list sorts by difficulty from its column header","path":"e2e/home.spec.ts","line":1,"seconds":0.76,"usual":0.859,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.019,null,0.866,0.852,0.839,0.548,null,0.867],"edited":[1],"code":null},{"name":"home.spec.ts › [chromium] on a wider screen, add-ons sit side by side, each name starting its row, in the list and on a card","folder":"","file":"home.spec.ts","block":"","title":"[chromium] on a wider screen, add-ons sit side by side, each name starting its row, in the list and on a card","path":"e2e/home.spec.ts","line":1,"seconds":3.308,"usual":3.466,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.628,null,3.342,3.539,3.442,2.314,null,3.49],"edited":[1],"code":null},{"name":"home.spec.ts › [chromium] on a wider screen, an open game's awards sit side by side","folder":"","file":"home.spec.ts","block":"","title":"[chromium] on a wider screen, an open game's awards sit side by side","path":"e2e/home.spec.ts","line":1,"seconds":1.054,"usual":1.314,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.39,null,1.348,1.319,1.309,0.583,null,1.3],"edited":[1],"code":null},{"name":"home.spec.ts › [chromium] the list's table fits its box at the narrowest width of each layout, a long name wrapping","folder":"","file":"home.spec.ts","block":"","title":"[chromium] the list's table fits its box at the narrowest width of each layout, a long name wrapping","path":"e2e/home.spec.ts","line":1,"seconds":2.406,"usual":2.6710000000000003,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.075,null,2.681,2.61,2.744,1.596,null,2.661],"edited":[1],"code":null},{"name":"links.spec.ts › [chromium] an approve link shows what BoardGameGeek has, and approves only when pressed","folder":"","file":"links.spec.ts","block":"","title":"[chromium] an approve link shows what BoardGameGeek has, and approves only when pressed","path":"e2e/links.spec.ts","line":1,"seconds":0.736,"usual":0.742,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.751,null,0.745,0.737,0.773,0.63,null,0.739],"edited":[],"code":null},{"name":"links.spec.ts › [chromium] a deny link denies only when pressed, and a used one says so","folder":"","file":"links.spec.ts","block":"","title":"[chromium] a deny link denies only when pressed, and a used one says so","path":"e2e/links.spec.ts","line":1,"seconds":1.16,"usual":1.198,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.202,null,1.194,1.252,1.216,1.007,null,1.17],"edited":[],"code":null},{"name":"not-found.spec.ts › [chromium] an unknown address shows the not-found page with a way home","folder":"","file":"not-found.spec.ts","block":"","title":"[chromium] an unknown address shows the not-found page with a way home","path":"e2e/not-found.spec.ts","line":1,"seconds":0.61,"usual":0.6815,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.727,null,0.566,0.797,0.636,0.371,null,0.748],"edited":[],"code":null},{"name":"not-found.spec.ts › [chromium] rules for an unknown game say so and link home","folder":"","file":"not-found.spec.ts","block":"","title":"[chromium] rules for an unknown game say so and link home","path":"e2e/not-found.spec.ts","line":1,"seconds":0.617,"usual":0.616,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.625,null,0.64,0.607,0.628,0.54,null,0.594],"edited":[],"code":null},{"name":"not-found.spec.ts › [chromium] a page whose code is gone since the tab loaded reloads once and opens","folder":"","file":"not-found.spec.ts","block":"","title":"[chromium] a page whose code is gone since the tab loaded reloads once and opens","path":"e2e/not-found.spec.ts","line":1,"seconds":1.593,"usual":1.5975000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.785,null,1.578,1.617,1.711,1.526,null,1.194],"edited":[],"code":null},{"name":"not-found.spec.ts › [chromium] a page whose code never loads says so after one reload, not a loop","folder":"","file":"not-found.spec.ts","block":"","title":"[chromium] a page whose code never loads says so after one reload, not a loop","path":"e2e/not-found.spec.ts","line":1,"seconds":1.592,"usual":1.6045,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.593,null,1.644,1.616,1.654,1.389,null,1.133],"edited":[],"code":null},{"name":"offline.spec.ts › [chromium] after a first visit, the installed site lists the collection, checks words and keeps score with no network","folder":"","file":"offline.spec.ts","block":"","title":"[chromium] after a first visit, the installed site lists the collection, checks words and keeps score with no network","path":"e2e/offline.spec.ts","line":1,"seconds":3.028,"usual":3.2375,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.554,null,3.177,2.903,3.462,2.137,null,3.298],"edited":[],"code":null},{"name":"offline.spec.ts › [chromium] the wishlist's box art, seen once online, shows on its cards with no network","folder":"","file":"offline.spec.ts","block":"","title":"[chromium] the wishlist's box art, seen once online, shows on its cards with no network","path":"e2e/offline.spec.ts","line":1,"seconds":5.881,"usual":6.62,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[7.038,null,6.216,6.671,7.094,4.214,null,6.569],"edited":[],"code":null},{"name":"offline.spec.ts › [chromium] a large rulebook saved with Save for offline draws offline, its JPEG 2000 pages included","folder":"","file":"offline.spec.ts","block":"","title":"[chromium] a large rulebook saved with Save for offline draws offline, its JPEG 2000 pages included","path":"e2e/offline.spec.ts","line":1,"seconds":7.53,"usual":6.9015,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[9.124,null,7.022,8.003,6.781,5.623,null,6.553],"edited":[],"code":null},{"name":"offline.spec.ts › [chromium] a saved rulebook draws offline a page with images never opened online","folder":"","file":"offline.spec.ts","block":"","title":"[chromium] a saved rulebook draws offline a page with images never opened online","path":"e2e/offline.spec.ts","line":1,"seconds":5.679,"usual":6.437,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[6.999,null,6.172,6.333,6.541,4.898,null,6.746],"edited":[],"code":null},{"name":"offline.spec.ts › [chromium] a small rulebook saves itself on its first open, says so, and reads offline","folder":"","file":"offline.spec.ts","block":"","title":"[chromium] a small rulebook saves itself on its first open, says so, and reads offline","path":"e2e/offline.spec.ts","line":1,"seconds":3.203,"usual":3.3985,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.663,null,3.296,3.254,3.6,2.473,null,3.501],"edited":[],"code":null},{"name":"offline.spec.ts › [chromium] a large rulebook isn't saved by opening it, and offline says to tap Save for offline next time","folder":"","file":"offline.spec.ts","block":"","title":"[chromium] a large rulebook isn't saved by opening it, and offline says to tap Save for offline next time","path":"e2e/offline.spec.ts","line":1,"seconds":3.817,"usual":3.8415,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.944,null,3.667,3.851,3.917,3.141,null,3.832],"edited":[],"code":null},{"name":"offline.spec.ts › [chromium] a large rulebook saved with Save for offline reads offline, and says it is saved","folder":"","file":"offline.spec.ts","block":"","title":"[chromium] a large rulebook saved with Save for offline reads offline, and says it is saved","path":"e2e/offline.spec.ts","line":1,"seconds":4.855,"usual":4.633,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[4.983,null,4.528,4.738,4.825,3.245,null,4.102],"edited":[],"code":null},{"name":"offline.spec.ts › [chromium] a rulebook the device has no room for says so, with nothing to try again","folder":"","file":"offline.spec.ts","block":"","title":"[chromium] a rulebook the device has no room for says so, with nothing to try again","path":"e2e/offline.spec.ts","line":1,"seconds":2.534,"usual":2.605,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.819,null,2.439,2.612,2.598,1.938,null,2.659],"edited":[],"code":null},{"name":"offline.spec.ts › [chromium] a rulebook opened once reads on a phone with no network","folder":"","file":"offline.spec.ts","block":"","title":"[chromium] a rulebook opened once reads on a phone with no network","path":"e2e/offline.spec.ts","line":1,"seconds":4.307,"usual":4.388,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[4.73,null,4.447,4.318,4.46,3.039,null,4.329],"edited":[],"code":null},{"name":"offline.spec.ts › [chromium] offline on a rules page, the chat says the assistant needs a connection and waits for one","folder":"","file":"offline.spec.ts","block":"","title":"[chromium] offline on a rules page, the chat says the assistant needs a connection and waits for one","path":"e2e/offline.spec.ts","line":1,"seconds":2.681,"usual":2.9234999999999998,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.354,null,2.926,2.928,2.804,2.138,null,2.921],"edited":[],"code":null},{"name":"offline.spec.ts › [chromium] a rulebook never opened says offline that it isn't saved, with no dead links to it","folder":"","file":"offline.spec.ts","block":"","title":"[chromium] a rulebook never opened says offline that it isn't saved, with no dead links to it","path":"e2e/offline.spec.ts","line":1,"seconds":1.481,"usual":1.6515,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.834,null,1.679,1.624,1.866,1.275,null,1.617],"edited":[],"code":null},{"name":"offline.spec.ts › [chromium] a rulebook that failed offline loads by itself when the network comes back","folder":"","file":"offline.spec.ts","block":"","title":"[chromium] a rulebook that failed offline loads by itself when the network comes back","path":"e2e/offline.spec.ts","line":1,"seconds":2.465,"usual":2.513,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.824,null,2.499,2.514,2.512,1.6,null,2.6],"edited":[],"code":null},{"name":"offline.spec.ts › [chromium] the saved rulebook answers byte ranges the way the server does","folder":"","file":"offline.spec.ts","block":"","title":"[chromium] the saved rulebook answers byte ranges the way the server does","path":"e2e/offline.spec.ts","line":1,"seconds":1.088,"usual":1.1230000000000002,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.57,null,1.594,1.122,0.983,0.821,null,1.124],"edited":[],"code":null},{"name":"offline.spec.ts › [chromium] the API goes to the network, never the service worker","folder":"","file":"offline.spec.ts","block":"","title":"[chromium] the API goes to the network, never the service worker","path":"e2e/offline.spec.ts","line":1,"seconds":1.258,"usual":1.4495,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.465,null,1.465,1.39,1.524,0.996,null,1.434],"edited":[],"code":null},{"name":"rules.spec.ts › [chromium] a rules page shows the rulebook and the assistant answers a question","folder":"","file":"rules.spec.ts","block":"","title":"[chromium] a rules page shows the rulebook and the assistant answers a question","path":"e2e/rules.spec.ts","line":1,"seconds":2.328,"usual":2.449,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.572,null,2.483,2.415,2.614,1.87,null,2.274],"edited":[],"code":null},{"name":"rules.spec.ts › [chromium] a game's house rules open above its rulebook, on every tab","folder":"","file":"rules.spec.ts","block":"","title":"[chromium] a game's house rules open above its rulebook, on every tab","path":"e2e/rules.spec.ts","line":1,"seconds":1.15,"usual":1.0394999999999999,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.133,null,1.095,1.004,1.029,0.806,null,1.05],"edited":[],"code":null},{"name":"rules.spec.ts › [chromium] a rate-limited question comes back to the box and Retry asks it again","folder":"","file":"rules.spec.ts","block":"","title":"[chromium] a rate-limited question comes back to the box and Retry asks it again","path":"e2e/rules.spec.ts","line":1,"seconds":1.128,"usual":1.153,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.2,null,1.105,1.222,1.199,0.759,null,1.107],"edited":[],"code":null},{"name":"rules.spec.ts › [chromium] the daily cap says the assistant is resting for today, by the box, not to wait a minute","folder":"","file":"rules.spec.ts","block":"","title":"[chromium] the daily cap says the assistant is resting for today, by the box, not to wait a minute","path":"e2e/rules.spec.ts","line":1,"seconds":1.009,"usual":1.017,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.012,null,1.022,1.085,0.995,0.813,null,1.083],"edited":[],"code":null},{"name":"rules.spec.ts › [chromium] under a players filter, Rules opens the add-on the game fits through","folder":"","file":"rules.spec.ts","block":"","title":"[chromium] under a players filter, Rules opens the add-on the game fits through","path":"e2e/rules.spec.ts","line":1,"seconds":0.632,"usual":0.6425000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.754,null,0.621,0.668,0.648,0.421,null,0.637],"edited":[],"code":null},{"name":"rules.spec.ts › [chromium] an answer that names another rulebook links to its tab","folder":"","file":"rules.spec.ts","block":"","title":"[chromium] an answer that names another rulebook links to its tab","path":"e2e/rules.spec.ts","line":1,"seconds":1.124,"usual":1.1105,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.071,null,1.094,1.177,1.134,0.838,null,1.127],"edited":[],"code":null},{"name":"rules.spec.ts › [chromium] a starter question asks itself, and a game with a calculator links to it","folder":"","file":"rules.spec.ts","block":"","title":"[chromium] a starter question asks itself, and a game with a calculator links to it","path":"e2e/rules.spec.ts","line":1,"seconds":1.107,"usual":1.0225,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.065,null,1,1.045,0.997,0.878,null,1.055],"edited":[],"code":null},{"name":"rules.spec.ts › [chromium] on a phone the page draws the rulebook, searchable, under a download link","folder":"","file":"rules.spec.ts","block":"","title":"[chromium] on a phone the page draws the rulebook, searchable, under a download link","path":"e2e/rules.spec.ts","line":1,"seconds":3.297,"usual":3.1175,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.286,null,3.148,3.331,3.087,2.073,null,2.726],"edited":[],"code":null},{"name":"rules.spec.ts › [chromium] a scanned rulebook can be searched on a phone too","folder":"","file":"rules.spec.ts","block":"","title":"[chromium] a scanned rulebook can be searched on a phone too","path":"e2e/rules.spec.ts","line":1,"seconds":2.284,"usual":2.8905,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.979,null,2.366,2.86,3.355,2.082,null,2.921],"edited":[],"code":null},{"name":"rules.spec.ts › [chromium] on a phone a rulebook tab opens its own book in the reader","folder":"","file":"rules.spec.ts","block":"","title":"[chromium] on a phone a rulebook tab opens its own book in the reader","path":"e2e/rules.spec.ts","line":1,"seconds":5.744,"usual":5.8635,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[6.44,null,5.837,6.55,5.718,3.755,null,5.89],"edited":[],"code":null},{"name":"rules.spec.ts › [chromium] a long rulebook strip opens with the chosen tab in view","folder":"","file":"rules.spec.ts","block":"","title":"[chromium] a long rulebook strip opens with the chosen tab in view","path":"e2e/rules.spec.ts","line":1,"seconds":0.704,"usual":0.711,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.744,null,0.663,0.738,0.713,0.598,null,0.709],"edited":[],"code":null},{"name":"rules.spec.ts › [chromium] a tab opened from a link sits clear of the strip's faded edge","folder":"","file":"rules.spec.ts","block":"","title":"[chromium] a tab opened from a link sits clear of the strip's faded edge","path":"e2e/rules.spec.ts","line":1,"seconds":0.689,"usual":0.764,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.8,null,0.69,0.913,0.721,0.728,null,0.887],"edited":[],"code":null},{"name":"rules.spec.ts › [chromium] an answer's page citations open their rulebook at that page","folder":"","file":"rules.spec.ts","block":"","title":"[chromium] an answer's page citations open their rulebook at that page","path":"e2e/rules.spec.ts","line":1,"seconds":1.029,"usual":1.0935000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.054,null,1.215,1.179,1.036,0.839,null,1.133],"edited":[],"code":null},{"name":"rules.spec.ts › [chromium] on a phone a citation of another tab's rulebook opens that tab at the page, under the answer","folder":"","file":"rules.spec.ts","block":"","title":"[chromium] on a phone a citation of another tab's rulebook opens that tab at the page, under the answer","path":"e2e/rules.spec.ts","line":1,"seconds":1.968,"usual":2.1624999999999996,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.292,null,2.086,2.527,1.984,1.842,null,2.239],"edited":[],"code":null},{"name":"rules.spec.ts › [chromium] on a phone a jump lands on its page in a rulebook of mixed page sizes","folder":"","file":"rules.spec.ts","block":"","title":"[chromium] on a phone a jump lands on its page in a rulebook of mixed page sizes","path":"e2e/rules.spec.ts","line":1,"seconds":2.644,"usual":2.6055,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.756,null,2.43,2.922,2.612,2.221,null,2.599],"edited":[],"code":null},{"name":"rules.spec.ts › [chromium] on a desktop a citation opens its page in place and marks the passage it points to","folder":"","file":"rules.spec.ts","block":"","title":"[chromium] on a desktop a citation opens its page in place and marks the passage it points to","path":"e2e/rules.spec.ts","line":1,"seconds":5.12,"usual":5.741,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[6.025,null,5.709,6.608,5.522,4.142,null,5.773],"edited":[],"code":null},{"name":"rules.spec.ts › [chromium] on a phone a citation marks the passage it points to, on another tab's rulebook","folder":"","file":"rules.spec.ts","block":"","title":"[chromium] on a phone a citation marks the passage it points to, on another tab's rulebook","path":"e2e/rules.spec.ts","line":1,"seconds":2.391,"usual":2.468,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.813,null,2.448,3.247,2.488,2.377,null,2.436],"edited":[],"code":null},{"name":"rules.spec.ts › [chromium] the cited mark covers the words it marks on the page image","folder":"","file":"rules.spec.ts","block":"","title":"[chromium] the cited mark covers the words it marks on the page image","path":"e2e/rules.spec.ts","line":1,"seconds":3.272,"usual":3.482,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.54,null,3.431,3.928,3.479,3.167,null,3.485],"edited":[],"code":null},{"name":"score-pads.spec.ts › [chromium] a deck's Hearts is scored hand by hand from its rules page, to the end","folder":"","file":"score-pads.spec.ts","block":"","title":"[chromium] a deck's Hearts is scored hand by hand from its rules page, to the end","path":"e2e/score-pads.spec.ts","line":1,"seconds":2.194,"usual":2.1980000000000004,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.501,null,2.146,2.589,2.24,2.057,null,2.156],"edited":[],"code":null},{"name":"score-pads.spec.ts › [chromium] Uno's Score button opens its pad, and the first to 500 wins","folder":"","file":"score-pads.spec.ts","block":"","title":"[chromium] Uno's Score button opens its pad, and the first to 500 wins","path":"e2e/score-pads.spec.ts","line":1,"seconds":2.207,"usual":1.871,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.931,null,1.825,2.008,1.917,1.398,null,1.735],"edited":[],"code":null},{"name":"score-pads.spec.ts › [chromium] Spades scores partnerships, and Euchre the makers","folder":"","file":"score-pads.spec.ts","block":"","title":"[chromium] Spades scores partnerships, and Euchre the makers","path":"e2e/score-pads.spec.ts","line":1,"seconds":1.399,"usual":1.621,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.632,null,1.61,1.841,1.674,1.35,null,1.572],"edited":[],"code":null},{"name":"score-pads.spec.ts › [chromium] Ticket to Ride scores each player's routes and tickets on the map played","folder":"","file":"score-pads.spec.ts","block":"","title":"[chromium] Ticket to Ride scores each player's routes and tickets on the map played","path":"e2e/score-pads.spec.ts","line":1,"seconds":1.014,"usual":1.2145000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.294,null,1.051,1.331,1.155,1.029,null,1.274],"edited":[],"code":null},{"name":"score-pads.spec.ts › [chromium] Dominion counts only the Kingdom cards ticked","folder":"","file":"score-pads.spec.ts","block":"","title":"[chromium] Dominion counts only the Kingdom cards ticked","path":"e2e/score-pads.spec.ts","line":1,"seconds":1.101,"usual":1.1955,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.207,null,1.099,1.399,1.184,1.034,null,1.259],"edited":[],"code":null},{"name":"score.spec.ts › [chromium] the 7 Wonders calculator totals a player and ranks the table","folder":"","file":"score.spec.ts","block":"","title":"[chromium] the 7 Wonders calculator totals a player and ranks the table","path":"e2e/score.spec.ts","line":1,"seconds":0.798,"usual":0.902,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.909,null,0.79,1.08,0.895,0.752,null,0.916],"edited":[],"code":null},{"name":"score.spec.ts › [chromium] on a phone the score sheet scrolls sideways with the categories pinned","folder":"","file":"score.spec.ts","block":"","title":"[chromium] on a phone the score sheet scrolls sideways with the categories pinned","path":"e2e/score.spec.ts","line":1,"seconds":0.943,"usual":1.083,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.085,null,0.989,1.21,1.081,0.732,null,1.121],"edited":[],"code":null},{"name":"score.spec.ts › [chromium] Next passes the phone round the table and ends on the results","folder":"","file":"score.spec.ts","block":"","title":"[chromium] Next passes the phone round the table and ends on the results","path":"e2e/score.spec.ts","line":1,"seconds":0.732,"usual":0.782,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.857,null,0.8,0.907,0.754,0.626,null,0.764],"edited":[],"code":null},{"name":"score.spec.ts › [chromium] a game with no score calculator shows the not-found page","folder":"","file":"score.spec.ts","block":"","title":"[chromium] a game with no score calculator shows the not-found page","path":"e2e/score.spec.ts","line":1,"seconds":0.817,"usual":1.0015,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.151,null,0.896,1.179,0.955,0.712,null,1.048],"edited":[],"code":null},{"name":"score.spec.ts › [chromium] a negative military score can be typed and the game survives a reload","folder":"","file":"score.spec.ts","block":"","title":"[chromium] a negative military score can be typed and the game survives a reload","path":"e2e/score.spec.ts","line":1,"seconds":1.152,"usual":1.256,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.412,null,1.212,1.438,1.264,1.073,null,1.248],"edited":[],"code":null},{"name":"score.spec.ts › [chromium] a score sits dead centre in its box","folder":"","file":"score.spec.ts","block":"","title":"[chromium] a score sits dead centre in its box","path":"e2e/score.spec.ts","line":1,"seconds":1.089,"usual":1.15,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.25,null,1.096,1.281,1.167,0.931,null,1.133],"edited":[],"code":null},{"name":"score.spec.ts › [chromium] on a 390px phone each box names its unit and a converted field shows its points on its label line","folder":"","file":"score.spec.ts","block":"","title":"[chromium] on a 390px phone each box names its unit and a converted field shows its points on its label line","path":"e2e/score.spec.ts","line":1,"seconds":0.799,"usual":0.837,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.034,null,0.838,1.062,0.833,0.697,null,0.836],"edited":[],"code":null},{"name":"score.spec.ts › [chromium] on a 320px phone each box names its unit and a converted field shows its points on its label line","folder":"","file":"score.spec.ts","block":"","title":"[chromium] on a 320px phone each box names its unit and a converted field shows its points on its label line","path":"e2e/score.spec.ts","line":1,"seconds":0.796,"usual":0.8485,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.993,null,0.839,1.228,0.845,0.609,null,0.852],"edited":[],"code":null},{"name":"score.spec.ts › [chromium] at 1280px each box shows a long score and its unit as one centred line","folder":"","file":"score.spec.ts","block":"","title":"[chromium] at 1280px each box shows a long score and its unit as one centred line","path":"e2e/score.spec.ts","line":1,"seconds":0.838,"usual":0.9185000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.077,null,0.893,1.243,0.935,0.667,null,0.902],"edited":[],"code":null},{"name":"score.spec.ts › [chromium] at 390px each box shows a long score and its unit as one centred line","folder":"","file":"score.spec.ts","block":"","title":"[chromium] at 390px each box shows a long score and its unit as one centred line","path":"e2e/score.spec.ts","line":1,"seconds":0.847,"usual":0.9225,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.003,null,0.876,1.186,0.938,0.598,null,0.907],"edited":[],"code":null},{"name":"score.spec.ts › [chromium] at 375px each box shows a long score and its unit as one centred line","folder":"","file":"score.spec.ts","block":"","title":"[chromium] at 375px each box shows a long score and its unit as one centred line","path":"e2e/score.spec.ts","line":1,"seconds":0.816,"usual":0.8585,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.034,null,0.845,1.08,0.872,0.598,null,0.842],"edited":[],"code":null},{"name":"score.spec.ts › [chromium] at 320px each box shows a long score and its unit as one centred line","folder":"","file":"score.spec.ts","block":"","title":"[chromium] at 320px each box shows a long score and its unit as one centred line","path":"e2e/score.spec.ts","line":1,"seconds":0.915,"usual":1.032,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.174,null,1.005,1.211,1.059,0.771,null,0.965],"edited":[],"code":null},{"name":"theme.spec.ts › [chromium] follows the system's dark setting with nothing picked","folder":"","file":"theme.spec.ts","block":"","title":"[chromium] follows the system's dark setting with nothing picked","path":"e2e/theme.spec.ts","line":1,"seconds":0.702,"usual":0.736,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.847,null,0.677,0.876,0.712,0.408,null,0.76],"edited":[],"code":null},{"name":"theme.spec.ts › [chromium] a picked theme wins over the system's and is there from the first paint next time","folder":"","file":"theme.spec.ts","block":"","title":"[chromium] a picked theme wins over the system's and is there from the first paint next time","path":"e2e/theme.spec.ts","line":1,"seconds":2.026,"usual":2.173,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.492,null,2.167,2.653,2.179,1.435,null,2.157],"edited":[],"code":null},{"name":"theme.spec.ts › [chromium] the theme toggle stays clear of the title at 390px","folder":"","file":"theme.spec.ts","block":"","title":"[chromium] the theme toggle stays clear of the title at 390px","path":"e2e/theme.spec.ts","line":1,"seconds":0.825,"usual":0.929,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.016,null,0.932,1.132,0.926,0.579,null,0.914],"edited":[],"code":null},{"name":"theme.spec.ts › [chromium] the theme toggle stays clear of the title at 700px","folder":"","file":"theme.spec.ts","block":"","title":"[chromium] the theme toggle stays clear of the title at 700px","path":"e2e/theme.spec.ts","line":1,"seconds":0.901,"usual":0.9375,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.051,null,0.888,1.007,0.861,0.57,null,0.987],"edited":[],"code":null},{"name":"theme.spec.ts › [chromium] the theme toggle stays clear of the title at 1280px","folder":"","file":"theme.spec.ts","block":"","title":"[chromium] the theme toggle stays clear of the title at 1280px","path":"e2e/theme.spec.ts","line":1,"seconds":0.864,"usual":0.9065000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.12,null,0.889,0.995,0.883,0.631,null,0.924],"edited":[],"code":null},{"name":"theme.spec.ts › [chromium] text keeps a readable contrast in the light theme","folder":"","file":"theme.spec.ts","block":"","title":"[chromium] text keeps a readable contrast in the light theme","path":"e2e/theme.spec.ts","line":1,"seconds":8.193,"usual":9.286999999999999,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[10.023,null,8.891,9.167,9.407,5.497,null,9.518],"edited":[],"code":null},{"name":"theme.spec.ts › [chromium] text keeps a readable contrast in the dark theme","folder":"","file":"theme.spec.ts","block":"","title":"[chromium] text keeps a readable contrast in the dark theme","path":"e2e/theme.spec.ts","line":1,"seconds":8.151,"usual":9.3995,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[10.367,null,8.83,9.282,9.517,5.432,null,9.841],"edited":[],"code":null},{"name":"wishlist.spec.ts › [chromium] voting on a wishlist game posts the vote and shows the new count","folder":"","file":"wishlist.spec.ts","block":"","title":"[chromium] voting on a wishlist game posts the vote and shows the new count","path":"e2e/wishlist.spec.ts","line":1,"seconds":1.075,"usual":1.224,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.293,null,1.266,1.2,1.248,0.833,null,1.107],"edited":[],"code":null},{"name":"wishlist.spec.ts › [chromium] the wishlist sorts by most votes, marks expansions and jumps to the suggest form","folder":"","file":"wishlist.spec.ts","block":"","title":"[chromium] the wishlist sorts by most votes, marks expansions and jumps to the suggest form","path":"e2e/wishlist.spec.ts","line":1,"seconds":3.428,"usual":3.9749999999999996,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[4.154,null,3.94,4.15,4.01,2.737,null,3.703],"edited":[],"code":null},{"name":"wishlist.spec.ts › [chromium] a friend opening the wishlist link is asked to vote, and sees the vote land","folder":"","file":"wishlist.spec.ts","block":"","title":"[chromium] a friend opening the wishlist link is asked to vote, and sees the vote land","path":"e2e/wishlist.spec.ts","line":1,"seconds":1.986,"usual":2.215,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.203,null,2.227,2.422,2.361,1.355,null,2.01],"edited":[],"code":null},{"name":"word-checker.spec.ts › [chromium] a dictionary word is valid and shows its definition","folder":"","file":"word-checker.spec.ts","block":"","title":"[chromium] a dictionary word is valid and shows its definition","path":"e2e/word-checker.spec.ts","line":1,"seconds":0.859,"usual":0.9435,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.134,null,0.898,1.064,0.917,0.718,null,0.97],"edited":[],"code":null},{"name":"word-checker.spec.ts › [chromium] a word the dictionary does not know (404) is not valid","folder":"","file":"word-checker.spec.ts","block":"","title":"[chromium] a word the dictionary does not know (404) is not valid","path":"e2e/word-checker.spec.ts","line":1,"seconds":0.779,"usual":0.9125000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.927,null,0.901,0.963,0.917,0.616,null,0.908],"edited":[],"code":null},{"name":"word-checker.spec.ts › [chromium] a lone letter gets a note, not a verdict, and no lookup","folder":"","file":"word-checker.spec.ts","block":"","title":"[chromium] a lone letter gets a note, not a verdict, and no lookup","path":"e2e/word-checker.spec.ts","line":1,"seconds":0.825,"usual":0.914,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.969,null,0.905,1.026,0.923,0.677,null,0.819],"edited":[],"code":null},{"name":"word-checker.spec.ts › [chromium] a word Wiktionary has only as a misspelling is not valid","folder":"","file":"word-checker.spec.ts","block":"","title":"[chromium] a word Wiktionary has only as a misspelling is not valid","path":"e2e/word-checker.spec.ts","line":1,"seconds":0.86,"usual":0.91,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.954,null,0.912,0.987,0.908,0.652,null,0.895],"edited":[],"code":null},{"name":"word-checker.spec.ts › [chromium] a dictionary outage still answers from the word-game list","folder":"","file":"word-checker.spec.ts","block":"","title":"[chromium] a dictionary outage still answers from the word-game list","path":"e2e/word-checker.spec.ts","line":1,"seconds":1.274,"usual":1.2930000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.458,null,1.312,1.332,1.268,0.952,null,1.274],"edited":[],"code":null},{"name":"word-checker.spec.ts › [chromium] a word missing from both lists is valid when the dictionary has it","folder":"","file":"word-checker.spec.ts","block":"","title":"[chromium] a word missing from both lists is valid when the dictionary has it","path":"e2e/word-checker.spec.ts","line":1,"seconds":0.893,"usual":0.912,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.006,null,0.903,1.042,0.921,0.758,null,0.858],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] the list is a line a game, which opens in place; Rules inside opens the rules page and Back finds it open","folder":"","file":"phone.spec.ts","block":"","title":"[phone] the list is a line a game, which opens in place; Rules inside opens the rules page and Back finds it open","path":"e2e/phone.spec.ts","line":1,"seconds":2.311,"usual":2.5205,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.716,null,2.307,2.706,2.484,1.581,null,2.557],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] a line opening never scrolls inside itself, so a tap on what it shows stays where it was aimed","folder":"","file":"phone.spec.ts","block":"","title":"[phone] a line opening never scrolls inside itself, so a tap on what it shows stays where it was aimed","path":"e2e/phone.spec.ts","line":1,"seconds":1.264,"usual":1.3860000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.456,null,1.349,1.423,1.326,0.75,null,1.435],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] cards are still a choice, and the choice is kept in the link","folder":"","file":"phone.spec.ts","block":"","title":"[phone] cards are still a choice, and the choice is kept in the link","path":"e2e/phone.spec.ts","line":1,"seconds":1.878,"usual":2.123,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.158,null,1.982,2.134,2.394,1.288,null,2.112],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] the bar along the bottom stays on screen, its buttons centred in it, and switches the lists","folder":"","file":"phone.spec.ts","block":"","title":"[phone] the bar along the bottom stays on screen, its buttons centred in it, and switches the lists","path":"e2e/phone.spec.ts","line":1,"seconds":4.683,"usual":4.72,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[4.794,null,4.434,5.147,5.602,3.809,null,4.646],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] what takes focus scrolls clear of the bar","folder":"","file":"phone.spec.ts","block":"","title":"[phone] what takes focus scrolls clear of the bar","path":"e2e/phone.spec.ts","line":1,"seconds":0.964,"usual":1.0955,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.181,null,1.041,1.14,1.164,0.804,null,1.051],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] the heading keeps one line from 360px, and the bar its one-line labels at 320px","folder":"","file":"phone.spec.ts","block":"","title":"[phone] the heading keeps one line from 360px, and the bar its one-line labels at 320px","path":"e2e/phone.spec.ts","line":1,"seconds":1.889,"usual":2.1574999999999998,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.425,null,2.06,2.531,2.11,1.283,null,2.205],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] the bar steps aside while the keyboard is up for the search","folder":"","file":"phone.spec.ts","block":"","title":"[phone] the bar steps aside while the keyboard is up for the search","path":"e2e/phone.spec.ts","line":1,"seconds":0.765,"usual":0.9195,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.113,null,0.957,1.174,0.882,0.518,null,0.859],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] the top of the page leaves room for four games: the title beside the theme picker, small covers under it","folder":"","file":"phone.spec.ts","block":"","title":"[phone] the top of the page leaves room for four games: the title beside the theme picker, small covers under it","path":"e2e/phone.spec.ts","line":1,"seconds":1.091,"usual":1.3439999999999999,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.451,null,1.272,1.589,1.331,0.676,null,1.357],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] the controls on the page take taps 44px each way, a small one beyond its look","folder":"","file":"phone.spec.ts","block":"","title":"[phone] the controls on the page take taps 44px each way, a small one beyond its look","path":"e2e/phone.spec.ts","line":1,"seconds":2.468,"usual":2.8,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.939,null,2.578,2.882,2.852,1.718,null,2.748],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] a score pad's and the rules page's small controls take taps 44px each way","folder":"","file":"phone.spec.ts","block":"","title":"[phone] a score pad's and the rules page's small controls take taps 44px each way","path":"e2e/phone.spec.ts","line":1,"seconds":1.492,"usual":1.599,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.743,null,1.64,1.834,1.522,1.263,null,1.558],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] a wishlist line votes from where it sits, without opening","folder":"","file":"phone.spec.ts","block":"","title":"[phone] a wishlist line votes from where it sits, without opening","path":"e2e/phone.spec.ts","line":1,"seconds":0.939,"usual":1.0155,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.901,null,0.983,1.048,1.07,0.586,null,1.072],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] the bar and the lines keep a readable contrast in the light theme","folder":"","file":"phone.spec.ts","block":"","title":"[phone] the bar and the lines keep a readable contrast in the light theme","path":"e2e/phone.spec.ts","line":1,"seconds":3.388,"usual":3.7555,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.728,null,3.577,4.047,3.928,2.34,null,3.783],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] the bar and the lines keep a readable contrast in the dark theme","folder":"","file":"phone.spec.ts","block":"","title":"[phone] the bar and the lines keep a readable contrast in the dark theme","path":"e2e/phone.spec.ts","line":1,"seconds":3.177,"usual":3.6654999999999998,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.657,null,3.48,3.774,3.83,2.398,null,3.674],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] filters live in a sheet behind one button and survive a reload","folder":"","file":"phone.spec.ts","block":"","title":"[phone] filters live in a sheet behind one button and survive a reload","path":"e2e/phone.spec.ts","line":1,"seconds":2.951,"usual":3.271,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.576,null,3.06,3.428,3.34,2.38,null,3.202],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] sign-in starts with Google and comes back to the page, which says what went wrong in its own words","folder":"","file":"phone.spec.ts","block":"","title":"[phone] sign-in starts with Google and comes back to the page, which says what went wrong in its own words","path":"e2e/phone.spec.ts","line":1,"seconds":1.478,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","passed"],"times":[null,null,null,null,1.568,null,null,1.472],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] another Google account signs in to nothing extra, and the page says whose it is","folder":"","file":"phone.spec.ts","block":"","title":"[phone] another Google account signs in to nothing extra, and the page says whose it is","path":"e2e/phone.spec.ts","line":1,"seconds":0.393,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","passed"],"times":[null,null,null,null,0.735,null,null,0.427],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] a session over a day old is asked for Google again before it adds a passkey","folder":"","file":"phone.spec.ts","block":"","title":"[phone] a session over a day old is asked for Google again before it adds a passkey","path":"e2e/phone.spec.ts","line":1,"seconds":0.561,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","passed"],"times":[null,null,null,null,0.748,null,null,0.473],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] with a passkey › the owner adds one, signs out, and signs back in with it with no Google step","folder":"","file":"phone.spec.ts","block":"[phone] with a passkey","title":"the owner adds one, signs out, and signs back in with it with no Google step","path":"e2e/phone.spec.ts","line":438,"seconds":0.62,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","passed"],"times":[null,null,null,null,0.627,null,null,0.714],"edited":[],"code":null},{"name":"visual-desktop.spec.ts › [visual-chromium] home-grid","folder":"","file":"visual-desktop.spec.ts","block":"","title":"[visual-chromium] home-grid","path":"e2e/visual-desktop.spec.ts","line":1,"seconds":2.46,"usual":2.7785,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.064,null,2.718,2.81,2.878,2.286,null,2.747],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › wishlist","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"wishlist","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.435,"usual":2.7055,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.725,null,2.735,2.686,2.819,2.117,null,2.555],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › wishlist-grid","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"wishlist-grid","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.295,"usual":2.5875,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.609,null,2.566,2.615,2.622,2.4,null,2.444],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › filter-open","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"filter-open","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.487,"usual":2.2880000000000003,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.331,null,2.196,2.214,2.314,2.262,null,2.628],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › details-open","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"details-open","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.262,"usual":2.518,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.455,null,2.635,2.595,2.563,1.967,null,2.473],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › no-results","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"no-results","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.335,"usual":2.3655,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.345,null,2.386,2.47,2.505,2.117,null,2.336],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › random-pick","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"random-pick","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.885,"usual":3.02,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.221,null,2.998,3.249,3.042,2.275,null,2.54],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › rules-chat","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"rules-chat","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.008,"usual":2.134,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.035,null,2.155,2.243,2.134,1.321,null,2.134],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › house-rules","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"house-rules","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.516,"usual":1.46,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.536,null,1.484,1.562,1.436,1.126,null,1.416],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › score-ticket-to-ride","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"score-ticket-to-ride","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.814,"usual":0.8385,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.87,null,0.746,0.892,0.844,0.623,null,0.833],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › score-dominion","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"score-dominion","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.813,"usual":0.7155,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.761,null,0.682,0.729,0.763,0.565,null,0.702],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › score-hearts","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"score-hearts","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.961,"usual":0.9605,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.11,null,0.922,1.017,0.999,0.728,null,0.899],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › word-checked","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"word-checked","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.075,"usual":1.1255,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.256,null,1.019,1.26,1.113,0.752,null,1.138],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › sign-in","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"sign-in","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.456,"usual":0.481,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","failed"],"times":[0.499,null,0.459,0.51,0.481,0.325,null,0.696],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › sign-in-error","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"sign-in-error","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.472,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,0.528,null,null,0.662],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › sign-in-other-account","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"sign-in-other-account","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.506,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,0.778,null,null,0.839],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › sign-in-owner","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"sign-in-owner","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.713,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,0.378,null,null,0.742],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › sign-in-passkey-added","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"sign-in-passkey-added","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.454,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,0.606,null,null,0.988],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › sign-in-old-session","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"sign-in-old-session","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.519,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,0.57,null,null,0.872],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › not-found","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"not-found","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.44,"usual":0.4835,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.468,null,0.485,0.505,0.482,0.346,null,0.59],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › approve-link","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"approve-link","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.797,"usual":0.7395,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.744,null,0.804,0.707,0.735,0.607,null,0.962],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › deny-link","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"deny-link","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.765,"usual":0.755,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.766,null,0.688,0.744,0.717,1.085,null,0.844],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › home-list-whole","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"home-list-whole","path":"e2e/visual-full.spec.ts","line":30,"seconds":3.057,"usual":3.0765000000000002,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.181,null,2.972,2.951,3.182,2.26,null,3.64],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › home-grid-whole","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"home-grid-whole","path":"e2e/visual-full.spec.ts","line":31,"seconds":3.1,"usual":3.2105,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.2,null,3.221,3.222,3.138,2.838,null,3.279],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] light theme › wishlist-whole","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] light theme","title":"wishlist-whole","path":"e2e/visual-full.spec.ts","line":32,"seconds":3.207,"usual":3.325,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.467,null,3.183,3.138,3.486,2.238,null,3.756],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › wishlist","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"wishlist","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.331,"usual":2.3529999999999998,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.298,null,2.237,2.334,2.372,2.377,null,2.412],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › wishlist-grid","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"wishlist-grid","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.218,"usual":2.3685,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.374,null,2.363,2.728,2.499,2.348,null,2.353],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › filter-open","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"filter-open","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.415,"usual":2.332,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.174,null,2.687,2.428,2.594,2.236,null,2.057],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › details-open","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"details-open","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.214,"usual":2.5285,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.662,null,2.492,2.724,2.565,1.948,null,2.401],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › no-results","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"no-results","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.303,"usual":2.332,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.521,null,2.327,2.552,2.337,2.094,null,2.308],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › random-pick","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"random-pick","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.757,"usual":2.722,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.929,null,2.515,3.207,2.5,2.388,null,3.075],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › rules-chat","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"rules-chat","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.919,"usual":2.1390000000000002,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.315,null,2.166,2.296,2.112,1.148,null,2.051],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › house-rules","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"house-rules","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.333,"usual":1.459,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.563,null,1.416,1.502,1.413,1.09,null,1.503],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › score-ticket-to-ride","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"score-ticket-to-ride","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.752,"usual":0.8315,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.865,null,0.748,0.921,0.803,0.634,null,0.86],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › score-dominion","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"score-dominion","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.663,"usual":0.7475,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.781,null,0.771,0.721,0.724,0.566,null,0.78],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › score-hearts","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"score-hearts","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.816,"usual":0.878,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1,null,0.849,0.91,0.905,0.695,null,0.851],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › word-checked","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"word-checked","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.113,"usual":1.146,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.135,null,1.157,1.181,1.206,0.805,null,1.003],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › sign-in","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"sign-in","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.487,"usual":0.457,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","failed"],"times":[0.538,null,0.46,0.418,0.457,0.315,null,0.961],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › sign-in-error","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"sign-in-error","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.546,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,0.555,null,null,0.597],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › sign-in-other-account","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"sign-in-other-account","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.468,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,0.792,null,null,0.944],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › sign-in-owner","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"sign-in-owner","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.512,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,0.372,null,null,0.853],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › sign-in-passkey-added","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"sign-in-passkey-added","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.534,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,0.868,null,null,0.995],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › sign-in-old-session","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"sign-in-old-session","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.778,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,0.529,null,null,1.033],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › not-found","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"not-found","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.426,"usual":0.4875,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.485,null,0.509,0.49,0.436,0.316,null,0.7],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › approve-link","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"approve-link","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.669,"usual":0.739,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.8,null,0.701,0.737,0.741,0.592,null,0.949],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › deny-link","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"deny-link","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.117,"usual":0.785,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.705,null,0.677,1.287,0.771,1.06,null,0.799],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › home-list","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"home-list","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.343,"usual":2.4465,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.49,null,2.366,2.566,2.453,2,null,2.44],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › rules","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"rules","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.491,"usual":1.4985,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.53,null,1.493,1.637,1.504,1.191,null,1.483],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › score-7-wonders","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"score-7-wonders","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.732,"usual":0.7195,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.811,null,0.756,0.673,0.683,0.562,null,0.806],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › word-checker","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"word-checker","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.803,"usual":0.8845000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.892,null,0.908,0.897,0.877,0.625,null,0.866],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › home-grid","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"home-grid","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.366,"usual":2.348,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.37,null,2.301,2.299,2.348,2.414,null,2.348],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › home-list-whole","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"home-list-whole","path":"e2e/visual-full.spec.ts","line":30,"seconds":2.95,"usual":3.053,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.356,null,3.171,2.935,2.826,2.702,null,3.331],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › home-grid-whole","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"home-grid-whole","path":"e2e/visual-full.spec.ts","line":31,"seconds":2.844,"usual":2.9295,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.159,null,2.828,2.982,2.877,2.692,null,3.065],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] dark theme › wishlist-whole","folder":"","file":"visual-full.spec.ts","block":"[visual-chromium] dark theme","title":"wishlist-whole","path":"e2e/visual-full.spec.ts","line":32,"seconds":2.97,"usual":3.215,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[3.287,null,3.017,3.289,3.299,2.853,null,3.143],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-chromium] the toggle's dark theme","folder":"","file":"visual-full.spec.ts","block":"","title":"[visual-chromium] the toggle's dark theme","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.412,"usual":2.4665,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.631,null,2.373,2.772,2.483,2.291,null,2.45],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-chromium] home-list","folder":"","file":"visual.spec.ts","block":"","title":"[visual-chromium] home-list","path":"e2e/visual.spec.ts","line":1,"seconds":2.327,"usual":2.4445,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.511,null,2.419,2.409,2.715,2.47,null,2.392],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-chromium] rules","folder":"","file":"visual.spec.ts","block":"","title":"[visual-chromium] rules","path":"e2e/visual.spec.ts","line":1,"seconds":1.67,"usual":1.506,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.705,null,1.521,1.807,1.448,1.202,null,1.491],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-chromium] score-7-wonders","folder":"","file":"visual.spec.ts","block":"","title":"[visual-chromium] score-7-wonders","path":"e2e/visual.spec.ts","line":1,"seconds":0.827,"usual":0.8214999999999999,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.847,null,0.805,0.823,0.82,0.651,null,0.867],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-chromium] word-checker","folder":"","file":"visual.spec.ts","block":"","title":"[visual-chromium] word-checker","path":"e2e/visual.spec.ts","line":1,"seconds":0.727,"usual":0.802,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.863,null,0.822,0.723,0.782,0.668,null,0.846],"edited":[],"code":null},{"name":"visual-desktop.spec.ts › [visual-firefox] home-grid","folder":"","file":"visual-desktop.spec.ts","block":"","title":"[visual-firefox] home-grid","path":"e2e/visual-desktop.spec.ts","line":1,"seconds":4.287,"usual":4.187,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[4.525,null,4.053,4.182,4.192,3.461,null,4.255],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-firefox] home-list","folder":"","file":"visual.spec.ts","block":"","title":"[visual-firefox] home-list","path":"e2e/visual.spec.ts","line":1,"seconds":4.188,"usual":4.824999999999999,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[4.999,null,4.296,4.936,4.933,3.631,null,4.717],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-firefox] rules","folder":"","file":"visual.spec.ts","block":"","title":"[visual-firefox] rules","path":"e2e/visual.spec.ts","line":1,"seconds":2.643,"usual":2.459,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.52,null,2.315,2.744,2.573,1.83,null,2.398],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-firefox] score-7-wonders","folder":"","file":"visual.spec.ts","block":"","title":"[visual-firefox] score-7-wonders","path":"e2e/visual.spec.ts","line":1,"seconds":1.186,"usual":1.16,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.285,null,1.129,1.168,1.152,0.86,null,1.223],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-firefox] word-checker","folder":"","file":"visual.spec.ts","block":"","title":"[visual-firefox] word-checker","path":"e2e/visual.spec.ts","line":1,"seconds":1.351,"usual":1.426,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.495,null,1.426,1.428,1.33,0.977,null,1.426],"edited":[],"code":null},{"name":"visual-desktop.spec.ts › [visual-webkit] home-grid","folder":"","file":"visual-desktop.spec.ts","block":"","title":"[visual-webkit] home-grid","path":"e2e/visual-desktop.spec.ts","line":1,"seconds":6.758,"usual":6.3965,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[8.837,null,6.219,6.574,5.032,4.637,null,7.213],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-webkit] home-list","folder":"","file":"visual.spec.ts","block":"","title":"[visual-webkit] home-list","path":"e2e/visual.spec.ts","line":1,"seconds":6.997,"usual":6.3605,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[7.878,null,5.998,6.683,6.038,4.6,null,7.041],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-webkit] rules","folder":"","file":"visual.spec.ts","block":"","title":"[visual-webkit] rules","path":"e2e/visual.spec.ts","line":1,"seconds":6.839,"usual":7.229,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[7.311,null,6.752,8.178,8.686,4.5,null,7.147],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-webkit] score-7-wonders","folder":"","file":"visual.spec.ts","block":"","title":"[visual-webkit] score-7-wonders","path":"e2e/visual.spec.ts","line":1,"seconds":1.938,"usual":1.9445000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.2,null,1.874,2.015,1.856,1.343,null,2.032],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-webkit] word-checker","folder":"","file":"visual.spec.ts","block":"","title":"[visual-webkit] word-checker","path":"e2e/visual.spec.ts","line":1,"seconds":2.208,"usual":2.2245,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.259,null,2.155,2.204,2.395,1.615,null,2.245],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-chromium] the filter sheet","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-chromium] the filter sheet","path":"e2e/visual-phone.spec.ts","line":1,"seconds":2.675,"usual":2.7445,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.714,null,2.775,2.707,2.873,2.414,null,2.79],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-chromium] approve-link","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-chromium] approve-link","path":"e2e/visual-phone.spec.ts","line":1,"seconds":0.692,"usual":0.914,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.933,null,0.904,0.796,0.924,0.556,null,0.943],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-chromium] deny-link","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-chromium] deny-link","path":"e2e/visual-phone.spec.ts","line":1,"seconds":0.565,"usual":0.576,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.754,null,0.565,0.57,0.58,1.018,null,0.572],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-chromium] sign-in","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-chromium] sign-in","path":"e2e/visual-phone.spec.ts","line":1,"seconds":0.468,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,0.321,null,null,0.46],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-chromium] sign-in-error","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-chromium] sign-in-error","path":"e2e/visual-phone.spec.ts","line":1,"seconds":0.411,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,0.468,null,null,0.731],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-chromium] sign-in-other-account","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-chromium] sign-in-other-account","path":"e2e/visual-phone.spec.ts","line":1,"seconds":0.468,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,0.473,null,null,0.678],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-chromium] sign-in-owner","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-chromium] sign-in-owner","path":"e2e/visual-phone.spec.ts","line":1,"seconds":0.394,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,0.493,null,null,0.837],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-chromium] sign-in-passkey-added","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-chromium] sign-in-passkey-added","path":"e2e/visual-phone.spec.ts","line":1,"seconds":0.475,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,0.505,null,null,0.861],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-chromium] sign-in-old-session","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-chromium] sign-in-old-session","path":"e2e/visual-phone.spec.ts","line":1,"seconds":0.763,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,0.512,null,null,0.947],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-phone-chromium] home-list","folder":"","file":"visual.spec.ts","block":"","title":"[visual-phone-chromium] home-list","path":"e2e/visual.spec.ts","line":1,"seconds":2.229,"usual":2.4515000000000002,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2.445,null,2.314,2.517,2.458,1.983,null,2.663],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-phone-chromium] rules","folder":"","file":"visual.spec.ts","block":"","title":"[visual-phone-chromium] rules","path":"e2e/visual.spec.ts","line":1,"seconds":1.289,"usual":1.4715,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.483,null,1.467,1.474,1.469,1.227,null,1.719],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-phone-chromium] score-7-wonders","folder":"","file":"visual.spec.ts","block":"","title":"[visual-phone-chromium] score-7-wonders","path":"e2e/visual.spec.ts","line":1,"seconds":0.661,"usual":0.708,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.767,null,0.62,0.725,0.691,0.542,null,0.767],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-phone-chromium] word-checker","folder":"","file":"visual.spec.ts","block":"","title":"[visual-phone-chromium] word-checker","path":"e2e/visual.spec.ts","line":1,"seconds":0.602,"usual":0.6984999999999999,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[0.722,null,0.771,0.697,0.7,0.594,null,0.633],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] the filter sheet","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] the filter sheet","path":"e2e/visual-phone.spec.ts","line":1,"seconds":3.685,"usual":4.629,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[4.639,null,4.619,4.754,4.703,3.4,null,4.518],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] approve-link","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] approve-link","path":"e2e/visual-phone.spec.ts","line":1,"seconds":1.223,"usual":1.2675,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.406,null,1.256,1.327,1.27,1.032,null,1.265],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] deny-link","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] deny-link","path":"e2e/visual-phone.spec.ts","line":1,"seconds":1.068,"usual":1.2165,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.336,null,1.235,1.198,1.155,0.917,null,1.236],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] sign-in","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] sign-in","path":"e2e/visual-phone.spec.ts","line":1,"seconds":1.317,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,1.123,null,null,1.389],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] sign-in-error","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] sign-in-error","path":"e2e/visual-phone.spec.ts","line":1,"seconds":1.226,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,1.054,null,null,1.182],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] sign-in-other-account","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] sign-in-other-account","path":"e2e/visual-phone.spec.ts","line":1,"seconds":1.118,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,1.024,null,null,1.304],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] sign-in-owner","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] sign-in-owner","path":"e2e/visual-phone.spec.ts","line":1,"seconds":0.851,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,1.035,null,null,1.194],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] sign-in-passkey-added","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] sign-in-passkey-added","path":"e2e/visual-phone.spec.ts","line":1,"seconds":1.105,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,1.034,null,null,1.417],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] sign-in-old-session","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] sign-in-old-session","path":"e2e/visual-phone.spec.ts","line":1,"seconds":1.041,"usual":null,"result":"passed","slower":false,"flaky":false,"message":"","hist":["","","","","passed","","","failed"],"times":[null,null,null,null,1.328,null,null,1.677],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-phone-webkit] home-list","folder":"","file":"visual.spec.ts","block":"","title":"[visual-phone-webkit] home-list","path":"e2e/visual.spec.ts","line":1,"seconds":3.913,"usual":4.285,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[4.535,null,4.37,5.083,4.2,3.406,null,4.152],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-phone-webkit] rules","folder":"","file":"visual.spec.ts","block":"","title":"[visual-phone-webkit] rules","path":"e2e/visual.spec.ts","line":1,"seconds":3.304,"usual":4.8149999999999995,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[4.587,null,5.259,4.324,5.043,3.089,null,5.438],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-phone-webkit] score-7-wonders","folder":"","file":"visual.spec.ts","block":"","title":"[visual-phone-webkit] score-7-wonders","path":"e2e/visual.spec.ts","line":1,"seconds":1.791,"usual":1.5815,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[1.759,null,1.65,1.694,1.513,1.373,null,1.501],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-phone-webkit] word-checker","folder":"","file":"visual.spec.ts","block":"","title":"[visual-phone-webkit] word-checker","path":"e2e/visual.spec.ts","line":1,"seconds":1.66,"usual":1.3585,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","","passed","passed","passed","passed","","passed"],"times":[2,null,1.249,1.308,1.352,1.387,null,1.365],"edited":[],"code":null}],"notes":[["Runner image","ubuntu26 20261101.186.1"],["Cores","4"],["Memory","16 GB"],["Node","v24.22.2"],["Playwright","1.64.1"],["Browsers","Chrome for Testing 156.0.8078.4, Chrome Headless Shell 156.0.8078.4, Firefox 157.0, WebKit 27.2"]],"load":[{"t":15,"load":0.45,"busy":8.5},{"t":25,"load":0.68,"busy":20.2},{"t":35,"load":0.81,"busy":47.8},{"t":45,"load":1.14,"busy":35.2},{"t":55,"load":1.11,"busy":9.9},{"t":65,"load":0.94,"busy":2.6},{"t":75,"load":1.03,"busy":14.7},{"t":85,"load":1.18,"busy":26.2},{"t":95,"load":1.15,"busy":40.7},{"t":105,"load":1.44,"busy":51.3},{"t":115,"load":1.38,"busy":56.3},{"t":125,"load":2.78,"busy":89.1},{"t":135,"load":3.72,"busy":91.8},{"t":145,"load":4.3,"busy":86.7},{"t":155,"load":5.23,"busy":81.9},{"t":165,"load":5.06,"busy":88.7},{"t":175,"load":5.42,"busy":91.9},{"t":185,"load":5.13,"busy":84.8},{"t":195,"load":5.48,"busy":80.8},{"t":205,"load":5.18,"busy":82.4},{"t":215,"load":5.3,"busy":87.9},{"t":225,"load":5.72,"busy":84.1},{"t":235,"load":6.79,"busy":81},{"t":245,"load":6.42,"busy":48.6},{"t":255,"load":6.67,"busy":57.3},{"t":265,"load":5.72,"busy":55.5},{"t":275,"load":4.99,"busy":55.3},{"t":285,"load":5.86,"busy":66.6},{"t":295,"load":6.15,"busy":52.6},{"t":305,"load":6.65,"busy":95.1},{"t":315,"load":6.54,"busy":74.4},{"t":325,"load":7.18,"busy":81.5},{"t":335,"load":6.15,"busy":3.6}],"settle":null};
+      const N = data.runs.length;
+
+      const fmt = (s) =>
+        s == null
+          ? '–'
+          : s === 0
+            ? '0s'
+            : s < 1
+              ? `${Math.max(1, Math.round(s * 1000))}ms`
+              : s < 10
+                ? `${Math.round(s * 10) / 10}s`
+                : s < 60
+                  ? `${Math.round(s)}s`
+                  : s < 3600
+                    ? `${Math.floor(s / 60)}m ${String(Math.round(s % 60)).padStart(2, '0')}s`
+                    : `${Math.floor(s / 3600)}h ${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}m`;
+      const tick = (s) => (s === 0 ? '0' : s >= 60 && s % 60 === 0 ? `${s / 60}m` : fmt(s));
+      const pct = (a, b) => (b > 0 ? `+${Math.round((a / b - 1) * 100)}%` : `+${fmt(a - b)}`);
+      const ago = (iso) => {
+        const ms = Date.now() - Date.parse(iso);
+        if (!Number.isFinite(ms)) return '';
+        const m = Math.max(0, Math.round(ms / 60000));
+        return m < 60
+          ? `${m}m ago`
+          : m < 2880
+            ? `${Math.round(m / 60)}h ago`
+            : `${Math.round(m / 1440)}d ago`;
+      };
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) =>
+        String(s).replace(
+          /[&<>"]/g,
+          (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
+        );
+      const short = (sha) => String(sha).slice(0, 7);
+
+      // A small highlighter for test code (JavaScript, TypeScript) and Maestro
+      // flows (YAML): enough to tell strings, keywords, numbers and comments
+      // apart, with nothing to load.
+      const JS_RULES = [
+        ['c', /\/\/.*|\/\*[\s\S]*?\*\/|^\s+at .*/y],
+        ['e', /\b[A-Z]\w*Error\b|^Assertion is false/y],
+        ['s', /`(?:\\.|[^`\\])*`|'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"/y],
+        [
+          'k',
+          /\b(?:const|let|var|await|async|function|return|if|else|for|of|in|new|import|from|export|true|false|null|undefined|typeof)\b/y,
+        ],
+        ['f', /\b(?:it|test|describe|expect|beforeEach|afterEach)\b(?=\s*\(|\.)/y],
+        ['n', /\b\d+(?:\.\d+)?\b/y],
+        ['', /[A-Za-z_$][\w$]*|\s+|./y],
+      ];
+      const YAML_RULES = [
+        ['c', /#.*/y],
+        ['s', /"(?:\\.|[^"\\])*"|'[^']*'/y],
+        ['p', /[\w-]+(?=\s*:)/y],
+        ['k', /\b(?:true|false|null)\b/y],
+        ['n', /\b\d+(?:\.\d+)?\b/y],
+        ['', /[A-Za-z_][\w.\/-]*|\s+|./y],
+      ];
+      function highlight(line, yaml) {
+        const rules = yaml ? YAML_RULES : JS_RULES;
+        let out = '',
+          i = 0;
+        while (i < line.length) {
+          for (const [cls, re] of rules) {
+            re.lastIndex = i;
+            const m = re.exec(line);
+            if (!m || !m[0]) continue;
+            out += cls ? `<b class="${cls}">${esc(m[0])}</b>` : esc(m[0]);
+            i += m[0].length;
+            break;
+          }
+        }
+        return out;
+      }
+      // A failure's message, a line at a time; a diff's lines (Vitest's
+      // "- Expected" and "+ Received") are coloured whole.
+      // Long messages show their first MESSAGE_LINES lines until opened.
+      const MESSAGE_LINES = 8;
+      const openMessages = new Set();
+      function message(cls, key, text, yaml) {
+        const lines = text.split('\n');
+        const long = lines.length > MESSAGE_LINES + 2;
+        const open = !long || openMessages.has(key);
+        const shown = open ? text : lines.slice(0, MESSAGE_LINES).join('\n');
+        const more = long
+          ? `<button type="button" class="msgmore" data-msg="${esc(key)}">${open ? 'Show less' : `Show all ${lines.length} lines`}</button>`
+          : '';
+        return `<pre class="${cls} hl">${hlBlock(shown, yaml)}${more}</pre>`;
+      }
+      const hlBlock = (text, yaml) =>
+        text
+          .split('\n')
+          .map((line) =>
+            /^- /.test(line)
+              ? `<b class="del">${esc(line)}</b>`
+              : /^\+ /.test(line)
+                ? `<b class="ins">${esc(line)}</b>`
+                : /^\s*❯ /.test(line)
+                  ? `<b class="c">${esc(line)}</b>`
+                  : highlight(line, yaml),
+          )
+          .join('\n');
+      // What the filter matched, marked in a name.
+      function marked(text) {
+        const q = state.q.trim();
+        if (!q) return esc(text);
+        const at = text.toLowerCase().indexOf(q.toLowerCase());
+        return at < 0
+          ? esc(text)
+          : esc(text.slice(0, at)) +
+              '<mark>' +
+              esc(text.slice(at, at + q.length)) +
+              '</mark>' +
+              esc(text.slice(at + q.length));
+      }
+
+      // Tooltips: measured at the left edge, where nothing squeezes them, then put
+      // right of the pointer, or left of it when they wouldn't fit there.
+      const tip = $('tip');
+      function showTip(e, html) {
+        tip.innerHTML = html;
+        tip.hidden = false;
+        tip.style.left = '0px';
+        tip.style.top = '0px';
+        const w = tip.offsetWidth,
+          h = tip.offsetHeight;
+        const px = e.clientX ?? 0,
+          py = e.clientY ?? 0;
+        tip.style.left =
+          (px + 14 + w <= innerWidth - 8 ? px + 14 : Math.max(8, px - 14 - w)) + 'px';
+        tip.style.top =
+          (py + 14 + h <= innerHeight - 8 ? py + 14 : Math.max(8, py - 14 - h)) + 'px';
+      }
+      function hideTip() {
+        tip.hidden = true;
+      }
+      function bindTip(el, html) {
+        el.addEventListener('mousemove', (e) => showTip(e, html()));
+        el.addEventListener('mouseleave', hideTip);
+        el.addEventListener('focus', () => {
+          const b = el.getBoundingClientRect();
+          showTip({ clientX: b.right, clientY: b.top }, html());
+        });
+        el.addEventListener('blur', hideTip);
+      }
+
+      const tests = data.tests ?? [];
+      const nouns = esc(data.noun) + 's';
+      const Nouns = nouns[0].toUpperCase() + nouns.slice(1);
+      const runName = (i) => (i === N ? 'This run' : `Run #${data.runs[i]?.number ?? '?'}`);
+      const groups = {
+        failed: tests.filter((t) => t.result === 'failed'),
+        rerun: tests.filter((t) => t.result === 'passed on re-run'),
+        slower: tests.filter((t) => t.slower),
+        flaky: tests.filter((t) => t.flaky),
+      };
+      // The groups (folder, file, describe block) holding a failed test.
+      const failedGroups = () =>
+        groups.failed.flatMap((t) => [
+          t.folder,
+          t.folder + t.file,
+          t.folder + t.file + ' › ' + t.block,
+        ]);
+      const state = {
+        sort: { key: null, dir: 1 },
+        filter: 'all',
+        q: '',
+        open: new Set(failedGroups()),
+        code: new Set(
+          tests.map((t, i) => (t.result === 'failed' && t.code ? i : -1)).filter((i) => i >= 0),
+        ),
+      };
+
+      // Redraws the charts at their card's new width (render sets it).
+      let redrawCharts = () => {};
+      // A chart's width: its card's, but never so narrow its labels crowd (a
+      // phone scrolls it instead).
+      const chartWidth = (id) => Math.max(560, $(id).clientWidth || 980);
+
+      function render() {
+        const steps = data.steps;
+        const ran = tests.filter((t) => t.result !== 'skipped');
+        const failedSteps = steps.filter((s) => s.conclusion === 'failure');
+        document.title = `${data.job}${data.run ? ` · run #${data.run.number}` : ''}`;
+        $('crumbs').innerHTML =
+          `<a href="https://github.com/${esc(data.repo)}">${esc(data.repo)}</a> › ${esc(data.workflow)}${data.run ? ` › <a href="${esc(data.run.url)}">run #${data.run.number}</a> · ${esc(short(data.run.sha))} on ${esc(data.run.branch)}${Number.isFinite(Date.parse(data.run.when)) ? ` · ${esc(new Date(data.run.when).toLocaleString())}` : ''}` : ''}`;
+        const verdict = groups.failed.length
+          ? `<span class="pill bad">${groups.failed.length} of ${ran.length} ${nouns} failed</span>`
+          : failedSteps.length
+            ? `<span class="pill bad">${esc(failedSteps[0].name)} failed</span>`
+            : data.tests
+              ? `<span class="pill ok">${ran.length} ${nouns} passed</span>`
+              : '<span class="pill ok">no step failed</span>';
+        $('title').innerHTML = `${esc(data.job)} ${verdict}`;
+        const facts = [`<span>Job time <b>${fmt(data.seconds)}</b></span>`];
+        if (data.usual) {
+          const vs = Math.round((data.seconds / data.usual - 1) * 100);
+          facts.push(
+            `<span>Usual <b>${fmt(data.usual)}</b> <span class="${vs >= 5 ? 'slow' : ''}">${vs >= 5 ? `${vs}% slower` : vs <= -5 ? `${-vs}% faster` : 'about the same'}</span></span>`,
+          );
+        } else
+          facts.push('<span>No usual time yet: three earlier runs that passed make one</span>');
+        facts.push(`<span>Steps <b>${steps.length}</b></span>`);
+        if (data.tests) facts.push(`<span>${Nouns} <b>${tests.length}</b></span>`);
+        if (N)
+          facts.push(
+            `<span>Compared with the last ${N} runs on this branch and the default branch</span>`,
+          );
+        $('facts').innerHTML = facts.join('');
+        $('problem-card').hidden = !data.problem;
+        $('problem').textContent = data.problem;
+
+        // Needs attention: each item goes to where the page shows it.
+        const att = [];
+        const goTest = (t) => `tabindex="0" role="link" data-go="test:${tests.indexOf(t)}"`;
+        const goStep = (st) => `tabindex="0" role="link" data-go="step:${st.i}"`;
+        const go = '<span class="go">Show ↓</span>';
+        const where = (t) =>
+          t.file
+            ? `<span class="muted"> · ${esc(t.folder + t.file)}${t.block ? ` › ${esc(t.block)}` : ''}</span>`
+            : '';
+        groups.failed.forEach((t) =>
+          att.push(
+            `<li ${goTest(t)}><span class="tag bad">Failed</span><span>${esc(t.title)}${where(t)} after ${fmt(t.seconds)}${go}${t.message ? message('msg', `a${tests.indexOf(t)}`, t.message, /\.ya?ml$/.test(t.path)) : ''}</span></li>`,
+          ),
+        );
+        if (!groups.failed.length)
+          failedSteps.forEach((s) =>
+            att.push(
+              `<li ${goStep(s)}><span class="tag bad">Failed step</span><span>${esc(s.name)}${go}</span></li>`,
+            ),
+          );
+        groups.rerun.forEach((t) =>
+          att.push(
+            `<li ${goTest(t)}><span class="tag warn">Re-run</span><span>${esc(t.title)}${where(t)} passed on a re-run${go}</span></li>`,
+          ),
+        );
+        groups.flaky.forEach((t) => {
+          const results = [...t.hist, t.result].filter((h) => h);
+          const bad = results.filter((h) => h === 'failed' || h === 'passed on re-run').length;
+          att.push(
+            `<li ${goTest(t)}><span class="tag flaky">Flaky</span><span>${esc(t.title)}${where(t)}: failed ${bad} of its last ${results.length} runs${go}</span></li>`,
+          );
+        });
+        [...steps.filter((s) => s.slower), ...groups.slower].forEach((x) =>
+          att.push(
+            `<li ${x.i ? goStep(x) : goTest(x)}><span class="tag warn">Slower</span><span>${esc(x.i ? x.name : x.title)}${x.i ? ' (step)' : where(x)}: ${fmt(x.seconds)}, usually ${fmt(x.usual)} (${pct(x.seconds, x.usual)})${go}</span></li>`,
+          ),
+        );
+        $('attention').innerHTML = att.join('');
+        $('attention')
+          .querySelectorAll('[data-go]')
+          .forEach((li) => {
+            const open = () => {
+              const [kind, n] = li.dataset.go.split(':');
+              kind === 'step' ? showStep(+n) : showTest(+n);
+            };
+            li.addEventListener('click', open);
+            li.addEventListener('keydown', (e) => {
+              // A key on a control inside the item (Show all lines) is its own.
+              if (e.target !== li) return;
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                open();
+              }
+            });
+          });
+        $('attention-card').hidden = !att.length;
+
+        $('steps-card').hidden = !steps.length;
+        if (steps.length)
+          drawSteps(
+            steps,
+            data.seconds || steps.reduce((n, s) => Math.max(n, s.start + s.seconds), 0),
+          );
+        $('tests-card').hidden = !data.tests;
+        if (data.tests) drawTests();
+        $('history-card').hidden = !N;
+        if (N) drawHistory();
+        const notes = data.notes ?? [];
+        const load = data.load ?? [];
+        $('notes-card').hidden = !notes.length && !load.length;
+        $('notes').hidden = !notes.length;
+        $('notes').innerHTML = notes
+          .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`)
+          .join('');
+        $('load-wrap').hidden = !load.length;
+        if (load.length) drawLoad(steps, load);
+        redrawCharts = () => {
+          if (N) drawHistory();
+          if (load.length) drawLoad(steps, load);
+        };
+        $('foot').textContent =
+          `Written by jbhirsh/ci's job-summary${data.run ? ` for run #${data.run.number}` : ''}.`;
+      }
+
+      const NS = 'http://www.w3.org/2000/svg';
+      function svgEl(name, attrs, parent) {
+        const el = document.createElementNS(NS, name);
+        for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+        parent?.appendChild(el);
+        return el;
+      }
+      function niceStep(total) {
+        const raw = Math.max(total, 1) / 6;
+        // Whole minutes once the ticks are over a minute apart, whole hours
+        // past that: always about six ticks, however long the span.
+        if (raw > 45)
+          return (
+            [60, 120, 180, 300, 600, 900, 1800, 3600].find((s) => s >= raw) ??
+            Math.ceil(raw / 3600) * 3600
+          );
+        const p = 10 ** Math.floor(Math.log10(raw));
+        return [1, 2, 5, 10].map((m) => m * p).find((s) => s >= raw);
+      }
+
+      // The job's time, run by run, with the usual time labelled where its line ends.
+      function drawHistory() {
+        const runs = [
+          ...data.runs.map((r) => ({ ...r })),
+          {
+            ...(data.run ?? { number: 0, sha: '', branch: '', when: '' }),
+            seconds: data.seconds,
+            conclusion:
+              groups.failed.length || data.steps.some((s) => s.conclusion === 'failure')
+                ? 'failure'
+                : 'success',
+            self: true,
+          },
+        ];
+        $('history-title').textContent = `Job time, last ${runs.length} runs`;
+        const W = chartWidth('history'),
+          H = 240,
+          left = 66,
+          bottom = 34,
+          top = 30;
+        const max = Math.max(...runs.map((r) => r.seconds), data.usual ?? 0) * 1.15 || 1;
+        const svg = svgEl('svg', {
+          width: W,
+          height: H,
+          viewBox: `0 0 ${W} ${H}`,
+          role: 'img',
+          'aria-label': 'Job time for the last runs',
+        });
+        const y = (s) => H - bottom - (s / max) * (H - bottom - top);
+        const g = svgEl('g', { class: 'grid' }, svg),
+          ax = svgEl('g', { class: 'axis' }, svg);
+        const step = niceStep(max);
+        for (let t = 0; t <= max; t += step) {
+          svgEl('line', { x1: left, x2: W - 90, y1: y(t), y2: y(t) }, g);
+          svgEl('text', { x: left - 8, y: y(t) + 4, 'text-anchor': 'end' }, ax).textContent =
+            tick(t);
+        }
+        const bw = (W - left - 100) / runs.length;
+        runs.forEach((r, i) => {
+          const bx = left + i * bw + bw * 0.18;
+          const link = r.self
+            ? svg
+            : svgEl(
+                'a',
+                {
+                  href: r.url,
+                  target: '_blank',
+                  rel: 'noopener',
+                  'aria-label': `Run #${r.number}`,
+                },
+                svg,
+              );
+          const bar = svgEl(
+            'rect',
+            {
+              class: `bar ${r.self ? 'this' : ''} ${r.conclusion === 'failure' && !r.self ? 'bad' : ''}`,
+              x: bx,
+              y: y(r.seconds),
+              width: bw * 0.64,
+              height: Math.max(0, H - bottom - y(r.seconds)),
+              rx: 3,
+              tabindex: r.self ? 0 : -1,
+            },
+            link,
+          );
+          svgEl(
+            'text',
+            { x: bx + bw * 0.32, y: H - 14, 'text-anchor': 'middle', class: 'axis' },
+            ax,
+          ).textContent = r.self ? 'this' : `#${r.number}`;
+          if (H - bottom - y(r.seconds) > 22)
+            svgEl(
+              'text',
+              { x: bx + bw * 0.32, y: y(r.seconds) + 16, 'text-anchor': 'middle', class: 'inbar' },
+              svg,
+            ).textContent = fmt(r.seconds);
+          // A keyboard reaches an earlier run's bar through its link.
+          bindTip(
+            r.self ? bar : link,
+            () =>
+              `<b>${r.self ? 'This run' : 'Run #' + r.number}</b> · ${r.conclusion === 'failure' ? 'failed' : r.conclusion === 'success' ? 'passed' : esc(r.conclusion || 'running')}<br><span class="k">Time</span> ${fmt(r.seconds)}${data.usual ? ` (usual ${fmt(data.usual)})` : ''}<br><span class="k">Commit</span> ${esc(short(r.sha))} on ${esc(r.branch)}<br><span class="k">When</span> ${r.self ? 'now' : esc(ago(r.when))}${r.self ? '' : '<br><span class="k">Click to open that run</span>'}`,
+          );
+        });
+        if (data.usual) {
+          svgEl(
+            'line',
+            { class: 'usual', x1: left, x2: W - 90, y1: y(data.usual), y2: y(data.usual) },
+            svg,
+          );
+          const label = svgEl(
+            'text',
+            { x: W - 84, y: y(data.usual) - 2, class: 'axis', tabindex: 0 },
+            svg,
+          );
+          svgEl('tspan', { x: W - 84 }, label).textContent = 'usual';
+          svgEl('tspan', { x: W - 84, dy: 14 }, label).textContent = fmt(data.usual);
+          bindTip(
+            label,
+            () =>
+              `<b>Usual: ${fmt(data.usual)}</b><br>The middle time of the earlier runs that passed`,
+          );
+        }
+        $('history').replaceChildren(svg);
+      }
+
+      // CPU across the job, on the same time axis as the steps, so a slow step can
+      // be read against what the machine was doing then.
+      function drawLoad(steps, samples) {
+        const total = Math.max(
+          data.seconds,
+          ...steps.map((st) => st.start + st.seconds),
+          ...samples.map((p) => p.t),
+          1,
+        );
+        const W = chartWidth('load'),
+          H = 206,
+          left = 50,
+          right = 46,
+          top = 30,
+          bottom = 26;
+        const x = (t) => left + (t / total) * (W - left - right);
+        const yi = (v) => H - bottom - (v / 100) * (H - bottom - top);
+        const svg = svgEl('svg', {
+          width: W,
+          height: H,
+          viewBox: `0 0 ${W} ${H}`,
+          role: 'img',
+          'aria-label': 'CPU over the job',
+        });
+        const keyed = [];
+        steps
+          .filter((st) => st.seconds / total > 0.04)
+          .forEach((st, k) => {
+            const w = x(st.start + st.seconds) - x(st.start);
+            svgEl(
+              'rect',
+              {
+                class: 'band',
+                x: x(st.start),
+                y: top,
+                width: w,
+                height: H - top - bottom,
+                opacity: k % 2 ? 0.45 : 0.9,
+              },
+              svg,
+            );
+            // A numbered badge over the band; the names are in the key under the chart.
+            const badge = svgEl(
+              'g',
+              {
+                class: 'badge',
+                tabindex: 0,
+                role: 'link',
+                'aria-label': `Step ${st.i}: ${st.name}`,
+              },
+              svg,
+            );
+            svgEl('circle', { cx: x(st.start) + 12, cy: top - 12, r: 9 }, badge);
+            svgEl(
+              'text',
+              { x: x(st.start) + 12, y: top - 8, 'text-anchor': 'middle' },
+              badge,
+            ).textContent = st.i;
+            bindTip(
+              badge,
+              () =>
+                `<b>${st.i}. ${esc(st.name)}</b><br><span class="k">Ran</span> ${fmt(st.start)} → ${fmt(st.start + st.seconds)} into the job<br><span class="k">Took</span> ${fmt(st.seconds)}${st.usual ? ` (usual ${fmt(st.usual)})` : ''}<br><span class="k">Click to see it in Steps</span>`,
+            );
+            badge.addEventListener('click', () => showStep(st.i));
+            badge.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') showStep(st.i);
+            });
+            keyed.push(st);
+          });
+        $('stepkey').innerHTML = keyed
+          .map(
+            (st) =>
+              `<button type="button" data-step="${st.i}"><b>${st.i}</b> ${esc(st.name)}</button>`,
+          )
+          .join('');
+        $('stepkey')
+          .querySelectorAll('button')
+          .forEach((b) => b.addEventListener('click', () => showStep(+b.dataset.step)));
+        const g = svgEl('g', { class: 'grid' }, svg),
+          ax = svgEl('g', { class: 'axis' }, svg);
+        for (let v = 0; v <= 100; v += 25) {
+          svgEl('line', { x1: left, x2: W - right, y1: yi(v), y2: yi(v) }, g);
+          svgEl('text', { x: left - 6, y: yi(v) + 4, 'text-anchor': 'end' }, ax).textContent =
+            `${v}%`;
+        }
+        const step = niceStep(total);
+        for (let t = 0; t <= total; t += step)
+          svgEl('text', { x: x(t), y: H - 8, 'text-anchor': 'middle' }, ax).textContent = tick(t);
+        svgEl(
+          'polyline',
+          { class: 'loadline', points: samples.map((p) => `${x(p.t)},${yi(p.busy)}`).join(' ') },
+          svg,
+        );
+        $('settle-key').hidden = data.settle == null;
+        if (data.settle != null) {
+          svgEl(
+            'line',
+            { class: 'usual', x1: left, x2: W - right, y1: yi(data.settle), y2: yi(data.settle) },
+            svg,
+          );
+          svgEl(
+            'text',
+            {
+              x: W - right - 4,
+              y: yi(data.settle) - 5,
+              'text-anchor': 'end',
+              class: 'peaklabel muted-label',
+            },
+            svg,
+          ).textContent = `settle wait's limit, ${data.settle}% busy`;
+        }
+        // The peak, on the line, labelled on whichever side has room.
+        const peak = samples.reduce((a, c) => (c.busy > a.busy ? c : a));
+        svgEl(
+          'circle',
+          {
+            cx: x(peak.t),
+            cy: yi(peak.busy),
+            r: 4,
+            fill: 'var(--bad)',
+            stroke: 'var(--surface)',
+            'stroke-width': 2,
+          },
+          svg,
+        );
+        const peakText = `peak ${Math.round(peak.busy)}% at ${fmt(peak.t)}`;
+        const onLeft = x(peak.t) - 8 - peakText.length * 6.2 > left + 4;
+        svgEl(
+          'text',
+          {
+            x: x(peak.t) + (onLeft ? -8 : 8),
+            y: yi(peak.busy) + (onLeft ? 4 : 16),
+            'text-anchor': onLeft ? 'end' : 'start',
+            class: 'peaklabel',
+          },
+          svg,
+        ).textContent = peakText;
+        const cursor = svgEl(
+          'line',
+          { class: 'cursor', x1: 0, x2: 0, y1: top, y2: H - bottom, visibility: 'hidden' },
+          svg,
+        );
+        const hit = svgEl(
+          'rect',
+          {
+            x: left,
+            y: top,
+            width: W - left - right,
+            height: H - top - bottom,
+            fill: 'transparent',
+          },
+          svg,
+        );
+        hit.addEventListener('mousemove', (e) => {
+          const b = svg.getBoundingClientRect();
+          const t = (((e.clientX - b.left) * (W / b.width) - left) / (W - left - right)) * total;
+          const p = samples.reduce((a, c) => (Math.abs(c.t - t) < Math.abs(a.t - t) ? c : a));
+          const st = steps.find((q) => p.t >= q.start && p.t < q.start + q.seconds);
+          cursor.setAttribute('x1', x(p.t));
+          cursor.setAttribute('x2', x(p.t));
+          cursor.setAttribute('visibility', 'visible');
+          showTip(
+            e,
+            `<b>${fmt(p.t)} into the job</b><br><span class="k">CPU busy</span> ${Math.round(p.busy)}%<br><span class="k">Load average</span> ${p.load} (1 minute)${st ? `<br><span class="k">Step</span> ${st.i}. ${esc(st.name)}` : ''}`,
+          );
+        });
+        hit.addEventListener('mouseleave', () => {
+          cursor.setAttribute('visibility', 'hidden');
+          hideTip();
+        });
+        $('load').replaceChildren(svg);
+      }
+
+      // The steps: a row each, with its bar where it ran in the job, its times
+      // and its recent runs.
+      function drawSteps(steps, total) {
+        const step = niceStep(total);
+        const ticks = [];
+        for (let t = 0; t <= total; t += step) ticks.push(t);
+        const at = (t) => (t / total) * 100;
+        const axis = `<div class="axisrow">${ticks.map((t) => `<span style="left:${at(t)}%">${tick(t)}</span>`).join('')}</div>`;
+        const cols = [
+          ['#', 'i', 'num'],
+          ['Step', 'name', ''],
+          [axis, null, 'tl'],
+          ['This run', 'seconds', 'num'],
+          ['Usual', 'usual', 'num'],
+          ['Change', 'change', 'num'],
+          ['Last runs', null, ''],
+        ];
+        const rows = steps.map((s) => ({
+          ...s,
+          change: s.usual ? s.seconds / s.usual - 1 : -Infinity,
+        }));
+        const { key, dir } = state.sort;
+        if (key) rows.sort((a, b) => (a[key] > b[key] ? 1 : a[key] < b[key] ? -1 : 0) * dir);
+        const grid = ticks.map((t) => `<i class="tick" style="left:${at(t)}%"></i>`).join('');
+        const t = $('steps');
+        // A sortable column's header is a button, for the keyboard and screen
+        // readers too; the column sorted says which way.
+        const head = ([h, k, c]) =>
+          k
+            ? `<th class="${c}" aria-sort="${k === key ? (dir > 0 ? 'ascending' : 'descending') : 'none'}"><button type="button" class="sortbtn" data-k="${k}">${h}</button></th>`
+            : `<th class="${c}">${h}</th>`;
+        t.innerHTML = `<thead><tr>${cols.map(head).join('')}</tr></thead><tbody>${rows
+          .map((s) => {
+            const cls = s.conclusion === 'failure' ? 'bad' : s.slower ? 'slow' : '';
+            const was =
+              s.slower && s.usual
+                ? `<i class="was" style="left:${at(s.start)}%;width:${at(s.usual)}%"></i>`
+                : '';
+            const change = s.usual
+              ? `${Math.round(s.change * 100) >= 0 ? '+' : ''}${Math.round(s.change * 100)}%`
+              : '–';
+            return `<tr id="step-${s.i}"><td class="num muted">${s.i}</td><td><span class="stepname" title="${esc(s.name)}">${s.conclusion === 'failure' ? '<span class="res bad">✖</span> ' : ''}${esc(s.name)}</span></td><td class="tl"><div class="track">${grid}<i class="seg ${cls}" tabindex="0" data-step="${s.i - 1}" style="left:${at(s.start)}%;width:max(3px, ${at(s.seconds)}%)"></i>${was}</div></td><td class="num ${s.slower ? 'slowtxt' : ''}">${fmt(s.seconds)}</td><td class="num muted">${s.usual == null ? 'n/a' : fmt(s.usual)}</td><td class="num ${s.slower ? 'slowtxt' : 'muted'}">${change}</td><td>${spark(s)}</td></tr>`;
+          })
+          .join('')}</tbody>`;
+        t.querySelectorAll('.sortbtn').forEach((b) =>
+          b.addEventListener('click', () => {
+            const k = b.dataset.k;
+            state.sort = { key: k, dir: state.sort.key === k ? -state.sort.dir : 1 };
+            drawSteps(steps, total);
+            t.querySelector(`.sortbtn[data-k="${k}"]`)?.focus();
+          }),
+        );
+        t.querySelectorAll('.seg').forEach((el) => {
+          const s = steps[+el.dataset.step];
+          bindTip(
+            el,
+            () =>
+              `<b>${esc(s.name)}</b><br><span class="k">Ran</span> ${fmt(s.start)} → ${fmt(s.start + s.seconds)} into the job<br><span class="k">This run</span> ${fmt(s.seconds)}${s.conclusion === 'failure' ? ' · failed' : ''}<br><span class="k">Usual</span> ${s.usual == null ? 'not enough earlier runs' : fmt(s.usual) + (s.slower ? ` (${pct(s.seconds, s.usual)})` : '')}`,
+          );
+        });
+        t.querySelectorAll('[data-spark]').forEach((el) => {
+          const s = steps[+el.dataset.spark];
+          el.querySelectorAll('.b').forEach((bar) =>
+            bindTip(bar, () => {
+              const i = +bar.dataset.i;
+              const v = i === N ? s.seconds : s.past[i];
+              return `<b>${runName(i)}</b><br><span class="k">${esc(s.name)}</span><br><span class="k">Time</span> ${fmt(v)}${s.usual ? ` (usual ${fmt(s.usual)})` : ''}${i === N ? '' : '<br><span class="k">Click to open that run</span>'}`;
+            }),
+          );
+        });
+      }
+      // A step's recent runs as small bars from zero, to scale with each other:
+      // one per run, oldest first, this run last; each opens its run.
+      function spark(s) {
+        // As many earlier times as there are earlier runs, this run's last.
+        const all = [
+          ...s.past.slice(0, N),
+          ...Array(Math.max(0, N - s.past.length)).fill(null),
+          s.seconds,
+        ];
+        const vals = all.filter((v) => v != null);
+        const max = Math.max(...vals, 0.001);
+        return `<span class="minibars" data-spark="${s.i - 1}">${all
+          .map((v, i) => {
+            if (v == null) return `<span class="none" title="Didn't run"></span>`;
+            const h = Math.max(2, Math.round((v / max) * 22));
+            if (i === N)
+              return `<span class="b ${s.conclusion === 'failure' ? 'bad' : s.slower ? 'slow' : 'this'}" data-i="${i}" style="height:${h}px"></span>`;
+            return `<a class="b" data-i="${i}" href="${esc(data.runs[i].url)}" target="_blank" rel="noopener" aria-label="Run #${data.runs[i].number}: ${fmt(v)}" style="height:${h}px"></a>`;
+          })
+          .join('')}</span>`;
+      }
+
+      // The tests: a tree of folders, files and describe blocks, or a flat list
+      // of flows; filters for the groups worth reading.
+      function drawTests() {
+        const g = groups;
+        const filters = [
+          ['all', 'All', tests],
+          ['failed', 'Failed', g.failed],
+          ['slower', 'Slower', g.slower],
+          ['flaky', 'Flaky', g.flaky],
+          ['rerun', 'Re-run', g.rerun],
+        ];
+        $('chips').innerHTML = filters
+          .filter(([k, , l]) => k === 'all' || l.length)
+          .map(
+            ([k, label, l]) =>
+              `<button type="button" class="chip" data-f="${k}" aria-pressed="${state.filter === k}">${label}<span class="n">${l.length}</span></button>`,
+          )
+          .join('');
+        $('chips')
+          .querySelectorAll('.chip')
+          .forEach((c) =>
+            c.addEventListener('click', () => {
+              state.filter = c.dataset.f;
+              // All: the groups holding failures open, as at load; a filter: everything.
+              state.open = new Set(state.filter === 'all' ? failedGroups() : ['*']);
+              drawTests();
+            }),
+          );
+        const tree = tests.some((t) => t.file);
+        $('tests-title').innerHTML =
+          `${Nouns} <small>${tests.length} ${nouns} · ${g.failed.length} failed · ${g.slower.length} slower · ${g.flaky.length} flaky · ${tree ? 'by folder, file and describe block, ' : ''}slowest first</small>`;
+        const q = state.q.trim().toLowerCase();
+        const pool = (
+          state.filter === 'all' ? tests : filters.find((f) => f[0] === state.filter)[2]
+        ).filter(
+          (t) => !q || `${t.folder}${t.file} ${t.block} ${t.title}`.toLowerCase().includes(q),
+        );
+        const html = [
+          `<div class="row head"><span>Name</span><span class="num">This run</span><span class="num">Usual</span><span class="num">Last ${N + 1} runs</span></div>`,
+        ];
+        if (!pool.length) html.push(`<div class="empty">No ${nouns} match.</div>`);
+        const sum = (l) => l.reduce((n, t) => n + t.seconds, 0);
+        const usum = (l) =>
+          l.every((t) => t.usual != null) ? l.reduce((n, t) => n + t.usual, 0) : null;
+        const groupBy = (l, k) => {
+          const m = new Map();
+          l.forEach((t) => {
+            const key = k(t);
+            if (!m.has(key)) m.set(key, []);
+            m.get(key).push(t);
+          });
+          return [...m].sort((a, b) => sum(b[1]) - sum(a[1]));
+        };
+        const isOpen = (id) => Boolean(q) || state.open.has('*') || state.open.has(id);
+        const groupRow = (id, depth, label, list) => {
+          const bad = list.some((t) => t.result === 'failed');
+          return `<div class="row group" role="treeitem" tabindex="0" aria-expanded="${isOpen(id)}" data-id="${esc(id)}" style="padding-left:${6 + depth * 18}px"><span class="name ${isOpen(id) ? 'open' : ''}"><span class="caret">▸</span>${bad ? '<span class="res bad">✖</span>' : ''}<span class="t">${marked(label)}</span> <span class="count">${list.length}</span></span><span class="num">${fmt(sum(list))}</span><span class="num muted">${fmt(usum(list))}</span><span></span></div>`;
+        };
+        const leaf = (t, depth) => {
+          const ti = tests.indexOf(t);
+          const res =
+            t.result === 'failed'
+              ? ['bad', '✖']
+              : t.result === 'passed on re-run'
+                ? ['warn', '↻']
+                : t.result === 'skipped'
+                  ? ['skip', '–']
+                  : ['ok', '✓'];
+          const dots = [
+            ...t.hist.slice(0, N),
+            ...Array(Math.max(0, N - t.hist.length)).fill(''),
+            t.result,
+          ]
+            .map((h, i) => {
+              const cls = `${h === 'failed' ? 'bad' : h === 'passed on re-run' ? 'rerun' : h === '' || h === 'skipped' ? 'none' : ''} ${i === N ? 'this' : ''} ${t.edited.includes(i) ? 'changed' : ''}`;
+              const href = i === N ? (data.run?.url ?? '#') : data.runs[i].url;
+              return `<a href="${esc(href)}" target="_blank" rel="noopener" aria-label="${runName(i)}: ${esc(h || 'no result')}" class="${cls}" data-h="${i}"></a>`;
+            })
+            .join('');
+          const href =
+            t.path && data.run
+              ? `https://github.com/${data.repo}/blob/${data.run.sha}/${t.path.split('/').map(encodeURIComponent).join('/')}#L${t.line}`
+              : '';
+          const codeOpen = state.code.has(ti);
+          const yaml = /\.ya?ml$/.test(t.path);
+          const code =
+            t.code && codeOpen
+              ? `<div class="code hl"><div class="path"><span>${esc(t.path)}</span>${href ? `<a href="${esc(href)}" target="_blank" rel="noopener">Open on GitHub ↗</a>` : ''}</div><pre>${t.code.map(([n, line, hit]) => `<span data-n="${n}" class="${hit ? 'hit' : ''}">${highlight(line, yaml)}</span>`).join('')}</pre></div>`
+              : '';
+          const name = href
+            ? `<a class="t" href="${esc(href)}" target="_blank" rel="noopener" title="Open ${esc(t.path)} at line ${t.line}">${marked(t.title)}</a>`
+            : `<span class="t">${marked(t.title)}</span>`;
+          const slow = t.slower
+            ? `<span class="delta" data-slow="${ti}" tabindex="0" aria-label="Slower than usual, ${pct(t.seconds, t.usual)}">⚠</span>`
+            : '';
+          return `<div class="row" role="treeitem" data-ti="${ti}" style="padding-left:${6 + depth * 18 + 12}px"><span class="name"><span class="res ${res[0]}">${res[1]}</span>${name}${t.code ? `<button type="button" class="codebtn" data-code="${ti}" aria-expanded="${codeOpen}">${codeOpen ? 'Hide code' : 'Show code'}</button>` : ''}</span><span class="num ${t.slower ? 'slowtxt' : ''}">${slow}${fmt(t.seconds)}</span><span class="num muted">${fmt(t.usual)}</span><span class="dots" data-t="${ti}">${dots}</span>${t.message ? message('failmsg', `t${ti}`, t.message, yaml) : ''}${code}</div>`;
+        };
+        const slowest = (l) => [...l].sort((a, b) => b.seconds - a.seconds);
+        if (!tree) {
+          slowest(pool).forEach((t) => html.push(leaf(t, -0.7)));
+        } else {
+          for (const [folder, inF] of groupBy(pool, (t) => t.folder)) {
+            const fileDepth = folder ? 1 : 0;
+            if (folder) {
+              html.push(groupRow(folder, 0, '📁 ' + folder, inF));
+              if (!isOpen(folder)) continue;
+            }
+            for (const [file, inFile] of groupBy(inF, (t) => t.file)) {
+              const fid = folder + file;
+              if (file) {
+                html.push(groupRow(fid, fileDepth, file, inFile));
+                if (!isOpen(fid)) continue;
+              }
+              for (const [block, inB] of groupBy(inFile, (t) => t.block)) {
+                const bid = fid + ' › ' + block;
+                if (block) {
+                  html.push(groupRow(bid, fileDepth + 1, block, inB));
+                  if (!isOpen(bid)) continue;
+                }
+                slowest(inB).forEach((t) => html.push(leaf(t, fileDepth + (block ? 2 : 1))));
+              }
+            }
+          }
+        }
+        const el = $('tree');
+        el.innerHTML = html.join('');
+        el.querySelectorAll('.group').forEach((row) => {
+          const toggle = () => {
+            const id = row.dataset.id;
+            if (state.open.has('*')) state.open = new Set(allIds());
+            state.open.has(id) ? state.open.delete(id) : state.open.add(id);
+            keepFocus(drawTests);
+          };
+          row.addEventListener('click', toggle);
+          row.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              toggle();
+            }
+          });
+        });
+        el.querySelectorAll('[data-slow]').forEach((s) => {
+          const t = tests[+s.dataset.slow];
+          bindTip(
+            s,
+            () =>
+              `<b>Slower than usual: ${pct(t.seconds, t.usual)}</b><br>${fmt(t.seconds)} this run, usually ${fmt(t.usual)}<br><span class="k">Usual is the middle time of the earlier runs it passed in</span>`,
+          );
+        });
+        el.querySelectorAll('.codebtn').forEach((b) =>
+          b.addEventListener('click', () => {
+            const i = +b.dataset.code;
+            state.code.has(i) ? state.code.delete(i) : state.code.add(i);
+            keepFocus(drawTests);
+          }),
+        );
+        el.querySelectorAll('.dots').forEach((d) => {
+          const t = tests[+d.dataset.t];
+          d.querySelectorAll('a').forEach((dot) =>
+            bindTip(dot, () => {
+              const i = +dot.dataset.h;
+              const r = i === N ? data.run : data.runs[i];
+              const h = i === N ? t.result : t.hist[i] || 'no result';
+              const time = i === N ? t.seconds : t.times[i];
+              const edited = t.edited.includes(i)
+                ? `<br>✎ <b>${esc(t.path.split('/').pop())} changed since this branch's previous run</b>`
+                : '';
+              return `<b>${runName(i)}</b> · ${esc(h)}<br><span class="k">${esc(t.title)}</span>${time != null ? `<br><span class="k">Time</span> ${fmt(time)}` : ''}${r ? `<br><span class="k">Commit</span> ${esc(short(r.sha))} on ${esc(r.branch)}` : ''}${edited}${i === N ? '' : '<br><span class="k">Click to open that run</span>'}`;
+            }),
+          );
+        });
+      }
+
+      // Redraws with `draw`, then gives keyboard focus back to the control that
+      // had it, found again by its data attribute: a redraw replaces every
+      // element, and focus would otherwise fall back to the page.
+      function keepFocus(draw) {
+        const a = document.activeElement;
+        const key = ['data-id', 'data-msg', 'data-code', 'data-go'].find((k) => a?.hasAttribute(k));
+        const value = key ? a.getAttribute(key) : null;
+        draw();
+        if (key)
+          [...document.querySelectorAll(`[${key}]`)]
+            .find((e) => e.getAttribute(key) === value)
+            ?.focus();
+      }
+
+      // Scrolls to a place on the page and lights it up for a moment.
+      function reveal(el) {
+        if (!el) return;
+        el.scrollIntoView({
+          block: 'center',
+          behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        });
+        el.classList.remove('flash');
+        void el.offsetWidth;
+        el.classList.add('flash');
+      }
+      function showStep(i) {
+        reveal($('step-' + i));
+      }
+      // Opens the tree down to a test (clearing a filter that hides it), then goes there.
+      function showTest(ti) {
+        const t = tests[ti];
+        const shown = state.filter === 'all' || (groups[state.filter] || []).includes(t);
+        if (!shown) state.filter = 'all';
+        if (state.q) {
+          state.q = '';
+          $('q').value = '';
+        }
+        if (!state.open.has('*'))
+          [t.folder, t.folder + t.file, t.folder + t.file + ' › ' + t.block].forEach((id) =>
+            state.open.add(id),
+          );
+        drawTests();
+        reveal(document.querySelector(`#tree [data-ti="${ti}"]`));
+      }
+      function allIds() {
+        const ids = [];
+        tests.forEach((t) => {
+          ids.push(t.folder, t.folder + t.file, t.folder + t.file + ' › ' + t.block);
+        });
+        return [...new Set(ids)];
+      }
+
+      document.addEventListener(
+        'click',
+        (e) => {
+          const b = e.target.closest('.msgmore');
+          if (!b) return;
+          e.stopPropagation();
+          const key = b.dataset.msg;
+          openMessages.has(key) ? openMessages.delete(key) : openMessages.add(key);
+          keepFocus(key.startsWith('a') ? render : drawTests);
+        },
+        true,
+      );
+      $('q').addEventListener('input', (e) => {
+        state.q = e.target.value;
+        drawTests();
+      });
+      $('expand').addEventListener('click', () => {
+        state.open = new Set(['*']);
+        drawTests();
+      });
+      $('collapse').addEventListener('click', () => {
+        state.open = new Set();
+        drawTests();
+      });
+      render();
+      let resizing = 0;
+      addEventListener('resize', () => {
+        cancelAnimationFrame(resizing);
+        resizing = requestAnimationFrame(() => redrawCharts());
+      });
+    </script>
+  </body>
+</html>

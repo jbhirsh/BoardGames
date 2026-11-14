@@ -1,0 +1,12 @@
+{
+  "id": 43382164784,
+  "number": 583,
+  "workflow": "CI",
+  "branch": "review-skip-drizzle-meta",
+  "sha": "f6602527661e57061d2a89297b10da547e2001dd",
+  "created": "2026-11-13T06:56:23Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43382164784",
+  "jobs": [
+    "ci"
+  ]
+}

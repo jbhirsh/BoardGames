@@ -1,0 +1,12 @@
+{
+  "id": 43382925638,
+  "number": 311,
+  "workflow": "E2E",
+  "branch": "review-skip-drizzle-meta",
+  "sha": "fb0fe26fe6951c20212a6a24aafe23be46c9ad15",
+  "created": "2026-11-13T07:03:00Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43382925638",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}

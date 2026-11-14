@@ -1,0 +1,12 @@
+{
+  "id": 43372726354,
+  "number": 300,
+  "workflow": "E2E",
+  "branch": "turso-api-2b",
+  "sha": "fecca554d611870125fd773990abaefc349bfe98",
+  "created": "2026-11-13T05:32:53Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43372726354",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}

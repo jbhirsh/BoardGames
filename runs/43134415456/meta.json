@@ -1,0 +1,12 @@
+{
+  "id": 43134415456,
+  "number": 544,
+  "workflow": "CI",
+  "branch": "trial-gh-attach",
+  "sha": "31cdcf97e7b83c85fafccaf3834fc243f5ee53e5",
+  "created": "2026-11-12T01:25:29Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43134415456",
+  "jobs": [
+    "ci"
+  ]
+}

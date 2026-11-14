@@ -1,0 +1,12 @@
+{
+  "id": 43136493446,
+  "number": 548,
+  "workflow": "CI",
+  "branch": "wishlist-art-uncropped",
+  "sha": "89af5eba9d3385736990bc867f9fa34a72c50646",
+  "created": "2026-11-12T01:43:47Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43136493446",
+  "jobs": [
+    "ci"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": 41885941820,
+  "number": 510,
+  "workflow": "CI",
+  "branch": "wishlist-difficulty",
+  "sha": "4f1d25fe0b4141fc75df6aa69c226d941c22190c",
+  "created": "2026-11-04T18:19:06Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/41885941820",
+  "jobs": [
+    "ci"
+  ]
+}

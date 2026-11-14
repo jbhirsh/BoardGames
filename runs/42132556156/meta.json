@@ -1,0 +1,12 @@
+{
+  "id": 42132556156,
+  "number": 522,
+  "workflow": "CI",
+  "branch": "turso-wishlist-tables",
+  "sha": "0b3c379350671c5de57325619a116a3764a17cc8",
+  "created": "2026-11-05T23:51:28Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/42132556156",
+  "jobs": [
+    "ci"
+  ]
+}
