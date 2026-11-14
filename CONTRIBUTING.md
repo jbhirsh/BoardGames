@@ -52,7 +52,7 @@ assistant, wishlist, suggestions, sign-in and monitoring need the variables belo
 | `npm run test:e2e` | build, serve on port 4174 and run the Playwright suite (`npx playwright test --project=phone` for one project) |
 | `npm run test:mutation` | StrykerJS over the whole scope; `npx stryker run --mutate <file>` while iterating, report in `reports/mutation/` |
 | `GEMINI_API_KEY=... npm run eval` | the rules assistant against `eval/golden-set.json` (real Gemini calls) |
-| `npm run pr-gif -- <scenario.ts> --dir <PR>` | a PR's before/after GIFs, hosted on the `screenshots` branch |
+| `npm run pr-gif -- <scenario.ts>` | a scenario's before/after GIFs, into `pr-gif/`, to try one before pushing it: PR GIFs (`pr-gif.yml`) records each scenario a PR changes in Actions, and `pr-gif-attach.yml` attaches them to the PR (by hand, PR GIFs records any scenario) |
 
 The git hooks run lint, Prettier, the layering rules and the type-check on commit, and the
 tests a push can affect plus the build on push; both do nothing when `$CI` is set.
@@ -66,7 +66,7 @@ tests a push can affect plus the build on push; both do nothing when `$CI` is se
 | StrykerJS (`mutation.yml`) | mutation testing of the lines a PR changed; the monthly full sweep (`mutation-sweep.yml`) isn't a PR check |
 | E2E Tests (Playwright) (`e2e.yml`) | the e2e suite and visual regression in WebKit, on a desktop and an iPhone |
 | Answer-Quality Eval (`eval.yml`) | the rules assistant against the golden set, when its code changes |
-| PR visuals (`pr-visuals.yml`) | a UI change has pictures in its description |
+| PR visuals (`pr-visuals.yml`) | a UI change shows: its changed baselines (in a before/after comment), a GIF, or a picture no test can draw |
 | Secret scan, `semgrep-cloud-platform/scan`, Vercel, API smoke test | secrets, static analysis, the deploy, and its live API (`smoke.yml`) |
 
 The CI tooling is shared with fog-and-frontier and sift from
@@ -81,7 +81,9 @@ The CI tooling is shared with fog-and-frontier and sift from
   for this repository with Contents and Pull requests read and write. The README screenshot bot
   opens its PR with it: a PR the default Actions token opens starts no workflows, so its
   required checks would never report. Without it the default token is used, which also needs
-  Settings, Actions, General: "Allow GitHub Actions to create and approve pull requests".
+  Settings, Actions, General: "Allow GitHub Actions to create and approve pull requests". PR GIFs
+  (`pr-gif-attach.yml`, and `pr-gif.yml` run by hand) needs it too, to attach GIFs: GitHub
+  refuses the Actions token for attachments.
 - **Pages:** Settings, Pages: Deploy from a branch, `job-reports`, `/ (root)`, for each job's
   report.
 - **The shared Claude rules:** sessions read them from jbhirsh/ci; on your own computer, link

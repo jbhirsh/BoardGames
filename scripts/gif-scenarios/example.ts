@@ -3,7 +3,9 @@
 //
 //   npm run pr-gif -- scripts/gif-scenarios/example.ts --side-by-side
 //
-// Copy it for a PR's own recording; it needn't be committed.
+// Copy it for a PR's own recording, committed on the PR's branch: each push
+// that leaves the PR changing it records it (pr-gif.yml) and attaches the
+// GIFs to the PR (pr-gif-attach.yml).
 import type { Scenario } from '../gif-types.ts';
 
 export default {

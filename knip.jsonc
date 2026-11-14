@@ -9,8 +9,9 @@
     "api/[^_]*.ts",
     // Run as a child process by extract-rules-text.mjs.
     "scripts/ocr-pdfs.mjs",
-    // Scenarios passed to `npm run pr-gif` on the command line, and the
-    // setup module .github/ci.json names: jbhirsh/ci's GIF tool loads them.
+    // Scenarios, which PR GIFs (pr-gif.yml) records when a PR changes one and
+    // `npm run pr-gif` takes on the command line, and the setup module
+    // .github/ci.json names: jbhirsh/ci's GIF tool loads them.
     "scripts/gif-scenarios/*.ts",
     "scripts/gif-setup.ts",
     // The README's screenshots, a Playwright project only when README_SHOTS is set.
