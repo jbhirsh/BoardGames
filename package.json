@@ -12,7 +12,7 @@
     "postinstall": "patch-package",
     "build": "npm run typecheck && vite build",
     "typecheck": "node node_modules/@typescript/native/bin/tsc -b",
-    "typecov": "for p in app api node eval sw e2e; do type-coverage -p tsconfig.$p.json --at-least 100 --ignore-files 'src/gql/**' || exit 1; done",
+    "typecov": "for p in tsconfig.app.json api/tsconfig.json tsconfig.node.json tsconfig.eval.json tsconfig.sw.json tsconfig.e2e.json; do type-coverage -p $p --at-least 100 --ignore-files 'src/gql/**' || exit 1; done",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

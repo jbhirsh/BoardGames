@@ -4,6 +4,7 @@
       "vite.config.ts",
       "src/setupTests.ts",
       "tsconfig*.json",
+      "api/tsconfig.json",
       "package.json",
       "package-lock.json",
       "patches/**",

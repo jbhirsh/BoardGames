@@ -126,7 +126,7 @@ jobs:
       - name: Type coverage
         run: |
           npm run typecov || {
-            echo "::error title=Type coverage::An identifier is typed any. Give it its type where it enters (annotate a JSON.parse, res.json() or req.body result unknown and narrow it); npx type-coverage -p tsconfig.<project>.json --detail --ignore-files 'src/gql/**' lists them."
+            echo "::error title=Type coverage::An identifier is typed any. Give it its type where it enters (annotate a JSON.parse, res.json() or req.body result unknown and narrow it); npx type-coverage -p <the project's tsconfig, from npm run typecov's list> --detail --ignore-files 'src/gql/**' lists them."
             exit 1
           }
 
@@ -143,8 +143,8 @@ jobs:
             echo
             echo '| Project | Typed identifiers |'
             echo '| --- | --- |'
-            for p in app api node eval sw e2e; do
-              echo "| $p | $(npx type-coverage -p "tsconfig.$p.json" --strict | grep '%') |"
+            for p in tsconfig.app.json api/tsconfig.json tsconfig.node.json tsconfig.eval.json tsconfig.sw.json tsconfig.e2e.json; do
+              echo "| $p | $(npx type-coverage -p "$p" --strict | grep '%') |"
             done
           } >> "$GITHUB_STEP_SUMMARY"
 
