@@ -77,7 +77,7 @@ async function open(path: string) {
 beforeEach(() => {
   state.loading = null;
   state.broken = null;
-  // Only /sign-in asks after the owner's session.
+  // Only /sign-in and the emailed links' pages ask after the owner's session.
   stubGraphql({ Session: () => ({ session: { admin: true } }) });
 });
 
@@ -107,9 +107,13 @@ describe('the routes', () => {
     expect(screen.getByTestId('layout')).toContainElement(screen.getByRole('heading'));
   });
 
-  it("checks the owner's session for the sign-in page", async () => {
-    await open('/sign-in');
-    expect(await screen.findByRole('heading', { name: 'SignInPage admin' })).toBeInTheDocument();
+  it.each([
+    ['/sign-in', 'SignInPage'],
+    ['/approve', 'EmailedDecisionPage'],
+    ['/deny', 'EmailedDecisionPage'],
+  ])("checks the owner's session for %s", async (path, page) => {
+    await open(path);
+    expect(await screen.findByRole('heading', { name: `${page} admin` })).toBeInTheDocument();
   });
 
   it('checks no session for the pages that need none', async () => {

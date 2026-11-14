@@ -27,7 +27,8 @@ import { opensRulesPage, opensScorePad } from './utils/subPages';
 //   /approve, /deny      where a suggestion email's links lead
 //                        (components/EmailedDecisionPage.tsx)
 // The emailed links' pages read with a query and act only when their button
-// is pressed, since mail scanners follow every link.
+// is pressed, since mail scanners follow every link. They and /sign-in each
+// sit in an AuthProvider (context/AuthContext.tsx).
 // Only the home page, and the not-found page the router's error page needs,
 // are in the main bundle. The rest load on first open (lazyPages.ts) in their
 // frame, the column and Back link (components/PageFrame.tsx), behind their
@@ -80,9 +81,11 @@ const router = createBrowserRouter([
       ...(['approve', 'deny'] as const).map((decision) => ({
         path: `/${decision}`,
         element: (
-          <PageFrame fallback={<RouteFallback title={decision === 'approve' ? 'Approve' : 'Deny'} art={false} />}>
-            <EmailedDecisionPage />
-          </PageFrame>
+          <AuthProvider>
+            <PageFrame fallback={<RouteFallback title={decision === 'approve' ? 'Approve' : 'Deny'} art={false} />}>
+              <EmailedDecisionPage />
+            </PageFrame>
+          </AuthProvider>
         ),
       })),
       { path: '*', element: <NotFoundPage /> },

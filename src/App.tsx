@@ -30,8 +30,8 @@ export function HomePage() {
 
   // Both sections stay mounted and the Own/Want toggle (on a phone, the
   // bar along the bottom) hides one, so a toggle never refetches. The
-  // session check lives here rather than in App: only this page and
-  // /sign-in read it.
+  // session check lives here rather than in App: only this page, /sign-in
+  // and the emailed links' pages read it.
   return (
     <AuthProvider>
       <WishlistProvider>
