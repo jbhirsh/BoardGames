@@ -1,12 +1,19 @@
 name: Update visual baselines
 
-# Run by hand, on a branch: rewrites the visual regression's baselines on
-# Linux (the machine they must match; e2e.yml's E2E Tests compare against them)
-# and commits them to that branch. jbhirsh/ci's visual-baselines/rewrite
-# does it; this app's settings (the folders, and the command that writes
-# them) are the `visual-baselines` key of .github/ci.json. The Actions
-# token's push does start the PR's workflows, but each waits for a
-# maintainer to approve it on the PR, then runs as github-actions[bot].
+# Run by hand, on a PR's branch (never main): rewrites the visual regression's
+# baselines on Linux (the machine they must match; e2e.yml's E2E Tests compare
+# against them) and adds them to the branch's head commit. jbhirsh/ci's
+# visual-baselines/rewrite does it; this app's settings (the folders, the
+# command that writes them, and `verify`) are the `visual-baselines` key of
+# .github/ci.json.
+#
+# `verify` makes the rewrite amend the head commit and carry every other
+# check's result over to it, so the Actions token's push leaves no workflow
+# waiting for a maintainer's approval. So run it once every required check
+# has finished and passed on the head (StrykerJS can take longer than the
+# 15 minutes it waits): it refuses otherwise, and a head that edits
+# .github/workflows/. It runs the E2E command itself, up to about 45
+# minutes in all. The head's SHA changes: reset a local clone to the branch.
 on:
   workflow_dispatch:
 
@@ -21,10 +28,14 @@ jobs:
   update:
     name: Update visual baselines
     runs-on: ubuntu-latest
-    timeout-minutes: 25
-    # Pushes the new baselines to the branch it ran on.
+    timeout-minutes: 60
+    # Pushes the new baselines to the branch it ran on (contents), posts the
+    # carried-over check results onto it (checks) and cancels the runs the
+    # push holds for approval (actions).
     permissions:
       contents: write
+      checks: write
+      actions: write
     steps:
       - uses: actions/checkout@v7
       - uses: jbhirsh/ci/visual-baselines/rewrite@main
