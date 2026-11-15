@@ -33,7 +33,11 @@ permissions: {}
 
 jobs:
   api-smoke:
-    name: API smoke test
+    # A deployment that isn't a success (pending, failure, error) skips
+    # this job, and a skipped check passes, so its run takes another name
+    # and never stands in for the required "API smoke test". A failed
+    # deploy is reported by the required Vercel check.
+    name: ${{ (github.event_name != 'deployment_status' || github.event.deployment_status.state == 'success') && 'API smoke test' || 'API smoke test (not deployed)' }}
     if: github.event_name != 'deployment_status' || github.event.deployment_status.state == 'success'
     runs-on: ubuntu-latest
     steps:
@@ -74,13 +78,17 @@ jobs:
 
           # probe <label> <expected-substring-or-empty> <curl args...>
           # Passes when the response is HTTP 200, non-empty, free of '"error"',
-          # and (if given) contains the expected substring. Retries 3x for
-          # cold starts.
+          # and (if given) contains the expected substring. One try, with no
+          # pause: curl's 90 s limit covers a cold start. Only the chat probe
+          # tries once more at once, when Gemini (a third party) failed: the
+          # API answers every Gemini failure with a 500 "Failed to generate
+          # response" (api/_resolvers/chat.ts). Its 429s and 503s are our own
+          # limiters, which a retry mustn't paper over (jbhirsh/ci#58).
           probe() {
             local label="$1"; shift
             local expect="$1"; shift
-            local code=000
-            for attempt in 1 2 3; do
+            local code
+            for attempt in 1 2; do
               code=$(curl -sS -o body.txt -w '%{http_code}' --max-time 90 "${auth_args[@]}" "$@") || code=000
               echo "$label attempt $attempt: HTTP $code"
               if [ "$code" = "200" ] && [ -s body.txt ] && ! grep -q '"error"' body.txt \
@@ -89,9 +97,9 @@ jobs:
                 return 0
               fi
               cat body.txt 2>/dev/null || true
-              sleep 10
+              [ "$label" = "chat" ] && [ "$code" = "500" ] && grep -q 'Failed to generate response' body.txt || break
             done
-            echo "::error::$label smoke test failed after 3 attempts (last status $code) — the deployed $label endpoint is not answering"
+            echo "::error::$label smoke test failed (HTTP $code, body above): the deployed $label endpoint didn't answer as expected"
             return 1
           }
 

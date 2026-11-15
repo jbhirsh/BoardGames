@@ -340,7 +340,8 @@ describe('askRules', () => {
       try {
         for (;;) {
           yield { text: 'more ' };
-          await new Promise((resolve) => setTimeout(resolve, 5));
+          // A turn of the event loop between chunks, not a wait.
+          await new Promise((resolve) => setTimeout(resolve, 0));
         }
       } finally {
         closed();

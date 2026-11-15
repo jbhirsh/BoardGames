@@ -32,16 +32,12 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: CI,
-  // One retry in CI, so a failure that doesn't repeat shows up as flaky
-  // rather than red-then-green on a rerun; failOnFlakyTests still fails the
-  // run when that retry passes, so it never hides a flake.
-  retries: CI ? 1 : 0,
-  failOnFlakyTests: CI,
+  // No retries, in CI too: a flaky test is a bug, found and fixed rather
+  // than tried again (jbhirsh/ci#58).
+  retries: 0,
   // In CI, JUnit too, for the job summary (jbhirsh/ci's job-summary, in
   // e2e.yml): each test named with its project, since the visual suite runs
-  // the same tests in several, and with its retries, so a test that passed
-  // only on its retry shows as flaky in the report (each failed try a
-  // <flakyFailure>) rather than as a plain pass.
+  // the same tests in several.
   reporter: CI
     ? [
         ['github'],
@@ -51,15 +47,14 @@ export default defineConfig({
           {
             outputFile: 'test-results/junit.xml',
             includeProjectInTestName: true,
-            includeRetries: true,
           },
         ],
       ]
     : [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: BASE_URL,
-    // The trace of the attempt that failed, not of a retry that may pass.
-    trace: 'retain-on-first-failure',
+    // The trace of a test that failed.
+    trace: 'retain-on-failure',
     // The service worker answers requests itself, out of page.route's
     // reach, so it would slip past the stubs. Only e2e/offline.spec.ts,
     // which tests it, lets it run.
