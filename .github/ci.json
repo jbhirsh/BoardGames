@@ -22,6 +22,7 @@
       "src/data/types.ts",
       "src/data/suggestionLimits.ts"
     ],
+    "fromBaselines": true,
     "advice": "Add before/after pictures to the description, at phone size first: screenshots for looks, a GIF for motion. `npm run pr-gif -- <scenario.ts> --dir <PR number>` records main and this branch (a scenario like scripts/gif-scenarios/example.ts, moving with gif.glide, click, drag and scroll, with pauses), hosts the GIFs on the screenshots branch and prints the table to paste; it records in WebKit, which needs `npx playwright install --with-deps webkit` first. Or tick \"No visible UI change\" in the template. Editing the description re-runs this check."
   },
   "audit": {
@@ -44,6 +45,10 @@
   },
   "visual-baselines": {
     "folders": ["e2e/*-snapshots"],
+    "columns": [
+      { "label": "Phone", "file": "{state}-visual-phone-webkit-linux.png" },
+      { "label": "Desktop", "file": "{state}-visual-webkit-linux.png" }
+    ],
     "command": "npx playwright install --with-deps webkit && npx playwright test --project='visual-*' --update-snapshots"
   },
   "gif": {
