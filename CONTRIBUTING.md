@@ -75,13 +75,15 @@ The CI tooling is shared with fog-and-frontier and sift from
 
 ## One-time setup
 
-- **Actions secrets:** `CLAUDE_CODE_OAUTH_TOKEN` (Claude Review and the autofix workflows),
-  `GEMINI_API_KEY` (the eval), `VERCEL_AUTOMATION_BYPASS_SECRET` (lets the smoke test through
-  Vercel Authentication on previews) and `BOT_PR_TOKEN`, a fine-grained token
+- **Actions secrets:** `GEMINI_API_KEY` (the eval), `VERCEL_AUTOMATION_BYPASS_SECRET` (lets the
+  smoke test through Vercel Authentication on previews) and `BOT_PR_TOKEN`, a fine-grained token
   for this repository with Contents and Pull requests read and write. The README screenshot bot
   opens its PR with it: a PR the default Actions token opens starts no workflows, so its
   required checks would never report. Without it the default token is used, which also needs
   Settings, Actions, General: "Allow GitHub Actions to create and approve pull requests".
+- **Claude Review, the autofix workflows and the weekly Semgrep autofix** sign in by workload
+  identity federation: they pass the IDs of a rule in the Anthropic Console (Workload identity),
+  so there is no Claude secret. The IDs aren't secret.
 - **Pages:** Settings, Pages: Deploy from a branch, `job-reports`, `/ (root)`, for each job's
   report.
 - **The shared Claude rules:** sessions read them from jbhirsh/ci; on your own computer, link
