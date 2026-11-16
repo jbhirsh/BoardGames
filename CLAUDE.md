@@ -27,8 +27,7 @@ changing the module.
   `src/client/operations/*.graphql`.
 - `src/data/games.ts` is the collection's source of truth, compiled in until #290's part 4; its
   difficulty, awards and BGG summaries come from the games query (`Query.games`, `bgg_info`),
-  which also carries the wishlist. `data/seed.json` is the one-time copy's input and the tests'
-  wishlist.
+  which also carries the wishlist. `data/seed.json` is the tests' wishlist and collection ids.
 
 ## Traps that cross files
 

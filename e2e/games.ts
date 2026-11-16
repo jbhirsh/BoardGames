@@ -3,9 +3,8 @@ import { ALL_GAMES, COMING_SOON as COMPILED_COMING_SOON, GAMES as COMPILED_GAMES
 import type { Game } from '../src/data/types';
 
 /**
- * The games query's stubbed answer (Query.games): the wishlist the one-time
- * copy puts in the database (data/seed.json), one approved friend's
- * suggestion, and made-up BoardGameGeek data for every game the site knows,
+ * The games query's stubbed answer (Query.games): the written wishlist
+ * (data/seed.json), one approved friend's suggestion, and made-up BoardGameGeek data for every game the site knows,
  * so the collection and the wishlist show difficulties and awards as they
  * would. None of it is BoardGameGeek's: a weight is worked out from the id,
  * and the honours are a few made up for the specs that open them.

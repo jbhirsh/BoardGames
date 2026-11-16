@@ -151,8 +151,8 @@ export const votes = sqliteTable(
  * What BoardGameGeek says about a game, by its BGG id, for the wishlist's
  * games and the collection's alike (#290's part 2b): its name, its one-line
  * summary, its honours and its weight. Filled when a game is approved or
- * added, by the one-time copy, and by each production build's refresh
- * (scripts/bgg-refresh.ts), oldest first. None of BGG's data is in the code.
+ * added, and by each production build's refresh (scripts/bgg-refresh.ts),
+ * oldest first. None of BGG's data is in the code.
  */
 export const bggInfo = sqliteTable('bgg_info', {
   bggId: integer('bgg_id').primaryKey(),
@@ -168,7 +168,7 @@ export const bggInfo = sqliteTable('bgg_info', {
    * of its own (Dominion's second edition shows the first's).
    */
   honoursFrom: integer('honours_from'),
-  /** When BGG was last asked, in ms; zero for a row the copy made without an answer. */
+  /** When BGG was last asked, in ms; zero for a row made without an answer. */
   fetchedAt: integer('fetched_at').notNull(),
 });
 

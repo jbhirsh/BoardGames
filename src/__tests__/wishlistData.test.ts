@@ -11,9 +11,9 @@ import { expectCoherentTable } from './coherentTable';
 import { WISHLIST } from './helpers/wishlist';
 
 /**
- * The 39 written wishlist entries the one-time copy puts in the database
- * (data/seed.json), which the tests and e2e render too. The wishlist
- * shares the collection's filter fields; keep them coherent.
+ * The 39 written wishlist entries (data/seed.json), which the tests and e2e
+ * render too. The wishlist shares the collection's filter fields; keep them
+ * coherent.
  */
 describe('the seed wishlist', () => {
   it('holds 39 games rows the database takes', () => {

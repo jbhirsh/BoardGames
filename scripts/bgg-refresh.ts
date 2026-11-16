@@ -1,14 +1,12 @@
 // Keeps `bgg_info` (api/_db/schema.ts) current: in a production build, after
-// the migrations and the one-time copy (vercel.json's buildCommand), it
-// fills the row of any BGG id the site knows but the table lacks (a game
-// new in src/data/games.ts, a wishlist game BGG didn't answer for), then
-// refreshes the oldest rows past REFRESH_AFTER_MS, at most PER_BUILD in all,
-// one request at a time with no pause between them (jbhirsh/ci#58). Rows
-// the copy fetched in the same build are fresh, so it leaves them. It never
-// fails the build: a miss (a 429 included) is logged and tried again by the
-// next one. Previews (a PR's, Dependabot's) never run it, so they add
-// nothing to BGG's load; nor does a production build of any branch but
-// main.
+// the migrations (vercel.json's buildCommand), it fills the row of any BGG
+// id the site knows but the table lacks (a game new in src/data/games.ts, a
+// wishlist game BGG didn't answer for), then refreshes the oldest rows past
+// REFRESH_AFTER_MS, at most PER_BUILD in all, one request at a time with no
+// pause between them (jbhirsh/ci#58). It never fails the build: a miss (a
+// 429 included) is logged and tried again by the next one. Previews (a PR's,
+// Dependabot's) never run it, so they add nothing to BGG's load; nor does a
+// production build of any branch but main.
 //
 //   npm run bgg-refresh          the development database (DEV_DB_PATH)
 //
