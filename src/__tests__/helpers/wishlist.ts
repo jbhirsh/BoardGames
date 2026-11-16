@@ -10,9 +10,8 @@ import {
   type ListedGame,
 } from '../../utils/bggInfo';
 
-// The wishlist the tests render: the 39 written entries the one-time copy
-// puts in the database (data/seed.json), as the games query answers them
-// and GamesProvider shapes them.
+// The wishlist the tests render: the 39 written entries (data/seed.json), as the
+// games query answers them and GamesProvider shapes them.
 
 const SOURCES = { curated: 'CURATED', friend: 'FRIEND', owner: 'OWNER' } as const;
 

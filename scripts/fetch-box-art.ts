@@ -3,9 +3,8 @@
 // every tile on either list is the same kind of picture. A game's goes to
 // public/images/<slug>.webp (the `img` games.ts gives it); a written
 // wishlist entry's to public/images/wishlist/<id>.webp, and each entry's
-// `image` in data/seed.json, which the one-time copy puts in the database
-// (#290's part 2b) and the tests render, is rewritten from what is on disk
-// there. Run `npm run format` after it.
+// `image` in data/seed.json, which the tests render, is rewritten from what
+// is on disk there. Run `npm run format` after it.
 //
 //   npm run box-art                      every game and wishlist entry
 //   npm run box-art -- catan ark-nova    just these (a game's slug or an entry's id)

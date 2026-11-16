@@ -52,7 +52,7 @@ the trust boundary. Flag:
 Turso holds live production data that outlives every deploy: the wishlist's
 `games`, the `suggestions`, the `votes`, BoardGameGeek's `bgg_info`, the
 owner's own `owner_awards`, the `rate_limits` counters, the `meta` markers
-(the one-time copy's `redis-copied`) and the owner's sign-in (Better Auth's
+(the old one-time copy's `redis-copied`) and the owner's sign-in (Better Auth's
 `auth_*` tables). It changes only through migrations (`drizzle/`), which
 must work with the code already deployed.
 Each browser also keeps

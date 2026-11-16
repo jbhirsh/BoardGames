@@ -31,7 +31,7 @@ describe('games ↔ assets integrity', () => {
   });
 
   // The slug becomes a filesystem path in the chat API (rules-text/<slug>.txt)
-  // and a Redis key elsewhere, so it must satisfy the shared boundary regex or
+  // and an id elsewhere, so it must satisfy the shared boundary regex or
   // the API rejects it with a 400 even when the file exists.
   it.each(ALL_GAMES.map((g) => [g.slug] as const))('slug "%s" matches the chat/votes slug shape', (slug) => {
     expect(slug).toMatch(SLUG_RE);

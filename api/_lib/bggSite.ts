@@ -7,9 +7,8 @@
 // undefined rather than throwing. Also BGG's text decoding, which the XML
 // API's answers need too.
 //
-// Imports nothing of the app's own: the scripts (scripts/copy-from-redis.ts,
-// bgg-refresh.ts) load it with Node, which doesn't resolve the API's
-// `./x.js` imports to their `.ts` files.
+// Imports nothing of the app's own: the script bgg-refresh.ts loads it with
+// Node, which doesn't resolve the API's `./x.js` imports to their `.ts` files.
 
 /** What a lookup fetches with: `fetch`, or a fake in tests. */
 export type FetchLike = (

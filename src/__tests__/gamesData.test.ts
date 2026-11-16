@@ -93,7 +93,7 @@ describe('games data', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('lists every BoardGameGeek id in the seed, whose BGG data the one-time copy fetches', () => {
+  it('lists every BoardGameGeek id of games.ts in the seed collection', () => {
     const ids = ALL_GAMES.flatMap((g) => [g, ...(g.subgames ?? [])]).flatMap((t) =>
       t.bgg === undefined ? [] : [t.bgg],
     );
