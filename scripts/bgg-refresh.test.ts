@@ -53,7 +53,6 @@ describe('refresh', () => {
   });
   const deps = (source: string) => ({
     fetch: fetchLike,
-    pause: async () => {},
     now: () => NOW,
     log: vi.fn(),
     collection: async () => source,
