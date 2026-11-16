@@ -11,9 +11,9 @@
 #     mockups waiting on that commit) or a mockup run;
 #   - a description edit (the "No visible UI change" box), and auto-merge
 #     turned on or off (which accepts or blocks a change).
-# A workflow_run workflow runs only from main, so the PR adding it can't
-# get a status from it. No `paths:` filter: `Visual changes` will be a
-# required status.
+# A workflow_run workflow runs only from main, so the PR adding it couldn't
+# get a status from it. No `paths:` filter: `Visual changes` is a required
+# status, which never reports if a filter skips the workflow.
 #
 # pull_request_target runs main's code with a write token, so it's in
 # autofix.exempt (.github/ci.json): autofix never acts on its runs.
