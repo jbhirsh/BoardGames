@@ -4,10 +4,8 @@
 # .github/ci.json ("review") and the guide it names,
 # .github/claude-review.md, both read from main.
 #
-# Its own workflow rather than a job in ci.yml: claude-code-action skips (and
-# still reports success on) any PR that edits the workflow file it runs from,
-# so only a PR that edits this stub skips review. It doesn't wait for CI, so
-# a red PR is reviewed too. The job's `name:` is a required status check on
+# Its own workflow rather than a job in ci.yml, so it doesn't wait for CI: a
+# red PR is reviewed too. The job's `name:` is a required status check on
 # main; keep it.
 #
 # pull_request only: the review needs PR context for inline comments, which
