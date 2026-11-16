@@ -18,6 +18,11 @@ changing the module.
 - `npm run test:e2e` runs in WebKit only: install the one matching `@playwright/test` with
   `npx playwright install --with-deps webkit` (on Linux, `--with-deps` adds the system
   libraries WebKit needs; Claude's cloud sessions have only Chromium, which can't stand in).
+- A plan's mockup (visual review's table on its issue, with no branch): stage the throwaway
+  change (`git add -N` for new files), then
+  `gh workflow run e2e.yml --ref main -f mockup_patch="$(git diff --binary HEAD | base64 -w0)" -f mockup_issue=<n>`.
+  Only `visual-review.mockupPaths` may change, never a lockfile, and the base64 holds at most
+  65,535 characters.
 
 ## Where names don't tell
 

@@ -60,9 +60,15 @@ export default defineConfig({
     // which tests it, lets it run.
     serviceWorkers: 'block',
   },
-  // Visual regression's screenshots (e2e/visual.spec.ts), compared with
-  // baselines: off but this one test's own small diffs, so a style that
-  // moves an element shows.
+  // Visual review's shots (e2e/visual.ts), into /visual-shots, which git
+  // ignores: CI takes them fresh with --update-snapshots=all (e2e.yml) and
+  // jbhirsh/ci's visual-review compares them with main's. File names stay
+  // Playwright's own, which `visual-review.columns` pairs into rows.
+  snapshotPathTemplate: 'visual-shots/{testFileName}-snapshots/{arg}{-projectName}{-platform}{ext}',
+  // Locally, the first run writes the shots and fails each visual test
+  // ("A snapshot doesn't exist"); later runs compare with your last ones:
+  // off but small diffs (visual-review.ratio is the same 1%), so a style
+  // that moves an element shows.
   expect: {
     toHaveScreenshot: { maxDiffPixelRatio: 0.01, animations: 'disabled', caret: 'hide' },
   },

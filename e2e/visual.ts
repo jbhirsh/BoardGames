@@ -10,11 +10,11 @@ import { expect, CHAT_ANSWER, authRefusal, operationOf, stubAuth, stubOperation 
  * visual-full.spec.ts, everything in both themes, on the desktop;
  * visual-phone.spec.ts, what only a phone shows, and its grid.
  *
- * Baselines are Linux CI's (fonts and anti-aliasing differ between
- * machines), in visual*.spec.ts-snapshots/: a run of visual-baselines.yml
- * by hand rewrites them and commits them to its branch. A change
- * meant to move pixels updates them in the same PR; any other diff is a
- * regression.
+ * CI takes every shot fresh into /visual-shots, which git ignores
+ * (playwright.config.ts), and visual review compares a PR's with main's
+ * (visual-review.yml): nothing is committed. The e2e/*-snapshots folders and
+ * visual-baselines.yml are the old committed baselines, unused now and
+ * going in jbhirsh/ci#64's next step.
  */
 
 export type Theme = 'light' | 'dark';

@@ -45,6 +45,8 @@ reports
 test-results
 playwright-report
 blob-report
+# Visual review's shots (playwright.config.ts's snapshotPathTemplate)
+/visual-shots
 
 # GIFs recorded for PRs (npm run pr-gif)
 /pr-gif

@@ -2,19 +2,33 @@
 # preview, driven in WebKit (Safari's engine) on a desktop and on an iPhone
 # through the flows people use — browsing and filtering the collection, the
 # wishlist and its votes, the random picker, a rules page and its assistant,
-# the score calculator and the word checker — and visual regression:
-# screenshots of every page, compared with baselines, in WebKit on a desktop
-# and on an iPhone (e2e/visual.ts).
+# the score calculator and the word checker — and the screenshot job of
+# visual review (jbhirsh/ci#64): screenshots of every page, in WebKit on a
+# desktop and on an iPhone (e2e/visual.ts).
 #
-# visual-baselines.yml, run by hand, rewrites those baselines on Linux (the
-# machine they must match) and commits them to its branch.
+# The shots are taken, never compared here: --update-snapshots=all writes
+# each one fresh into /visual-shots, which git ignores, so a changed look
+# never fails this job, while a page that breaks still does. The last step,
+# jbhirsh/ci's visual-shots, uploads them, and visual-review.yml compares a
+# PR's with main's shots of the commit it's built on. Main's push runs are
+# that reference, so a push run is never cancelled.
+#
+# Mockups: run by hand on main with mockup_patch (a base64 `git diff
+# --binary`, of only the paths `visual-review.mockupPaths` allows) and
+# mockup_issue (the plan's issue), the run applies the patch after
+# installing, takes only the shots, and visual-review puts the table in the
+# issue. The patch is code on no branch, so that run uses no secret, writes
+# no cache and skips everything but the shots; its inputs reach a step only
+# as an action's input or through env, never spliced into a script.
+#
 # Every /api call is stubbed (e2e/fixtures.ts, which also aborts any request
 # off the preview origin) and a spec that needs the dictionary API stubs it
 # itself, so the job needs no secrets and touches no live service.
 #
-# It also runs on every push to main, so the job's report (jbhirsh/ci's
-# job-summary) has main's runs to compare a pull request's with. Nothing in
-# it reads a pull request or writes anything back.
+# It also runs on every push to main, for visual review's reference and so
+# the job's report (jbhirsh/ci's job-summary) has main's runs to compare a
+# pull request's with. Nothing in it reads a pull request or writes
+# anything back.
 name: E2E
 
 on:
@@ -26,12 +40,27 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      mockup_patch:
+        description: "A mockup: base64 of `git diff --binary` (visual-review.mockupPaths only)"
+        type: string
+        default: ""
+      mockup_issue:
+        description: The mockup's issue, for its before/after table
+        type: string
+        default: ""
 
-# A push to main has no PR number and groups by its branch: it cancels only
-# main's previous run, never a PR's.
+# Only a PR's run is superseded by its next push. Each push to main has a
+# group of its own, so none is cancelled or dropped while waiting (GitHub
+# keeps one waiting run per group): each commit on main keeps its shots. A
+# mockup has its own too, so it never holds up or cancels main's.
 concurrency:
-  group: e2e-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: >-
+    e2e-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number)
+    || github.event_name == 'push' && format('push-{0}', github.sha)
+    || inputs.mockup_patch != '' && format('mockup-{0}', github.run_id)
+    || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -44,6 +73,9 @@ jobs:
     name: E2E Tests (Playwright)
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      # 'true' for a mockup: the steps below that aren't the shots skip.
+      MOCKUP: ${{ github.event_name == 'workflow_dispatch' && inputs.mockup_patch != '' }}
     # actions: read lets the job summary read the run's steps and earlier runs.
     permissions:
       contents: read
@@ -52,15 +84,34 @@ jobs:
       # The job summary's report charts the machine's CPU across the job:
       # first, so the chart covers every step (jbhirsh/ci's sample-load).
       - uses: jbhirsh/ci/job-summary/sample-load@main
+        if: env.MOCKUP != 'true'
 
+      # A mockup's patch is code on no branch: leave it no token in
+      # .git/config. Depth 2: visual-shots reads a PR's head and
+      # base as its merge commit's parents.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+          persist-credentials: ${{ env.MOCKUP != 'true' }}
 
+      # No npm cache for a mockup: its run must write none.
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-          cache: npm
+          cache: ${{ env.MOCKUP != 'true' && 'npm' || '' }}
+          package-manager-cache: ${{ env.MOCKUP != 'true' }}
 
       - run: npm ci
+
+      # After npm ci, so install scripts run main's code only. It refuses a
+      # run off main or with no issue, and a patch to anything mockupPaths
+      # doesn't allow, never a lockfile.
+      - name: Apply the mockup patch
+        if: env.MOCKUP == 'true'
+        uses: jbhirsh/ci/visual-shots/mockup@main
+        with:
+          patch: ${{ inputs.mockup_patch }}
+          issue: ${{ inputs.mockup_issue }}
 
       # The browsers matching the installed @playwright/test, plus the system
       # libraries they need on the runner.
@@ -73,6 +124,7 @@ jobs:
       # fails the job: a missing note only leaves the report without it.
       - name: Read the Playwright and browser versions
         id: playwright
+        if: env.MOCKUP != 'true'
         continue-on-error: true
         run: |
           echo "version=$(npx playwright --version | sed 's/^Version //')" >> "$GITHUB_OUTPUT"
@@ -81,6 +133,7 @@ jobs:
       # Shown in the report's Environment, with the machine the first note
       # adds (jbhirsh/ci's job-summary/note).
       - name: Note them for the job summary
+        if: env.MOCKUP != 'true'
         uses: jbhirsh/ci/job-summary/note@main
         with:
           notes: |
@@ -88,12 +141,19 @@ jobs:
             Browsers: ${{ steps.playwright.outputs.browsers }}
 
       # playwright.config.ts builds the app and serves it with vite preview.
+      # Take mode: each shot is written fresh, never compared. A mockup runs
+      # the visual suite alone.
       - name: Run Playwright tests
-        run: npm run test:e2e
+        run: |
+          if [ "$MOCKUP" = true ]; then
+            npm run test:e2e -- --project='visual-*' --update-snapshots=all
+          else
+            npm run test:e2e -- --update-snapshots=all
+          fi
 
       # cancelled() too, so a run that hits the timeout still leaves its traces.
       - name: Upload Playwright report
-        if: failure() || cancelled()
+        if: (failure() || cancelled()) && env.MOCKUP != 'true'
         uses: actions/upload-artifact@v7
         with:
           name: playwright-report
@@ -107,20 +167,29 @@ jobs:
       # suite runs the same tests in several) beside its recent runs,
       # published on the repository's Pages by the reports job below.
       - name: Job summary
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && env.MOCKUP != 'true' }}
         uses: jbhirsh/ci/job-summary@main
         with:
           job: E2E Tests (Playwright)
           junit: test-results/junit.xml
+
+      # The shots, for visual review (visual-review.yml reads them): only
+      # from a run whose tests passed, as a failed one's may be of a broken
+      # page. Last, so nothing after it can change them.
+      - name: Upload the shots for visual review
+        uses: jbhirsh/ci/visual-shots@main
+        with:
+          mockup-issue: ${{ env.MOCKUP == 'true' && inputs.mockup_issue || '' }}
 
   # Publishes this run's job reports to the repository's Pages and keeps
   # one comment on the PR with every job's summary (jbhirsh/ci's
   # job-reports.yml), once the E2E Tests (Playwright) job is done, failed or not. As part
   # of the run, it runs from the PR's own branch. Not a required check; it
   # never fails a run for a report.
+  # A mockup's run has no report: it's the shots alone.
   reports:
     needs: [e2e]
-    if: ${{ !cancelled() }}
+    if: ${{ !cancelled() && !(github.event_name == 'workflow_dispatch' && inputs.mockup_patch != '') }}
     permissions:
       contents: write
       actions: read
