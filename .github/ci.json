@@ -51,6 +51,17 @@
     ],
     "command": "npx playwright install --with-deps webkit && npx playwright test --project='visual-*' --update-snapshots"
   },
+  "visual-review": {
+    "workflow": "e2e.yml",
+    "job": "E2E Tests (Playwright)",
+    "folders": ["visual-shots/*-snapshots"],
+    "ratio": 0.01,
+    "columns": [
+      { "label": "Phone", "file": "{state}-visual-phone-webkit-linux.png" },
+      { "label": "Desktop", "file": "{state}-visual-webkit-linux.png" }
+    ],
+    "mockupPaths": ["src/**", "public/**", "index.html", "e2e/visual*.ts"]
+  },
   "gif": {
     "setup": "scripts/gif-setup.ts",
     "scenarios": "scripts/gif-scenarios",

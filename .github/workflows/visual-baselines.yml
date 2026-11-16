@@ -1,5 +1,9 @@
 name: Update visual baselines
 
+# Unused since visual review (visual-review.yml) replaced the committed
+# baselines: E2E writes its shots into the git-ignored /visual-shots, so
+# this commits nothing. It goes with the baselines in jbhirsh/ci#64's step 5.
+#
 # Run by hand, on a branch: rewrites the visual regression's baselines on
 # Linux (the machine they must match; e2e.yml's E2E Tests compare against them)
 # and commits them to that branch. jbhirsh/ci's visual-baselines/rewrite
