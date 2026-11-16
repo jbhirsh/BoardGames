@@ -90,6 +90,10 @@ changing the module.
   for dark, used as classes (`text-text2`, a tint by modifier: `bg-gold/12`).
   `e2e/theme.spec.ts` holds both themes to AA. Messages use `Notice`, not a one-off coloured
   box. Focus is handed over by `data-focus-target`, never a class (`src/client/focus.ts`).
+- **Visual review compares each PR's screenshots with main's** (`visual-review.yml`, from
+  jbhirsh/ci), not with the committed `e2e/*-snapshots`, which are unused: merging accepts a
+  change. A changed screen fails `Visual changes` on a PR that merges itself, unless it's the
+  owner's own PR and they turned auto-merge on after the table appeared.
 - **Don't mix a filter `dispatch` with `navigate()`** in one handler: the dispatch wins and the
   navigation's params are dropped.
 
