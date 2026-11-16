@@ -70,12 +70,11 @@ export interface Game {
 /** Runs a command and returns what it printed: ImageMagick, here. */
 export type Exec = (cmd: string, args: string[], options?: { stdio: 'ignore' }) => string;
 
-/** What a run reaches outside itself: the folder it writes under, the network, ImageMagick and its pause. */
+/** What a run reaches outside itself: the folder it writes under, the network and ImageMagick. */
 export interface Deps {
   dir?: string;
   fetch?: typeof fetch;
   exec?: Exec;
-  pause?: () => Promise<unknown>;
 }
 
 const COVERS: Record<string, Entry> = {
@@ -234,8 +233,6 @@ export async function run(
     dir = '.',
     fetch: request = fetch,
     exec = (cmd, args, options) => execFileSync(cmd, args, { encoding: 'utf8', ...options }),
-    // BGG asks clients to keep a gentle pace: one request at a time, spaced.
-    pause = () => new Promise((resolve) => setTimeout(resolve, 1200)),
   }: Deps = {},
 ): Promise<number> {
   const seed = await readFile(join(dir, SEED_FILE), 'utf8');
@@ -257,7 +254,6 @@ export async function run(
     if (r.status === 429 || r.status === 403)
       throw new Stop(`BoardGameGeek answered ${r.status} for ${url}; stopping, re-run later for the rest.`);
     const body = Buffer.from(await r.arrayBuffer().catch(stalled));
-    await pause();
     return { ok: r.ok, status: r.status, body };
   };
   // An answer's JSON, or nothing where it is not JSON (a page served in its place).

@@ -2,12 +2,13 @@
 // the migrations and the one-time copy (vercel.json's buildCommand), it
 // fills the row of any BGG id the site knows but the table lacks (a game
 // new in src/data/games.ts, a wishlist game BGG didn't answer for), then
-// refreshes the oldest rows past REFRESH_AFTER_MS, at most PER_BUILD in all
-// (about 20 s at BGG's gentle pace). Rows the copy fetched in the same
-// build are fresh, so it leaves them. It never fails the build: a miss is
-// logged and tried again by the next one. Previews (a PR's, Dependabot's)
-// never run it, so they add nothing to BGG's load; nor does a production
-// build of any branch but main.
+// refreshes the oldest rows past REFRESH_AFTER_MS, at most PER_BUILD in all,
+// one request at a time with no pause between them (jbhirsh/ci#58). Rows
+// the copy fetched in the same build are fresh, so it leaves them. It never
+// fails the build: a miss (a 429 included) is logged and tried again by the
+// next one. Previews (a PR's, Dependabot's) never run it, so they add
+// nothing to BGG's load; nor does a production build of any branch but
+// main.
 //
 //   npm run bgg-refresh          the development database (DEV_DB_PATH)
 //
@@ -56,7 +57,6 @@ export function due(
 
 export interface RefreshDeps {
   fetch?: FetchLike;
-  pause?: () => Promise<unknown>;
   now?: () => number;
   log?: (line: string) => void;
   /** src/data/games.ts's source. */
@@ -101,7 +101,6 @@ export async function refresh(env: Env, arg: string | undefined, deps: RefreshDe
   if (env.VERCEL && env.VERCEL_ENV !== 'production') return 'bgg-refresh: production builds only; skipped.';
   const log = deps.log ?? console.log;
   const request = deps.fetch ?? fetch;
-  const pause = deps.pause ?? (() => new Promise((resolve) => setTimeout(resolve, 1000)));
   const now = (deps.now ?? Date.now)();
   try {
     const { expected, conn } = deployTarget(env, arg, 'refreshes');
@@ -132,7 +131,6 @@ export async function refresh(env: Env, arg: string | undefined, deps: RefreshDe
       for (const id of ids) {
         if (await refreshOne(db, id, request, now)) refreshed++;
         else log(`bgg-refresh: BoardGameGeek didn't answer for ${id}; the next build tries again.`);
-        await pause();
       }
       return `bgg-refresh: refreshed ${refreshed} of ${ids.length}.`;
     } finally {

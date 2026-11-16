@@ -122,8 +122,6 @@ function fakeMagick(raw: string, trimmed = '0 0') {
   return { exec, downloads, writes: () => exec.mock.calls.filter(([, args]) => args.at(-1)?.endsWith('.webp')) };
 }
 
-const pause = () => Promise.resolve();
-
 beforeEach(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
   vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -253,20 +251,19 @@ describe('run', () => {
 
   it('refuses a name neither list has, before fetching anything', async () => {
     const fetch = fakeFetch({});
-    await expect(
-      run(['catan', 'lost-cities', 'nope', 'seafarers'], { dir, fetch, exec: () => '', pause }),
-    ).rejects.toThrow('not in src/data/games.ts or data/seed.json: nope, seafarers');
+    await expect(run(['catan', 'lost-cities', 'nope', 'seafarers'], { dir, fetch, exec: () => '' })).rejects.toThrow(
+      'not in src/data/games.ts or data/seed.json: nope, seafarers',
+    );
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it("cuts a pinned cover's centred square, downloading it once, and pauses after each request", async () => {
-    const wait = vi.fn(pause);
+  it("cuts a pinned cover's centred square, downloading it once", async () => {
     const fetch = fakeFetch({
       [IMAGE(9156909)]: () => sizes('https://cf.geekdo.com/catan.jpg'),
       'https://cf.geekdo.com/catan.jpg': () => new Response('catan bytes'),
     });
     const magick = fakeMagick('1000 800');
-    expect(await run(['catan'], { dir, fetch, exec: magick.exec, pause: wait })).toBe(1);
+    expect(await run(['catan'], { dir, fetch, exec: magick.exec })).toBe(1);
     expect(magick.downloads.map((d) => d.bytes)).toEqual(['catan bytes']);
     const out = join(dir, 'public/images/catan.webp');
     expect(magick.writes()).toEqual([
@@ -294,7 +291,6 @@ describe('run', () => {
         ],
       ],
     ]);
-    expect(wait).toHaveBeenCalledTimes(2);
     expect(fetch.mock.calls[0][1]?.headers).toEqual({
       'User-Agent': 'TheGameRoom-art-script (personal collection site)',
     });
@@ -312,7 +308,7 @@ describe('run', () => {
       'https://cf.geekdo.com/7w.png': () => new Response('7w'),
     });
     const magick = fakeMagick('600 1000');
-    expect(await run(['azul', '7-wonders'], { dir, fetch, exec: magick.exec, pause })).toBe(2);
+    expect(await run(['azul', '7-wonders'], { dir, fetch, exec: magick.exec })).toBe(2);
     const [azul, wonders] = magick.writes().map(([, args]) => args);
     // 0.2 of the way down a 400 px overhang.
     expect(azul.slice(5, 9)).toEqual(['600x1000+0+0', '+repage', '-crop', '600x600+0+80']);
@@ -328,7 +324,7 @@ describe('run', () => {
       'https://cf.geekdo.com/ek.jpg': () => new Response('ek'),
     });
     const magick = fakeMagick('1200 700', '800 400');
-    await run(['exploding-kittens'], { dir, fetch, exec: magick.exec, pause });
+    await run(['exploding-kittens'], { dir, fetch, exec: magick.exec });
     const edges = magick.exec.mock.calls.filter(([, args]) => args.includes('%[pixel:p{0,0}]'));
     // A 3 px strip 2% of the height in from each edge.
     expect(edges.map(([, args]) => args.slice(1, 5))).toEqual([
@@ -353,7 +349,7 @@ describe('run', () => {
       'https://cf.geekdo.com/dcc.jpg': () => new Response('dcc'),
     });
     const magick = fakeMagick('1000 1000', '300 600');
-    await run(['dungeon-crawler-carl-rpg-starter-set'], { dir, fetch, exec: magick.exec, pause });
+    await run(['dungeon-crawler-carl-rpg-starter-set'], { dir, fetch, exec: magick.exec });
     expect(magick.exec.mock.calls.some(([, args]) => args.includes('%[pixel:p{0,0}]'))).toBe(false);
     // The box [0, 0, 0.775, 1] is cut before the trim.
     const trim = magick.exec.mock.calls.find(([, args]) => args.includes('-trim'));
@@ -373,7 +369,7 @@ describe('run', () => {
   it('leaves a kept cover, and one with neither a pin nor an id, as they are', async () => {
     const fetch = fakeFetch({});
     const magick = fakeMagick('0 0');
-    expect(await run(['analyze-me', 'homemade'], { dir, fetch, exec: magick.exec, pause })).toBe(0);
+    expect(await run(['analyze-me', 'homemade'], { dir, fetch, exec: magick.exec })).toBe(0);
     expect(fetch).not.toHaveBeenCalled();
     expect(magick.writes()).toEqual([]);
     expect(console.log).toHaveBeenCalledWith(
@@ -392,7 +388,7 @@ describe('run', () => {
       'https://cf.geekdo.com/m.jpg': () => new Response('m'),
     });
     const magick = fakeMagick('500 500');
-    expect(await run(['mystery'], { dir, fetch, exec: magick.exec, pause })).toBe(1);
+    expect(await run(['mystery'], { dir, fetch, exec: magick.exec })).toBe(1);
     expect(console.warn).toHaveBeenCalledWith(
       'Mystery: not in COVERS, using its main image 4242; check it is a flat front cover and pin it',
     );
@@ -428,7 +424,7 @@ describe('run', () => {
       ],
     ];
     for (const [answers, warning] of cases) {
-      expect(await run(['mystery'], { dir, fetch: fakeFetch(answers), exec: magick.exec, pause })).toBe(0);
+      expect(await run(['mystery'], { dir, fetch: fakeFetch(answers), exec: magick.exec })).toBe(0);
       expect(console.warn).toHaveBeenLastCalledWith(warning);
     }
     expect(magick.writes()).toEqual([]);
@@ -441,7 +437,7 @@ describe('run', () => {
         'https://cf.geekdo.com/catan.jpg': () => new Response('catan'),
         [IMAGE(6973671)]: () => status(code),
       });
-      expect(await run(['catan', 'azul', '7-wonders'], { dir, fetch, exec: fakeMagick('10 10').exec, pause })).toBe(1);
+      expect(await run(['catan', 'azul', '7-wonders'], { dir, fetch, exec: fakeMagick('10 10').exec })).toBe(1);
       expect(fetch).toHaveBeenCalledTimes(3);
       expect(console.error).toHaveBeenLastCalledWith(
         `BoardGameGeek answered ${code} for ${IMAGE(6973671)}; stopping, re-run later for the rest.`,
@@ -452,7 +448,7 @@ describe('run', () => {
 
   it('stops when BGG stalls, before answering or partway through its answer', async () => {
     const fetch = vi.fn<Fetch>(() => Promise.reject(new DOMException('timed out', 'TimeoutError')));
-    expect(await run(['catan'], { dir, fetch, exec: fakeMagick('10 10').exec, pause })).toBe(0);
+    expect(await run(['catan'], { dir, fetch, exec: fakeMagick('10 10').exec })).toBe(0);
     expect(console.error).toHaveBeenCalledWith(
       `BoardGameGeek stopped answering for ${IMAGE(9156909)}; stopping, re-run later for the rest.`,
     );
@@ -463,7 +459,7 @@ describe('run', () => {
       [IMAGE(9156909)]: () => sizes('https://cf.geekdo.com/catan.jpg'),
       'https://cf.geekdo.com/catan.jpg': () => stalled,
     });
-    expect(await run(['catan'], { dir, fetch: partway, exec: fakeMagick('10 10').exec, pause })).toBe(0);
+    expect(await run(['catan'], { dir, fetch: partway, exec: fakeMagick('10 10').exec })).toBe(0);
     expect(console.error).toHaveBeenLastCalledWith(
       'BoardGameGeek stopped answering for https://cf.geekdo.com/catan.jpg; stopping, re-run later for the rest.',
     );
@@ -479,7 +475,7 @@ describe('run', () => {
     const art = join(dir, 'public/images/wishlist');
     mkdirSync(art, { recursive: true });
     writeFileSync(join(art, 'lost-cities.webp'), 'webp');
-    await expect(run(['catan', 'azul'], { dir, fetch, exec: magick.exec, pause })).rejects.toThrow('fetch failed');
+    await expect(run(['catan', 'azul'], { dir, fetch, exec: magick.exec })).rejects.toThrow('fetch failed');
     expect(existsSync(magick.downloads[0].path)).toBe(false);
     // The seed still names what is on disk.
     expect(seedArt(dir)).toEqual([['lost-cities', '/images/wishlist/lost-cities.webp']]);
@@ -496,7 +492,7 @@ describe('run', () => {
       'https://cf.geekdo.com/lc.jpg': () => new Response('lc'),
     });
     const magick = fakeMagick('1000 1000');
-    expect(await run(['lost-cities'], { dir, fetch, exec: magick.exec, pause })).toBe(1);
+    expect(await run(['lost-cities'], { dir, fetch, exec: magick.exec })).toBe(1);
     expect(magick.writes()[0][1].at(-1)).toBe(join(art, 'lost-cities.webp'));
     expect(readdirSync(art).sort()).toEqual(['lost-cities.webp', 'stray.jpg', 'unnamed.png']);
     expect(seedArt(dir)).toEqual([
@@ -507,13 +503,13 @@ describe('run', () => {
 
   it('still names what is on disk when a run stops, making the folder where there is none', async () => {
     const fetch = vi.fn<Fetch>(() => Promise.resolve(status(429)));
-    expect(await run(['lost-cities'], { dir, fetch, exec: fakeMagick('10 10').exec, pause })).toBe(0);
+    expect(await run(['lost-cities'], { dir, fetch, exec: fakeMagick('10 10').exec })).toBe(0);
     expect(seedArt(dir)).toEqual([]);
   });
 
   it('goes through every game when given none', async () => {
     const fetch = vi.fn<Fetch>(() => Promise.resolve(status(429)));
-    await run([], { dir, fetch, exec: fakeMagick('10 10').exec, pause });
+    await run([], { dir, fetch, exec: fakeMagick('10 10').exec });
     // Catan is first, and stops the run.
     expect(fetch).toHaveBeenCalledWith(IMAGE(9156909), expect.anything());
   });
