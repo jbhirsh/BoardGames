@@ -30,8 +30,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 # Least-privilege default. Claude Review runs in claude-review.yml, not
-# here: claude-code-action skips a PR that edits the workflow file it runs
-# from, so a review job in this file would skip every PR that changes CI.
+# here, so it doesn't wait for CI: a red PR is reviewed too.
 permissions:
   contents: read
 

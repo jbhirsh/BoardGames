@@ -60,9 +60,14 @@
   },
   "review": {
     "instructions": ".github/claude-review.md",
-    "skip": ["src/gql/**", "rules-text/**", "drizzle/meta/*_snapshot.json"]
+    "skip": ["src/gql/**", "rules-text/**", "drizzle/meta/*_snapshot.json"],
+    "engine": "sdk",
+    "advisor": "opus",
+    "skipBots": ["dependabot[bot]"]
   },
   "autofix": {
+    "engine": "sdk",
+    "advisor": "opus",
     "ciFixChecks": [
       "`npm run lint`",
       "`npm run format:check` (`npm run format` rewrites what it flags)",
