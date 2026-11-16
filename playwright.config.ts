@@ -66,9 +66,9 @@ export default defineConfig({
   // Playwright's own, which `visual-review.columns` pairs into rows.
   snapshotPathTemplate: 'visual-shots/{testFileName}-snapshots/{arg}{-projectName}{-platform}{ext}',
   // Locally, the first run writes the shots and fails each visual test
-  // ("A snapshot doesn't exist"); later runs compare with your last ones:
-  // off but small diffs (visual-review.ratio is the same 1%), so a style
-  // that moves an element shows.
+  // ("A snapshot doesn't exist"); later runs compare with your last ones,
+  // ignoring diffs under 1% of a shot's pixels (CI compares nothing here:
+  // visual review's `ratio` is its default 0).
   expect: {
     toHaveScreenshot: { maxDiffPixelRatio: 0.01, animations: 'disabled', caret: 'hide' },
   },

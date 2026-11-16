@@ -55,7 +55,6 @@
     "workflow": "e2e.yml",
     "job": "E2E Tests (Playwright)",
     "folders": ["visual-shots/*-snapshots"],
-    "ratio": 0.01,
     "columns": [
       { "label": "Phone", "file": "{state}-visual-phone-webkit-linux.png" },
       { "label": "Desktop", "file": "{state}-visual-webkit-linux.png" }
