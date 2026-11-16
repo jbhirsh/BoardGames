@@ -65,7 +65,8 @@ tests a push can affect plus the build on push; both do nothing when `$CI` is se
 | StrykerJS (`mutation.yml`) | mutation testing of the lines a PR changed; the monthly full sweep (`mutation-sweep.yml`) isn't a PR check |
 | E2E Tests (Playwright) (`e2e.yml`) | the e2e suite in WebKit, on a desktop and an iPhone, and the screenshots visual review compares |
 | Answer-Quality Eval (`eval.yml`) | the rules assistant against the golden set, when its code changes |
-| PR visuals (`pr-visuals.yml`) | a UI change has pictures in its description; `Visual changes`, visual review's status (`visual-review.yml`), replaces it once it's required |
+| PR visuals (`pr-visuals.yml`) | a UI change has pictures in its description |
+| `Visual changes` (`visual-review.yml`) | visual review: this PR's screenshots against main's, with the before/after table in its description; a commit status from GitHub Actions, not a check run |
 | Secret scan, `semgrep-cloud-platform/scan`, Vercel, API smoke test | secrets, static analysis, the deploy, and its live API (`smoke.yml`) |
 
 The CI tooling is shared with fog-and-frontier and sift from
@@ -89,6 +90,9 @@ The CI tooling is shared with fog-and-frontier and sift from
   so there is no Claude secret. The IDs aren't secret. Review and autofix run on the Agent SDK
   (`"engine": "sdk"` in `.github/ci.json`), which the Max plan's API credit pays for
   (jbhirsh/ci#68); the Semgrep autofix still runs claude-code-action, which it doesn't.
+- **The branch rule** (Settings, Rules) requires each check above by name. `Visual changes` is a
+  commit status, not a check run: add it by that name, with its integration on any source (or
+  GitHub Actions).
 - **Pages:** Settings, Pages: Deploy from a branch, `job-reports`, `/ (root)`, for each job's
   report.
 - **The shared Claude rules:** sessions read them from jbhirsh/ci; on your own computer, link
