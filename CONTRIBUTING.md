@@ -65,7 +65,7 @@ tests a push can affect plus the build on push; both do nothing when `$CI` is se
 | StrykerJS (`mutation.yml`) | mutation testing of the lines a PR changed; the monthly full sweep (`mutation-sweep.yml`) isn't a PR check |
 | E2E Tests (Playwright) (`e2e.yml`) | the e2e suite in WebKit, on a desktop and an iPhone, and the screenshots visual review compares |
 | Answer-Quality Eval (`eval.yml`) | the rules assistant against the golden set, when its code changes |
-| PR visuals (`pr-visuals.yml`) | a UI change has pictures in its description |
+| PR visuals (`pr-visuals.yml`) | a UI change has pictures in its description; `Visual changes`, visual review's status (`visual-review.yml`), replaces it once it's required |
 | Secret scan, `semgrep-cloud-platform/scan`, Vercel, API smoke test | secrets, static analysis, the deploy, and its live API (`smoke.yml`) |
 
 The CI tooling is shared with fog-and-frontier and sift from
@@ -76,9 +76,11 @@ The CI tooling is shared with fog-and-frontier and sift from
 
 - **Actions secrets:** `GEMINI_API_KEY` (the eval), `VERCEL_AUTOMATION_BYPASS_SECRET` (lets the
   smoke test through Vercel Authentication on previews) and `BOT_PR_TOKEN`, a fine-grained token
-  for this repository with Contents and Pull requests read and write and Actions read, and no
-  Workflows permission. Claude autofix pushes its fixes and runs `gh` with it, so its pushes
-  start the PR's workflows (Actions read is for the failed runs' logs). The README screenshot bot
+  for this repository with Contents, Pull requests and Issues read and write and Actions read,
+  and no Workflows permission. Visual review uploads its pictures with it, in a comment on the
+  PR or on a mockup's issue (GitHub attaches files only for a person's token). Claude autofix
+  pushes its fixes and runs `gh` with it, so its pushes start the PR's workflows (Actions read
+  is for the failed runs' logs). The README screenshot bot
   opens its PR with it: a PR the default Actions token opens starts no workflows, so its required
   checks would never report. Without it the default token is used, which also needs Settings,
   Actions, General: "Allow GitHub Actions to create and approve pull requests".

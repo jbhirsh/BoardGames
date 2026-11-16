@@ -1,0 +1,45 @@
+# Visual review (jbhirsh/ci#64): each PR's screenshots, from E2E's
+# `E2E Tests (Playwright)` job, against main's of the commit it's built on,
+# as a before/after table in the PR's description and the `Visual changes`
+# status; a mockup's table goes to its issue. jbhirsh/ci's reusable
+# workflow does it all, from main's copy of this file: it checks out no PR
+# code and reads the shots as bytes from the runs' artifacts. Its settings
+# are the `visual-review` key of .github/ci.json.
+#
+# Triggers:
+#   - E2E finishing, on a PR, a push to main (which settles the PRs and
+#     mockups waiting on that commit) or a mockup run;
+#   - a description edit (the "No visible UI change" box), and auto-merge
+#     turned on or off (which accepts or blocks a change).
+# A workflow_run workflow runs only from main, so the PR adding it can't
+# get a status from it. No `paths:` filter: `Visual changes` will be a
+# required status.
+#
+# pull_request_target runs main's code with a write token, so it's in
+# autofix.exempt (.github/ci.json): autofix never acts on its runs.
+# BOT_PR_TOKEN only uploads the pictures in a comment, as GitHub attaches
+# files only for a person's token; the Actions token writes the status and
+# the description, which starts no workflow.
+name: Visual review
+
+on:
+  workflow_run:
+    workflows: [E2E]
+    types: [completed]
+  pull_request_target:
+    types: [edited, auto_merge_enabled, auto_merge_disabled]
+
+permissions: {}
+
+jobs:
+  review:
+    permissions:
+      actions: read
+      # enable.mjs turns Dependabot's auto-merge on once nothing changed.
+      contents: write
+      statuses: write
+      pull-requests: write
+      issues: write
+    uses: jbhirsh/ci/.github/workflows/visual-review.yml@main
+    secrets:
+      bot-pr-token: ${{ secrets.BOT_PR_TOKEN }}
