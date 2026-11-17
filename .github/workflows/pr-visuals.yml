@@ -1,14 +1,11 @@
 name: PR visuals
 
-# A PR that changes the UI must show it: jbhirsh/ci's visuals action fails
-# when a component, a stylesheet, a class module or index.html (the
-# `visuals` globs in .github/ci.json) changes and the description has no
-# image, GIF or video and no ticked "No visible UI change". It runs on
-# description edits too, so adding the pictures turns it green without a new
-# push, and it passes Dependabot's PRs. Whether a change to motion needs a GIF
-# rather than a still is a judgment call that Claude Review makes
-# (claude-review.yml). It is a required check, so it has no `paths:` filter:
-# a filtered-out workflow never reports, and the PR would wait on it forever.
+# jbhirsh/ci's visuals action. With `visuals.sharedTemplate` in .github/ci.json
+# it passes every PR: visual review (`Visual changes`) decides whether a screen
+# changed, and the shared PR template has no box to tick. The workflow stays
+# because its check is still required in the branch rule. It is a required
+# check, so it has no `paths:` filter: a filtered-out workflow never reports,
+# and the PR would wait on it forever.
 on:
   pull_request:
     branches: [main]

@@ -65,7 +65,7 @@ tests a push can affect plus the build on push; both do nothing when `$CI` is se
 | StrykerJS (`mutation.yml`) | mutation testing of the lines a PR changed; the monthly full sweep (`mutation-sweep.yml`) isn't a PR check |
 | E2E Tests (Playwright) (`e2e.yml`) | the e2e suite in WebKit, on a desktop and an iPhone, and the screenshots visual review compares |
 | Answer-Quality Eval (`eval.yml`) | the rules assistant against the golden set, when its code changes |
-| PR visuals (`pr-visuals.yml`) | a UI change has pictures in its description |
+| PR visuals (`pr-visuals.yml`) | passes every PR, as the app uses the shared PR template and visual review decides what changed; kept because the branch rule requires it |
 | `Visual changes` (`visual-review.yml`) | visual review: this PR's screenshots against main's, with the before/after table in its description; a commit status from GitHub Actions, not a check run |
 | Secret scan, `semgrep-cloud-platform/scan`, Vercel, API smoke test | secrets, static analysis, the deploy, and its live API (`smoke.yml`) |
 

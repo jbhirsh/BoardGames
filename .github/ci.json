@@ -22,8 +22,7 @@
       "src/data/types.ts",
       "src/data/suggestionLimits.ts"
     ],
-    "fromBaselines": true,
-    "advice": "Add before/after pictures to the description, at phone size first: screenshots for looks, a GIF for motion. `npm run pr-gif -- <scenario.ts> --dir <PR number>` records main and this branch (a scenario like scripts/gif-scenarios/example.ts, moving with gif.glide, click, drag and scroll, with pauses), hosts the GIFs on the screenshots branch and prints the table to paste; it records in WebKit, which needs `npx playwright install --with-deps webkit` first. Or tick \"No visible UI change\" in the template. Editing the description re-runs this check."
+    "sharedTemplate": true
   },
   "audit": {
     "graph": ["src", "api", "e2e"]
@@ -42,14 +41,6 @@
     ],
     "ignore": ["src/__tests__/**"],
     "source": "the production build, every /api call and the dictionary stubbed (e2e/readme.shots.ts)"
-  },
-  "visual-baselines": {
-    "folders": ["e2e/*-snapshots"],
-    "columns": [
-      { "label": "Phone", "file": "{state}-visual-phone-webkit-linux.png" },
-      { "label": "Desktop", "file": "{state}-visual-webkit-linux.png" }
-    ],
-    "command": "npx playwright install --with-deps webkit && npx playwright test --project='visual-*' --update-snapshots"
   },
   "visual-review": {
     "workflow": "e2e.yml",
@@ -98,7 +89,7 @@
       "the answer-quality eval (it needs the Gemini key)"
     ],
     "exempt": {
-      "PR visuals": "Wants pictures in the PR description, which no code change gives (autofix skips its failure too).",
+      "PR visuals": "Passes every PR (the shared template); a failure would be a settings error in ci.json, not a fix autofix can make.",
       "Visual review": "Runs on pull_request_target and workflow_run from main's code; a picture changing is the owner's to look at, not a fix to make.",
       "PR GIFs": "Records the PR's GIF scenarios; a failed recording is a scenario or the app to look at, not code autofix can fix."
     }

@@ -12,9 +12,7 @@ import { expect, CHAT_ANSWER, authRefusal, operationOf, stubAuth, stubOperation 
  *
  * CI takes every shot fresh into /visual-shots, which git ignores
  * (playwright.config.ts), and visual review compares a PR's with main's
- * (visual-review.yml): nothing is committed. The e2e/*-snapshots folders and
- * visual-baselines.yml are the old committed baselines, unused now and
- * going in jbhirsh/ci#64's next step.
+ * (visual-review.yml): nothing is committed, and merging accepts a change.
  */
 
 export type Theme = 'light' | 'dark';
@@ -67,7 +65,7 @@ async function firstPageDrawn(page: Page): Promise<void> {
   // Its text is laid over the drawing once that is done (the canvas is
   // hidden from the accessibility tree, so the text is all the page holds).
   // WebKit draws Catan's first page in about 3 s, but past 15 s on a busy
-  // runner (a baselines run, two workers shooting at once).
+  // runner (two workers shooting at once).
   await expect(first.getByText(/\S/).first()).toBeAttached({ timeout: 30_000 });
 }
 
