@@ -86,10 +86,14 @@ The CI tooling is shared with fog-and-frontier and sift from
   checks would never report. Without it the default token is used, which also needs Settings,
   Actions, General: "Allow GitHub Actions to create and approve pull requests".
 - **Claude Review, the autofix workflows and the weekly Semgrep autofix** sign in by workload
-  identity federation: they pass the IDs of a rule in the Anthropic Console (Workload identity),
-  so there is no Claude secret. The IDs aren't secret. Review and autofix run on the Agent SDK
-  (`"engine": "sdk"` in `.github/ci.json`), which the Max plan's API credit pays for
-  (jbhirsh/ci#68); the Semgrep autofix still runs claude-code-action, which it doesn't.
+  identity federation: they pass the IDs of a rule in the Anthropic Console (Workload identity).
+  The IDs aren't secret. Review and autofix run on the Agent SDK (`"engine": "sdk"` in
+  `.github/ci.json`), which the Max plan's API credit pays for (jbhirsh/ci#68); the Semgrep
+  autofix still runs claude-code-action, which it doesn't.
+- **`CLAUDE_CODE_OAUTH_TOKEN`**, as an Actions secret and as a Dependabot secret (Dependabot's
+  PRs see only Dependabot secrets): the owner's Claude subscription token, from
+  `claude setup-token`. Claude Review retries a pass the API refuses for credit or a limit on it,
+  once; without it, such a stop fails the check (jbhirsh/ci#57).
 - **The branch rule** (Settings, Rules) requires each check above by name. `Visual changes` is a
   commit status, not a check run: add it by that name, with its integration on any source (or
   GitHub Actions).
