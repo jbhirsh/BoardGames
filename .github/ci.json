@@ -99,7 +99,8 @@
     ],
     "exempt": {
       "PR visuals": "Wants pictures in the PR description, which no code change gives (autofix skips its failure too).",
-      "Visual review": "Runs on pull_request_target and workflow_run from main's code; a picture changing is the owner's to look at, not a fix to make."
+      "Visual review": "Runs on pull_request_target and workflow_run from main's code; a picture changing is the owner's to look at, not a fix to make.",
+      "PR GIFs": "Records the PR's GIF scenarios; a failed recording is a scenario or the app to look at, not code autofix can fix."
     }
   },
   "unmeasured": {
