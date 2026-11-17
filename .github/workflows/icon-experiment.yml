@@ -1,0 +1,65 @@
+# ONE-OFF EXPERIMENT for the flaky Rules icon in visual review: runs only on
+# pushes to this branch, which is deleted once the result is recorded. Never
+# merged (shared rules: one-off workflows never go on main). Runs the visual
+# suite as e2e.yml does, six times for each change to AiRulesIcon (and the
+# icon as it is), and keeps each job's shots, so the sets can be compared.
+# Round 1 (no visible overflow, fill-opacity, no stroke) and round 2's
+# var() fills changed nothing; an outline without arcs never varied. Round 3
+# checks the fix: the same corners as Bézier curves.
+name: Icon experiment
+
+on:
+  push:
+    branches: [experiment/rules-icon-flake]
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [baseline, cubics]
+        run: [1, 2, 3, 4, 5, 6]
+        exclude:
+          - variant: baseline
+            run: 3
+          - variant: baseline
+            run: 4
+          - variant: baseline
+            run: 5
+          - variant: baseline
+            run: 6
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps webkit
+      - name: Change the icon
+        env:
+          VARIANT: ${{ matrix.variant }}
+        run: |
+          f=src/components/Icons.tsx
+          case "$VARIANT" in
+            cubics) sed -i '81,97s|d="M2 2.5A1.5 1.5 0 0 1 3.5 1H10l4 4v9.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5V2.5z"|d="M2 2.5C2 1.6716 2.6716 1 3.5 1H10l4 4v9.5c0 .8284-.6716 1.5-1.5 1.5h-9C2.6716 16 2 15.3284 2 14.5V2.5z"|; 81,97s|d="M10 1l4 4h-3a1 1 0 0 1-1-1V1z"|d="M10 1l4 4h-3c-.5523 0-1-.4477-1-1V1z"|' "$f" ;;
+          esac
+          git diff --stat
+          sed -n 81,97p "$f"
+      - name: Take the visual suite's shots
+        run: npm run test:e2e -- --project='visual-*' --update-snapshots=all --reporter=dot
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: shots-${{ matrix.variant }}-${{ matrix.run }}
+          path: visual-shots/
