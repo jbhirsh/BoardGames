@@ -78,11 +78,18 @@ export function GridIcon() {
   );
 }
 
+/**
+ * The page's rounded corners are cubic Béziers, never arc (`A`/`a`)
+ * commands: with arcs, WebKit drew this icon one of two ways from one visual
+ * shot to the next, so visual review flagged screens nothing had changed.
+ * Six reruns of the visual suite turned up both renders until the arcs went
+ * (removing the overflow, the opacity or the stroke didn't help).
+ */
 export function AiRulesIcon({ size = 16 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 18 18" fill="currentColor" style={{ overflow: 'visible' }}>
-      <path d="M2 2.5A1.5 1.5 0 0 1 3.5 1H10l4 4v9.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5V2.5z" />
-      <path d="M10 1l4 4h-3a1 1 0 0 1-1-1V1z" fill="currentColor" opacity=".3" />
+      <path d="M2 2.5C2 1.6716 2.6716 1 3.5 1H10l4 4v9.5c0 .8284-.6716 1.5-1.5 1.5h-9C2.6716 16 2 15.3284 2 14.5V2.5z" />
+      <path d="M10 1l4 4h-3c-.5523 0-1-.4477-1-1V1z" fill="currentColor" opacity=".3" />
       <rect x="4.5" y="6" width="7" height="1.4" rx=".7" fill="var(--icon-cut, var(--color-surface))" />
       <rect x="4.5" y="8.5" width="7" height="1.4" rx=".7" fill="var(--icon-cut, var(--color-surface))" />
       <rect x="4.5" y="11" width="5" height="1.4" rx=".7" fill="var(--icon-cut, var(--color-surface))" />
