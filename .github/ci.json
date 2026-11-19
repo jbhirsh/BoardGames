@@ -91,7 +91,8 @@
     "exempt": {
       "PR visuals": "Passes every PR (the shared template); a failure would be a settings error in ci.json, not a fix autofix can make.",
       "Visual review": "Runs on pull_request_target and workflow_run from main's code; a picture changing is the owner's to look at, not a fix to make.",
-      "PR GIFs": "Records the PR's GIF scenarios; a failed recording is a scenario or the app to look at, not code autofix can fix."
+      "PR GIFs": "Records the PR's GIF scenarios; a failed recording is a scenario or the app to look at, not code autofix can fix.",
+      "PR changes": "PR changes: reads the PR as data, runs none of its code."
     }
   },
   "unmeasured": {
