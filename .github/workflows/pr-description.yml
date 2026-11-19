@@ -1,0 +1,27 @@
+name: PR description
+
+# jbhirsh/ci's PR description action: holds the description to the shared shape
+# (goal, changes, each change's commit or filled tool block, the plan table, the
+# Revisions row naming the head). It reads only this event, so it checks nothing
+# out and needs no token. It will be a required check, so it has no `paths:` filter: a
+# filtered-out workflow never reports, and the PR would wait on it forever.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+# A new push or edit supersedes the previous run: the edit's run carries the fresh
+# description, which must win over the run of the push before it.
+concurrency:
+  group: pr-description-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  description:
+    name: PR description
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: jbhirsh/ci/pr-template@main
