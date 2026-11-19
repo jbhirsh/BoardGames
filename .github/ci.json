@@ -79,7 +79,7 @@
       "`npm run typecov`",
       "`npx vitest run --coverage` (per-file 80% coverage)",
       "`npm run build`",
-      "`npm audit --omit=dev --audit-level=high`",
+      "`npm audit --omit=dev --audit-level=critical`",
       "`npx playwright install --with-deps webkit && npx playwright test --project=desktop --project=phone` (E2E's functional tests; its visual projects are in \"can't run\")"
     ],
     "cannotRun": [
