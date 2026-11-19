@@ -309,6 +309,10 @@ export const SIGN_IN: Scenario[] = [
       await page.goto('/sign-in');
       await page.getByRole('button', { name: 'Add a passkey on this device' }).click();
       await expect(page.getByText(/Adding a passkey needs a sign-in from today/)).toBeVisible();
+      // The click leaves the pointer where the button was; the notice then pushes the
+      // button down, and WebKit un-hovers it only after a delay of its own, so the shot
+      // raced it. Move the pointer clear of the page's content.
+      await page.mouse.move(0, 0);
     },
   },
 ];
