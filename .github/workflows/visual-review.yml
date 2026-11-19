@@ -9,8 +9,8 @@
 # Triggers:
 #   - E2E finishing, on a PR, a push to main (which settles the PRs and
 #     mockups waiting on that commit) or a mockup run;
-#   - a description edit (the "No visible UI change" box), and auto-merge
-#     turned on or off (which accepts or blocks a change).
+#   - a description edit, and auto-merge turned on or off (which accepts or
+#     blocks a change).
 # A workflow_run workflow runs only from main, so the PR adding it couldn't
 # get a status from it. No `paths:` filter: `Visual changes` is a required
 # status, which never reports if a filter skips the workflow.

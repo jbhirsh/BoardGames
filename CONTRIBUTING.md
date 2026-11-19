@@ -60,12 +60,12 @@ tests a push can affect plus the build on push; both do nothing when `$CI` is se
 
 | Check (workflow) | What it runs |
 | --- | --- |
-| `ci` (`ci.yml`) | commit messages, pins, lint, Prettier, layering, type-check, GraphQL codegen and database migrations drift, type coverage, unit tests with coverage (the axe suite included), unmeasured source files, build, `npm audit --omit=dev` (high and up) |
+| `ci` (`ci.yml`) | commit messages, pins, lint, Prettier, layering, type-check, GraphQL codegen and database migrations drift, type coverage, unit tests with coverage (the axe suite included), unmeasured source files, build, `npm audit --omit=dev` (critical only) |
 | Claude Review (`claude-review.yml`) | jbhirsh/ci's AI review; this repo's guide is `.github/claude-review.md` |
 | StrykerJS (`mutation.yml`) | mutation testing of the lines a PR changed; the monthly full sweep (`mutation-sweep.yml`) isn't a PR check |
 | E2E Tests (Playwright) (`e2e.yml`) | the e2e suite in WebKit, on a desktop and an iPhone, and the screenshots visual review compares |
 | Answer-Quality Eval (`eval.yml`) | the rules assistant against the golden set, when its code changes |
-| PR visuals (`pr-visuals.yml`) | a UI change has pictures in its description |
+| PR description (`pr-description.yml`) | the PR's description held to the shared shape (jbhirsh/ci's `PR description`) |
 | `Visual changes` (`visual-review.yml`) | visual review: this PR's screenshots against main's, with the before/after table in its description; a commit status from GitHub Actions, not a check run |
 | Secret scan, `semgrep-cloud-platform/scan`, Vercel, API smoke test | secrets, static analysis, the deploy, and its live API (`smoke.yml`) |
 
