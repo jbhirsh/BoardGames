@@ -12,18 +12,6 @@
     ],
     "smoke": ["src/utils/filterUrl.ts", "src/utils/pickRandom.ts", "src/utils/urls.ts"]
   },
-  "visuals": {
-    "ui": ["src/**/*.{tsx,css}", "src/**/*Classes.ts", "src/data/**", "public/**", "index.html"],
-    "notUi": [
-      "**/*.test.tsx",
-      "src/__tests__/**",
-      "src/context/**",
-      "src/main.tsx",
-      "src/data/types.ts",
-      "src/data/suggestionLimits.ts"
-    ],
-    "sharedTemplate": true
-  },
   "audit": {
     "graph": ["src", "api", "e2e"]
   },
@@ -90,7 +78,6 @@
     ],
     "exempt": {
       "PR description": "A description is text, not code: a failure is the author's to fix in the PR's description, not a change autofix can make.",
-      "PR visuals": "Passes every PR (the shared template); a failure would be a settings error in ci.json, not a fix autofix can make.",
       "Visual review": "Runs on pull_request_target and workflow_run from main's code; a picture changing is the owner's to look at, not a fix to make.",
       "PR GIFs": "Records the PR's GIF scenarios; a failed recording is a scenario or the app to look at, not code autofix can fix.",
       "PR changes": "PR changes: reads the PR as data, runs none of its code."
