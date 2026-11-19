@@ -1,0 +1,12 @@
+{
+  "id": 42175447514,
+  "number": 530,
+  "workflow": "CI",
+  "branch": "claude/shared-claude-rules",
+  "sha": "0a7254314a6123a0b30e44c69da942e579525104",
+  "created": "2026-11-06T06:35:54Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/42175447514",
+  "jobs": [
+    "ci"
+  ]
+}

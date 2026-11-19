@@ -1,0 +1,12 @@
+{
+  "id": 43985022615,
+  "number": 649,
+  "workflow": "CI",
+  "branch": "review-subscription-token",
+  "sha": "3ad64086d7cfb19a418c81166a0ec3a903bd8cad",
+  "created": "2026-11-17T00:07:21Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43985022615",
+  "jobs": [
+    "ci"
+  ]
+}

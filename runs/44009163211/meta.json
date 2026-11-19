@@ -1,0 +1,12 @@
+{
+  "id": 44009163211,
+  "number": 383,
+  "workflow": "E2E",
+  "branch": "remove-visual-baselines",
+  "sha": "c9313e0b685f78e2877651e9239c8eea4bab5fb0",
+  "created": "2026-11-17T03:17:36Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/44009163211",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}

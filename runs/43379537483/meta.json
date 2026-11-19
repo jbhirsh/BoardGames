@@ -1,0 +1,12 @@
+{
+  "id": 43379537483,
+  "number": 302,
+  "workflow": "E2E",
+  "branch": "claude/charming-maxwell-awz2ey",
+  "sha": "b6d4de0099540f13e536c7665369e4801a21e702",
+  "created": "2026-11-13T06:33:35Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43379537483",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": 43739948323,
+  "number": 618,
+  "workflow": "CI",
+  "branch": "baselines-verify",
+  "sha": "db71d96bfd31b42f5409e78fc90f02588f7478f4",
+  "created": "2026-11-15T17:14:08Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43739948323",
+  "jobs": [
+    "ci"
+  ]
+}

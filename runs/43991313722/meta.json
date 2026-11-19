@@ -1,0 +1,12 @@
+{
+  "id": 43991313722,
+  "number": 379,
+  "workflow": "E2E",
+  "branch": "gif-callers",
+  "sha": "46d976a7bc94317e61305afd68fa6cef1ba656ce",
+  "created": "2026-11-17T00:53:48Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43991313722",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}

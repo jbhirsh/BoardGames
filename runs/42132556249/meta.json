@@ -1,0 +1,12 @@
+{
+  "id": 42132556249,
+  "number": 245,
+  "workflow": "E2E",
+  "branch": "turso-wishlist-tables",
+  "sha": "0b3c379350671c5de57325619a116a3764a17cc8",
+  "created": "2026-11-05T23:51:28Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/42132556249",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": 41886936702,
+  "number": 234,
+  "workflow": "E2E",
+  "branch": "wishlist-difficulty",
+  "sha": "8f07f35947af8454851541a1163b5ed24cdeb639",
+  "created": "2026-11-04T18:25:02Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/41886936702",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}

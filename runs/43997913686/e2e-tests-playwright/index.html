@@ -1,0 +1,1956 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Job report</title>
+    <!-- jbhirsh/ci job-summary's report page. report.mjs writes the run's model
+     (model.mjs) into its script, as a value; the page loads nothing else. -->
+    <style>
+      /* Layout: one working column like a CI log page; summary strip, then charts, then the test tree. */
+      :root {
+        --bg: #f7f8fa;
+        --surface: #ffffff;
+        --fg: #1c2230;
+        --muted: #5d6677;
+        --line: #dfe3ea;
+        --soft: #eef1f5;
+        --accent: #2f5fd0;
+        --bar: #7d99e0;
+        --ok: #1f8a4c;
+        --warn: #b7791f;
+        --warn-bar: #e0a33a;
+        --bad: #c8323a;
+        --tip-bg: #1c2230;
+        --tip-fg: #f2f4f8;
+        --hl-key: #8a3ab9;
+        --hl-str: #0a7a43;
+        --hl-num: #b04a00;
+        --hl-com: #7c8596;
+        --hl-fn: #2f5fd0;
+        --hl-prop: #9a3412;
+        --mark: #ffe58a;
+        --sans: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --bg: #12151b;
+          --surface: #1a1e26;
+          --fg: #e4e8ef;
+          --muted: #98a2b3;
+          --line: #2c323d;
+          --soft: #222833;
+          --accent: #7ea2ff;
+          --bar: #5876c4;
+          --ok: #4cc27f;
+          --warn: #e7b456;
+          --warn-bar: #c48b2a;
+          --bad: #ff6b72;
+          --tip-bg: #e4e8ef;
+          --tip-fg: #12151b;
+          --hl-key: #d39bff;
+          --hl-str: #7fd6a0;
+          --hl-num: #ffb27a;
+          --hl-com: #7f8899;
+          --hl-fn: #8fb0ff;
+          --hl-prop: #f0a37a;
+          --mark: #6b5a12;
+          color-scheme: dark;
+        }
+      }
+      :root[data-theme='dark'] {
+        --bg: #12151b;
+        --surface: #1a1e26;
+        --fg: #e4e8ef;
+        --muted: #98a2b3;
+        --line: #2c323d;
+        --soft: #222833;
+        --accent: #7ea2ff;
+        --bar: #5876c4;
+        --ok: #4cc27f;
+        --warn: #e7b456;
+        --warn-bar: #c48b2a;
+        --bad: #ff6b72;
+        --tip-bg: #e4e8ef;
+        --tip-fg: #12151b;
+        --hl-key: #d39bff;
+        --hl-str: #7fd6a0;
+        --hl-num: #ffb27a;
+        --hl-com: #7f8899;
+        --hl-fn: #8fb0ff;
+        --hl-prop: #f0a37a;
+        --mark: #6b5a12;
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      body {
+        background: var(--bg);
+        color: var(--fg);
+        font: 14px/1.5 var(--sans);
+        padding-block: 20px 48px;
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
+      }
+      .page {
+        max-width: 1040px;
+        margin: 0 auto;
+        display: grid;
+        gap: 20px;
+      }
+      header.top {
+        display: grid;
+        gap: 6px;
+      }
+      .crumbs {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .crumbs a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0;
+        text-wrap: balance;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 12px;
+        align-items: center;
+      }
+      .pill {
+        font-size: 13px;
+        font-weight: 600;
+        padding: 2px 10px;
+        border-radius: 999px;
+        border: 1px solid currentColor;
+      }
+      .pill.bad {
+        color: var(--bad);
+      }
+      .pill.ok {
+        color: var(--ok);
+      }
+      .facts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 18px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .facts b {
+        color: var(--fg);
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+      .facts .slow {
+        color: var(--warn);
+        font-weight: 600;
+      }
+      section.card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 16px 18px;
+        display: grid;
+        gap: 12px;
+        min-width: 0;
+      }
+      h2 {
+        font-size: 15px;
+        margin: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      h2 small {
+        font-weight: 400;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .attention {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .attention li {
+        display: grid;
+        grid-template-columns: 92px 1fr;
+        gap: 10px;
+        align-items: baseline;
+        padding: 4px 6px;
+        margin: 0 -6px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .attention li:hover {
+        background: var(--soft);
+      }
+      .attention li:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+      .attention .go {
+        color: var(--accent);
+        font-size: 12px;
+        white-space: nowrap;
+        margin-left: 6px;
+      }
+      @keyframes flash {
+        from {
+          background: var(--mark);
+        }
+        to {
+          background: transparent;
+        }
+      }
+      .flash,
+      tr.flash td {
+        animation: flash 1.6s ease-out;
+      }
+      .tag {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .tag.bad {
+        color: var(--bad);
+      }
+      .tag.warn {
+        color: var(--warn);
+      }
+      .tag.flaky {
+        color: var(--accent);
+      }
+      .attention li > span {
+        min-width: 0;
+      }
+      .attention .msg {
+        display: block;
+        margin: 6px 0 0;
+        font: 12px/1.5 var(--mono);
+        background: var(--soft);
+        border-left: 3px solid var(--bad);
+        padding: 6px 10px;
+        border-radius: 4px;
+        white-space: pre;
+        overflow-x: auto;
+        color: var(--fg);
+      }
+      .chart {
+        overflow-x: auto;
+      }
+      .chart svg {
+        display: block;
+      }
+      .chart text {
+        fill: var(--fg);
+        font: 12px var(--sans);
+      }
+      .chart .axis text {
+        fill: var(--muted);
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+      }
+      .chart .grid line {
+        stroke: var(--line);
+      }
+      .chart .rowbg {
+        fill: var(--soft);
+      }
+      .chart .bar {
+        fill: var(--bar);
+        cursor: pointer;
+      }
+      .chart .bar.slow {
+        fill: var(--warn-bar);
+      }
+      .chart .bar.bad {
+        fill: var(--bad);
+      }
+      .chart .bar.this {
+        fill: var(--accent);
+      }
+      .chart .bar:hover,
+      .chart .bar:focus {
+        stroke: var(--fg);
+        stroke-width: 1.5;
+        outline: none;
+      }
+      .chart .usual {
+        stroke: var(--fg);
+        stroke-dasharray: 3 3;
+        fill: none;
+      }
+      .chart .band {
+        fill: var(--soft);
+      }
+      .minibars {
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        height: 24px;
+        border-bottom: 1px solid var(--line);
+        width: max-content;
+      }
+      .minibars .b {
+        width: 9px;
+        background: var(--bar);
+        border-radius: 1px 1px 0 0;
+        display: block;
+      }
+      .minibars a.b:hover,
+      .minibars a.b:focus-visible {
+        background: var(--accent);
+        outline: none;
+      }
+      .minibars .b.this {
+        background: var(--accent);
+      }
+      .minibars .b.slow {
+        background: var(--warn-bar);
+      }
+      .minibars .b.bad {
+        background: var(--bad);
+      }
+      .minibars .none {
+        width: 9px;
+        height: 1px;
+      }
+      .delta {
+        color: var(--warn);
+        font-weight: 600;
+        margin-right: 4px;
+        cursor: help;
+      }
+      .tree .row .num {
+        white-space: nowrap;
+      }
+      .chart .bandlabel {
+        fill: var(--muted);
+        font-size: 11px;
+      }
+      .chart .bandlabel.link {
+        cursor: pointer;
+        text-decoration: underline dotted;
+      }
+      .chart .badge {
+        cursor: pointer;
+      }
+      .chart .badge circle {
+        fill: var(--surface);
+        stroke: var(--muted);
+      }
+      .chart .badge text {
+        fill: var(--fg);
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .chart .badge:hover circle,
+      .chart .badge:focus circle {
+        stroke: var(--accent);
+        stroke-width: 2;
+      }
+      .chart .badge:focus {
+        outline: none;
+      }
+      .stepkey {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 14px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .stepkey button {
+        font: inherit;
+        color: inherit;
+        background: none;
+        border: 0;
+        padding: 2px 0;
+        cursor: pointer;
+        text-align: left;
+      }
+      .stepkey button:hover {
+        color: var(--accent);
+      }
+      .stepkey b {
+        display: inline-grid;
+        place-items: center;
+        width: 18px;
+        height: 18px;
+        border: 1px solid var(--muted);
+        border-radius: 50%;
+        color: var(--fg);
+        font-size: 11px;
+        margin-right: 4px;
+      }
+      .chart text.peaklabel {
+        fill: var(--bad);
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .chart text.muted-label {
+        fill: var(--muted);
+        font-weight: 400;
+      }
+      .chart .bandlabel.link:hover,
+      .chart .bandlabel.link:focus {
+        fill: var(--accent);
+        outline: none;
+      }
+      .chart .loadline {
+        fill: none;
+        stroke: var(--bad);
+        stroke-width: 2;
+      }
+      .chart .idleline {
+        fill: none;
+        stroke: var(--ok);
+        stroke-width: 1.5;
+      }
+      .chart .cursor {
+        stroke: var(--fg);
+        stroke-width: 1;
+      }
+      #load-wrap {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .chart text.inbar {
+        fill: var(--surface);
+        font-size: 11px;
+        font-weight: 600;
+        pointer-events: none;
+        font-variant-numeric: tabular-nums;
+      }
+      .chart .label.link {
+        fill: var(--accent);
+        cursor: pointer;
+      }
+      .legend {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .legend i {
+        display: inline-block;
+        width: 12px;
+        height: 10px;
+        border-radius: 2px;
+        margin-right: 5px;
+        vertical-align: -1px;
+      }
+      .tablewrap {
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 13px;
+        font-variant-numeric: tabular-nums;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 6px 10px;
+        border-bottom: 1px solid var(--line);
+        white-space: nowrap;
+      }
+      th {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 600;
+        user-select: none;
+      }
+      .sortbtn {
+        font: inherit;
+        color: inherit;
+        background: none;
+        border: 0;
+        padding: 0;
+        cursor: pointer;
+        text-align: inherit;
+      }
+      .sortbtn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      th[aria-sort='ascending']::after {
+        content: ' ▲';
+      }
+      th[aria-sort='descending']::after {
+        content: ' ▼';
+      }
+      td.num,
+      th.num {
+        text-align: right;
+      }
+
+      /* A long step name (a command with its flags) is cut short, whole in its
+         tooltip, so the timeline and the times stay on the card. */
+      .stepname {
+        display: block;
+        max-width: 24em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      table.steps td.tl,
+      table.steps th.tl {
+        width: 42%;
+        min-width: 260px;
+        padding-inline: 4px;
+      }
+      .track {
+        position: relative;
+        height: 16px;
+      }
+      .track .seg {
+        position: absolute;
+        top: 2px;
+        height: 12px;
+        border-radius: 3px;
+        background: var(--bar);
+        cursor: default;
+      }
+      .track .seg.slow {
+        background: var(--warn-bar);
+      }
+      .track .seg.bad {
+        background: var(--bad);
+      }
+      .track .seg:hover,
+      .track .seg:focus {
+        outline: 1.5px solid var(--fg);
+        outline-offset: 1px;
+      }
+      .track .was {
+        position: absolute;
+        top: 1px;
+        height: 14px;
+        border: 1px dashed var(--fg);
+        border-radius: 3px;
+        pointer-events: none;
+      }
+      .track .tick {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        border-left: 1px solid var(--line);
+      }
+      .axisrow {
+        position: relative;
+        height: 16px;
+        font-weight: 400;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .axisrow span {
+        position: absolute;
+        transform: translateX(-50%);
+        white-space: nowrap;
+      }
+      .axisrow span:first-child {
+        transform: none;
+      }
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      .toolbar input {
+        font: inherit;
+        padding: 6px 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--bg);
+        color: var(--fg);
+        min-width: 0;
+        flex: 1 1 220px;
+      }
+      .chip {
+        font: inherit;
+        font-size: 13px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--fg);
+        cursor: pointer;
+      }
+      .chip[aria-pressed='true'] {
+        border-color: var(--accent);
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .chip .n {
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+        margin-left: 4px;
+      }
+      .link-btn {
+        font: inherit;
+        font-size: 13px;
+        background: none;
+        border: 0;
+        color: var(--accent);
+        cursor: pointer;
+        padding: 4px;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      .tree .row:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .tree {
+        display: grid;
+        font-size: 13px;
+      }
+      .tree .row {
+        display: grid;
+        grid-template-columns: 1fr 70px 70px 140px;
+        gap: 10px;
+        align-items: center;
+        padding: 4px 6px;
+        border-radius: 6px;
+        font-variant-numeric: tabular-nums;
+      }
+      .tree .row:hover {
+        background: var(--soft);
+      }
+      .tree .row .name {
+        min-width: 0;
+        display: flex;
+        gap: 6px;
+        align-items: baseline;
+        overflow: hidden;
+      }
+      .tree .row .name span.t {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .tree .row .num {
+        text-align: right;
+      }
+      .tree .row .muted,
+      .muted {
+        color: var(--muted);
+      }
+      .tree .group {
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .tree .caret {
+        display: inline-block;
+        width: 12px;
+        color: var(--muted);
+        transition: transform 0.12s;
+      }
+      .tree .open > .caret {
+        transform: rotate(90deg);
+      }
+      .tree .count {
+        font-weight: 400;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .tree .head {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 600;
+        border-bottom: 1px solid var(--line);
+        border-radius: 0;
+      }
+      .tree .head:hover {
+        background: none;
+      }
+      .res {
+        width: 14px;
+        text-align: center;
+        flex: none;
+      }
+      .res.bad {
+        color: var(--bad);
+      }
+      .res.ok {
+        color: var(--ok);
+      }
+      .res.warn {
+        color: var(--warn);
+      }
+      .res.skip {
+        color: var(--muted);
+      }
+      .dots {
+        display: flex;
+        gap: 3px;
+        justify-content: flex-end;
+      }
+      .dots a {
+        width: 11px;
+        height: 11px;
+        border-radius: 2px;
+        background: var(--ok);
+        display: block;
+      }
+      .dots a.bad {
+        background: var(--bad);
+      }
+      .dots a.rerun {
+        background: var(--warn-bar);
+      }
+      .dots a.none {
+        background: var(--line);
+      }
+      .dots a.this {
+        outline: 1.5px solid var(--fg);
+        outline-offset: 1px;
+      }
+      .dots a.changed {
+        box-shadow: inset 0 -3px 0 var(--fg);
+      }
+      .dots a:hover,
+      .dots a:focus-visible {
+        transform: scale(1.35);
+        outline: 1.5px solid var(--fg);
+        outline-offset: 1px;
+      }
+      .slowtxt {
+        color: var(--warn);
+        font-weight: 600;
+      }
+      .msgmore {
+        font: inherit;
+        font-size: 12px;
+        color: var(--accent);
+        background: none;
+        border: 0;
+        padding: 2px 0 0;
+        cursor: pointer;
+        display: block;
+      }
+      .failmsg {
+        grid-column: 1 / -1;
+        margin: 2px 0 6px 38px;
+        font: 12px/1.5 var(--mono);
+        background: var(--soft);
+        border-left: 3px solid var(--bad);
+        padding: 8px 10px;
+        border-radius: 4px;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .empty {
+        color: var(--muted);
+        padding: 10px 6px;
+      }
+      .tree .row .name a.t {
+        color: inherit;
+        text-decoration: none;
+      }
+      .tree .row .name a.t:hover {
+        color: var(--accent);
+        text-decoration: underline;
+      }
+      .codebtn {
+        font: inherit;
+        font-size: 12px;
+        color: var(--accent);
+        background: none;
+        border: 0;
+        padding: 0 2px;
+        cursor: pointer;
+        flex: none;
+      }
+      .code {
+        grid-column: 1 / -1;
+        margin: 2px 0 8px 38px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .code .path {
+        font-size: 12px;
+        padding: 4px 10px;
+        background: var(--soft);
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .code .path a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .code pre {
+        margin: 0;
+        padding: 8px 0;
+        font: 12px/1.5 var(--mono);
+        overflow-x: auto;
+        background: var(--surface);
+      }
+      .code pre span {
+        display: block;
+        padding: 0 10px;
+        white-space: pre;
+      }
+      .code pre span::before {
+        content: attr(data-n);
+        display: inline-block;
+        width: 3.5ch;
+        margin-right: 1.5ch;
+        color: var(--muted);
+        text-align: right;
+      }
+      .code pre span.hit {
+        background: var(--soft);
+        box-shadow: inset 3px 0 var(--bad);
+      }
+      .code b {
+        font-weight: inherit;
+      }
+      .hl b {
+        font-weight: inherit;
+      }
+      .hl .k {
+        color: var(--hl-key);
+      }
+      .hl .s {
+        color: var(--hl-str);
+      }
+      .hl .n {
+        color: var(--hl-num);
+      }
+      .hl .c {
+        color: var(--hl-com);
+        font-style: italic;
+      }
+      .hl .f {
+        color: var(--hl-fn);
+      }
+      .hl .p {
+        color: var(--hl-prop);
+      }
+      .hl .e {
+        color: var(--bad);
+        font-weight: 650;
+      }
+      .hl .del {
+        color: var(--bad);
+      }
+      .hl .ins {
+        color: var(--ok);
+      }
+      mark {
+        background: var(--mark);
+        color: inherit;
+        border-radius: 2px;
+        padding: 0 1px;
+      }
+      .tip {
+        position: fixed;
+        z-index: 20;
+        pointer-events: none;
+        width: max-content;
+        background: var(--tip-bg);
+        color: var(--tip-fg);
+        font-size: 12px;
+        line-height: 1.45;
+        padding: 8px 10px;
+        border-radius: 8px;
+        max-width: 300px;
+        box-shadow: 0 6px 20px rgb(0 0 0 / 0.25);
+        font-variant-numeric: tabular-nums;
+      }
+      .tip b {
+        font-weight: 650;
+      }
+      .tip .k {
+        opacity: 0.7;
+      }
+      dl.notes {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 6px 16px;
+        margin: 0;
+        font-size: 13px;
+      }
+      dl.notes dt {
+        color: var(--muted);
+      }
+      dl.notes dd {
+        margin: 0;
+        font-variant-numeric: tabular-nums;
+      }
+      @media (max-width: 640px) {
+        .tree .row {
+          grid-template-columns: 1fr 56px 0 0;
+        }
+        .tree .row > :nth-child(3),
+        .tree .row > :nth-child(4) {
+          display: none;
+        }
+        .attention li {
+          grid-template-columns: 1fr;
+          gap: 2px;
+        }
+        .failmsg {
+          margin-left: 18px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .tree .caret {
+          transition: none;
+        }
+      }
+
+      .foot {
+        font-size: 12px;
+        color: var(--muted);
+        margin: 0;
+      }
+      #problem {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="top">
+        <div class="crumbs" id="crumbs"></div>
+        <h1 id="title"></h1>
+        <div class="facts" id="facts"></div>
+      </header>
+
+      <section class="card" id="problem-card" hidden>
+        <h2>Not everything could be read</h2>
+        <p id="problem"></p>
+      </section>
+
+      <section class="card" id="attention-card">
+        <h2>Needs attention</h2>
+        <ul class="attention" id="attention"></ul>
+      </section>
+
+      <section class="card" id="steps-card">
+        <h2>Steps</h2>
+        <div class="legend">
+          <span><i style="background: var(--bar)"></i>as usual</span
+          ><span><i style="background: var(--warn-bar)"></i>slower than usual</span
+          ><span><i style="background: var(--bad)"></i>failed</span
+          ><span><i style="border: 1px dashed var(--fg)"></i>usual time</span>
+        </div>
+        <div class="tablewrap"><table id="steps" class="steps"></table></div>
+      </section>
+
+      <section class="card" id="tests-card">
+        <h2 id="tests-title">Tests</h2>
+        <div class="toolbar">
+          <input
+            id="q"
+            type="search"
+            placeholder="Filter by name, file or describe block"
+            aria-label="Filter tests"
+          />
+          <span id="chips" class="toolbar"></span>
+          <button type="button" class="link-btn" id="expand">Expand all</button>
+          <button type="button" class="link-btn" id="collapse">Collapse all</button>
+        </div>
+        <div class="tree" id="tree" role="tree"></div>
+      </section>
+
+      <section class="card" id="history-card">
+        <h2 id="history-title">Job time</h2>
+        <div class="chart" id="history"></div>
+      </section>
+
+      <section class="card" id="notes-card">
+        <h2>Environment</h2>
+        <dl class="notes" id="notes"></dl>
+        <div id="load-wrap" hidden>
+          <h2>CPU over the job</h2>
+          <div class="legend">
+            <span><i style="background: var(--bad)"></i>CPU busy</span
+            ><span id="settle-key"
+              ><i style="border: 1px dashed var(--fg)"></i>the settle wait's limit</span
+            ><span
+              ><i style="background: var(--soft); border: 1px solid var(--line)"></i>a step</span
+            >
+          </div>
+          <div class="chart" id="load"></div>
+          <div class="stepkey" id="stepkey"></div>
+        </div>
+      </section>
+
+      <p class="foot" id="foot"></p>
+    </div>
+    <div class="tip" id="tip" hidden></div>
+
+    <script>
+      // job-summary's report page (jbhirsh/ci, job-summary/report.html): one
+      // job's run beside its recent runs. Its data is the value report.mjs
+      // writes in place of the marker below (model.mjs); everything here
+      // only draws it, escaping every piece of text it writes as HTML.
+      const data = {"repo":"jbhirsh/BoardGames","workflow":"E2E","job":"E2E Tests (Playwright)","noun":"test","problem":"","run":{"number":380,"url":"https://github.com/jbhirsh/BoardGames/actions/runs/43997913686/job/133754450272","sha":"dc0ecd3831ddd8bad039d99dff79d3547c633f61","branch":"main","when":"2026-11-17T01:44:58Z"},"seconds":515.66,"usual":505.617,"steps":[{"i":1,"name":"Set up job","start":1,"seconds":2,"conclusion":"success","usual":1,"slower":false,"past":[0,1,1,1,1,2,4,1,1]},{"i":2,"name":"Run jbhirsh/ci/job-summary/sample-load@main","start":3,"seconds":0,"conclusion":"success","usual":1,"slower":false,"past":[1,0,2,1,1,0,null,0,1]},{"i":3,"name":"Run actions/checkout@v7","start":3,"seconds":8,"conclusion":"success","usual":8,"slower":false,"past":[8,9,7,7,8,8,10,7,6]},{"i":4,"name":"Run actions/setup-node@v7","start":11,"seconds":3,"conclusion":"success","usual":4,"slower":false,"past":[2,3,5,4,5,2,5,4,4]},{"i":5,"name":"Run npm ci","start":14,"seconds":52,"conclusion":"success","usual":52,"slower":false,"past":[13,54,64,39,52,52,47,64,63]},{"i":6,"name":"Install browsers","start":66,"seconds":34,"conclusion":"success","usual":31,"slower":false,"past":[30,33,48,30,28,33,55,31,28]},{"i":7,"name":"Read the Playwright and browser versions","start":100,"seconds":1,"conclusion":"success","usual":1,"slower":false,"past":[2,1,2,1,1,1,null,1,2]},{"i":8,"name":"Note them for the job summary","start":101,"seconds":0,"conclusion":"success","usual":0,"slower":false,"past":[0,0,0,0,0,0,null,0,0]},{"i":9,"name":"Run Playwright tests","start":101,"seconds":414,"conclusion":"success","usual":408,"slower":false,"past":[381,392,488,304,408,424,148,541,522]}],"runs":[{"number":346,"url":"https://jbhirsh.github.io/BoardGames/runs/43740423857/e2e-tests-playwright/","sha":"b8a032419ef03033a0cde8888276da3118616ee5","branch":"main","when":"2026-11-15T17:19:10Z","seconds":438.788,"conclusion":"success"},{"number":355,"url":"https://jbhirsh.github.io/BoardGames/runs/43927584703/e2e-tests-playwright/","sha":"26e765bf8dcf5f8f4ff6e53a3c6fba866223e106","branch":"main","when":"2026-11-16T18:19:20Z","seconds":495.326,"conclusion":"success"},{"number":359,"url":"https://jbhirsh.github.io/BoardGames/runs/43929756414/e2e-tests-playwright/","sha":"5598e1509bab19a161c38d923ec6244bf7791690","branch":"main","when":"2026-11-16T18:31:42Z","seconds":619.071,"conclusion":"success"},{"number":364,"url":"https://jbhirsh.github.io/BoardGames/runs/43940229262/e2e-tests-playwright/","sha":"5fb595a0683c8ab7e0892aab7d2966775c34ee46","branch":"main","when":"2026-11-16T19:31:34Z","seconds":388.428,"conclusion":"success"},{"number":370,"url":"https://jbhirsh.github.io/BoardGames/runs/43946043940/e2e-tests-playwright/","sha":"64c15d4aef07e4969c0dfd6f8d3d47bd0775f853","branch":"main","when":"2026-11-16T20:05:03Z","seconds":505.617,"conclusion":"success"},{"number":372,"url":"https://jbhirsh.github.io/BoardGames/runs/43953550601/e2e-tests-playwright/","sha":"3120a1b9b8b7c6d52967ca5ac0088d229d604504","branch":"main","when":"2026-11-16T20:48:20Z","seconds":523.088,"conclusion":"success"},{"number":374,"url":"https://github.com/jbhirsh/BoardGames/actions/runs/43966545927/job/133647398674","sha":"3120a1b9b8b7c6d52967ca5ac0088d229d604504","branch":"main","when":"2026-11-16T22:05:11Z","seconds":274,"conclusion":"success"},{"number":376,"url":"https://jbhirsh.github.io/BoardGames/runs/43983344900/e2e-tests-playwright/","sha":"db555880ad34536debdc5f424228c06cda85a51c","branch":"main","when":"2026-11-16T23:55:12Z","seconds":651.311,"conclusion":"success"},{"number":378,"url":"https://jbhirsh.github.io/BoardGames/runs/43987295005/e2e-tests-playwright/","sha":"4ddb2c5190731fb5e788bfa8a2d6e3db1e45fdae","branch":"main","when":"2026-11-17T00:23:57Z","seconds":628.485,"conclusion":"success"}],"tests":[{"name":"admin.spec.ts › [desktop] the owner sees what BoardGameGeek found before adding a game","folder":"","file":"admin.spec.ts","block":"","title":"[desktop] the owner sees what BoardGameGeek found before adding a game","path":"e2e/admin.spec.ts","line":1,"seconds":7.201,"usual":9.353,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[7.132,7.919,12.815,5.06,6.642,13.388,null,11.813,10.787],"edited":[],"code":null},{"name":"admin.spec.ts › [desktop] the owner is told on the form when BoardGameGeek has no match, and can add it anyway","folder":"","file":"admin.spec.ts","block":"","title":"[desktop] the owner is told on the form when BoardGameGeek has no match, and can add it anyway","path":"e2e/admin.spec.ts","line":1,"seconds":6.87,"usual":8.864,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[6.709,7.598,12.348,4.785,6.295,13.106,null,11.224,10.13],"edited":[],"code":null},{"name":"admin.spec.ts › [desktop] the owner corrects a misspelt suggestion, sees what BoardGameGeek has for it, and approves it","folder":"","file":"admin.spec.ts","block":"","title":"[desktop] the owner corrects a misspelt suggestion, sees what BoardGameGeek has for it, and approves it","path":"e2e/admin.spec.ts","line":1,"seconds":3.584,"usual":3.9485,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.719,3.813,6.204,2.754,3.337,4.084,null,4.811,5.012],"edited":[],"code":null},{"name":"back-link.spec.ts › [desktop] Back from a rules page returns to the filtered list where it was left","folder":"","file":"back-link.spec.ts","block":"","title":"[desktop] Back from a rules page returns to the filtered list where it was left","path":"e2e/back-link.spec.ts","line":1,"seconds":10.761,"usual":11.2495,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[10.863,10.228,14.084,8.15,8.874,11.636,null,12.678,15.379],"edited":[],"code":null},{"name":"back-link.spec.ts › [desktop] Back from the picked game's rules returns to the list where it was","folder":"","file":"back-link.spec.ts","block":"","title":"[desktop] Back from the picked game's rules returns to the list where it was","path":"e2e/back-link.spec.ts","line":1,"seconds":4.821,"usual":4.93,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.601,4.958,6.616,4.052,4.293,4.902,null,6.041,5.694],"edited":[],"code":null},{"name":"back-link.spec.ts › [desktop] a press on Back that the page arrives during still goes back","folder":"","file":"back-link.spec.ts","block":"","title":"[desktop] a press on Back that the page arrives during still goes back","path":"e2e/back-link.spec.ts","line":1,"seconds":5.374,"usual":5.173,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[5.25,5.168,5.178,4.109,4.625,5.065,null,6.658,5.568],"edited":[],"code":null},{"name":"back-link.spec.ts › [desktop] a collapsed list row carries no Rules link, on a desktop or the narrow list","folder":"","file":"back-link.spec.ts","block":"","title":"[desktop] a collapsed list row carries no Rules link, on a desktop or the narrow list","path":"e2e/back-link.spec.ts","line":1,"seconds":2.291,"usual":2.5395000000000003,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.482,2.486,3.087,1.78,2.247,2.593,null,3.461,3.19],"edited":[],"code":null},{"name":"back-link.spec.ts › [desktop] the open row's Rules, at the end of its write-up on the right, opens the rules page, and Back returns to the list","folder":"","file":"back-link.spec.ts","block":"","title":"[desktop] the open row's Rules, at the end of its write-up on the right, opens the rules page, and Back returns to the list","path":"e2e/back-link.spec.ts","line":1,"seconds":5.711,"usual":5.215,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.75,5.253,6.506,3.824,5.177,5.006,null,6.433,6.786],"edited":[],"code":null},{"name":"back-link.spec.ts › [desktop] the open row comes back open, its Rules in view, by the browser's Back and the page's","folder":"","file":"back-link.spec.ts","block":"","title":"[desktop] the open row comes back open, its Rules in view, by the browser's Back and the page's","path":"e2e/back-link.spec.ts","line":1,"seconds":5.802,"usual":5.5875,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[5.287,5.674,6.958,4.558,5.501,5.417,null,6.675,6.652],"edited":[],"code":null},{"name":"back-link.spec.ts › [desktop] a fresh visit to the list opens no row, even after one was left open","folder":"","file":"back-link.spec.ts","block":"","title":"[desktop] a fresh visit to the list opens no row, even after one was left open","path":"e2e/back-link.spec.ts","line":1,"seconds":3.384,"usual":3.6334999999999997,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.62,3.643,4.775,3.085,3.624,3.465,null,4.642,4.281],"edited":[],"code":null},{"name":"back-link.spec.ts › [desktop] Back from a rules page opened directly goes to the whole collection","folder":"","file":"back-link.spec.ts","block":"","title":"[desktop] Back from a rules page opened directly goes to the whole collection","path":"e2e/back-link.spec.ts","line":1,"seconds":2.418,"usual":2.792,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.544,2.647,3.129,2.054,2.74,2.844,null,3.773,3.554],"edited":[],"code":null},{"name":"hero.spec.ts › [desktop] the hero's covers glide sideways, and stop when paused","folder":"","file":"hero.spec.ts","block":"","title":"[desktop] the hero's covers glide sideways, and stop when paused","path":"e2e/hero.spec.ts","line":1,"seconds":3.236,"usual":3.4379999999999997,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.536,3.175,4.239,2.282,3.116,3.34,null,4.474,3.733],"edited":[],"code":null},{"name":"hero.spec.ts › [desktop] the row holds still under the pointer","folder":"","file":"hero.spec.ts","block":"","title":"[desktop] the row holds still under the pointer","path":"e2e/hero.spec.ts","line":1,"seconds":1.895,"usual":1.704,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.647,1.636,2.548,1.214,1.533,1.761,null,2.305,2.126],"edited":[],"code":null},{"name":"hero.spec.ts › [desktop] only a cover holds the row still, not the gaps or the room round it","folder":"","file":"hero.spec.ts","block":"","title":"[desktop] only a cover holds the row still, not the gaps or the room round it","path":"e2e/hero.spec.ts","line":1,"seconds":2.552,"usual":2.5455,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.535,2.483,3.618,1.941,2.522,2.556,null,3.266,3.238],"edited":[],"code":null},{"name":"hero.spec.ts › [desktop] the row drags sideways, and the drag doesn't open a game","folder":"","file":"hero.spec.ts","block":"","title":"[desktop] the row drags sideways, and the drag doesn't open a game","path":"e2e/hero.spec.ts","line":1,"seconds":2.366,"usual":2.474,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.082,2.482,3.749,2.161,2.314,2.466,null,2.764,3.194],"edited":[],"code":null},{"name":"hero.spec.ts › [desktop] pulled right, the row turns to glide right, coming round its loop","folder":"","file":"hero.spec.ts","block":"","title":"[desktop] pulled right, the row turns to glide right, coming round its loop","path":"e2e/hero.spec.ts","line":1,"seconds":3.825,"usual":3.8975,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.853,3.879,4.496,2.815,3.768,3.916,null,4.486,4.119],"edited":[],"code":null},{"name":"hero.spec.ts › [desktop] a press on a cover that doesn't move still opens its game","folder":"","file":"hero.spec.ts","block":"","title":"[desktop] a press on a cover that doesn't move still opens its game","path":"e2e/hero.spec.ts","line":1,"seconds":1.745,"usual":1.916,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.776,1.833,2.49,1.406,1.84,1.992,null,2.389,2.167],"edited":[],"code":null},{"name":"hero.spec.ts › [desktop] clicking a cover brings its game's row into view, ready for the keyboard","folder":"","file":"hero.spec.ts","block":"","title":"[desktop] clicking a cover brings its game's row into view, ready for the keyboard","path":"e2e/hero.spec.ts","line":1,"seconds":2.626,"usual":2.532,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.531,2.383,3.204,1.884,2.467,2.533,null,3.465,3.338],"edited":[],"code":null},{"name":"hero.spec.ts › [desktop] a cover Tabbed to and pressed brings its game's card into view","folder":"","file":"hero.spec.ts","block":"","title":"[desktop] a cover Tabbed to and pressed brings its game's card into view","path":"e2e/hero.spec.ts","line":1,"seconds":2.595,"usual":2.7285000000000004,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.745,2.712,3.473,1.944,2.575,2.678,null,3.197,3.183],"edited":[],"code":null},{"name":"hero.spec.ts › [desktop] the row is one Tab stop after its pause button, with arrow keys between covers","folder":"","file":"hero.spec.ts","block":"","title":"[desktop] the row is one Tab stop after its pause button, with arrow keys between covers","path":"e2e/hero.spec.ts","line":1,"seconds":2.43,"usual":2.9085,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.96,2.94,3.758,2.369,2.786,2.877,null,3.895,3.378],"edited":[],"code":null},{"name":"hero.spec.ts › [desktop] the cover the keyboard is on shows its ring on screen, at the start of the list too","folder":"","file":"hero.spec.ts","block":"","title":"[desktop] the cover the keyboard is on shows its ring on screen, at the start of the list too","path":"e2e/hero.spec.ts","line":1,"seconds":3.155,"usual":3.4555,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.189,3.354,4.372,2.375,3.101,3.557,null,4.381,4.113],"edited":[],"code":null},{"name":"hero.spec.ts › [desktop] a cover whose game the filters hide clears them to show it","folder":"","file":"hero.spec.ts","block":"","title":"[desktop] a cover whose game the filters hide clears them to show it","path":"e2e/hero.spec.ts","line":1,"seconds":2.82,"usual":2.851,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.825,2.854,3.877,2.112,2.792,2.848,null,3.08,3.69],"edited":[],"code":null},{"name":"hero.spec.ts › [desktop] with reduced motion › the covers stand still in a row of favourites, with nothing to pause","folder":"","file":"hero.spec.ts","block":"[desktop] with reduced motion","title":"the covers stand still in a row of favourites, with nothing to pause","path":"e2e/hero.spec.ts","line":274,"seconds":1.573,"usual":1.612,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.688,1.536,1.774,1.048,1.386,1.507,null,1.929,1.948],"edited":[],"code":null},{"name":"home.spec.ts › [desktop] the home page lists the whole collection","folder":"","file":"home.spec.ts","block":"","title":"[desktop] the home page lists the whole collection","path":"e2e/home.spec.ts","line":1,"seconds":1.833,"usual":1.867,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.831,1.8,2.341,1.323,1.8,1.903,null,2.359,2.806],"edited":[],"code":null},{"name":"home.spec.ts › [desktop] players and time filters narrow the list and survive a reload","folder":"","file":"home.spec.ts","block":"","title":"[desktop] players and time filters narrow the list and survive a reload","path":"e2e/home.spec.ts","line":1,"seconds":4.839,"usual":4.368,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.019,4.116,5.464,3.895,4.115,4.62,null,6.834,6.155],"edited":[],"code":null},{"name":"home.spec.ts › [desktop] a time budget keeps the quick games, and an old bucket link opens one","folder":"","file":"home.spec.ts","block":"","title":"[desktop] a time budget keeps the quick games, and an old bucket link opens one","path":"e2e/home.spec.ts","line":1,"seconds":1.381,"usual":1.2905,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.263,1.257,1.738,1.022,1.273,1.308,null,1.565,1.621],"edited":[],"code":null},{"name":"home.spec.ts › [desktop] the Own/Want toggle switches to the wishlist","folder":"","file":"home.spec.ts","block":"","title":"[desktop] the Own/Want toggle switches to the wishlist","path":"e2e/home.spec.ts","line":1,"seconds":3.162,"usual":3.5475,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.574,3.253,4.531,2.521,3.241,3.521,null,4.085,4.171],"edited":[],"code":null},{"name":"home.spec.ts › [desktop] the random picker picks a game from the filtered list","folder":"","file":"home.spec.ts","block":"","title":"[desktop] the random picker picks a game from the filtered list","path":"e2e/home.spec.ts","line":1,"seconds":5.274,"usual":4.74,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.69,4.665,5.012,4.79,4.68,4.682,null,7.756,5.521],"edited":[],"code":null},{"name":"home.spec.ts › [desktop] games on their way are listed under the collection, never picked","folder":"","file":"home.spec.ts","block":"","title":"[desktop] games on their way are listed under the collection, never picked","path":"e2e/home.spec.ts","line":1,"seconds":1.617,"usual":1.8545,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.723,1.858,2.44,1.269,1.851,1.646,null,2.228,2.126],"edited":[],"code":null},{"name":"home.spec.ts › [desktop] opening a card's games on the grid gives it a row of its own and keeps the order","folder":"","file":"home.spec.ts","block":"","title":"[desktop] opening a card's games on the grid gives it a row of its own and keeps the order","path":"e2e/home.spec.ts","line":1,"seconds":3.194,"usual":2.793,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.82,2.645,3.669,2.401,2.647,2.766,null,2.874,3.541],"edited":[],"code":null},{"name":"home.spec.ts › [desktop] on a desktop grid, More opens a game's write-up across the row","folder":"","file":"home.spec.ts","block":"","title":"[desktop] on a desktop grid, More opens a game's write-up across the row","path":"e2e/home.spec.ts","line":1,"seconds":4.226,"usual":4.374,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.822,4.387,5.937,3.257,4.314,4.361,null,5.746,5.726],"edited":[],"code":null},{"name":"home.spec.ts › [desktop] pages carry their own titles and the site has a link preview","folder":"","file":"home.spec.ts","block":"","title":"[desktop] pages carry their own titles and the site has a link preview","path":"e2e/home.spec.ts","line":1,"seconds":1.452,"usual":1.6535,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.609,1.476,2.045,1.191,1.698,1.534,null,2.201,2.022],"edited":[],"code":null},{"name":"home.spec.ts › [desktop] an empty result names the filters and offers to drop one","folder":"","file":"home.spec.ts","block":"","title":"[desktop] an empty result names the filters and offers to drop one","path":"e2e/home.spec.ts","line":1,"seconds":1.48,"usual":1.5345,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.545,1.512,1.957,1.196,1.468,1.524,null,1.64,1.644],"edited":[],"code":null},{"name":"home.spec.ts › [desktop] the picker lands a deck on one of its games","folder":"","file":"home.spec.ts","block":"","title":"[desktop] the picker lands a deck on one of its games","path":"e2e/home.spec.ts","line":1,"seconds":3.126,"usual":3.3575,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.246,3.386,3.873,2.991,3.194,3.329,null,4.117,4.093],"edited":[],"code":null},{"name":"home.spec.ts › [desktop] each card shows BoardGameGeek's difficulty, and a deck the span of its games'","folder":"","file":"home.spec.ts","block":"","title":"[desktop] each card shows BoardGameGeek's difficulty, and a deck the span of its games'","path":"e2e/home.spec.ts","line":1,"seconds":1.189,"usual":1.2445,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.126,1.214,1.618,0.945,1.255,1.234,null,1.684,1.657],"edited":[],"code":null},{"name":"home.spec.ts › [desktop] the list sorts by difficulty from its column header","folder":"","file":"home.spec.ts","block":"","title":"[desktop] the list sorts by difficulty from its column header","path":"e2e/home.spec.ts","line":1,"seconds":2.549,"usual":2.5839999999999996,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.467,2.602,3.111,2.013,2.405,2.566,null,3.337,3.153],"edited":[],"code":null},{"name":"home.spec.ts › [desktop] on a wider screen, add-ons sit side by side, each name starting its row, in the list and on a card","folder":"","file":"home.spec.ts","block":"","title":"[desktop] on a wider screen, add-ons sit side by side, each name starting its row, in the list and on a card","path":"e2e/home.spec.ts","line":1,"seconds":8.195,"usual":7.096,"result":"passed","slower":true,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[7.279,5.502,7.46,5.83,6.913,5.67,null,7.648,7.714],"edited":[],"code":[[1,"import { COMING_SOON, GAMES, WISHLIST } from './games';",false],[2,"import { test, expect, SUGGESTION } from './fixtures';",false],[3,"",false],[4,"/** Every game row in the visible list carries a \"Show details for \u003cname>\" toggle. */",false],[5,"const rowToggles = /^Show details for /;",false],[6,"",false],[7,"test('the home page lists the whole collection', async ({ page }) => {",false],[8,"  await page.goto('/');",false],[9,"",false],[10,"  await expect(page.getByRole('heading', { level: 1, name: 'Our Game Room' })).toBeVisible();",false],[11,"  await expect(page.getByRole('heading', { level: 2, name: 'Our Collection' })).toBeVisible();",false],[12,"  await expect(page.getByText(`${GAMES.length} games`, { exact: true })).toBeVisible();",false],[13,"  await expect(page.getByRole('button', { name: rowToggles })).toHaveCount(GAMES.length);",false],[14,"  for (const name of ['Azul', 'Bananagrams', '7 Wonders']) {",false],[15,"    await expect(page.getByRole('button', { name: `Show details for ${name}` })).toBeVisible();",false],[16,"  }",false]]},{"name":"home.spec.ts › [desktop] on a wider screen, an open game's awards sit side by side","folder":"","file":"home.spec.ts","block":"","title":"[desktop] on a wider screen, an open game's awards sit side by side","path":"e2e/home.spec.ts","line":1,"seconds":2.378,"usual":2.5069999999999997,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.223,2.526,3.068,1.734,2.437,2.488,null,3.657,3.253],"edited":[],"code":null},{"name":"home.spec.ts › [desktop] the list's table fits its box at the narrowest width of each layout, a long name wrapping","folder":"","file":"home.spec.ts","block":"","title":"[desktop] the list's table fits its box at the narrowest width of each layout, a long name wrapping","path":"e2e/home.spec.ts","line":1,"seconds":3.519,"usual":4.713,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.918,4.96,5.517,2.817,3.858,4.466,null,5.514,5.452],"edited":[],"code":null},{"name":"home.spec.ts › [desktop] a card's footer stays one row on the grid's narrowest cards, and under a filter","folder":"","file":"home.spec.ts","block":"","title":"[desktop] a card's footer stays one row on the grid's narrowest cards, and under a filter","path":"e2e/home.spec.ts","line":1,"seconds":7.368,"usual":8.126999999999999,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[8.205,8.049,9.603,5.498,7.303,7.316,null,10.14,10.801],"edited":[],"code":null},{"name":"links.spec.ts › [desktop] an approve link shows what BoardGameGeek has, and approves only when pressed","folder":"","file":"links.spec.ts","block":"","title":"[desktop] an approve link shows what BoardGameGeek has, and approves only when pressed","path":"e2e/links.spec.ts","line":1,"seconds":1.147,"usual":1.0185,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.229,0.894,1.022,1.024,0.914,0.917,null,1.015,1.494],"edited":[],"code":null},{"name":"links.spec.ts › [desktop] a deny link denies only when pressed, and a used one says so","folder":"","file":"links.spec.ts","block":"","title":"[desktop] a deny link denies only when pressed, and a used one says so","path":"e2e/links.spec.ts","line":1,"seconds":1.396,"usual":1.178,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.25,1.168,1.497,1.212,0.894,0.943,null,1.048,1.188],"edited":[],"code":null},{"name":"links.spec.ts › [desktop] an emailed link opened signed out reads nothing and offers sign-in","folder":"","file":"links.spec.ts","block":"","title":"[desktop] an emailed link opened signed out reads nothing and offers sign-in","path":"e2e/links.spec.ts","line":1,"seconds":0.58,"usual":0.734,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.692,0.584,0.887,0.547,0.535,0.939,null,1.033,0.776],"edited":[],"code":null},{"name":"not-found.spec.ts › [desktop] an unknown address shows the not-found page with a way home","folder":"","file":"not-found.spec.ts","block":"","title":"[desktop] an unknown address shows the not-found page with a way home","path":"e2e/not-found.spec.ts","line":1,"seconds":1.626,"usual":1.428,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.392,1.291,1.683,1.106,1.39,1.464,null,1.786,2.165],"edited":[],"code":null},{"name":"not-found.spec.ts › [desktop] rules for an unknown game say so and link home","folder":"","file":"not-found.spec.ts","block":"","title":"[desktop] rules for an unknown game say so and link home","path":"e2e/not-found.spec.ts","line":1,"seconds":0.824,"usual":0.6839999999999999,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.6,0.632,0.829,0.472,0.594,0.845,null,0.744,0.736],"edited":[],"code":null},{"name":"not-found.spec.ts › [desktop] a page whose code is gone since the tab loaded reloads once and opens","folder":"","file":"not-found.spec.ts","block":"","title":"[desktop] a page whose code is gone since the tab loaded reloads once and opens","path":"e2e/not-found.spec.ts","line":1,"seconds":1.182,"usual":1.593,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.289,2.107,1.663,1.032,1.226,1.822,null,1.662,1.524],"edited":[],"code":null},{"name":"not-found.spec.ts › [desktop] a page whose code never loads says so after one reload, not a loop","folder":"","file":"not-found.spec.ts","block":"","title":"[desktop] a page whose code never loads says so after one reload, not a loop","path":"e2e/not-found.spec.ts","line":1,"seconds":1.102,"usual":1.287,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.913,1.454,1.361,0.978,0.917,1.389,null,1.243,1.331],"edited":[],"code":null},{"name":"offline.spec.ts › [desktop] after a first visit, the installed site lists the collection, checks words and keeps score with no network","folder":"","file":"offline.spec.ts","block":"","title":"[desktop] after a first visit, the installed site lists the collection, checks words and keeps score with no network","path":"e2e/offline.spec.ts","line":1,"seconds":3.944,"usual":4.196,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.069,4.093,5.302,3.112,3.807,4.299,null,5.284,5.23],"edited":[],"code":null},{"name":"offline.spec.ts › [desktop] the wishlist, seen once online, lists its games offline from the games query's saved answer","folder":"","file":"offline.spec.ts","block":"","title":"[desktop] the wishlist, seen once online, lists its games offline from the games query's saved answer","path":"e2e/offline.spec.ts","line":1,"seconds":3.299,"usual":3.2815000000000003,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.205,3.358,4.382,2.541,3.195,3.095,null,4.689,3.85],"edited":[],"code":null},{"name":"offline.spec.ts › [desktop] the wishlist's box art, seen once online, shows on its cards with no network","folder":"","file":"offline.spec.ts","block":"","title":"[desktop] the wishlist's box art, seen once online, shows on its cards with no network","path":"e2e/offline.spec.ts","line":1,"seconds":17.6,"usual":18.311,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[17.328,18.495,23.142,13.571,17.695,18.127,null,23.624,24.264],"edited":[],"code":null},{"name":"offline.spec.ts › [desktop] a large rulebook saved with Save for offline draws offline, its JPEG 2000 pages included","folder":"","file":"offline.spec.ts","block":"","title":"[desktop] a large rulebook saved with Save for offline draws offline, its JPEG 2000 pages included","path":"e2e/offline.spec.ts","line":1,"seconds":12.646,"usual":13.4985,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[13.335,13.023,18.11,10.234,13.583,13.414,null,17.827,17.672],"edited":[],"code":null},{"name":"offline.spec.ts › [desktop] a saved rulebook draws offline a page with images never opened online","folder":"","file":"offline.spec.ts","block":"","title":"[desktop] a saved rulebook draws offline a page with images never opened online","path":"e2e/offline.spec.ts","line":1,"seconds":13.468,"usual":13.764,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[12.647,13.394,17.821,10.472,12.811,14.134,null,19.889,17.146],"edited":[],"code":null},{"name":"offline.spec.ts › [desktop] a small rulebook saves itself on its first open, says so, and reads offline","folder":"","file":"offline.spec.ts","block":"","title":"[desktop] a small rulebook saves itself on its first open, says so, and reads offline","path":"e2e/offline.spec.ts","line":1,"seconds":3.597,"usual":3.42,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.057,3.126,4.503,2.564,3.714,3.043,null,4.185,4.288],"edited":[],"code":null},{"name":"offline.spec.ts › [desktop] a large rulebook isn't saved by opening it, and offline says to tap Save for offline next time","folder":"","file":"offline.spec.ts","block":"","title":"[desktop] a large rulebook isn't saved by opening it, and offline says to tap Save for offline next time","path":"e2e/offline.spec.ts","line":1,"seconds":4.144,"usual":4.3665,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.159,4.317,6.084,3.287,4.416,4.195,null,5.216,5.184],"edited":[],"code":null},{"name":"offline.spec.ts › [desktop] a large rulebook saved with Save for offline reads offline, and says it is saved","folder":"","file":"offline.spec.ts","block":"","title":"[desktop] a large rulebook saved with Save for offline reads offline, and says it is saved","path":"e2e/offline.spec.ts","line":1,"seconds":7.448,"usual":7.692,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[7.071,6.825,8.996,5.579,8.657,6.02,null,8.313,9.124],"edited":[],"code":null},{"name":"offline.spec.ts › [desktop] a rulebook the device has no room for says so, with nothing to try again","folder":"","file":"offline.spec.ts","block":"","title":"[desktop] a rulebook the device has no room for says so, with nothing to try again","path":"e2e/offline.spec.ts","line":1,"seconds":4.425,"usual":5.133,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[5.321,4.806,6.154,3.186,4.945,4.933,null,7.123,6.322],"edited":[],"code":null},{"name":"offline.spec.ts › [desktop] a rulebook opened once reads on a phone with no network","folder":"","file":"offline.spec.ts","block":"","title":"[desktop] a rulebook opened once reads on a phone with no network","path":"e2e/offline.spec.ts","line":1,"seconds":4.19,"usual":4.4335,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.992,5.025,4.639,2.827,3.817,4.228,null,5.747,6.098],"edited":[],"code":null},{"name":"offline.spec.ts › [desktop] offline on a rules page, the chat says the assistant needs a connection and waits for one","folder":"","file":"offline.spec.ts","block":"","title":"[desktop] offline on a rules page, the chat says the assistant needs a connection and waits for one","path":"e2e/offline.spec.ts","line":1,"seconds":7.155,"usual":7.0545,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[6.068,6.319,7.637,5.571,6.85,7.259,null,8.465,9.966],"edited":[],"code":null},{"name":"offline.spec.ts › [desktop] a rulebook never opened says offline that it isn't saved, with no dead links to it","folder":"","file":"offline.spec.ts","block":"","title":"[desktop] a rulebook never opened says offline that it isn't saved, with no dead links to it","path":"e2e/offline.spec.ts","line":1,"seconds":2.853,"usual":2.956,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.979,2.933,3.314,2.089,2.611,2.54,null,3.395,3.082],"edited":[],"code":null},{"name":"offline.spec.ts › [desktop] a rulebook that failed offline loads by itself when the network comes back","folder":"","file":"offline.spec.ts","block":"","title":"[desktop] a rulebook that failed offline loads by itself when the network comes back","path":"e2e/offline.spec.ts","line":1,"seconds":2.664,"usual":3.984,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.07,3.934,5.08,2.963,2.689,2.851,null,4.034,4.353],"edited":[],"code":null},{"name":"offline.spec.ts › [desktop] the saved rulebook answers byte ranges the way the server does","folder":"","file":"offline.spec.ts","block":"","title":"[desktop] the saved rulebook answers byte ranges the way the server does","path":"e2e/offline.spec.ts","line":1,"seconds":2.503,"usual":2.498,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.18,2.296,2.631,1.516,2.515,2.701,null,2.914,2.481],"edited":[],"code":null},{"name":"offline.spec.ts › [desktop] the API goes to the network, never the service worker","folder":"","file":"offline.spec.ts","block":"","title":"[desktop] the API goes to the network, never the service worker","path":"e2e/offline.spec.ts","line":1,"seconds":3.19,"usual":3.062,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.441,2.67,3.828,1.904,3.357,3.147,null,3.577,2.977],"edited":[],"code":null},{"name":"rules.spec.ts › [desktop] a rules page shows the rulebook and the assistant answers a question","folder":"","file":"rules.spec.ts","block":"","title":"[desktop] a rules page shows the rulebook and the assistant answers a question","path":"e2e/rules.spec.ts","line":1,"seconds":6.664,"usual":7.696999999999999,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[8.014,7.064,9.097,5.164,7.38,6.585,null,9.298,8.779],"edited":[],"code":null},{"name":"rules.spec.ts › [desktop] a game's house rules open above its rulebook, on every tab","folder":"","file":"rules.spec.ts","block":"","title":"[desktop] a game's house rules open above its rulebook, on every tab","path":"e2e/rules.spec.ts","line":1,"seconds":1.472,"usual":2.6235,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.201,2.462,3.419,2.203,2.378,2.925,null,3.004,2.785],"edited":[],"code":null},{"name":"rules.spec.ts › [desktop] a rate-limited question comes back to the box and Retry asks it again","folder":"","file":"rules.spec.ts","block":"","title":"[desktop] a rate-limited question comes back to the box and Retry asks it again","path":"e2e/rules.spec.ts","line":1,"seconds":2.918,"usual":3.215,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.283,3.345,4.036,2.845,2.595,3.147,null,3.052,3.72],"edited":[],"code":null},{"name":"rules.spec.ts › [desktop] the daily cap says the assistant is resting for today, by the box, not to wait a minute","folder":"","file":"rules.spec.ts","block":"","title":"[desktop] the daily cap says the assistant is resting for today, by the box, not to wait a minute","path":"e2e/rules.spec.ts","line":1,"seconds":1.903,"usual":2.173,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.802,2.137,2.335,1.991,2.197,2.149,null,2.418,2.338],"edited":[],"code":null},{"name":"rules.spec.ts › [desktop] under a players filter, Rules opens the add-on the game fits through","folder":"","file":"rules.spec.ts","block":"","title":"[desktop] under a players filter, Rules opens the add-on the game fits through","path":"e2e/rules.spec.ts","line":1,"seconds":1.802,"usual":2.252,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.953,2.467,2.848,1.59,2.089,2.054,null,2.415,2.952],"edited":[],"code":null},{"name":"rules.spec.ts › [desktop] an answer that names another rulebook links to its tab","folder":"","file":"rules.spec.ts","block":"","title":"[desktop] an answer that names another rulebook links to its tab","path":"e2e/rules.spec.ts","line":1,"seconds":2.495,"usual":2.5905,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.178,2.48,3.773,2.014,2.515,2.666,null,3.403,2.939],"edited":[],"code":null},{"name":"rules.spec.ts › [desktop] a starter question asks itself, and a game with a calculator links to it","folder":"","file":"rules.spec.ts","block":"","title":"[desktop] a starter question asks itself, and a game with a calculator links to it","path":"e2e/rules.spec.ts","line":1,"seconds":2.355,"usual":2.846,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.414,3.874,2.965,2.727,2.379,2.559,null,3.259,3.81],"edited":[],"code":null},{"name":"rules.spec.ts › [desktop] on a phone the page draws the rulebook, searchable, under a download link","folder":"","file":"rules.spec.ts","block":"","title":"[desktop] on a phone the page draws the rulebook, searchable, under a download link","path":"e2e/rules.spec.ts","line":1,"seconds":7.276,"usual":8.1425,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[8.052,6.339,9.758,5.288,6.698,8.233,null,9.833,10.142],"edited":[],"code":null},{"name":"rules.spec.ts › [desktop] a scanned rulebook can be searched on a phone too","folder":"","file":"rules.spec.ts","block":"","title":"[desktop] a scanned rulebook can be searched on a phone too","path":"e2e/rules.spec.ts","line":1,"seconds":2.485,"usual":3.433,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.209,2.656,4.242,2.487,3.25,3.616,null,3.872,3.96],"edited":[],"code":null},{"name":"rules.spec.ts › [desktop] on a phone a rulebook tab opens its own book in the reader","folder":"","file":"rules.spec.ts","block":"","title":"[desktop] on a phone a rulebook tab opens its own book in the reader","path":"e2e/rules.spec.ts","line":1,"seconds":5.078,"usual":5.516,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.223,5.249,6.985,3.973,5.783,4.849,null,7.138,6.782],"edited":[],"code":null},{"name":"rules.spec.ts › [desktop] a long rulebook strip opens with the chosen tab in view","folder":"","file":"rules.spec.ts","block":"","title":"[desktop] a long rulebook strip opens with the chosen tab in view","path":"e2e/rules.spec.ts","line":1,"seconds":1.366,"usual":1.3210000000000002,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.292,1.176,1.488,0.959,0.999,1.399,null,1.736,1.35],"edited":[],"code":null},{"name":"rules.spec.ts › [desktop] a tab opened from a link sits clear of the strip's faded edge","folder":"","file":"rules.spec.ts","block":"","title":"[desktop] a tab opened from a link sits clear of the strip's faded edge","path":"e2e/rules.spec.ts","line":1,"seconds":1.105,"usual":1.1360000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.898,1.228,1.479,0.832,1.029,1.093,null,1.392,1.179],"edited":[],"code":null},{"name":"rules.spec.ts › [desktop] an answer's page citations open their rulebook at that page","folder":"","file":"rules.spec.ts","block":"","title":"[desktop] an answer's page citations open their rulebook at that page","path":"e2e/rules.spec.ts","line":1,"seconds":1.564,"usual":2.026,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.174,1.676,2.376,2.009,1.464,1.695,null,2.393,2.043],"edited":[],"code":null},{"name":"rules.spec.ts › [desktop] on a phone a citation of another tab's rulebook opens that tab at the page, under the answer","folder":"","file":"rules.spec.ts","block":"","title":"[desktop] on a phone a citation of another tab's rulebook opens that tab at the page, under the answer","path":"e2e/rules.spec.ts","line":1,"seconds":2.272,"usual":2.7305,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.426,2.681,4.104,2.712,3.395,2.44,null,3.636,2.749],"edited":[],"code":null},{"name":"rules.spec.ts › [desktop] on a phone a jump lands on its page in a rulebook of mixed page sizes","folder":"","file":"rules.spec.ts","block":"","title":"[desktop] on a phone a jump lands on its page in a rulebook of mixed page sizes","path":"e2e/rules.spec.ts","line":1,"seconds":4.849,"usual":5.827,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[5.713,5.919,6.429,4.499,5.735,5.094,null,6.988,6.088],"edited":[],"code":null},{"name":"rules.spec.ts › [desktop] on a desktop a citation opens its page in place and marks the passage it points to","folder":"","file":"rules.spec.ts","block":"","title":"[desktop] on a desktop a citation opens its page in place and marks the passage it points to","path":"e2e/rules.spec.ts","line":1,"seconds":13.641,"usual":13.073,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[11.979,11.39,16.603,10.077,12.295,13.851,null,16.271,15.225],"edited":[],"code":null},{"name":"rules.spec.ts › [desktop] on a phone a citation marks the passage it points to, on another tab's rulebook","folder":"","file":"rules.spec.ts","block":"","title":"[desktop] on a phone a citation marks the passage it points to, on another tab's rulebook","path":"e2e/rules.spec.ts","line":1,"seconds":4.822,"usual":5.2085,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.425,5.38,7.74,3.62,4.839,5.037,null,6.185,6.531],"edited":[],"code":null},{"name":"rules.spec.ts › [desktop] the cited mark covers the words it marks on the page image","folder":"","file":"rules.spec.ts","block":"","title":"[desktop] the cited mark covers the words it marks on the page image","path":"e2e/rules.spec.ts","line":1,"seconds":6.102,"usual":7.1195,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[6.861,7.378,8.856,5.602,5.538,6.283,null,8.53,9.582],"edited":[],"code":null},{"name":"score-pads.spec.ts › [desktop] a deck's Hearts is scored hand by hand from its rules page, to the end","folder":"","file":"score-pads.spec.ts","block":"","title":"[desktop] a deck's Hearts is scored hand by hand from its rules page, to the end","path":"e2e/score-pads.spec.ts","line":1,"seconds":4.067,"usual":4.4365000000000006,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.602,4.271,5.933,3.46,4.182,4.09,null,5.47,5.939],"edited":[],"code":null},{"name":"score-pads.spec.ts › [desktop] Uno's Score button opens its pad, and the first to 500 wins","folder":"","file":"score-pads.spec.ts","block":"","title":"[desktop] Uno's Score button opens its pad, and the first to 500 wins","path":"e2e/score-pads.spec.ts","line":1,"seconds":4.674,"usual":5.0715,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.177,4.598,6.095,3.181,5.75,3.99,null,5.545,5.7],"edited":[],"code":null},{"name":"score-pads.spec.ts › [desktop] Spades scores partnerships, and Euchre the makers","folder":"","file":"score-pads.spec.ts","block":"","title":"[desktop] Spades scores partnerships, and Euchre the makers","path":"e2e/score-pads.spec.ts","line":1,"seconds":1.697,"usual":2.059,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.551,2.022,2.096,1.69,1.969,1.998,null,3.668,3.072],"edited":[],"code":null},{"name":"score-pads.spec.ts › [desktop] Ticket to Ride scores each player's routes and tickets on the map played","folder":"","file":"score-pads.spec.ts","block":"","title":"[desktop] Ticket to Ride scores each player's routes and tickets on the map played","path":"e2e/score-pads.spec.ts","line":1,"seconds":2.447,"usual":1.9215,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.759,1.758,2.355,1.467,1.839,2.004,null,2.459,2.245],"edited":[],"code":null},{"name":"score-pads.spec.ts › [desktop] Dominion counts only the Kingdom cards ticked","folder":"","file":"score-pads.spec.ts","block":"","title":"[desktop] Dominion counts only the Kingdom cards ticked","path":"e2e/score-pads.spec.ts","line":1,"seconds":1.05,"usual":1.3545,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.314,1.414,1.51,1.085,1.067,1.081,null,1.395,1.455],"edited":[],"code":null},{"name":"score.spec.ts › [desktop] the 7 Wonders calculator totals a player and ranks the table","folder":"","file":"score.spec.ts","block":"","title":"[desktop] the 7 Wonders calculator totals a player and ranks the table","path":"e2e/score.spec.ts","line":1,"seconds":1.217,"usual":1.418,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.579,1.294,1.785,1.172,1.369,1.398,null,1.438,1.493],"edited":[],"code":null},{"name":"score.spec.ts › [desktop] on a phone the score sheet scrolls sideways with the categories pinned","folder":"","file":"score.spec.ts","block":"","title":"[desktop] on a phone the score sheet scrolls sideways with the categories pinned","path":"e2e/score.spec.ts","line":1,"seconds":1.99,"usual":2.0835,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.84,2.144,2.433,1.59,1.949,2.023,null,2.472,2.674],"edited":[],"code":null},{"name":"score.spec.ts › [desktop] Next passes the phone round the table and ends on the results","folder":"","file":"score.spec.ts","block":"","title":"[desktop] Next passes the phone round the table and ends on the results","path":"e2e/score.spec.ts","line":1,"seconds":1.504,"usual":1.437,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.348,1.326,1.667,1.245,1.526,1.306,null,1.785,1.554],"edited":[],"code":null},{"name":"score.spec.ts › [desktop] a game with no score calculator shows the not-found page","folder":"","file":"score.spec.ts","block":"","title":"[desktop] a game with no score calculator shows the not-found page","path":"e2e/score.spec.ts","line":1,"seconds":1.486,"usual":1.493,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.368,1.618,1.896,1.06,1.289,1.276,null,1.69,1.669],"edited":[],"code":null},{"name":"score.spec.ts › [desktop] a negative military score can be typed and the game survives a reload","folder":"","file":"score.spec.ts","block":"","title":"[desktop] a negative military score can be typed and the game survives a reload","path":"e2e/score.spec.ts","line":1,"seconds":1.437,"usual":1.724,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.635,1.786,2.263,1.461,1.662,1.644,null,1.945,1.84],"edited":[],"code":null},{"name":"score.spec.ts › [desktop] a score sits dead centre in its box","folder":"","file":"score.spec.ts","block":"","title":"[desktop] a score sits dead centre in its box","path":"e2e/score.spec.ts","line":1,"seconds":2.789,"usual":2.6635,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.616,2.593,3.307,2.124,2.536,2.711,null,3.282,3.103],"edited":[],"code":null},{"name":"score.spec.ts › [desktop] on a 390px phone each box names its unit and a converted field shows its points on its label line","folder":"","file":"score.spec.ts","block":"","title":"[desktop] on a 390px phone each box names its unit and a converted field shows its points on its label line","path":"e2e/score.spec.ts","line":1,"seconds":1.414,"usual":1.393,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.461,1.358,1.634,0.946,1.23,1.246,null,1.695,1.428],"edited":[],"code":null},{"name":"score.spec.ts › [desktop] on a 320px phone each box names its unit and a converted field shows its points on its label line","folder":"","file":"score.spec.ts","block":"","title":"[desktop] on a 320px phone each box names its unit and a converted field shows its points on its label line","path":"e2e/score.spec.ts","line":1,"seconds":1.026,"usual":1.3115,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.449,1.235,1.321,1.194,1.222,1.302,null,1.392,1.341],"edited":[],"code":null},{"name":"score.spec.ts › [desktop] at 1280px each box shows a long score and its unit as one centred line","folder":"","file":"score.spec.ts","block":"","title":"[desktop] at 1280px each box shows a long score and its unit as one centred line","path":"e2e/score.spec.ts","line":1,"seconds":1.222,"usual":1.379,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.405,1.169,1.618,0.93,1.16,1.396,null,1.779,1.362],"edited":[],"code":null},{"name":"score.spec.ts › [desktop] at 390px each box shows a long score and its unit as one centred line","folder":"","file":"score.spec.ts","block":"","title":"[desktop] at 390px each box shows a long score and its unit as one centred line","path":"e2e/score.spec.ts","line":1,"seconds":1.199,"usual":1.392,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.462,1.223,1.688,0.932,1.228,1.322,null,1.508,1.663],"edited":[],"code":null},{"name":"score.spec.ts › [desktop] at 375px each box shows a long score and its unit as one centred line","folder":"","file":"score.spec.ts","block":"","title":"[desktop] at 375px each box shows a long score and its unit as one centred line","path":"e2e/score.spec.ts","line":1,"seconds":1.138,"usual":1.237,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.142,1.158,1.476,0.926,1.286,1.188,null,1.777,1.398],"edited":[],"code":null},{"name":"score.spec.ts › [desktop] at 320px each box shows a long score and its unit as one centred line","folder":"","file":"score.spec.ts","block":"","title":"[desktop] at 320px each box shows a long score and its unit as one centred line","path":"e2e/score.spec.ts","line":1,"seconds":1.303,"usual":1.2625,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.131,1.307,1.503,0.92,1.163,1.218,null,1.465,1.493],"edited":[],"code":null},{"name":"theme.spec.ts › [desktop] follows the system's dark setting with nothing picked","folder":"","file":"theme.spec.ts","block":"","title":"[desktop] follows the system's dark setting with nothing picked","path":"e2e/theme.spec.ts","line":1,"seconds":3.392,"usual":3.0549999999999997,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.018,3.239,4.068,2.341,3.092,1.626,null,4.24,2.246],"edited":[],"code":null},{"name":"theme.spec.ts › [desktop] a picked theme wins over the system's and is there from the first paint next time","folder":"","file":"theme.spec.ts","block":"","title":"[desktop] a picked theme wins over the system's and is there from the first paint next time","path":"e2e/theme.spec.ts","line":1,"seconds":7.012,"usual":7.104,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[6.668,7.021,8.413,5.329,6.692,7.187,null,8.789,8.517],"edited":[],"code":null},{"name":"theme.spec.ts › [desktop] the theme toggle stays clear of the title at 390px","folder":"","file":"theme.spec.ts","block":"","title":"[desktop] the theme toggle stays clear of the title at 390px","path":"e2e/theme.spec.ts","line":1,"seconds":1.173,"usual":1.392,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.437,1.347,1.752,1.054,1.27,1.26,null,1.706,1.453],"edited":[],"code":null},{"name":"theme.spec.ts › [desktop] the theme toggle stays clear of the title at 700px","folder":"","file":"theme.spec.ts","block":"","title":"[desktop] the theme toggle stays clear of the title at 700px","path":"e2e/theme.spec.ts","line":1,"seconds":1.417,"usual":1.4295,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.529,1.323,2.021,1.058,1.33,1.329,null,1.992,1.677],"edited":[],"code":null},{"name":"theme.spec.ts › [desktop] the theme toggle stays clear of the title at 1280px","folder":"","file":"theme.spec.ts","block":"","title":"[desktop] the theme toggle stays clear of the title at 1280px","path":"e2e/theme.spec.ts","line":1,"seconds":1.643,"usual":1.6135000000000002,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.681,1.546,2.053,1.143,1.461,1.503,null,1.967,1.824],"edited":[],"code":null},{"name":"theme.spec.ts › [desktop] text keeps a readable contrast in the light theme","folder":"","file":"theme.spec.ts","block":"","title":"[desktop] text keeps a readable contrast in the light theme","path":"e2e/theme.spec.ts","line":1,"seconds":7.936,"usual":8.69,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[8.684,8.414,11.442,6.676,8.386,8.696,null,11.232,11.25],"edited":[],"code":null},{"name":"theme.spec.ts › [desktop] text keeps a readable contrast in the dark theme","folder":"","file":"theme.spec.ts","block":"","title":"[desktop] text keeps a readable contrast in the dark theme","path":"e2e/theme.spec.ts","line":1,"seconds":19.552,"usual":20.311500000000002,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[20.36,20.242,25.982,15.212,18.964,20.263,null,27.148,23.024],"edited":[],"code":null},{"name":"wishlist-owner.spec.ts › [desktop] the owner edits a written entry from its pencil, and removes it from its bin after confirming","folder":"","file":"wishlist-owner.spec.ts","block":"","title":"[desktop] the owner edits a written entry from its pencil, and removes it from its bin after confirming","path":"e2e/wishlist-owner.spec.ts","line":1,"seconds":5.033,"usual":5.24,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.902,5.925,6.646,3.802,4.912,4.696,null,5.93,5.568],"edited":[],"code":null},{"name":"wishlist-owner.spec.ts › [desktop] a visitor sees no pencil or bin","folder":"","file":"wishlist-owner.spec.ts","block":"","title":"[desktop] a visitor sees no pencil or bin","path":"e2e/wishlist-owner.spec.ts","line":1,"seconds":0.92,"usual":1.0565,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.908,1.139,1.112,0.74,0.801,1.001,null,1.29,1.317],"edited":[],"code":null},{"name":"wishlist-owner.spec.ts › [desktop] the owner's card footers stay one row at the desktop's widths, two-digit votes and all","folder":"","file":"wishlist-owner.spec.ts","block":"","title":"[desktop] the owner's card footers stay one row at the desktop's widths, two-digit votes and all","path":"e2e/wishlist-owner.spec.ts","line":1,"seconds":1.591,"usual":1.893,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.63,1.932,2.276,1.217,1.665,1.854,null,2.17,2.05],"edited":[],"code":null},{"name":"wishlist.spec.ts › [desktop] voting on a wishlist game posts the vote and shows the new count","folder":"","file":"wishlist.spec.ts","block":"","title":"[desktop] voting on a wishlist game posts the vote and shows the new count","path":"e2e/wishlist.spec.ts","line":1,"seconds":2.834,"usual":2.7830000000000004,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.724,2.842,3.415,1.963,2.65,2.401,null,3.293,2.997],"edited":[],"code":null},{"name":"wishlist.spec.ts › [desktop] the wishlist sorts by most votes, marks expansions and jumps to the suggest form","folder":"","file":"wishlist.spec.ts","block":"","title":"[desktop] the wishlist sorts by most votes, marks expansions and jumps to the suggest form","path":"e2e/wishlist.spec.ts","line":1,"seconds":5.37,"usual":5.224,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.613,5.286,6.042,3.947,4.639,5.162,null,6.821,5.554],"edited":[],"code":null},{"name":"wishlist.spec.ts › [desktop] a friend opening the wishlist link is asked to vote, and sees the vote land","folder":"","file":"wishlist.spec.ts","block":"","title":"[desktop] a friend opening the wishlist link is asked to vote, and sees the vote land","path":"e2e/wishlist.spec.ts","line":1,"seconds":4.157,"usual":5.035,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[5.375,4.361,6.139,3.375,4.695,4.53,null,6.214,6.034],"edited":[],"code":null},{"name":"word-checker.spec.ts › [desktop] a dictionary word is valid and shows its definition","folder":"","file":"word-checker.spec.ts","block":"","title":"[desktop] a dictionary word is valid and shows its definition","path":"e2e/word-checker.spec.ts","line":1,"seconds":1.458,"usual":1.3535,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.353,1.516,1.649,1.145,1.354,1.143,null,1.25,1.513],"edited":[],"code":null},{"name":"word-checker.spec.ts › [desktop] a word the dictionary does not know (404) is not valid","folder":"","file":"word-checker.spec.ts","block":"","title":"[desktop] a word the dictionary does not know (404) is not valid","path":"e2e/word-checker.spec.ts","line":1,"seconds":1.56,"usual":1.2405,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.001,1.344,1.456,0.93,1.137,0.941,null,1.351,1.439],"edited":[],"code":null},{"name":"word-checker.spec.ts › [desktop] a lone letter gets a note, not a verdict, and no lookup","folder":"","file":"word-checker.spec.ts","block":"","title":"[desktop] a lone letter gets a note, not a verdict, and no lookup","path":"e2e/word-checker.spec.ts","line":1,"seconds":1.014,"usual":1.2225000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.183,1.262,1.66,0.777,1.091,1.08,null,1.294,1.311],"edited":[],"code":null},{"name":"word-checker.spec.ts › [desktop] a word Wiktionary has only as a misspelling is not valid","folder":"","file":"word-checker.spec.ts","block":"","title":"[desktop] a word Wiktionary has only as a misspelling is not valid","path":"e2e/word-checker.spec.ts","line":1,"seconds":1.093,"usual":1.2285,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.162,1.249,1.381,0.901,1.085,1.208,null,1.555,1.707],"edited":[],"code":null},{"name":"word-checker.spec.ts › [desktop] a dictionary outage still answers from the word-game list","folder":"","file":"word-checker.spec.ts","block":"","title":"[desktop] a dictionary outage still answers from the word-game list","path":"e2e/word-checker.spec.ts","line":1,"seconds":1.775,"usual":1.8885,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.697,1.842,2.295,1.408,1.741,1.935,null,2.43,2.37],"edited":[],"code":null},{"name":"word-checker.spec.ts › [desktop] a word missing from both lists is valid when the dictionary has it","folder":"","file":"word-checker.spec.ts","block":"","title":"[desktop] a word missing from both lists is valid when the dictionary has it","path":"e2e/word-checker.spec.ts","line":1,"seconds":0.976,"usual":1.1825,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.175,1.233,1.497,0.797,1.044,1.004,null,1.19,1.47],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] the list is a line a game, which opens in place; Rules inside opens the rules page and Back finds it open","folder":"","file":"phone.spec.ts","block":"","title":"[phone] the list is a line a game, which opens in place; Rules inside opens the rules page and Back finds it open","path":"e2e/phone.spec.ts","line":1,"seconds":6.021,"usual":7.9105,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[6.192,7.807,11.036,4.78,7.7,8.014,null,10.697,10.384],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] a line opening never scrolls inside itself, so a tap on what it shows stays where it was aimed","folder":"","file":"phone.spec.ts","block":"","title":"[phone] a line opening never scrolls inside itself, so a tap on what it shows stays where it was aimed","path":"e2e/phone.spec.ts","line":1,"seconds":1.953,"usual":1.9645000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.976,1.885,2.681,1.584,1.851,1.953,null,2.725,2.61],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] cards are still a choice, and the choice is kept in the link","folder":"","file":"phone.spec.ts","block":"","title":"[phone] cards are still a choice, and the choice is kept in the link","path":"e2e/phone.spec.ts","line":1,"seconds":4.828,"usual":5.147,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.997,5.135,6.797,3.937,4.842,5.159,null,6.478,6.357],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] a card's award sits on its art, and its footer is one row of buttons, with add-ons or the owner's tools","folder":"","file":"phone.spec.ts","block":"","title":"[phone] a card's award sits on its art, and its footer is one row of buttons, with add-ons or the owner's tools","path":"e2e/phone.spec.ts","line":1,"seconds":5.052,"usual":6.147,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[5.119,6.05,7.234,3.962,6.244,5.037,null,6.905,7.975],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] the bar along the bottom stays on screen, its buttons centred in it, and switches the lists","folder":"","file":"phone.spec.ts","block":"","title":"[phone] the bar along the bottom stays on screen, its buttons centred in it, and switches the lists","path":"e2e/phone.spec.ts","line":1,"seconds":12.064,"usual":12.564,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[12.313,12.815,16.949,10.177,11.822,12.287,null,17.362,16.724],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] what takes focus scrolls clear of the bar","folder":"","file":"phone.spec.ts","block":"","title":"[phone] what takes focus scrolls clear of the bar","path":"e2e/phone.spec.ts","line":1,"seconds":1.535,"usual":1.7065000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.748,1.665,2.171,1.403,1.445,1.608,null,2.312,1.859],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] the heading keeps one line from 360px, and the bar its one-line labels at 320px","folder":"","file":"phone.spec.ts","block":"","title":"[phone] the heading keeps one line from 360px, and the bar its one-line labels at 320px","path":"e2e/phone.spec.ts","line":1,"seconds":2.816,"usual":3.5575,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.468,3.647,4.312,2.483,2.995,3.205,null,4.572,3.836],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] the bar steps aside while the keyboard is up for the search","folder":"","file":"phone.spec.ts","block":"","title":"[phone] the bar steps aside while the keyboard is up for the search","path":"e2e/phone.spec.ts","line":1,"seconds":1.221,"usual":1.3860000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.393,1.22,1.782,1.007,1.296,1.379,null,1.618,1.633],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] the top of the page leaves room for four games: the title beside the theme picker, small covers under it","folder":"","file":"phone.spec.ts","block":"","title":"[phone] the top of the page leaves room for four games: the title beside the theme picker, small covers under it","path":"e2e/phone.spec.ts","line":1,"seconds":1.687,"usual":1.7635,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.71,1.709,2.035,1.204,1.817,1.58,null,2.278,2.107],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] the controls on the page take taps 44px each way, a small one beyond its look","folder":"","file":"phone.spec.ts","block":"","title":"[phone] the controls on the page take taps 44px each way, a small one beyond its look","path":"e2e/phone.spec.ts","line":1,"seconds":7.949,"usual":8.8955,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[9.101,8.589,11.4,6.101,8.69,8.649,null,10.154,10.352],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] a score pad's and the rules page's small controls take taps 44px each way","folder":"","file":"phone.spec.ts","block":"","title":"[phone] a score pad's and the rules page's small controls take taps 44px each way","path":"e2e/phone.spec.ts","line":1,"seconds":3.047,"usual":3.426,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.318,3.44,3.876,2.812,3.412,2.887,null,4.02,4.445],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] a wishlist line votes from where it sits, without opening","folder":"","file":"phone.spec.ts","block":"","title":"[phone] a wishlist line votes from where it sits, without opening","path":"e2e/phone.spec.ts","line":1,"seconds":2.42,"usual":2.4375,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.386,2.489,3.04,1.851,2.191,2.234,null,2.736,2.765],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] the bar and the lines keep a readable contrast in the light theme","folder":"","file":"phone.spec.ts","block":"","title":"[phone] the bar and the lines keep a readable contrast in the light theme","path":"e2e/phone.spec.ts","line":1,"seconds":6.859,"usual":6.875,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[6.617,7.105,9.418,4.802,6.613,6.645,null,9.262,8.747],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] the bar and the lines keep a readable contrast in the dark theme","folder":"","file":"phone.spec.ts","block":"","title":"[phone] the bar and the lines keep a readable contrast in the dark theme","path":"e2e/phone.spec.ts","line":1,"seconds":8.816,"usual":10.528500000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[9.415,10.917,11.74,7.958,10.14,9.961,null,15.821,12.955],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] filters live in a sheet behind one button and survive a reload","folder":"","file":"phone.spec.ts","block":"","title":"[phone] filters live in a sheet behind one button and survive a reload","path":"e2e/phone.spec.ts","line":1,"seconds":8.761,"usual":10.069500000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[9.78,9.813,12.247,7.512,10.223,9.916,null,14.229,12.296],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] sign-in starts with Google and comes back to the page, which says what went wrong in its own words","folder":"","file":"phone.spec.ts","block":"","title":"[phone] sign-in starts with Google and comes back to the page, which says what went wrong in its own words","path":"e2e/phone.spec.ts","line":1,"seconds":1.386,"usual":1.6615,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.636,1.687,1.575,1.364,1.433,1.73,null,2.006,1.972],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] another Google account signs in to nothing extra, and the page says whose it is","folder":"","file":"phone.spec.ts","block":"","title":"[phone] another Google account signs in to nothing extra, and the page says whose it is","path":"e2e/phone.spec.ts","line":1,"seconds":0.987,"usual":0.8560000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.747,1.07,0.915,0.691,0.797,0.771,null,1.177,1.027],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] a session over a day old is asked for Google again before it adds a passkey","folder":"","file":"phone.spec.ts","block":"","title":"[phone] a session over a day old is asked for Google again before it adds a passkey","path":"e2e/phone.spec.ts","line":1,"seconds":1.014,"usual":1.1315,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.147,1.103,1.116,0.846,1.004,1.197,null,1.358,1.155],"edited":[],"code":null},{"name":"phone.spec.ts › [phone] with a passkey › the owner adds one, signs out, and signs back in with it with no Google step","folder":"","file":"phone.spec.ts","block":"[phone] with a passkey","title":"the owner adds one, signs out, and signs back in with it with no Google step","path":"e2e/phone.spec.ts","line":470,"seconds":1.353,"usual":1.4525000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.097,1.375,1.623,1.12,1.294,1.601,null,1.53,1.679],"edited":[],"code":null},{"name":"visual-desktop.spec.ts › [visual-webkit] home-grid","folder":"","file":"visual-desktop.spec.ts","block":"","title":"[visual-webkit] home-grid","path":"e2e/visual-desktop.spec.ts","line":1,"seconds":6.174,"usual":4.442,"result":"passed","slower":true,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.073,3.222,3.864,3.125,6,5.02,null,6.298,5.8],"edited":[],"code":[[1,"import { test } from './fixtures';",false],[2,"import { GRID, prepare, shoot } from './visual';",false],[3,"",false],[4,"// The collection's grid on a desktop, in the light theme (see visual.ts);",false],[5,"// visual-phone.spec.ts shoots a phone's.",false],[6,"for (const scenario of GRID) {",false],[7,"  test(scenario.name, async ({ page }) => {",false],[8,"    await prepare(page, 'light');",false],[9,"    await scenario.open(page);",false],[10,"    await shoot(page, `${scenario.name}-light`);",false],[11,"  });",false],[12,"}",false]]},{"name":"visual-desktop.spec.ts › [visual-webkit] card-awards-open","folder":"","file":"visual-desktop.spec.ts","block":"","title":"[visual-webkit] card-awards-open","path":"e2e/visual-desktop.spec.ts","line":1,"seconds":6.938,"usual":7.0785,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[5.381,5.548,6.907,4.108,7.25,7.906,null,9.875,9.762],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › wishlist","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"wishlist","path":"e2e/visual-full.spec.ts","line":1,"seconds":3.977,"usual":3.8259999999999996,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.237,3.069,3.663,3.22,4.013,3.989,null,4.803,4.721],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › wishlist-grid","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"wishlist-grid","path":"e2e/visual-full.spec.ts","line":1,"seconds":5.078,"usual":4.4595,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.199,3.629,4.202,3.119,4.717,5.171,null,6.312,6.77],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › filter-open","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"filter-open","path":"e2e/visual-full.spec.ts","line":1,"seconds":3.777,"usual":3.949,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.384,3.819,4.069,3.004,3.984,3.914,null,4.39,4.414],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › details-open","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"details-open","path":"e2e/visual-full.spec.ts","line":1,"seconds":3.743,"usual":3.716,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.133,3.529,3.844,2.942,3.593,3.839,null,4.788,5.545],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › no-results","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"no-results","path":"e2e/visual-full.spec.ts","line":1,"seconds":3.371,"usual":3.0949999999999998,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.06,2.862,3.352,2.897,3.331,2.965,null,3.927,3.13],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › random-pick","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"random-pick","path":"e2e/visual-full.spec.ts","line":1,"seconds":5.597,"usual":5.506,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[5.161,5.18,6.796,3.617,5.052,5.832,null,7.39,6.243],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › rules-chat","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"rules-chat","path":"e2e/visual-full.spec.ts","line":1,"seconds":6.171,"usual":5.162000000000001,"result":"passed","slower":true,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.434,3.733,4.581,2.949,6.129,5.743,null,7.304,8.755],"edited":[],"code":[[1,"import { test, expect } from './fixtures';",false],[2,"import { CORE, GRID, MORE, prepare, shoot } from './visual';",false],[3,"",false],[4,"// Every state in both themes, in desktop Safari (see visual.ts), which",false],[5,"// covers every style the app has.",false],[6,"for (const theme of ['light', 'dark'] as const) {",false],[7,"  test.describe(`${theme} theme`, () => {",false],[8,"    for (const scenario of MORE) {",false],[9,"      test(scenario.name, async ({ page }) => {",false],[10,"        await prepare(page, theme);",false],[11,"        await scenario.open(page);",false],[12,"        await shoot(page, `${scenario.name}-${theme}`);",false],[13,"      });",false],[14,"    }",false],[15,"",false],[16,"    // The core pages in the dark theme; visual.spec.ts and",false]]},{"name":"visual-full.spec.ts › [visual-webkit] light theme › house-rules","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"house-rules","path":"e2e/visual-full.spec.ts","line":1,"seconds":6.541,"usual":5.3175,"result":"passed","slower":true,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.622,3.815,4.463,3.212,6.514,6.013,null,8.822,8.877],"edited":[],"code":[[1,"import { test, expect } from './fixtures';",false],[2,"import { CORE, GRID, MORE, prepare, shoot } from './visual';",false],[3,"",false],[4,"// Every state in both themes, in desktop Safari (see visual.ts), which",false],[5,"// covers every style the app has.",false],[6,"for (const theme of ['light', 'dark'] as const) {",false],[7,"  test.describe(`${theme} theme`, () => {",false],[8,"    for (const scenario of MORE) {",false],[9,"      test(scenario.name, async ({ page }) => {",false],[10,"        await prepare(page, theme);",false],[11,"        await scenario.open(page);",false],[12,"        await shoot(page, `${scenario.name}-${theme}`);",false],[13,"      });",false],[14,"    }",false],[15,"",false],[16,"    // The core pages in the dark theme; visual.spec.ts and",false]]},{"name":"visual-full.spec.ts › [visual-webkit] light theme › score-ticket-to-ride","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"score-ticket-to-ride","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.017,"usual":1.6075,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.048,1.431,1.483,1.116,1.732,2.092,null,2.722,2.357],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › score-dominion","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"score-dominion","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.334,"usual":1.3805,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.05,1.058,1.293,0.72,1.49,1.468,null,1.811,1.634],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › score-hearts","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"score-hearts","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.705,"usual":2.4210000000000003,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.139,2.372,3.255,1.911,2.47,2.247,null,2.831,3.314],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › word-checked","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"word-checked","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.858,"usual":1.799,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.807,1.696,2.225,1.547,1.748,1.791,null,2.241,2.656],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › sign-in","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"sign-in","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.01,"usual":1.3479999999999999,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.226,1.315,1.473,0.769,1.08,1.463,null,1.877,1.381],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › sign-in-error","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"sign-in-error","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.204,"usual":1.0995,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.882,1.085,1.155,0.73,1.032,1.114,null,1.479,1.34],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › sign-in-other-account","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"sign-in-other-account","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.932,"usual":1.064,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.089,0.879,1.231,0.861,0.98,1.039,null,1.408,1.154],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › sign-in-owner","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"sign-in-owner","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.065,"usual":0.9724999999999999,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.833,0.858,1.251,0.607,0.962,0.983,null,1.155,1.187],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › sign-in-passkey-added","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"sign-in-passkey-added","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.186,"usual":1.117,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.972,1.043,1.12,0.859,1.114,1.219,null,1.521,1.428],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › sign-in-old-session","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"sign-in-old-session","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.191,"usual":1.206,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1,1.258,1.374,0.763,1.154,1.15,null,1.472,1.437],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › not-found","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"not-found","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.984,"usual":0.968,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.795,0.707,0.96,0.673,1.041,0.976,null,1.225,1.09],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › approve-link","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"approve-link","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.251,"usual":1.171,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.004,0.873,1.3,0.757,1.232,1.11,null,1.576,1.481],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › deny-link","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"deny-link","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.101,"usual":1.1360000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.049,0.994,1.197,0.972,1.075,1.341,null,1.433,1.428],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › approve-link-signed-out","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"approve-link-signed-out","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.114,"usual":0.9644999999999999,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.963,0.956,1.035,0.628,0.943,0.966,null,1.151,1.202],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › collection-loading","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"collection-loading","path":"e2e/visual-full.spec.ts","line":1,"seconds":3.667,"usual":3.207,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.976,3.027,3.078,2.517,3.51,3.336,null,4.567,4.268],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › collection-loading-grid","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"collection-loading-grid","path":"e2e/visual-full.spec.ts","line":1,"seconds":4.933,"usual":4.2875,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.934,2.935,3.481,2.502,5.094,5.099,null,5.79,5.54],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › wishlist-loading","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"wishlist-loading","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.932,"usual":2.8819999999999997,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.778,2.536,2.855,2.448,2.909,2.914,null,3.412,3.271],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › wishlist-owner","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"wishlist-owner","path":"e2e/visual-full.spec.ts","line":1,"seconds":5.147,"usual":3.9835,"result":"passed","slower":true,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.711,3.734,3.471,3.253,4.233,4.978,null,6.311,6.141],"edited":[],"code":[[1,"import { test, expect } from './fixtures';",false],[2,"import { CORE, GRID, MORE, prepare, shoot } from './visual';",false],[3,"",false],[4,"// Every state in both themes, in desktop Safari (see visual.ts), which",false],[5,"// covers every style the app has.",false],[6,"for (const theme of ['light', 'dark'] as const) {",false],[7,"  test.describe(`${theme} theme`, () => {",false],[8,"    for (const scenario of MORE) {",false],[9,"      test(scenario.name, async ({ page }) => {",false],[10,"        await prepare(page, theme);",false],[11,"        await scenario.open(page);",false],[12,"        await shoot(page, `${scenario.name}-${theme}`);",false],[13,"      });",false],[14,"    }",false],[15,"",false],[16,"    // The core pages in the dark theme; visual.spec.ts and",false]]},{"name":"visual-full.spec.ts › [visual-webkit] light theme › home-list-whole","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"home-list-whole","path":"e2e/visual-full.spec.ts","line":30,"seconds":5.121,"usual":5.2170000000000005,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.539,4.434,5.323,3.562,5.404,5.111,null,6.75,6.492],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › home-grid-whole","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"home-grid-whole","path":"e2e/visual-full.spec.ts","line":31,"seconds":6.044,"usual":5.476,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.84,4.636,5.508,3.804,5.883,5.444,null,7.503,7.404],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] light theme › wishlist-whole","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] light theme","title":"wishlist-whole","path":"e2e/visual-full.spec.ts","line":32,"seconds":5.085,"usual":5.0685,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.997,4.466,4.715,3.401,5.671,5.422,null,6.676,6.503],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › wishlist","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"wishlist","path":"e2e/visual-full.spec.ts","line":1,"seconds":4.275,"usual":3.741,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.107,3.523,3.426,3.015,3.959,4.174,null,5.206,5.122],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › wishlist-grid","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"wishlist-grid","path":"e2e/visual-full.spec.ts","line":1,"seconds":6.323,"usual":4.881,"result":"passed","slower":true,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.353,3.56,4.43,3.092,5.332,5.71,null,6.757,7.626],"edited":[],"code":[[1,"import { test, expect } from './fixtures';",false],[2,"import { CORE, GRID, MORE, prepare, shoot } from './visual';",false],[3,"",false],[4,"// Every state in both themes, in desktop Safari (see visual.ts), which",false],[5,"// covers every style the app has.",false],[6,"for (const theme of ['light', 'dark'] as const) {",false],[7,"  test.describe(`${theme} theme`, () => {",false],[8,"    for (const scenario of MORE) {",false],[9,"      test(scenario.name, async ({ page }) => {",false],[10,"        await prepare(page, theme);",false],[11,"        await scenario.open(page);",false],[12,"        await shoot(page, `${scenario.name}-${theme}`);",false],[13,"      });",false],[14,"    }",false],[15,"",false],[16,"    // The core pages in the dark theme; visual.spec.ts and",false]]},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › filter-open","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"filter-open","path":"e2e/visual-full.spec.ts","line":1,"seconds":4.227,"usual":4.2325,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.8,3.519,4.477,3.04,4.324,4.141,null,5.351,5.162],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › details-open","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"details-open","path":"e2e/visual-full.spec.ts","line":1,"seconds":3.591,"usual":3.3945,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.188,3.102,3.643,2.466,3.289,3.5,null,4.579,4.525],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › no-results","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"no-results","path":"e2e/visual-full.spec.ts","line":1,"seconds":3.765,"usual":3.5774999999999997,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.111,3.035,3.618,2.683,3.537,3.837,null,4.214,4.024],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › random-pick","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"random-pick","path":"e2e/visual-full.spec.ts","line":1,"seconds":6.529,"usual":6.5105,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[5.691,5.645,6.903,4.725,6.898,6.123,null,8.792,8.335],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › rules-chat","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"rules-chat","path":"e2e/visual-full.spec.ts","line":1,"seconds":4.809,"usual":4.4015,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.196,3.301,4.422,2.875,4.381,4.614,null,5.809,6.302],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › house-rules","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"house-rules","path":"e2e/visual-full.spec.ts","line":1,"seconds":5.396,"usual":4.851,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.006,4.135,4.711,2.89,5.143,4.991,null,7.039,6.852],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › score-ticket-to-ride","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"score-ticket-to-ride","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.707,"usual":1.6124999999999998,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.239,1.121,1.551,1.06,1.674,1.819,null,2.126,2.134],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › score-dominion","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"score-dominion","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.415,"usual":1.3984999999999999,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.069,1.035,1.331,0.872,1.54,1.466,null,1.671,1.689],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › score-hearts","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"score-hearts","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.898,"usual":2.1719999999999997,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.005,1.974,2.727,1.398,2.201,2.143,null,2.544,2.289],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › word-checked","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"word-checked","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.768,"usual":1.775,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.652,1.852,2.248,1.379,1.66,1.698,null,2.366,2.515],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › sign-in","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"sign-in","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.41,"usual":1.021,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.851,1.05,1.234,0.908,0.981,0.992,null,1.466,1.707],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › sign-in-error","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"sign-in-error","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.122,"usual":1.0050000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.785,0.914,1.354,0.612,1.096,0.914,null,1.411,1.472],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › sign-in-other-account","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"sign-in-other-account","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.984,"usual":1.0105,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.048,0.839,1.17,0.633,0.958,0.973,null,1.175,1.273],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › sign-in-owner","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"sign-in-owner","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.055,"usual":0.9525,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.776,0.997,0.931,0.7,0.974,0.913,null,1.013,1.114],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › sign-in-passkey-added","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"sign-in-passkey-added","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.998,"usual":1.2015,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.233,0.928,1.17,0.795,1.094,1.278,null,1.583,1.351],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › sign-in-old-session","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"sign-in-old-session","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.295,"usual":1.1280000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.883,1.165,1.391,0.812,1.091,1.015,null,1.33,1.272],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › not-found","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"not-found","path":"e2e/visual-full.spec.ts","line":1,"seconds":0.954,"usual":0.9215,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.809,0.805,1.017,0.644,0.957,0.886,null,1.159,1.149],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › approve-link","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"approve-link","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.338,"usual":1.4775,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.307,1.292,1.612,0.971,1.43,1.525,null,1.832,1.858],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › deny-link","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"deny-link","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.332,"usual":1.1055000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.92,1.154,1.139,0.925,1.072,1.034,null,1.307,1.228],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › approve-link-signed-out","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"approve-link-signed-out","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.031,"usual":0.9364999999999999,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.812,0.87,1.099,0.611,0.792,1.003,null,1.355,1.362],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › collection-loading","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"collection-loading","path":"e2e/visual-full.spec.ts","line":1,"seconds":3.937,"usual":3.7465,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.177,3.355,3.59,3.102,3.955,3.903,null,4.753,4.892],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › collection-loading-grid","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"collection-loading-grid","path":"e2e/visual-full.spec.ts","line":1,"seconds":5.501,"usual":4.901,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.752,3.902,4.65,3.609,5.369,5.152,null,6.39,5.985],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › wishlist-loading","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"wishlist-loading","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.628,"usual":2.6745,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.437,2.331,2.68,2.162,2.669,2.753,null,3.204,3.133],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › wishlist-owner","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"wishlist-owner","path":"e2e/visual-full.spec.ts","line":1,"seconds":6.238,"usual":5.7995,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.835,3.784,5.68,3.347,5.919,6.505,null,9.926,8.588],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › home-list","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"home-list","path":"e2e/visual-full.spec.ts","line":1,"seconds":4.722,"usual":4.248,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.716,4.149,3.991,3.184,4.347,4.463,null,5.683,4.887],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › rules","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"rules","path":"e2e/visual-full.spec.ts","line":1,"seconds":5.707,"usual":5.2015,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.543,4.349,4.979,2.716,5.424,5.671,null,7.214,6.626],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › score-7-wonders","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"score-7-wonders","path":"e2e/visual-full.spec.ts","line":1,"seconds":2.259,"usual":2.0445,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.339,1.257,2.092,1.144,2.109,1.997,null,2.211,2.294],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › word-checker","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"word-checker","path":"e2e/visual-full.spec.ts","line":1,"seconds":1.267,"usual":1.3365,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.221,1.153,1.37,1.037,1.355,1.318,null,1.997,1.761],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › home-grid","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"home-grid","path":"e2e/visual-full.spec.ts","line":1,"seconds":6.133,"usual":5.2285,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.61,4.698,4.967,3.782,5.49,5.937,null,6.628,6.034],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › card-awards-open","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"card-awards-open","path":"e2e/visual-full.spec.ts","line":1,"seconds":8.2,"usual":7.484999999999999,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[5.709,6.235,7.576,4.338,7.394,7.745,null,10.295,10.514],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › home-list-whole","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"home-list-whole","path":"e2e/visual-full.spec.ts","line":30,"seconds":6.233,"usual":6.23,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[5.04,5.423,6.075,3.841,6.385,6.394,null,7.905,7.56],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › home-grid-whole","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"home-grid-whole","path":"e2e/visual-full.spec.ts","line":31,"seconds":8.099,"usual":6.654999999999999,"result":"passed","slower":true,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[6.178,5.613,6.194,4.983,7.116,7.477,null,9.409,9.029],"edited":[],"code":[[31,"      ['home-grid-whole', '/?v=grid'],",false],[32,"      ['wishlist-whole', '/?c=want'],",false],[33,"    ] as const) {",false]]},{"name":"visual-full.spec.ts › [visual-webkit] dark theme › wishlist-whole","folder":"","file":"visual-full.spec.ts","block":"[visual-webkit] dark theme","title":"wishlist-whole","path":"e2e/visual-full.spec.ts","line":32,"seconds":5.497,"usual":5.4254999999999995,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.622,4.86,5.178,3.324,5.699,5.673,null,6.852,7.033],"edited":[],"code":null},{"name":"visual-full.spec.ts › [visual-webkit] the toggle's dark theme","folder":"","file":"visual-full.spec.ts","block":"","title":"[visual-webkit] the toggle's dark theme","path":"e2e/visual-full.spec.ts","line":1,"seconds":4.163,"usual":4.295,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.73,3.699,4.292,2.898,4.298,4.394,null,5.88,5.448],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-webkit] home-list","folder":"","file":"visual.spec.ts","block":"","title":"[visual-webkit] home-list","path":"e2e/visual.spec.ts","line":1,"seconds":3.62,"usual":3.784,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.719,3.155,3.665,2.829,3.908,3.849,null,4.477,4.409],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-webkit] rules","folder":"","file":"visual.spec.ts","block":"","title":"[visual-webkit] rules","path":"e2e/visual.spec.ts","line":1,"seconds":6.605,"usual":5.26,"result":"passed","slower":true,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[4.305,3.916,4.671,2.834,6.154,5.849,null,7.653,8.147],"edited":[],"code":[[1,"import { test } from './fixtures';",false],[2,"import { CORE, prepare, shoot } from './visual';",false],[3,"",false],[4,"// The core pages in the light theme, on a desktop and on the iPhone (see",false],[5,"// visual.ts).",false],[6,"for (const scenario of CORE) {",false],[7,"  test(scenario.name, async ({ page }) => {",false],[8,"    await prepare(page, 'light');",false],[9,"    await scenario.open(page);",false],[10,"    await shoot(page, `${scenario.name}-light`);",false],[11,"  });",false],[12,"}",false]]},{"name":"visual.spec.ts › [visual-webkit] score-7-wonders","folder":"","file":"visual.spec.ts","block":"","title":"[visual-webkit] score-7-wonders","path":"e2e/visual.spec.ts","line":1,"seconds":1.317,"usual":1.5659999999999998,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.145,1.209,1.565,0.964,1.691,1.567,null,2.046,1.733],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-webkit] word-checker","folder":"","file":"visual.spec.ts","block":"","title":"[visual-webkit] word-checker","path":"e2e/visual.spec.ts","line":1,"seconds":1.475,"usual":1.3315000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.227,1.352,1.311,0.883,1.186,1.464,null,1.484,1.729],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] the filter sheet","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] the filter sheet","path":"e2e/visual-phone.spec.ts","line":1,"seconds":4.256,"usual":4.0405,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.508,3.575,4.113,2.608,4.008,4.073,null,5.323,5.776],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] approve-link","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] approve-link","path":"e2e/visual-phone.spec.ts","line":1,"seconds":1.295,"usual":1.1695,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.916,1.008,1.139,0.799,1.2,1.366,null,1.865,1.651],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] deny-link","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] deny-link","path":"e2e/visual-phone.spec.ts","line":1,"seconds":1.312,"usual":1.258,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.74,0.982,1.305,0.914,1.305,1.211,null,1.692,1.625],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] approve-link-signed-out","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] approve-link-signed-out","path":"e2e/visual-phone.spec.ts","line":1,"seconds":1.079,"usual":1.0895000000000001,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.766,0.891,1.172,0.647,1.058,1.121,null,1.247,1.143],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] sign-in","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] sign-in","path":"e2e/visual-phone.spec.ts","line":1,"seconds":0.983,"usual":0.9604999999999999,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.956,0.832,1.183,0.786,0.948,0.965,null,1.236,1.081],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] sign-in-error","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] sign-in-error","path":"e2e/visual-phone.spec.ts","line":1,"seconds":1.058,"usual":1.0015,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.862,0.986,0.997,0.999,1.004,1.1,null,1.263,1.134],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] sign-in-other-account","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] sign-in-other-account","path":"e2e/visual-phone.spec.ts","line":1,"seconds":0.896,"usual":0.9299999999999999,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.014,0.882,0.903,0.505,0.843,0.957,null,1.194,1.348],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] sign-in-owner","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] sign-in-owner","path":"e2e/visual-phone.spec.ts","line":1,"seconds":1.107,"usual":0.971,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.854,0.976,0.966,0.608,1.129,0.932,null,1.137,1.106],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] sign-in-passkey-added","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] sign-in-passkey-added","path":"e2e/visual-phone.spec.ts","line":1,"seconds":1.026,"usual":1.081,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.05,0.92,1.141,0.808,1.064,1.098,null,1.617,1.311],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] sign-in-old-session","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] sign-in-old-session","path":"e2e/visual-phone.spec.ts","line":1,"seconds":1.23,"usual":1.1575000000000002,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[0.996,0.931,1.231,0.752,1.084,1.347,null,1.395,1.395],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] home-grid","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] home-grid","path":"e2e/visual-phone.spec.ts","line":1,"seconds":5.289,"usual":4.1625,"result":"passed","slower":true,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.434,3.377,3.637,2.979,5.028,5.007,null,5.4,4.688],"edited":[],"code":[[1,"import { test, expect } from './fixtures';",false],[2,"import { GAMES_STATES, GRID, LINKS, SIGN_IN, prepare, shoot } from './visual';",false],[3,"",false],[4,"// What only a phone shows, on the iPhone (see visual.ts).",false],[5,"test('the filter sheet', async ({ page }) => {",false],[6,"  await prepare(page, 'light');",false],[7,"  await page.goto('/');",false],[8,"  await page.getByRole('button', { name: /^Filters/ }).click();",false],[9,"  await expect(page.getByRole('dialog', { name: 'Filters' })).toBeVisible();",false],[10,"  await shoot(page, 'filter-sheet-light');",false],[11,"});",false]]},{"name":"visual-phone.spec.ts › [visual-phone-webkit] card-awards-open","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] card-awards-open","path":"e2e/visual-phone.spec.ts","line":1,"seconds":5.894,"usual":5.3665,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.925,4.403,6.246,2.691,5.4,5.333,null,8.784,8.505],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] collection-loading","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] collection-loading","path":"e2e/visual-phone.spec.ts","line":1,"seconds":4.604,"usual":3.9465000000000003,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.33,3.671,3.352,3.004,4.222,4.52,null,6.604,4.982],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] collection-loading-grid","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] collection-loading-grid","path":"e2e/visual-phone.spec.ts","line":1,"seconds":4.614,"usual":3.835,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.396,3.466,3.949,2.89,4.912,5.119,null,5.368,3.721],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] wishlist-loading","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] wishlist-loading","path":"e2e/visual-phone.spec.ts","line":1,"seconds":3.271,"usual":3.0025,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.709,2.898,3.148,2.766,3.006,2.999,null,4.282,3.656],"edited":[],"code":null},{"name":"visual-phone.spec.ts › [visual-phone-webkit] wishlist-owner","folder":"","file":"visual-phone.spec.ts","block":"","title":"[visual-phone-webkit] wishlist-owner","path":"e2e/visual-phone.spec.ts","line":1,"seconds":4.088,"usual":4.4915,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[2.987,3.23,4.564,2.649,4.419,4.724,null,5.392,5.591],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-phone-webkit] home-list","folder":"","file":"visual.spec.ts","block":"","title":"[visual-phone-webkit] home-list","path":"e2e/visual.spec.ts","line":1,"seconds":5.643,"usual":5.015499999999999,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.52,3.655,4.701,3.43,5.33,5.46,null,7.062,5.743],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-phone-webkit] rules","folder":"","file":"visual.spec.ts","block":"","title":"[visual-phone-webkit] rules","path":"e2e/visual.spec.ts","line":1,"seconds":4.865,"usual":4.578,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[3.44,3.816,4.381,3.028,4.775,5.196,null,6.798,5.786],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-phone-webkit] score-7-wonders","folder":"","file":"visual.spec.ts","block":"","title":"[visual-phone-webkit] score-7-wonders","path":"e2e/visual.spec.ts","line":1,"seconds":1.769,"usual":1.8385,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.514,1.958,1.872,0.936,1.572,1.805,null,2.442,2.52],"edited":[],"code":null},{"name":"visual.spec.ts › [visual-phone-webkit] word-checker","folder":"","file":"visual.spec.ts","block":"","title":"[visual-phone-webkit] word-checker","path":"e2e/visual.spec.ts","line":1,"seconds":1.133,"usual":1.0905,"result":"passed","slower":false,"flaky":false,"message":"","hist":["passed","passed","passed","passed","passed","passed","","passed","passed"],"times":[1.101,1.204,1.059,0.879,0.99,1.08,null,1.211,1.43],"edited":[],"code":null}],"notes":[["Runner image","ubuntu26 20261111.196.1"],["Cores","4"],["Memory","16 GB"],["Node","v24.22.2"],["Playwright","1.65.0"],["Browsers","WebKit 27.2"]],"load":[{"t":13,"load":0.56,"busy":14.2},{"t":23,"load":0.7,"busy":53},{"t":33,"load":0.9,"busy":27.7},{"t":43,"load":0.99,"busy":27.3},{"t":53,"load":0.99,"busy":26.3},{"t":63,"load":1,"busy":27.8},{"t":73,"load":1.39,"busy":23.4},{"t":83,"load":1.18,"busy":1.9},{"t":93,"load":1.23,"busy":19.7},{"t":103,"load":1.58,"busy":39.8},{"t":113,"load":1.79,"busy":51.2},{"t":123,"load":2.63,"busy":80.5},{"t":133,"load":3.47,"busy":95.8},{"t":143,"load":4.74,"busy":94.5},{"t":153,"load":5.47,"busy":95.6},{"t":163,"load":6.97,"busy":94.3},{"t":173,"load":7.37,"busy":94.8},{"t":183,"load":8.22,"busy":97.1},{"t":193,"load":8.43,"busy":96.2},{"t":203,"load":8.35,"busy":96.4},{"t":213,"load":8.9,"busy":98.3},{"t":223,"load":9.95,"busy":98.1},{"t":233,"load":9.71,"busy":98.4},{"t":243,"load":9.3,"busy":97.5},{"t":253,"load":10.54,"busy":98.1},{"t":263,"load":10.53,"busy":97.6},{"t":273,"load":11.37,"busy":98.3},{"t":283,"load":11.69,"busy":91.5},{"t":293,"load":11.66,"busy":94.6},{"t":303,"load":12.41,"busy":96.6},{"t":313,"load":12.2,"busy":96.2},{"t":323,"load":11.88,"busy":93},{"t":334,"load":12.22,"busy":96.6},{"t":344,"load":11.59,"busy":95.5},{"t":354,"load":10.95,"busy":96.4},{"t":364,"load":11.23,"busy":94.4},{"t":374,"load":11.52,"busy":95.3},{"t":384,"load":10.99,"busy":91},{"t":394,"load":10.52,"busy":96.4},{"t":404,"load":9.8,"busy":90.6},{"t":414,"load":10.53,"busy":93},{"t":424,"load":10.28,"busy":92.3},{"t":434,"load":9.33,"busy":91.7},{"t":444,"load":9.12,"busy":90.9},{"t":454,"load":9.04,"busy":87.7},{"t":464,"load":8.77,"busy":95},{"t":474,"load":8.73,"busy":90.3},{"t":484,"load":8.39,"busy":90.1},{"t":494,"load":8.03,"busy":94.3},{"t":504,"load":8.12,"busy":94.4},{"t":514,"load":8.82,"busy":94.7},{"t":524,"load":7.54,"busy":13.5}],"settle":null};
+      const N = data.runs.length;
+
+      const fmt = (s) =>
+        s == null
+          ? '–'
+          : s === 0
+            ? '0s'
+            : s < 1
+              ? `${Math.max(1, Math.round(s * 1000))}ms`
+              : s < 10
+                ? `${Math.round(s * 10) / 10}s`
+                : s < 60
+                  ? `${Math.round(s)}s`
+                  : s < 3600
+                    ? `${Math.floor(s / 60)}m ${String(Math.round(s % 60)).padStart(2, '0')}s`
+                    : `${Math.floor(s / 3600)}h ${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}m`;
+      const tick = (s) => (s === 0 ? '0' : s >= 60 && s % 60 === 0 ? `${s / 60}m` : fmt(s));
+      const pct = (a, b) => (b > 0 ? `+${Math.round((a / b - 1) * 100)}%` : `+${fmt(a - b)}`);
+      const ago = (iso) => {
+        const ms = Date.now() - Date.parse(iso);
+        if (!Number.isFinite(ms)) return '';
+        const m = Math.max(0, Math.round(ms / 60000));
+        return m < 60
+          ? `${m}m ago`
+          : m < 2880
+            ? `${Math.round(m / 60)}h ago`
+            : `${Math.round(m / 1440)}d ago`;
+      };
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) =>
+        String(s).replace(
+          /[&<>"]/g,
+          (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
+        );
+      const short = (sha) => String(sha).slice(0, 7);
+
+      // A small highlighter for test code (JavaScript, TypeScript) and Maestro
+      // flows (YAML): enough to tell strings, keywords, numbers and comments
+      // apart, with nothing to load.
+      const JS_RULES = [
+        ['c', /\/\/.*|\/\*[\s\S]*?\*\/|^\s+at .*/y],
+        ['e', /\b[A-Z]\w*Error\b|^Assertion is false/y],
+        ['s', /`(?:\\.|[^`\\])*`|'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"/y],
+        [
+          'k',
+          /\b(?:const|let|var|await|async|function|return|if|else|for|of|in|new|import|from|export|true|false|null|undefined|typeof)\b/y,
+        ],
+        ['f', /\b(?:it|test|describe|expect|beforeEach|afterEach)\b(?=\s*\(|\.)/y],
+        ['n', /\b\d+(?:\.\d+)?\b/y],
+        ['', /[A-Za-z_$][\w$]*|\s+|./y],
+      ];
+      const YAML_RULES = [
+        ['c', /#.*/y],
+        ['s', /"(?:\\.|[^"\\])*"|'[^']*'/y],
+        ['p', /[\w-]+(?=\s*:)/y],
+        ['k', /\b(?:true|false|null)\b/y],
+        ['n', /\b\d+(?:\.\d+)?\b/y],
+        ['', /[A-Za-z_][\w.\/-]*|\s+|./y],
+      ];
+      function highlight(line, yaml) {
+        const rules = yaml ? YAML_RULES : JS_RULES;
+        let out = '',
+          i = 0;
+        while (i < line.length) {
+          for (const [cls, re] of rules) {
+            re.lastIndex = i;
+            const m = re.exec(line);
+            if (!m || !m[0]) continue;
+            out += cls ? `<b class="${cls}">${esc(m[0])}</b>` : esc(m[0]);
+            i += m[0].length;
+            break;
+          }
+        }
+        return out;
+      }
+      // A failure's message, a line at a time; a diff's lines (Vitest's
+      // "- Expected" and "+ Received") are coloured whole.
+      // Long messages show their first MESSAGE_LINES lines until opened.
+      const MESSAGE_LINES = 8;
+      const openMessages = new Set();
+      function message(cls, key, text, yaml) {
+        const lines = text.split('\n');
+        const long = lines.length > MESSAGE_LINES + 2;
+        const open = !long || openMessages.has(key);
+        const shown = open ? text : lines.slice(0, MESSAGE_LINES).join('\n');
+        const more = long
+          ? `<button type="button" class="msgmore" data-msg="${esc(key)}">${open ? 'Show less' : `Show all ${lines.length} lines`}</button>`
+          : '';
+        return `<pre class="${cls} hl">${hlBlock(shown, yaml)}${more}</pre>`;
+      }
+      const hlBlock = (text, yaml) =>
+        text
+          .split('\n')
+          .map((line) =>
+            /^- /.test(line)
+              ? `<b class="del">${esc(line)}</b>`
+              : /^\+ /.test(line)
+                ? `<b class="ins">${esc(line)}</b>`
+                : /^\s*❯ /.test(line)
+                  ? `<b class="c">${esc(line)}</b>`
+                  : highlight(line, yaml),
+          )
+          .join('\n');
+      // What the filter matched, marked in a name.
+      function marked(text) {
+        const q = state.q.trim();
+        if (!q) return esc(text);
+        const at = text.toLowerCase().indexOf(q.toLowerCase());
+        return at < 0
+          ? esc(text)
+          : esc(text.slice(0, at)) +
+              '<mark>' +
+              esc(text.slice(at, at + q.length)) +
+              '</mark>' +
+              esc(text.slice(at + q.length));
+      }
+
+      // Tooltips: measured at the left edge, where nothing squeezes them, then put
+      // right of the pointer, or left of it when they wouldn't fit there.
+      const tip = $('tip');
+      function showTip(e, html) {
+        tip.innerHTML = html;
+        tip.hidden = false;
+        tip.style.left = '0px';
+        tip.style.top = '0px';
+        const w = tip.offsetWidth,
+          h = tip.offsetHeight;
+        const px = e.clientX ?? 0,
+          py = e.clientY ?? 0;
+        tip.style.left =
+          (px + 14 + w <= innerWidth - 8 ? px + 14 : Math.max(8, px - 14 - w)) + 'px';
+        tip.style.top =
+          (py + 14 + h <= innerHeight - 8 ? py + 14 : Math.max(8, py - 14 - h)) + 'px';
+      }
+      function hideTip() {
+        tip.hidden = true;
+      }
+      function bindTip(el, html) {
+        el.addEventListener('mousemove', (e) => showTip(e, html()));
+        el.addEventListener('mouseleave', hideTip);
+        el.addEventListener('focus', () => {
+          const b = el.getBoundingClientRect();
+          showTip({ clientX: b.right, clientY: b.top }, html());
+        });
+        el.addEventListener('blur', hideTip);
+      }
+
+      const tests = data.tests ?? [];
+      const nouns = esc(data.noun) + 's';
+      const Nouns = nouns[0].toUpperCase() + nouns.slice(1);
+      const runName = (i) => (i === N ? 'This run' : `Run #${data.runs[i]?.number ?? '?'}`);
+      const groups = {
+        failed: tests.filter((t) => t.result === 'failed'),
+        rerun: tests.filter((t) => t.result === 'passed on re-run'),
+        slower: tests.filter((t) => t.slower),
+        flaky: tests.filter((t) => t.flaky),
+      };
+      // The groups (folder, file, describe block) holding a failed test.
+      const failedGroups = () =>
+        groups.failed.flatMap((t) => [
+          t.folder,
+          t.folder + t.file,
+          t.folder + t.file + ' › ' + t.block,
+        ]);
+      const state = {
+        sort: { key: null, dir: 1 },
+        filter: 'all',
+        q: '',
+        open: new Set(failedGroups()),
+        code: new Set(
+          tests.map((t, i) => (t.result === 'failed' && t.code ? i : -1)).filter((i) => i >= 0),
+        ),
+      };
+
+      // Redraws the charts at their card's new width (render sets it).
+      let redrawCharts = () => {};
+      // A chart's width: its card's, but never so narrow its labels crowd (a
+      // phone scrolls it instead).
+      const chartWidth = (id) => Math.max(560, $(id).clientWidth || 980);
+
+      function render() {
+        const steps = data.steps;
+        const ran = tests.filter((t) => t.result !== 'skipped');
+        const failedSteps = steps.filter((s) => s.conclusion === 'failure');
+        document.title = `${data.job}${data.run ? ` · run #${data.run.number}` : ''}`;
+        $('crumbs').innerHTML =
+          `<a href="https://github.com/${esc(data.repo)}">${esc(data.repo)}</a> › ${esc(data.workflow)}${data.run ? ` › <a href="${esc(data.run.url)}">run #${data.run.number}</a> · ${esc(short(data.run.sha))} on ${esc(data.run.branch)}${Number.isFinite(Date.parse(data.run.when)) ? ` · ${esc(new Date(data.run.when).toLocaleString())}` : ''}` : ''}`;
+        const verdict = groups.failed.length
+          ? `<span class="pill bad">${groups.failed.length} of ${ran.length} ${nouns} failed</span>`
+          : failedSteps.length
+            ? `<span class="pill bad">${esc(failedSteps[0].name)} failed</span>`
+            : data.tests
+              ? `<span class="pill ok">${ran.length} ${nouns} passed</span>`
+              : '<span class="pill ok">no step failed</span>';
+        $('title').innerHTML = `${esc(data.job)} ${verdict}`;
+        const facts = [`<span>Job time <b>${fmt(data.seconds)}</b></span>`];
+        if (data.usual) {
+          const vs = Math.round((data.seconds / data.usual - 1) * 100);
+          facts.push(
+            `<span>Usual <b>${fmt(data.usual)}</b> <span class="${vs >= 5 ? 'slow' : ''}">${vs >= 5 ? `${vs}% slower` : vs <= -5 ? `${-vs}% faster` : 'about the same'}</span></span>`,
+          );
+        } else
+          facts.push('<span>No usual time yet: three earlier runs that passed make one</span>');
+        facts.push(`<span>Steps <b>${steps.length}</b></span>`);
+        if (data.tests) facts.push(`<span>${Nouns} <b>${tests.length}</b></span>`);
+        if (N)
+          facts.push(
+            `<span>Compared with the last ${N} runs on this branch and the default branch</span>`,
+          );
+        $('facts').innerHTML = facts.join('');
+        $('problem-card').hidden = !data.problem;
+        $('problem').textContent = data.problem;
+
+        // Needs attention: each item goes to where the page shows it.
+        const att = [];
+        const goTest = (t) => `tabindex="0" role="link" data-go="test:${tests.indexOf(t)}"`;
+        const goStep = (st) => `tabindex="0" role="link" data-go="step:${st.i}"`;
+        const go = '<span class="go">Show ↓</span>';
+        const where = (t) =>
+          t.file
+            ? `<span class="muted"> · ${esc(t.folder + t.file)}${t.block ? ` › ${esc(t.block)}` : ''}</span>`
+            : '';
+        groups.failed.forEach((t) =>
+          att.push(
+            `<li ${goTest(t)}><span class="tag bad">Failed</span><span>${esc(t.title)}${where(t)} after ${fmt(t.seconds)}${go}${t.message ? message('msg', `a${tests.indexOf(t)}`, t.message, /\.ya?ml$/.test(t.path)) : ''}</span></li>`,
+          ),
+        );
+        if (!groups.failed.length)
+          failedSteps.forEach((s) =>
+            att.push(
+              `<li ${goStep(s)}><span class="tag bad">Failed step</span><span>${esc(s.name)}${go}</span></li>`,
+            ),
+          );
+        groups.rerun.forEach((t) =>
+          att.push(
+            `<li ${goTest(t)}><span class="tag warn">Re-run</span><span>${esc(t.title)}${where(t)} passed on a re-run${go}</span></li>`,
+          ),
+        );
+        groups.flaky.forEach((t) => {
+          const results = [...t.hist, t.result].filter((h) => h);
+          const bad = results.filter((h) => h === 'failed' || h === 'passed on re-run').length;
+          att.push(
+            `<li ${goTest(t)}><span class="tag flaky">Flaky</span><span>${esc(t.title)}${where(t)}: failed ${bad} of its last ${results.length} runs${go}</span></li>`,
+          );
+        });
+        [...steps.filter((s) => s.slower), ...groups.slower].forEach((x) =>
+          att.push(
+            `<li ${x.i ? goStep(x) : goTest(x)}><span class="tag warn">Slower</span><span>${esc(x.i ? x.name : x.title)}${x.i ? ' (step)' : where(x)}: ${fmt(x.seconds)}, usually ${fmt(x.usual)} (${pct(x.seconds, x.usual)})${go}</span></li>`,
+          ),
+        );
+        $('attention').innerHTML = att.join('');
+        $('attention')
+          .querySelectorAll('[data-go]')
+          .forEach((li) => {
+            const open = () => {
+              const [kind, n] = li.dataset.go.split(':');
+              kind === 'step' ? showStep(+n) : showTest(+n);
+            };
+            li.addEventListener('click', open);
+            li.addEventListener('keydown', (e) => {
+              // A key on a control inside the item (Show all lines) is its own.
+              if (e.target !== li) return;
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                open();
+              }
+            });
+          });
+        $('attention-card').hidden = !att.length;
+
+        $('steps-card').hidden = !steps.length;
+        if (steps.length)
+          drawSteps(
+            steps,
+            data.seconds || steps.reduce((n, s) => Math.max(n, s.start + s.seconds), 0),
+          );
+        $('tests-card').hidden = !data.tests;
+        if (data.tests) drawTests();
+        $('history-card').hidden = !N;
+        if (N) drawHistory();
+        const notes = data.notes ?? [];
+        const load = data.load ?? [];
+        $('notes-card').hidden = !notes.length && !load.length;
+        $('notes').hidden = !notes.length;
+        $('notes').innerHTML = notes
+          .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`)
+          .join('');
+        $('load-wrap').hidden = !load.length;
+        if (load.length) drawLoad(steps, load);
+        redrawCharts = () => {
+          if (N) drawHistory();
+          if (load.length) drawLoad(steps, load);
+        };
+        $('foot').textContent =
+          `Written by jbhirsh/ci's job-summary${data.run ? ` for run #${data.run.number}` : ''}.`;
+      }
+
+      const NS = 'http://www.w3.org/2000/svg';
+      function svgEl(name, attrs, parent) {
+        const el = document.createElementNS(NS, name);
+        for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+        parent?.appendChild(el);
+        return el;
+      }
+      function niceStep(total) {
+        const raw = Math.max(total, 1) / 6;
+        // Whole minutes once the ticks are over a minute apart, whole hours
+        // past that: always about six ticks, however long the span.
+        if (raw > 45)
+          return (
+            [60, 120, 180, 300, 600, 900, 1800, 3600].find((s) => s >= raw) ??
+            Math.ceil(raw / 3600) * 3600
+          );
+        const p = 10 ** Math.floor(Math.log10(raw));
+        return [1, 2, 5, 10].map((m) => m * p).find((s) => s >= raw);
+      }
+
+      // The job's time, run by run, with the usual time labelled where its line ends.
+      function drawHistory() {
+        const runs = [
+          ...data.runs.map((r) => ({ ...r })),
+          {
+            ...(data.run ?? { number: 0, sha: '', branch: '', when: '' }),
+            seconds: data.seconds,
+            conclusion:
+              groups.failed.length || data.steps.some((s) => s.conclusion === 'failure')
+                ? 'failure'
+                : 'success',
+            self: true,
+          },
+        ];
+        $('history-title').textContent = `Job time, last ${runs.length} runs`;
+        const W = chartWidth('history'),
+          H = 240,
+          left = 66,
+          bottom = 34,
+          top = 30;
+        const max = Math.max(...runs.map((r) => r.seconds), data.usual ?? 0) * 1.15 || 1;
+        const svg = svgEl('svg', {
+          width: W,
+          height: H,
+          viewBox: `0 0 ${W} ${H}`,
+          role: 'img',
+          'aria-label': 'Job time for the last runs',
+        });
+        const y = (s) => H - bottom - (s / max) * (H - bottom - top);
+        const g = svgEl('g', { class: 'grid' }, svg),
+          ax = svgEl('g', { class: 'axis' }, svg);
+        const step = niceStep(max);
+        for (let t = 0; t <= max; t += step) {
+          svgEl('line', { x1: left, x2: W - 90, y1: y(t), y2: y(t) }, g);
+          svgEl('text', { x: left - 8, y: y(t) + 4, 'text-anchor': 'end' }, ax).textContent =
+            tick(t);
+        }
+        const bw = (W - left - 100) / runs.length;
+        runs.forEach((r, i) => {
+          const bx = left + i * bw + bw * 0.18;
+          const link = r.self
+            ? svg
+            : svgEl(
+                'a',
+                {
+                  href: r.url,
+                  target: '_blank',
+                  rel: 'noopener',
+                  'aria-label': `Run #${r.number}`,
+                },
+                svg,
+              );
+          const bar = svgEl(
+            'rect',
+            {
+              class: `bar ${r.self ? 'this' : ''} ${r.conclusion === 'failure' && !r.self ? 'bad' : ''}`,
+              x: bx,
+              y: y(r.seconds),
+              width: bw * 0.64,
+              height: Math.max(0, H - bottom - y(r.seconds)),
+              rx: 3,
+              tabindex: r.self ? 0 : -1,
+            },
+            link,
+          );
+          svgEl(
+            'text',
+            { x: bx + bw * 0.32, y: H - 14, 'text-anchor': 'middle', class: 'axis' },
+            ax,
+          ).textContent = r.self ? 'this' : `#${r.number}`;
+          if (H - bottom - y(r.seconds) > 22)
+            svgEl(
+              'text',
+              { x: bx + bw * 0.32, y: y(r.seconds) + 16, 'text-anchor': 'middle', class: 'inbar' },
+              svg,
+            ).textContent = fmt(r.seconds);
+          // A keyboard reaches an earlier run's bar through its link.
+          bindTip(
+            r.self ? bar : link,
+            () =>
+              `<b>${r.self ? 'This run' : 'Run #' + r.number}</b> · ${r.conclusion === 'failure' ? 'failed' : r.conclusion === 'success' ? 'passed' : esc(r.conclusion || 'running')}<br><span class="k">Time</span> ${fmt(r.seconds)}${data.usual ? ` (usual ${fmt(data.usual)})` : ''}<br><span class="k">Commit</span> ${esc(short(r.sha))} on ${esc(r.branch)}<br><span class="k">When</span> ${r.self ? 'now' : esc(ago(r.when))}${r.self ? '' : '<br><span class="k">Click to open that run</span>'}`,
+          );
+        });
+        if (data.usual) {
+          svgEl(
+            'line',
+            { class: 'usual', x1: left, x2: W - 90, y1: y(data.usual), y2: y(data.usual) },
+            svg,
+          );
+          const label = svgEl(
+            'text',
+            { x: W - 84, y: y(data.usual) - 2, class: 'axis', tabindex: 0 },
+            svg,
+          );
+          svgEl('tspan', { x: W - 84 }, label).textContent = 'usual';
+          svgEl('tspan', { x: W - 84, dy: 14 }, label).textContent = fmt(data.usual);
+          bindTip(
+            label,
+            () =>
+              `<b>Usual: ${fmt(data.usual)}</b><br>The middle time of the earlier runs that passed`,
+          );
+        }
+        $('history').replaceChildren(svg);
+      }
+
+      // CPU across the job, on the same time axis as the steps, so a slow step can
+      // be read against what the machine was doing then.
+      function drawLoad(steps, samples) {
+        const total = Math.max(
+          data.seconds,
+          ...steps.map((st) => st.start + st.seconds),
+          ...samples.map((p) => p.t),
+          1,
+        );
+        const W = chartWidth('load'),
+          H = 206,
+          left = 50,
+          right = 46,
+          top = 30,
+          bottom = 26;
+        const x = (t) => left + (t / total) * (W - left - right);
+        const yi = (v) => H - bottom - (v / 100) * (H - bottom - top);
+        const svg = svgEl('svg', {
+          width: W,
+          height: H,
+          viewBox: `0 0 ${W} ${H}`,
+          role: 'img',
+          'aria-label': 'CPU over the job',
+        });
+        const keyed = [];
+        steps
+          .filter((st) => st.seconds / total > 0.04)
+          .forEach((st, k) => {
+            const w = x(st.start + st.seconds) - x(st.start);
+            svgEl(
+              'rect',
+              {
+                class: 'band',
+                x: x(st.start),
+                y: top,
+                width: w,
+                height: H - top - bottom,
+                opacity: k % 2 ? 0.45 : 0.9,
+              },
+              svg,
+            );
+            // A numbered badge over the band; the names are in the key under the chart.
+            const badge = svgEl(
+              'g',
+              {
+                class: 'badge',
+                tabindex: 0,
+                role: 'link',
+                'aria-label': `Step ${st.i}: ${st.name}`,
+              },
+              svg,
+            );
+            svgEl('circle', { cx: x(st.start) + 12, cy: top - 12, r: 9 }, badge);
+            svgEl(
+              'text',
+              { x: x(st.start) + 12, y: top - 8, 'text-anchor': 'middle' },
+              badge,
+            ).textContent = st.i;
+            bindTip(
+              badge,
+              () =>
+                `<b>${st.i}. ${esc(st.name)}</b><br><span class="k">Ran</span> ${fmt(st.start)} → ${fmt(st.start + st.seconds)} into the job<br><span class="k">Took</span> ${fmt(st.seconds)}${st.usual ? ` (usual ${fmt(st.usual)})` : ''}<br><span class="k">Click to see it in Steps</span>`,
+            );
+            badge.addEventListener('click', () => showStep(st.i));
+            badge.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') showStep(st.i);
+            });
+            keyed.push(st);
+          });
+        $('stepkey').innerHTML = keyed
+          .map(
+            (st) =>
+              `<button type="button" data-step="${st.i}"><b>${st.i}</b> ${esc(st.name)}</button>`,
+          )
+          .join('');
+        $('stepkey')
+          .querySelectorAll('button')
+          .forEach((b) => b.addEventListener('click', () => showStep(+b.dataset.step)));
+        const g = svgEl('g', { class: 'grid' }, svg),
+          ax = svgEl('g', { class: 'axis' }, svg);
+        for (let v = 0; v <= 100; v += 25) {
+          svgEl('line', { x1: left, x2: W - right, y1: yi(v), y2: yi(v) }, g);
+          svgEl('text', { x: left - 6, y: yi(v) + 4, 'text-anchor': 'end' }, ax).textContent =
+            `${v}%`;
+        }
+        const step = niceStep(total);
+        for (let t = 0; t <= total; t += step)
+          svgEl('text', { x: x(t), y: H - 8, 'text-anchor': 'middle' }, ax).textContent = tick(t);
+        svgEl(
+          'polyline',
+          { class: 'loadline', points: samples.map((p) => `${x(p.t)},${yi(p.busy)}`).join(' ') },
+          svg,
+        );
+        $('settle-key').hidden = data.settle == null;
+        if (data.settle != null) {
+          svgEl(
+            'line',
+            { class: 'usual', x1: left, x2: W - right, y1: yi(data.settle), y2: yi(data.settle) },
+            svg,
+          );
+          svgEl(
+            'text',
+            {
+              x: W - right - 4,
+              y: yi(data.settle) - 5,
+              'text-anchor': 'end',
+              class: 'peaklabel muted-label',
+            },
+            svg,
+          ).textContent = `settle wait's limit, ${data.settle}% busy`;
+        }
+        // The peak, on the line, labelled on whichever side has room.
+        const peak = samples.reduce((a, c) => (c.busy > a.busy ? c : a));
+        svgEl(
+          'circle',
+          {
+            cx: x(peak.t),
+            cy: yi(peak.busy),
+            r: 4,
+            fill: 'var(--bad)',
+            stroke: 'var(--surface)',
+            'stroke-width': 2,
+          },
+          svg,
+        );
+        const peakText = `peak ${Math.round(peak.busy)}% at ${fmt(peak.t)}`;
+        const onLeft = x(peak.t) - 8 - peakText.length * 6.2 > left + 4;
+        svgEl(
+          'text',
+          {
+            x: x(peak.t) + (onLeft ? -8 : 8),
+            y: yi(peak.busy) + (onLeft ? 4 : 16),
+            'text-anchor': onLeft ? 'end' : 'start',
+            class: 'peaklabel',
+          },
+          svg,
+        ).textContent = peakText;
+        const cursor = svgEl(
+          'line',
+          { class: 'cursor', x1: 0, x2: 0, y1: top, y2: H - bottom, visibility: 'hidden' },
+          svg,
+        );
+        const hit = svgEl(
+          'rect',
+          {
+            x: left,
+            y: top,
+            width: W - left - right,
+            height: H - top - bottom,
+            fill: 'transparent',
+          },
+          svg,
+        );
+        hit.addEventListener('mousemove', (e) => {
+          const b = svg.getBoundingClientRect();
+          const t = (((e.clientX - b.left) * (W / b.width) - left) / (W - left - right)) * total;
+          const p = samples.reduce((a, c) => (Math.abs(c.t - t) < Math.abs(a.t - t) ? c : a));
+          const st = steps.find((q) => p.t >= q.start && p.t < q.start + q.seconds);
+          cursor.setAttribute('x1', x(p.t));
+          cursor.setAttribute('x2', x(p.t));
+          cursor.setAttribute('visibility', 'visible');
+          showTip(
+            e,
+            `<b>${fmt(p.t)} into the job</b><br><span class="k">CPU busy</span> ${Math.round(p.busy)}%<br><span class="k">Load average</span> ${p.load} (1 minute)${st ? `<br><span class="k">Step</span> ${st.i}. ${esc(st.name)}` : ''}`,
+          );
+        });
+        hit.addEventListener('mouseleave', () => {
+          cursor.setAttribute('visibility', 'hidden');
+          hideTip();
+        });
+        $('load').replaceChildren(svg);
+      }
+
+      // The steps: a row each, with its bar where it ran in the job, its times
+      // and its recent runs.
+      function drawSteps(steps, total) {
+        const step = niceStep(total);
+        const ticks = [];
+        for (let t = 0; t <= total; t += step) ticks.push(t);
+        const at = (t) => (t / total) * 100;
+        const axis = `<div class="axisrow">${ticks.map((t) => `<span style="left:${at(t)}%">${tick(t)}</span>`).join('')}</div>`;
+        const cols = [
+          ['#', 'i', 'num'],
+          ['Step', 'name', ''],
+          [axis, null, 'tl'],
+          ['This run', 'seconds', 'num'],
+          ['Usual', 'usual', 'num'],
+          ['Change', 'change', 'num'],
+          ['Last runs', null, ''],
+        ];
+        const rows = steps.map((s) => ({
+          ...s,
+          change: s.usual ? s.seconds / s.usual - 1 : -Infinity,
+        }));
+        const { key, dir } = state.sort;
+        if (key) rows.sort((a, b) => (a[key] > b[key] ? 1 : a[key] < b[key] ? -1 : 0) * dir);
+        const grid = ticks.map((t) => `<i class="tick" style="left:${at(t)}%"></i>`).join('');
+        const t = $('steps');
+        // A sortable column's header is a button, for the keyboard and screen
+        // readers too; the column sorted says which way.
+        const head = ([h, k, c]) =>
+          k
+            ? `<th class="${c}" aria-sort="${k === key ? (dir > 0 ? 'ascending' : 'descending') : 'none'}"><button type="button" class="sortbtn" data-k="${k}">${h}</button></th>`
+            : `<th class="${c}">${h}</th>`;
+        t.innerHTML = `<thead><tr>${cols.map(head).join('')}</tr></thead><tbody>${rows
+          .map((s) => {
+            const cls = s.conclusion === 'failure' ? 'bad' : s.slower ? 'slow' : '';
+            const was =
+              s.slower && s.usual
+                ? `<i class="was" style="left:${at(s.start)}%;width:${at(s.usual)}%"></i>`
+                : '';
+            const change = s.usual
+              ? `${Math.round(s.change * 100) >= 0 ? '+' : ''}${Math.round(s.change * 100)}%`
+              : '–';
+            return `<tr id="step-${s.i}"><td class="num muted">${s.i}</td><td><span class="stepname" title="${esc(s.name)}">${s.conclusion === 'failure' ? '<span class="res bad">✖</span> ' : ''}${esc(s.name)}</span></td><td class="tl"><div class="track">${grid}<i class="seg ${cls}" tabindex="0" data-step="${s.i - 1}" style="left:${at(s.start)}%;width:max(3px, ${at(s.seconds)}%)"></i>${was}</div></td><td class="num ${s.slower ? 'slowtxt' : ''}">${fmt(s.seconds)}</td><td class="num muted">${s.usual == null ? 'n/a' : fmt(s.usual)}</td><td class="num ${s.slower ? 'slowtxt' : 'muted'}">${change}</td><td>${spark(s)}</td></tr>`;
+          })
+          .join('')}</tbody>`;
+        t.querySelectorAll('.sortbtn').forEach((b) =>
+          b.addEventListener('click', () => {
+            const k = b.dataset.k;
+            state.sort = { key: k, dir: state.sort.key === k ? -state.sort.dir : 1 };
+            drawSteps(steps, total);
+            t.querySelector(`.sortbtn[data-k="${k}"]`)?.focus();
+          }),
+        );
+        t.querySelectorAll('.seg').forEach((el) => {
+          const s = steps[+el.dataset.step];
+          bindTip(
+            el,
+            () =>
+              `<b>${esc(s.name)}</b><br><span class="k">Ran</span> ${fmt(s.start)} → ${fmt(s.start + s.seconds)} into the job<br><span class="k">This run</span> ${fmt(s.seconds)}${s.conclusion === 'failure' ? ' · failed' : ''}<br><span class="k">Usual</span> ${s.usual == null ? 'not enough earlier runs' : fmt(s.usual) + (s.slower ? ` (${pct(s.seconds, s.usual)})` : '')}`,
+          );
+        });
+        t.querySelectorAll('[data-spark]').forEach((el) => {
+          const s = steps[+el.dataset.spark];
+          el.querySelectorAll('.b').forEach((bar) =>
+            bindTip(bar, () => {
+              const i = +bar.dataset.i;
+              const v = i === N ? s.seconds : s.past[i];
+              return `<b>${runName(i)}</b><br><span class="k">${esc(s.name)}</span><br><span class="k">Time</span> ${fmt(v)}${s.usual ? ` (usual ${fmt(s.usual)})` : ''}${i === N ? '' : '<br><span class="k">Click to open that run</span>'}`;
+            }),
+          );
+        });
+      }
+      // A step's recent runs as small bars from zero, to scale with each other:
+      // one per run, oldest first, this run last; each opens its run.
+      function spark(s) {
+        // As many earlier times as there are earlier runs, this run's last.
+        const all = [
+          ...s.past.slice(0, N),
+          ...Array(Math.max(0, N - s.past.length)).fill(null),
+          s.seconds,
+        ];
+        const vals = all.filter((v) => v != null);
+        const max = Math.max(...vals, 0.001);
+        return `<span class="minibars" data-spark="${s.i - 1}">${all
+          .map((v, i) => {
+            if (v == null) return `<span class="none" title="Didn't run"></span>`;
+            const h = Math.max(2, Math.round((v / max) * 22));
+            if (i === N)
+              return `<span class="b ${s.conclusion === 'failure' ? 'bad' : s.slower ? 'slow' : 'this'}" data-i="${i}" style="height:${h}px"></span>`;
+            return `<a class="b" data-i="${i}" href="${esc(data.runs[i].url)}" target="_blank" rel="noopener" aria-label="Run #${data.runs[i].number}: ${fmt(v)}" style="height:${h}px"></a>`;
+          })
+          .join('')}</span>`;
+      }
+
+      // The tests: a tree of folders, files and describe blocks, or a flat list
+      // of flows; filters for the groups worth reading.
+      function drawTests() {
+        const g = groups;
+        const filters = [
+          ['all', 'All', tests],
+          ['failed', 'Failed', g.failed],
+          ['slower', 'Slower', g.slower],
+          ['flaky', 'Flaky', g.flaky],
+          ['rerun', 'Re-run', g.rerun],
+        ];
+        $('chips').innerHTML = filters
+          .filter(([k, , l]) => k === 'all' || l.length)
+          .map(
+            ([k, label, l]) =>
+              `<button type="button" class="chip" data-f="${k}" aria-pressed="${state.filter === k}">${label}<span class="n">${l.length}</span></button>`,
+          )
+          .join('');
+        $('chips')
+          .querySelectorAll('.chip')
+          .forEach((c) =>
+            c.addEventListener('click', () => {
+              state.filter = c.dataset.f;
+              // All: the groups holding failures open, as at load; a filter: everything.
+              state.open = new Set(state.filter === 'all' ? failedGroups() : ['*']);
+              drawTests();
+            }),
+          );
+        const tree = tests.some((t) => t.file);
+        $('tests-title').innerHTML =
+          `${Nouns} <small>${tests.length} ${nouns} · ${g.failed.length} failed · ${g.slower.length} slower · ${g.flaky.length} flaky · ${tree ? 'by folder, file and describe block, ' : ''}slowest first</small>`;
+        const q = state.q.trim().toLowerCase();
+        const pool = (
+          state.filter === 'all' ? tests : filters.find((f) => f[0] === state.filter)[2]
+        ).filter(
+          (t) => !q || `${t.folder}${t.file} ${t.block} ${t.title}`.toLowerCase().includes(q),
+        );
+        const html = [
+          `<div class="row head"><span>Name</span><span class="num">This run</span><span class="num">Usual</span><span class="num">Last ${N + 1} runs</span></div>`,
+        ];
+        if (!pool.length) html.push(`<div class="empty">No ${nouns} match.</div>`);
+        const sum = (l) => l.reduce((n, t) => n + t.seconds, 0);
+        const usum = (l) =>
+          l.every((t) => t.usual != null) ? l.reduce((n, t) => n + t.usual, 0) : null;
+        const groupBy = (l, k) => {
+          const m = new Map();
+          l.forEach((t) => {
+            const key = k(t);
+            if (!m.has(key)) m.set(key, []);
+            m.get(key).push(t);
+          });
+          return [...m].sort((a, b) => sum(b[1]) - sum(a[1]));
+        };
+        const isOpen = (id) => Boolean(q) || state.open.has('*') || state.open.has(id);
+        const groupRow = (id, depth, label, list) => {
+          const bad = list.some((t) => t.result === 'failed');
+          return `<div class="row group" role="treeitem" tabindex="0" aria-expanded="${isOpen(id)}" data-id="${esc(id)}" style="padding-left:${6 + depth * 18}px"><span class="name ${isOpen(id) ? 'open' : ''}"><span class="caret">▸</span>${bad ? '<span class="res bad">✖</span>' : ''}<span class="t">${marked(label)}</span> <span class="count">${list.length}</span></span><span class="num">${fmt(sum(list))}</span><span class="num muted">${fmt(usum(list))}</span><span></span></div>`;
+        };
+        const leaf = (t, depth) => {
+          const ti = tests.indexOf(t);
+          const res =
+            t.result === 'failed'
+              ? ['bad', '✖']
+              : t.result === 'passed on re-run'
+                ? ['warn', '↻']
+                : t.result === 'skipped'
+                  ? ['skip', '–']
+                  : ['ok', '✓'];
+          const dots = [
+            ...t.hist.slice(0, N),
+            ...Array(Math.max(0, N - t.hist.length)).fill(''),
+            t.result,
+          ]
+            .map((h, i) => {
+              const cls = `${h === 'failed' ? 'bad' : h === 'passed on re-run' ? 'rerun' : h === '' || h === 'skipped' ? 'none' : ''} ${i === N ? 'this' : ''} ${t.edited.includes(i) ? 'changed' : ''}`;
+              const href = i === N ? (data.run?.url ?? '#') : data.runs[i].url;
+              return `<a href="${esc(href)}" target="_blank" rel="noopener" aria-label="${runName(i)}: ${esc(h || 'no result')}" class="${cls}" data-h="${i}"></a>`;
+            })
+            .join('');
+          const href =
+            t.path && data.run
+              ? `https://github.com/${data.repo}/blob/${data.run.sha}/${t.path.split('/').map(encodeURIComponent).join('/')}#L${t.line}`
+              : '';
+          const codeOpen = state.code.has(ti);
+          const yaml = /\.ya?ml$/.test(t.path);
+          const code =
+            t.code && codeOpen
+              ? `<div class="code hl"><div class="path"><span>${esc(t.path)}</span>${href ? `<a href="${esc(href)}" target="_blank" rel="noopener">Open on GitHub ↗</a>` : ''}</div><pre>${t.code.map(([n, line, hit]) => `<span data-n="${n}" class="${hit ? 'hit' : ''}">${highlight(line, yaml)}</span>`).join('')}</pre></div>`
+              : '';
+          const name = href
+            ? `<a class="t" href="${esc(href)}" target="_blank" rel="noopener" title="Open ${esc(t.path)} at line ${t.line}">${marked(t.title)}</a>`
+            : `<span class="t">${marked(t.title)}</span>`;
+          const slow = t.slower
+            ? `<span class="delta" data-slow="${ti}" tabindex="0" aria-label="Slower than usual, ${pct(t.seconds, t.usual)}">⚠</span>`
+            : '';
+          return `<div class="row" role="treeitem" data-ti="${ti}" style="padding-left:${6 + depth * 18 + 12}px"><span class="name"><span class="res ${res[0]}">${res[1]}</span>${name}${t.code ? `<button type="button" class="codebtn" data-code="${ti}" aria-expanded="${codeOpen}">${codeOpen ? 'Hide code' : 'Show code'}</button>` : ''}</span><span class="num ${t.slower ? 'slowtxt' : ''}">${slow}${fmt(t.seconds)}</span><span class="num muted">${fmt(t.usual)}</span><span class="dots" data-t="${ti}">${dots}</span>${t.message ? message('failmsg', `t${ti}`, t.message, yaml) : ''}${code}</div>`;
+        };
+        const slowest = (l) => [...l].sort((a, b) => b.seconds - a.seconds);
+        if (!tree) {
+          slowest(pool).forEach((t) => html.push(leaf(t, -0.7)));
+        } else {
+          for (const [folder, inF] of groupBy(pool, (t) => t.folder)) {
+            const fileDepth = folder ? 1 : 0;
+            if (folder) {
+              html.push(groupRow(folder, 0, '📁 ' + folder, inF));
+              if (!isOpen(folder)) continue;
+            }
+            for (const [file, inFile] of groupBy(inF, (t) => t.file)) {
+              const fid = folder + file;
+              if (file) {
+                html.push(groupRow(fid, fileDepth, file, inFile));
+                if (!isOpen(fid)) continue;
+              }
+              for (const [block, inB] of groupBy(inFile, (t) => t.block)) {
+                const bid = fid + ' › ' + block;
+                if (block) {
+                  html.push(groupRow(bid, fileDepth + 1, block, inB));
+                  if (!isOpen(bid)) continue;
+                }
+                slowest(inB).forEach((t) => html.push(leaf(t, fileDepth + (block ? 2 : 1))));
+              }
+            }
+          }
+        }
+        const el = $('tree');
+        el.innerHTML = html.join('');
+        el.querySelectorAll('.group').forEach((row) => {
+          const toggle = () => {
+            const id = row.dataset.id;
+            if (state.open.has('*')) state.open = new Set(allIds());
+            state.open.has(id) ? state.open.delete(id) : state.open.add(id);
+            keepFocus(drawTests);
+          };
+          row.addEventListener('click', toggle);
+          row.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              toggle();
+            }
+          });
+        });
+        el.querySelectorAll('[data-slow]').forEach((s) => {
+          const t = tests[+s.dataset.slow];
+          bindTip(
+            s,
+            () =>
+              `<b>Slower than usual: ${pct(t.seconds, t.usual)}</b><br>${fmt(t.seconds)} this run, usually ${fmt(t.usual)}<br><span class="k">Usual is the middle time of the earlier runs it passed in</span>`,
+          );
+        });
+        el.querySelectorAll('.codebtn').forEach((b) =>
+          b.addEventListener('click', () => {
+            const i = +b.dataset.code;
+            state.code.has(i) ? state.code.delete(i) : state.code.add(i);
+            keepFocus(drawTests);
+          }),
+        );
+        el.querySelectorAll('.dots').forEach((d) => {
+          const t = tests[+d.dataset.t];
+          d.querySelectorAll('a').forEach((dot) =>
+            bindTip(dot, () => {
+              const i = +dot.dataset.h;
+              const r = i === N ? data.run : data.runs[i];
+              const h = i === N ? t.result : t.hist[i] || 'no result';
+              const time = i === N ? t.seconds : t.times[i];
+              const edited = t.edited.includes(i)
+                ? `<br>✎ <b>${esc(t.path.split('/').pop())} changed since this branch's previous run</b>`
+                : '';
+              return `<b>${runName(i)}</b> · ${esc(h)}<br><span class="k">${esc(t.title)}</span>${time != null ? `<br><span class="k">Time</span> ${fmt(time)}` : ''}${r ? `<br><span class="k">Commit</span> ${esc(short(r.sha))} on ${esc(r.branch)}` : ''}${edited}${i === N ? '' : '<br><span class="k">Click to open that run</span>'}`;
+            }),
+          );
+        });
+      }
+
+      // Redraws with `draw`, then gives keyboard focus back to the control that
+      // had it, found again by its data attribute: a redraw replaces every
+      // element, and focus would otherwise fall back to the page.
+      function keepFocus(draw) {
+        const a = document.activeElement;
+        const key = ['data-id', 'data-msg', 'data-code', 'data-go'].find((k) => a?.hasAttribute(k));
+        const value = key ? a.getAttribute(key) : null;
+        draw();
+        if (key)
+          [...document.querySelectorAll(`[${key}]`)]
+            .find((e) => e.getAttribute(key) === value)
+            ?.focus();
+      }
+
+      // Scrolls to a place on the page and lights it up for a moment.
+      function reveal(el) {
+        if (!el) return;
+        el.scrollIntoView({
+          block: 'center',
+          behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        });
+        el.classList.remove('flash');
+        void el.offsetWidth;
+        el.classList.add('flash');
+      }
+      function showStep(i) {
+        reveal($('step-' + i));
+      }
+      // Opens the tree down to a test (clearing a filter that hides it), then goes there.
+      function showTest(ti) {
+        const t = tests[ti];
+        const shown = state.filter === 'all' || (groups[state.filter] || []).includes(t);
+        if (!shown) state.filter = 'all';
+        if (state.q) {
+          state.q = '';
+          $('q').value = '';
+        }
+        if (!state.open.has('*'))
+          [t.folder, t.folder + t.file, t.folder + t.file + ' › ' + t.block].forEach((id) =>
+            state.open.add(id),
+          );
+        drawTests();
+        reveal(document.querySelector(`#tree [data-ti="${ti}"]`));
+      }
+      function allIds() {
+        const ids = [];
+        tests.forEach((t) => {
+          ids.push(t.folder, t.folder + t.file, t.folder + t.file + ' › ' + t.block);
+        });
+        return [...new Set(ids)];
+      }
+
+      document.addEventListener(
+        'click',
+        (e) => {
+          const b = e.target.closest('.msgmore');
+          if (!b) return;
+          e.stopPropagation();
+          const key = b.dataset.msg;
+          openMessages.has(key) ? openMessages.delete(key) : openMessages.add(key);
+          keepFocus(key.startsWith('a') ? render : drawTests);
+        },
+        true,
+      );
+      $('q').addEventListener('input', (e) => {
+        state.q = e.target.value;
+        drawTests();
+      });
+      $('expand').addEventListener('click', () => {
+        state.open = new Set(['*']);
+        drawTests();
+      });
+      $('collapse').addEventListener('click', () => {
+        state.open = new Set();
+        drawTests();
+      });
+      render();
+      let resizing = 0;
+      addEventListener('resize', () => {
+        cancelAnimationFrame(resizing);
+        resizing = requestAnimationFrame(() => redrawCharts());
+      });
+    </script>
+  </body>
+</html>

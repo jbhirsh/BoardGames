@@ -1,0 +1,12 @@
+{
+  "id": 43539023159,
+  "number": 604,
+  "workflow": "CI",
+  "branch": "claude/amazing-pasteur-oq9lcj",
+  "sha": "cba5213d806ad1ad828b576203f17c9dc45cfc3b",
+  "created": "2026-11-14T01:11:13Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43539023159",
+  "jobs": [
+    "ci"
+  ]
+}

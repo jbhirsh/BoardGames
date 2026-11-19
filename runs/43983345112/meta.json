@@ -1,0 +1,12 @@
+{
+  "id": 43983345112,
+  "number": 648,
+  "workflow": "CI",
+  "branch": "main",
+  "sha": "db555880ad34536debdc5f424228c06cda85a51c",
+  "created": "2026-11-16T23:55:12Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43983345112",
+  "jobs": [
+    "ci"
+  ]
+}
