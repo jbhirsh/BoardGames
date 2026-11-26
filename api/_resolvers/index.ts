@@ -22,6 +22,7 @@ import { askRules, type AskRulesInput } from './chat.js';
 import { buildContext, limit, requireAdmin, type ApiContext, type ApiDeps } from './context.js';
 import { guarded } from './errors.js';
 import { limits } from './limits.js';
+import { timedResolvers } from './timed.js';
 import { listGames } from './games.js';
 import * as suggestions from './suggestions.js';
 import { castVote, readVotes } from './votes.js';
@@ -171,10 +172,14 @@ const enums = {
  */
 const WishlistGame = { asin: () => null };
 
-const schema = createSchema<ApiContext>({
-  typeDefs,
-  resolvers: { Query, Mutation, Subscription, EmailedSuggestion, WishlistGame, ...enums },
-});
+// Each field with a resolver of its own is timed into the request's
+// Server-Timing (./timed.ts).
+const schema = timedResolvers(
+  createSchema<ApiContext>({
+    typeDefs,
+    resolvers: { Query, Mutation, Subscription, EmailedSuggestion, WishlistGame, ...enums },
+  }),
+);
 
 /** The request's headers as a plain record, as the session and rate-limit helpers read them. */
 const headerRecord = (headers: globalThis.Headers): Headers => Object.fromEntries(headers.entries());
