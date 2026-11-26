@@ -29,6 +29,25 @@ describe('the API database client', () => {
     expect(deployEnvironment({})).toBeUndefined();
   });
 
+  it('times its first open as the phase db-open of the request that opened it, and only that', async () => {
+    current = await testDb();
+    await current.db.insert(meta).values({ key: 'environment', value: 'preview' });
+    const { database } = await load();
+    const { timeRequest } = await import('../../api/_lib/timing');
+    const env = { VERCEL_ENV: 'preview', DEV_DB_PATH: current.path };
+    const first = await timeRequest(async (read) => {
+      await database(env);
+      await database(env);
+      return read();
+    });
+    const later = await timeRequest(async (read) => {
+      await database(env);
+      return read();
+    });
+    expect(first.phases.map((p) => p.name)).toEqual(['db-open']);
+    expect(later.phases).toEqual([]);
+  });
+
   it("refuses another environment's database, then tries afresh", async () => {
     current = await testDb();
     await current.db.insert(meta).values({ key: 'environment', value: 'production' });

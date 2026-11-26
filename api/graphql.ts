@@ -8,6 +8,7 @@ import { getLimiter } from './_lib/rateLimit.js';
 import { database } from './_db/client.js';
 import { assembleRulesText, streamRulesAnswer } from './_lib/rulesAssistant.js';
 import { initSentry, reportError } from './_lib/sentry.js';
+import { markLoaded, phase, phaseSync, serverTimingHeader, timeRequest, type Timing } from './_lib/timing.js';
 import { CHAT_DAILY_LIMIT } from './_resolvers/chat.js';
 import type { ApiDeps } from './_resolvers/context.js';
 import { createApi, notJson } from './_resolvers/index.js';
@@ -45,10 +46,13 @@ let deps: ApiDeps | undefined;
 // Built on the first request, not at load, so a missing setting fails a
 // request (a 500), not the function. The database opens on first use.
 function realDeps(): ApiDeps {
-  if (deps) return deps;
+  return (deps ??= phaseSync('deps', buildDeps));
+}
+
+function buildDeps(): ApiDeps {
   const mailer = resendMailer();
   const db = () => database();
-  deps = {
+  return {
     db,
     suggestions: {
       db,
@@ -68,7 +72,6 @@ function realDeps(): ApiDeps {
     limiters,
     ownerSession: ownerSessionReader(auth, ownerEmail),
   };
-  return deps;
 }
 
 const yoga = createApi(realDeps, { production: process.env.VERCEL_ENV === 'production' });
@@ -94,7 +97,7 @@ const badJson = () => Response.json({ errors: [{ message: 'Requests must be vali
  */
 async function signIn(req: IncomingMessage, res: ServerResponse): Promise<void> {
   try {
-    await toNodeHandler(await auth())(req, res);
+    await toNodeHandler(await phase('auth-init', () => auth()))(req, res);
   } catch (err) {
     if (err instanceof SyntaxError && !res.headersSent) return refuse(res, badJson());
     await reportError('auth api error:', err);
@@ -111,7 +114,29 @@ async function signIn(req: IncomingMessage, res: ServerResponse): Promise<void> 
  * suggestion's email) has finished, so the function isn't frozen with it
  * half done.
  */
-export default async function handler(req: IncomingMessage, res: ServerResponse): Promise<void> {
+export default function handler(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  return timeRequest((timing) => {
+    withServerTiming(res, timing);
+    return answer(req, res);
+  });
+}
+
+/**
+ * Has the response carry its request's `Server-Timing` (api/_lib/timing.ts),
+ * read when its headers go out: Node sends them through writeHead, called
+ * by every way of answering here (refuse(), Better Auth, Yoga) or implicitly
+ * by the first write. A streamed answer's header holds the phases before
+ * its stream began.
+ */
+function withServerTiming(res: ServerResponse, timing: () => Timing): void {
+  const writeHead = res.writeHead.bind(res);
+  res.writeHead = ((...args: Parameters<typeof writeHead>) => {
+    if (!res.headersSent) res.setHeader('Server-Timing', serverTimingHeader(timing()));
+    return writeHead(...args);
+  }) as typeof res.writeHead;
+}
+
+async function answer(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (isAuthRequest(req)) return signIn(req, res);
   // Every POST must be JSON, judged on the headers as they arrived (see
   // jsonOnly in _resolvers/index.ts for why Yoga's own view isn't enough).
@@ -135,3 +160,6 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   });
   await Promise.allSettled(pending);
 }
+
+// Last, so the time it notes covers loading every module above.
+markLoaded();

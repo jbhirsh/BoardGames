@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { IncomingMessage, ServerResponse } from 'node:http';
+import { IncomingMessage, ServerResponse } from 'node:http';
+import { Socket } from 'node:net';
 import { Readable } from 'node:stream';
 
 // api/graphql.ts only wires the real services into the server; the server
@@ -8,6 +9,7 @@ import { Readable } from 'node:stream';
 const yoga = vi.hoisted(() => ({
   calls: [] as Array<{ req: unknown; waitUntil: (work: Promise<void> | void) => void }>,
   deferred: undefined as Promise<void> | undefined,
+  answer: undefined as ((res: ServerResponse) => void) | undefined,
 }));
 
 vi.mock('@sentry/node', () => ({
@@ -45,8 +47,9 @@ vi.mock('../../api/_lib/rateLimit.js', async (importActual) => ({
 vi.mock('../../api/_resolvers/index.js', async (importActual) => ({
   ...(await importActual<typeof import('../../api/_resolvers/index.js')>()),
   createApi: vi.fn(() =>
-    vi.fn(async (req: unknown, _res: unknown, ctx: { waitUntil: (work: Promise<void> | void) => void }) => {
+    vi.fn(async (req: unknown, res: ServerResponse, ctx: { waitUntil: (work: Promise<void> | void) => void }) => {
       yoga.calls.push({ req, waitUntil: ctx.waitUntil });
+      yoga.answer?.(res);
       if (yoga.deferred) ctx.waitUntil(yoga.deferred);
     }),
   ),
@@ -64,11 +67,16 @@ const getDeps = vi.mocked(createApi).mock.calls[0][0] as () => ApiDeps;
 function nodeRes() {
   const res = {
     status: 0,
+    headersSent: false,
     headers: {} as Record<string, unknown>,
     body: '',
-    writeHead(status: number, headers: Record<string, unknown>) {
+    setHeader(name: string, value: unknown) {
+      res.headers[name] = value;
+    },
+    writeHead(status: number, headers: Record<string, unknown> = {}) {
       res.status = status;
-      res.headers = headers;
+      Object.assign(res.headers, headers);
+      res.headersSent = true;
       return res;
     },
     end(body: string) {
@@ -88,6 +96,7 @@ describe('api/graphql.ts', () => {
   beforeEach(() => {
     yoga.calls = [];
     yoga.deferred = undefined;
+    yoga.answer = undefined;
   });
 
   afterEach(() => {
@@ -148,6 +157,33 @@ describe('api/graphql.ts', () => {
     finish();
     await pending;
     expect(done).toBe(true);
+  });
+
+  it("puts the request's Server-Timing on a refusal, before Yoga sees it", async () => {
+    const res = await call('POST', { 'content-type': 'text/plain' });
+    expect(res.status).toBe(415);
+    expect(res.headers['Server-Timing']).toMatch(/(^|, )total;dur=[\d.]+$/);
+  });
+
+  it("puts the request's Server-Timing on Yoga's answer, beside Yoga's own headers", async () => {
+    yoga.answer = (res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' }).end('{}');
+    };
+    await call('GET');
+    // Not the instance's first request (an earlier test was), so not cold.
+    const res = await call('GET');
+    expect(res.headers['Server-Timing']).toMatch(/^total;dur=[\d.]+$/);
+    expect(res.headers['Content-Type']).toBe('application/json');
+  });
+
+  it('puts it on an answer whose headers go out with its body, as Node does for a bare end()', async () => {
+    yoga.answer = (res) => {
+      res.end('{}');
+    };
+    const res = new ServerResponse(new IncomingMessage(new Socket()));
+    await handler({ method: 'GET', headers: {} } as IncomingMessage, res);
+    expect(res.headersSent).toBe(true);
+    expect(res.getHeader('server-timing')).toMatch(/(^|, )total;dur=[\d.]+$/);
   });
 
   it('builds the services once, from the environment', () => {
@@ -231,6 +267,21 @@ describe('api/graphql.ts at /api/auth/*', () => {
       ['GET', 'https://games.example/api/auth/callback/google?code=c&state=s'],
     ]);
     expect(yoga.calls).toEqual([]);
+  });
+
+  it("times Better Auth's start in the answer's Server-Timing", async () => {
+    const res = streamRes();
+    await handler(authReq('GET', '/api/auth/ok', {}), res as unknown as ServerResponse);
+    await vi.waitFor(() => expect(res.body).toBe('{"ok":true}'));
+    expect(res.headers['Server-Timing']).toMatch(/(^|, )auth-init;dur=[\d.]+, total;dur=[\d.]+$/);
+  });
+
+  it("puts the Server-Timing on the plain error when Better Auth can't start", async () => {
+    signIn.fail = new Error('database out of reach');
+    const res = streamRes();
+    await handler(authReq('GET', '/api/auth/ok', {}), res as unknown as ServerResponse);
+    expect(res.statusCode).toBe(500);
+    expect(res.headers['Server-Timing']).toMatch(/(^|, )auth-init;dur=[\d.]+, total;dur=[\d.]+$/);
   });
 
   it("hands it a POST that isn't JSON, with its body, which Yoga would refuse", async () => {
