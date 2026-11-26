@@ -8,6 +8,7 @@
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { connection, open, recordedEnvironment, type Env } from './connection.js';
 import { checkEnvironment, isDbEnvironment, type DbEnvironment } from './environment.js';
+import { phase } from '../_lib/timing.js';
 
 /** The environment a deployment's database must record: production's or preview's, none elsewhere. */
 export function deployEnvironment(env: Env): DbEnvironment | undefined {
@@ -40,7 +41,7 @@ let opened: Promise<LibSQLDatabase> | undefined;
  * so a database briefly out of reach doesn't take the instance down with it.
  */
 export function database(env: Env = process.env): Promise<LibSQLDatabase> {
-  opened ??= openChecked(env).catch((err: unknown) => {
+  opened ??= phase('db-open', () => openChecked(env)).catch((err: unknown) => {
     opened = undefined;
     throw err;
   });
