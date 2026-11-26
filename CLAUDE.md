@@ -94,6 +94,9 @@ changing the module.
   jbhirsh/ci), not with committed images: merging accepts a
   change. A changed screen fails `Visual changes` on a PR that merges itself, unless it's the
   owner's own PR and they turned auto-merge on after the table appeared.
+- **Every field resolver is timed into `Server-Timing`** by `api/_resolvers/timed.ts`, wrapped round
+  the schema `createSchema` builds in `api/_resolvers/index.ts`: a resolver added any other way (a
+  second schema, a Yoga plugin) isn't timed.
 - **Don't mix a filter `dispatch` with `navigate()`** in one handler: the dispatch wins and the
   navigation's params are dropped.
 

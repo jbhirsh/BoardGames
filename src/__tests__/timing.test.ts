@@ -91,13 +91,14 @@ describe('serverTimingHeader', () => {
           { name: 'deps', ms: 1.26 },
           { name: 'db-open', ms: 40 },
         ],
+        fields: [],
         totalMs: 60.04,
       }),
     ).toBe('cold, loaded;dur=812.3, deps;dur=1.3, db-open;dur=40, total;dur=60');
   });
 
   it('writes a warm request as its phases and total only', () => {
-    expect(timing.serverTimingHeader({ cold: false, phases: [], totalMs: 0.04 })).toBe('total;dur=0');
+    expect(timing.serverTimingHeader({ cold: false, phases: [], fields: [], totalMs: 0.04 })).toBe('total;dur=0');
   });
 
   it('turns a name into a token, and a duration that is not a positive number into 0', () => {
