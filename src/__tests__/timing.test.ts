@@ -1,5 +1,6 @@
 // @vitest-environment node
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { performance } from 'node:perf_hooks';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // The module keeps one instance's state (whether it has served a request,
 // when it finished loading), so each test loads a fresh copy, as a new
@@ -9,6 +10,10 @@ let timing: typeof import('../../api/_lib/timing');
 beforeEach(async () => {
   vi.resetModules();
   timing = await import('../../api/_lib/timing');
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe('timeRequest and phase', () => {
@@ -68,6 +73,35 @@ describe('timeRequest and phase', () => {
     expect(first).toMatchObject({ cold: true, loadedMs: 123.4 });
     expect(second.cold).toBe(false);
     expect(second).not.toHaveProperty('loadedMs');
+  });
+
+  it("records when each phase started, in ms from the request's start", async () => {
+    let now = 100;
+    vi.spyOn(performance, 'now').mockImplementation(() => now);
+    const said = await timing.timeRequest(async (read) => {
+      now = 110;
+      await timing.phase('outer', async () => {
+        now = 115;
+        await timing.phase('inner', () => {
+          now = 120;
+        });
+        now = 130;
+      });
+      now = 140;
+      timing.phaseSync('sync', () => {
+        now = 145;
+      });
+      return read();
+    });
+    expect(said.phases).toEqual([
+      { name: 'inner', ms: 5, startMs: 15 },
+      { name: 'outer', ms: 20, startMs: 10 },
+      { name: 'sync', ms: 5, startMs: 40 },
+    ]);
+    expect(said.totalMs).toBe(45);
+    expect(timing.serverTimingHeader(said)).toBe(
+      'cold, inner;dur=5;start=15, outer;dur=20;start=10, sync;dur=5;start=40, total;dur=45',
+    );
   });
 
   it('reads the phases recorded by the time it is asked', async () => {

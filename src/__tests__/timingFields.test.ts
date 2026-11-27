@@ -77,6 +77,54 @@ describe('each field that does work', () => {
     expect(votes.slowestMs * votes.calls).toBeGreaterThanOrEqual(votes.ms);
   });
 
+  it("records each field's first call's start, from the request's start", async () => {
+    let now = 0;
+    vi.spyOn(performance, 'now').mockImplementation(() => (now += 1));
+    const said = await run('{ items { name votes } }');
+    const [items, votes] = said.fields;
+    expect(items.startMs).toBeGreaterThanOrEqual(0);
+    // An item's field starts once the list it's in has been resolved.
+    expect(votes.startMs).toBeGreaterThanOrEqual((items.startMs ?? 0) + items.ms);
+    expect((votes.startMs ?? 0) + (votes.spanMs ?? 0)).toBeLessThanOrEqual(said.totalMs);
+  });
+
+  it("spans a list's items that resolve together from their first start to their last end, its dur their sum", async () => {
+    let release = () => {};
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    const Item = new GraphQLObjectType({
+      name: 'Item',
+      fields: { slow: { type: GraphQLInt, resolve: () => gate.then(() => 1) } },
+    });
+    const Query = new GraphQLObjectType({
+      name: 'Query',
+      fields: { items: { type: new GraphQLList(Item), resolve: () => [{}, {}, {}] } },
+    });
+    const parallel = timedResolvers(new GraphQLSchema({ query: Query }));
+    let now = 100;
+    vi.spyOn(performance, 'now').mockImplementation(() => now);
+    const said = await timeRequest(async (read) => {
+      now = 121;
+      // Execution calls every item's resolver before it first waits.
+      const done = graphql({ schema: parallel, source: '{ items { slow } }' });
+      now = 123;
+      release();
+      await done;
+      return read();
+    });
+    expect(said.fields.find((f) => f.path === 'items.slow')).toEqual({
+      path: 'items.slow',
+      label: 'Item.slow',
+      ms: 6,
+      calls: 3,
+      slowestMs: 2,
+      startMs: 21,
+      spanMs: 2,
+    });
+    expect(serverTimingHeader(said)).toContain(
+      'field.items.slow;dur=6;desc="Item.slow";calls=3;slowest=2;span=2;start=21, total;dur=23',
+    );
+  });
+
   it('times a resolver that hands back a thenable as async', async () => {
     let now = 0;
     vi.spyOn(performance, 'now').mockImplementation(() => (now += 1));
@@ -117,6 +165,14 @@ describe('addFieldCall and fieldsShown', () => {
     ]);
   });
 
+  it('keeps the earliest start and the latest end of any call, as calls end in any order', () => {
+    const fields = new Map<string, FieldTime>();
+    addFieldCall(fields, { responsePath: 'games.wishlist.1.votes', label: 'Game.votes', ms: 1, startMs: 5 });
+    addFieldCall(fields, { responsePath: 'games.wishlist.0.votes', label: 'Game.votes', ms: 4, startMs: 2 });
+    addFieldCall(fields, { responsePath: 'games.wishlist.2.votes', label: 'Game.votes', ms: 1, startMs: 9 });
+    expect(fields.get('games.wishlist.votes')).toMatchObject({ ms: 6, calls: 3, startMs: 2, spanMs: 8 });
+  });
+
   it('shows every root field, then the slowest others of at least 1 ms, at most FIELDS_SHOWN', () => {
     const field = (path: string, ms: number): FieldTime => ({ path, label: 'T.f', ms, calls: 1, slowestMs: ms });
     const others = Array.from({ length: FIELDS_SHOWN + 3 }, (_, i) => field(`games.f${i}`, i + 1));
@@ -139,6 +195,31 @@ describe('addFieldCall and fieldsShown', () => {
   it('drops only list item numbers from a path', () => {
     expect(fieldPath('games.wishlist.12.votes')).toBe('games.wishlist.votes');
     expect(fieldPath('games')).toBe('games');
+  });
+
+  it('writes when a field started, last, and a repeated one its span', () => {
+    expect(
+      serverTimingHeader({
+        cold: false,
+        phases: [],
+        fields: [
+          { path: 'games', label: 'Query.games', ms: 19.84, calls: 1, slowestMs: 19.84, startMs: 1.44 },
+          {
+            path: 'games.wishlist.votes',
+            label: 'Game.votes',
+            ms: 60,
+            calls: 30,
+            slowestMs: 2.43,
+            startMs: 21.26,
+            spanMs: 2.51,
+          },
+        ],
+        totalMs: 82.1,
+      }),
+    ).toBe(
+      'field.games;dur=19.8;desc="Query.games";calls=1;start=1.4, ' +
+        'field.games.wishlist.votes;dur=60;desc="Game.votes";calls=30;slowest=2.4;span=2.5;start=21.3, total;dur=82.1',
+    );
   });
 
   it('writes a field once as its call, and a repeated one with its calls and slowest', () => {
@@ -177,7 +258,7 @@ describe("the app's own games query", () => {
     });
     expect(said.fields[0]).toMatchObject({ path: 'games', label: 'Query.games', calls: 1 });
     // As api/graphql.ts writes it on the response.
-    expect(serverTimingHeader(said)).toMatch(/^field\.games;dur=[\d.]+;desc="Query\.games";calls=1(, |$)/);
+    expect(serverTimingHeader(said)).toMatch(/^field\.games;dur=[\d.]+;desc="Query\.games";calls=1;start=[\d.]+(, |$)/);
     expect(said.fields.every((f) => !/\.\d+(\.|$)/.test(f.path))).toBe(true);
   });
 });

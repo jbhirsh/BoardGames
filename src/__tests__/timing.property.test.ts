@@ -1,18 +1,27 @@
 // @vitest-environment node
 import fc from 'fast-check';
-import { describe, expect, it } from 'vitest';
+import { performance } from 'node:perf_hooks';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   FIELDS_SHOWN,
   FIELD_NAME_LENGTH,
   FIELD_SHOWN_MS,
   fieldPath,
   fieldsShown,
+  phaseSync,
   serverTimingHeader,
+  timeField,
+  timeRequest,
+  type FieldTime,
 } from '../../api/_lib/timing';
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 // A Server-Timing entry as RFC 9110 and the Server Timing spec allow: a
-// token, optionally `;dur=` and a non-negative decimal.
-const ENTRY = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+(;dur=\d+(\.\d)?)?$/;
+// token, optionally `;dur=` and a non-negative decimal, and `;start=` too.
+const ENTRY = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+(;dur=\d+(\.\d)?)?(;start=\d+(\.\d)?)?$/;
 
 const duration = fc.oneof(
   fc.double({ min: -1e9, max: 1e9, noNaN: false }),
@@ -25,7 +34,9 @@ describe('serverTimingHeader, for any phases', () => {
       fc.property(
         fc.boolean(),
         fc.option(duration, { nil: undefined }),
-        fc.array(fc.record({ name: fc.string(), ms: duration }), { maxLength: 20 }),
+        fc.array(fc.record({ name: fc.string(), ms: duration, startMs: fc.option(duration, { nil: undefined }) }), {
+          maxLength: 20,
+        }),
         duration,
         (cold, loadedMs, phases, totalMs) => {
           const header = serverTimingHeader({
@@ -71,7 +82,16 @@ const fieldTime = fc
     ms: fc.double({ min: 0, max: 1e5, noNaN: true }),
     calls: fc.integer({ min: 1, max: 500 }),
   })
-  .map((f) => ({ ...f, slowestMs: f.ms / f.calls }));
+  .chain((f) =>
+    fc
+      .record({ startMs: fc.option(duration, { nil: undefined }), spanMs: fc.option(duration, { nil: undefined }) })
+      .map(({ startMs, spanMs }): FieldTime => ({
+        ...f,
+        slowestMs: f.ms / f.calls,
+        ...(startMs === undefined ? {} : { startMs }),
+        ...(spanMs === undefined ? {} : { spanMs }),
+      })),
+  );
 
 describe('fieldsShown and the header, for any fields', () => {
   it('shows every root field, then at most FIELDS_SHOWN others of at least FIELD_SHOWN_MS, slowest first', () => {
@@ -90,7 +110,7 @@ describe('fieldsShown and the header, for any fields', () => {
 
   it('writes only valid entries, a field with its desc, the total last', () => {
     const FIELD_ENTRY =
-      /^field\.[!#$%&'*+.^_`|~0-9A-Za-z-]+;dur=\d+(\.\d)?;desc="[_0-9A-Za-z.]+";calls=\d+(;slowest=\d+(\.\d)?)?$/;
+      /^field\.[!#$%&'*+.^_`|~0-9A-Za-z-]+;dur=\d+(\.\d)?;desc="[_0-9A-Za-z.]+";calls=\d+(;slowest=\d+(\.\d)?(;span=\d+(\.\d)?)?)?(;start=\d+(\.\d)?)?$/;
     fc.assert(
       fc.property(fc.array(fieldTime, { maxLength: 15 }), duration, (fields, totalMs) => {
         const entries = serverTimingHeader({ cold: false, phases: [], fields, totalMs }).split(', ');
@@ -102,6 +122,111 @@ describe('fieldsShown and the header, for any fields', () => {
         });
         expect(entries.at(-1)).toMatch(/^total;dur=/);
       }),
+    );
+  });
+});
+
+/** A parameter's value in an entry, as the probe reads it, or undefined. */
+const param = (entry: string, key: string) => {
+  const found = new RegExp(`;${key}=([^;]*)`).exec(entry);
+  return found ? Number(found[1]) : undefined;
+};
+
+describe('the header, for any starts and spans', () => {
+  it('writes start= on exactly the entries that have one, and span= on a repeated field that has one', () => {
+    const phase = fc.record({ name: fc.string(), ms: duration, startMs: fc.option(duration, { nil: undefined }) });
+    fc.assert(
+      fc.property(fc.array(phase, { maxLength: 10 }), fc.array(fieldTime, { maxLength: 10 }), (phases, fields) => {
+        const entries = serverTimingHeader({ cold: false, phases, fields, totalMs: 1 }).split(', ');
+        phases.forEach(({ startMs }, i) => {
+          expect(param(entries[i], 'start') === undefined).toBe(startMs === undefined);
+        });
+        fields.forEach(({ startMs, spanMs, calls }, i) => {
+          const entry = entries[phases.length + i];
+          expect(param(entry, 'start') === undefined).toBe(startMs === undefined);
+          expect(param(entry, 'span') === undefined).toBe(spanMs === undefined || calls === 1);
+        });
+      }),
+    );
+  });
+});
+
+describe('timeRequest, for any clock', () => {
+  it("records each part's start as the clock's steps before it, a repeated field's span from its first start to its last end, and nothing ending past the total", async () => {
+    // Each step is how far the clock moves: before a piece of work starts,
+    // and while it runs. Whole numbers, so the sums are exact.
+    const work = fc.record({
+      kind: fc.constantFrom('phase', 'field', 'field in phase'),
+      name: fc.constantFrom('a', 'b', 'c'),
+      before: fc.nat({ max: 1000 }),
+      during: fc.nat({ max: 1000 }),
+    });
+    await fc.assert(
+      fc.asyncProperty(
+        fc.nat({ max: 1e6 }),
+        fc.array(work, { maxLength: 12 }),
+        fc.nat({ max: 1000 }),
+        async (from, list, after) => {
+          let now = from;
+          const clock = vi.spyOn(performance, 'now').mockImplementation(() => now);
+          const field = (name: string, during: number) =>
+            timeField(`Item.${name}`, `items.0.${name}`, () => {
+              now += during;
+              return name;
+            });
+          const said = await timeRequest(async (read) => {
+            for (const { kind, name, before, during } of list) {
+              now += before;
+              if (kind === 'phase') phaseSync(name, () => (now += during));
+              else if (kind === 'field') field(name, during);
+              else phaseSync(name, () => field(name, during));
+            }
+            now += after;
+            return read();
+          });
+          clock.mockRestore();
+
+          // The same work, added up by hand.
+          const phases: Array<{ name: string; ms: number; startMs: number }> = [];
+          const fields = new Map<string, FieldTime>();
+          let at = 0;
+          for (const { kind, name, before, during } of list) {
+            at += before;
+            if (kind !== 'phase') {
+              const path = `items.${name}`;
+              const known = fields.get(path);
+              if (known) {
+                known.ms += during;
+                known.calls += 1;
+                known.slowestMs = Math.max(known.slowestMs, during);
+                known.spanMs = at + during - (known.startMs ?? 0);
+              } else {
+                fields.set(path, {
+                  path,
+                  label: `Item.${name}`,
+                  ms: during,
+                  calls: 1,
+                  slowestMs: during,
+                  startMs: at,
+                  spanMs: during,
+                });
+              }
+            }
+            if (kind !== 'field') phases.push({ name, ms: during, startMs: at });
+            at += during;
+          }
+          expect(said.totalMs).toBe(at + after);
+          expect(said.phases).toEqual(phases);
+          const shown = [...fields.values()].filter((f) => f.ms >= FIELD_SHOWN_MS);
+          expect(new Set(said.fields.map((f) => f.path))).toEqual(new Set(shown.map((f) => f.path)));
+          for (const f of said.fields) expect(f).toEqual(fields.get(f.path));
+          for (const part of [...said.phases, ...said.fields]) {
+            expect((part.startMs ?? 0) + ('spanMs' in part ? (part.spanMs ?? 0) : part.ms)).toBeLessThanOrEqual(
+              said.totalMs,
+            );
+          }
+        },
+      ),
     );
   });
 });
