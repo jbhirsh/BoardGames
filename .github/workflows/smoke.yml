@@ -1,6 +1,7 @@
 name: Deployment Smoke Test
 
-# Two triggers, one job:
+# Two triggers; the smoke test runs on both, the performance probe on
+# deployments only:
 #
 # 1. deployment_status — Vercel reports every deployment (preview and
 #    production) back to GitHub. When one succeeds, probe the deployed API.
@@ -17,6 +18,14 @@ name: Deployment Smoke Test
 #    text), so a month of scheduled runs is well under one cent of Gemini
 #    usage, and Actions minutes are free on public repos.
 #
+# The performance probe (perf-probe, jbhirsh/ci's probe/web, #354) runs on
+# deployments only, before the smoke test: it loads the app's pages in
+# WebKit and reads each API response's Server-Timing, cold and warm, so
+# each deployment's numbers don't wait for visitors. It goes first because
+# the smoke test's curls would otherwise make the deployment's first
+# request, and the probe would almost never see a cold start. A scheduled
+# run has no probe: production is always warm by then.
+#
 # Preview deployments sit behind Vercel Authentication, so the request sends
 # the project's Protection Bypass for Automation secret
 # (VERCEL_AUTOMATION_BYPASS_SECRET). Without it, preview smoke tests fail
@@ -28,17 +37,82 @@ on:
     - cron: "17 5,17 * * *"
   workflow_dispatch:
 
-# This job only curls public URLs and reads one secret; it needs no repo token.
+# The smoke test only curls public URLs and reads one secret, so it needs
+# no repo token; each job that needs one asks for its own.
 permissions: {}
 
 jobs:
+  # Not a required check: a slow number never fails it, only a measuring
+  # that broke (a listed response with no Server-Timing, not 2xx, never
+  # made). Its settings are the `probe` key in .github/ci.json (jbhirsh/ci's
+  # probe/settings.ts says what each does): it loads the home page and
+  # times its Games and Session requests; WishlistVotes is listed so that a
+  # cold flag it carries is named, but not timed, as the page makes it only
+  # when the wishlist has entries. It sends `x-synthetic: probe` on its
+  # requests to the deployment, so its traces are marked as synthetic. A
+  # deployment that isn't a success has nothing to probe.
+  perf-probe:
+    name: Performance probe
+    if: github.event_name == 'deployment_status' && github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    # Only a hang limit: the probe waits on events and moves on as soon as
+    # they happen, each wait limited to the settings' `timeout` (60 s). The
+    # required API smoke test waits for this job, so this is also the most
+    # it holds that check up: 10 minutes, on a deployment that hangs.
+    timeout-minutes: 10
+    # contents to check out the app's settings and lockfile; actions for
+    # the job summary's steps and earlier runs.
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      # The deployment's commit (a deployment_status run's github.sha), for
+      # its probe settings and the Playwright release its lockfile pins.
+      # The probe installs only Playwright, not the app's packages. No
+      # token is left in .git/config: nothing here uses git again.
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # Production only reads: only GET and HEAD and the settings' `reads`
+      # go out, and anything else is aborted before it leaves the browser.
+      # Vercel names its environments Preview and Production. The bypass
+      # secret goes only to a host the settings' `hosts` allow, over https,
+      # and never on a browser request (probe/web/action.yml says how).
+      - name: Probe the deployment
+        id: probe
+        uses: jbhirsh/ci/probe/web@main
+        with:
+          url: ${{ github.event.deployment_status.environment_url }}
+          environment: ${{ github.event.deployment_status.environment == 'Preview' && 'preview' || 'production' }}
+          bypass-secret: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+
+      # The job's summary and report (jbhirsh/ci's job-summary), with the
+      # probe's measurements tracked against main's earlier deployments
+      # (`measurements`, the probe's results file, written even when the
+      # probe fails), published on the repository's Pages by the reports
+      # job below.
+      - name: Job summary
+        if: ${{ !cancelled() }}
+        uses: jbhirsh/ci/job-summary@main
+        with:
+          job: Performance probe
+          measurements: ${{ steps.probe.outputs.results }}
+
   api-smoke:
     # A deployment that isn't a success (pending, failure, error) skips
     # this job, and a skipped check passes, so its run takes another name
     # and never stands in for the required "API smoke test". A failed
     # deploy is reported by the required Vercel check.
+    #
+    # It waits for the performance probe (at most its 10 minutes), so the
+    # probe makes the deployment's first request, but runs whatever the
+    # probe did: !cancelled() runs it when the probe failed, and when it was
+    # skipped (a scheduled or manual run). Its name stays, so the branch
+    # rule's required check is unchanged.
     name: ${{ (github.event_name != 'deployment_status' || github.event.deployment_status.state == 'success') && 'API smoke test' || 'API smoke test (not deployed)' }}
-    if: github.event_name != 'deployment_status' || github.event.deployment_status.state == 'success'
+    needs: perf-probe
+    if: ${{ !cancelled() && (github.event_name != 'deployment_status' || github.event.deployment_status.state == 'success') }}
     runs-on: ubuntu-latest
     steps:
       - name: Probe the GraphQL API's rules chat, votes, games and session, and sign-in, on the target deployment
@@ -69,9 +143,12 @@ jobs:
             *) echo "::error::refusing to smoke-test unexpected host: $host"; exit 1 ;;
           esac
 
-          auth_args=()
+          # Every request says it's the smoke test's, so the API's traces
+          # mark it as synthetic (#354), apart from visitors' and the
+          # performance probe's (x-synthetic: probe).
+          curl_args=(-H 'x-synthetic: smoke')
           if [ -n "$VERCEL_BYPASS" ]; then
-            auth_args=(-H "x-vercel-protection-bypass: $VERCEL_BYPASS")
+            curl_args+=(-H "x-vercel-protection-bypass: $VERCEL_BYPASS")
           else
             echo "::warning::VERCEL_AUTOMATION_BYPASS_SECRET is not set; protected preview deployments will 401. See the comment at the top of this workflow."
           fi
@@ -89,7 +166,7 @@ jobs:
             local expect="$1"; shift
             local code
             for attempt in 1 2; do
-              code=$(curl -sS -o body.txt -w '%{http_code}' --max-time 90 "${auth_args[@]}" "$@") || code=000
+              code=$(curl -sS -o body.txt -w '%{http_code}' --max-time 90 "${curl_args[@]}" "$@") || code=000
               echo "$label attempt $attempt: HTTP $code"
               if [ "$code" = "200" ] && [ -s body.txt ] && ! grep -q '"error"' body.txt \
                  && { [ -z "$expect" ] || grep -q "$expect" body.txt; }; then
@@ -132,3 +209,20 @@ jobs:
             -H 'Content-Type: application/json' -H 'Cookie: __Secure-better-auth.session_token=smoke.test' \
             -d '{"query":"query Smoke { session { admin } }"}' || fail=1
           exit $fail
+
+  # Publishes this run's job reports to the repository's Pages and keeps
+  # one comment on the PR with every job's summary (jbhirsh/ci's
+  # job-reports.yml), once the Performance probe job is done, failed or
+  # not; a production deployment of main comments on no PR. As part of the
+  # run, it runs from the deployment's commit. Only a deployment's run has
+  # a report: the smoke test writes no job summary. Not a required check;
+  # it never fails a run for a report. The workflow's permissions: {}
+  # grants nothing, so it asks for what job-reports.yml's jobs need.
+  reports:
+    needs: [perf-probe]
+    if: ${{ !cancelled() && github.event_name == 'deployment_status' && github.event.deployment_status.state == 'success' }}
+    permissions:
+      contents: write
+      actions: read
+      pull-requests: write
+    uses: jbhirsh/ci/.github/workflows/job-reports.yml@main
