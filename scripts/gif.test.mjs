@@ -132,3 +132,43 @@ describe('main', () => {
     expect(commands()).toEqual([[process.execPath, [path.join('/tmp/from-env', 'gif', 'cli.mjs'), 'a.ts']]]);
   });
 });
+
+// jbhirsh/ci#180 deletes gif/cli.mjs, leaving gif/cli.ts as the command line;
+// the tests above are a clone from before it, with cli.mjs.
+describe('main, once jbhirsh/ci has only gif/cli.ts', () => {
+  const ts = path.join(besideClone, 'gif', 'cli.ts');
+  const mjs = path.join(besideClone, 'gif', 'cli.mjs');
+
+  it('runs gif/cli.ts with the arguments and APP_ROOT when the clone has no gif/cli.mjs', () => {
+    given([path.join(besideClone, '.git'), ts], { tool: 3 });
+
+    expect(main(['scripts/gif-scenarios/example.ts', '--side-by-side'], { HOME: '/home/someone' })).toBe(3);
+
+    expect(commands()).toEqual([
+      ['git', ['-C', besideClone, 'pull', '--ff-only', '--quiet']],
+      [process.execPath, [ts, 'scripts/gif-scenarios/example.ts', '--side-by-side']],
+    ]);
+    expect(spawnSync.mock.calls[1][2]).toEqual({
+      stdio: 'inherit',
+      env: { HOME: '/home/someone', APP_ROOT: root },
+    });
+  });
+
+  it("runs gif/cli.mjs while the clone has both, as cli.ts doesn't run on its own before jbhirsh/ci#180", () => {
+    given([path.join(besideClone, '.git'), ts, mjs]);
+
+    expect(main(['a.ts'], {})).toBe(0);
+
+    expect(commands().at(-1)).toEqual([process.execPath, [mjs, 'a.ts']]);
+  });
+
+  it('runs the gif/cli.ts in the clone CI_TOOLING_DIR names, with no git', () => {
+    const otherTs = path.join(path.resolve('elsewhere/ci'), 'gif', 'cli.ts');
+    given([otherTs]);
+
+    expect(main(['a.ts'], { CI_TOOLING_DIR: 'elsewhere/ci' })).toBe(0);
+
+    expect(commands()).toEqual([[process.execPath, [otherTs, 'a.ts']]]);
+    expect(spawnSync.mock.calls[0][2].env).toEqual({ CI_TOOLING_DIR: 'elsewhere/ci', APP_ROOT: root });
+  });
+});

@@ -1,15 +1,18 @@
 // `npm run pr-gif -- <scenario.ts> [options]`: a PR's before/after GIFs,
 // recorded by the GIF tool in jbhirsh/ci, which this app shares with the
-// owner's other apps (gif/cli.mjs there says what it does and which options
+// owner's other apps (gif/cli.ts there says what it does and which options
 // it takes; this app's settings for it are the `gif` key of
 // .github/ci.json).
 //
 // This only fetches the tool and runs it: it makes sure jbhirsh/ci is cloned
 // beside this checkout, as ../ci (cloned if missing, `git pull --ff-only` if
 // there, so it follows main as CI does; a pull that fails, offline say, runs
-// what's there), then runs ../ci/gif/cli.mjs with APP_ROOT set to this
-// checkout. CI_TOOLING_DIR points it at another clone instead, left as it is
-// (one being changed, say).
+// what's there), then runs ../ci/gif/cli.ts with APP_ROOT set to this
+// checkout, under the Node running this, which strips cli.ts's types (any
+// Node with import.meta.main does: 22.18 or later, .nvmrc's 24).
+// CI_TOOLING_DIR points it at another clone instead, left as it is (one
+// being changed, say), and never inside node_modules, where Node won't strip
+// types.
 //
 // The scenarios (scripts/gif-scenarios/) and the setup module
 // (scripts/gif-setup.ts) are this app's own, typed by scripts/gif-types.ts:
@@ -58,7 +61,16 @@ export function main(args, env = process.env) {
       return 1;
     }
   }
-  const cli = path.join(tooling, 'gif', 'cli.mjs');
+  // The fallback, until jbhirsh/ci's main has no gif/cli.mjs: then run only
+  // cli.ts. ci is moving its tools to TypeScript that Node strips
+  // (jbhirsh/ci#155); cli.mjs, today only a wrapper calling cli.ts's main,
+  // is deleted in jbhirsh/ci#180, which makes cli.ts run as `node
+  // gif/cli.ts`. Until then cli.ts runs nothing on its own, so it runs only
+  // in a clone without cli.mjs, and a clone with neither is still reported
+  // by cli.mjs's path.
+  const mjs = path.join(tooling, 'gif', 'cli.mjs');
+  const ts = path.join(tooling, 'gif', 'cli.ts');
+  const cli = !existsSync(mjs) && existsSync(ts) ? ts : mjs;
   if (!existsSync(cli)) {
     console.error(`gif: ${cli} isn't there: is ${tooling} a clone of jbhirsh/ci?`);
     return 1;
