@@ -93,5 +93,20 @@
       "e2e/readme.shots.ts: Playwright support for the e2e suite, which unit coverage doesn't run",
       "e2e/visual.ts: Playwright support for the e2e suite, which unit coverage doesn't run"
     ]
+  },
+  "probe": {
+    "pages": [{ "path": "/", "expect": ["Games", "Session"] }],
+    "requests": [
+      { "name": "Games", "path": "/api/graphql", "method": "GET", "operation": "Games" },
+      { "name": "Session", "path": "/api/graphql", "method": "POST", "operation": "Session" },
+      { "name": "WishlistVotes", "path": "/api/graphql", "method": "POST", "operation": "WishlistVotes" }
+    ],
+    "reads": [
+      { "method": "POST", "path": "/api/graphql", "operation": "Session" },
+      { "method": "POST", "path": "/api/graphql", "operation": "WishlistVotes" }
+    ],
+    "hosts": ["*.vercel.app"],
+    "headers": { "x-synthetic": "probe" },
+    "timeout": 60
   }
 }
