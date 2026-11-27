@@ -31,6 +31,15 @@
 // Paths and type names are GraphQL names (the parser accepts nothing else),
 // and no field's arguments or value is ever read.
 //
+// Each phase also records when it started, and each field when its first
+// call started, in ms from the request's start (timeRequest()), so the
+// probe's waterfall can place them and show what ran side by side: fields
+// resolved together start together. The header writes it as `start=`, to
+// one decimal; a field that ran more than once also has `span=`, from its
+// first call's start to its last call's end. A part is recorded when it
+// ends, on a clock that only moves forward, so neither reaches past the
+// request's `total`. `loaded` has none: it ends before the request starts.
+//
 // Imports only Node's own modules: no Sentry yet (#354's later PR makes
 // each phase a span too), nothing of the app's.
 
@@ -41,6 +50,8 @@ import { performance } from 'node:perf_hooks';
 export interface Phase {
   name: string;
   ms: number;
+  /** When it started, in ms from the request's start: phase() always records it. */
+  startMs?: number;
 }
 
 /** One field's time in a request, added up across the times it ran. */
@@ -52,6 +63,14 @@ export interface FieldTime {
   ms: number;
   calls: number;
   slowestMs: number;
+  /** When its first call started, in ms from the request's start: timeField() always records it. */
+  startMs?: number;
+  /**
+   * From its first call's start to its last call's end, with startMs: less
+   * than `ms` when calls ran side by side (a list's items resolving
+   * together), as `ms` adds every call up.
+   */
+  spanMs?: number;
 }
 
 /** What a response's `Server-Timing` says. */
@@ -75,6 +94,8 @@ export const FIELD_SHOWN_MS = 1;
 export const FIELD_NAME_LENGTH = 64;
 
 interface Request {
+  /** When it started, on performance.now()'s clock. */
+  start: number;
   phases: Phase[];
   fields: Map<string, FieldTime>;
 }
@@ -95,10 +116,10 @@ export function markLoaded(now: number = performance.now()): void {
  * each call reads what was recorded by then.
  */
 export function timeRequest<T>(work: (timing: () => Timing) => Promise<T>): Promise<T> {
-  const request: Request = { phases: [], fields: new Map() };
+  const start = performance.now();
+  const request: Request = { start, phases: [], fields: new Map() };
   const cold = !served;
   served = true;
-  const start = performance.now();
   const timing = (): Timing => ({
     cold,
     ...(cold && loadedAt !== undefined ? { loadedMs: loadedAt } : {}),
@@ -114,23 +135,23 @@ export function timeRequest<T>(work: (timing: () => Timing) => Promise<T>): Prom
  * its result or error through. Outside a request it only runs the work.
  */
 export async function phase<T>(name: string, work: () => Promise<T> | T): Promise<T> {
-  const phases = store.getStore()?.phases;
+  const request = store.getStore();
   const start = performance.now();
   try {
     return await work();
   } finally {
-    phases?.push({ name, ms: performance.now() - start });
+    request?.phases.push({ name, ms: performance.now() - start, startMs: start - request.start });
   }
 }
 
 /** phase() for work that doesn't wait: times it and returns its result as it is. */
 export function phaseSync<T>(name: string, work: () => T): T {
-  const phases = store.getStore()?.phases;
+  const request = store.getStore();
   const start = performance.now();
   try {
     return work();
   } finally {
-    phases?.push({ name, ms: performance.now() - start });
+    request?.phases.push({ name, ms: performance.now() - start, startMs: start - request.start });
   }
 }
 
@@ -142,10 +163,14 @@ export function fieldPath(responsePath: string): string {
     .join('.');
 }
 
-/** Adds one call of a field to a request's totals. */
+/**
+ * Adds one call of a field to a request's totals. Calls are added as they
+ * end, which isn't the order they started, so the field keeps the earliest
+ * start and the latest end of any call, as its start and span.
+ */
 export function addFieldCall(
   fields: Map<string, FieldTime>,
-  call: { responsePath: string; label: string; ms: number },
+  call: { responsePath: string; label: string; ms: number; startMs?: number },
 ): void {
   const path = fieldPath(call.responsePath);
   const known = fields.get(path);
@@ -153,8 +178,14 @@ export function addFieldCall(
     known.ms += call.ms;
     known.calls += 1;
     known.slowestMs = Math.max(known.slowestMs, call.ms);
+    if (call.startMs !== undefined && known.startMs !== undefined && known.spanMs !== undefined) {
+      const endMs = Math.max(known.startMs + known.spanMs, call.startMs + call.ms);
+      known.startMs = Math.min(known.startMs, call.startMs);
+      known.spanMs = endMs - known.startMs;
+    }
   } else {
-    fields.set(path, { path, label: call.label, ms: call.ms, calls: 1, slowestMs: call.ms });
+    const startMs = call.startMs === undefined ? {} : { startMs: call.startMs, spanMs: call.ms };
+    fields.set(path, { path, label: call.label, ms: call.ms, calls: 1, slowestMs: call.ms, ...startMs });
   }
 }
 
@@ -180,7 +211,13 @@ export function timeField<T>(label: string, responsePath: string, resolve: () =>
   const request = store.getStore();
   if (!request) return resolve();
   const start = performance.now();
-  const done = () => addFieldCall(request.fields, { responsePath, label, ms: performance.now() - start });
+  const done = () =>
+    addFieldCall(request.fields, {
+      responsePath,
+      label,
+      ms: performance.now() - start,
+      startMs: start - request.start,
+    });
   let result: T;
   try {
     result = resolve();
@@ -224,22 +261,30 @@ export function durationText(ms: number): string {
 
 /**
  * The `Server-Timing` header for a request's timing: `cold, loaded;dur=…`
- * first when cold, then each phase in the order it ended, then each field
- * shown as `field.<path>;dur=…;desc="<Type.field>";calls=…` (and
- * `;slowest=…` when it ran more than once), then `total`. The counts are
- * parameters of their own, not words in `desc`, so a comma never appears
- * inside an entry for a reader that splits entries at commas. Browsers show
- * only `dur` and `desc`, so the counts are for raw readers such as the probe.
+ * first when cold, then each phase in the order it ended, as
+ * `<name>;dur=…;start=…`, then each field shown as
+ * `field.<path>;dur=…;desc="<Type.field>";calls=…` (and `;slowest=…;span=…`
+ * when it ran more than once) and `;start=…`, then `total`. A repeated
+ * field's `dur` adds up its calls, which shows what a list's N+1 calls
+ * cost; its `span`, first start to last end, is where it sits in the
+ * request's time. The counts are parameters of their own, not words in
+ * `desc`, so a comma never appears inside an entry for a reader that splits
+ * entries at commas. Browsers show only `dur` and `desc`, so the counts,
+ * spans and starts are for raw readers such as the probe.
  */
 export function serverTimingHeader({ cold, loadedMs, phases, fields, totalMs }: Timing): string {
   const entries: string[] = [];
+  const startText = (startMs: number | undefined) => (startMs === undefined ? '' : `;start=${durationText(startMs)}`);
   if (cold) entries.push('cold');
   if (cold && loadedMs !== undefined) entries.push(`loaded;dur=${durationText(loadedMs)}`);
-  for (const { name, ms } of phases) entries.push(`${metricName(name)};dur=${durationText(ms)}`);
-  for (const { path, label, ms, calls, slowestMs } of fields) {
-    const slowest = calls > 1 ? `;slowest=${durationText(slowestMs)}` : '';
+  for (const { name, ms, startMs } of phases) {
+    entries.push(`${metricName(name)};dur=${durationText(ms)}${startText(startMs)}`);
+  }
+  for (const { path, label, ms, calls, slowestMs, startMs, spanMs } of fields) {
+    const span = calls > 1 && spanMs !== undefined ? `;span=${durationText(spanMs)}` : '';
+    const slowest = calls > 1 ? `;slowest=${durationText(slowestMs)}${span}` : '';
     const name = metricName(`field.${path}`).slice(0, FIELD_NAME_LENGTH);
-    entries.push(`${name};dur=${durationText(ms)};desc="${label}";calls=${calls}${slowest}`);
+    entries.push(`${name};dur=${durationText(ms)};desc="${label}";calls=${calls}${slowest}${startText(startMs)}`);
   }
   entries.push(`total;dur=${durationText(totalMs)}`);
   return entries.join(', ');

@@ -273,7 +273,7 @@ describe('api/graphql.ts at /api/auth/*', () => {
     const res = streamRes();
     await handler(authReq('GET', '/api/auth/ok', {}), res as unknown as ServerResponse);
     await vi.waitFor(() => expect(res.body).toBe('{"ok":true}'));
-    expect(res.headers['Server-Timing']).toMatch(/(^|, )auth-init;dur=[\d.]+, total;dur=[\d.]+$/);
+    expect(res.headers['Server-Timing']).toMatch(/(^|, )auth-init;dur=[\d.]+;start=[\d.]+, total;dur=[\d.]+$/);
   });
 
   it("puts the Server-Timing on the plain error when Better Auth can't start", async () => {
@@ -281,7 +281,7 @@ describe('api/graphql.ts at /api/auth/*', () => {
     const res = streamRes();
     await handler(authReq('GET', '/api/auth/ok', {}), res as unknown as ServerResponse);
     expect(res.statusCode).toBe(500);
-    expect(res.headers['Server-Timing']).toMatch(/(^|, )auth-init;dur=[\d.]+, total;dur=[\d.]+$/);
+    expect(res.headers['Server-Timing']).toMatch(/(^|, )auth-init;dur=[\d.]+;start=[\d.]+, total;dur=[\d.]+$/);
   });
 
   it("hands it a POST that isn't JSON, with its body, which Yoga would refuse", async () => {
