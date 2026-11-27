@@ -1,5 +1,5 @@
 // What every PR GIF of this app needs around its scenario (the `gif.setup`
-// setting in .github/ci.json; jbhirsh/ci's gif/cli.mjs calls it): the page
+// setting in .github/ci.json; jbhirsh/ci's gif/cli.ts calls it): the page
 // looks as it does on the live site. The wishlist and its votes are the live
 // site's (LIVE, read with GETs only), the BoardGameGeek art is loaded, and
 // nothing is sent to it: any other API call is stubbed (not signed in; a
