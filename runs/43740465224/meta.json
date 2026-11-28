@@ -1,0 +1,12 @@
+{
+  "id": 43740465224,
+  "number": 347,
+  "workflow": "E2E",
+  "branch": "baselines-verify",
+  "sha": "a6fe40104dbba7e19d99ba834505af6112231d4a",
+  "created": "2026-11-15T17:19:36Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43740465224",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}

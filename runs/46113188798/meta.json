@@ -1,0 +1,12 @@
+{
+  "id": 46113188798,
+  "number": 695,
+  "workflow": "CI",
+  "branch": "claude/gracious-gates-d1ccwf-cold-first",
+  "sha": "c9902dbfb4bde0c4dc34a5af46b5863fdfb8db85",
+  "created": "2026-11-28T05:40:47Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/46113188798",
+  "jobs": [
+    "ci"
+  ]
+}

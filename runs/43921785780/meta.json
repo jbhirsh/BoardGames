@@ -1,0 +1,12 @@
+{
+  "id": 43921785780,
+  "number": 627,
+  "workflow": "CI",
+  "branch": "sdk-engines",
+  "sha": "90d664dc70e0ca3ee3066a5ce93b8e12ce9ce2c0",
+  "created": "2026-11-16T17:45:57Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43921785780",
+  "jobs": [
+    "ci"
+  ]
+}

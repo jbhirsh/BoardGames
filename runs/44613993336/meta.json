@@ -1,0 +1,12 @@
+{
+  "id": 44613993336,
+  "number": 402,
+  "workflow": "E2E",
+  "branch": "claude/pr-description-workflow",
+  "sha": "1275baa77740c3c64a2e2785e77693837c0cc658",
+  "created": "2026-11-19T20:58:08Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/44613993336",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}

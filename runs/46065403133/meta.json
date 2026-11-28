@@ -1,0 +1,12 @@
+{
+  "id": 46065403133,
+  "number": 1104,
+  "workflow": "Deployment Smoke Test",
+  "branch": "claude/gracious-gates-d1ccwf",
+  "sha": "f3b16c8e3c56fce7caa4150bfb6efec0af21b592",
+  "created": "2026-11-27T20:42:03Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/46065403133",
+  "jobs": [
+    "performance-probe"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": 46105198211,
+  "number": 1107,
+  "workflow": "Deployment Smoke Test",
+  "branch": "main",
+  "sha": "8b445cd65ae031a40e289a9fbc345c95484addfe",
+  "created": "2026-11-28T03:56:27Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/46105198211",
+  "jobs": [
+    "performance-probe"
+  ]
+}

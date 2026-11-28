@@ -1,0 +1,12 @@
+{
+  "id": 43340793603,
+  "number": 563,
+  "workflow": "CI",
+  "branch": "turso-api-2b",
+  "sha": "65a9fe3a358e1f0f0d71f849420451db62638db7",
+  "created": "2026-11-13T00:54:32Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43340793603",
+  "jobs": [
+    "ci"
+  ]
+}

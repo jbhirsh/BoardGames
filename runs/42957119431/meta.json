@@ -1,0 +1,12 @@
+{
+  "id": 42957119431,
+  "number": 256,
+  "workflow": "E2E",
+  "branch": "claude/charming-allen-m2qpna",
+  "sha": "c42bbde4b4a004232962fb0d7d25e3faf74a2cd8",
+  "created": "2026-11-11T04:07:07Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/42957119431",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}

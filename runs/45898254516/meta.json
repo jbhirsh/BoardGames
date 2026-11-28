@@ -1,0 +1,12 @@
+{
+  "id": 45898254516,
+  "number": 687,
+  "workflow": "CI",
+  "branch": "claude/gracious-gates-d1ccwf",
+  "sha": "481f516e9903010bddf7bad1f15b99e6197b948d",
+  "created": "2026-11-26T21:27:20Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/45898254516",
+  "jobs": [
+    "ci"
+  ]
+}

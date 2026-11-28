@@ -1,0 +1,12 @@
+{
+  "id": 43536735549,
+  "number": 328,
+  "workflow": "E2E",
+  "branch": "claude/upbeat-volta-yt4wfa",
+  "sha": "4920f63c33c29978ad5d50a8ed601e5916b6f50e",
+  "created": "2026-11-14T00:49:43Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43536735549",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}

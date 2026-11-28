@@ -1,0 +1,12 @@
+{
+  "id": 46115285453,
+  "number": 432,
+  "workflow": "E2E",
+  "branch": "claude/container-awards-labels-y6p18l",
+  "sha": "1adb923e2acaf7f84e65e83614c4c2051579966b",
+  "created": "2026-11-28T06:09:17Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/46115285453",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}

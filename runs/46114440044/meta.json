@@ -1,0 +1,12 @@
+{
+  "id": 46114440044,
+  "number": 698,
+  "workflow": "CI",
+  "branch": "claude/container-awards-labels-y6p18l",
+  "sha": "40db7cf901acc84e5d69f522acdb2af07eccb5ca",
+  "created": "2026-11-28T05:58:06Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/46114440044",
+  "jobs": [
+    "ci"
+  ]
+}

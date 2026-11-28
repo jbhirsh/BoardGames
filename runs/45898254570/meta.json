@@ -1,0 +1,12 @@
+{
+  "id": 45898254570,
+  "number": 416,
+  "workflow": "E2E",
+  "branch": "claude/gracious-gates-d1ccwf",
+  "sha": "481f516e9903010bddf7bad1f15b99e6197b948d",
+  "created": "2026-11-26T21:27:20Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/45898254570",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}

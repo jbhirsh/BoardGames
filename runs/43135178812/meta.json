@@ -1,0 +1,12 @@
+{
+  "id": 43135178812,
+  "number": 545,
+  "workflow": "CI",
+  "branch": "claude/unmeasured-coverage",
+  "sha": "026dac16f59aa16da71ec0c014f406409b8fbcf5",
+  "created": "2026-11-12T01:32:18Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43135178812",
+  "jobs": [
+    "ci"
+  ]
+}

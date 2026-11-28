@@ -1,0 +1,12 @@
+{
+  "id": 44632957949,
+  "number": 678,
+  "workflow": "CI",
+  "branch": "dependabot/npm_and_yarn/blocked-simplewebauthn-ebf3270754",
+  "sha": "1ed6e12e1cf358d219cf27af1bc079abf015978c",
+  "created": "2026-11-19T22:54:42Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/44632957949",
+  "jobs": [
+    "ci"
+  ]
+}

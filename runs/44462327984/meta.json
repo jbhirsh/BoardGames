@@ -1,0 +1,12 @@
+{
+  "id": 44462327984,
+  "number": 392,
+  "workflow": "E2E",
+  "branch": "main",
+  "sha": "3a94c851b027d23506617e81fdbd5faad6fbf224",
+  "created": "2026-11-19T05:02:00Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/44462327984",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}

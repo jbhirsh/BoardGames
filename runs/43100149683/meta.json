@@ -1,0 +1,12 @@
+{
+  "id": 43100149683,
+  "number": 262,
+  "workflow": "E2E",
+  "branch": "google-passkey-sign-in",
+  "sha": "87f841f6b323f352ac161503d3432d7ab915557f",
+  "created": "2026-11-11T21:05:57Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43100149683",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}

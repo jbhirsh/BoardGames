@@ -1,0 +1,12 @@
+{
+  "id": 43684674351,
+  "number": 608,
+  "workflow": "CI",
+  "branch": "claude/upbeat-volta-yt4wfa",
+  "sha": "5d69e8eedb0e3eab860558a0fa8ead0ed5ad2572",
+  "created": "2026-11-15T06:16:18Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43684674351",
+  "jobs": [
+    "ci"
+  ]
+}

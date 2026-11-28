@@ -1,0 +1,12 @@
+{
+  "id": 44468906598,
+  "number": 667,
+  "workflow": "CI",
+  "branch": "throwaway-pr-changes-check",
+  "sha": "5fd31996222a65370b15244a45a1ea45a3999a41",
+  "created": "2026-11-19T05:59:23Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/44468906598",
+  "jobs": [
+    "ci"
+  ]
+}

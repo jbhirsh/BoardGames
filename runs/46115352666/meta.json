@@ -1,0 +1,12 @@
+{
+  "id": 46115352666,
+  "number": 1114,
+  "workflow": "Deployment Smoke Test",
+  "branch": "claude/container-awards-labels-y6p18l",
+  "sha": "1adb923e2acaf7f84e65e83614c4c2051579966b",
+  "created": "2026-11-28T06:10:09Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/46115352666",
+  "jobs": [
+    "performance-probe"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": 44433823795,
+  "number": 659,
+  "workflow": "CI",
+  "branch": "remove-visual-baselines",
+  "sha": "2041d9f76868044d8a68e30dc69bb07fe5389c74",
+  "created": "2026-11-19T01:02:39Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/44433823795",
+  "jobs": [
+    "ci"
+  ]
+}

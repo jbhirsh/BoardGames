@@ -1,0 +1,12 @@
+{
+  "id": 41400888596,
+  "number": 509,
+  "workflow": "CI",
+  "branch": "dependabot/npm_and_yarn/all-updates-f3fefa8b22",
+  "sha": "bc1a8acdd7e3c37766082f4fc18005dcdd129a11",
+  "created": "2026-11-02T06:35:37Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/41400888596",
+  "jobs": [
+    "ci"
+  ]
+}

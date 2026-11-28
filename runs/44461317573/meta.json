@@ -1,0 +1,12 @@
+{
+  "id": 44461317573,
+  "number": 391,
+  "workflow": "E2E",
+  "branch": "adopt-pr-changes",
+  "sha": "1ba59db9306174b5c9cf94f5a09855cc5b1714e8",
+  "created": "2026-11-19T04:52:54Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/44461317573",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}

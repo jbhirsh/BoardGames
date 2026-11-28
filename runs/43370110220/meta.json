@@ -1,0 +1,12 @@
+{
+  "id": 43370110220,
+  "number": 572,
+  "workflow": "CI",
+  "branch": "claude/charming-maxwell-awz2ey",
+  "sha": "9459e4ae91d9dcb6649d24ed161c6cee28788b29",
+  "created": "2026-11-13T05:09:09Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43370110220",
+  "jobs": [
+    "ci"
+  ]
+}

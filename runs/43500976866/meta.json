@@ -1,0 +1,12 @@
+{
+  "id": 43500976866,
+  "number": 318,
+  "workflow": "E2E",
+  "branch": "claude/laughing-meitner-er7pgp",
+  "sha": "1c5e5aabdebfbd53d480ce0bfd7321f3df4868c3",
+  "created": "2026-11-13T20:22:37Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43500976866",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}

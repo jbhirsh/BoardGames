@@ -1,0 +1,12 @@
+{
+  "id": 46063589959,
+  "number": 420,
+  "workflow": "E2E",
+  "branch": "claude/gif-cli-ts",
+  "sha": "7631e9f36f75a77a5dd42d102a463540652919b2",
+  "created": "2026-11-27T20:25:56Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/46063589959",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": 43381299477,
+  "number": 307,
+  "workflow": "E2E",
+  "branch": "claude/pdfjs-cancel-rejections",
+  "sha": "2a4113d1de0587efacaa8f1fc280a5cd4c6959db",
+  "created": "2026-11-13T06:48:49Z",
+  "url": "https://github.com/jbhirsh/BoardGames/actions/runs/43381299477",
+  "jobs": [
+    "e2e-tests-playwright"
+  ]
+}
