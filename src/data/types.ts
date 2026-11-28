@@ -204,6 +204,8 @@ export interface WishlistItem extends Filterable {
   source: 'curated' | 'friend' | 'owner';
   /** The description on its own, without a friend's quoted note, for the owner's edit form. */
   blurb: string;
+  /** The year its BoardGameGeek entry says it came out, when it has one. */
+  year?: number;
 }
 
 /** The most minutes a game may take to show under the duration filter. */

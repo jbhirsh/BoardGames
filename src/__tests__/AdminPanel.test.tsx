@@ -46,6 +46,7 @@ const FARAWAY_STORED = {
 interface PreviewBody {
   outcome: string;
   details?: object;
+  matches?: object[];
 }
 type PreviewAnswer =
   PreviewBody | Reply | ((game: string, signal?: AbortSignal) => PreviewBody | Reply | Promise<PreviewBody | Reply>);
@@ -59,7 +60,9 @@ function mockApi(
   const lookup = 'lookup' in mutation ? mutation.lookup : null;
   const answer = (field: string) => () => ('status' in mutation ? mutation : { [field]: { lookup } });
   const asPreview = (body: PreviewBody | Reply) =>
-    'status' in body ? body : { previewGame: { outcome: body.outcome, details: body.details ?? null } };
+    'status' in body
+      ? body
+      : { previewGame: { outcome: body.outcome, details: body.details ?? null, matches: body.matches ?? null } };
   return stubGraphql({
     PendingSuggestions: () => {
       if (pending instanceof Error) throw pending;
@@ -200,6 +203,47 @@ describe('AdminPanel', () => {
     expect(within(form).getByLabelText('Game')).toHaveValue('');
     expect(within(form).queryByText('Explore Alula backwards.')).not.toBeInTheDocument();
     expect(within(form).getByRole('button', { name: 'Look up' })).toBeInTheDocument();
+  });
+
+  describe('when BoardGameGeek has several games with the name', () => {
+    const edition = (bggId: number, year: number) => ({ ...FARAWAY, bggId, year, desc: `Edition of ${year}.` });
+    const several: PreviewBody = { outcome: 'AMBIGUOUS', matches: [edition(1, 2007), edition(2, 2026)] };
+
+    it('asks which on the add form, and adds the one picked, never a guess', async () => {
+      const spy = mockApi([], {}, several);
+      renderPanel();
+      const form = await screen.findByRole('form', { name: 'Add a game' });
+      fireEvent.change(within(form).getByLabelText('Game'), { target: { value: 'Faraway' } });
+      fireEvent.click(within(form).getByRole('button', { name: 'Look up' }));
+      expect(await within(form).findByText(/has several games called “Faraway”/)).toBeInTheDocument();
+      expect(within(form).queryByRole('button', { name: 'Add anyway' })).not.toBeInTheDocument();
+      expect(within(form).queryByRole('button', { name: 'Look up again' })).not.toBeInTheDocument();
+      fireEvent.click(within(form).getByRole('button', { name: 'Choose which one' }));
+      const sheet = await screen.findByRole('dialog', { name: 'Which Faraway?' });
+      fireEvent.click(within(sheet).getByRole('button', { name: 'Use Faraway (2007), BGG 1' }));
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(within(form).getByText('Edition of 2007.')).toBeInTheDocument();
+      fireEvent.click(within(form).getByRole('button', { name: 'Add to wishlist' }));
+      await waitFor(() => expect(within(form).getByRole('status')).toHaveTextContent('Faraway is on the wishlist.'));
+      expect(sent(spy).at(-1)).toMatchObject({ op: 'AddGame', details: { bggId: 1, year: 2007 } });
+    });
+
+    it('opens the choice instead of approving a queued suggestion, and approves the one picked', async () => {
+      const spy = mockApi([PENDING[0]], {}, several);
+      renderPanel();
+      expect(await screen.findByText(/has several games called “Root”/)).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Approve Root' }));
+      const sheet = await screen.findByRole('dialog', { name: 'Which Root?' });
+      expect(decisions(spy)).toEqual([]);
+      fireEvent.click(within(sheet).getByRole('button', { name: 'Use Faraway (2026), BGG 2' }));
+      expect(await screen.findByText('Edition of 2026.')).toBeInTheDocument();
+      expect(decisions(spy)).toEqual([]);
+      fireEvent.click(screen.getByRole('button', { name: 'Approve Root' }));
+      expect(await screen.findByText('Nothing waiting.')).toBeInTheDocument();
+      expect(decisions(spy)).toMatchObject([
+        { op: 'DecideSuggestion', decision: 'APPROVE', id: 'sug-1', details: { bggId: 2, year: 2026 } },
+      ]);
+    });
   });
 
   it('refuses a bad name before posting', async () => {

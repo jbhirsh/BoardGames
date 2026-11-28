@@ -6,8 +6,9 @@ import {
   fetchBggWeight,
   parseHonour,
   parseThing,
-  pickSearchId,
+  searchMatches,
   lookupGame,
+  lookupById,
   type FetchLike,
 } from '../../api/_lib/bgg';
 
@@ -238,7 +239,10 @@ describe('parseThing', () => {
   });
 });
 
-describe('pickSearchId', () => {
+// The first game a search offers for a name, as a lookup with only one match uses it.
+const pickSearchId = (xml: string, wanted: string) => searchMatches(xml, wanted)[0]?.id ?? null;
+
+describe('which search hit a name picks', () => {
   it('prefers an exact (normalised) name match over the first hit', () => {
     expect(pickSearchId(SEARCH, 'wingspan')).toBe(266192);
     expect(pickSearchId(SEARCH, 'WINGSPAN!')).toBe(266192);
@@ -571,5 +575,121 @@ describe('fetchBggItem and fetchBggWeight', () => {
     expect(await fetchBggWeight(13, stats({ avgweight: '0', numweights: '0' }))).toBeNull();
     expect(await fetchBggWeight(13, async () => respond(500))).toBeUndefined();
     expect(await fetchBggWeight(13, async () => respond(200, '{}'))).toBeUndefined();
+  });
+});
+
+// Three games BGG lists as "Container": the Valley Games original and the 2026 Allplay edition share a name (#367).
+const CONTAINER_SEARCH = `<items total="3">
+  <item type="boardgame" id="26990"><name type="primary" value="Container"/><yearpublished value="2007"/></item>
+  <item type="boardgame" id="453740"><name type="primary" value="Container"/><yearpublished value="2026"/></item>
+  <item type="boardgameexpansion" id="500001"><name type="primary" value="Container: More Containers"/><yearpublished value="2026"/></item>
+</items>`;
+const thingOf = (id: number, year: number) =>
+  `<items><item type="boardgame" id="${id}"><name type="primary" value="Container"/><yearpublished value="${year}"/><minplayers value="3"/><maxplayers value="5"/><playingtime value="90"/></item></items>`;
+
+describe('searchMatches', () => {
+  it('lists every game with the name, each with its year, and not the expansion that only starts with it', () => {
+    expect(searchMatches(CONTAINER_SEARCH, 'container')).toEqual([
+      { id: 26990, name: 'Container', year: 2007 },
+      { id: 453740, name: 'Container', year: 2026 },
+    ]);
+  });
+
+  it('falls back to the part before a colon only when no whole name matches, and says nothing for no match', () => {
+    expect(searchMatches(CONTAINER_SEARCH, 'container deluxe')).toEqual([]);
+    expect(
+      searchMatches(`<items><item id="1"><name value="Ticket to Ride: Europe"/></item></items>`, 'ticket to ride'),
+    ).toEqual([{ id: 1, name: 'Ticket to Ride: Europe' }]);
+    expect(searchMatches('<items></items>', 'container')).toEqual([]);
+    expect(searchMatches(CONTAINER_SEARCH, '---')).toEqual([]);
+  });
+});
+
+describe('lookupGame, for a name several games share', () => {
+  const respond = (status: number, body = '') => Promise.resolve({ status, text: async () => body });
+  const TOKEN = 'bgg-test-token';
+
+  it('answers ambiguous with each game, rather than the first of them', async () => {
+    const fetchLike: FetchLike = vi.fn(async (url: string) => {
+      if (url.includes('/geekitems?')) return respond(404);
+      if (url.includes('/search?')) return respond(200, CONTAINER_SEARCH);
+      return respond(200, url.includes('id=26990') ? thingOf(26990, 2007) : thingOf(453740, 2026));
+    });
+    const r = await lookupGame('Container', TOKEN, fetchLike);
+    expect(r.outcome).toBe('ambiguous');
+    expect(r.outcome === 'ambiguous' && r.matches.map((m) => [m.bggId, m.year])).toEqual([
+      [453740, 2026],
+      [26990, 2007],
+    ]);
+  });
+
+  it('skips a game BGG has nothing in, and answers the one left as the one found', async () => {
+    const fetchLike: FetchLike = async (url) => {
+      if (url.includes('/geekitems?')) return respond(404);
+      if (url.includes('/search?')) return respond(200, CONTAINER_SEARCH);
+      return url.includes('id=453740') ? respond(200, thingOf(453740, 2026)) : respond(200, '<items></items>');
+    };
+    const r = await lookupGame('Container', TOKEN, fetchLike);
+    expect(r.outcome === 'found' && r.details.bggId).toBe(453740);
+    const none: FetchLike = async (url) =>
+      url.includes('/search?') ? respond(200, CONTAINER_SEARCH) : respond(200, '<items></items>');
+    expect((await lookupGame('Container', TOKEN, none)).outcome).toBe('no-match');
+  });
+
+  it('fails as BGG failing when any of the games does not answer, rather than offer the others as the only ones', async () => {
+    const only: FetchLike = async (url) => {
+      if (url.includes('/geekitems?')) return respond(404);
+      if (url.includes('/search?')) return respond(200, CONTAINER_SEARCH);
+      return url.includes('id=453740') ? respond(200, thingOf(453740, 2026)) : respond(500);
+    };
+    expect((await lookupGame('Container', TOKEN, only)).outcome).toBe('unavailable');
+    const none: FetchLike = async (url) => (url.includes('/search?') ? respond(200, CONTAINER_SEARCH) : respond(500));
+    expect((await lookupGame('Container', TOKEN, none)).outcome).toBe('unavailable');
+  });
+});
+
+describe('lookupGame, for more games than a sheet offers', () => {
+  const respond = (status: number, body = '') => Promise.resolve({ status, text: async () => body });
+
+  it('offers the newest five, so the rest are reached by pasting their id', async () => {
+    const years = [2001, 2002, 2003, 2004, 2005, 2006, 2007];
+    const search = `<items>${years
+      .map(
+        (y) =>
+          `<item type="boardgame" id="${y}"><name type="primary" value="Container"/><yearpublished value="${y}"/></item>`,
+      )
+      .join('')}</items>`;
+    const fetchLike: FetchLike = async (url) => {
+      if (url.includes('/geekitems?')) return respond(404);
+      if (url.includes('/search?')) return respond(200, search);
+      return respond(200, thingOf(Number(/id=(\d+)/.exec(url)?.[1]), 2000));
+    };
+    const r = await lookupGame('Container', 'bgg-test-token', fetchLike);
+    expect(r.outcome === 'ambiguous' && r.matches.map((m) => m.bggId)).toEqual([2007, 2006, 2005, 2004, 2003]);
+  });
+});
+
+describe('lookupById', () => {
+  const respond = (status: number, body = '') => Promise.resolve({ status, text: async () => body });
+
+  it('fetches that game, with the same outcomes as a lookup by name', async () => {
+    const calls: string[] = [];
+    const fetchLike: FetchLike = async (url) => {
+      calls.push(url);
+      return url.includes('/geekitems?') ? respond(404) : respond(200, thingOf(453740, 2026));
+    };
+    const r = await lookupById(453740, 'bgg-test-token', fetchLike);
+    expect(r.outcome === 'found' && [r.details.bggId, r.details.year, r.details.max]).toEqual([453740, 2026, 5]);
+    expect(calls.some((u) => u.includes('/thing?id=453740&stats=1'))).toBe(true);
+    expect(await lookupById(1, undefined, fetchLike)).toEqual({ outcome: 'no-token' });
+    expect(await lookupById(1, 't', async () => respond(401))).toEqual({ outcome: 'refused', status: 401 });
+    expect(
+      (
+        await lookupById(1, 't', async (u) =>
+          u.includes('/geekitems?') ? respond(404) : respond(200, '<items></items>'),
+        )
+      ).outcome,
+    ).toBe('no-match');
+    expect((await lookupById(1, 't', async () => respond(500))).outcome).toBe('unavailable');
   });
 });

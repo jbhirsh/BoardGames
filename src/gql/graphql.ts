@@ -10,6 +10,8 @@ export type Decision =
 
 /** The owner's edits; a field left out keeps what is stored, and `type: null` files it under "Suggested by friends". */
 export type DetailsEdit = {
+  /** A BoardGameGeek game link or id to move the game to: its details replace the stored ones, except any changed in this same edit. */
+  bgg?: string | null | undefined;
   desc?: string | null | undefined;
   kw?: Array<string> | null | undefined;
   max?: number | null | undefined;
@@ -47,6 +49,8 @@ export type HistoryEntry = {
 
 /** How a BoardGameGeek lookup went. */
 export type LookupOutcome =
+  /** Several games have the name; `Preview.matches` lists them for the owner to pick from. */
+  | 'AMBIGUOUS'
   | 'FOUND'
   | 'NO_MATCH'
   /** BGG_API_TOKEN isn't set, so BoardGameGeek wasn't asked. */
@@ -78,7 +82,14 @@ export type PreviewGameQueryVariables = Exact<{
 }>;
 
 
-export type PreviewGameQuery = { previewGame: { outcome: LookupOutcome, details: { bggId: number, name: string, year: number | null, min: number, max: number, mins: number, desc: string, kw: Array<string>, img: string | null, weight: number | null, section: string, summary: string | null, honours: Array<{ name: string, year: number | null, result: string }> } | null } };
+export type PreviewGameQuery = { previewGame: { outcome: LookupOutcome, details: { bggId: number, name: string, year: number | null, min: number, max: number, mins: number, desc: string, kw: Array<string>, img: string | null, weight: number | null, section: string, summary: string | null, honours: Array<{ name: string, year: number | null, result: string }> } | null, matches: Array<{ bggId: number, name: string, year: number | null, min: number, max: number, mins: number, desc: string, kw: Array<string>, img: string | null, weight: number | null, section: string, summary: string | null, honours: Array<{ name: string, year: number | null, result: string }> }> | null } };
+
+export type PreviewBggIdQueryVariables = Exact<{
+  id: string;
+}>;
+
+
+export type PreviewBggIdQuery = { previewBggId: { outcome: LookupOutcome, details: { bggId: number, name: string, year: number | null, min: number, max: number, mins: number, desc: string, kw: Array<string>, img: string | null, weight: number | null, section: string, summary: string | null, honours: Array<{ name: string, year: number | null, result: string }> } | null, matches: Array<{ bggId: number, name: string, year: number | null, min: number, max: number, mins: number, desc: string, kw: Array<string>, img: string | null, weight: number | null, section: string, summary: string | null, honours: Array<{ name: string, year: number | null, result: string }> }> | null } };
 
 export type DecideSuggestionMutationVariables = Exact<{
   id: string;
@@ -116,7 +127,9 @@ export type RemoveGameMutationVariables = Exact<{
 
 export type RemoveGameMutation = { removeGame: boolean };
 
-export type PreviewFragment = { outcome: LookupOutcome, details: { bggId: number, name: string, year: number | null, min: number, max: number, mins: number, desc: string, kw: Array<string>, img: string | null, weight: number | null, section: string, summary: string | null, honours: Array<{ name: string, year: number | null, result: string }> } | null };
+export type PreviewFragment = { outcome: LookupOutcome, details: { bggId: number, name: string, year: number | null, min: number, max: number, mins: number, desc: string, kw: Array<string>, img: string | null, weight: number | null, section: string, summary: string | null, honours: Array<{ name: string, year: number | null, result: string }> } | null, matches: Array<{ bggId: number, name: string, year: number | null, min: number, max: number, mins: number, desc: string, kw: Array<string>, img: string | null, weight: number | null, section: string, summary: string | null, honours: Array<{ name: string, year: number | null, result: string }> }> | null };
+
+export type GameShownFragment = { bggId: number, name: string, year: number | null, min: number, max: number, mins: number, desc: string, kw: Array<string>, img: string | null, weight: number | null, section: string, summary: string | null, honours: Array<{ name: string, year: number | null, result: string }> };
 
 export type SessionQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -129,7 +142,7 @@ export type EmailedSuggestionQueryVariables = Exact<{
 }>;
 
 
-export type EmailedSuggestionQuery = { emailedSuggestion: { suggestion: { game: string, name: string, note: string, status: SuggestionStatus }, preview: { outcome: LookupOutcome, details: { bggId: number, name: string, year: number | null, min: number, max: number, mins: number, desc: string, kw: Array<string>, img: string | null, weight: number | null, section: string, summary: string | null, honours: Array<{ name: string, year: number | null, result: string }> } | null } | null } };
+export type EmailedSuggestionQuery = { emailedSuggestion: { suggestion: { game: string, name: string, note: string, status: SuggestionStatus }, preview: { outcome: LookupOutcome, details: { bggId: number, name: string, year: number | null, min: number, max: number, mins: number, desc: string, kw: Array<string>, img: string | null, weight: number | null, section: string, summary: string | null, honours: Array<{ name: string, year: number | null, result: string }> } | null, matches: Array<{ bggId: number, name: string, year: number | null, min: number, max: number, mins: number, desc: string, kw: Array<string>, img: string | null, weight: number | null, section: string, summary: string | null, honours: Array<{ name: string, year: number | null, result: string }> }> | null } | null } };
 
 export type DecideByLinkMutationVariables = Exact<{
   id: string;
@@ -200,30 +213,56 @@ export class TypedDocumentString<TResult, TVariables>
     return this.value;
   }
 }
+export const GameShownFragmentDoc = new TypedDocumentString(`
+    fragment GameShown on GameDetails {
+  bggId
+  name
+  year
+  min
+  max
+  mins
+  desc
+  kw
+  img
+  weight
+  section
+  summary
+  honours {
+    name
+    year
+    result
+  }
+}
+    `, {"fragmentName":"GameShown"}) as unknown as TypedDocumentString<GameShownFragment, unknown>;
 export const PreviewFragmentDoc = new TypedDocumentString(`
     fragment Preview on Preview {
   outcome
   details {
-    bggId
-    name
-    year
-    min
-    max
-    mins
-    desc
-    kw
-    img
-    weight
-    section
-    summary
-    honours {
-      name
-      year
-      result
-    }
+    ...GameShown
+  }
+  matches {
+    ...GameShown
   }
 }
-    `, {"fragmentName":"Preview"}) as unknown as TypedDocumentString<PreviewFragment, unknown>;
+    fragment GameShown on GameDetails {
+  bggId
+  name
+  year
+  min
+  max
+  mins
+  desc
+  kw
+  img
+  weight
+  section
+  summary
+  honours {
+    name
+    year
+    result
+  }
+}`, {"fragmentName":"Preview"}) as unknown as TypedDocumentString<PreviewFragment, unknown>;
 export const PendingSuggestionsDocument = new TypedDocumentString(`
     query PendingSuggestions {
   pendingSuggestions {
@@ -243,25 +282,65 @@ export const PreviewGameDocument = new TypedDocumentString(`
     fragment Preview on Preview {
   outcome
   details {
-    bggId
+    ...GameShown
+  }
+  matches {
+    ...GameShown
+  }
+}
+fragment GameShown on GameDetails {
+  bggId
+  name
+  year
+  min
+  max
+  mins
+  desc
+  kw
+  img
+  weight
+  section
+  summary
+  honours {
     name
     year
-    min
-    max
-    mins
-    desc
-    kw
-    img
-    weight
-    section
-    summary
-    honours {
-      name
-      year
-      result
-    }
+    result
   }
 }`) as unknown as TypedDocumentString<PreviewGameQuery, PreviewGameQueryVariables>;
+export const PreviewBggIdDocument = new TypedDocumentString(`
+    query PreviewBggId($id: String!) {
+  previewBggId(id: $id) {
+    ...Preview
+  }
+}
+    fragment Preview on Preview {
+  outcome
+  details {
+    ...GameShown
+  }
+  matches {
+    ...GameShown
+  }
+}
+fragment GameShown on GameDetails {
+  bggId
+  name
+  year
+  min
+  max
+  mins
+  desc
+  kw
+  img
+  weight
+  section
+  summary
+  honours {
+    name
+    year
+    result
+  }
+}`) as unknown as TypedDocumentString<PreviewBggIdQuery, PreviewBggIdQueryVariables>;
 export const DecideSuggestionDocument = new TypedDocumentString(`
     mutation DecideSuggestion($id: String!, $decision: Decision!, $game: String, $details: DetailsInput) {
   decideSuggestion(id: $id, decision: $decision, game: $game, details: $details) {
@@ -312,23 +391,29 @@ export const EmailedSuggestionDocument = new TypedDocumentString(`
     fragment Preview on Preview {
   outcome
   details {
-    bggId
+    ...GameShown
+  }
+  matches {
+    ...GameShown
+  }
+}
+fragment GameShown on GameDetails {
+  bggId
+  name
+  year
+  min
+  max
+  mins
+  desc
+  kw
+  img
+  weight
+  section
+  summary
+  honours {
     name
     year
-    min
-    max
-    mins
-    desc
-    kw
-    img
-    weight
-    section
-    summary
-    honours {
-      name
-      year
-      result
-    }
+    result
   }
 }`) as unknown as TypedDocumentString<EmailedSuggestionQuery, EmailedSuggestionQueryVariables>;
 export const DecideByLinkDocument = new TypedDocumentString(`

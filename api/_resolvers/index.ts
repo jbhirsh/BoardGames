@@ -16,7 +16,7 @@ import { readFileSync } from 'node:fs';
 import { createSchema, createYoga, type Plugin } from 'graphql-yoga';
 // Renamed: it is a Yoga plugin, not a React hook.
 import { useCSRFPrevention as csrfPrevention } from '@graphql-yoga/plugin-csrf-prevention';
-import type { LookupResult } from '../_lib/bgg.js';
+import type { GameDetails, LookupResult } from '../_lib/bgg.js';
 import { isJsonRequest, type Headers } from '../_lib/json.js';
 import { askRules, type AskRulesInput } from './chat.js';
 import { buildContext, limit, requireAdmin, type ApiContext, type ApiDeps } from './context.js';
@@ -39,10 +39,13 @@ interface EmailedParent {
 }
 
 /** A lookup as the schema's Preview reads it: details only when it found the game, its honours a list. */
+const shown = (d: GameDetails) => ({ ...d, honours: d.honours ?? [] });
 const preview = (result: LookupResult) =>
   result.outcome === 'found'
-    ? { outcome: result.outcome, details: { ...result.details, honours: result.details.honours ?? [] } }
-    : { outcome: result.outcome };
+    ? { outcome: result.outcome, details: shown(result.details) }
+    : result.outcome === 'ambiguous'
+      ? { outcome: result.outcome, matches: result.matches.map(shown) }
+      : { outcome: result.outcome };
 
 /** GraphQL leaves an absent argument out and passes null for an explicit null; the services tell the two apart. */
 type Maybe<T> = T | null | undefined;
@@ -70,6 +73,13 @@ const Query = {
     guarded(...SUGGESTIONS, async () => {
       await requireAdmin(ctx);
       return preview(await suggestions.previewGame(ctx.deps.suggestions, args.game));
+    }),
+
+  // The same, for the id or link the owner pasted to move a game to.
+  previewBggId: (_: unknown, args: { id: string }, ctx: ApiContext) =>
+    guarded(...SUGGESTIONS, async () => {
+      await requireAdmin(ctx);
+      return preview(await suggestions.previewBggId(ctx.deps.suggestions, args.id));
     }),
 
   // A read, so it can come over GET, but only the owner's: the page shows
@@ -158,6 +168,7 @@ const enums = {
   LookupOutcome: {
     FOUND: 'found',
     NO_MATCH: 'no-match',
+    AMBIGUOUS: 'ambiguous',
     NO_TOKEN: 'no-token',
     REFUSED: 'refused',
     UNAVAILABLE: 'unavailable',

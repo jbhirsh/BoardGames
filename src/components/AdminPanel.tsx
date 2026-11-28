@@ -17,6 +17,7 @@ import {
 } from '../client/adminApi';
 import Notice from './Notice';
 import PreviewCard from './PreviewCard';
+import BggMatchSheet from './BggMatchSheet';
 import {
   adminActionsClass,
   adminButtonClass,
@@ -68,6 +69,7 @@ function QueueRow({
   // The name a lookup is out for; the friend's from the start.
   const [lookingFor, setLookingFor] = useState<string | null>(item.game);
   const [error, setError] = useState<string | null>(null);
+  const [choosing, setChoosing] = useState(false);
   const inFlight = useRef<AbortController | null>(null);
 
   // Sends a lookup (`queued`: once the rows before it have had theirs),
@@ -82,8 +84,14 @@ function QueueRow({
       void (queued ? inTurn(send) : send()).then((result) => {
         if (!result || controller.signal.aborted) return;
         setLookingFor(null);
-        if (result.ok) setLooked({ game: name, outcome: result.data.outcome, details: result.data.details });
-        else setError(result.error);
+        if (result.ok) {
+          setLooked({
+            game: name,
+            outcome: result.data.outcome,
+            details: result.data.details,
+            matches: result.data.matches,
+          });
+        } else setError(result.error);
       });
     },
     [inTurn],
@@ -116,6 +124,11 @@ function QueueRow({
       }
     }
     const rename = renamed ? { game: typed } : {};
+    // Several games share the name: the owner says which, never a guess.
+    if (current?.outcome === 'ambiguous') {
+      setChoosing(true);
+      return;
+    }
     // After an outage the server tries the lookup again; any other miss is
     // approved without details, as the row showed it.
     if (current?.outcome === 'unavailable') onDecide(item, 'approve', rename);
@@ -189,7 +202,23 @@ function QueueRow({
         {!lookingUp && notice && (
           <Notice tone="warning" live={false} className="mt-0.5">
             {notice}
+            {current?.matches && (
+              <>
+                {' '}
+                <button type="button" className={adminGhostClass} onClick={() => setChoosing(true)}>
+                  Choose which one
+                </button>
+              </>
+            )}
           </Notice>
+        )}
+        {choosing && current?.matches && (
+          <ChooseMatch
+            looked={current}
+            matches={current.matches}
+            onPick={setLooked}
+            onClose={() => setChoosing(false)}
+          />
         )}
         {!lookingUp && !current && renamed && !error && (
           <p className={adminMutedClass}>Look the corrected name up to check its details; Approve does that first.</p>
@@ -292,6 +321,36 @@ interface Looked {
   game: string;
   outcome: LookupOutcome;
   details?: PreviewDetails;
+  /** With `ambiguous`: every game BoardGameGeek has under the name, until the owner picks one. */
+  matches?: PreviewDetails[];
+}
+
+/**
+ * The sheet for a lookup that found several games: the one picked takes the
+ * lookup's place, as if it had found just that game, and the sheet closes.
+ */
+function ChooseMatch({
+  looked,
+  matches,
+  onPick,
+  onClose,
+}: {
+  looked: Looked;
+  matches: PreviewDetails[];
+  onPick: (found: Looked) => void;
+  onClose: () => void;
+}) {
+  return (
+    <BggMatchSheet
+      name={looked.game}
+      matches={matches}
+      onPick={(details) => {
+        onPick({ game: looked.game, outcome: 'found', details });
+        onClose();
+      }}
+      onClose={onClose}
+    />
+  );
 }
 
 /**
@@ -308,6 +367,7 @@ function AddGameForm() {
   const [status, setStatus] = useState<AddStatus>({ kind: 'idle' });
   const [looked, setLooked] = useState<Looked | null>(null);
   const [lookingUp, setLookingUp] = useState(false);
+  const [choosing, setChoosing] = useState(false);
   const uid = useId();
 
   const typed = game.trim();
@@ -323,7 +383,12 @@ function AddGameForm() {
       setStatus({ kind: 'error', message: result.error });
       return;
     }
-    setLooked({ game: typed, outcome: result.data.outcome, details: result.data.details });
+    setLooked({
+      game: typed,
+      outcome: result.data.outcome,
+      details: result.data.details,
+      matches: result.data.matches,
+    });
     setStatus({ kind: 'idle' });
   };
 
@@ -344,6 +409,11 @@ function AddGameForm() {
     }
     if (!current) {
       await lookUp();
+      return;
+    }
+    // Several games share the name: the owner says which, never a guess.
+    if (current.outcome === 'ambiguous') {
+      setChoosing(true);
       return;
     }
     setStatus({ kind: 'busy' });
@@ -369,7 +439,7 @@ function AddGameForm() {
   const notice = current && !found ? lookupNotice(current.outcome, current.game, 'preview') : null;
   let label = 'Look up';
   if (busy) label = lookingUp ? 'Looking up…' : 'Adding…';
-  else if (current) label = found ? 'Add to wishlist' : 'Add anyway';
+  else if (current) label = found ? 'Add to wishlist' : current.matches ? 'Choose which one' : 'Add anyway';
 
   return (
     <form className="mt-2" onSubmit={onSubmit} aria-labelledby={`${uid}-title`}>
@@ -428,11 +498,14 @@ function AddGameForm() {
           </Notice>
         )}
       </div>
+      {choosing && current?.matches && (
+        <ChooseMatch looked={current} matches={current.matches} onPick={setLooked} onClose={() => setChoosing(false)} />
+      )}
       <div className={formActionsClass}>
         <button type="submit" className={submitClass} disabled={busy}>
           {label}
         </button>
-        {current && !found && (
+        {current && !found && !current.matches && (
           <button type="button" className={adminGhostClass} disabled={busy} onClick={() => void lookUp()}>
             Look up again
           </button>

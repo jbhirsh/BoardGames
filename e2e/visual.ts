@@ -159,6 +159,15 @@ const CASCADIA_PREVIEW = {
   },
 };
 
+/** One of several BoardGameGeek games sharing a name, as the owner's match sheet lists them, art from the preview origin. */
+const MATCH = (year: number) => ({
+  ...CASCADIA_PREVIEW.details,
+  bggId: year,
+  year,
+  weight: null,
+  summary: `The ${year} edition: draft habitat tiles and wildlife tokens.`,
+});
+
 /** The pages the owner's emails open, each read stubbed: in MORE, and on phones. */
 export const LINKS: Scenario[] = [
   {
@@ -366,6 +375,61 @@ export const GAMES_STATES: Scenario[] = [
       const edit = page.getByRole('button', { name: /^Edit / }).first();
       await expect(edit).toBeVisible();
       await edit.scrollIntoViewIfNeeded();
+    },
+  },
+  {
+    name: 'wishlist-owner-edit',
+    open: async (page) => {
+      await answer(page, 'Session', { session: { admin: true } });
+      await answer(page, 'PendingSuggestions', { pendingSuggestions: [] });
+      await page.goto('/?c=want&v=grid');
+      await page
+        .getByRole('button', { name: /^Edit / })
+        .first()
+        .click();
+      const change = page.getByRole('button', { name: 'Change match' });
+      await expect(change).toBeVisible();
+      await change.scrollIntoViewIfNeeded();
+    },
+  },
+  {
+    name: 'wishlist-owner-edit-picker',
+    open: async (page) => {
+      await answer(page, 'Session', { session: { admin: true } });
+      await answer(page, 'PendingSuggestions', { pendingSuggestions: [] });
+      await answer(page, 'PreviewGame', {
+        previewGame: { outcome: 'AMBIGUOUS', details: null, matches: [MATCH(2007), MATCH(2026)] },
+      });
+      await page.goto('/?c=want&v=grid');
+      await page
+        .getByRole('button', { name: /^Edit / })
+        .first()
+        .click();
+      await page.getByRole('button', { name: 'Change match' }).click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+    },
+  },
+  {
+    name: 'wishlist-owner-edit-link-error',
+    open: async (page) => {
+      await answer(page, 'Session', { session: { admin: true } });
+      await answer(page, 'PendingSuggestions', { pendingSuggestions: [] });
+      await answer(page, 'PreviewBggId', {
+        previewBggId: { outcome: 'NO_MATCH', details: null, matches: null },
+      });
+      await page.goto('/?c=want&v=grid');
+      await page
+        .getByRole('button', { name: /^Edit / })
+        .first()
+        .click();
+      await page.getByRole('button', { name: 'Paste a BGG link or id' }).click();
+      await page.getByLabel('BoardGameGeek link or id').fill('999999999');
+      await page
+        .getByRole('form', { name: /^Edit / })
+        .getByRole('button', { name: 'Look up' })
+        .click();
+      await expect(page.getByRole('alert')).toBeVisible();
+      await page.getByRole('alert').scrollIntoViewIfNeeded();
     },
   },
 ];

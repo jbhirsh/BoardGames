@@ -3,7 +3,7 @@
  * approved (`outcome` and `lookup` in api/_lib/bgg.ts, mirrored here
  * since the two trees can't import each other).
  */
-export type LookupOutcome = 'found' | 'no-match' | 'no-token' | 'refused' | 'unavailable';
+export type LookupOutcome = 'found' | 'ambiguous' | 'no-match' | 'no-token' | 'refused' | 'unavailable';
 
 /** Details BoardGameGeek has for a game, as the preview answers them. */
 export interface PreviewDetails {
@@ -27,6 +27,7 @@ export interface PreviewDetails {
 }
 
 const CAUSE: Record<Exclude<LookupOutcome, 'found'>, (game: string) => string> = {
+  ambiguous: (game) => `BoardGameGeek has several games called “${game}”.`,
   'no-match': (game) => `BoardGameGeek had no match for “${game}”.`,
   'no-token': (game) => `“${game}” couldn't be looked up: the BoardGameGeek token (BGG_API_TOKEN) is missing.`,
   // A 401 or 403 is the token, or BGG's bot screening turning the request away.
@@ -40,6 +41,7 @@ const CAUSE: Record<Exclude<LookupOutcome, 'found'>, (game: string) => string> =
 const ACT: Record<'preview' | 'queue', string> = { preview: 'add it anyway', queue: 'approve it' };
 const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const PREVIEW_ADVICE: Record<Exclude<LookupOutcome, 'found'>, (act: string) => string> = {
+  ambiguous: () => 'Choose the one you mean.',
   'no-match': (act) => `Check the name and look it up again, or ${act} and fill in its details with Edit.`,
   'no-token': (act) =>
     `${capital(act)} and fill in its details with Edit, or set the token, redeploy, then look it up again.`,

@@ -13,6 +13,7 @@ const PROBLEMS: Record<string, string> = {
   NOT_FOUND: 'Suggestion not found',
   FORBIDDEN: 'Link not valid',
   BAD_NAME: 'Name not recognised',
+  AMBIGUOUS: 'Several games share the name',
 };
 
 /** The heading for a link (or a corrected name) the API refused. */
@@ -23,6 +24,7 @@ type Miss = Exclude<LookupOutcome, 'found'>;
 
 // Why the approve page has no preview to show, for the name it looked up.
 const PREVIEW_MISSES: Record<Miss, (game: string) => string> = {
+  ambiguous: (game) => `BoardGameGeek has several games called “${game}”.`,
   'no-match': (game) => `BoardGameGeek had no match for “${game}”.`,
   'no-token': (game) => `“${game}” couldn't be looked up: BGG_API_TOKEN isn't set.`,
   refused: (game) => `“${game}” couldn't be looked up: BoardGameGeek refused the request (check BGG_API_TOKEN).`,
@@ -36,9 +38,11 @@ const PREVIEW_MISSES: Record<Miss, (game: string) => string> = {
  */
 export function missText(game: string, outcome: Miss): string {
   const advice =
-    outcome === 'unavailable'
-      ? 'Approving tries again, and adds it without details if BoardGameGeek still has nothing; or look it up again below.'
-      : 'Approving adds it without details, to fill in with Edit on the site; or correct the name below and look it up again.';
+    outcome === 'ambiguous'
+      ? 'Approving here would have to guess, so it is refused: choose which one you mean on the site, or correct the name below and look it up again.'
+      : outcome === 'unavailable'
+        ? 'Approving tries again, and adds it without details if BoardGameGeek still has nothing; or look it up again below.'
+        : 'Approving adds it without details, to fill in with Edit on the site; or correct the name below and look it up again.';
   return `${PREVIEW_MISSES[outcome](game)} ${advice}`;
 }
 
@@ -52,13 +56,15 @@ export function missText(game: string, outcome: Miss): string {
 export function approvalDetails(
   preview: { outcome: LookupOutcome; details?: PreviewDetails } | null,
 ): PreviewDetails | null | undefined {
-  if (!preview || preview.outcome === 'unavailable') return undefined;
+  if (!preview || preview.outcome === 'unavailable' || preview.outcome === 'ambiguous') return undefined;
   return preview.outcome === 'found' && preview.details ? preview.details : null;
 }
 
 // What the approval says when the lookup filled nothing in, so the owner
 // hears about it where they approved rather than from an empty card.
 const LOOKUP_NOTES: Record<Miss, string> = {
+  ambiguous:
+    'BoardGameGeek has several games with that name, so it was not approved: sign in on the site and choose the one you mean.',
   'no-match':
     'BoardGameGeek had no match for it, so it has no players, time or description yet: sign in on the site to fill them in with Edit.',
   'no-token':
