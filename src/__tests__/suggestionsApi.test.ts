@@ -14,6 +14,7 @@ import {
   editGame,
   openEmailed,
   pendingList,
+  previewBggId,
   previewEmailed,
   previewGame,
   removeGame,
@@ -621,6 +622,229 @@ describe('editGame', () => {
   ])('refuses %o', async (input, status, message) => {
     const err = await refusal(editGame(deps(), input));
     expect([err.status, err.message]).toEqual([status, message]);
+  });
+});
+
+describe('editGame, moving a game to another BoardGameGeek entry', () => {
+  const CONTAINER = {
+    bggId: 453740,
+    name: 'Container',
+    year: 2026,
+    min: 3,
+    max: 5,
+    mins: 90,
+    desc: 'Ports and ships.',
+    kw: ['strategy'],
+    img: 'https://cf.geekdo-images.com/c.jpg',
+    weight: 3.1,
+    summary: 'Run the shipping port.',
+    honours: [{ name: 'Golden Geek Best Strategy Game', year: 2026, result: 'Nominee' }],
+  };
+  const lookupById = (result: LookupResult = found(CONTAINER)) =>
+    vi.fn<(bggId: number) => Promise<LookupResult>>(async () => result);
+  beforeEach(() => seed(db.db, { gameRows: [curated({ keywords: ['party'], section: 'party' })] }));
+
+  const stored = async () => (await db.db.select().from(games).where(eq(games.id, 'seti')))[0];
+
+  it("replaces the players, time, description, art and year with the entry's, keeping the keywords and section", async () => {
+    const lookup = lookupById();
+    const edited = await editGame(deps({ lookupById: lookup }), { id: 'seti', details: { bgg: '453740' } });
+    expect(lookup).toHaveBeenCalledWith(453740);
+    expect(edited).toMatchObject({
+      bggId: 453740,
+      year: 2026,
+      image: 'https://cf.geekdo-images.com/c.jpg',
+      minPlayers: 3,
+      maxPlayers: 5,
+      players: '3–5',
+      minutes: 90,
+      dur: '90 min',
+      description: 'Ports and ships.',
+      keywords: ['party'],
+      section: 'party',
+    });
+  });
+
+  it("stores the entry's weight and honours at once, so the card shows them", async () => {
+    await editGame(deps({ lookupById: lookupById() }), { id: 'seti', details: { bgg: '453740' } });
+    expect((await rows()).info).toMatchObject([
+      {
+        bggId: 453740,
+        name: 'Container',
+        summary: 'Run the shipping port.',
+        weight: 3.1,
+        honours: [{ name: 'Golden Geek Best Strategy Game', year: 2026, result: 'Nominee' }],
+        fetchedAt: 5000,
+      },
+    ]);
+  });
+
+  it('stores an empty row for the next refresh when BGG gave no honours', async () => {
+    const bare = Object.fromEntries(
+      Object.entries(CONTAINER).filter(([key]) => key !== 'honours' && key !== 'summary'),
+    ) as Found;
+    await editGame(deps({ lookupById: lookupById(found(bare)) }), { id: 'seti', details: { bgg: '453740' } });
+    expect((await rows()).info).toMatchObject([{ bggId: 453740, honours: [], weight: 3.1, fetchedAt: 0 }]);
+  });
+
+  it('reads a boardgamegeek.com game link as its id', async () => {
+    const lookup = lookupById();
+    await editGame(deps({ lookupById: lookup }), {
+      id: 'seti',
+      details: { bgg: 'https://boardgamegeek.com/boardgame/453740/container' },
+    });
+    expect(lookup).toHaveBeenCalledWith(453740);
+  });
+
+  it("takes BGG's players, time and description when the edit leaves them as stored, and keeps what the owner changed", async () => {
+    const edited = await editGame(deps({ lookupById: lookupById() }), {
+      id: 'seti',
+      details: { bgg: '453740', min: 1, max: 4, mins: 160, desc: 'Search the stars.', kw: ['party'] },
+    });
+    // Sent as the form prefills them, equal to what is stored: BGG's replace them.
+    expect(edited).toMatchObject({ minPlayers: 3, maxPlayers: 5, minutes: 90, description: 'Ports and ships.' });
+    const mine = await editGame(deps({ lookupById: lookupById() }), {
+      id: 'seti',
+      details: { bgg: '453740', min: 2, max: 4, mins: 45, desc: 'My words.' },
+    });
+    expect(mine).toMatchObject({
+      bggId: 453740,
+      minPlayers: 2,
+      maxPlayers: 4,
+      players: '2–4',
+      minutes: 45,
+      description: 'My words.',
+    });
+  });
+
+  it("replaces the art and year with nothing when the new entry has none, not the old edition's", async () => {
+    const bare = Object.fromEntries(
+      Object.entries(CONTAINER).filter(([key]) => key !== 'img' && key !== 'year'),
+    ) as Found;
+    const edited = await editGame(deps({ lookupById: lookupById(found(bare)) }), {
+      id: 'seti',
+      details: { bgg: '453740' },
+    });
+    expect(edited).toMatchObject({ bggId: 453740, image: null, year: null });
+  });
+
+  it('counts a stored description with stray whitespace as unchanged when the form sends it back', async () => {
+    await db.db.update(games).set({ description: '  Search   the stars. ' }).where(eq(games.id, 'seti'));
+    const edited = await editGame(deps({ lookupById: lookupById() }), {
+      id: 'seti',
+      details: { bgg: '453740', desc: 'Search the stars.' },
+    });
+    expect(edited.description).toBe('Ports and ships.');
+  });
+
+  it('does not ask BGG when the id is the one the game already has', async () => {
+    const lookup = lookupById();
+    const edited = await editGame(deps({ lookupById: lookup }), { id: 'seti', details: { bgg: '418059', mins: 30 } });
+    expect(lookup).not.toHaveBeenCalled();
+    expect(edited).toMatchObject({ bggId: 418059, minutes: 30, image: '/images/wishlist/seti.jpg' });
+    expect((await rows()).info).toEqual([]);
+  });
+
+  it.each([
+    [
+      'a value that is no id or game link',
+      { bgg: 'container' },
+      found(CONTAINER),
+      400,
+      'paste a BoardGameGeek game link',
+    ],
+    ['a zero id', { bgg: '0' }, found(CONTAINER), 400, 'paste a BoardGameGeek game link'],
+    [
+      'an id BGG does not have',
+      { bgg: '999999999' },
+      { outcome: 'no-match' },
+      404,
+      'BoardGameGeek has no game with id 999999999',
+    ],
+    ['BGG not answering', { bgg: '453740' }, { outcome: 'unavailable' }, 502, "BoardGameGeek didn't answer for 453740"],
+    ['a missing token', { bgg: '453740' }, { outcome: 'no-token' }, 502, "BoardGameGeek didn't answer for 453740"],
+    [
+      'a refused token',
+      { bgg: '453740' },
+      { outcome: 'refused', status: 401 },
+      502,
+      "BoardGameGeek didn't answer for 453740",
+    ],
+  ] as const)('refuses %s and changes nothing', async (_what, details, result, status, message) => {
+    const before = await stored();
+    const err = await refusal(
+      editGame(deps({ lookupById: lookupById(result) }), { id: 'seti', details: { ...details, mins: 30 } }),
+    );
+    expect([err.status, err.message]).toEqual([status, expect.stringContaining(message)]);
+    expect(await stored()).toEqual(before);
+    expect((await rows()).info).toEqual([]);
+  });
+
+  it('answers 502 too when the lookup throws, or none is configured', async () => {
+    const throwing = vi.fn(async () => {
+      throw new Error('boom');
+    });
+    expect(
+      (await refusal(editGame(deps({ lookupById: throwing }), { id: 'seti', details: { bgg: '453740' } }))).status,
+    ).toBe(502);
+    expect(
+      (await refusal(editGame(deps({ lookupById: null }), { id: 'seti', details: { bgg: '453740' } }))).status,
+    ).toBe(502);
+  });
+});
+
+describe('previewBggId', () => {
+  it('shows the game an id or link names, storing nothing', async () => {
+    const lookupById = vi.fn<(bggId: number) => Promise<LookupResult>>(async () => found(WINGSPAN));
+    const r = await previewBggId(deps({ lookupById }), 'https://boardgamegeek.com/boardgame/266192/wingspan');
+    expect(r.outcome === 'found' && r.details.name).toBe('Wingspan');
+    expect(lookupById).toHaveBeenCalledWith(266192);
+    expect(await rows()).toEqual({ games: [], suggestions: [], info: [] });
+  });
+
+  it('refuses a value that is no id or link with a 400, and says unavailable with no lookup configured', async () => {
+    expect((await refusal(previewBggId(deps(), 'wingspan'))).status).toBe(400);
+    expect(await previewBggId(deps({ lookupById: null }), '266192')).toEqual({ outcome: 'unavailable' });
+  });
+});
+
+describe('a name several BoardGameGeek games share', () => {
+  const ambiguous: LookupResult = {
+    outcome: 'ambiguous',
+    matches: [
+      { categories: [], mechanics: [], section: 'strategy', ...WINGSPAN, bggId: 1, year: 2007 },
+      { categories: [], mechanics: [], section: 'strategy', ...WINGSPAN, bggId: 2, year: 2026 },
+    ],
+  };
+
+  it('is shown as it is by a preview, for the owner to pick from', async () => {
+    expect(await previewGame(deps({ lookup: async () => ambiguous }), 'Wingspan')).toEqual(ambiguous);
+  });
+
+  it('is never approved on a guess: with no picked details, the approval is refused and the suggestion waits', async () => {
+    await seed(db.db, { suggestionRows: [pendingRow()] });
+    const err = await refusal(
+      decideSuggestion(deps({ lookup: async () => ambiguous }), { id: 'sug-aaaaaa', decision: 'approve' }),
+    );
+    expect([err.status, err.message]).toEqual([409, expect.stringContaining('several games called Wingspan')]);
+    expect(err.extensions).toMatchObject({ code: 'AMBIGUOUS' });
+    expect(await rows()).toMatchObject({ games: [], suggestions: [{ id: 'sug-aaaaaa', status: 'pending' }], info: [] });
+  });
+
+  it('is never added on a guess either', async () => {
+    const err = await refusal(addGame(deps({ lookup: async () => ambiguous }), { game: 'Wingspan', name: 'Jess' }));
+    expect(err.status).toBe(409);
+    expect(await rows()).toEqual({ games: [], suggestions: [], info: [] });
+  });
+
+  it('is approved with the details the owner picked', async () => {
+    await seed(db.db, { suggestionRows: [pendingRow()] });
+    await decideSuggestion(deps(), {
+      id: 'sug-aaaaaa',
+      decision: 'approve',
+      details: { bggId: 2, year: 2026, min: 1, max: 5, mins: 70, desc: 'Birds.', kw: [], section: 'strategy' },
+    });
+    expect((await rows()).games).toMatchObject([{ id: 'sug-aaaaaa', bggId: 2, year: 2026 }]);
   });
 });
 

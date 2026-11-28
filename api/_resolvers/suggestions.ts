@@ -1,5 +1,5 @@
 // Friends' game suggestions and the owner's wishlist, in the API's database
-// (#290's part 2b): Query.pendingSuggestions, previewGame, emailedSuggestion;
+// (#290's part 2b): Query.pendingSuggestions, previewGame, previewBggId, emailedSuggestion;
 // Mutation.suggestGame, decideSuggestion, addGame, editGame, removeGame. The
 // resolvers (index.ts) check the owner's session and JSON where an
 // operation is the owner's, and call these.
@@ -19,6 +19,15 @@
 // thing that decides a suggestion, from the page's button or the site's
 // queue alike. Both look the game up (read-only; previewEmailed, previewGame)
 // and show what BoardGameGeek has.
+//
+// Several BoardGameGeek games can share a name (Container has three), so a
+// lookup by name that finds more than one is `ambiguous`, never the first of
+// them: a preview lists them for the owner to pick from, and an approval or
+// add with no picked details is refused (409 `AMBIGUOUS`, the suggestion left
+// waiting) rather than guess (#367). The owner can also move a game to another BGG entry (editGame's
+// `details.bgg`, an id or game link): its players, time, description, art
+// and year replace the stored ones, except what the same edit changed, and
+// its weight and honours are stored with it.
 //
 // A decision is one conditional UPDATE … WHERE status IN ('pending',
 // 'unsent') … RETURNING, in a transaction with what an approval writes, so
@@ -46,6 +55,7 @@ import { randomBytes } from 'node:crypto';
 import { and, desc, eq, inArray, ne } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { reportError } from '../_lib/sentry.js';
+import { parseBggId } from '../_lib/bggId.js';
 import { BGG_IMG_RE, type BggItem, type GameDetails, type LookupOutcome, type LookupResult } from '../_lib/bgg.js';
 import {
   DESC_MAX,
@@ -93,6 +103,8 @@ export interface SuggestionsDeps {
   db: () => Promise<LibSQLDatabase>;
   /** Fills in a game's details on approval, or says why not; null skips it. */
   lookup?: ((name: string) => Promise<LookupResult>) | null;
+  /** One game's details by BGG id (an edit moving a game to another entry, or a pasted id's preview); null skips it. */
+  lookupById?: ((bggId: number) => Promise<LookupResult>) | null;
   /** BGG's spelling of a typed name, or null for none or any failure (bggSpelling, which never throws); null skips it. */
   spelling?: ((name: string) => Promise<string | null>) | null;
   /**
@@ -149,6 +161,9 @@ function ok<T>(result: { ok: true; details: T } | { ok: false; error: string }):
   return result.details;
 }
 
+/** A description as it is stored: trimmed, its whitespace collapsed. */
+const tidy = (text: string) => text.trim().replace(/\s+/g, ' ');
+
 /** The owner's edits, validated field by field against what's stored. */
 function mergeDetails(base: Details, raw: unknown): { ok: true; details: Details } | { ok: false; error: string } {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ok: false, error: 'details must be an object' };
@@ -165,7 +180,7 @@ function mergeDetails(base: Details, raw: unknown): { ok: true; details: Details
   if (d.desc !== undefined) {
     // Normalise first: the edit form's textarea sends newlines, which are
     // whitespace to collapse, not control characters to refuse.
-    const clean = typeof d.desc === 'string' ? d.desc.trim().replace(/\s+/g, ' ') : null;
+    const clean = typeof d.desc === 'string' ? tidy(d.desc) : null;
     if (clean === null || clean.length > DESC_MAX || /[\p{C}]/u.test(clean))
       return { ok: false, error: `description must be at most ${DESC_MAX} characters` };
     desc = clean;
@@ -362,13 +377,29 @@ async function listedAs(db: LibSQLDatabase, game: string, exceptId?: string): Pr
  * lookup) is captured too; a plain miss is not an error.
  */
 async function lookUp(deps: SuggestionsDeps, game: string): Promise<LookupResult | null> {
-  if (!deps.lookup) return null;
-  let result: LookupResult;
+  const { lookup } = deps;
+  if (!lookup) return null;
+  return reported(await attempt(() => lookup(game)));
+}
+
+/** `lookUp`'s by-id twin, for an edit or a pasted id; the same reports. */
+async function lookUpId(deps: SuggestionsDeps, bggId: number): Promise<LookupResult | null> {
+  const { lookupById } = deps;
+  if (!lookupById) return null;
+  return reported(await attempt(() => lookupById(bggId)));
+}
+
+/** A lookup's result, a throw turned into `unavailable` with its cause. */
+async function attempt(run: () => Promise<LookupResult>): Promise<LookupResult> {
   try {
-    result = await deps.lookup(game);
+    return await run();
   } catch (err) {
-    result = { outcome: 'unavailable', cause: err };
+    return { outcome: 'unavailable', cause: err };
   }
+}
+
+/** Reports a lookup that failed for a reason the owner can fix, and passes it on. */
+async function reported(result: LookupResult): Promise<LookupResult> {
   if (result.outcome === 'no-token') {
     await reportError(
       'suggestions: BoardGameGeek lookup skipped',
@@ -414,6 +445,13 @@ async function detailsFor(
     return { details: given, weight: given?.weight, bggName: item?.name, item };
   }
   const result = await lookUp(deps, game);
+  // Never a guess between games that share the name: the suggestion stays
+  // as it is until the owner picks one (the sheet previews, then sends it).
+  if (result?.outcome === 'ambiguous') {
+    throw new ApiError(409, `BoardGameGeek has several games called ${game}: look it up and choose the one you mean`, {
+      code: 'AMBIGUOUS',
+    });
+  }
   if (result?.outcome !== 'found') return { details: null, lookup: result?.outcome };
   const d = result.details;
   const item = d.honours ? { ...(d.summary ? { summary: d.summary } : {}), honours: d.honours } : null;
@@ -632,6 +670,19 @@ export async function previewGame(deps: SuggestionsDeps, game: unknown): Promise
   return result ?? { outcome: 'unavailable' };
 }
 
+/**
+ * Looks a game up by the BGG id or game link the owner pasted, without
+ * storing anything, for the edit form to show as a card before it saves. A
+ * value that is neither is a 400.
+ */
+export async function previewBggId(deps: SuggestionsDeps, raw: unknown): Promise<LookupResult> {
+  const id = parseBggId(raw);
+  if (id === null) throw new ApiError(400, BGG_ID_ERROR);
+  return (await lookUpId(deps, id)) ?? { outcome: 'unavailable' };
+}
+
+const BGG_ID_ERROR = 'paste a BoardGameGeek game link (boardgamegeek.com/boardgame/…) or its id';
+
 export interface AddInput {
   game: unknown;
   name: unknown;
@@ -765,9 +816,34 @@ export interface EditInput {
   details?: unknown;
 }
 
+/**
+ * The BGG entry an edit moves a game to, or null when it is the one the
+ * game already has (BGG isn't asked then). An id that isn't a BGG game link
+ * or number is a 400, one BGG doesn't have a 404, and BGG not answering a
+ * 502, with nothing saved in any case.
+ */
+async function moveTo(deps: SuggestionsDeps, game: GameRowType, raw: unknown) {
+  const id = parseBggId(raw);
+  if (id === null) throw new ApiError(400, BGG_ID_ERROR);
+  if (id === game.bggId) return null;
+  const result = await lookUpId(deps, id);
+  if (result?.outcome !== 'found') {
+    if (result?.outcome === 'no-match') throw new ApiError(404, `BoardGameGeek has no game with id ${id}`);
+    throw new ApiError(502, `BoardGameGeek didn't answer for ${id}: try again in a minute`);
+  }
+  const d = result.details;
+  const item = d.honours ? { ...(d.summary ? { summary: d.summary } : {}), honours: d.honours } : null;
+  return {
+    details: fromLookup(d),
+    name: d.name || game.name,
+    saved: { details: fromLookup(d), weight: d.weight, bggName: d.name || undefined, item },
+  };
+}
+
 /** The owner editing how a wishlist game reads, whichever way it got there, and the note it came with. */
 export async function editGame(deps: SuggestionsDeps, input: EditInput): Promise<WishlistGame> {
   const db = await deps.db();
+  const now = deps.now ?? (() => Date.now());
   const game = await loadGame(db, input.id);
   const fields: Partial<typeof games.$inferInsert> = {};
   if (input.game !== undefined) {
@@ -777,6 +853,7 @@ export async function editGame(deps: SuggestionsDeps, input: EditInput): Promise
     if (dup) throw new ApiError(409, `${dup.name} is already on the list`);
     fields.name = g.game;
   }
+  let moved: Awaited<ReturnType<typeof moveTo>> | null = null;
   if (input.details !== undefined) {
     const base: Details = {
       min: game.minPlayers,
@@ -787,16 +864,34 @@ export async function editGame(deps: SuggestionsDeps, input: EditInput): Promise
       ...(isSection(game.section) ? { section: game.section } : {}),
     };
     const d = ok(mergeDetails(base, input.details));
+    const bgg = (input.details as { bgg?: unknown }).bgg;
+    // A pasted or picked BGG entry other than the stored one replaces what
+    // BGG supplies; what the owner changed in this same save stays theirs.
+    moved = bgg === undefined || bgg === null ? null : await moveTo(deps, game, bgg);
+    const kept = (differs: boolean, mine: Details, theirs: Details | undefined) =>
+      moved && theirs && !differs ? theirs : mine;
+    const players = kept(d.min !== game.minPlayers || d.max !== game.maxPlayers, d, moved?.details);
+    const time = kept(d.mins !== game.minutes, d, moved?.details);
+    const text = kept(d.desc !== tidy(game.description), d, moved?.details);
     Object.assign(fields, {
-      minPlayers: d.min,
-      maxPlayers: d.max,
-      minutes: d.mins,
-      description: d.desc,
+      minPlayers: players.min,
+      maxPlayers: players.max,
+      minutes: time.mins,
+      description: text.desc,
       keywords: d.kw,
       section: d.section ?? null,
     });
-    if (d.min !== game.minPlayers || d.max !== game.maxPlayers) fields.players = playersLabel(d.min, d.max);
-    if (d.mins !== game.minutes) fields.dur = d.mins > 0 ? `${d.mins} min` : null;
+    if (moved) {
+      Object.assign(fields, {
+        bggId: moved.details.bggId ?? null,
+        year: moved.details.year ?? null,
+        image: moved.details.img ?? null,
+      });
+    }
+    if (players.min !== game.minPlayers || players.max !== game.maxPlayers) {
+      fields.players = playersLabel(players.min, players.max);
+    }
+    if (time.mins !== game.minutes) fields.dur = time.mins > 0 ? `${time.mins} min` : null;
   }
   let note: string | undefined;
   if (input.note !== undefined) {
@@ -812,6 +907,10 @@ export async function editGame(deps: SuggestionsDeps, input: EditInput): Promise
   row(gameRow, { ...game, ...fields }, `${game.name}'s row`);
   await db.transaction(async (tx) => {
     if (Object.keys(fields).length > 0) await tx.update(games).set(fields).where(eq(games.id, game.id));
+    if (moved) {
+      const info = saveInfo(tx, moved.name, moved.saved, now());
+      if (info) await info;
+    }
     if (note !== undefined) await tx.update(suggestions).set({ note }).where(eq(suggestions.gameId, game.id));
   });
   const [listed] = (await wishlist(deps)).filter((g) => g.id === game.id);

@@ -31,6 +31,9 @@ type Query {
   "Owner, as JSON: what BoardGameGeek has for a game, or why it has nothing. Stores nothing."
   previewGame(game: String!): Preview!
 
+  "Owner, as JSON: what BoardGameGeek has for the game a pasted id or game link names, or why it has nothing. Stores nothing."
+  previewBggId(id: String!): Preview!
+
   "Owner: the suggestion behind an emailed approve or deny link. Changes nothing."
   emailedSuggestion(id: String!): EmailedSuggestion!
 }
@@ -119,6 +122,8 @@ enum Decision {
 enum LookupOutcome {
   FOUND
   NO_MATCH
+  "Several games have the name; `Preview.matches` lists them for the owner to pick from."
+  AMBIGUOUS
   "BGG_API_TOKEN isn't set, so BoardGameGeek wasn't asked."
   NO_TOKEN
   "BoardGameGeek refused the token."
@@ -233,6 +238,8 @@ type GameDetails {
 type Preview {
   outcome: LookupOutcome!
   details: GameDetails
+  "With AMBIGUOUS, every game BoardGameGeek has under the name, as `details` would show each."
+  matches: [GameDetails!]
 }
 
 type EmailedSuggestion {
@@ -271,6 +278,8 @@ input DetailsEdit {
   desc: String
   kw: [String!]
   type: String
+  "A BoardGameGeek game link or id to move the game to: its details replace the stored ones, except any changed in this same edit."
+  bgg: String
 }
 
 input HistoryEntry {

@@ -15,6 +15,12 @@ query PreviewGame($game: String!) {
   }
 }
 
+query PreviewBggId($id: String!) {
+  previewBggId(id: $id) {
+    ...Preview
+  }
+}
+
 mutation DecideSuggestion($id: String!, $decision: Decision!, $game: String, $details: DetailsInput) {
   decideSuggestion(id: $id, decision: $decision, game: $game, details: $details) {
     lookup
@@ -40,22 +46,29 @@ mutation RemoveGame($id: String!) {
 fragment Preview on Preview {
   outcome
   details {
-    bggId
+    ...GameShown
+  }
+  matches {
+    ...GameShown
+  }
+}
+
+fragment GameShown on GameDetails {
+  bggId
+  name
+  year
+  min
+  max
+  mins
+  desc
+  kw
+  img
+  weight
+  section
+  summary
+  honours {
     name
     year
-    min
-    max
-    mins
-    desc
-    kw
-    img
-    weight
-    section
-    summary
-    honours {
-      name
-      year
-      result
-    }
+    result
   }
 }

@@ -201,6 +201,7 @@ describe("the owner's operations", () => {
   const OWNER_ONLY: Array<[string, string]> = [
     ['pendingSuggestions', '{ pendingSuggestions { id } }'],
     ['previewGame', '{ previewGame(game: "Wingspan") { outcome } }'],
+    ['previewBggId', '{ previewBggId(id: "266192") { outcome } }'],
     ['emailedSuggestion', '{ emailedSuggestion(id: "sug-aaaaaa") { suggestion { game } } }'],
     ['addGame', 'mutation { addGame(game: "Cascadia", name: "Jess") { item { id } } }'],
     ['editGame', 'mutation { editGame(id: "seti", game: "Azul") { id } }'],
@@ -257,6 +258,12 @@ describe("the owner's operations", () => {
     expect(preview.data).toEqual({
       previewGame: { outcome: 'FOUND', details: { name: 'Wingspan', section: 'strategy' } },
     });
+    const byId = await api.run(
+      '{ previewBggId(id: "https://boardgamegeek.com/boardgame/266192/wingspan") { outcome } }',
+      {},
+      OWNER,
+    );
+    expect(byId.data).toEqual({ previewBggId: { outcome: 'UNAVAILABLE' } });
     const approved = await api.run(
       'mutation { decideSuggestion(id: "sug-aaaaaa", decision: APPROVE) { item { status } lookup } }',
       {},

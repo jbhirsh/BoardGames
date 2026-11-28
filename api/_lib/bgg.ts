@@ -162,26 +162,38 @@ export function parseThing(xml: string): GameDetails | null {
 
 const norm = normName;
 
+/** One search hit that fits what was typed. */
+export interface SearchMatch {
+  id: number;
+  name: string;
+  year?: number;
+}
+
 /**
- * Pick the search hit whose name matches what was typed, ignoring case and
- * punctuation, and also accepting a match on the part before a colon
- * ("Ticket to Ride: Europe" for "ticket to ride europe"). No match means no
- * details: attributing another game's data would be worse than none.
+ * Every search hit whose name matches what was typed, ignoring case and
+ * punctuation: the whole-name matches, or, with none, those matching the part
+ * before a colon ("Ticket to Ride: Europe" for "ticket to ride europe"). A
+ * whole-name match anywhere in the list beats a before-the-colon one, so
+ * "wingspan" resolves to Wingspan even when an expansion is listed first.
+ * Several games can share a name (Container has three), which is why this is
+ * a list: the caller asks the owner. None means no details: attributing
+ * another game's data would be worse than none.
  */
-export function pickSearchId(xml: string, wanted: string): number | null {
+export function searchMatches(xml: string, wanted: string): SearchMatch[] {
   const items = xml.match(/<item\b[\s\S]*?<\/item>/g) ?? [];
   const target = norm(wanted);
-  if (!target) return null;
-  const named = items.map((item) => {
-    const name = /<name[^>]*value="([^"]*)"/.exec(item)?.[1] ?? '';
-    return { id: Number(attr(item, 'id') ?? NaN), full: norm(name), beforeColon: norm(name.split(':')[0] ?? '') };
+  if (!target) return [];
+  const named = items.flatMap((item) => {
+    const id = Number(attr(item, 'id') ?? NaN);
+    if (!Number.isInteger(id)) return [];
+    const name = decodeEntities(/<name[^>]*value="([^"]*)"/.exec(item)?.[1] ?? '');
+    const year = Number(/<yearpublished[^>]*value="(\d+)"/.exec(item)?.[1]) || undefined;
+    return [{ id, name, year, full: norm(name), beforeColon: norm(name.split(':')[0] ?? '') }];
   });
-  // A whole-name match anywhere in the list beats a before-the-colon match,
-  // so "wingspan" resolves to Wingspan even when an expansion is listed first.
-  const exact = named.find((n) => n.full === target);
-  if (exact) return exact.id;
-  const titled = named.find((n) => n.beforeColon === target && n.full.startsWith(target));
-  return titled ? titled.id : null;
+  const pick = (hits: typeof named) => hits.map(({ id, name, year }) => ({ id, name, ...(year ? { year } : {}) }));
+  const exact = named.filter((n) => n.full === target);
+  if (exact.length > 0) return pick(exact);
+  return pick(named.filter((n) => n.beforeColon === target && n.full.startsWith(target)));
 }
 
 const RETRY_MS = 1500;
@@ -190,11 +202,14 @@ const RETRY_MS = 1500;
  * Why a lookup came back the way it did, so the owner hears about a miss
  * instead of finding an empty card: `no-match` (BGG answered, nothing fits
  * the name), `no-token` (BGG_API_TOKEN unset, so BGG was never called),
- * `refused` (BGG answered 401 or 403 to the token) and `unavailable` (an
- * error status, a network failure, or 202s until the budget ran out).
+ * `refused` (BGG answered 401 or 403 to the token), `unavailable` (an
+ * error status, a network failure, or 202s until the budget ran out) and
+ * `ambiguous` (several games have the name: their details, for the owner to
+ * pick from).
  */
 export type LookupResult =
   | { outcome: 'found'; details: GameDetails }
+  | { outcome: 'ambiguous'; matches: GameDetails[] }
   | { outcome: 'no-match' }
   | { outcome: 'no-token' }
   | { outcome: 'refused'; status: number }
@@ -232,11 +247,32 @@ async function get(fetchLike: FetchLike, url: string, deadline: number, token: s
   return unavailable();
 }
 
+/** The most games a name can offer the owner to pick from. */
+const MATCHES_MAX = 5;
+
+/** One game's details by id, with its summary and honours from BGG's site beside them. */
+async function detailsOf(id: number, token: string, fetchLike: FetchLike, deadline: number): Promise<LookupResult> {
+  // The summary and honours come from BGG's site API, alongside: a failure
+  // there leaves them out, never the game.
+  const [thing, item] = await Promise.all([
+    get(fetchLike, `${BASE}/thing?id=${id}&stats=1`, deadline, token),
+    fetchBggItem(id, fetchLike, deadline - Date.now()),
+  ]);
+  if (!thing.ok) return thing.result;
+  const details = parseThing(thing.body);
+  if (!details) return { outcome: 'no-match' };
+  return {
+    outcome: 'found',
+    details: item ? { ...details, ...(item.summary ? { summary: item.summary } : {}), honours: item.honours } : details,
+  };
+}
+
 /**
  * Look a game up by name within `budgetMs` overall (the caller runs inside a
  * serverless function with its own limit), saying why when it finds
  * nothing. BGG answers 401 to a request without a token, so with none set
- * this returns `no-token` without calling it at all.
+ * this returns `no-token` without calling it at all. Several games with the
+ * name come back as `ambiguous`, never as the first of them.
  */
 export async function lookupGame(
   name: string,
@@ -254,26 +290,40 @@ export async function lookupGame(
     token,
   );
   if (!exact.ok && exact.result.outcome === 'refused') return exact.result;
-  let id = exact.ok ? pickSearchId(exact.body, name) : null;
-  if (id === null) {
+  let hits = exact.ok ? searchMatches(exact.body, name) : [];
+  if (hits.length === 0) {
     // The loose search also catches what a failed exact search would have,
     // so its answer decides between "no match" and "BGG didn't answer".
     const loose = await get(fetchLike, `${BASE}/search?type=boardgame,boardgameexpansion&query=${q}`, deadline, token);
     if (!loose.ok) return loose.result;
-    id = pickSearchId(loose.body, name);
+    hits = searchMatches(loose.body, name);
   }
-  if (id === null) return { outcome: 'no-match' };
-  // The summary and honours come from BGG's site API, alongside: a failure
-  // there leaves them out, never the game.
-  const [thing, item] = await Promise.all([
-    get(fetchLike, `${BASE}/thing?id=${id}&stats=1`, deadline, token),
-    fetchBggItem(id, fetchLike, deadline - Date.now()),
-  ]);
-  if (!thing.ok) return thing.result;
-  const details = parseThing(thing.body);
-  if (!details) return { outcome: 'no-match' };
-  return {
-    outcome: 'found',
-    details: item ? { ...details, ...(item.summary ? { summary: item.summary } : {}), honours: item.honours } : details,
-  };
+  const [first, ...rest] = hits;
+  if (!first) return { outcome: 'no-match' };
+  if (rest.length === 0) return detailsOf(first.id, token, fetchLike, deadline);
+  // The newest games are offered when there are more than fit; the rest can
+  // still be reached by pasting their id.
+  const newest = [...hits].sort((a, b) => (b.year ?? 0) - (a.year ?? 0)).slice(0, MATCHES_MAX);
+  const all = await Promise.all(newest.map((h) => detailsOf(h.id, token, fetchLike, deadline)));
+  // A game that didn't answer is not "the one there is": offering the others
+  // alone could attach the wrong edition, so the lookup fails as BGG's. One
+  // BGG has nothing in (an empty item) is skipped: there is no such game.
+  const failed = all.find((r) => r.outcome !== 'found' && r.outcome !== 'no-match');
+  if (failed) return failed;
+  const found = all.flatMap((r) => (r.outcome === 'found' ? [r.details] : []));
+  const [only, ...others] = found;
+  if (!only) return { outcome: 'no-match' };
+  if (others.length === 0) return { outcome: 'found', details: only };
+  return { outcome: 'ambiguous', matches: found };
+}
+
+/** A game's details by BGG id, with the same outcomes as a lookup by name (never `ambiguous`). */
+export async function lookupById(
+  id: number,
+  token: string | undefined,
+  fetchLike: FetchLike = fetch,
+  budgetMs = 6000,
+): Promise<LookupResult> {
+  if (!token) return { outcome: 'no-token' };
+  return detailsOf(id, token, fetchLike, Date.now() + budgetMs);
 }

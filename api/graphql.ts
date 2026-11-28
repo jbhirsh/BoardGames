@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { toNodeHandler } from 'better-auth/node';
 import { auth, ownerSessionReader } from './_auth.js';
-import { bggSpelling, fetchBggItem, lookupGame } from './_lib/bgg.js';
+import { bggSpelling, fetchBggItem, lookupById, lookupGame } from './_lib/bgg.js';
 import { isJsonRequest } from './_lib/json.js';
 import { ownerEmail, baseUrl, resendMailer } from './_lib/mail.js';
 import { getLimiter } from './_lib/rateLimit.js';
@@ -59,6 +59,7 @@ function buildDeps(): ApiDeps {
       mailer,
       baseUrl,
       lookup: (name) => lookupGame(name, process.env.BGG_API_TOKEN, fetch, 6000),
+      lookupById: (bggId) => lookupById(bggId, process.env.BGG_API_TOKEN, fetch, 6000),
       spelling: (name) => bggSpelling(name, process.env.BGG_API_TOKEN, fetch, 3000),
       item: (bggId) => fetchBggItem(bggId, fetch, 4000),
     },
