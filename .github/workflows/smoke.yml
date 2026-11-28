@@ -48,9 +48,13 @@ jobs:
   # probe/settings.ts says what each does): it loads the home page and
   # times its Games and Session requests; WishlistVotes is listed so that a
   # cold flag it carries is named, but not timed, as the page makes it only
-  # when the wishlist has entries. It sends `x-synthetic: probe` on its
-  # requests to the deployment, so its traces are marked as synthetic. A
-  # deployment that isn't a success has nothing to probe.
+  # when the wishlist has entries. On the cold load Games goes first
+  # (`coldFirst`): the page's other API calls wait until its own wait ends,
+  # so Games is the first API call a fresh instance receives (jbhirsh/ci#186);
+  # Session, held on that load, is left out of it and timed warm only. It
+  # sends `x-synthetic: probe` on its requests to the deployment, so its
+  # traces are marked as synthetic. A deployment that isn't a success has
+  # nothing to probe.
   perf-probe:
     name: Performance probe
     if: github.event_name == 'deployment_status' && github.event.deployment_status.state == 'success'
