@@ -123,6 +123,132 @@ describe('AdminItemControls', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
+  describe("changing the game's BoardGameGeek match", () => {
+    const entry = (bggId: number, year: number, over: object = {}) => ({
+      bggId,
+      name: 'Root',
+      year,
+      min: 3,
+      max: 5,
+      mins: 75,
+      desc: `From ${year}.`,
+      kw: [],
+      img: null,
+      weight: null,
+      section: 'strategy',
+      summary: `Root, ${year}.`,
+      honours: [],
+      ...over,
+    });
+    const two = { outcome: 'AMBIGUOUS', details: null, matches: [entry(1, 2007), entry(2, 2026)] };
+    const open = () => {
+      const view = renderControls({ bgg: 1, year: 2007 });
+      fireEvent.click(screen.getByRole('button', { name: 'Edit Root' }));
+      return { ...view, form: screen.getByRole('form', { name: 'Edit Root' }) };
+    };
+
+    it("shows the game's current match as a card, and says so when it has none", () => {
+      const { form } = open();
+      expect(within(form).getByText('Root')).toBeInTheDocument();
+      expect(within(form).getByText('(2007)')).toBeInTheDocument();
+      expect(within(form).getByRole('button', { name: 'Change match' })).toBeInTheDocument();
+      renderControls({ bgg: undefined });
+      fireEvent.click(screen.getAllByRole('button', { name: 'Edit Root' })[1]);
+      expect(screen.getByText('Not matched to a BoardGameGeek game yet.')).toBeInTheDocument();
+    });
+
+    it('lists every game with the name, newest first, and fills the form from the one picked', async () => {
+      const spy = stubGraphql({
+        PreviewGame: () => ({ previewGame: two }),
+        EditGame: () => ({ editGame: { id: 'sug-1' } }),
+      });
+      const { reload, form } = open();
+      fireEvent.click(within(form).getByRole('button', { name: 'Change match' }));
+      const sheet = await screen.findByRole('dialog', { name: 'Which Root?' });
+      expect(within(sheet).getByText('BoardGameGeek has 2 games called Root.')).toBeInTheDocument();
+      const uses = within(sheet).getAllByRole('button', { name: /^Use / });
+      expect(uses.map((b) => b.getAttribute('aria-label'))).toEqual([
+        'Use Root (2026), BGG 2',
+        'Use Root (2007), BGG 1',
+      ]);
+      expect(within(sheet).getByText('BGG 1 · current')).toBeInTheDocument();
+      fireEvent.click(uses[0]);
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(within(form).getByLabelText('Minimum players')).toHaveValue(3);
+      expect(within(form).getByLabelText('Maximum players')).toHaveValue(5);
+      expect(within(form).getByLabelText('Minutes')).toHaveValue(75);
+      expect(within(form).getByLabelText('Description')).toHaveValue('From 2026.');
+      expect(within(form).getByText('(2026)')).toBeInTheDocument();
+      fireEvent.click(within(form).getByRole('button', { name: 'Save' }));
+      await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
+      expect(lastSent(spy).variables).toMatchObject({ details: { mins: 75, bgg: '2' } });
+    });
+
+    it('leaves the id out of a save that keeps the current match, and closes the sheet with Escape', async () => {
+      const spy = stubGraphql({
+        PreviewGame: () => ({ previewGame: two }),
+        EditGame: () => ({ editGame: { id: 'sug-1' } }),
+      });
+      const { form } = open();
+      fireEvent.click(within(form).getByRole('button', { name: 'Change match' }));
+      await screen.findByRole('dialog');
+      fireEvent.keyDown(window, { key: 'Escape' });
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      fireEvent.submit(form);
+      await waitFor(() => expect(lastSent(spy).op).toBe('EditGame'));
+      expect((lastSent(spy).variables?.details as { bgg?: string }).bgg).toBeUndefined();
+    });
+
+    it('hands focus back to Change match when the sheet closes, and keeps it on a card button through a re-render', async () => {
+      stubGraphql({ PreviewGame: () => ({ previewGame: two }) });
+      const { form } = open();
+      const change = within(form).getByRole('button', { name: 'Change match' });
+      change.focus();
+      fireEvent.click(change);
+      const sheet = await screen.findByRole('dialog');
+      // The dialog takes focus in an effect after it mounts; move focus only once it has.
+      await waitFor(() => expect(sheet).toHaveFocus());
+      const use = within(sheet).getAllByRole('button', { name: /^Use / })[0];
+      use.focus();
+      // Typing in the form re-renders the parent, and its inline onClose with it.
+      fireEvent.change(within(form).getByLabelText('Name'), { target: { value: 'Root 2' } });
+      expect(use).toHaveFocus();
+      fireEvent.click(within(sheet).getByRole('button', { name: 'Close' }));
+      expect(change).toHaveFocus();
+    });
+
+    it('says why when BoardGameGeek has no game with the name', async () => {
+      stubGraphql({ PreviewGame: () => ({ previewGame: { outcome: 'NO_MATCH', details: null, matches: null } }) });
+      const { form } = open();
+      fireEvent.click(within(form).getByRole('button', { name: 'Change match' }));
+      expect(await within(form).findByRole('alert')).toHaveTextContent('BoardGameGeek had no match for “Root”.');
+    });
+
+    it('takes a pasted link or id, shows its game, and says why when it cannot', async () => {
+      const spy = stubGraphql({
+        PreviewBggId: ({ id }) =>
+          String(id).trim() === '2'
+            ? { previewBggId: { outcome: 'FOUND', details: entry(2, 2026), matches: null } }
+            : gqlError('paste a BoardGameGeek game link (boardgamegeek.com/boardgame/…) or its id'),
+        EditGame: () => ({ editGame: { id: 'sug-1' } }),
+      });
+      const { form } = open();
+      expect(within(form).queryByLabelText('BoardGameGeek link or id')).not.toBeInTheDocument();
+      fireEvent.click(within(form).getByRole('button', { name: 'Paste a BGG link or id' }));
+      const field = within(form).getByLabelText('BoardGameGeek link or id');
+      expect(within(form).getByRole('button', { name: 'Look up' })).toBeDisabled();
+      fireEvent.change(field, { target: { value: 'nonsense' } });
+      fireEvent.click(within(form).getByRole('button', { name: 'Look up' }));
+      expect(await within(form).findByRole('alert')).toHaveTextContent('paste a BoardGameGeek game link');
+      fireEvent.change(field, { target: { value: ' 2 ' } });
+      fireEvent.click(within(form).getByRole('button', { name: 'Look up' }));
+      expect(await within(form).findByText('(2026)')).toBeInTheDocument();
+      expect(within(form).queryByRole('alert')).not.toBeInTheDocument();
+      expect(within(form).getByLabelText('Description')).toHaveValue('From 2026.');
+      expect(operations(spy).map((o) => o.variables)).toEqual([{ id: 'nonsense' }, { id: ' 2 ' }]);
+    });
+  });
+
   it('asks before removing, then removes it and reloads', async () => {
     const spy = stubGraphql({ RemoveGame: () => ({ removeGame: true }) });
     const { reload } = renderControls();

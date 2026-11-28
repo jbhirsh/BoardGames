@@ -1,5 +1,13 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { addGame, decideSuggestion, editGame, fetchPending, previewGame, removeGame } from '../client/adminApi';
+import {
+  addGame,
+  decideSuggestion,
+  editGame,
+  fetchPending,
+  previewBggId,
+  previewGame,
+  removeGame,
+} from '../client/adminApi';
 import { gqlError, operations, stubGraphql } from './helpers/graphqlFetch';
 
 const ROOT = {
@@ -98,6 +106,40 @@ describe('adminApi', () => {
     expect(await previewGame('Rot')).toEqual({ ok: true, data: { outcome: 'no-token' } });
     expect(await decideSuggestion('sug-1', 'approve')).toEqual({ ok: true, data: { lookup: 'refused' } });
     expect(await decideSuggestion('sug-1', 'deny')).toEqual({ ok: true, data: {} });
+  });
+
+  it("reads every game a name matches, and a pasted id's game, in the admin controls' words", async () => {
+    const raw = (bggId: number, year: number) => ({ ...ROOT, bggId, year, img: null, weight: null, summary: null });
+    const spy = stubGraphql({
+      PreviewGame: () => ({
+        previewGame: { outcome: 'AMBIGUOUS', details: null, matches: [raw(1, 2007), raw(2, 2026)] },
+      }),
+      PreviewBggId: ({ id }) =>
+        id === '2'
+          ? { previewBggId: { outcome: 'FOUND', details: raw(2, 2026), matches: null } }
+          : { previewBggId: { outcome: 'NO_MATCH', details: null, matches: null } },
+    });
+    const many = await previewGame('Container');
+    expect(many.ok && many.data.outcome).toBe('ambiguous');
+    expect(many.ok && many.data.matches?.map((m) => [m.bggId, m.year, m.img])).toEqual([
+      [1, 2007, undefined],
+      [2, 2026, undefined],
+    ]);
+    const one = await previewBggId('2');
+    expect(one.ok && one.data.details?.bggId).toBe(2);
+    expect(await previewBggId('3')).toEqual({ ok: true, data: { outcome: 'no-match' } });
+    expect(operations(spy).map((o) => [o.operationName, o.variables])).toEqual([
+      ['PreviewGame', { game: 'Container' }],
+      ['PreviewBggId', { id: '2' }],
+      ['PreviewBggId', { id: '3' }],
+    ]);
+  });
+
+  it('sends the BoardGameGeek id an edit moves a game to', async () => {
+    const spy = stubGraphql({ EditGame: () => ({ editGame: { id: 'sug-1' } }) });
+    const details = { min: 3, max: 5, mins: 90, desc: 'Ports.', kw: [], type: null, bgg: '453740' };
+    await editGame({ id: 'sug-1', game: 'Container', details });
+    expect(operations(spy).map((o) => o.variables)).toEqual([{ id: 'sug-1', game: 'Container', details }]);
   });
 
   it('turns failures into messages instead of throwing', async () => {

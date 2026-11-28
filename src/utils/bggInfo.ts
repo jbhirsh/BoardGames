@@ -33,6 +33,7 @@ export interface ListedGame {
   video?: string | null;
   image?: string | null;
   bggId?: number | null;
+  year?: number | null;
 }
 
 export type BggIndex = ReadonlyMap<number, BggEntry>;
@@ -121,6 +122,7 @@ export function toWishlistItem(g: ListedGame, info: BggIndex): WishlistItem {
     awards: awardsOf(entry),
     source,
     ...(g.bggId == null ? {} : { bgg: g.bggId }),
+    ...(g.year == null ? {} : { year: g.year }),
     ...(entry?.weight == null ? {} : { weight: entry.weight }),
     ...(g.suggestedBy ? { suggestedBy: g.suggestedBy } : {}),
     ...(g.expands ? { expands: g.expands } : {}),

@@ -32,6 +32,42 @@ test('the owner edits a written entry from its pencil, and removes it from its b
   expect(await removed).toEqual({ id: 'seti' });
 });
 
+test("the owner changes a game's BoardGameGeek match: a sheet of every game with the name, then Save", async ({
+  page,
+}) => {
+  const edition = (bggId: number, year: number) => ({
+    bggId,
+    name: SETI,
+    year,
+    min: 1,
+    max: 4,
+    mins: 120,
+    desc: `The ${year} edition.`,
+    kw: [],
+    img: null,
+    weight: null,
+    section: 'heavy',
+    summary: `SETI, ${year}.`,
+    honours: [],
+  });
+  await stubOperation(page, 'PreviewGame', () => ({
+    previewGame: { outcome: 'AMBIGUOUS', details: null, matches: [edition(1, 2023), edition(2, 2026)] },
+  }));
+  await page.goto('/?c=want&v=grid&q=seti');
+  const card = page.getByTestId('wishlist-item').filter({ has: page.getByRole('heading', { name: SETI }) });
+  await card.getByRole('button', { name: `Edit ${SETI}` }).click();
+  await card.getByRole('button', { name: 'Change match' }).click();
+  const sheet = page.getByRole('dialog', { name: `Which ${SETI}?` });
+  await expect(sheet.getByRole('button', { name: /^Use / })).toHaveCount(2);
+  await sheet.getByRole('button', { name: `Use ${SETI} (2026), BGG 2` }).click();
+  await expect(sheet).toBeHidden();
+  const form = card.getByRole('form', { name: `Edit ${SETI}` });
+  await expect(form.getByLabel('Description')).toHaveValue('The 2026 edition.');
+  const edited = nextOperation(page, 'EditGame');
+  await form.getByRole('button', { name: 'Save' }).click();
+  expect(await edited).toMatchObject({ id: 'seti', details: { bgg: '2', mins: 120 } });
+});
+
 test('a visitor sees no pencil or bin', async ({ page }) => {
   await stubOperation(page, 'Session', () => ({ session: { admin: false } }));
   await page.goto('/?c=want&v=grid&q=seti');

@@ -4,7 +4,10 @@ import { KW, WISHLIST_SECTIONS, WISHLIST_TYPES } from '../data/keywords';
 import { DESC_MAX, GAME_MAX, GAME_MIN, MINS_MAX, PLAYERS_MAX } from '../data/suggestionLimits';
 import { useAuth } from '../context/useAuth';
 import { useWishlistItems } from '../context/useWishlistItems';
-import { editGame, removeGame } from '../client/adminApi';
+import { editGame, previewBggId, previewGame, removeGame, type Preview } from '../client/adminApi';
+import { lookupNotice, type PreviewDetails } from '../utils/lookupNotice';
+import BggMatchSheet from './BggMatchSheet';
+import PreviewCard from './PreviewCard';
 import { BinIcon, PencilIcon } from './Icons';
 import { outlineIconClass } from './sharedClasses';
 import {
@@ -135,6 +138,67 @@ function EditForm({ item, onDone }: Props & { onDone: () => void }) {
   const [desc, setDesc] = useState(item.blurb);
   const [kw, setKw] = useState<Set<KeywordId>>(() => new Set(item.kw));
   const uid = useId();
+  // The BoardGameGeek game the owner picked or pasted, saved with the form.
+  const [picked, setPicked] = useState<PreviewDetails | null>(null);
+  const [matches, setMatches] = useState<PreviewDetails[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [link, setLink] = useState('');
+  const [bggError, setBggError] = useState<string | null>(null);
+
+  // The picked game's players, time and description fill the form, as saving
+  // will store them; whatever the owner then types over them is kept.
+  const choose = (d: PreviewDetails) => {
+    setPicked(d);
+    setMin(String(d.min));
+    setMax(String(d.max));
+    setMins(String(d.mins));
+    setDesc(d.desc);
+    setMatches(null);
+    setBggError(null);
+  };
+
+  const findMatches = async () => {
+    if (searching) return;
+    setSearching(true);
+    setBggError(null);
+    const result = await previewGame(item.name);
+    setSearching(false);
+    if (!result.ok) return setBggError(result.error);
+    const found = result.data.matches ?? (result.data.details ? [result.data.details] : []);
+    if (found.length > 0) return setMatches(found);
+    setBggError(lookupNotice(result.data.outcome, item.name, 'preview'));
+  };
+
+  const lookUpLink = async () => {
+    if (searching) return;
+    setSearching(true);
+    setBggError(null);
+    const result = await previewBggId(link);
+    setSearching(false);
+    if (!result.ok) return setBggError(result.error);
+    const details = (result.data as Preview).details;
+    if (details) return choose(details);
+    setBggError(lookupNotice(result.data.outcome, link.trim(), 'preview'));
+  };
+
+  const shownMatch: PreviewDetails | null =
+    picked ??
+    (item.bgg === undefined
+      ? null
+      : {
+          bggId: item.bgg,
+          name: item.name,
+          year: item.year,
+          min: item.min,
+          max: item.max,
+          mins: item.mins,
+          desc: '',
+          kw: [],
+          img: item.img,
+          section: item.type,
+          honours: [],
+        });
 
   const toggleKw = (id: KeywordId) =>
     setKw((prev) => {
@@ -159,6 +223,7 @@ function EditForm({ item, onDone }: Props & { onDone: () => void }) {
         desc: desc.trim(),
         kw: [...kw],
         type: type || null,
+        ...(picked && picked.bggId !== item.bgg ? { bgg: String(picked.bggId) } : {}),
       },
     });
     setBusy(false);
@@ -177,6 +242,66 @@ function EditForm({ item, onDone }: Props & { onDone: () => void }) {
       aria-label={`Edit ${item.name}`}
     >
       <div className={fieldsClass}>
+        <span className={fieldLabelClass}>BoardGameGeek</span>
+        <div className="flex flex-col gap-2">
+          {shownMatch ? (
+            <PreviewCard details={shownMatch} className="mt-0" />
+          ) : (
+            <p className={adminMutedClass}>Not matched to a BoardGameGeek game yet.</p>
+          )}
+          <div className={adminActionsClass}>
+            <button type="button" className={adminGhostClass} disabled={searching} onClick={() => void findMatches()}>
+              {searching ? 'Looking up…' : 'Change match'}
+            </button>
+            <button
+              type="button"
+              className="cursor-pointer text-[12.5px] text-blue underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue"
+              aria-expanded={linkOpen}
+              onClick={() => setLinkOpen((o) => !o)}
+            >
+              Paste a BGG link or id
+            </button>
+          </div>
+          {linkOpen && (
+            <div className={adminActionsClass}>
+              <input
+                className={`${fieldClass} h-8.5 min-w-0 flex-1`}
+                aria-label="BoardGameGeek link or id"
+                placeholder="boardgamegeek.com/boardgame/… or 453740"
+                value={link}
+                onChange={(e) => setLink(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    void lookUpLink();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                className={adminButtonClass}
+                disabled={searching || !link.trim()}
+                onClick={() => void lookUpLink()}
+              >
+                Look up
+              </button>
+            </div>
+          )}
+          {bggError && (
+            <p className={adminErrorClass} role="alert">
+              {bggError}
+            </p>
+          )}
+        </div>
+        {matches && (
+          <BggMatchSheet
+            name={item.name}
+            matches={matches}
+            current={item.bgg}
+            onPick={choose}
+            onClose={() => setMatches(null)}
+          />
+        )}
         <label className={fieldLabelClass} htmlFor={`${uid}-game`}>
           Name
         </label>

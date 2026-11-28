@@ -14,9 +14,11 @@ import {
   EditGameDocument,
   PendingSuggestionsDocument,
   PreviewGameDocument,
+  PreviewBggIdDocument,
   RemoveGameDocument,
   type LookupOutcome as ApiOutcome,
   type PreviewFragment,
+  type GameShownFragment,
   type SuggestionStatus,
 } from '../gql/graphql';
 import type { LookupOutcome, PreviewDetails } from '../utils/lookupNotice';
@@ -26,6 +28,7 @@ export type Outcome<T = undefined> = { ok: true; data: T } | { ok: false; error:
 
 const OUTCOMES: Record<ApiOutcome, LookupOutcome> = {
   FOUND: 'found',
+  AMBIGUOUS: 'ambiguous',
   NO_MATCH: 'no-match',
   NO_TOKEN: 'no-token',
   REFUSED: 'refused',
@@ -105,30 +108,35 @@ export const decideSuggestion = async (
 export interface Preview {
   outcome: LookupOutcome;
   details?: PreviewDetails;
+  /** With `ambiguous`: every game BoardGameGeek has under the name, for the owner to pick from. */
+  matches?: PreviewDetails[];
 }
 
+const shown = (details: GameShownFragment): PreviewDetails => ({
+  ...details,
+  year: details.year ?? undefined,
+  img: details.img ?? undefined,
+  weight: details.weight ?? undefined,
+  summary: details.summary ?? undefined,
+  honours: details.honours.map((h) => ({ ...h, year: h.year ?? undefined })),
+});
+
 /** A preview as the admin controls read it. */
-function toPreview({ outcome, details }: PreviewFragment): Preview {
+function toPreview({ outcome, details, matches }: PreviewFragment): Preview {
   return {
     outcome: OUTCOMES[outcome],
-    ...(details
-      ? {
-          details: {
-            ...details,
-            year: details.year ?? undefined,
-            img: details.img ?? undefined,
-            weight: details.weight ?? undefined,
-            summary: details.summary ?? undefined,
-            honours: details.honours.map((h) => ({ ...h, year: h.year ?? undefined })),
-          },
-        }
-      : {}),
+    ...(details ? { details: shown(details) } : {}),
+    ...(matches ? { matches: matches.map(shown) } : {}),
   };
 }
 
 /** Looks a game up on BoardGameGeek without storing anything, for the add form and the queue to show. */
 export const previewGame = async (game: string, signal?: AbortSignal): Promise<Outcome<Preview>> =>
   map(await request(PreviewGameDocument, { game }, signal), (data) => toPreview(data.previewGame));
+
+/** Looks up the game a pasted BoardGameGeek link or id names, without storing anything. */
+export const previewBggId = async (id: string, signal?: AbortSignal): Promise<Outcome<Preview>> =>
+  map(await request(PreviewBggIdDocument, { id }, signal), (data) => toPreview(data.previewBggId));
 
 export interface AddGameInput {
   game: string;
@@ -144,7 +152,16 @@ export const addGame = async ({ game, name, note, details }: AddGameInput): Prom
 export interface EditGameInput {
   id: string;
   game: string;
-  details: { min: number; max: number; mins: number; desc: string; kw: string[]; type: string | null };
+  details: {
+    min: number;
+    max: number;
+    mins: number;
+    desc: string;
+    kw: string[];
+    type: string | null;
+    /** A BoardGameGeek id to move the game to; its details replace the stored ones except any changed here. */
+    bgg?: string;
+  };
 }
 
 export const editGame = async ({ id, game, details }: EditGameInput): Promise<Outcome> =>
